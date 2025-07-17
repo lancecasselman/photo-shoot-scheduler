@@ -45,8 +45,9 @@ onAuthStateChanged(auth, async (user) => {
             console.error('Error creating user:', error);
         }
         
-        // Store current user globally
+        // Store current user globally with token
         window.currentUser = user;
+        window.userToken = await user.getIdToken();
         
         authDiv.style.display = 'none';
         appDiv.style.display = 'block';

@@ -2,6 +2,15 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
+const admin = require('firebase-admin');
+
+// Initialize Firebase Admin SDK (for token verification)
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.applicationDefault(),
+    projectId: 'photography-schedule-f08eb'
+  });
+}
 
 const PORT = process.env.PORT || 5000;
 
@@ -51,6 +60,22 @@ function serveStaticFile(filePath, res) {
   }
 }
 
+// Verify Firebase token and get user ID
+async function verifyUser(req) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    throw new Error('No authentication token provided');
+  }
+  
+  const token = authHeader.split(' ')[1];
+  try {
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    return decodedToken.uid;
+  } catch (error) {
+    throw new Error('Invalid authentication token');
+  }
+}
+
 async function handleApiRequest(method, pathname, req, res) {
   setCorsHeaders(res);
   
@@ -69,10 +94,22 @@ async function handleApiRequest(method, pathname, req, res) {
     req.on('end', async () => {
       const data = body ? JSON.parse(body) : {};
       let result;
+      
+      // Verify user authentication for protected endpoints
+      let userId = null;
+      if (pathname.startsWith('/api/sessions')) {
+        try {
+          userId = await verifyUser(req);
+        } catch (error) {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Unauthorized: ' + error.message }));
+          return;
+        }
+      }
 
       if (pathname === '/api/sessions' && method === 'GET') {
-        const query = 'SELECT * FROM sessions ORDER BY date_time ASC';
-        const { rows } = await pool.query(query);
+        const query = 'SELECT * FROM sessions WHERE created_by = $1 ORDER BY date_time ASC';
+        const { rows } = await pool.query(query, [userId]);
         result = rows;
       } else if (pathname === '/api/sessions' && method === 'POST') {
         const query = `
@@ -83,21 +120,31 @@ async function handleApiRequest(method, pathname, req, res) {
         const values = [
           data.sessionType, data.clientName, data.dateTime, data.location,
           data.phoneNumber, data.email, data.price, data.duration, data.notes || '',
-          data.contractSigned || false, data.paid || false, data.edited || false, data.delivered || false, data.createdBy || 'anonymous'
+          data.contractSigned || false, data.paid || false, data.edited || false, data.delivered || false, userId
         ];
         const { rows } = await pool.query(query, values);
         result = rows[0];
       } else if (pathname.startsWith('/api/sessions/') && method === 'PUT') {
         const id = parseInt(pathname.split('/')[3]);
         const updates = Object.keys(data).map((key, index) => `${key} = $${index + 1}`).join(', ');
-        const query = `UPDATE sessions SET ${updates}, updated_at = CURRENT_TIMESTAMP WHERE id = $${Object.keys(data).length + 1} RETURNING *`;
-        const values = [...Object.values(data), id];
+        const query = `UPDATE sessions SET ${updates}, updated_at = CURRENT_TIMESTAMP WHERE id = $${Object.keys(data).length + 1} AND created_by = $${Object.keys(data).length + 2} RETURNING *`;
+        const values = [...Object.values(data), id, userId];
         const { rows } = await pool.query(query, values);
+        if (rows.length === 0) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Session not found or unauthorized' }));
+          return;
+        }
         result = rows[0];
       } else if (pathname.startsWith('/api/sessions/') && method === 'DELETE') {
         const id = parseInt(pathname.split('/')[3]);
-        const query = 'DELETE FROM sessions WHERE id = $1';
-        await pool.query(query, [id]);
+        const query = 'DELETE FROM sessions WHERE id = $1 AND created_by = $2';
+        const deleteResult = await pool.query(query, [id, userId]);
+        if (deleteResult.rowCount === 0) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Session not found or unauthorized' }));
+          return;
+        }
         result = { success: true };
       } else if (pathname === '/api/users' && method === 'POST') {
         const query = `

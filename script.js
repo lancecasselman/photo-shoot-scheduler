@@ -54,6 +54,30 @@ const sessionForm = document.getElementById('sessionForm');
 const sessionsContainer = document.getElementById('sessionsContainer');
 const messageContainer = document.getElementById('messageContainer');
 
+// API call helper with authentication
+async function apiCall(url, options = {}) {
+    const headers = {
+        'Content-Type': 'application/json',
+        ...options.headers
+    };
+    
+    // Add authentication header if user is logged in
+    if (window.currentUser && window.userToken) {
+        headers['Authorization'] = `Bearer ${window.userToken}`;
+    }
+    
+    const response = await fetch(url, {
+        ...options,
+        headers
+    });
+    
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return await response.json();
+}
+
 // Load sessions from database
 async function loadSessions() {
     try {
