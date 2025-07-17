@@ -39,6 +39,8 @@ This is a client-side web application for managing photography sessions. It's a 
 - **Fixed Session Addition**: Resolved issue where sessions couldn't be added when Firebase credentials were missing
 - **Data Transformation**: Added proper field name conversion between database snake_case and frontend camelCase
 - **Deployment Ready**: Application successfully runs and allows full functionality in both authenticated and fallback modes
+- **Admin View**: Added admin functionality to view and manage all sessions from all users when logged in as admin
+- **Admin Permissions**: Admin users can delete any session, while regular users can only delete their own sessions
 
 ## User Preferences
 

@@ -107,7 +107,7 @@ function serveStaticFile(filePath, res) {
   }
 }
 
-// Verify Firebase token and get user ID
+// Verify Firebase token and get user info
 async function verifyUser(req) {
   // Check if Firebase is initialized
   if (!isFirebaseInitialized) {
@@ -122,10 +122,19 @@ async function verifyUser(req) {
   const token = authHeader.split(' ')[1];
   try {
     const decodedToken = await admin.auth().verifyIdToken(token);
-    return decodedToken.uid;
+    return {
+      uid: decodedToken.uid,
+      email: decodedToken.email
+    };
   } catch (error) {
     throw new Error('Invalid authentication token');
   }
+}
+
+// Check if user is admin
+function isAdminUser(email) {
+  const adminEmails = ['lancecasselman@icloud.com']; // Add your admin email here
+  return adminEmails.includes(email);
 }
 
 async function handleApiRequest(method, pathname, req, res) {
@@ -148,15 +157,15 @@ async function handleApiRequest(method, pathname, req, res) {
       let result;
       
       // Verify user authentication for protected endpoints
-      let userId = null;
-      if (pathname.startsWith('/api/sessions')) {
+      let userInfo = null;
+      if (pathname.startsWith('/api/sessions') || pathname.startsWith('/api/admin')) {
         try {
-          userId = await verifyUser(req);
+          userInfo = await verifyUser(req);
         } catch (error) {
           // If Firebase is not initialized, use fallback mode
           if (!isFirebaseInitialized) {
             console.warn('Operating in fallback mode - authentication disabled');
-            userId = 'fallback-user'; // Use a fallback user ID when Firebase is unavailable
+            userInfo = { uid: 'fallback-user', email: 'fallback@example.com' };
           } else {
             res.writeHead(401, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: 'Unauthorized: ' + error.message }));
@@ -167,7 +176,7 @@ async function handleApiRequest(method, pathname, req, res) {
 
       if (pathname === '/api/sessions' && method === 'GET') {
         const query = 'SELECT * FROM sessions WHERE created_by = $1 ORDER BY date_time ASC';
-        const { rows } = await pool.query(query, [userId]);
+        const { rows } = await pool.query(query, [userInfo.uid]);
         result = rows;
       } else if (pathname === '/api/sessions' && method === 'POST') {
         const query = `
@@ -178,7 +187,7 @@ async function handleApiRequest(method, pathname, req, res) {
         const values = [
           data.sessionType, data.clientName, data.dateTime, data.location,
           data.phoneNumber, data.email, data.price, data.duration, data.notes || '',
-          data.contractSigned || false, data.paid || false, data.edited || false, data.delivered || false, userId
+          data.contractSigned || false, data.paid || false, data.edited || false, data.delivered || false, userInfo.uid
         ];
         const { rows } = await pool.query(query, values);
         result = rows[0];
@@ -186,7 +195,7 @@ async function handleApiRequest(method, pathname, req, res) {
         const id = parseInt(pathname.split('/')[3]);
         const updates = Object.keys(data).map((key, index) => `${key} = $${index + 1}`).join(', ');
         const query = `UPDATE sessions SET ${updates}, updated_at = CURRENT_TIMESTAMP WHERE id = $${Object.keys(data).length + 1} AND created_by = $${Object.keys(data).length + 2} RETURNING *`;
-        const values = [...Object.values(data), id, userId];
+        const values = [...Object.values(data), id, userInfo.uid];
         const { rows } = await pool.query(query, values);
         if (rows.length === 0) {
           res.writeHead(404, { 'Content-Type': 'application/json' });
@@ -196,14 +205,40 @@ async function handleApiRequest(method, pathname, req, res) {
         result = rows[0];
       } else if (pathname.startsWith('/api/sessions/') && method === 'DELETE') {
         const id = parseInt(pathname.split('/')[3]);
-        const query = 'DELETE FROM sessions WHERE id = $1 AND created_by = $2';
-        const deleteResult = await pool.query(query, [id, userId]);
+        
+        // Check if user is admin or owns the session
+        let query, values;
+        if (isAdminUser(userInfo.email)) {
+          query = 'DELETE FROM sessions WHERE id = $1';
+          values = [id];
+        } else {
+          query = 'DELETE FROM sessions WHERE id = $1 AND created_by = $2';
+          values = [id, userInfo.uid];
+        }
+        
+        const deleteResult = await pool.query(query, values);
         if (deleteResult.rowCount === 0) {
           res.writeHead(404, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Session not found or unauthorized' }));
           return;
         }
         result = { success: true };
+      } else if (pathname === '/api/admin/sessions' && method === 'GET') {
+        // Admin endpoint to get all sessions
+        if (!isAdminUser(userInfo.email)) {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Forbidden: Admin access required' }));
+          return;
+        }
+        
+        const query = `
+          SELECT s.*, u.email as user_email, u.display_name as user_display_name
+          FROM sessions s
+          LEFT JOIN users u ON s.created_by = u.id
+          ORDER BY s.date_time ASC
+        `;
+        const { rows } = await pool.query(query);
+        result = rows;
       } else if (pathname === '/api/users' && method === 'POST') {
         const query = `
           INSERT INTO users (id, email, display_name)
