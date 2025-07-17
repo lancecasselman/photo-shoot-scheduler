@@ -31,7 +31,9 @@ function getMimeType(filePath) {
 function setCorsHeaders(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Max-Age', '86400');
 }
 
 function serveStaticFile(filePath, res) {
@@ -80,8 +82,8 @@ async function handleApiRequest(method, pathname, req, res) {
         `;
         const values = [
           data.sessionType, data.clientName, data.dateTime, data.location,
-          data.phoneNumber, data.email, data.price, data.duration, data.notes,
-          data.contractSigned, data.paid, data.edited, data.delivered, data.createdBy
+          data.phoneNumber, data.email, data.price, data.duration, data.notes || '',
+          data.contractSigned || false, data.paid || false, data.edited || false, data.delivered || false, data.createdBy || 'anonymous'
         ];
         const { rows } = await pool.query(query, values);
         result = rows[0];
@@ -131,7 +133,11 @@ async function handleApiRequest(method, pathname, req, res) {
   } catch (error) {
     console.error('API Error:', error);
     res.writeHead(500, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Internal server error' }));
+    res.end(JSON.stringify({ 
+      error: 'Internal server error',
+      message: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    }));
   }
 }
 

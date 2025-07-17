@@ -53,7 +53,9 @@ onAuthStateChanged(auth, async (user) => {
         
         // Load sessions from database
         if (window.loadSessions) {
-            window.loadSessions();
+            setTimeout(() => {
+                window.loadSessions();
+            }, 100); // Small delay to ensure DOM is ready
         }
     } else {
         // User is signed out

@@ -8,22 +8,40 @@ let sessionIdCounter = 1;
 // API helper functions
 async function apiCall(url, options = {}) {
     try {
+        console.log(`Making API call to: ${url}`, options);
+        
         const response = await fetch(url, {
             headers: {
                 'Content-Type': 'application/json',
                 ...options.headers
             },
+            mode: 'cors',
+            credentials: 'omit',
             ...options
         });
         
+        console.log(`API response status: ${response.status}`);
+        
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorText = await response.text();
+            console.error(`API error response: ${errorText}`);
+            throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
         }
         
-        return await response.json();
+        const data = await response.json();
+        console.log('API response data:', data);
+        return data;
     } catch (error) {
         console.error('API call failed:', error);
-        throw error;
+        
+        // More specific error messages for mobile debugging
+        if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+            throw new Error('Network error: Unable to connect to server. Please check your internet connection.');
+        } else if (error.name === 'SyntaxError') {
+            throw new Error('Server response error: Invalid data format received.');
+        } else {
+            throw new Error(`API error: ${error.message}`);
+        }
     }
 }
 
@@ -35,12 +53,29 @@ const messageContainer = document.getElementById('messageContainer');
 // Load sessions from database
 async function loadSessions() {
     try {
+        console.log('Loading sessions from database...');
         const data = await apiCall('/api/sessions');
+        console.log('Sessions loaded:', data);
         sessions = data || [];
         renderSessions();
+        
+        if (sessions.length === 0) {
+            console.log('No sessions found in database');
+        }
     } catch (error) {
         console.error('Error loading sessions:', error);
-        showMessage('Error loading sessions. Please refresh the page.', 'error');
+        showMessage(`Error loading sessions: ${error.message}. Please check your connection and try again.`, 'error');
+        
+        // Fallback to empty sessions array
+        sessions = [];
+        renderSessions();
+        
+        // Additional mobile debugging
+        if (navigator.userAgent.includes('Mobile')) {
+            console.log('Mobile device - API call failed, showing error details');
+            console.log('User agent:', navigator.userAgent);
+            console.log('Current URL:', window.location.href);
+        }
     }
 }
 
@@ -63,6 +98,11 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         // Initial render for empty state
         renderSessions();
+    }
+    
+    // Mobile-specific debugging
+    if (navigator.userAgent.includes('Mobile')) {
+        console.log('Mobile device detected');
     }
 });
 
