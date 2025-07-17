@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photography Session Scheduler</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📸 Photography Session Scheduler</h1>
+            <p>Manage your photography sessions with ease</p>
+        </header>
+
+        <main>
+            <!-- Session Form -->
+            <section class="form-section">
+                <h2>Add New Session</h2>
+                <form id="sessionForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="sessionType">Session Type</label>
+                            <input type="text" id="sessionType" name="sessionType" required placeholder="e.g., Wedding, Portrait, Event">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="clientName">Client Name</label>
+                            <input type="text" id="clientName" name="clientName" required placeholder="Enter client name">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="dateTime">Date & Time</label>
+                            <input type="datetime-local" id="dateTime" name="dateTime" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="location">Location</label>
+                            <input type="text" id="location" name="location" required placeholder="Session location">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="phoneNumber">Phone Number</label>
+                            <input type="tel" id="phoneNumber" name="phoneNumber" required placeholder="+1 (555) 123-4567">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" name="email" required placeholder="client@example.com">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="price">Price</label>
+                            <input type="number" id="price" name="price" step="0.01" min="0" required placeholder="0.00">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="duration">Length of Shoot (minutes)</label>
+                            <input type="number" id="duration" name="duration" min="1" required placeholder="60">
+                        </div>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="notes">Notes</label>
+                        <textarea id="notes" name="notes" rows="3" placeholder="Additional notes about the session"></textarea>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="contractSigned" name="contractSigned">
+                            <label for="contractSigned">Contract Signed</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="paid" name="paid">
+                            <label for="paid">Paid</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="edited" name="edited">
+                            <label for="edited">Edited</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="delivered" name="delivered">
+                            <label for="delivered">Delivered</label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Add Session</button>
+                </form>
+            </section>
+
+            <!-- Sessions Display -->
+            <section class="sessions-section">
+                <h2>Scheduled Sessions</h2>
+                <div id="sessionsContainer" class="sessions-container">
+                    <div class="empty-state">
+                        <p>No sessions scheduled yet. Add your first session above!</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Success/Error Messages -->
+    <div id="messageContainer" class="message-container"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
