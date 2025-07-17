@@ -7,13 +7,27 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>📸 Photography Session Scheduler</h1>
-            <p>Manage your photography sessions with ease</p>
-        </header>
+    <div id="auth">
+        <h2>Login</h2>
+        <input type="email" id="login-email" placeholder="Email"><br>
+        <input type="password" id="login-password" placeholder="Password"><br>
+        <button onclick="login()">Login</button>
 
-        <main>
+        <h2>Signup</h2>
+        <input type="email" id="signup-email" placeholder="Email"><br>
+        <input type="password" id="signup-password" placeholder="Password"><br>
+        <button onclick="signup()">Signup</button>
+    </div>
+
+    <div id="app" style="display: none;">
+        <div class="container">
+            <header>
+                <h1>📸 Photography Session Scheduler</h1>
+                <p>Manage your photography sessions with ease</p>
+                <button onclick="logout()" style="float: right; margin-top: -40px;">Logout</button>
+            </header>
+
+            <main>
             <!-- Session Form -->
             <section class="form-section">
                 <h2>Add New Session</h2>
@@ -97,12 +111,15 @@
                     </div>
                 </div>
             </section>
-        </main>
+            </main>
+        </div>
+
+        <!-- Success/Error Messages -->
+        <div id="messageContainer" class="message-container"></div>
+
+        <script src="script.js"></script>
     </div>
 
-    <!-- Success/Error Messages -->
-    <div id="messageContainer" class="message-container"></div>
-
-    <script src="script.js"></script>
+    <script type="module" src="auth.js"></script>
 </body>
 </html>
