@@ -146,13 +146,18 @@ const server = http.createServer(async (req, res) => {
   const pathname = url.pathname;
   const method = req.method;
 
+  // Debug logging
+  console.log(`[${new Date().toISOString()}] ${method} ${pathname} - Host: ${req.headers.host}, User-Agent: ${req.headers['user-agent']?.substring(0, 50) || 'unknown'}`);
+
   // Handle API requests
   if (pathname.startsWith('/api/')) {
+    console.log(`Handling API request: ${method} ${pathname}`);
     await handleApiRequest(method, pathname, req, res);
     return;
   }
 
   // Handle static files
+  console.log(`Serving static file: ${pathname}`);
   if (pathname === '/') {
     serveStaticFile('index.html', res);
   } else if (pathname === '/auth.js') {

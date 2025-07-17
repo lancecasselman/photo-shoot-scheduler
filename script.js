@@ -9,6 +9,9 @@ let sessionIdCounter = 1;
 async function apiCall(url, options = {}) {
     try {
         console.log(`Making API call to: ${url}`, options);
+        console.log(`Full URL: ${window.location.origin}${url}`);
+        console.log(`Current host: ${window.location.host}`);
+        console.log(`Protocol: ${window.location.protocol}`);
         
         const response = await fetch(url, {
             headers: {
@@ -21,6 +24,7 @@ async function apiCall(url, options = {}) {
         });
         
         console.log(`API response status: ${response.status}`);
+        console.log(`Response URL: ${response.url}`);
         
         if (!response.ok) {
             const errorText = await response.text();
