@@ -50,13 +50,38 @@ async function apiCall(url, options = {}) {
     }
 }
 
+// Convert database format to frontend format
+function transformSessionData(dbSession) {
+    return {
+        id: dbSession.id,
+        sessionType: dbSession.session_type,
+        clientName: dbSession.client_name,
+        dateTime: dbSession.date_time,
+        location: dbSession.location,
+        phoneNumber: dbSession.phone_number,
+        email: dbSession.email,
+        price: parseFloat(dbSession.price),
+        duration: dbSession.duration,
+        notes: dbSession.notes,
+        contractSigned: dbSession.contract_signed,
+        paid: dbSession.paid,
+        edited: dbSession.edited,
+        delivered: dbSession.delivered,
+        createdBy: dbSession.created_by,
+        createdAt: dbSession.created_at,
+        updatedAt: dbSession.updated_at
+    };
+}
+
 // Load sessions from database
 async function loadSessions() {
     try {
         console.log('Loading sessions from database...');
         const data = await apiCall('/api/sessions');
         console.log('Sessions loaded:', data);
-        sessions = data || [];
+        
+        // Transform database format to frontend format
+        sessions = (data || []).map(transformSessionData);
         renderSessions();
         
         if (sessions.length === 0) {
@@ -83,7 +108,7 @@ async function loadSessions() {
 window.loadSessions = loadSessions;
 
 // Initialize the application
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     // Set minimum datetime to current date/time
     const now = new Date();
     const formattedNow = now.toISOString().slice(0, 16);
@@ -92,12 +117,22 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add form submit event listener
     sessionForm.addEventListener('submit', handleFormSubmit);
     
-    // Load sessions if user is authenticated
-    if (window.currentUser) {
+    // Check server status to determine if we should load sessions
+    try {
+        const statusResponse = await fetch('/api/status');
+        const statusData = await statusResponse.json();
+        
+        // Load sessions if user is authenticated OR if authentication is disabled
+        if (window.currentUser || !statusData.authenticationEnabled) {
+            loadSessions();
+        } else {
+            // Initial render for empty state
+            renderSessions();
+        }
+    } catch (error) {
+        console.error('Error checking server status:', error);
+        // Fallback to loading sessions if we can't check status
         loadSessions();
-    } else {
-        // Initial render for empty state
-        renderSessions();
     }
     
     // Mobile-specific debugging
@@ -110,7 +145,11 @@ document.addEventListener('DOMContentLoaded', function() {
 async function handleFormSubmit(event) {
     event.preventDefault();
     
-    if (!window.currentUser) {
+    // Check if we need authentication (only if Firebase is enabled)
+    const statusResponse = await fetch('/api/status');
+    const statusData = await statusResponse.json();
+    
+    if (statusData.authenticationEnabled && !window.currentUser) {
         showMessage('Please log in to add sessions.', 'error');
         return;
     }
@@ -131,7 +170,7 @@ async function handleFormSubmit(event) {
             paid: formData.has('paid'),
             edited: formData.has('edited'),
             delivered: formData.has('delivered'),
-            createdBy: window.currentUser.uid
+            createdBy: window.currentUser ? window.currentUser.uid : 'fallback-user'
         };
         
         // Validate required fields
@@ -145,8 +184,8 @@ async function handleFormSubmit(event) {
             body: JSON.stringify(sessionData)
         });
         
-        // Add to local sessions array
-        sessions.push(savedSession);
+        // Transform and add to local sessions array
+        sessions.push(transformSessionData(savedSession));
         
         // Clear form
         sessionForm.reset();
