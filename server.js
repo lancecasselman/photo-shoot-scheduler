@@ -437,13 +437,18 @@ async function handleApiRequest(method, pathname, req, res) {
         result = rows[0];
       } else if (pathname === '/api/status' && method === 'GET') {
         // Status endpoint to check Firebase and system health
+        // Check if we have proper Firebase credentials
+        const hasFirebaseCredentials = process.env.FIREBASE_PRIVATE_KEY && 
+                                     process.env.FIREBASE_CLIENT_EMAIL && 
+                                     process.env.FIREBASE_PRIVATE_KEY_ID;
+        
         result = {
           firebaseInitialized: isFirebaseInitialized,
           firestoreEnabled: firestore !== null,
-          authenticationEnabled: isFirebaseInitialized,
+          authenticationEnabled: isFirebaseInitialized && hasFirebaseCredentials,
           databaseConnected: true,
           timestamp: new Date().toISOString(),
-          mode: isFirebaseInitialized ? 'authenticated' : 'fallback',
+          mode: (isFirebaseInitialized && hasFirebaseCredentials) ? 'authenticated' : 'fallback',
           storageMode: firestore ? 'firestore' : 'postgresql'
         };
       } else if (pathname === '/api/health' && method === 'GET') {

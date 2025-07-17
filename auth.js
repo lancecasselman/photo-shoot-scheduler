@@ -32,9 +32,14 @@ async function checkServerAuthStatus() {
         
         console.log('Server auth status:', serverAuthEnabled);
         
-        // Always bypass authentication for now to avoid login issues
-        console.log('Bypassing authentication - using fallback mode');
-        bypassAuthentication();
+        // Only bypass authentication if server explicitly disables it
+        if (!serverAuthEnabled) {
+            console.log('Server authentication disabled - using fallback mode');
+            bypassAuthentication();
+        } else {
+            console.log('Server authentication enabled - using Firebase auth');
+            // Let Firebase auth handle the flow
+        }
     } catch (error) {
         console.error('Error checking server status:', error);
         // If we can't check status, use fallback mode
@@ -111,6 +116,7 @@ window.checkAuthAndLoadSessions = function() {
 onAuthStateChanged(auth, async (user) => {
     // Skip Firebase auth handling if server auth is disabled
     if (!serverAuthEnabled) {
+        console.log('Firebase auth disabled, skipping auth state change');
         return;
     }
     
@@ -150,8 +156,10 @@ onAuthStateChanged(auth, async (user) => {
             }, 100); // Small delay to ensure DOM is ready
         }
     } else {
-        // User is signed out
-        console.log('User signed out');
+        // User is signed out - only log if we haven't already handled this
+        if (window.currentUser) {
+            console.log('User signed out');
+        }
         window.currentUser = null;
         authDiv.style.display = 'block';
         appDiv.style.display = 'none';
