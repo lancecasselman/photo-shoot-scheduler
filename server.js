@@ -19,9 +19,9 @@ function initializeFirebase() {
         'FIREBASE_CLIENT_EMAIL',
         'FIREBASE_CLIENT_ID'
       ];
-      
+
       const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
-      
+
       if (missingVars.length > 0) {
         console.warn('Firebase initialization skipped - missing environment variables:', missingVars);
         console.warn('Authentication features will be disabled. Please set the required Firebase environment variables.');
@@ -30,7 +30,7 @@ function initializeFirebase() {
 
       const serviceAccount = {
         type: "service_account",
-        project_id: "photoshcheduleapp",
+        project_id: "photoschduleapp",
         private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
         private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
         client_email: process.env.FIREBASE_CLIENT_EMAIL,
@@ -44,7 +44,7 @@ function initializeFirebase() {
         credential: admin.credential.cert(serviceAccount),
         projectId: 'photoshcheduleapp'
       });
-      
+
       // Initialize Firestore using Firebase Admin SDK
       try {
         firestore = admin.firestore();
@@ -54,7 +54,7 @@ function initializeFirebase() {
         console.warn('Disabling Firestore, will use PostgreSQL fallback');
         firestore = null;
       }
-      
+
       console.log('Firebase Admin SDK initialized successfully');
       isFirebaseInitialized = true;
       return true;
@@ -108,7 +108,7 @@ function serveStaticFile(filePath, res) {
     const fullPath = path.join(process.cwd(), filePath);
     const data = fs.readFileSync(fullPath);
     const mimeType = getMimeType(filePath);
-    
+
     setCorsHeaders(res);
     res.writeHead(200, { 'Content-Type': mimeType });
     res.end(data);
@@ -124,12 +124,12 @@ async function verifyUser(req) {
   if (!isFirebaseInitialized) {
     throw new Error('Authentication service unavailable - Firebase not initialized');
   }
-  
+
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     throw new Error('No authentication token provided');
   }
-  
+
   const token = authHeader.split(' ')[1];
   try {
     const decodedToken = await admin.auth().verifyIdToken(token);
@@ -154,14 +154,14 @@ async function createSessionInFirestore(sessionData) {
     if (!firestore) {
       throw new Error('Firestore not initialized');
     }
-    
+
     const sessionsRef = firestore.collection('sessions');
     const docRef = await sessionsRef.add({
       ...sessionData,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
     });
-    
+
     return docRef.id;
   } catch (error) {
     console.error('Error creating session in Firestore:', error);
@@ -174,25 +174,25 @@ async function getSessionsFromFirestore(userUid) {
     if (!firestore) {
       throw new Error('Firestore not initialized');
     }
-    
+
     const sessionsRef = firestore.collection('sessions');
     const query = sessionsRef.where('userUid', '==', userUid).orderBy('createdAt', 'desc');
-    
+
     const snapshot = await query.get();
     const sessions = [];
-    
+
     snapshot.forEach(doc => {
       sessions.push({
         id: doc.id,
         ...doc.data()
       });
     });
-    
+
     return sessions;
   } catch (error) {
     console.error('Error getting sessions from Firestore:', error);
     console.warn('Falling back to PostgreSQL due to Firestore error');
-    
+
     // Fallback to PostgreSQL
     const query = 'SELECT * FROM sessions WHERE created_by = $1 ORDER BY date_time ASC';
     const { rows } = await pool.query(query, [userUid]);
@@ -204,19 +204,19 @@ async function getAllSessionsFromFirestore() {
   if (!firestore) {
     throw new Error('Firestore not initialized');
   }
-  
+
   const sessionsRef = firestore.collection('sessions');
   const snapshot = await sessionsRef.orderBy('createdAt', 'desc').get();
-  
+
   const sessions = [];
-  
+
   snapshot.forEach(doc => {
     sessions.push({
       id: doc.id,
       ...doc.data()
     });
   });
-  
+
   return sessions;
 }
 
@@ -224,13 +224,13 @@ async function updateSessionInFirestore(sessionId, updateData) {
   if (!firestore) {
     throw new Error('Firestore not initialized');
   }
-  
+
   const sessionRef = firestore.collection('sessions').doc(sessionId);
   await sessionRef.update({
     ...updateData,
     updatedAt: admin.firestore.FieldValue.serverTimestamp()
   });
-  
+
   return true;
 }
 
@@ -238,16 +238,16 @@ async function deleteSessionFromFirestore(sessionId) {
   if (!firestore) {
     throw new Error('Firestore not initialized');
   }
-  
+
   const sessionRef = firestore.collection('sessions').doc(sessionId);
   await sessionRef.delete();
-  
+
   return true;
 }
 
 async function handleApiRequest(method, pathname, req, res) {
   setCorsHeaders(res);
-  
+
   if (method === 'OPTIONS') {
     res.writeHead(200);
     res.end();
@@ -263,7 +263,7 @@ async function handleApiRequest(method, pathname, req, res) {
     req.on('end', async () => {
       const data = body ? JSON.parse(body) : {};
       let result;
-      
+
       // Verify user authentication for protected endpoints
       let userInfo = null;
       if (pathname.startsWith('/api/sessions') || pathname.startsWith('/api/admin')) {
@@ -311,7 +311,7 @@ async function handleApiRequest(method, pathname, req, res) {
           edited: data.edited || false,
           delivered: data.delivered || false
         };
-        
+
         // Use PostgreSQL for session creation
         const query = `
           INSERT INTO sessions (session_type, client_name, date_time, location, phone_number, email, price, duration, notes, contract_signed, paid, edited, delivered, created_by)
@@ -327,7 +327,7 @@ async function handleApiRequest(method, pathname, req, res) {
         result = rows[0];
       } else if (pathname.startsWith('/api/sessions/') && method === 'PUT') {
         const id = pathname.split('/')[3];
-        
+
         if (firestore) {
           await updateSessionInFirestore(id, data);
           result = { id, ...data };
@@ -347,33 +347,33 @@ async function handleApiRequest(method, pathname, req, res) {
         }
       } else if (pathname.startsWith('/api/sessions/') && method === 'DELETE') {
         const id = pathname.split('/')[3];
-        
+
         if (firestore) {
           // For Firestore, we need to check ownership before deletion
           const sessionRef = firestore.collection('sessions').doc(id);
           const sessionDoc = await sessionRef.get();
-          
+
           if (!sessionDoc.exists) {
             res.writeHead(404, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: 'Session not found' }));
             return;
           }
-          
+
           const sessionData = sessionDoc.data();
-          
+
           // Check if user is admin or owns the session
           if (!isAdminUser(userInfo.email) && sessionData.userUid !== userInfo.uid) {
             res.writeHead(403, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: 'Unauthorized' }));
             return;
           }
-          
+
           await deleteSessionFromFirestore(id);
           result = { success: true };
         } else {
           // Fallback to PostgreSQL
           const intId = parseInt(id);
-          
+
           // Check if user is admin or owns the session
           let query, values;
           if (isAdminUser(userInfo.email)) {
@@ -383,7 +383,7 @@ async function handleApiRequest(method, pathname, req, res) {
             query = 'DELETE FROM sessions WHERE id = $1 AND created_by = $2';
             values = [intId, userInfo.uid];
           }
-          
+
           const deleteResult = await pool.query(query, values);
           if (deleteResult.rowCount === 0) {
             res.writeHead(404, { 'Content-Type': 'application/json' });
@@ -399,7 +399,7 @@ async function handleApiRequest(method, pathname, req, res) {
           res.end(JSON.stringify({ error: 'Forbidden: Admin access required' }));
           return;
         }
-        
+
         if (firestore) {
           result = await getAllSessionsFromFirestore();
         } else {
@@ -513,7 +513,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`Firebase Admin SDK: ${isFirebaseInitialized ? 'Initialized' : 'Not initialized (fallback mode)'}`);
   console.log(`Authentication: ${isFirebaseInitialized ? 'Enabled' : 'Disabled (fallback mode)'}`);
   console.log('Server ready for requests');
-  
+
   // Display helpful information about the current state
   if (!isFirebaseInitialized) {
     console.log('\n⚠️  NOTICE: Firebase authentication is disabled');

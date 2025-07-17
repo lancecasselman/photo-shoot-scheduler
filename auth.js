@@ -9,12 +9,13 @@ import {
 
 // Firebase configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyBQzM-FCocsuR850TbVBqcF-X4HuQ-BSrM",
-    authDomain: "photography-schedule-f08eb.firebaseapp.com",
-    projectId: "photography-schedule-f08eb",
-    storageBucket: "photography-schedule-f08eb.firebasestorage.app",
-    messagingSenderId: "655615133280",
-    appId: "1:655615133280:web:d8cf2ccfe5a8f6b6e3a505"
+    apiKey: "AIzaSyDbtboh1bW6xu9Tz9FILkx_0lzGwXQHjyM",
+    authDomain: "photoshcheduleapp.firebaseapp.com",
+    projectId: "photoshcheduleapp",
+    storageBucket: "photoshcheduleapp.firebasestorage.app",
+    messagingSenderId: "1080892259604",
+    appId: "1:1080892259604:web:8198de9d7da81c684c1601",
+    measurementId: "G-MB2KDEFRHL"
 };
 
 // Initialize Firebase
