@@ -38,7 +38,7 @@ async function checkServerAuthStatus() {
             bypassAuthentication();
         } else {
             console.log('Server authentication enabled - using Firebase auth');
-            // Let Firebase auth handle the flow
+            // Don't bypass authentication - let Firebase handle it properly
         }
     } catch (error) {
         console.error('Error checking server status:', error);
