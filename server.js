@@ -1,8 +1,10 @@
-const http = require('http');
-const fs = require('fs');
+
+const express = require('express');
 const path = require('path');
 const { Pool } = require('pg');
 const admin = require('firebase-admin');
+
+const app = express();
 
 // Global flag to track Firebase initialization status
 let isFirebaseInitialized = false;
@@ -77,46 +79,38 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
-// MIME type mapping
-const mimeTypes = {
-  '.html': 'text/html',
-  '.css': 'text/css',
-  '.js': 'application/javascript',
-  '.json': 'application/json',
-  '.png': 'image/png',
-  '.jpg': 'image/jpeg',
-  '.gif': 'image/gif',
-  '.svg': 'image/svg+xml',
-  '.ico': 'image/x-icon'
-};
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-function getMimeType(filePath) {
-  const ext = path.extname(filePath).toLowerCase();
-  return mimeTypes[ext] || 'application/octet-stream';
-}
-
-function setCorsHeaders(res) {
+// CORS middleware
+app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Max-Age', '86400');
-}
-
-function serveStaticFile(filePath, res) {
-  try {
-    const fullPath = path.join(process.cwd(), filePath);
-    const data = fs.readFileSync(fullPath);
-    const mimeType = getMimeType(filePath);
-
-    setCorsHeaders(res);
-    res.writeHead(200, { 'Content-Type': mimeType });
-    res.end(data);
-  } catch (error) {
-    res.writeHead(404, { 'Content-Type': 'text/plain' });
-    res.end('File not found');
+  
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
   }
-}
+  next();
+});
+
+// Serve static files from current directory
+app.use(express.static(path.join(__dirname), {
+  setHeaders: (res, path) => {
+    // Set proper MIME types
+    if (path.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript');
+    } else if (path.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css');
+    } else if (path.endsWith('.html')) {
+      res.setHeader('Content-Type', 'text/html');
+    }
+  }
+}));
 
 // Verify Firebase token and get user info
 async function verifyUser(req) {
@@ -245,305 +239,6 @@ async function deleteSessionFromFirestore(sessionId) {
   return true;
 }
 
-async function handleApiRequest(method, pathname, req, res) {
-  setCorsHeaders(res);
-
-  if (method === 'OPTIONS') {
-    res.writeHead(200);
-    res.end();
-    return;
-  }
-
-  try {
-    let body = '';
-    req.on('data', chunk => {
-      body += chunk.toString();
-    });
-
-    req.on('end', async () => {
-      const data = body ? JSON.parse(body) : {};
-      let result;
-
-      // Verify user authentication for protected endpoints
-      let userInfo = null;
-      if (pathname.startsWith('/api/sessions') || pathname.startsWith('/api/admin')) {
-        try {
-          userInfo = await verifyUser(req);
-        } catch (error) {
-          // If Firebase is not initialized, use fallback mode
-          if (!isFirebaseInitialized) {
-            console.warn('Operating in fallback mode - authentication disabled');
-            userInfo = { uid: 'fallback-user', email: 'fallback@example.com' };
-          } else {
-            // Check if the error is due to no token provided - allow fallback mode
-            if (error.message.includes('No authentication token provided')) {
-              console.warn('No authentication token provided, using fallback mode');
-              userInfo = { uid: 'fallback-user', email: 'fallback@example.com' };
-            } else {
-              res.writeHead(401, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ error: 'Unauthorized: ' + error.message }));
-              return;
-            }
-          }
-        }
-      }
-
-      if (pathname === '/api/sessions' && method === 'GET') {
-        // Get user from authorization header
-        const authHeader = req.headers.authorization;
-        let userUid = null;
-
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-          const token = authHeader.substring(7);
-          try {
-            if (isFirebaseInitialized) {
-              const decodedToken = await admin.auth().verifyIdToken(token);
-              userUid = decodedToken.uid;
-            }
-          } catch (error) {
-            console.error('Token verification failed:', error);
-            // Continue with fallback mode
-          }
-        }
-
-        // If no valid user token, use fallback user
-        if (!userUid) {
-          userUid = 'fallback-user';
-        }
-
-        console.log('Loading sessions for user:', userUid);
-
-        // Try Firestore first, then fallback to PostgreSQL
-        try {
-          if (firestore && userUid !== 'fallback-user') {
-            result = await getSessionsFromFirestore(userUid);
-          } else {
-            // Use PostgreSQL for fallback users or when Firestore unavailable
-            try {
-              const query = 'SELECT * FROM sessions WHERE created_by = $1 ORDER BY date_time ASC';
-              const { rows } = await pool.query(query, [userUid]);
-              result = rows;
-              console.log(`Found ${rows.length} sessions for user ${userUid}`);
-            } catch (dbError) {
-              console.error('Database query error:', dbError);
-              // Return empty array if database query fails
-              result = [];
-            }
-          }
-        } catch (error) {
-          console.error('Error loading sessions:', error);
-          // Return empty array on error
-          result = [];
-        }
-      } else if (pathname === '/api/sessions' && method === 'POST') {
-        // Get user from authorization header
-        const authHeader = req.headers.authorization;
-        let userUid = null;
-
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-          const token = authHeader.substring(7);
-          try {
-            if (isFirebaseInitialized) {
-              const decodedToken = await admin.auth().verifyIdToken(token);
-              userUid = decodedToken.uid;
-            }
-          } catch (error) {
-            console.error('Token verification failed:', error);
-          }
-        }
-
-        // If no valid user token, use fallback user
-        if (!userUid) {
-          userUid = 'fallback-user';
-        }
-
-        // Add user ID to session data
-        const sessionWithUser = {
-          ...data,
-          created_by: userUid,
-          user_uid: userUid
-        };
-
-        console.log('Creating session for user:', userUid);
-
-        // Try Firestore first, then fallback to PostgreSQL
-        try {
-          if (firestore && userUid !== 'fallback-user') {
-            const firestoreId = await createSessionInFirestore(sessionWithUser);
-            // Also save to PostgreSQL for consistency
-            await createSessionInPostgreSQL(sessionWithUser);
-            result = { id: firestoreId, ...sessionWithUser };
-          } else {
-            // Use PostgreSQL for fallback users or when Firestore unavailable
-            try {
-              result = await createSessionInPostgreSQL(sessionWithUser);
-              console.log('Session created successfully:', result.id);
-            } catch (dbError) {
-              console.error('Database creation error:', dbError);
-              throw new Error('Failed to create session in database');
-            }
-          }
-        } catch (error) {
-          console.error('Error creating session:', error);
-          throw error; // Re-throw to trigger 500 response
-        }
-      } else if (pathname.startsWith('/api/sessions/') && method === 'PUT') {
-        const id = pathname.split('/')[3];
-
-        if (firestore) {
-          await updateSessionInFirestore(id, data);
-          result = { id, ...data };
-        } else {
-          // Fallback to PostgreSQL
-          const intId = parseInt(id);
-          const updates = Object.keys(data).map((key, index) => `${key} = $${index + 1}`).join(', ');
-          const query = `UPDATE sessions SET ${updates}, updated_at = CURRENT_TIMESTAMP WHERE id = $${Object.keys(data).length + 1} AND created_by = $${Object.keys(data).length + 2} RETURNING *`;
-          const values = [...Object.values(data), intId, userInfo.uid];
-          const { rows } = await pool.query(query, values);
-          if (rows.length === 0) {
-            res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Session not found or unauthorized' }));
-            return;
-          }
-          result = rows[0];
-        }
-      } else if (pathname.startsWith('/api/sessions/') && method === 'DELETE') {
-        const id = pathname.split('/')[3];
-
-        if (firestore) {
-          // For Firestore, we need to check ownership before deletion
-          const sessionRef = firestore.collection('sessions').doc(id);
-          const sessionDoc = await sessionRef.get();
-
-          if (!sessionDoc.exists) {
-            res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Session not found' }));
-            return;
-          }
-
-          const sessionData = sessionDoc.data();
-
-          // Check if user is admin or owns the session
-          if (!isAdminUser(userInfo.email) && sessionData.userUid !== userInfo.uid) {
-            res.writeHead(403, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Unauthorized' }));
-            return;
-          }
-
-          await deleteSessionFromFirestore(id);
-          result = { success: true };
-        } else {
-          // Fallback to PostgreSQL
-          const intId = parseInt(id);
-
-          // Check if user is admin or owns the session
-          let query, values;
-          if (isAdminUser(userInfo.email)) {
-            query = 'DELETE FROM sessions WHERE id = $1';
-            values = [intId];
-          } else {
-            query = 'DELETE FROM sessions WHERE id = $1 AND created_by = $2';
-            values = [intId, userInfo.uid];
-          }
-
-          const deleteResult = await pool.query(query, values);
-          if (deleteResult.rowCount === 0) {
-            res.writeHead(404, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Session not found or unauthorized' }));
-            return;
-          }
-          result = { success: true };
-        }
-      } else if (pathname === '/api/admin/sessions' && method === 'GET') {
-        // Admin endpoint to get all sessions
-        if (!isAdminUser(userInfo.email)) {
-          res.writeHead(403, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Forbidden: Admin access required' }));
-          return;
-        }
-
-        if (firestore) {
-          result = await getAllSessionsFromFirestore();
-        } else {
-          // Fallback to PostgreSQL
-          const query = `
-            SELECT s.*, u.email as user_email, u.display_name as user_display_name
-            FROM sessions s
-            LEFT JOIN users u ON s.created_by = u.id
-            ORDER BY s.date_time ASC
-          `;
-          const { rows } = await pool.query(query);
-          result = rows;
-        }
-      } else if (pathname === '/api/users' && method === 'POST') {
-        const query = `
-          INSERT INTO users (id, email, display_name)
-          VALUES ($1, $2, $3)
-          ON CONFLICT (id) DO UPDATE SET
-            email = EXCLUDED.email,
-            display_name = EXCLUDED.display_name,
-            updated_at = CURRENT_TIMESTAMP
-          RETURNING *
-        `;
-        const values = [data.id, data.email, data.displayName];
-        const { rows } = await pool.query(query, values);
-        result = rows[0];
-      } else if (pathname.startsWith('/api/users/') && method === 'GET') {
-        const id = pathname.split('/')[3];
-        const query = 'SELECT * FROM users WHERE id = $1';
-        const { rows } = await pool.query(query, [id]);
-        result = rows[0];
-      } else if (pathname === '/api/users/email' && method === 'POST') {
-        const query = 'SELECT * FROM users WHERE email = $1';
-        const { rows } = await pool.query(query, [data.email]);
-        result = rows[0];
-      } else if (pathname === '/api/status' && method === 'GET') {
-        // Status endpoint to check Firebase and system health
-        // Check if we have proper Firebase credentials
-        const hasFirebaseCredentials = !!(process.env.FIREBASE_PRIVATE_KEY && 
-                                          process.env.FIREBASE_CLIENT_EMAIL && 
-                                          process.env.FIREBASE_PRIVATE_KEY_ID);
-
-        result = {
-          firebaseInitialized: isFirebaseInitialized,
-          firestoreEnabled: firestore !== null,
-          authenticationEnabled: isFirebaseInitialized && hasFirebaseCredentials,
-          databaseConnected: true,
-          timestamp: new Date().toISOString(),
-          mode: (isFirebaseInitialized && hasFirebaseCredentials) ? 'authenticated' : 'fallback',
-          storageMode: firestore ? 'firestore' : 'postgresql'
-        };
-      } else if (pathname === '/api/health' && method === 'GET') {
-        // Health check endpoint
-        result = {
-          status: 'healthy',
-          services: {
-            firebase: isFirebaseInitialized ? 'active' : 'disabled',
-            firestore: firestore ? 'active' : 'disabled',
-            database: 'connected'
-          },
-          timestamp: new Date().toISOString()
-        };
-      } else {
-        res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Endpoint not found' }));
-        return;
-      }
-
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(result));
-    });
-  } catch (error) {
-    console.error('API Error:', error);
-    res.writeHead(500, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ 
-      error: 'Internal server error',
-      message: error.message,
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    }));
-  }
-}
-
 async function createSessionInPostgreSQL(sessionData) {
   try {
     const query = `
@@ -583,37 +278,388 @@ async function createSessionInPostgreSQL(sessionData) {
   }
 }
 
-const server = http.createServer(async (req, res) => {
-  const url = new URL(req.url, `http://${req.headers.host}`);
-  const pathname = url.pathname;
-  const method = req.method;
+// API Routes
 
-  // Debug logging
-  console.log(`[${new Date().toISOString()}] ${method} ${pathname} - Host: ${req.headers.host}, User-Agent: ${req.headers['user-agent']?.substring(0, 50) || 'unknown'}`);
+// Status endpoint
+app.get('/api/status', (req, res) => {
+  const hasFirebaseCredentials = !!(process.env.FIREBASE_PRIVATE_KEY && 
+                                    process.env.FIREBASE_CLIENT_EMAIL && 
+                                    process.env.FIREBASE_PRIVATE_KEY_ID);
 
-  // Handle API requests
-  if (pathname.startsWith('/api/')) {
-    console.log(`Handling API request: ${method} ${pathname}`);
-    await handleApiRequest(method, pathname, req, res);
-    return;
-  }
+  res.json({
+    firebaseInitialized: isFirebaseInitialized,
+    firestoreEnabled: firestore !== null,
+    authenticationEnabled: isFirebaseInitialized && hasFirebaseCredentials,
+    databaseConnected: true,
+    timestamp: new Date().toISOString(),
+    mode: (isFirebaseInitialized && hasFirebaseCredentials) ? 'authenticated' : 'fallback',
+    storageMode: firestore ? 'firestore' : 'postgresql'
+  });
+});
 
-  // Handle static files
-  console.log(`Serving static file: ${pathname}`);
-  if (pathname === '/') {
-    serveStaticFile('index.html', res);
-  } else if (pathname === '/auth.js') {
-    serveStaticFile('auth.js', res);
-  } else if (pathname === '/script.js') {
-    serveStaticFile('script.js', res);
-  } else if (pathname === '/style.css') {
-    serveStaticFile('style.css', res);
-  } else {
-    serveStaticFile(pathname, res);
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    services: {
+      firebase: isFirebaseInitialized ? 'active' : 'disabled',
+      firestore: firestore ? 'active' : 'disabled',
+      database: 'connected'
+    },
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Get sessions
+app.get('/api/sessions', async (req, res) => {
+  try {
+    // Get user from authorization header
+    const authHeader = req.headers.authorization;
+    let userUid = null;
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      try {
+        if (isFirebaseInitialized) {
+          const decodedToken = await admin.auth().verifyIdToken(token);
+          userUid = decodedToken.uid;
+        }
+      } catch (error) {
+        console.error('Token verification failed:', error);
+        // Continue with fallback mode
+      }
+    }
+
+    // If no valid user token, use fallback user
+    if (!userUid) {
+      userUid = 'fallback-user';
+    }
+
+    console.log('Loading sessions for user:', userUid);
+
+    // Try Firestore first, then fallback to PostgreSQL
+    let result;
+    try {
+      if (firestore && userUid !== 'fallback-user') {
+        result = await getSessionsFromFirestore(userUid);
+      } else {
+        // Use PostgreSQL for fallback users or when Firestore unavailable
+        try {
+          const query = 'SELECT * FROM sessions WHERE created_by = $1 ORDER BY date_time ASC';
+          const { rows } = await pool.query(query, [userUid]);
+          result = rows;
+          console.log(`Found ${rows.length} sessions for user ${userUid}`);
+        } catch (dbError) {
+          console.error('Database query error:', dbError);
+          // Return empty array if database query fails
+          result = [];
+        }
+      }
+    } catch (error) {
+      console.error('Error loading sessions:', error);
+      // Return empty array on error
+      result = [];
+    }
+
+    res.json(result);
+  } catch (error) {
+    console.error('API Error:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: error.message
+    });
   }
 });
 
-server.listen(PORT, '0.0.0.0', () => {
+// Create session
+app.post('/api/sessions', async (req, res) => {
+  try {
+    // Get user from authorization header
+    const authHeader = req.headers.authorization;
+    let userUid = null;
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      try {
+        if (isFirebaseInitialized) {
+          const decodedToken = await admin.auth().verifyIdToken(token);
+          userUid = decodedToken.uid;
+        }
+      } catch (error) {
+        console.error('Token verification failed:', error);
+      }
+    }
+
+    // If no valid user token, use fallback user
+    if (!userUid) {
+      userUid = 'fallback-user';
+    }
+
+    // Add user ID to session data
+    const sessionWithUser = {
+      ...req.body,
+      created_by: userUid,
+      user_uid: userUid
+    };
+
+    console.log('Creating session for user:', userUid);
+
+    // Try Firestore first, then fallback to PostgreSQL
+    let result;
+    try {
+      if (firestore && userUid !== 'fallback-user') {
+        const firestoreId = await createSessionInFirestore(sessionWithUser);
+        // Also save to PostgreSQL for consistency
+        await createSessionInPostgreSQL(sessionWithUser);
+        result = { id: firestoreId, ...sessionWithUser };
+      } else {
+        // Use PostgreSQL for fallback users or when Firestore unavailable
+        try {
+          result = await createSessionInPostgreSQL(sessionWithUser);
+          console.log('Session created successfully:', result.id);
+        } catch (dbError) {
+          console.error('Database creation error:', dbError);
+          throw new Error('Failed to create session in database');
+        }
+      }
+    } catch (error) {
+      console.error('Error creating session:', error);
+      throw error; // Re-throw to trigger 500 response
+    }
+
+    res.json(result);
+  } catch (error) {
+    console.error('API Error:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: error.message
+    });
+  }
+});
+
+// Update session
+app.put('/api/sessions/:id', async (req, res) => {
+  try {
+    let userInfo = null;
+    try {
+      userInfo = await verifyUser(req);
+    } catch (error) {
+      // If Firebase is not initialized, use fallback mode
+      if (!isFirebaseInitialized) {
+        console.warn('Operating in fallback mode - authentication disabled');
+        userInfo = { uid: 'fallback-user', email: 'fallback@example.com' };
+      } else {
+        // Check if the error is due to no token provided - allow fallback mode
+        if (error.message.includes('No authentication token provided')) {
+          console.warn('No authentication token provided, using fallback mode');
+          userInfo = { uid: 'fallback-user', email: 'fallback@example.com' };
+        } else {
+          return res.status(401).json({ error: 'Unauthorized: ' + error.message });
+        }
+      }
+    }
+
+    const id = req.params.id;
+    let result;
+
+    if (firestore) {
+      await updateSessionInFirestore(id, req.body);
+      result = { id, ...req.body };
+    } else {
+      // Fallback to PostgreSQL
+      const intId = parseInt(id);
+      const updates = Object.keys(req.body).map((key, index) => `${key} = $${index + 1}`).join(', ');
+      const query = `UPDATE sessions SET ${updates}, updated_at = CURRENT_TIMESTAMP WHERE id = $${Object.keys(req.body).length + 1} AND created_by = $${Object.keys(req.body).length + 2} RETURNING *`;
+      const values = [...Object.values(req.body), intId, userInfo.uid];
+      const { rows } = await pool.query(query, values);
+      if (rows.length === 0) {
+        return res.status(404).json({ error: 'Session not found or unauthorized' });
+      }
+      result = rows[0];
+    }
+
+    res.json(result);
+  } catch (error) {
+    console.error('API Error:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: error.message
+    });
+  }
+});
+
+// Delete session
+app.delete('/api/sessions/:id', async (req, res) => {
+  try {
+    let userInfo = null;
+    try {
+      userInfo = await verifyUser(req);
+    } catch (error) {
+      // If Firebase is not initialized, use fallback mode
+      if (!isFirebaseInitialized) {
+        console.warn('Operating in fallback mode - authentication disabled');
+        userInfo = { uid: 'fallback-user', email: 'fallback@example.com' };
+      } else {
+        // Check if the error is due to no token provided - allow fallback mode
+        if (error.message.includes('No authentication token provided')) {
+          console.warn('No authentication token provided, using fallback mode');
+          userInfo = { uid: 'fallback-user', email: 'fallback@example.com' };
+        } else {
+          return res.status(401).json({ error: 'Unauthorized: ' + error.message });
+        }
+      }
+    }
+
+    const id = req.params.id;
+    let result;
+
+    if (firestore) {
+      // For Firestore, we need to check ownership before deletion
+      const sessionRef = firestore.collection('sessions').doc(id);
+      const sessionDoc = await sessionRef.get();
+
+      if (!sessionDoc.exists) {
+        return res.status(404).json({ error: 'Session not found' });
+      }
+
+      const sessionData = sessionDoc.data();
+
+      // Check if user is admin or owns the session
+      if (!isAdminUser(userInfo.email) && sessionData.userUid !== userInfo.uid) {
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
+
+      await deleteSessionFromFirestore(id);
+      result = { success: true };
+    } else {
+      // Fallback to PostgreSQL
+      const intId = parseInt(id);
+
+      // Check if user is admin or owns the session
+      let query, values;
+      if (isAdminUser(userInfo.email)) {
+        query = 'DELETE FROM sessions WHERE id = $1';
+        values = [intId];
+      } else {
+        query = 'DELETE FROM sessions WHERE id = $1 AND created_by = $2';
+        values = [intId, userInfo.uid];
+      }
+
+      const deleteResult = await pool.query(query, values);
+      if (deleteResult.rowCount === 0) {
+        return res.status(404).json({ error: 'Session not found or unauthorized' });
+      }
+      result = { success: true };
+    }
+
+    res.json(result);
+  } catch (error) {
+    console.error('API Error:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: error.message
+    });
+  }
+});
+
+// Admin endpoint to get all sessions
+app.get('/api/admin/sessions', async (req, res) => {
+  try {
+    let userInfo = null;
+    try {
+      userInfo = await verifyUser(req);
+    } catch (error) {
+      return res.status(401).json({ error: 'Unauthorized: ' + error.message });
+    }
+
+    if (!isAdminUser(userInfo.email)) {
+      return res.status(403).json({ error: 'Forbidden: Admin access required' });
+    }
+
+    let result;
+    if (firestore) {
+      result = await getAllSessionsFromFirestore();
+    } else {
+      // Fallback to PostgreSQL
+      const query = `
+        SELECT s.*, u.email as user_email, u.display_name as user_display_name
+        FROM sessions s
+        LEFT JOIN users u ON s.created_by = u.id
+        ORDER BY s.date_time ASC
+      `;
+      const { rows } = await pool.query(query);
+      result = rows;
+    }
+
+    res.json(result);
+  } catch (error) {
+    console.error('API Error:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: error.message
+    });
+  }
+});
+
+// User management endpoints
+app.post('/api/users', async (req, res) => {
+  try {
+    const query = `
+      INSERT INTO users (id, email, display_name)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (id) DO UPDATE SET
+        email = EXCLUDED.email,
+        display_name = EXCLUDED.display_name,
+        updated_at = CURRENT_TIMESTAMP
+      RETURNING *
+    `;
+    const values = [req.body.id, req.body.email, req.body.displayName];
+    const { rows } = await pool.query(query, values);
+    res.json(rows[0]);
+  } catch (error) {
+    console.error('API Error:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: error.message
+    });
+  }
+});
+
+app.get('/api/users/:id', async (req, res) => {
+  try {
+    const query = 'SELECT * FROM users WHERE id = $1';
+    const { rows } = await pool.query(query, [req.params.id]);
+    res.json(rows[0]);
+  } catch (error) {
+    console.error('API Error:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: error.message
+    });
+  }
+});
+
+app.post('/api/users/email', async (req, res) => {
+  try {
+    const query = 'SELECT * FROM users WHERE email = $1';
+    const { rows } = await pool.query(query, [req.body.email]);
+    res.json(rows[0]);
+  } catch (error) {
+    console.error('API Error:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: error.message
+    });
+  }
+});
+
+// Serve index.html for all non-API routes (SPA support)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// Start server
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Photography Scheduler running on http://0.0.0.0:${PORT}`);
   console.log('Database connected and ready');
   console.log(`Firebase Admin SDK: ${isFirebaseInitialized ? 'Initialized' : 'Not initialized (fallback mode)'}`);
