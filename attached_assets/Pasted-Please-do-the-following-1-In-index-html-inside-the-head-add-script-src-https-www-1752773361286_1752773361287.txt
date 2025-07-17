@@ -1,0 +1,57 @@
+Please do the following:
+
+1. In index.html, inside the <head>, add:
+
+   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
+
+2. Update auth.js with this script-based Firebase config and login logic:
+
+   const firebaseConfig = {
+     apiKey: "AIzaSyDbtboh1bW6xu9Tz9FILkx_0lzGwXQHjyM",
+     authDomain: "photoshcheduleapp.firebaseapp.com",
+     projectId: "photoshcheduleapp",
+     storageBucket: "photoshcheduleapp.firebasestorage.app",
+     messagingSenderId: "1080892259604",
+     appId: "1:1080892259604:web:8198de9d7da81c684c1601",
+     measurementId: "G-MB2KDEFRHL"
+   };
+
+   firebase.initializeApp(firebaseConfig);
+   const auth = firebase.auth();
+
+   window.signup = function () {
+     const email = document.getElementById("signup-email").value;
+     const password = document.getElementById("signup-password").value;
+     auth.createUserWithEmailAndPassword(email, password)
+       .then(() => alert("Signup successful!"))
+       .catch(error => alert(error.message));
+   };
+
+   window.login = function () {
+     const email = document.getElementById("login-email").value;
+     const password = document.getElementById("login-password").value;
+     auth.signInWithEmailAndPassword(email, password)
+       .then(() => alert("Login successful!"))
+       .catch(error => alert(error.message));
+   };
+
+   window.logout = function () {
+     auth.signOut().then(() => alert("Logged out"));
+   };
+
+   auth.onAuthStateChanged(user => {
+     const app = document.getElementById("app");
+     const authSection = document.getElementById("auth");
+     if (user) {
+       app.style.display = "block";
+       authSection.style.display = "none";
+     } else {
+       app.style.display = "none";
+       authSection.style.display = "block";
+     }
+   });
+
+3. Add this to the bottom of index.html (before </body>):
+
+   <script src="auth.js"></script>
