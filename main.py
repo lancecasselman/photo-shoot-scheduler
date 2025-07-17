@@ -24,11 +24,11 @@ class StaticFileHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
         super().end_headers()
     
-   def do_GET(self):
-       # Handle root path by serving index.html
-       if self.path == '/':
-           self.path = '/index.html'
-       return super().do_GET()
+    def do_GET(self):
+        # Handle root path by serving index.html
+        if self.path == '/':
+            self.path = '/index.html'
+        return super().do_GET()
 
 def run_server():
     """Run the HTTP server"""

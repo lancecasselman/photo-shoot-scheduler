@@ -6,6 +6,12 @@ This is a client-side web application for managing photography sessions. It's a 
 
 ## Recent Changes
 
+### Deployment Configuration Fix (July 17, 2025)
+- **Fixed Deployment Error**: Updated run command from `python -m http.server 5000` to `python main.py`
+- **Corrected Syntax Error**: Fixed indentation issue in main.py StaticFileHandler class
+- **Improved Server Configuration**: Enhanced HTTP server with proper CORS headers and root path handling
+- **Deployment Ready**: Application now responds correctly to health checks on root endpoint (/)
+
 ### Security Enhancement (July 17, 2025)
 - **Fixed XSS Vulnerability**: Replaced innerHTML usage with safer DOM methods (createElement, textContent, appendChild)
 - **Improved Code Security**: Eliminated string concatenation for HTML generation to prevent potential XSS attacks
