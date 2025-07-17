@@ -110,22 +110,32 @@ function validateSessionData(data) {
 
 // Render all sessions
 function renderSessions() {
+    // Clear existing content
+    sessionsContainer.innerHTML = '';
+    
     if (sessions.length === 0) {
-        sessionsContainer.innerHTML = `
-            <div class="empty-state">
-                <p>No sessions scheduled yet. Add your first session above!</p>
-            </div>
-        `;
+        const emptyState = document.createElement('div');
+        emptyState.className = 'empty-state';
+        
+        const message = document.createElement('p');
+        message.textContent = 'No sessions scheduled yet. Add your first session above!';
+        
+        emptyState.appendChild(message);
+        sessionsContainer.appendChild(emptyState);
         return;
     }
     
     // Sort sessions by date/time
     const sortedSessions = [...sessions].sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
     
-    sessionsContainer.innerHTML = sortedSessions.map(session => createSessionCard(session)).join('');
+    // Create and append session cards using DOM methods
+    sortedSessions.forEach(session => {
+        const sessionCard = createSessionCard(session);
+        sessionsContainer.appendChild(sessionCard);
+    });
 }
 
-// Create session card HTML
+// Create session card using safe DOM methods
 function createSessionCard(session) {
     const sessionDate = new Date(session.dateTime);
     const formattedDate = sessionDate.toLocaleDateString('en-US', {
@@ -139,81 +149,134 @@ function createSessionCard(session) {
         minute: '2-digit'
     });
     
-    return `
-        <div class="session-card">
-            <div class="session-header">
-                <div>
-                    <div class="session-title">${escapeHtml(session.sessionType)}</div>
-                    <div class="session-client">${escapeHtml(session.clientName)}</div>
-                </div>
-                <div class="session-actions">
-                    <button class="btn btn-success" onclick="exportToCalendar(${session.id})">
-                        📅 Add to Calendar
-                    </button>
-                    <button class="btn btn-danger" onclick="deleteSession(${session.id})">
-                        🗑️ Delete
-                    </button>
-                </div>
-            </div>
-            
-            <div class="session-details">
-                <div class="detail-item">
-                    <div class="detail-label">Date & Time</div>
-                    <div class="detail-value">${formattedDate} at ${formattedTime}</div>
-                </div>
-                <div class="detail-item">
-                    <div class="detail-label">Location</div>
-                    <div class="detail-value">${escapeHtml(session.location)}</div>
-                </div>
-                <div class="detail-item">
-                    <div class="detail-label">Phone</div>
-                    <div class="detail-value">${escapeHtml(session.phoneNumber)}</div>
-                </div>
-                <div class="detail-item">
-                    <div class="detail-label">Email</div>
-                    <div class="detail-value">${escapeHtml(session.email)}</div>
-                </div>
-                <div class="detail-item">
-                    <div class="detail-label">Price</div>
-                    <div class="detail-value">$${session.price.toFixed(2)}</div>
-                </div>
-                <div class="detail-item">
-                    <div class="detail-label">Duration</div>
-                    <div class="detail-value">${session.duration} minutes</div>
-                </div>
-            </div>
-            
-            <div class="status-indicators">
-                <div class="status-item">
-                    <input type="checkbox" id="contract-${session.id}" ${session.contractSigned ? 'checked' : ''} 
-                           onchange="updateSessionStatus(${session.id}, 'contractSigned', this.checked)">
-                    <label for="contract-${session.id}">Contract ${session.contractSigned ? 'Signed' : 'Pending'}</label>
-                </div>
-                <div class="status-item">
-                    <input type="checkbox" id="paid-${session.id}" ${session.paid ? 'checked' : ''} 
-                           onchange="updateSessionStatus(${session.id}, 'paid', this.checked)">
-                    <label for="paid-${session.id}">Payment ${session.paid ? 'Received' : 'Pending'}</label>
-                </div>
-                <div class="status-item">
-                    <input type="checkbox" id="edited-${session.id}" ${session.edited ? 'checked' : ''} 
-                           onchange="updateSessionStatus(${session.id}, 'edited', this.checked)">
-                    <label for="edited-${session.id}">Editing ${session.edited ? 'Complete' : 'Pending'}</label>
-                </div>
-                <div class="status-item">
-                    <input type="checkbox" id="delivered-${session.id}" ${session.delivered ? 'checked' : ''} 
-                           onchange="updateSessionStatus(${session.id}, 'delivered', this.checked)">
-                    <label for="delivered-${session.id}">Delivery ${session.delivered ? 'Complete' : 'Pending'}</label>
-                </div>
-            </div>
-            
-            ${session.notes ? `
-                <div class="notes-section">
-                    <h4>Notes:</h4>
-                    <div class="notes-content">${escapeHtml(session.notes)}</div>
-                </div>
-            ` : ''}
-        </div>
-    `;
+    // Create main card container
+    const card = document.createElement('div');
+    card.className = 'session-card';
+    
+    // Create header section
+    const header = document.createElement('div');
+    header.className = 'session-header';
+    
+    // Create header info section
+    const headerInfo = document.createElement('div');
+    
+    const title = document.createElement('div');
+    title.className = 'session-title';
+    title.textContent = session.sessionType;
+    
+    const client = document.createElement('div');
+    client.className = 'session-client';
+    client.textContent = session.clientName;
+    
+    headerInfo.appendChild(title);
+    headerInfo.appendChild(client);
+    
+    // Create actions section
+    const actions = document.createElement('div');
+    actions.className = 'session-actions';
+    
+    const calendarBtn = document.createElement('button');
+    calendarBtn.className = 'btn btn-success';
+    calendarBtn.textContent = '📅 Add to Calendar';
+    calendarBtn.onclick = () => exportToCalendar(session.id);
+    
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'btn btn-danger';
+    deleteBtn.textContent = '🗑️ Delete';
+    deleteBtn.onclick = () => deleteSession(session.id);
+    
+    actions.appendChild(calendarBtn);
+    actions.appendChild(deleteBtn);
+    
+    header.appendChild(headerInfo);
+    header.appendChild(actions);
+    
+    // Create details section
+    const details = document.createElement('div');
+    details.className = 'session-details';
+    
+    // Helper function to create detail items
+    function createDetailItem(label, value) {
+        const item = document.createElement('div');
+        item.className = 'detail-item';
+        
+        const labelDiv = document.createElement('div');
+        labelDiv.className = 'detail-label';
+        labelDiv.textContent = label;
+        
+        const valueDiv = document.createElement('div');
+        valueDiv.className = 'detail-value';
+        valueDiv.textContent = value;
+        
+        item.appendChild(labelDiv);
+        item.appendChild(valueDiv);
+        
+        return item;
+    }
+    
+    details.appendChild(createDetailItem('Date & Time', `${formattedDate} at ${formattedTime}`));
+    details.appendChild(createDetailItem('Location', session.location));
+    details.appendChild(createDetailItem('Phone', session.phoneNumber));
+    details.appendChild(createDetailItem('Email', session.email));
+    details.appendChild(createDetailItem('Price', `$${session.price.toFixed(2)}`));
+    details.appendChild(createDetailItem('Duration', `${session.duration} minutes`));
+    
+    // Create status indicators section
+    const statusIndicators = document.createElement('div');
+    statusIndicators.className = 'status-indicators';
+    
+    // Helper function to create status items
+    function createStatusItem(id, checked, label, statusText) {
+        const item = document.createElement('div');
+        item.className = 'status-item';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = `${id}-${session.id}`;
+        checkbox.checked = checked;
+        checkbox.onchange = (e) => updateSessionStatus(session.id, id, e.target.checked);
+        
+        const labelEl = document.createElement('label');
+        labelEl.htmlFor = `${id}-${session.id}`;
+        labelEl.textContent = `${label} ${statusText}`;
+        
+        item.appendChild(checkbox);
+        item.appendChild(labelEl);
+        
+        return item;
+    }
+    
+    statusIndicators.appendChild(createStatusItem('contractSigned', session.contractSigned, 'Contract', session.contractSigned ? 'Signed' : 'Pending'));
+    statusIndicators.appendChild(createStatusItem('paid', session.paid, 'Payment', session.paid ? 'Received' : 'Pending'));
+    statusIndicators.appendChild(createStatusItem('edited', session.edited, 'Editing', session.edited ? 'Complete' : 'Pending'));
+    statusIndicators.appendChild(createStatusItem('delivered', session.delivered, 'Delivery', session.delivered ? 'Complete' : 'Pending'));
+    
+    // Create notes section if notes exist
+    if (session.notes) {
+        const notesSection = document.createElement('div');
+        notesSection.className = 'notes-section';
+        
+        const notesTitle = document.createElement('h4');
+        notesTitle.textContent = 'Notes:';
+        
+        const notesContent = document.createElement('div');
+        notesContent.className = 'notes-content';
+        notesContent.textContent = session.notes;
+        
+        notesSection.appendChild(notesTitle);
+        notesSection.appendChild(notesContent);
+        
+        card.appendChild(header);
+        card.appendChild(details);
+        card.appendChild(statusIndicators);
+        card.appendChild(notesSection);
+    } else {
+        card.appendChild(header);
+        card.appendChild(details);
+        card.appendChild(statusIndicators);
+    }
+    
+    return card;
 }
 
 // Delete session
@@ -344,12 +407,7 @@ function showMessage(message, type) {
     }, 5000);
 }
 
-// Utility function to escape HTML
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
+
 
 // Update session status (checkbox change)
 function updateSessionStatus(sessionId, field, checked) {
