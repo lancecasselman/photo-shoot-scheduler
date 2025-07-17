@@ -1,11 +1,51 @@
-// In-memory storage for sessions
+// Photography Session Scheduler
+// Session management system with cloud database
+
+// Global variables
 let sessions = [];
 let sessionIdCounter = 1;
+
+// API helper functions
+async function apiCall(url, options = {}) {
+    try {
+        const response = await fetch(url, {
+            headers: {
+                'Content-Type': 'application/json',
+                ...options.headers
+            },
+            ...options
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error('API call failed:', error);
+        throw error;
+    }
+}
 
 // DOM elements
 const sessionForm = document.getElementById('sessionForm');
 const sessionsContainer = document.getElementById('sessionsContainer');
 const messageContainer = document.getElementById('messageContainer');
+
+// Load sessions from database
+async function loadSessions() {
+    try {
+        const data = await apiCall('/api/sessions');
+        sessions = data || [];
+        renderSessions();
+    } catch (error) {
+        console.error('Error loading sessions:', error);
+        showMessage('Error loading sessions. Please refresh the page.', 'error');
+    }
+}
+
+// Make loadSessions available globally for auth.js
+window.loadSessions = loadSessions;
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
@@ -17,18 +57,27 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add form submit event listener
     sessionForm.addEventListener('submit', handleFormSubmit);
     
-    // Initial render
-    renderSessions();
+    // Load sessions if user is authenticated
+    if (window.currentUser) {
+        loadSessions();
+    } else {
+        // Initial render for empty state
+        renderSessions();
+    }
 });
 
 // Handle form submission
-function handleFormSubmit(event) {
+async function handleFormSubmit(event) {
     event.preventDefault();
+    
+    if (!window.currentUser) {
+        showMessage('Please log in to add sessions.', 'error');
+        return;
+    }
     
     try {
         const formData = new FormData(sessionForm);
         const sessionData = {
-            id: sessionIdCounter++,
             sessionType: formData.get('sessionType').trim(),
             clientName: formData.get('clientName').trim(),
             dateTime: formData.get('dateTime'),
@@ -42,7 +91,7 @@ function handleFormSubmit(event) {
             paid: formData.has('paid'),
             edited: formData.has('edited'),
             delivered: formData.has('delivered'),
-            createdAt: new Date().toISOString()
+            createdBy: window.currentUser.uid
         };
         
         // Validate required fields
@@ -50,8 +99,14 @@ function handleFormSubmit(event) {
             return;
         }
         
-        // Add session to in-memory storage
-        sessions.push(sessionData);
+        // Save session to database
+        const savedSession = await apiCall('/api/sessions', {
+            method: 'POST',
+            body: JSON.stringify(sessionData)
+        });
+        
+        // Add to local sessions array
+        sessions.push(savedSession);
         
         // Clear form
         sessionForm.reset();
@@ -280,11 +335,25 @@ function createSessionCard(session) {
 }
 
 // Delete session
-function deleteSession(sessionId) {
+async function deleteSession(sessionId) {
+    if (!window.currentUser) {
+        showMessage('Please log in to delete sessions.', 'error');
+        return;
+    }
+    
     if (confirm('Are you sure you want to delete this session?')) {
-        sessions = sessions.filter(session => session.id !== sessionId);
-        renderSessions();
-        showMessage('Session deleted successfully!', 'success');
+        try {
+            await apiCall(`/api/sessions/${sessionId}`, {
+                method: 'DELETE'
+            });
+            
+            sessions = sessions.filter(session => session.id !== sessionId);
+            renderSessions();
+            showMessage('Session deleted successfully!', 'success');
+        } catch (error) {
+            console.error('Error deleting session:', error);
+            showMessage('Error deleting session. Please try again.', 'error');
+        }
     }
 }
 
@@ -410,23 +479,40 @@ function showMessage(message, type) {
 
 
 // Update session status (checkbox change)
-function updateSessionStatus(sessionId, field, checked) {
+async function updateSessionStatus(sessionId, field, checked) {
+    if (!window.currentUser) {
+        showMessage('Please log in to update sessions.', 'error');
+        return;
+    }
+    
     const session = sessions.find(s => s.id === sessionId);
     if (!session) {
         showMessage('Session not found.', 'error');
         return;
     }
     
-    // Update the session object
-    session[field] = checked;
-    
-    // Re-render sessions to update the display
-    renderSessions();
-    
-    // Show confirmation message
-    const fieldName = field.replace(/([A-Z])/g, ' $1').toLowerCase();
-    const status = checked ? 'marked as complete' : 'marked as pending';
-    showMessage(`${fieldName} ${status}!`, 'success');
+    try {
+        // Update in database
+        const updates = { [field]: checked };
+        await apiCall(`/api/sessions/${sessionId}`, {
+            method: 'PUT',
+            body: JSON.stringify(updates)
+        });
+        
+        // Update local session object
+        session[field] = checked;
+        
+        // Re-render sessions to update the display
+        renderSessions();
+        
+        // Show confirmation message
+        const fieldName = field.replace(/([A-Z])/g, ' $1').toLowerCase();
+        const status = checked ? 'marked as complete' : 'marked as pending';
+        showMessage(`${fieldName} ${status}!`, 'success');
+    } catch (error) {
+        console.error('Error updating session:', error);
+        showMessage('Error updating session. Please try again.', 'error');
+    }
 }
 
 // Utility function to handle form reset

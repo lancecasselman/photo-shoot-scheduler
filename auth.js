@@ -22,18 +22,43 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
 // Auth state observer
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
     const authDiv = document.getElementById('auth');
     const appDiv = document.getElementById('app');
     
     if (user) {
         // User is signed in
         console.log('User signed in:', user.email);
+        
+        // Create or update user in database
+        try {
+            await fetch('/api/users', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: user.uid,
+                    email: user.email,
+                    displayName: user.displayName || user.email
+                })
+            });
+        } catch (error) {
+            console.error('Error creating user:', error);
+        }
+        
+        // Store current user globally
+        window.currentUser = user;
+        
         authDiv.style.display = 'none';
         appDiv.style.display = 'block';
+        
+        // Load sessions from database
+        if (window.loadSessions) {
+            window.loadSessions();
+        }
     } else {
         // User is signed out
         console.log('User signed out');
+        window.currentUser = null;
         authDiv.style.display = 'block';
         appDiv.style.display = 'none';
     }
