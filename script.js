@@ -185,20 +185,24 @@ function createSessionCard(session) {
             
             <div class="status-indicators">
                 <div class="status-item">
-                    <div class="status-icon ${session.contractSigned ? 'complete' : 'incomplete'}"></div>
-                    <span>Contract ${session.contractSigned ? 'Signed' : 'Pending'}</span>
+                    <input type="checkbox" id="contract-${session.id}" ${session.contractSigned ? 'checked' : ''} 
+                           onchange="updateSessionStatus(${session.id}, 'contractSigned', this.checked)">
+                    <label for="contract-${session.id}">Contract ${session.contractSigned ? 'Signed' : 'Pending'}</label>
                 </div>
                 <div class="status-item">
-                    <div class="status-icon ${session.paid ? 'complete' : 'incomplete'}"></div>
-                    <span>Payment ${session.paid ? 'Received' : 'Pending'}</span>
+                    <input type="checkbox" id="paid-${session.id}" ${session.paid ? 'checked' : ''} 
+                           onchange="updateSessionStatus(${session.id}, 'paid', this.checked)">
+                    <label for="paid-${session.id}">Payment ${session.paid ? 'Received' : 'Pending'}</label>
                 </div>
                 <div class="status-item">
-                    <div class="status-icon ${session.edited ? 'complete' : 'incomplete'}"></div>
-                    <span>Editing ${session.edited ? 'Complete' : 'Pending'}</span>
+                    <input type="checkbox" id="edited-${session.id}" ${session.edited ? 'checked' : ''} 
+                           onchange="updateSessionStatus(${session.id}, 'edited', this.checked)">
+                    <label for="edited-${session.id}">Editing ${session.edited ? 'Complete' : 'Pending'}</label>
                 </div>
                 <div class="status-item">
-                    <div class="status-icon ${session.delivered ? 'complete' : 'incomplete'}"></div>
-                    <span>Delivery ${session.delivered ? 'Complete' : 'Pending'}</span>
+                    <input type="checkbox" id="delivered-${session.id}" ${session.delivered ? 'checked' : ''} 
+                           onchange="updateSessionStatus(${session.id}, 'delivered', this.checked)">
+                    <label for="delivered-${session.id}">Delivery ${session.delivered ? 'Complete' : 'Pending'}</label>
                 </div>
             </div>
             
@@ -345,6 +349,26 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Update session status (checkbox change)
+function updateSessionStatus(sessionId, field, checked) {
+    const session = sessions.find(s => s.id === sessionId);
+    if (!session) {
+        showMessage('Session not found.', 'error');
+        return;
+    }
+    
+    // Update the session object
+    session[field] = checked;
+    
+    // Re-render sessions to update the display
+    renderSessions();
+    
+    // Show confirmation message
+    const fieldName = field.replace(/([A-Z])/g, ' $1').toLowerCase();
+    const status = checked ? 'marked as complete' : 'marked as pending';
+    showMessage(`${fieldName} ${status}!`, 'success');
 }
 
 // Utility function to handle form reset
