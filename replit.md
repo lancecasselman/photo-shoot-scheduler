@@ -6,6 +6,14 @@ This is a client-side web application for managing photography sessions. It's a 
 
 ## Recent Changes
 
+### Critical Server Fix - Session Loading Error (July 17, 2025)
+- **Fixed "Error Loading Sessions" Issue**: Resolved critical server crash caused by Firestore connection problems
+- **Implemented PostgreSQL Fallback**: Switched primary storage from Firestore to PostgreSQL for stability
+- **Enhanced Authentication Fallback**: Improved fallback mode to handle unauthenticated users gracefully
+- **Server Stability**: Added comprehensive error handling to prevent crashes during Firestore connection failures
+- **Database Integration**: Sessions now successfully load from PostgreSQL database without authentication errors
+- **Improved Error Messages**: Better user feedback for authentication and connection issues
+
 ### Database Integration & Shared Data (July 17, 2025)
 - **PostgreSQL Database**: Implemented persistent storage with shared data across all users
 - **User Authentication**: Firebase Authentication with automatic user creation in database

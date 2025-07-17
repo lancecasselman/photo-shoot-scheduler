@@ -77,6 +77,7 @@ function bypassAuthentication() {
     // Load sessions
     if (window.loadSessions) {
         setTimeout(() => {
+            console.log('Loading sessions in fallback mode');
             window.loadSessions();
         }, 100);
     }
@@ -84,6 +85,25 @@ function bypassAuthentication() {
 
 // Check server status on page load
 checkServerAuthStatus();
+
+// Add a global check for authentication status
+window.checkAuthAndLoadSessions = function() {
+    // If we have a current user, try to load sessions
+    if (window.currentUser && window.currentUser.uid) {
+        console.log('User authenticated, loading sessions');
+        if (window.loadSessions) {
+            window.loadSessions();
+        }
+    } else {
+        console.log('No authenticated user, showing login');
+        const authDiv = document.getElementById('auth');
+        const appDiv = document.getElementById('app');
+        if (authDiv && appDiv) {
+            authDiv.style.display = 'block';
+            appDiv.style.display = 'none';
+        }
+    }
+};
 
 // Auth state observer
 onAuthStateChanged(auth, async (user) => {

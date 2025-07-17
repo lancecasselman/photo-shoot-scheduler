@@ -101,7 +101,25 @@ async function loadSessions() {
         }
     } catch (error) {
         console.error('Error loading sessions:', error);
-        showMessage(`Error loading sessions: ${error.message}. Please check your connection and try again.`, 'error');
+        
+        // Check if this is an authentication error
+        if (error.message.includes('Unauthorized')) {
+            console.log('Authentication error - user needs to log in');
+            showMessage('Please log in to view your sessions.', 'error');
+            
+            // Check if we're in fallback mode and should redirect to login
+            if (!window.currentUser || !window.currentUser.uid) {
+                // Redirect to login
+                const authDiv = document.getElementById('auth');
+                const appDiv = document.getElementById('app');
+                if (authDiv && appDiv) {
+                    authDiv.style.display = 'block';
+                    appDiv.style.display = 'none';
+                }
+            }
+        } else {
+            showMessage(`Error loading sessions: ${error.message}. Please check your connection and try again.`, 'error');
+        }
         
         // Fallback to empty sessions array
         sessions = [];
