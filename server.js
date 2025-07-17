@@ -289,42 +289,104 @@ async function handleApiRequest(method, pathname, req, res) {
       }
 
       if (pathname === '/api/sessions' && method === 'GET') {
-        // Always use PostgreSQL to avoid Firestore connection issues
-        const query = 'SELECT * FROM sessions WHERE created_by = $1 ORDER BY date_time ASC';
-        const { rows } = await pool.query(query, [userInfo.uid]);
-        result = rows;
+        // Get user from authorization header
+        const authHeader = req.headers.authorization;
+        let userUid = null;
+
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+          const token = authHeader.substring(7);
+          try {
+            if (isFirebaseInitialized) {
+              const decodedToken = await admin.auth().verifyIdToken(token);
+              userUid = decodedToken.uid;
+            }
+          } catch (error) {
+            console.error('Token verification failed:', error);
+            // Continue with fallback mode
+          }
+        }
+
+        // If no valid user token, use fallback user
+        if (!userUid) {
+          userUid = 'fallback-user';
+        }
+
+        console.log('Loading sessions for user:', userUid);
+
+        // Try Firestore first, then fallback to PostgreSQL
+        try {
+          if (firestore && userUid !== 'fallback-user') {
+            result = await getSessionsFromFirestore(userUid);
+          } else {
+            // Use PostgreSQL for fallback users or when Firestore unavailable
+            try {
+              const query = 'SELECT * FROM sessions WHERE created_by = $1 ORDER BY date_time ASC';
+              const { rows } = await pool.query(query, [userUid]);
+              result = rows;
+              console.log(`Found ${rows.length} sessions for user ${userUid}`);
+            } catch (dbError) {
+              console.error('Database query error:', dbError);
+              // Return empty array if database query fails
+              result = [];
+            }
+          }
+        } catch (error) {
+          console.error('Error loading sessions:', error);
+          // Return empty array on error
+          result = [];
+        }
       } else if (pathname === '/api/sessions' && method === 'POST') {
-        const sessionData = {
-          userUid: userInfo.uid,
-          userEmail: userInfo.email,
-          sessionType: data.sessionType,
-          clientName: data.clientName,
-          dateTime: data.dateTime,
-          location: data.location,
-          phoneNumber: data.phoneNumber,
-          email: data.email,
-          price: data.price,
-          duration: data.duration,
-          notes: data.notes || '',
-          contractSigned: data.contractSigned || false,
-          paid: data.paid || false,
-          edited: data.edited || false,
-          delivered: data.delivered || false
+        // Get user from authorization header
+        const authHeader = req.headers.authorization;
+        let userUid = null;
+
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+          const token = authHeader.substring(7);
+          try {
+            if (isFirebaseInitialized) {
+              const decodedToken = await admin.auth().verifyIdToken(token);
+              userUid = decodedToken.uid;
+            }
+          } catch (error) {
+            console.error('Token verification failed:', error);
+          }
+        }
+
+        // If no valid user token, use fallback user
+        if (!userUid) {
+          userUid = 'fallback-user';
+        }
+
+        // Add user ID to session data
+        const sessionWithUser = {
+          ...data,
+          created_by: userUid,
+          user_uid: userUid
         };
 
-        // Use PostgreSQL for session creation
-        const query = `
-          INSERT INTO sessions (session_type, client_name, date_time, location, phone_number, email, price, duration, notes, contract_signed, paid, edited, delivered, created_by)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-          RETURNING *
-        `;
-        const values = [
-          data.sessionType, data.clientName, data.dateTime, data.location,
-          data.phoneNumber, data.email, data.price, data.duration, data.notes || '',
-          data.contractSigned || false, data.paid || false, data.edited || false, data.delivered || false, userInfo.uid
-        ];
-        const { rows } = await pool.query(query, values);
-        result = rows[0];
+        console.log('Creating session for user:', userUid);
+
+        // Try Firestore first, then fallback to PostgreSQL
+        try {
+          if (firestore && userUid !== 'fallback-user') {
+            const firestoreId = await createSessionInFirestore(sessionWithUser);
+            // Also save to PostgreSQL for consistency
+            await createSessionInPostgreSQL(sessionWithUser);
+            result = { id: firestoreId, ...sessionWithUser };
+          } else {
+            // Use PostgreSQL for fallback users or when Firestore unavailable
+            try {
+              result = await createSessionInPostgreSQL(sessionWithUser);
+              console.log('Session created successfully:', result.id);
+            } catch (dbError) {
+              console.error('Database creation error:', dbError);
+              throw new Error('Failed to create session in database');
+            }
+          }
+        } catch (error) {
+          console.error('Error creating session:', error);
+          throw error; // Re-throw to trigger 500 response
+        }
       } else if (pathname.startsWith('/api/sessions/') && method === 'PUT') {
         const id = pathname.split('/')[3];
 
@@ -441,7 +503,7 @@ async function handleApiRequest(method, pathname, req, res) {
         const hasFirebaseCredentials = !!(process.env.FIREBASE_PRIVATE_KEY && 
                                           process.env.FIREBASE_CLIENT_EMAIL && 
                                           process.env.FIREBASE_PRIVATE_KEY_ID);
-        
+
         result = {
           firebaseInitialized: isFirebaseInitialized,
           firestoreEnabled: firestore !== null,
@@ -479,6 +541,45 @@ async function handleApiRequest(method, pathname, req, res) {
       message: error.message,
       details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     }));
+  }
+}
+
+async function createSessionInPostgreSQL(sessionData) {
+  try {
+    const query = `
+      INSERT INTO sessions (
+        session_type, client_name, date_time, location, phone_number, 
+        email, price, duration, notes, contract_signed, paid, edited, 
+        delivered, created_by, user_uid
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+      RETURNING *
+    `;
+
+    const values = [
+      sessionData.sessionType || '',
+      sessionData.clientName || '',
+      sessionData.dateTime || new Date().toISOString(),
+      sessionData.location || '',
+      sessionData.phoneNumber || '',
+      sessionData.email || '',
+      parseFloat(sessionData.price) || 0,
+      parseInt(sessionData.duration) || 60,
+      sessionData.notes || '',
+      Boolean(sessionData.contractSigned),
+      Boolean(sessionData.paid),
+      Boolean(sessionData.edited),
+      Boolean(sessionData.delivered),
+      sessionData.created_by || 'fallback-user',
+      sessionData.user_uid || sessionData.created_by || 'fallback-user'
+    ];
+
+    const { rows } = await pool.query(query, values);
+    console.log('PostgreSQL session created:', rows[0]);
+    return rows[0];
+  } catch (error) {
+    console.error('Error creating session in PostgreSQL:', error);
+    console.error('Session data:', sessionData);
+    throw error;
   }
 }
 
