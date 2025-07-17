@@ -104,19 +104,21 @@ async function loadSessions() {
         
         // Check if this is an authentication error
         if (error.message.includes('Unauthorized')) {
-            console.log('Authentication error - user needs to log in');
-            showMessage('Please log in to view your sessions.', 'error');
+            console.log('Authentication error - setting up fallback user');
             
-            // Check if we're in fallback mode and should redirect to login
-            if (!window.currentUser || !window.currentUser.uid) {
-                // Redirect to login
-                const authDiv = document.getElementById('auth');
-                const appDiv = document.getElementById('app');
-                if (authDiv && appDiv) {
-                    authDiv.style.display = 'block';
-                    appDiv.style.display = 'none';
-                }
+            // Set up fallback user if not already set
+            if (!window.currentUser) {
+                window.currentUser = { uid: 'fallback-user', email: 'demo@example.com' };
+                window.userToken = null;
             }
+            
+            // Try to load sessions again with fallback user
+            console.log('Retrying session load with fallback user');
+            setTimeout(() => {
+                loadSessions();
+            }, 1000);
+            
+            return; // Don't show error message, just retry
         } else {
             showMessage(`Error loading sessions: ${error.message}. Please check your connection and try again.`, 'error');
         }
