@@ -235,53 +235,55 @@ function createAdminSessionItem(session) {
     dateTimeDiv.innerHTML = `<strong>${formattedDate}</strong><br><span style="color: #6c757d;">${formattedTime}</span>`;
     
     const phoneDiv = document.createElement('div');
-    phoneDiv.innerHTML = `<strong>Phone:</strong><br><span style="color: #6c757d;">${session.phoneNumber}</span>`;
+    phoneDiv.innerHTML = `<strong>Phone:</strong><br><span style="color: #6c757d;">${session.phoneNumber || 'No phone number'}</span>`;
     
-    // Add call and text buttons
-    const phoneActionsDiv = document.createElement('div');
-    phoneActionsDiv.style.cssText = `
-        display: flex;
-        gap: 5px;
-        margin-top: 5px;
-    `;
-    
-    const callBtn = document.createElement('a');
-    callBtn.href = `tel:${session.phoneNumber}`;
-    callBtn.textContent = '📞';
-    callBtn.style.cssText = `
-        text-decoration: none;
-        font-size: 14px;
-        cursor: pointer;
-        padding: 3px 6px;
-        border-radius: 3px;
-        background: #e8f5e8;
-        border: 1px solid #4CAF50;
-        transition: background-color 0.2s;
-    `;
-    callBtn.title = 'Call';
-    callBtn.onmouseover = () => callBtn.style.backgroundColor = '#d4edda';
-    callBtn.onmouseout = () => callBtn.style.backgroundColor = '#e8f5e8';
-    
-    const textBtn = document.createElement('a');
-    textBtn.href = `sms:${session.phoneNumber}`;
-    textBtn.textContent = '💬';
-    textBtn.style.cssText = `
-        text-decoration: none;
-        font-size: 14px;
-        cursor: pointer;
-        padding: 3px 6px;
-        border-radius: 3px;
-        background: #e3f2fd;
-        border: 1px solid #2196F3;
-        transition: background-color 0.2s;
-    `;
-    textBtn.title = 'Text';
-    textBtn.onmouseover = () => textBtn.style.backgroundColor = '#bbdefb';
-    textBtn.onmouseout = () => textBtn.style.backgroundColor = '#e3f2fd';
-    
-    phoneActionsDiv.appendChild(callBtn);
-    phoneActionsDiv.appendChild(textBtn);
-    phoneDiv.appendChild(phoneActionsDiv);
+    // Add call and text buttons only if phone number exists
+    if (session.phoneNumber && session.phoneNumber.trim() !== '') {
+        const phoneActionsDiv = document.createElement('div');
+        phoneActionsDiv.style.cssText = `
+            display: flex;
+            gap: 5px;
+            margin-top: 5px;
+        `;
+        
+        const callBtn = document.createElement('a');
+        callBtn.href = `tel:${session.phoneNumber}`;
+        callBtn.textContent = '📞';
+        callBtn.style.cssText = `
+            text-decoration: none;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 3px 6px;
+            border-radius: 3px;
+            background: #e8f5e8;
+            border: 1px solid #4CAF50;
+            transition: background-color 0.2s;
+        `;
+        callBtn.title = 'Call';
+        callBtn.onmouseover = () => callBtn.style.backgroundColor = '#d4edda';
+        callBtn.onmouseout = () => callBtn.style.backgroundColor = '#e8f5e8';
+        
+        const textBtn = document.createElement('a');
+        textBtn.href = `sms:${session.phoneNumber}`;
+        textBtn.textContent = '💬';
+        textBtn.style.cssText = `
+            text-decoration: none;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 3px 6px;
+            border-radius: 3px;
+            background: #e3f2fd;
+            border: 1px solid #2196F3;
+            transition: background-color 0.2s;
+        `;
+        textBtn.title = 'Text';
+        textBtn.onmouseover = () => textBtn.style.backgroundColor = '#bbdefb';
+        textBtn.onmouseout = () => textBtn.style.backgroundColor = '#e3f2fd';
+        
+        phoneActionsDiv.appendChild(callBtn);
+        phoneActionsDiv.appendChild(textBtn);
+        phoneDiv.appendChild(phoneActionsDiv);
+    }
     
     const priceDiv = document.createElement('div');
     priceDiv.innerHTML = `<strong>$${session.price}</strong><br><span style="color: #6c757d;">${session.duration} min</span>`;
@@ -530,17 +532,18 @@ function renderSessions() {
 
 // Create session card using safe DOM methods
 function createSessionCard(session) {
-    const sessionDate = new Date(session.dateTime);
-    const formattedDate = sessionDate.toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
-    const formattedTime = sessionDate.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit'
-    });
+    try {
+        const sessionDate = new Date(session.dateTime);
+        const formattedDate = sessionDate.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+        const formattedTime = sessionDate.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
     
     // Create main card container
     const card = document.createElement('div');
@@ -623,45 +626,49 @@ function createSessionCard(session) {
         valueDiv.style.gap = '10px';
         
         const phoneText = document.createElement('span');
-        phoneText.textContent = phoneNumber;
+        phoneText.textContent = phoneNumber || 'No phone number';
         
-        const callBtn = document.createElement('a');
-        callBtn.href = `tel:${phoneNumber}`;
-        callBtn.textContent = '📞';
-        callBtn.style.cssText = `
-            text-decoration: none;
-            font-size: 16px;
-            cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 4px;
-            background: #e8f5e8;
-            border: 1px solid #4CAF50;
-            transition: background-color 0.2s;
-        `;
-        callBtn.title = 'Call';
-        callBtn.onmouseover = () => callBtn.style.backgroundColor = '#d4edda';
-        callBtn.onmouseout = () => callBtn.style.backgroundColor = '#e8f5e8';
+        // Only create buttons if phone number exists
+        if (phoneNumber && phoneNumber.trim() !== '') {
+            const callBtn = document.createElement('a');
+            callBtn.href = `tel:${phoneNumber}`;
+            callBtn.textContent = '📞';
+            callBtn.style.cssText = `
+                text-decoration: none;
+                font-size: 16px;
+                cursor: pointer;
+                padding: 4px 8px;
+                border-radius: 4px;
+                background: #e8f5e8;
+                border: 1px solid #4CAF50;
+                transition: background-color 0.2s;
+            `;
+            callBtn.title = 'Call';
+            callBtn.onmouseover = () => callBtn.style.backgroundColor = '#d4edda';
+            callBtn.onmouseout = () => callBtn.style.backgroundColor = '#e8f5e8';
+            
+            const textBtn = document.createElement('a');
+            textBtn.href = `sms:${phoneNumber}`;
+            textBtn.textContent = '💬';
+            textBtn.style.cssText = `
+                text-decoration: none;
+                font-size: 16px;
+                cursor: pointer;
+                padding: 4px 8px;
+                border-radius: 4px;
+                background: #e3f2fd;
+                border: 1px solid #2196F3;
+                transition: background-color 0.2s;
+            `;
+            textBtn.title = 'Text';
+            textBtn.onmouseover = () => textBtn.style.backgroundColor = '#bbdefb';
+            textBtn.onmouseout = () => textBtn.style.backgroundColor = '#e3f2fd';
+            
+            valueDiv.appendChild(callBtn);
+            valueDiv.appendChild(textBtn);
+        }
         
-        const textBtn = document.createElement('a');
-        textBtn.href = `sms:${phoneNumber}`;
-        textBtn.textContent = '💬';
-        textBtn.style.cssText = `
-            text-decoration: none;
-            font-size: 16px;
-            cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 4px;
-            background: #e3f2fd;
-            border: 1px solid #2196F3;
-            transition: background-color 0.2s;
-        `;
-        textBtn.title = 'Text';
-        textBtn.onmouseover = () => textBtn.style.backgroundColor = '#bbdefb';
-        textBtn.onmouseout = () => textBtn.style.backgroundColor = '#e3f2fd';
-        
-        valueDiv.appendChild(phoneText);
-        valueDiv.appendChild(callBtn);
-        valueDiv.appendChild(textBtn);
+        valueDiv.insertBefore(phoneText, valueDiv.firstChild);
         
         item.appendChild(labelDiv);
         item.appendChild(valueDiv);
@@ -732,6 +739,20 @@ function createSessionCard(session) {
     }
     
     return card;
+    } catch (error) {
+        console.error('Error creating session card:', error, session);
+        // Return a basic error card
+        const errorCard = document.createElement('div');
+        errorCard.className = 'session-card';
+        errorCard.style.backgroundColor = '#ffebee';
+        errorCard.style.border = '1px solid #f44336';
+        errorCard.innerHTML = `
+            <p style="color: #f44336; padding: 10px;">
+                Error displaying session: ${session.sessionType || 'Unknown'}
+            </p>
+        `;
+        return errorCard;
+    }
 }
 
 // Delete session
