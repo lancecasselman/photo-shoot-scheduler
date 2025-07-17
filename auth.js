@@ -21,8 +21,77 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
+// Check server authentication status
+let serverAuthEnabled = true;
+async function checkServerAuthStatus() {
+    try {
+        const response = await fetch('/api/status');
+        const status = await response.json();
+        serverAuthEnabled = status.authenticationEnabled;
+        
+        if (!serverAuthEnabled) {
+            console.log('Server running in fallback mode - authentication disabled');
+            // If server auth is disabled, bypass Firebase authentication
+            bypassAuthentication();
+        }
+    } catch (error) {
+        console.error('Error checking server status:', error);
+        // If we can't check status, assume auth is enabled
+        serverAuthEnabled = true;
+    }
+}
+
+// Function to bypass authentication when server is in fallback mode
+function bypassAuthentication() {
+    const authDiv = document.getElementById('auth');
+    const appDiv = document.getElementById('app');
+    
+    // Show a notice about fallback mode
+    const fallbackNotice = document.createElement('div');
+    fallbackNotice.style.cssText = `
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        color: #856404;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 5px;
+        font-size: 14px;
+    `;
+    fallbackNotice.innerHTML = 'ℹ️ Running in demo mode - authentication disabled. All users share the same data.';
+    
+    // Hide auth form and show app
+    authDiv.style.display = 'none';
+    appDiv.style.display = 'block';
+    
+    // Add notice to the app
+    const appContainer = document.querySelector('#app .container');
+    if (appContainer && !document.querySelector('.fallback-notice')) {
+        fallbackNotice.className = 'fallback-notice';
+        appContainer.insertBefore(fallbackNotice, appContainer.firstChild);
+    }
+    
+    // Set up fallback user
+    window.currentUser = { uid: 'fallback-user', email: 'demo@example.com' };
+    window.userToken = null;
+    
+    // Load sessions
+    if (window.loadSessions) {
+        setTimeout(() => {
+            window.loadSessions();
+        }, 100);
+    }
+}
+
+// Check server status on page load
+checkServerAuthStatus();
+
 // Auth state observer
 onAuthStateChanged(auth, async (user) => {
+    // Skip Firebase auth handling if server auth is disabled
+    if (!serverAuthEnabled) {
+        return;
+    }
+    
     const authDiv = document.getElementById('auth');
     const appDiv = document.getElementById('app');
     
@@ -69,6 +138,11 @@ onAuthStateChanged(auth, async (user) => {
 
 // Signup function
 window.signup = async function() {
+    if (!serverAuthEnabled) {
+        alert('Authentication is disabled in demo mode. You can already use the app.');
+        return;
+    }
+    
     const email = document.getElementById('signup-email').value;
     const password = document.getElementById('signup-password').value;
     
@@ -91,6 +165,11 @@ window.signup = async function() {
 
 // Login function
 window.login = async function() {
+    if (!serverAuthEnabled) {
+        alert('Authentication is disabled in demo mode. You can already use the app.');
+        return;
+    }
+    
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
     
@@ -113,6 +192,11 @@ window.login = async function() {
 
 // Logout function
 window.logout = async function() {
+    if (!serverAuthEnabled) {
+        alert('Authentication is disabled in demo mode. App will continue running.');
+        return;
+    }
+    
     try {
         await signOut(auth);
         console.log('User logged out successfully');

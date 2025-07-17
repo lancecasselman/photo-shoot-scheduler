@@ -6,48 +6,6 @@ let sessions = [];
 let sessionIdCounter = 1;
 
 // API helper functions
-async function apiCall(url, options = {}) {
-    try {
-        console.log(`Making API call to: ${url}`, options);
-        console.log(`Full URL: ${window.location.origin}${url}`);
-        console.log(`Current host: ${window.location.host}`);
-        console.log(`Protocol: ${window.location.protocol}`);
-        
-        const response = await fetch(url, {
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers
-            },
-            mode: 'cors',
-            credentials: 'omit',
-            ...options
-        });
-        
-        console.log(`API response status: ${response.status}`);
-        console.log(`Response URL: ${response.url}`);
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error(`API error response: ${errorText}`);
-            throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
-        }
-        
-        const data = await response.json();
-        console.log('API response data:', data);
-        return data;
-    } catch (error) {
-        console.error('API call failed:', error);
-        
-        // More specific error messages for mobile debugging
-        if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-            throw new Error('Network error: Unable to connect to server. Please check your internet connection.');
-        } else if (error.name === 'SyntaxError') {
-            throw new Error('Server response error: Invalid data format received.');
-        } else {
-            throw new Error(`API error: ${error.message}`);
-        }
-    }
-}
 
 // DOM elements
 const sessionForm = document.getElementById('sessionForm');
@@ -56,26 +14,40 @@ const messageContainer = document.getElementById('messageContainer');
 
 // API call helper with authentication
 async function apiCall(url, options = {}) {
-    const headers = {
-        'Content-Type': 'application/json',
-        ...options.headers
-    };
-    
-    // Add authentication header if user is logged in
-    if (window.currentUser && window.userToken) {
-        headers['Authorization'] = `Bearer ${window.userToken}`;
+    try {
+        const headers = {
+            'Content-Type': 'application/json',
+            ...options.headers
+        };
+        
+        // Add authentication header if user is logged in and has a token
+        if (window.currentUser && window.userToken) {
+            headers['Authorization'] = `Bearer ${window.userToken}`;
+        }
+        
+        const response = await fetch(url, {
+            ...options,
+            headers
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error('API call failed:', error);
+        
+        // More specific error messages for debugging
+        if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+            throw new Error('Network error: Unable to connect to server. Please check your internet connection.');
+        } else if (error.name === 'SyntaxError') {
+            throw new Error('Server response error: Invalid data format received.');
+        } else {
+            throw new Error(`API error: ${error.message}`);
+        }
     }
-    
-    const response = await fetch(url, {
-        ...options,
-        headers
-    });
-    
-    if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    return await response.json();
 }
 
 // Load sessions from database

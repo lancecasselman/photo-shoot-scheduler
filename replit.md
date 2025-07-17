@@ -29,6 +29,14 @@ This is a client-side web application for managing photography sessions. It's a 
 - **Improved Code Security**: Eliminated string concatenation for HTML generation to prevent potential XSS attacks
 - **Maintained Functionality**: All existing features work the same way with improved security
 
+### Firebase Deployment Fix (July 17, 2025)
+- **Fixed Firebase Crash**: Resolved Firebase Admin SDK initialization crash when environment variables are missing
+- **Added Fallback Mode**: Application now gracefully handles missing Firebase credentials by disabling authentication
+- **Prevented App Crashes**: Added proper error handling and fallback mechanisms to prevent server crashes
+- **Enhanced Error Handling**: Improved authentication verification with fallback for missing Firebase initialization
+- **Added Status Endpoints**: Created `/api/status` and `/api/health` endpoints for monitoring Firebase and system health
+- **User Experience**: App shows clear notices when running in demo mode with authentication disabled
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.

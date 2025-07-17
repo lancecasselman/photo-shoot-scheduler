@@ -4,25 +4,60 @@ const path = require('path');
 const { Pool } = require('pg');
 const admin = require('firebase-admin');
 
-// Initialize Firebase Admin SDK (for token verification)
-if (!admin.apps.length) {
-  const serviceAccount = {
-    type: "service_account",
-    project_id: "photography-schedule-f08eb",
-    private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-    private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    client_email: process.env.FIREBASE_CLIENT_EMAIL,
-    client_id: process.env.FIREBASE_CLIENT_ID,
-    auth_uri: "https://accounts.google.com/o/oauth2/auth",
-    token_uri: "https://oauth2.googleapis.com/token",
-    auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs"
-  };
+// Global flag to track Firebase initialization status
+let isFirebaseInitialized = false;
 
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-    projectId: 'photography-schedule-f08eb'
-  });
+// Initialize Firebase Admin SDK (for token verification)
+function initializeFirebase() {
+  try {
+    if (!admin.apps.length) {
+      // Check if all required Firebase environment variables are present
+      const requiredEnvVars = [
+        'FIREBASE_PRIVATE_KEY_ID',
+        'FIREBASE_PRIVATE_KEY',
+        'FIREBASE_CLIENT_EMAIL',
+        'FIREBASE_CLIENT_ID'
+      ];
+      
+      const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+      
+      if (missingVars.length > 0) {
+        console.warn('Firebase initialization skipped - missing environment variables:', missingVars);
+        console.warn('Authentication features will be disabled. Please set the required Firebase environment variables.');
+        return false;
+      }
+
+      const serviceAccount = {
+        type: "service_account",
+        project_id: "photography-schedule-f08eb",
+        private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
+        private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+        client_email: process.env.FIREBASE_CLIENT_EMAIL,
+        client_id: process.env.FIREBASE_CLIENT_ID,
+        auth_uri: "https://accounts.google.com/o/oauth2/auth",
+        token_uri: "https://oauth2.googleapis.com/token",
+        auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs"
+      };
+
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+        projectId: 'photography-schedule-f08eb'
+      });
+      
+      console.log('Firebase Admin SDK initialized successfully');
+      isFirebaseInitialized = true;
+      return true;
+    }
+    return true;
+  } catch (error) {
+    console.error('Firebase initialization failed:', error.message);
+    console.warn('Authentication features will be disabled. Please check Firebase configuration.');
+    return false;
+  }
 }
+
+// Initialize Firebase on startup (with fallback handling)
+initializeFirebase();
 
 const PORT = process.env.PORT || 5000;
 
@@ -74,6 +109,11 @@ function serveStaticFile(filePath, res) {
 
 // Verify Firebase token and get user ID
 async function verifyUser(req) {
+  // Check if Firebase is initialized
+  if (!isFirebaseInitialized) {
+    throw new Error('Authentication service unavailable - Firebase not initialized');
+  }
+  
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     throw new Error('No authentication token provided');
@@ -113,9 +153,15 @@ async function handleApiRequest(method, pathname, req, res) {
         try {
           userId = await verifyUser(req);
         } catch (error) {
-          res.writeHead(401, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Unauthorized: ' + error.message }));
-          return;
+          // If Firebase is not initialized, use fallback mode
+          if (!isFirebaseInitialized) {
+            console.warn('Operating in fallback mode - authentication disabled');
+            userId = 'fallback-user'; // Use a fallback user ID when Firebase is unavailable
+          } else {
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Unauthorized: ' + error.message }));
+            return;
+          }
         }
       }
 
@@ -180,6 +226,25 @@ async function handleApiRequest(method, pathname, req, res) {
         const query = 'SELECT * FROM users WHERE email = $1';
         const { rows } = await pool.query(query, [data.email]);
         result = rows[0];
+      } else if (pathname === '/api/status' && method === 'GET') {
+        // Status endpoint to check Firebase and system health
+        result = {
+          firebaseInitialized: isFirebaseInitialized,
+          authenticationEnabled: isFirebaseInitialized,
+          databaseConnected: true,
+          timestamp: new Date().toISOString(),
+          mode: isFirebaseInitialized ? 'authenticated' : 'fallback'
+        };
+      } else if (pathname === '/api/health' && method === 'GET') {
+        // Health check endpoint
+        result = {
+          status: 'healthy',
+          services: {
+            firebase: isFirebaseInitialized ? 'active' : 'disabled',
+            database: 'connected'
+          },
+          timestamp: new Date().toISOString()
+        };
       } else {
         res.writeHead(404, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Endpoint not found' }));
@@ -233,5 +298,18 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Photography Scheduler running on http://0.0.0.0:${PORT}`);
   console.log('Database connected and ready');
+  console.log(`Firebase Admin SDK: ${isFirebaseInitialized ? 'Initialized' : 'Not initialized (fallback mode)'}`);
+  console.log(`Authentication: ${isFirebaseInitialized ? 'Enabled' : 'Disabled (fallback mode)'}`);
   console.log('Server ready for requests');
+  
+  // Display helpful information about the current state
+  if (!isFirebaseInitialized) {
+    console.log('\n⚠️  NOTICE: Firebase authentication is disabled');
+    console.log('   All users will share the same session data');
+    console.log('   To enable authentication, provide Firebase environment variables:');
+    console.log('   - FIREBASE_PRIVATE_KEY_ID');
+    console.log('   - FIREBASE_PRIVATE_KEY');
+    console.log('   - FIREBASE_CLIENT_EMAIL'); 
+    console.log('   - FIREBASE_CLIENT_ID\n');
+  }
 });
