@@ -7,10 +7,12 @@ This is a client-side web application for managing photography sessions. It's a 
 ## Recent Changes
 
 ### Deployment Configuration Fix (July 17, 2025)
-- **Fixed Deployment Error**: Updated run command from `python -m http.server 5000` to `python main.py`
+- **Fixed Deployment Error**: Updated run command from `python -m http.server 5000` to `python deploy.py`
 - **Corrected Syntax Error**: Fixed indentation issue in main.py StaticFileHandler class
 - **Improved Server Configuration**: Enhanced HTTP server with proper CORS headers and root path handling
+- **Added OPTIONS Support**: Implemented proper CORS preflight request handling
 - **Deployment Ready**: Application now responds correctly to health checks on root endpoint (/)
+- **Production Server**: Created deploy.py with graceful shutdown and error handling
 
 ### Security Enhancement (July 17, 2025)
 - **Fixed XSS Vulnerability**: Replaced innerHTML usage with safer DOM methods (createElement, textContent, appendChild)
@@ -100,8 +102,12 @@ Preferred communication style: Simple, everyday language.
 - **CDN**: Can be distributed via content delivery networks
 
 ### Deployment Files
-- `main.py`: Production server entry point
-- `run.py`: Development server script
+- `deploy.py`: Primary production server entry point (recommended)
+- `app.py`: Alternative production server
+- `main.py`: Backup server entry point
+- `wsgi.py`: WSGI-compatible server
+- `Procfile`: Process configuration for deployment platforms
+- `healthcheck.py`: Health check utility
 - `index.html`: Main application file
 - `style.css`: Application styling
 - `script.js`: Application logic
