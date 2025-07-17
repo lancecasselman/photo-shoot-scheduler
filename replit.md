@@ -74,15 +74,31 @@ Preferred communication style: Simple, everyday language.
 ## Deployment Strategy
 
 ### Current Deployment
-- **Static Hosting**: Can be deployed to any static file hosting service
+- **Static Hosting**: Deployed using Python HTTP server on Replit
 - **No Build Process**: Files can be served directly without compilation
-- **No Server Requirements**: Pure client-side application
+- **Server Setup**: Python HTTP server serves static files on port 5000
+- **Cloud Run**: Configured for Replit's Cloud Run deployment
+
+### Deployment Configuration
+- **Main Entry Point**: `main.py` - Production-ready HTTP server
+- **Development Server**: `python -m http.server 5000` - Local development
+- **Port Configuration**: Uses environment variable PORT or defaults to 5000
+- **CORS Headers**: Configured for cross-origin requests
+- **Static File Serving**: Serves HTML, CSS, and JS files from project root
 
 ### Deployment Options
-- **GitHub Pages**: Simple deployment for static sites
+- **Replit Deployment**: Primary deployment method using Cloud Run
+- **GitHub Pages**: Alternative for static site hosting
 - **Netlify/Vercel**: Modern static site hosting with CI/CD
 - **Basic Web Server**: Apache, Nginx, or any HTTP server
 - **CDN**: Can be distributed via content delivery networks
+
+### Deployment Files
+- `main.py`: Production server entry point
+- `run.py`: Development server script
+- `index.html`: Main application file
+- `style.css`: Application styling
+- `script.js`: Application logic
 
 ### File Structure
 ```
