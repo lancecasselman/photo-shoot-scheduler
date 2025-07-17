@@ -234,15 +234,61 @@ function createAdminSessionItem(session) {
     const dateTimeDiv = document.createElement('div');
     dateTimeDiv.innerHTML = `<strong>${formattedDate}</strong><br><span style="color: #6c757d;">${formattedTime}</span>`;
     
-    const userInfo = document.createElement('div');
-    userInfo.innerHTML = `<strong>User:</strong><br><span style="color: #6c757d;">${session.userEmail || 'Unknown'}</span>`;
+    const phoneDiv = document.createElement('div');
+    phoneDiv.innerHTML = `<strong>Phone:</strong><br><span style="color: #6c757d;">${session.phoneNumber}</span>`;
+    
+    // Add call and text buttons
+    const phoneActionsDiv = document.createElement('div');
+    phoneActionsDiv.style.cssText = `
+        display: flex;
+        gap: 5px;
+        margin-top: 5px;
+    `;
+    
+    const callBtn = document.createElement('a');
+    callBtn.href = `tel:${session.phoneNumber}`;
+    callBtn.textContent = '📞';
+    callBtn.style.cssText = `
+        text-decoration: none;
+        font-size: 14px;
+        cursor: pointer;
+        padding: 3px 6px;
+        border-radius: 3px;
+        background: #e8f5e8;
+        border: 1px solid #4CAF50;
+        transition: background-color 0.2s;
+    `;
+    callBtn.title = 'Call';
+    callBtn.onmouseover = () => callBtn.style.backgroundColor = '#d4edda';
+    callBtn.onmouseout = () => callBtn.style.backgroundColor = '#e8f5e8';
+    
+    const textBtn = document.createElement('a');
+    textBtn.href = `sms:${session.phoneNumber}`;
+    textBtn.textContent = '💬';
+    textBtn.style.cssText = `
+        text-decoration: none;
+        font-size: 14px;
+        cursor: pointer;
+        padding: 3px 6px;
+        border-radius: 3px;
+        background: #e3f2fd;
+        border: 1px solid #2196F3;
+        transition: background-color 0.2s;
+    `;
+    textBtn.title = 'Text';
+    textBtn.onmouseover = () => textBtn.style.backgroundColor = '#bbdefb';
+    textBtn.onmouseout = () => textBtn.style.backgroundColor = '#e3f2fd';
+    
+    phoneActionsDiv.appendChild(callBtn);
+    phoneActionsDiv.appendChild(textBtn);
+    phoneDiv.appendChild(phoneActionsDiv);
     
     const priceDiv = document.createElement('div');
     priceDiv.innerHTML = `<strong>$${session.price}</strong><br><span style="color: #6c757d;">${session.duration} min</span>`;
     
     sessionInfo.appendChild(sessionDetails);
     sessionInfo.appendChild(dateTimeDiv);
-    sessionInfo.appendChild(userInfo);
+    sessionInfo.appendChild(phoneDiv);
     sessionInfo.appendChild(priceDiv);
     
     const deleteBtn = document.createElement('button');
@@ -560,10 +606,72 @@ function createSessionCard(session) {
         
         return item;
     }
+
+    // Helper function to create phone detail item with call and text buttons
+    function createPhoneDetailItem(label, phoneNumber) {
+        const item = document.createElement('div');
+        item.className = 'detail-item';
+        
+        const labelDiv = document.createElement('div');
+        labelDiv.className = 'detail-label';
+        labelDiv.textContent = label;
+        
+        const valueDiv = document.createElement('div');
+        valueDiv.className = 'detail-value';
+        valueDiv.style.display = 'flex';
+        valueDiv.style.alignItems = 'center';
+        valueDiv.style.gap = '10px';
+        
+        const phoneText = document.createElement('span');
+        phoneText.textContent = phoneNumber;
+        
+        const callBtn = document.createElement('a');
+        callBtn.href = `tel:${phoneNumber}`;
+        callBtn.textContent = '📞';
+        callBtn.style.cssText = `
+            text-decoration: none;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: #e8f5e8;
+            border: 1px solid #4CAF50;
+            transition: background-color 0.2s;
+        `;
+        callBtn.title = 'Call';
+        callBtn.onmouseover = () => callBtn.style.backgroundColor = '#d4edda';
+        callBtn.onmouseout = () => callBtn.style.backgroundColor = '#e8f5e8';
+        
+        const textBtn = document.createElement('a');
+        textBtn.href = `sms:${phoneNumber}`;
+        textBtn.textContent = '💬';
+        textBtn.style.cssText = `
+            text-decoration: none;
+            font-size: 16px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: #e3f2fd;
+            border: 1px solid #2196F3;
+            transition: background-color 0.2s;
+        `;
+        textBtn.title = 'Text';
+        textBtn.onmouseover = () => textBtn.style.backgroundColor = '#bbdefb';
+        textBtn.onmouseout = () => textBtn.style.backgroundColor = '#e3f2fd';
+        
+        valueDiv.appendChild(phoneText);
+        valueDiv.appendChild(callBtn);
+        valueDiv.appendChild(textBtn);
+        
+        item.appendChild(labelDiv);
+        item.appendChild(valueDiv);
+        
+        return item;
+    }
     
     details.appendChild(createDetailItem('Date & Time', `${formattedDate} at ${formattedTime}`));
     details.appendChild(createDetailItem('Location', session.location));
-    details.appendChild(createDetailItem('Phone', session.phoneNumber));
+    details.appendChild(createPhoneDetailItem('Phone', session.phoneNumber));
     details.appendChild(createDetailItem('Email', session.email));
     details.appendChild(createDetailItem('Price', `$${session.price.toFixed(2)}`));
     details.appendChild(createDetailItem('Duration', `${session.duration} minutes`));

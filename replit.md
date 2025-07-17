@@ -51,6 +51,8 @@ This is a client-side web application for managing photography sessions. It's a 
 - **Admin View**: Admin can view and manage all sessions from all users in Firestore
 - **Session Fields**: Complete session data includes: userUid, userEmail, client details, pricing, and status checkboxes
 - **Automatic Timestamps**: Firestore automatically manages createdAt and updatedAt timestamps
+- **Call & Text Buttons**: Added convenient 📞 call and 💬 text buttons next to phone numbers in session displays
+- **Mobile Integration**: Call and text buttons use native tel: and sms: protocols for seamless mobile integration
 
 ## User Preferences
 
