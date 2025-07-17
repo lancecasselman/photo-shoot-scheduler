@@ -6,8 +6,9 @@ const admin = require('firebase-admin');
 
 // Global flag to track Firebase initialization status
 let isFirebaseInitialized = false;
+let firestore = null;
 
-// Initialize Firebase Admin SDK (for token verification)
+// Initialize Firebase Admin SDK (for token verification and Firestore)
 function initializeFirebase() {
   try {
     if (!admin.apps.length) {
@@ -29,7 +30,7 @@ function initializeFirebase() {
 
       const serviceAccount = {
         type: "service_account",
-        project_id: "photography-schedule-f08eb",
+        project_id: "photoshcheduleapp",
         private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
         private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
         client_email: process.env.FIREBASE_CLIENT_EMAIL,
@@ -41,10 +42,14 @@ function initializeFirebase() {
 
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
-        projectId: 'photography-schedule-f08eb'
+        projectId: 'photoshcheduleapp'
       });
       
+      // Initialize Firestore using Firebase Admin SDK
+      firestore = admin.firestore();
+      
       console.log('Firebase Admin SDK initialized successfully');
+      console.log('Firestore initialized successfully');
       isFirebaseInitialized = true;
       return true;
     }
@@ -137,6 +142,88 @@ function isAdminUser(email) {
   return adminEmails.includes(email);
 }
 
+// Firestore helper functions
+async function createSessionInFirestore(sessionData) {
+  if (!firestore) {
+    throw new Error('Firestore not initialized');
+  }
+  
+  const sessionsRef = firestore.collection('sessions');
+  const docRef = await sessionsRef.add({
+    ...sessionData,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp()
+  });
+  
+  return docRef.id;
+}
+
+async function getSessionsFromFirestore(userUid) {
+  if (!firestore) {
+    throw new Error('Firestore not initialized');
+  }
+  
+  const sessionsRef = firestore.collection('sessions');
+  const query = sessionsRef.where('userUid', '==', userUid).orderBy('createdAt', 'desc');
+  
+  const snapshot = await query.get();
+  const sessions = [];
+  
+  snapshot.forEach(doc => {
+    sessions.push({
+      id: doc.id,
+      ...doc.data()
+    });
+  });
+  
+  return sessions;
+}
+
+async function getAllSessionsFromFirestore() {
+  if (!firestore) {
+    throw new Error('Firestore not initialized');
+  }
+  
+  const sessionsRef = firestore.collection('sessions');
+  const snapshot = await sessionsRef.orderBy('createdAt', 'desc').get();
+  
+  const sessions = [];
+  
+  snapshot.forEach(doc => {
+    sessions.push({
+      id: doc.id,
+      ...doc.data()
+    });
+  });
+  
+  return sessions;
+}
+
+async function updateSessionInFirestore(sessionId, updateData) {
+  if (!firestore) {
+    throw new Error('Firestore not initialized');
+  }
+  
+  const sessionRef = firestore.collection('sessions').doc(sessionId);
+  await sessionRef.update({
+    ...updateData,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp()
+  });
+  
+  return true;
+}
+
+async function deleteSessionFromFirestore(sessionId) {
+  if (!firestore) {
+    throw new Error('Firestore not initialized');
+  }
+  
+  const sessionRef = firestore.collection('sessions').doc(sessionId);
+  await sessionRef.delete();
+  
+  return true;
+}
+
 async function handleApiRequest(method, pathname, req, res) {
   setCorsHeaders(res);
   
@@ -175,54 +262,121 @@ async function handleApiRequest(method, pathname, req, res) {
       }
 
       if (pathname === '/api/sessions' && method === 'GET') {
-        const query = 'SELECT * FROM sessions WHERE created_by = $1 ORDER BY date_time ASC';
-        const { rows } = await pool.query(query, [userInfo.uid]);
-        result = rows;
-      } else if (pathname === '/api/sessions' && method === 'POST') {
-        const query = `
-          INSERT INTO sessions (session_type, client_name, date_time, location, phone_number, email, price, duration, notes, contract_signed, paid, edited, delivered, created_by)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-          RETURNING *
-        `;
-        const values = [
-          data.sessionType, data.clientName, data.dateTime, data.location,
-          data.phoneNumber, data.email, data.price, data.duration, data.notes || '',
-          data.contractSigned || false, data.paid || false, data.edited || false, data.delivered || false, userInfo.uid
-        ];
-        const { rows } = await pool.query(query, values);
-        result = rows[0];
-      } else if (pathname.startsWith('/api/sessions/') && method === 'PUT') {
-        const id = parseInt(pathname.split('/')[3]);
-        const updates = Object.keys(data).map((key, index) => `${key} = $${index + 1}`).join(', ');
-        const query = `UPDATE sessions SET ${updates}, updated_at = CURRENT_TIMESTAMP WHERE id = $${Object.keys(data).length + 1} AND created_by = $${Object.keys(data).length + 2} RETURNING *`;
-        const values = [...Object.values(data), id, userInfo.uid];
-        const { rows } = await pool.query(query, values);
-        if (rows.length === 0) {
-          res.writeHead(404, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Session not found or unauthorized' }));
-          return;
-        }
-        result = rows[0];
-      } else if (pathname.startsWith('/api/sessions/') && method === 'DELETE') {
-        const id = parseInt(pathname.split('/')[3]);
-        
-        // Check if user is admin or owns the session
-        let query, values;
-        if (isAdminUser(userInfo.email)) {
-          query = 'DELETE FROM sessions WHERE id = $1';
-          values = [id];
+        if (firestore) {
+          result = await getSessionsFromFirestore(userInfo.uid);
         } else {
-          query = 'DELETE FROM sessions WHERE id = $1 AND created_by = $2';
-          values = [id, userInfo.uid];
+          // Fallback to PostgreSQL
+          const query = 'SELECT * FROM sessions WHERE created_by = $1 ORDER BY date_time ASC';
+          const { rows } = await pool.query(query, [userInfo.uid]);
+          result = rows;
         }
+      } else if (pathname === '/api/sessions' && method === 'POST') {
+        const sessionData = {
+          userUid: userInfo.uid,
+          userEmail: userInfo.email,
+          sessionType: data.sessionType,
+          clientName: data.clientName,
+          dateTime: data.dateTime,
+          location: data.location,
+          phoneNumber: data.phoneNumber,
+          email: data.email,
+          price: data.price,
+          duration: data.duration,
+          notes: data.notes || '',
+          contractSigned: data.contractSigned || false,
+          paid: data.paid || false,
+          edited: data.edited || false,
+          delivered: data.delivered || false
+        };
         
-        const deleteResult = await pool.query(query, values);
-        if (deleteResult.rowCount === 0) {
-          res.writeHead(404, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Session not found or unauthorized' }));
-          return;
+        if (firestore) {
+          const sessionId = await createSessionInFirestore(sessionData);
+          result = {
+            id: sessionId,
+            ...sessionData
+          };
+        } else {
+          // Fallback to PostgreSQL
+          const query = `
+            INSERT INTO sessions (session_type, client_name, date_time, location, phone_number, email, price, duration, notes, contract_signed, paid, edited, delivered, created_by)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+            RETURNING *
+          `;
+          const values = [
+            data.sessionType, data.clientName, data.dateTime, data.location,
+            data.phoneNumber, data.email, data.price, data.duration, data.notes || '',
+            data.contractSigned || false, data.paid || false, data.edited || false, data.delivered || false, userInfo.uid
+          ];
+          const { rows } = await pool.query(query, values);
+          result = rows[0];
         }
-        result = { success: true };
+      } else if (pathname.startsWith('/api/sessions/') && method === 'PUT') {
+        const id = pathname.split('/')[3];
+        
+        if (firestore) {
+          await updateSessionInFirestore(id, data);
+          result = { id, ...data };
+        } else {
+          // Fallback to PostgreSQL
+          const intId = parseInt(id);
+          const updates = Object.keys(data).map((key, index) => `${key} = $${index + 1}`).join(', ');
+          const query = `UPDATE sessions SET ${updates}, updated_at = CURRENT_TIMESTAMP WHERE id = $${Object.keys(data).length + 1} AND created_by = $${Object.keys(data).length + 2} RETURNING *`;
+          const values = [...Object.values(data), intId, userInfo.uid];
+          const { rows } = await pool.query(query, values);
+          if (rows.length === 0) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Session not found or unauthorized' }));
+            return;
+          }
+          result = rows[0];
+        }
+      } else if (pathname.startsWith('/api/sessions/') && method === 'DELETE') {
+        const id = pathname.split('/')[3];
+        
+        if (firestore) {
+          // For Firestore, we need to check ownership before deletion
+          const sessionRef = firestore.collection('sessions').doc(id);
+          const sessionDoc = await sessionRef.get();
+          
+          if (!sessionDoc.exists) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Session not found' }));
+            return;
+          }
+          
+          const sessionData = sessionDoc.data();
+          
+          // Check if user is admin or owns the session
+          if (!isAdminUser(userInfo.email) && sessionData.userUid !== userInfo.uid) {
+            res.writeHead(403, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Unauthorized' }));
+            return;
+          }
+          
+          await deleteSessionFromFirestore(id);
+          result = { success: true };
+        } else {
+          // Fallback to PostgreSQL
+          const intId = parseInt(id);
+          
+          // Check if user is admin or owns the session
+          let query, values;
+          if (isAdminUser(userInfo.email)) {
+            query = 'DELETE FROM sessions WHERE id = $1';
+            values = [intId];
+          } else {
+            query = 'DELETE FROM sessions WHERE id = $1 AND created_by = $2';
+            values = [intId, userInfo.uid];
+          }
+          
+          const deleteResult = await pool.query(query, values);
+          if (deleteResult.rowCount === 0) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Session not found or unauthorized' }));
+            return;
+          }
+          result = { success: true };
+        }
       } else if (pathname === '/api/admin/sessions' && method === 'GET') {
         // Admin endpoint to get all sessions
         if (!isAdminUser(userInfo.email)) {
@@ -231,14 +385,19 @@ async function handleApiRequest(method, pathname, req, res) {
           return;
         }
         
-        const query = `
-          SELECT s.*, u.email as user_email, u.display_name as user_display_name
-          FROM sessions s
-          LEFT JOIN users u ON s.created_by = u.id
-          ORDER BY s.date_time ASC
-        `;
-        const { rows } = await pool.query(query);
-        result = rows;
+        if (firestore) {
+          result = await getAllSessionsFromFirestore();
+        } else {
+          // Fallback to PostgreSQL
+          const query = `
+            SELECT s.*, u.email as user_email, u.display_name as user_display_name
+            FROM sessions s
+            LEFT JOIN users u ON s.created_by = u.id
+            ORDER BY s.date_time ASC
+          `;
+          const { rows } = await pool.query(query);
+          result = rows;
+        }
       } else if (pathname === '/api/users' && method === 'POST') {
         const query = `
           INSERT INTO users (id, email, display_name)
@@ -265,10 +424,12 @@ async function handleApiRequest(method, pathname, req, res) {
         // Status endpoint to check Firebase and system health
         result = {
           firebaseInitialized: isFirebaseInitialized,
+          firestoreEnabled: firestore !== null,
           authenticationEnabled: isFirebaseInitialized,
           databaseConnected: true,
           timestamp: new Date().toISOString(),
-          mode: isFirebaseInitialized ? 'authenticated' : 'fallback'
+          mode: isFirebaseInitialized ? 'authenticated' : 'fallback',
+          storageMode: firestore ? 'firestore' : 'postgresql'
         };
       } else if (pathname === '/api/health' && method === 'GET') {
         // Health check endpoint
@@ -276,6 +437,7 @@ async function handleApiRequest(method, pathname, req, res) {
           status: 'healthy',
           services: {
             firebase: isFirebaseInitialized ? 'active' : 'disabled',
+            firestore: firestore ? 'active' : 'disabled',
             database: 'connected'
           },
           timestamp: new Date().toISOString()

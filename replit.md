@@ -42,6 +42,16 @@ This is a client-side web application for managing photography sessions. It's a 
 - **Admin View**: Added admin functionality to view and manage all sessions from all users when logged in as admin
 - **Admin Permissions**: Admin users can delete any session, while regular users can only delete their own sessions
 
+### Firestore Integration (July 17, 2025)
+- **Firestore Database**: Successfully integrated Firebase Firestore as primary data storage
+- **Session Storage**: Sessions now saved in Firestore under "sessions" collection with user UID separation
+- **Real-time Data**: Firestore provides real-time synchronization across all devices and users
+- **User Separation**: Each session includes userUid field to separate data by authenticated user
+- **Fallback System**: PostgreSQL maintained as fallback when Firestore credentials are missing
+- **Admin View**: Admin can view and manage all sessions from all users in Firestore
+- **Session Fields**: Complete session data includes: userUid, userEmail, client details, pricing, and status checkboxes
+- **Automatic Timestamps**: Firestore automatically manages createdAt and updatedAt timestamps
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
