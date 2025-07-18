@@ -777,6 +777,16 @@ app.post('/api/invoice', async (req, res) => {
 
     const { customerEmail, clientName, amount, description } = req.body;
 
+    // Debug: Log the received data
+    console.log('Received invoice data:', {
+      customerEmail,
+      clientName,
+      amount,
+      description,
+      amountType: typeof amount,
+      amountParsed: parseFloat(amount)
+    });
+
     if (!customerEmail || !clientName || !amount || !description) {
       return res.status(400).json({ 
         error: 'Missing required fields: customerEmail, clientName, amount, description' 
@@ -818,10 +828,18 @@ app.post('/api/invoice', async (req, res) => {
       console.log('Created new customer:', customer.id);
     }
 
+    // Parse amount to ensure it's a number and convert to cents
+    const amountInCents = Math.round(parseFloat(amount) * 100);
+    console.log('Amount calculation:', {
+      originalAmount: amount,
+      parsedAmount: parseFloat(amount),
+      amountInCents: amountInCents
+    });
+
     // Create invoice item
     const invoiceItem = await stripe.invoiceItems.create({
       customer: customer.id,
-      amount: Math.round(amount * 100), // Convert to cents
+      amount: amountInCents, // Convert to cents
       currency: 'usd',
       description: description
     });
