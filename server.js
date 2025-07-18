@@ -519,6 +519,7 @@ app.delete('/api/sessions/:id', async (req, res) => {
     // Get user from authorization header
     const authHeader = req.headers.authorization;
     let userUid = null;
+    let isAdmin = false;
 
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
@@ -526,6 +527,7 @@ app.delete('/api/sessions/:id', async (req, res) => {
         if (isFirebaseInitialized) {
           const decodedToken = await admin.auth().verifyIdToken(token);
           userUid = decodedToken.uid;
+          isAdmin = isAdminUser(decodedToken.email);
         }
       } catch (error) {
         console.error('Token verification failed:', error);
@@ -538,16 +540,13 @@ app.delete('/api/sessions/:id', async (req, res) => {
       userUid = 'fallback-user';
     }
 
-    console.log('Deleting session for user:', userUid);
+    console.log('Deleting session for user:', userUid, 'isAdmin:', isAdmin);
 
     const id = req.params.id;
     const intId = parseInt(id);
     let result;
 
     try {
-      // Use PostgreSQL for deletion (primary storage)
-      let query, values;
-      
       // Check if this is a numeric ID (PostgreSQL) or string ID (Firestore)
       const isNumericId = !isNaN(parseInt(id));
       
@@ -555,11 +554,17 @@ app.delete('/api/sessions/:id', async (req, res) => {
         // PostgreSQL deletion
         console.log('Deleting PostgreSQL session:', intId, 'for user:', userUid);
         
-        // In fallback mode, allow deletion of sessions owned by fallback-user
-        // Admin users can delete any session
-        if (userUid === 'fallback-user') {
-          query = 'DELETE FROM sessions WHERE id = $1 AND created_by = $2 RETURNING *';
-          values = [intId, 'fallback-user'];
+        let query, values;
+        
+        if (userUid === 'fallback-user' || isAdmin) {
+          // Fallback mode or admin users can delete any session
+          if (isAdmin) {
+            query = 'DELETE FROM sessions WHERE id = $1 RETURNING *';
+            values = [intId];
+          } else {
+            query = 'DELETE FROM sessions WHERE id = $1 AND created_by = $2 RETURNING *';
+            values = [intId, 'fallback-user'];
+          }
         } else {
           // Regular authenticated users can only delete their own sessions
           query = 'DELETE FROM sessions WHERE id = $1 AND created_by = $2 RETURNING *';
@@ -581,6 +586,22 @@ app.delete('/api/sessions/:id', async (req, res) => {
         
         if (firestore) {
           try {
+            // For Firestore, we need to check ownership unless user is admin
+            if (!isAdmin) {
+              // Get the document first to check ownership
+              const sessionRef = firestore.collection('sessions').doc(id);
+              const sessionDoc = await sessionRef.get();
+              
+              if (!sessionDoc.exists) {
+                return res.status(404).json({ error: 'Session not found' });
+              }
+              
+              const sessionData = sessionDoc.data();
+              if (sessionData.created_by !== userUid && sessionData.createdBy !== userUid) {
+                return res.status(403).json({ error: 'Unauthorized to delete this session' });
+              }
+            }
+            
             await deleteSessionFromFirestore(id);
             console.log('Session deleted successfully from Firestore');
             result = { success: true };

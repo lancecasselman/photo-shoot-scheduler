@@ -340,6 +340,9 @@ async function adminDeleteSession(sessionId) {
     }
     
     try {
+        console.log('Admin deleting session:', sessionId);
+        
+        // Try to delete the session - the server will handle both Firestore and PostgreSQL
         await apiCall(`/api/sessions/${sessionId}`, {
             method: 'DELETE'
         });
@@ -347,8 +350,11 @@ async function adminDeleteSession(sessionId) {
         // Remove from admin sessions array
         adminSessions = adminSessions.filter(session => session.id !== sessionId);
         
-        // Remove from regular sessions array if it exists there
-        sessions = sessions.filter(session => session.id !== sessionId);
+        // Remove from regular sessions array if it exists there (convert IDs for comparison)
+        sessions = sessions.filter(session => {
+            // Handle both string and numeric IDs
+            return session.id.toString() !== sessionId.toString();
+        });
         
         // Re-render both views
         renderSessions();
@@ -357,7 +363,7 @@ async function adminDeleteSession(sessionId) {
         showMessage('Session deleted successfully!', 'success');
     } catch (error) {
         console.error('Error deleting session:', error);
-        showMessage('Error deleting session. Please try again.', 'error');
+        showMessage(`Error deleting session: ${error.message}`, 'error');
     }
 }
 
