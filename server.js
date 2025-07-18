@@ -636,22 +636,41 @@ app.post('/api/users', async (req, res) => {
   try {
     console.log('Creating/updating user:', req.body);
     
-    const query = `
-      INSERT INTO users (id, email, display_name)
-      VALUES ($1, $2, $3)
-      ON CONFLICT (id) DO UPDATE SET
-        email = EXCLUDED.email,
-        display_name = EXCLUDED.display_name,
+    // First try to update existing user by email
+    const updateQuery = `
+      UPDATE users SET 
+        id = $1,
+        display_name = $3,
         updated_at = CURRENT_TIMESTAMP
+      WHERE email = $2
       RETURNING *
     `;
-    const values = [req.body.id, req.body.email, req.body.displayName];
     
-    console.log('Query values:', values);
+    const updateValues = [req.body.id, req.body.email, req.body.displayName];
+    console.log('Trying update with values:', updateValues);
     
-    const { rows } = await pool.query(query, values);
-    console.log('User created/updated successfully:', rows[0]);
-    res.json(rows[0]);
+    const updateResult = await pool.query(updateQuery, updateValues);
+    
+    if (updateResult.rows.length > 0) {
+      console.log('User updated successfully:', updateResult.rows[0]);
+      res.json(updateResult.rows[0]);
+      return;
+    }
+    
+    // If no existing user found, create new one
+    const insertQuery = `
+      INSERT INTO users (id, email, display_name)
+      VALUES ($1, $2, $3)
+      RETURNING *
+    `;
+    
+    const insertValues = [req.body.id, req.body.email, req.body.displayName];
+    console.log('Creating new user with values:', insertValues);
+    
+    const insertResult = await pool.query(insertQuery, insertValues);
+    console.log('User created successfully:', insertResult.rows[0]);
+    res.json(insertResult.rows[0]);
+    
   } catch (error) {
     console.error('User creation error:', error);
     console.error('Error details:', {
