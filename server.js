@@ -465,19 +465,65 @@ app.put('/api/sessions/:id', async (req, res) => {
     const id = req.params.id;
     let result;
 
-    if (firestore) {
+    if (firestore && !isNaN(parseInt(id)) === false) {
+      // Firestore update (string IDs)
       await updateSessionInFirestore(id, req.body);
       result = { id, ...req.body };
     } else {
-      // Fallback to PostgreSQL
+      // PostgreSQL update (numeric IDs)
       const intId = parseInt(id);
-      const updates = Object.keys(req.body).map((key, index) => `${key} = $${index + 1}`).join(', ');
-      const query = `UPDATE sessions SET ${updates}, updated_at = CURRENT_TIMESTAMP WHERE id = $${Object.keys(req.body).length + 1} AND created_by = $${Object.keys(req.body).length + 2} RETURNING *`;
-      const values = [...Object.values(req.body), intId, userInfo.uid];
-      const { rows } = await pool.query(query, values);
+      
+      // Map frontend field names to database column names
+      const fieldMapping = {
+        'sessionType': 'session_type',
+        'clientName': 'client_name',
+        'dateTime': 'date_time',
+        'location': 'location',
+        'phoneNumber': 'phone_number',
+        'email': 'email',
+        'price': 'price',
+        'duration': 'duration',
+        'notes': 'notes',
+        'contractSigned': 'contract_signed',
+        'paid': 'paid',
+        'edited': 'edited',
+        'delivered': 'delivered'
+      };
+      
+      // Build update fields and values
+      const updateFields = [];
+      const updateValues = [];
+      let paramIndex = 1;
+      
+      for (const [frontendField, value] of Object.entries(req.body)) {
+        const dbField = fieldMapping[frontendField] || frontendField;
+        updateFields.push(`${dbField} = $${paramIndex}`);
+        updateValues.push(value);
+        paramIndex++;
+      }
+      
+      if (updateFields.length === 0) {
+        return res.status(400).json({ error: 'No valid fields to update' });
+      }
+      
+      const query = `
+        UPDATE sessions 
+        SET ${updateFields.join(', ')}, updated_at = CURRENT_TIMESTAMP 
+        WHERE id = $${paramIndex} AND created_by = $${paramIndex + 1} 
+        RETURNING *
+      `;
+      
+      updateValues.push(intId, userInfo.uid);
+      
+      console.log('Update query:', query);
+      console.log('Update values:', updateValues);
+      
+      const { rows } = await pool.query(query, updateValues);
+      
       if (rows.length === 0) {
         return res.status(404).json({ error: 'Session not found or unauthorized' });
       }
+      
       result = rows[0];
     }
 
