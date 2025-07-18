@@ -856,6 +856,21 @@ app.post('/api/admin/test-gallery-notifications', async (req, res) => {
       }
     }
 
+    // Send test notification
+    res.json({
+      success: true,
+      message: 'Test gallery notifications endpoint'
+    });
+
+  } catch (error) {
+    console.error('Error testing gallery notifications:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: error.message
+    });
+  }
+});
+
 // Serve index.html for all non-API routes (SPA support)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
