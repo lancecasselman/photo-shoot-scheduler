@@ -174,7 +174,7 @@ async function handleFormSubmit(event) {
     const statusData = await statusResponse.json();
     
     if (statusData.authenticationEnabled && !window.currentUser) {
-        showMessage('Please log in to add sessions.', 'error');
+        showMessage(editingSessionId ? 'Please log in to edit sessions.' : 'Please log in to add sessions.', 'error');
         return;
     }
     
@@ -201,33 +201,68 @@ async function handleFormSubmit(event) {
         console.log('Form data being sent:', sessionData);
         console.log('DateTime from form:', sessionData.dateTime);
         console.log('Phone number from form:', sessionData.phoneNumber);
+        console.log('Edit mode:', editingSessionId ? `Editing session ${editingSessionId}` : 'Adding new session');
         
         // Validate required fields
         if (!validateSessionData(sessionData)) {
             return;
         }
         
-        // Save session to database
-        const savedSession = await apiCall('/api/sessions', {
-            method: 'POST',
-            body: JSON.stringify(sessionData)
-        });
+        if (editingSessionId) {
+            // Update existing session
+            const updatedSession = await updateSession(editingSessionId, sessionData);
+            
+            // Reset edit mode
+            editingSessionId = null;
+            
+            // Reset form UI
+            const formSection = document.querySelector('.form-section h2');
+            formSection.textContent = 'Add New Session';
+            
+            const submitBtn = document.querySelector('#sessionForm button[type="submit"]');
+            submitBtn.textContent = 'Add Session';
+            submitBtn.className = 'btn btn-primary';
+            
+            // Remove cancel button
+            const cancelBtn = document.getElementById('cancelEdit');
+            if (cancelBtn) {
+                cancelBtn.remove();
+            }
+            
+            // Clear form
+            sessionForm.reset();
+            
+            // Show success message
+            showMessage('Session updated successfully!', 'success');
+            
+        } else {
+            // Save new session to database
+            const savedSession = await apiCall('/api/sessions', {
+                method: 'POST',
+                body: JSON.stringify(sessionData)
+            });
+            
+            // Transform and add to local sessions array
+            sessions.push(transformSessionData(savedSession));
+            
+            // Clear form
+            sessionForm.reset();
+            
+            // Re-render sessions
+            renderSessions();
+            
+            // Show success message
+            showMessage('Session added successfully!', 'success');
+        }
         
-        // Transform and add to local sessions array
-        sessions.push(transformSessionData(savedSession));
-        
-        // Clear form
-        sessionForm.reset();
-        
-        // Re-render sessions
-        renderSessions();
-        
-        // Show success message
-        showMessage('Session added successfully!', 'success');
+        // Reset minimum datetime
+        const now = new Date();
+        const formattedNow = now.toISOString().slice(0, 16);
+        document.getElementById('dateTime').min = formattedNow;
         
     } catch (error) {
-        console.error('Error adding session:', error);
-        showMessage('Error adding session. Please try again.', 'error');
+        console.error(editingSessionId ? 'Error updating session:' : 'Error adding session:', error);
+        showMessage(editingSessionId ? 'Error updating session. Please try again.' : 'Error adding session. Please try again.', 'error');
     }
 }
 
@@ -339,6 +374,11 @@ function createSessionCard(session) {
     const actions = document.createElement('div');
     actions.className = 'session-actions';
     
+    const editBtn = document.createElement('button');
+    editBtn.className = 'btn btn-primary';
+    editBtn.textContent = '✏️ Edit';
+    editBtn.onclick = () => editSession(session.id);
+    
     const calendarBtn = document.createElement('button');
     calendarBtn.className = 'btn btn-success';
     calendarBtn.textContent = '📅 Add to Calendar';
@@ -349,6 +389,7 @@ function createSessionCard(session) {
     deleteBtn.textContent = '🗑️ Delete';
     deleteBtn.onclick = () => deleteSession(session.id);
     
+    actions.appendChild(editBtn);
     actions.appendChild(calendarBtn);
     actions.appendChild(deleteBtn);
     
@@ -721,6 +762,118 @@ async function updateSessionStatus(sessionId, field, checked) {
     } catch (error) {
         console.error('Error updating session:', error);
         showMessage('Error updating session. Please try again.', 'error');
+    }
+}
+
+// Edit session functionality
+let editingSessionId = null;
+
+function editSession(sessionId) {
+    const session = sessions.find(s => s.id === sessionId);
+    if (!session) {
+        showMessage('Session not found.', 'error');
+        return;
+    }
+    
+    // Set editing mode
+    editingSessionId = sessionId;
+    
+    // Populate form with session data
+    document.getElementById('sessionType').value = session.sessionType;
+    document.getElementById('clientName').value = session.clientName;
+    document.getElementById('dateTime').value = formatDateTimeForInput(session.dateTime);
+    document.getElementById('location').value = session.location;
+    document.getElementById('phoneNumber').value = session.phoneNumber;
+    document.getElementById('email').value = session.email;
+    document.getElementById('price').value = session.price;
+    document.getElementById('duration').value = session.duration;
+    document.getElementById('notes').value = session.notes || '';
+    document.getElementById('contractSigned').checked = session.contractSigned;
+    document.getElementById('paid').checked = session.paid;
+    document.getElementById('edited').checked = session.edited;
+    document.getElementById('delivered').checked = session.delivered;
+    
+    // Update form UI for editing
+    const formSection = document.querySelector('.form-section h2');
+    formSection.textContent = 'Edit Session';
+    
+    const submitBtn = document.querySelector('#sessionForm button[type="submit"]');
+    submitBtn.textContent = 'Update Session';
+    submitBtn.className = 'btn btn-warning';
+    
+    // Add cancel button
+    if (!document.getElementById('cancelEdit')) {
+        const cancelBtn = document.createElement('button');
+        cancelBtn.type = 'button';
+        cancelBtn.id = 'cancelEdit';
+        cancelBtn.className = 'btn btn-secondary';
+        cancelBtn.textContent = 'Cancel Edit';
+        cancelBtn.onclick = cancelEdit;
+        submitBtn.parentNode.insertBefore(cancelBtn, submitBtn.nextSibling);
+    }
+    
+    // Scroll to form
+    document.querySelector('.form-section').scrollIntoView({ behavior: 'smooth' });
+    
+    showMessage('Editing session. Make your changes and click "Update Session".', 'info');
+}
+
+function cancelEdit() {
+    editingSessionId = null;
+    
+    // Reset form UI
+    const formSection = document.querySelector('.form-section h2');
+    formSection.textContent = 'Add New Session';
+    
+    const submitBtn = document.querySelector('#sessionForm button[type="submit"]');
+    submitBtn.textContent = 'Add Session';
+    submitBtn.className = 'btn btn-primary';
+    
+    // Remove cancel button
+    const cancelBtn = document.getElementById('cancelEdit');
+    if (cancelBtn) {
+        cancelBtn.remove();
+    }
+    
+    // Reset form
+    resetForm();
+    
+    showMessage('Edit cancelled.', 'info');
+}
+
+function formatDateTimeForInput(dateTimeString) {
+    const date = new Date(dateTimeString);
+    // Format as YYYY-MM-DDTHH:MM for datetime-local input
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+// Update session via API
+async function updateSession(sessionId, sessionData) {
+    try {
+        const updatedSession = await apiCall(`/api/sessions/${sessionId}`, {
+            method: 'PUT',
+            body: JSON.stringify(sessionData)
+        });
+        
+        // Update local session object
+        const sessionIndex = sessions.findIndex(s => s.id === sessionId);
+        if (sessionIndex !== -1) {
+            sessions[sessionIndex] = transformSessionData(updatedSession);
+        }
+        
+        // Re-render sessions
+        renderSessions();
+        
+        return updatedSession;
+    } catch (error) {
+        console.error('Error updating session:', error);
+        throw error;
     }
 }
 

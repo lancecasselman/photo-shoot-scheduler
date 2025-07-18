@@ -477,3 +477,41 @@ header p {
         gap: 8px;
     }
 }
+
+/* Edit mode styles */
+.btn-warning {
+    background-color: #ff9800;
+    color: white;
+    border: 1px solid #f57c00;
+}
+
+.btn-warning:hover {
+    background-color: #f57c00;
+    border-color: #ef6c00;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+    border: 1px solid #5a6268;
+    margin-left: 10px;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+    border-color: #545b62;
+}
+
+/* Form editing state */
+.form-section.editing {
+    border: 2px solid #ff9800;
+    background-color: #fff8e1;
+}
+
+/* Info message styling */
+.message.info {
+    background-color: #e3f2fd;
+    color: #1976d2;
+    border: 1px solid #90caf9;
+}
+}
