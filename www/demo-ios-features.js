@@ -149,7 +149,7 @@ class iOSFeaturesDemo {
         console.log('Initializing Capacitor features...');
         
         // Check if we're in a Capacitor environment
-        if (typeof Capacitor !== 'undefined') {
+        if (typeof window.Capacitor !== 'undefined') {
             console.log('Capacitor environment detected');
             this.showCapacitorStatus(true);
             await this.setupNativeFeatures();
@@ -166,8 +166,8 @@ class iOSFeaturesDemo {
         statusDiv.innerHTML = `
             <h3>🚀 Platform Status</h3>
             <p><strong>Environment:</strong> ${isNative ? 'Native iOS App' : 'Web App'}</p>
-            <p><strong>Capacitor:</strong> ${typeof Capacitor !== 'undefined' ? 'Available' : 'Not Available'}</p>
-            <p><strong>Platform:</strong> ${typeof Capacitor !== 'undefined' ? Capacitor.getPlatform() : 'Web'}</p>
+            <p><strong>Capacitor:</strong> ${typeof window.Capacitor !== 'undefined' ? 'Available' : 'Not Available'}</p>
+            <p><strong>Platform:</strong> ${typeof window.Capacitor !== 'undefined' ? window.Capacitor.getPlatform() : 'Web'}</p>
             <p><strong>Native Features:</strong> ${isNative ? 'Fully Available' : 'Web Fallbacks'}</p>
         `;
         
