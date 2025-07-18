@@ -237,6 +237,9 @@ async function handleFormSubmit(event) {
             // Clear form
             sessionForm.reset();
 
+            // Reload all sessions from database to ensure we get the current user's data
+            await loadSessions();
+
             // Show success message
             showMessage('Session updated successfully!', 'success');
 
@@ -247,14 +250,11 @@ async function handleFormSubmit(event) {
                 body: JSON.stringify(sessionData)
             });
 
-            // Transform and add to local sessions array
-            sessions.push(transformSessionData(savedSession));
-
             // Clear form
             sessionForm.reset();
 
-            // Re-render sessions
-            renderSessions();
+            // Reload all sessions from database to ensure we get the current user's data
+            await loadSessions();
 
             // Show success message
             showMessage('Session added successfully!', 'success');
