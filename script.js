@@ -1208,7 +1208,6 @@ async function updateSessionStatus(sessionId, field, checked) {
 }
 
 // Edit session functionality
-let editingSessionId = null;
 
 function editSession(sessionId) {
     const session = sessions.find(s => s.id === sessionId);
