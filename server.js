@@ -836,24 +836,57 @@ app.post('/api/invoice', async (req, res) => {
       amountInCents: amountInCents
     });
 
-    // Create invoice item
-    const invoiceItem = await stripe.invoiceItems.create({
-      customer: customer.id,
-      amount: amountInCents, // Convert to cents
-      currency: 'usd',
-      description: description
-    });
-
-    // Create draft invoice
+    // Create invoice with line items directly
     const invoice = await stripe.invoices.create({
       customer: customer.id,
       collection_method: 'send_invoice',
       days_until_due: 30,
-      description: `Photography Services - ${description}`
+      description: `Photography Services - ${description}`,
+      auto_advance: false // Don't automatically finalize the invoice
+    });
+
+    console.log('Draft invoice created:', {
+      id: invoice.id,
+      amount_due: invoice.amount_due,
+      total: invoice.total,
+      status: invoice.status
+    });
+
+    // Add line item to the invoice
+    const invoiceItem = await stripe.invoiceItems.create({
+      customer: customer.id,
+      invoice: invoice.id,
+      amount: amountInCents,
+      currency: 'usd',
+      description: description
+    });
+
+    console.log('Invoice item created:', {
+      id: invoiceItem.id,
+      amount: invoiceItem.amount,
+      currency: invoiceItem.currency,
+      description: invoiceItem.description
+    });
+
+    // Finalize the invoice
+    const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
+
+    console.log('Invoice finalized:', {
+      id: finalizedInvoice.id,
+      amount_due: finalizedInvoice.amount_due,
+      total: finalizedInvoice.total,
+      status: finalizedInvoice.status
     });
 
     // Send the invoice
     const sentInvoice = await stripe.invoices.sendInvoice(invoice.id);
+
+    console.log('Invoice sent:', {
+      id: sentInvoice.id,
+      amount_due: sentInvoice.amount_due,
+      total: sentInvoice.total,
+      status: sentInvoice.status
+    });
 
     res.json({
       success: true,
