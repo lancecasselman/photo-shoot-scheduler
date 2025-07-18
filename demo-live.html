@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Live iOS Features Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+            padding-top: env(safe-area-inset-top, 20px);
+            padding-bottom: env(safe-area-inset-bottom, 20px);
+        }
+        
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .demo-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .demo-header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .demo-header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-10px);
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 16px 48px rgba(0,0,0,0.2);
+        }
+        
+        .feature-icon {
+            font-size: 3em;
+            margin-bottom: 20px;
+            display: block;
+        }
+        
+        .feature-title {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .feature-description {
+            opacity: 0.9;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        .demo-button {
+            background: linear-gradient(45deg, #ff6b6b, #ffa500);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin: 10px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .demo-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+        
+        .demo-button:active {
+            transform: translateY(0);
+        }
+        
+        .result-area {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 15px;
+            min-height: 60px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .result-success {
+            background: rgba(76, 175, 80, 0.3);
+            border-color: rgba(76, 175, 80, 0.5);
+        }
+        
+        .result-error {
+            background: rgba(244, 67, 54, 0.3);
+            border-color: rgba(244, 67, 54, 0.5);
+        }
+        
+        .result-info {
+            background: rgba(33, 150, 243, 0.3);
+            border-color: rgba(33, 150, 243, 0.5);
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-online {
+            background: #4CAF50;
+        }
+        
+        .status-offline {
+            background: #f44336;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .platform-status {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .platform-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            margin: 5px;
+            font-size: 14px;
+        }
+        
+        .photo-preview {
+            max-width: 200px;
+            border-radius: 12px;
+            margin-top: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .contact-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .contact-btn {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 25px;
+            padding: 10px 15px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .contact-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        
+        .real-time-display {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 15px;
+            font-size: 14px;
+            z-index: 1000;
+            max-width: 300px;
+        }
+        
+        @media (max-width: 768px) {
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .real-time-display {
+                position: relative;
+                top: 0;
+                right: 0;
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="demo-header">
+            <h1>📱 iOS Features Live Demo</h1>
+            <p>Experience native iOS capabilities in your photography app</p>
+        </div>
+        
+        <div id="platform-status" class="platform-status">
+            <div class="platform-badge">🚀 Loading platform info...</div>
+        </div>
+        
+        <div id="real-time-display" class="real-time-display">
+            <div>📡 Real-time Status</div>
+            <div id="network-indicator">Network: <span class="status-indicator status-online"></span>Checking...</div>
+            <div id="app-state-indicator">App State: Active</div>
+            <div id="last-update">Last update: --:--</div>
+        </div>
+        
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">📸</div>
+                <div class="feature-title">Camera Integration</div>
+                <div class="feature-description">
+                    Take professional client photos directly within your app using the device's native camera.
+                </div>
+                <button class="demo-button" onclick="testCamera()">📷 Test Camera</button>
+                <div id="camera-result" class="result-area">
+                    Ready to capture photos...
+                </div>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">📞</div>
+                <div class="feature-title">Contact Actions</div>
+                <div class="feature-description">
+                    Instantly call, text, or email clients with native iOS contact integration.
+                </div>
+                <button class="demo-button" onclick="testContacts()">📱 Test Contacts</button>
+                <div id="contact-result" class="result-area">
+                    Contact actions ready...
+                </div>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">🔔</div>
+                <div class="feature-title">Push Notifications</div>
+                <div class="feature-description">
+                    Send session reminders and alerts directly to your clients' devices.
+                </div>
+                <button class="demo-button" onclick="testNotifications()">🔔 Test Notifications</button>
+                <div id="notification-result" class="result-area">
+                    Notification system ready...
+                </div>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">📱</div>
+                <div class="feature-title">Device Information</div>
+                <div class="feature-description">
+                    Access detailed device information for analytics and feature optimization.
+                </div>
+                <button class="demo-button" onclick="testDeviceInfo()">📊 Get Device Info</button>
+                <div id="device-result" class="result-area">
+                    Device info ready...
+                </div>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">🌐</div>
+                <div class="feature-title">Network Monitoring</div>
+                <div class="feature-description">
+                    Real-time network status monitoring with automatic sync when connection is restored.
+                </div>
+                <button class="demo-button" onclick="testNetwork()">🔍 Monitor Network</button>
+                <div id="network-result" class="result-area">
+                    Network monitoring ready...
+                </div>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <div class="feature-title">App State Management</div>
+                <div class="feature-description">
+                    Automatically save and restore app state when switching between apps.
+                </div>
+                <button class="demo-button" onclick="testAppState()">⚡ Monitor App State</button>
+                <div id="app-state-result" class="result-area">
+                    App state monitoring ready...
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Capacitor Core Scripts -->
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@capacitor/core@latest/dist/capacitor.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@capacitor/app@latest/dist/plugin.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@capacitor/camera@latest/dist/plugin.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@capacitor/device@latest/dist/plugin.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@capacitor/keyboard@latest/dist/plugin.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@capacitor/network@latest/dist/plugin.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@capacitor/push-notifications@latest/dist/plugin.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@capacitor/splash-screen@latest/dist/plugin.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@capacitor/status-bar@latest/dist/plugin.js"></script>
+    
+    <script>
+        // Initialize demo
+        let isNative = false;
+        let startTime = Date.now();
+        
+        // Update real-time display
+        function updateDisplay() {
+            const now = new Date();
+            document.getElementById('last-update').textContent = `Last update: ${now.toLocaleTimeString()}`;
+        }
+        
+        // Initialize platform detection
+        async function initializePlatform() {
+            const platformStatus = document.getElementById('platform-status');
+            
+            try {
+                // Check if Capacitor is available
+                if (typeof Capacitor !== 'undefined') {
+                    isNative = Capacitor.isNativePlatform();
+                    const platform = Capacitor.getPlatform();
+                    
+                    platformStatus.innerHTML = `
+                        <div class="platform-badge">🚀 Platform: ${platform}</div>
+                        <div class="platform-badge">📱 Native: ${isNative ? 'Yes' : 'No'}</div>
+                        <div class="platform-badge">⚡ Capacitor: Available</div>
+                    `;
+                } else {
+                    platformStatus.innerHTML = `
+                        <div class="platform-badge">🌐 Platform: Web</div>
+                        <div class="platform-badge">📱 Native: No</div>
+                        <div class="platform-badge">⚡ Capacitor: Not Available</div>
+                    `;
+                }
+            } catch (error) {
+                platformStatus.innerHTML = `
+                    <div class="platform-badge">❌ Error: ${error.message}</div>
+                `;
+            }
+        }
+        
+        // Test camera functionality
+        async function testCamera() {
+            const result = document.getElementById('camera-result');
+            result.className = 'result-area';
+            result.innerHTML = '📷 Opening camera...';
+            
+            try {
+                if (isNative && typeof Camera !== 'undefined') {
+                    const image = await Camera.getPhoto({
+                        quality: 90,
+                        allowEditing: true,
+                        resultType: CameraResultType.Uri,
+                        source: CameraSource.Camera,
+                    });
+                    
+                    result.className = 'result-area result-success';
+                    result.innerHTML = `
+                        <div>✅ Photo captured successfully!</div>
+                        <img src="${image.webPath}" class="photo-preview" alt="Captured photo">
+                    `;
+                } else {
+                    result.className = 'result-area result-info';
+                    result.innerHTML = `
+                        <div>ℹ️ Camera demo (Web environment)</div>
+                        <div>In native iOS app, this would open the device camera</div>
+                    `;
+                }
+            } catch (error) {
+                result.className = 'result-area result-error';
+                result.innerHTML = `❌ Camera error: ${error.message}`;
+            }
+        }
+        
+        // Test contact actions
+        function testContacts() {
+            const result = document.getElementById('contact-result');
+            result.className = 'result-area result-success';
+            result.innerHTML = `
+                <div>📞 Contact actions ready!</div>
+                <div class="contact-actions">
+                    <button class="contact-btn" onclick="window.open('tel:+1234567890')">📞 Call</button>
+                    <button class="contact-btn" onclick="window.open('sms:+1234567890')">💬 SMS</button>
+                    <button class="contact-btn" onclick="window.open('mailto:test@example.com')">✉️ Email</button>
+                </div>
+            `;
+        }
+        
+        // Test notifications
+        async function testNotifications() {
+            const result = document.getElementById('notification-result');
+            result.className = 'result-area';
+            result.innerHTML = '🔔 Testing notifications...';
+            
+            try {
+                if (isNative && typeof PushNotifications !== 'undefined') {
+                    const permission = await PushNotifications.requestPermissions();
+                    
+                    if (permission.receive === 'granted') {
+                        result.className = 'result-area result-success';
+                        result.innerHTML = `
+                            <div>✅ Notifications enabled!</div>
+                            <div>Push notification scheduled for 5 seconds</div>
+                        `;
+                        
+                        // Schedule test notification
+                        setTimeout(() => {
+                            PushNotifications.schedule({
+                                notifications: [{
+                                    title: 'Photography Scheduler',
+                                    body: 'Test notification from your app!',
+                                    id: Date.now()
+                                }]
+                            });
+                        }, 5000);
+                    } else {
+                        result.className = 'result-area result-error';
+                        result.innerHTML = `❌ Permission denied: ${permission.receive}`;
+                    }
+                } else {
+                    // Web fallback
+                    const permission = await Notification.requestPermission();
+                    
+                    if (permission === 'granted') {
+                        result.className = 'result-area result-success';
+                        result.innerHTML = `
+                            <div>✅ Web notifications enabled!</div>
+                            <div>Notification scheduled for 5 seconds</div>
+                        `;
+                        
+                        setTimeout(() => {
+                            new Notification('Photography Scheduler', {
+                                body: 'Test notification from your app!',
+                                icon: '/icon-192x192.svg'
+                            });
+                        }, 5000);
+                    } else {
+                        result.className = 'result-area result-error';
+                        result.innerHTML = `❌ Permission: ${permission}`;
+                    }
+                }
+            } catch (error) {
+                result.className = 'result-area result-error';
+                result.innerHTML = `❌ Notification error: ${error.message}`;
+            }
+        }
+        
+        // Test device info
+        async function testDeviceInfo() {
+            const result = document.getElementById('device-result');
+            result.className = 'result-area';
+            result.innerHTML = '📱 Getting device info...';
+            
+            try {
+                if (isNative && typeof Device !== 'undefined') {
+                    const deviceInfo = await Device.getInfo();
+                    
+                    result.className = 'result-area result-success';
+                    result.innerHTML = `
+                        <div>📱 Device Information:</div>
+                        <div><strong>Platform:</strong> ${deviceInfo.platform}</div>
+                        <div><strong>Model:</strong> ${deviceInfo.model}</div>
+                        <div><strong>OS:</strong> ${deviceInfo.osVersion}</div>
+                        <div><strong>App Version:</strong> ${deviceInfo.appVersion}</div>
+                    `;
+                } else {
+                    result.className = 'result-area result-info';
+                    result.innerHTML = `
+                        <div>🌐 Web Environment Info:</div>
+                        <div><strong>Platform:</strong> ${navigator.platform}</div>
+                        <div><strong>User Agent:</strong> ${navigator.userAgent.substring(0, 40)}...</div>
+                        <div><strong>Language:</strong> ${navigator.language}</div>
+                        <div><strong>Online:</strong> ${navigator.onLine}</div>
+                    `;
+                }
+            } catch (error) {
+                result.className = 'result-area result-error';
+                result.innerHTML = `❌ Device info error: ${error.message}`;
+            }
+        }
+        
+        // Test network monitoring
+        async function testNetwork() {
+            const result = document.getElementById('network-result');
+            result.className = 'result-area';
+            result.innerHTML = '🌐 Checking network...';
+            
+            try {
+                if (isNative && typeof Network !== 'undefined') {
+                    const status = await Network.getStatus();
+                    
+                    result.className = `result-area ${status.connected ? 'result-success' : 'result-error'}`;
+                    result.innerHTML = `
+                        <div>🌐 Network Status:</div>
+                        <div><strong>Connected:</strong> ${status.connected}</div>
+                        <div><strong>Type:</strong> ${status.connectionType}</div>
+                        <div><strong>Monitoring:</strong> Real-time updates enabled</div>
+                    `;
+                    
+                    // Set up network monitoring
+                    Network.addListener('networkStatusChange', (status) => {
+                        const indicator = document.getElementById('network-indicator');
+                        const statusClass = status.connected ? 'status-online' : 'status-offline';
+                        indicator.innerHTML = `Network: <span class="status-indicator ${statusClass}"></span>${status.connected ? 'Connected' : 'Disconnected'}`;
+                        updateDisplay();
+                    });
+                } else {
+                    result.className = `result-area ${navigator.onLine ? 'result-success' : 'result-error'}`;
+                    result.innerHTML = `
+                        <div>🌐 Web Network Status:</div>
+                        <div><strong>Online:</strong> ${navigator.onLine}</div>
+                        <div><strong>Connection:</strong> ${navigator.connection?.effectiveType || 'Unknown'}</div>
+                        <div><strong>Monitoring:</strong> Page visibility events</div>
+                    `;
+                }
+            } catch (error) {
+                result.className = 'result-area result-error';
+                result.innerHTML = `❌ Network error: ${error.message}`;
+            }
+        }
+        
+        // Test app state
+        function testAppState() {
+            const result = document.getElementById('app-state-result');
+            result.className = 'result-area result-success';
+            result.innerHTML = `
+                <div>⚡ App State Monitoring Active</div>
+                <div>Try switching to another app and back</div>
+                <div>Current state: Active</div>
+            `;
+            
+            if (isNative && typeof App !== 'undefined') {
+                App.addListener('appStateChange', (state) => {
+                    const indicator = document.getElementById('app-state-indicator');
+                    indicator.textContent = `App State: ${state.isActive ? 'Active' : 'Background'}`;
+                    updateDisplay();
+                    
+                    result.innerHTML = `
+                        <div>⚡ App State Changed!</div>
+                        <div>State: ${state.isActive ? 'Active' : 'Background'}</div>
+                        <div>Time: ${new Date().toLocaleTimeString()}</div>
+                    `;
+                });
+            } else {
+                document.addEventListener('visibilitychange', () => {
+                    const indicator = document.getElementById('app-state-indicator');
+                    indicator.textContent = `App State: ${document.hidden ? 'Hidden' : 'Visible'}`;
+                    updateDisplay();
+                    
+                    result.innerHTML = `
+                        <div>⚡ Page Visibility Changed!</div>
+                        <div>State: ${document.hidden ? 'Hidden' : 'Visible'}</div>
+                        <div>Time: ${new Date().toLocaleTimeString()}</div>
+                    `;
+                });
+            }
+        }
+        
+        // Initialize everything
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initializePlatform();
+            updateDisplay();
+            
+            // Update display every second
+            setInterval(updateDisplay, 1000);
+            
+            // Auto-test network on load
+            setTimeout(testNetwork, 1000);
+        });
+    </script>
+</body>
+</html>

@@ -20,6 +20,10 @@ args = "Photography Scheduler"
 task = "workflow.run"
 args = "iOS Build"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Demo Server"
+
 [[workflows.workflow]]
 name = "Photography Scheduler"
 author = "agent"
@@ -45,6 +49,15 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "node build-capacitor.js"
+
+[[workflows.workflow]]
+name = "Demo Server"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd www && python -m http.server 8080"
+waitForPort = 8080
 
 [[ports]]
 localPort = 5000
