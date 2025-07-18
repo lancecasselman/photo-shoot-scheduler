@@ -1,4 +1,3 @@
-
 const express = require('express');
 const path = require('path');
 const { Pool } = require('pg');
@@ -90,7 +89,7 @@ app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Max-Age', '86400');
-  
+
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
@@ -399,7 +398,6 @@ app.post('/api/sessions', async (req, res) => {
     const sessionWithUser = {
       ...req.body,
       created_by: userUid,
-      user_uid: userUid
     };
 
     console.log('Creating session for user:', userUid);
