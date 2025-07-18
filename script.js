@@ -52,29 +52,30 @@ async function apiCall(url, options = {}) {
 
 // Convert database format to frontend format
 function transformSessionData(dbSession) {
+    // Handle both PostgreSQL (snake_case) and Firestore (camelCase) formats
     return {
         id: dbSession.id,
-        sessionType: dbSession.session_type,
-        clientName: dbSession.client_name,
-        dateTime: dbSession.date_time,
+        sessionType: dbSession.sessionType || dbSession.session_type,
+        clientName: dbSession.clientName || dbSession.client_name,
+        dateTime: dbSession.dateTime || dbSession.date_time,
         location: dbSession.location,
-        phoneNumber: dbSession.phone_number,
+        phoneNumber: dbSession.phoneNumber || dbSession.phone_number,
         email: dbSession.email,
-        price: parseFloat(dbSession.price),
+        price: parseFloat(dbSession.price || 0),
         duration: dbSession.duration,
-        notes: dbSession.notes,
-        contractSigned: dbSession.contract_signed,
-        paid: dbSession.paid,
-        edited: dbSession.edited,
-        delivered: dbSession.delivered,
-        reminderEnabled: dbSession.reminder_enabled,
-        galleryReadyNotified: dbSession.gallery_ready_notified,
-        reminderSent: dbSession.reminder_sent,
-        createdBy: dbSession.created_by,
-        createdAt: dbSession.created_at,
-        updatedAt: dbSession.updated_at,
-        userEmail: dbSession.user_email,
-        userDisplayName: dbSession.user_display_name
+        notes: dbSession.notes || '',
+        contractSigned: dbSession.contractSigned || dbSession.contract_signed || false,
+        paid: dbSession.paid || false,
+        edited: dbSession.edited || false,
+        delivered: dbSession.delivered || false,
+        reminderEnabled: dbSession.reminderEnabled || dbSession.reminder_enabled || false,
+        galleryReadyNotified: dbSession.galleryReadyNotified || dbSession.gallery_ready_notified || false,
+        reminderSent: dbSession.reminderSent || dbSession.reminder_sent || false,
+        createdBy: dbSession.createdBy || dbSession.created_by,
+        createdAt: dbSession.createdAt || dbSession.created_at,
+        updatedAt: dbSession.updatedAt || dbSession.updated_at,
+        userEmail: dbSession.userEmail || dbSession.user_email,
+        userDisplayName: dbSession.userDisplayName || dbSession.user_display_name
     };
 }
 
@@ -978,14 +979,34 @@ async function createInvoice(session) {
     }
 
     try {
+        // Debug: Log the session object to see what data we have
+        console.log('Session object for invoice:', session);
+        
+        // Validate required fields before creating invoice
+        if (!session.email || !session.clientName || session.price === undefined || session.price === null) {
+            console.error('Missing required fields in session:', {
+                email: session.email,
+                clientName: session.clientName,
+                price: session.price,
+                sessionType: session.sessionType
+            });
+            showMessage('Error: Session is missing required information for invoice creation.', 'error');
+            return;
+        }
+
+        // Build description with fallback values
+        const sessionType = session.sessionType || 'Photography';
+        const sessionDate = session.dateTime ? new Date(session.dateTime).toLocaleDateString() : new Date().toLocaleDateString();
+        const description = `${sessionType} Photography Session - ${sessionDate}`;
+
         const invoiceData = {
             customerEmail: session.email,
             clientName: session.clientName,
             amount: session.price,
-            description: `${session.sessionType} Photography Session - ${new Date(session.dateTime).toLocaleDateString()}`
+            description: description
         };
 
-        console.log('Creating invoice:', invoiceData);
+        console.log('Creating invoice with data:', invoiceData);
 
         const response = await apiCall('/api/invoice', {
             method: 'POST',
