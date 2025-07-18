@@ -590,7 +590,16 @@ app.delete('/api/sessions/:id', async (req, res) => {
 
     try {
       // Check if this is a numeric ID (PostgreSQL) or string ID (Firestore)
-      const isNumericId = !isNaN(parseInt(id));
+      // Firestore IDs are typically longer alphanumeric strings
+      const isNumericId = !isNaN(parseInt(id)) && id.length < 10 && /^\d+$/.test(id);
+
+      console.log('ID analysis:', {
+        id,
+        isNumericId,
+        length: id.length,
+        isOnlyDigits: /^\d+$/.test(id),
+        parsedInt: parseInt(id)
+      });
 
       if (isNumericId) {
         // PostgreSQL deletion
