@@ -548,38 +548,59 @@ app.delete('/api/sessions/:id', async (req, res) => {
       // Use PostgreSQL for deletion (primary storage)
       let query, values;
       
-      // In fallback mode, allow deletion of sessions owned by fallback-user
-      // Admin users can delete any session
-      if (userUid === 'fallback-user') {
-        query = 'DELETE FROM sessions WHERE id = $1 AND created_by = $2';
-        values = [intId, 'fallback-user'];
-      } else {
-        // Regular authenticated users can only delete their own sessions
-        query = 'DELETE FROM sessions WHERE id = $1 AND created_by = $2';
-        values = [intId, userUid];
-      }
+      // Check if this is a numeric ID (PostgreSQL) or string ID (Firestore)
+      const isNumericId = !isNaN(parseInt(id));
+      
+      if (isNumericId) {
+        // PostgreSQL deletion
+        console.log('Deleting PostgreSQL session:', intId, 'for user:', userUid);
+        
+        // In fallback mode, allow deletion of sessions owned by fallback-user
+        // Admin users can delete any session
+        if (userUid === 'fallback-user') {
+          query = 'DELETE FROM sessions WHERE id = $1 AND created_by = $2 RETURNING *';
+          values = [intId, 'fallback-user'];
+        } else {
+          // Regular authenticated users can only delete their own sessions
+          query = 'DELETE FROM sessions WHERE id = $1 AND created_by = $2 RETURNING *';
+          values = [intId, userUid];
+        }
 
-      console.log('Executing delete query:', query, values);
-      const deleteResult = await pool.query(query, values);
-      
-      if (deleteResult.rowCount === 0) {
-        return res.status(404).json({ error: 'Session not found or unauthorized' });
-      }
-      
-      // Also try to delete from Firestore if available (cleanup)
-      if (firestore) {
-        try {
-          await deleteSessionFromFirestore(id);
-        } catch (firestoreError) {
-          console.warn('Failed to delete from Firestore:', firestoreError);
-          // Don't fail the request if Firestore delete fails
+        console.log('Executing delete query:', query, values);
+        const deleteResult = await pool.query(query, values);
+        
+        if (deleteResult.rowCount === 0) {
+          return res.status(404).json({ error: 'Session not found or unauthorized' });
+        }
+        
+        console.log('Session deleted successfully from PostgreSQL:', deleteResult.rows[0]);
+        result = { success: true, deleted: deleteResult.rows[0] };
+      } else {
+        // Firestore deletion
+        console.log('Deleting Firestore session:', id);
+        
+        if (firestore) {
+          try {
+            await deleteSessionFromFirestore(id);
+            console.log('Session deleted successfully from Firestore');
+            result = { success: true };
+          } catch (firestoreError) {
+            console.error('Failed to delete from Firestore:', firestoreError);
+            throw new Error('Failed to delete session from Firestore');
+          }
+        } else {
+          throw new Error('Firestore not available for deletion');
         }
       }
       
-      result = { success: true };
     } catch (dbError) {
       console.error('Database deletion error:', dbError);
-      throw new Error('Failed to delete session from database');
+      console.error('Error details:', {
+        message: dbError.message,
+        code: dbError.code,
+        detail: dbError.detail
+      });
+      throw new Error(`Failed to delete session from database: ${dbError.message}`);
     }
 
     res.json(result);
