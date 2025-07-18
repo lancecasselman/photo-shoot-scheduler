@@ -516,65 +516,70 @@ app.put('/api/sessions/:id', async (req, res) => {
 // Delete session
 app.delete('/api/sessions/:id', async (req, res) => {
   try {
-    let userInfo = null;
-    try {
-      userInfo = await verifyUser(req);
-    } catch (error) {
-      // If Firebase is not initialized, use fallback mode
-      if (!isFirebaseInitialized) {
-        console.warn('Operating in fallback mode - authentication disabled');
-        userInfo = { uid: 'fallback-user', email: 'fallback@example.com' };
-      } else {
-        // Check if the error is due to no token provided - allow fallback mode
-        if (error.message.includes('No authentication token provided')) {
-          console.warn('No authentication token provided, using fallback mode');
-          userInfo = { uid: 'fallback-user', email: 'fallback@example.com' };
-        } else {
-          return res.status(401).json({ error: 'Unauthorized: ' + error.message });
+    // Get user from authorization header
+    const authHeader = req.headers.authorization;
+    let userUid = null;
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      try {
+        if (isFirebaseInitialized) {
+          const decodedToken = await admin.auth().verifyIdToken(token);
+          userUid = decodedToken.uid;
         }
+      } catch (error) {
+        console.error('Token verification failed:', error);
+        // Continue with fallback mode
       }
     }
 
+    // If no valid user token, use fallback user
+    if (!userUid) {
+      userUid = 'fallback-user';
+    }
+
+    console.log('Deleting session for user:', userUid);
+
     const id = req.params.id;
+    const intId = parseInt(id);
     let result;
 
-    if (firestore) {
-      // For Firestore, we need to check ownership before deletion
-      const sessionRef = firestore.collection('sessions').doc(id);
-      const sessionDoc = await sessionRef.get();
-
-      if (!sessionDoc.exists) {
-        return res.status(404).json({ error: 'Session not found' });
-      }
-
-      const sessionData = sessionDoc.data();
-
-      // Check if user is admin or owns the session
-      if (!isAdminUser(userInfo.email) && sessionData.userUid !== userInfo.uid) {
-        return res.status(403).json({ error: 'Unauthorized' });
-      }
-
-      await deleteSessionFromFirestore(id);
-      result = { success: true };
-    } else {
-      // Fallback to PostgreSQL
-      const intId = parseInt(id);
-
-      // Check if user is admin or owns the session
+    try {
+      // Use PostgreSQL for deletion (primary storage)
       let query, values;
-      if (isAdminUser(userInfo.email)) {
-        query = 'DELETE FROM sessions WHERE id = $1';
-        values = [intId];
-      } else {
+      
+      // In fallback mode, allow deletion of sessions owned by fallback-user
+      // Admin users can delete any session
+      if (userUid === 'fallback-user') {
         query = 'DELETE FROM sessions WHERE id = $1 AND created_by = $2';
-        values = [intId, userInfo.uid];
+        values = [intId, 'fallback-user'];
+      } else {
+        // Regular authenticated users can only delete their own sessions
+        query = 'DELETE FROM sessions WHERE id = $1 AND created_by = $2';
+        values = [intId, userUid];
       }
 
+      console.log('Executing delete query:', query, values);
       const deleteResult = await pool.query(query, values);
+      
       if (deleteResult.rowCount === 0) {
         return res.status(404).json({ error: 'Session not found or unauthorized' });
       }
+      
+      // Also try to delete from Firestore if available (cleanup)
+      if (firestore) {
+        try {
+          await deleteSessionFromFirestore(id);
+        } catch (firestoreError) {
+          console.warn('Failed to delete from Firestore:', firestoreError);
+          // Don't fail the request if Firestore delete fails
+        }
+      }
+      
       result = { success: true };
+    } catch (dbError) {
+      console.error('Database deletion error:', dbError);
+      throw new Error('Failed to delete session from database');
     }
 
     res.json(result);

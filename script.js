@@ -782,9 +782,19 @@ function createSessionCard(session) {
 
 // Delete session
 async function deleteSession(sessionId) {
-    if (!window.currentUser) {
-        showMessage('Please log in to delete sessions.', 'error');
-        return;
+    // Check if authentication is required
+    try {
+        const statusResponse = await fetch('/api/status');
+        const statusData = await statusResponse.json();
+        
+        // Only require authentication if it's enabled
+        if (statusData.authenticationEnabled && !window.currentUser) {
+            showMessage('Please log in to delete sessions.', 'error');
+            return;
+        }
+    } catch (error) {
+        console.error('Error checking auth status:', error);
+        // Continue with deletion attempt
     }
     
     if (confirm('Are you sure you want to delete this session?')) {
@@ -926,9 +936,19 @@ function showMessage(message, type) {
 
 // Update session status (checkbox change)
 async function updateSessionStatus(sessionId, field, checked) {
-    if (!window.currentUser) {
-        showMessage('Please log in to update sessions.', 'error');
-        return;
+    // Check if authentication is required
+    try {
+        const statusResponse = await fetch('/api/status');
+        const statusData = await statusResponse.json();
+        
+        // Only require authentication if it's enabled
+        if (statusData.authenticationEnabled && !window.currentUser) {
+            showMessage('Please log in to update sessions.', 'error');
+            return;
+        }
+    } catch (error) {
+        console.error('Error checking auth status:', error);
+        // Continue with update attempt
     }
     
     const session = sessions.find(s => s.id === sessionId);
