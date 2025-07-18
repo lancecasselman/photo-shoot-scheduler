@@ -963,7 +963,6 @@ async function sendGalleryNotification(sessionId) {
 }
 
 // Utility function to handle form reset
-```text
 function resetForm() {
     sessionForm.reset();
     // Reset minimum datetime
