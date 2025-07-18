@@ -454,6 +454,11 @@ async function handleFormSubmit(event) {
             createdBy: window.currentUser ? window.currentUser.uid : 'fallback-user'
         };
         
+        // Debug: Log the form data before sending
+        console.log('Form data being sent:', sessionData);
+        console.log('DateTime from form:', sessionData.dateTime);
+        console.log('Phone number from form:', sessionData.phoneNumber);
+        
         // Validate required fields
         if (!validateSessionData(sessionData)) {
             return;

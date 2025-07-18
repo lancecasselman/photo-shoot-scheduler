@@ -249,10 +249,22 @@ async function createSessionInPostgreSQL(sessionData) {
       RETURNING *
     `;
 
+    // Ensure dateTime is in proper format
+    let formattedDateTime = sessionData.dateTime;
+    if (formattedDateTime) {
+      // Convert to ISO string if it's not already
+      const dateObj = new Date(formattedDateTime);
+      if (!isNaN(dateObj.getTime())) {
+        formattedDateTime = dateObj.toISOString();
+      }
+    } else {
+      formattedDateTime = new Date().toISOString();
+    }
+
     const values = [
       sessionData.sessionType || '',
       sessionData.clientName || '',
-      sessionData.dateTime || new Date().toISOString(),
+      formattedDateTime,
       sessionData.location || '',
       sessionData.phoneNumber || '',
       sessionData.email || '',
@@ -266,6 +278,16 @@ async function createSessionInPostgreSQL(sessionData) {
       sessionData.created_by || 'fallback-user'
     ];
 
+    console.log('Creating session with values:', {
+      sessionType: values[0],
+      clientName: values[1],
+      dateTime: values[2],
+      location: values[3],
+      phoneNumber: values[4],
+      email: values[5],
+      price: values[6],
+      duration: values[7]
+    });
 
     const { rows } = await pool.query(query, values);
     console.log('PostgreSQL session created:', rows[0]);
@@ -393,6 +415,11 @@ app.post('/api/sessions', async (req, res) => {
     if (!userUid) {
       userUid = 'fallback-user';
     }
+
+    // Debug: Log the incoming request body
+    console.log('Received session data:', req.body);
+    console.log('DateTime value:', req.body.dateTime);
+    console.log('Phone number value:', req.body.phoneNumber);
 
     // Add user ID to session data
     const sessionWithUser = {
