@@ -582,29 +582,43 @@ app.delete('/api/sessions/:id', async (req, res) => {
         result = { success: true, deleted: deleteResult.rows[0] };
       } else {
         // Firestore deletion
-        console.log('Deleting Firestore session:', id);
+        console.log('Deleting Firestore session:', id, 'isAdmin:', isAdmin);
         
         if (firestore) {
           try {
-            // For Firestore, we need to check ownership unless user is admin
-            if (!isAdmin) {
-              // Get the document first to check ownership
+            // For admin users, skip ownership check and delete directly
+            if (isAdmin) {
+              console.log('Admin user deleting Firestore session without ownership check');
+              await deleteSessionFromFirestore(id);
+              console.log('Admin successfully deleted Firestore session:', id);
+              result = { success: true };
+            } else {
+              // For non-admin users, check ownership
+              console.log('Non-admin user, checking ownership for Firestore session');
               const sessionRef = firestore.collection('sessions').doc(id);
               const sessionDoc = await sessionRef.get();
               
               if (!sessionDoc.exists) {
+                console.log('Firestore session not found:', id);
                 return res.status(404).json({ error: 'Session not found' });
               }
               
               const sessionData = sessionDoc.data();
+              console.log('Session data for ownership check:', { 
+                created_by: sessionData.created_by, 
+                createdBy: sessionData.createdBy, 
+                userUid 
+              });
+              
               if (sessionData.created_by !== userUid && sessionData.createdBy !== userUid) {
+                console.log('User not authorized to delete this session');
                 return res.status(403).json({ error: 'Unauthorized to delete this session' });
               }
+              
+              await deleteSessionFromFirestore(id);
+              console.log('Session deleted successfully from Firestore');
+              result = { success: true };
             }
-            
-            await deleteSessionFromFirestore(id);
-            console.log('Session deleted successfully from Firestore');
-            result = { success: true };
           } catch (firestoreError) {
             console.error('Failed to delete from Firestore:', firestoreError);
             throw new Error('Failed to delete session from Firestore');
