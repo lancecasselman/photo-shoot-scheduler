@@ -395,6 +395,11 @@ function createSessionCard(session) {
     galleryBtn.disabled = session.galleryReadyNotified;
     galleryBtn.onclick = () => sendGalleryNotification(session.id);
 
+    const invoiceBtn = document.createElement('button');
+    invoiceBtn.className = 'btn btn-info';
+    invoiceBtn.textContent = '💰 Send Invoice';
+    invoiceBtn.onclick = () => createInvoice(session);
+
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn btn-danger';
     deleteBtn.textContent = '🗑️ Delete';
@@ -403,6 +408,7 @@ function createSessionCard(session) {
     actions.appendChild(editBtn);
     actions.appendChild(calendarBtn);
     actions.appendChild(galleryBtn);
+    actions.appendChild(invoiceBtn);
     actions.appendChild(deleteBtn);
 
     header.appendChild(headerInfo);
@@ -1428,15 +1434,10 @@ function createSessionCard(session) {
     deleteBtn.textContent = '🗑️ Delete';
     deleteBtn.onclick = () => deleteSession(session.id);
 
-    const invoiceButton = document.createElement('button');
-    invoiceButton.textContent = 'Send Invoice';
-    invoiceButton.className = 'btn btn-primary';
-    invoiceButton.onclick = () => createInvoice(session);
-
     actions.appendChild(editBtn);
     actions.appendChild(calendarBtn);
     actions.appendChild(galleryBtn);
-    actions.appendChild(invoiceButton);
+    actions.appendChild(invoiceBtn);
     actions.appendChild(deleteBtn);
 
     header.appendChild(headerInfo);
