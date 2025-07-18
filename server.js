@@ -244,8 +244,8 @@ async function createSessionInPostgreSQL(sessionData) {
       INSERT INTO sessions (
         session_type, client_name, date_time, location, phone_number, 
         email, price, duration, notes, contract_signed, paid, edited, 
-        delivered, created_by, user_uid
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        delivered, created_by
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
       RETURNING *
     `;
 
