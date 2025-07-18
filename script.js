@@ -4,6 +4,62 @@
 // Global variables
 let sessions = [];
 let sessionIdCounter = 1;
+let deferredPrompt; // For PWA installation
+
+// PWA Installation
+window.addEventListener('beforeinstallprompt', (e) => {
+  console.log('PWA: beforeinstallprompt event fired');
+  e.preventDefault();
+  deferredPrompt = e;
+  showInstallPrompt();
+});
+
+// Service Worker Registration
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(registration => {
+        console.log('PWA: Service Worker registered successfully');
+      })
+      .catch(error => {
+        console.log('PWA: Service Worker registration failed');
+      });
+  });
+}
+
+// Show install prompt
+function showInstallPrompt() {
+  // Create install button
+  const installButton = document.createElement('button');
+  installButton.textContent = '📱 Install App';
+  installButton.className = 'btn btn-primary install-btn';
+  installButton.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  `;
+  
+  installButton.addEventListener('click', async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log('PWA: User choice:', outcome);
+      deferredPrompt = null;
+      installButton.remove();
+    }
+  });
+  
+  document.body.appendChild(installButton);
+  
+  // Auto-hide after 10 seconds
+  setTimeout(() => {
+    if (installButton.parentNode) {
+      installButton.style.opacity = '0.5';
+    }
+  }, 10000);
+}
 
 // API helper functions
 

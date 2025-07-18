@@ -6,6 +6,16 @@ This is a client-side web application for managing photography sessions. It's a 
 
 ## Recent Changes
 
+### iOS App Conversion - Progressive Web App (July 18, 2025)
+- **PWA Implementation**: Converted web app to installable iOS Progressive Web App
+- **App Manifest**: Created manifest.json with iOS-specific configurations
+- **Service Worker**: Implemented offline functionality and app caching
+- **App Icons**: Professional camera icons (192x192 and 512x512 SVG)
+- **iOS Meta Tags**: Apple-specific meta tags for home screen installation
+- **Install Prompt**: Automatic installation prompt for supported browsers
+- **Native-like Experience**: Full-screen app mode without browser UI
+- **Cross-Platform**: Works on both iOS and Android devices
+
 ### Invoice Functionality Fixed (July 18, 2025)
 - **Fixed Stripe API Integration**: Resolved API key truncation issue preventing invoice creation
 - **Complete Invoice System**: Successfully creating customers, invoices, and sending via Stripe

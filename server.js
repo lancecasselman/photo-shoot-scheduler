@@ -109,6 +109,10 @@ app.use(express.static(path.join(__dirname), {
       res.setHeader('Content-Type', 'text/css');
     } else if (path.endsWith('.html')) {
       res.setHeader('Content-Type', 'text/html');
+    } else if (path.endsWith('.json')) {
+      res.setHeader('Content-Type', 'application/json');
+    } else if (path.endsWith('.svg')) {
+      res.setHeader('Content-Type', 'image/svg+xml');
     }
   }
 }));
