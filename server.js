@@ -487,7 +487,8 @@ app.put('/api/sessions/:id', async (req, res) => {
         'contractSigned': 'contract_signed',
         'paid': 'paid',
         'edited': 'edited',
-        'delivered': 'delivered'
+        'delivered': 'delivered',
+        'createdBy': 'created_by'
       };
       
       // Build update fields and values
