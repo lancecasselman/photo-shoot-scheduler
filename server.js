@@ -263,9 +263,9 @@ async function createSessionInPostgreSQL(sessionData) {
       Boolean(sessionData.paid),
       Boolean(sessionData.edited),
       Boolean(sessionData.delivered),
-      sessionData.created_by || 'fallback-user',
-      sessionData.user_uid || sessionData.created_by || 'fallback-user'
+      sessionData.created_by || 'fallback-user'
     ];
+
 
     const { rows } = await pool.query(query, values);
     console.log('PostgreSQL session created:', rows[0]);
