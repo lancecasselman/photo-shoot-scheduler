@@ -6,6 +6,13 @@ This is a client-side web application for managing photography sessions. It's a 
 
 ## Recent Changes
 
+### Invoice Functionality Fixed (July 18, 2025)
+- **Fixed Stripe API Integration**: Resolved API key truncation issue preventing invoice creation
+- **Complete Invoice System**: Successfully creating customers, invoices, and sending via Stripe
+- **Payment Processing**: Full integration with Stripe live API for professional invoicing
+- **Automated Workflows**: Invoice creation includes hosted invoice URLs and PDF generation
+- **Customer Management**: Automatic customer creation and management in Stripe dashboard
+
 ### Critical Server Fix - Session Loading Error (July 17, 2025)
 - **Fixed "Error Loading Sessions" Issue**: Resolved critical server crash caused by Firestore connection problems
 - **Implemented PostgreSQL Fallback**: Switched primary storage from Firestore to PostgreSQL for stability
