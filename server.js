@@ -640,8 +640,18 @@ app.delete('/api/sessions/:id', async (req, res) => {
               userUid 
             });
 
-            // Check if user is the creator of the session
-            const isOwner = sessionData.created_by === userUid || sessionData.createdBy === userUid;
+            // Check if user is the creator of the session (check all possible fields)
+            const isOwner = sessionData.created_by === userUid || 
+                           sessionData.createdBy === userUid || 
+                           sessionData.userUid === userUid;
+            
+            console.log('Ownership check details:', {
+              isOwner,
+              sessionData_created_by: sessionData.created_by,
+              sessionData_createdBy: sessionData.createdBy,
+              sessionData_userUid: sessionData.userUid,
+              currentUserUid: userUid
+            });
             
             if (!isOwner) {
               console.log('User not authorized to delete this session');
