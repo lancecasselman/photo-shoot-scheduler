@@ -634,6 +634,8 @@ app.get('/api/admin/sessions', async (req, res) => {
 // User management endpoints
 app.post('/api/users', async (req, res) => {
   try {
+    console.log('Creating/updating user:', req.body);
+    
     const query = `
       INSERT INTO users (id, email, display_name)
       VALUES ($1, $2, $3)
@@ -644,13 +646,24 @@ app.post('/api/users', async (req, res) => {
       RETURNING *
     `;
     const values = [req.body.id, req.body.email, req.body.displayName];
+    
+    console.log('Query values:', values);
+    
     const { rows } = await pool.query(query, values);
+    console.log('User created/updated successfully:', rows[0]);
     res.json(rows[0]);
   } catch (error) {
-    console.error('API Error:', error);
+    console.error('User creation error:', error);
+    console.error('Error details:', {
+      code: error.code,
+      detail: error.detail,
+      constraint: error.constraint,
+      table: error.table
+    });
     res.status(500).json({ 
       error: 'Internal server error',
-      message: error.message
+      message: error.message,
+      code: error.code
     });
   }
 });
