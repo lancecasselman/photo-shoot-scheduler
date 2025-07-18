@@ -619,7 +619,7 @@ app.delete('/api/sessions/:id', async (req, res) => {
         result = { success: true, deleted: deleteResult.rows[0] };
       } else {
         // Firestore deletion
-        console.log('Deleting Firestore session:', id, 'isAdmin:', isAdmin);
+        console.log('Deleting Firestore session:', id, 'for user:', userUid);
 
         if (firestore) {
           try {
@@ -640,7 +640,10 @@ app.delete('/api/sessions/:id', async (req, res) => {
               userUid 
             });
 
-            if (sessionData.created_by !== userUid && sessionData.createdBy !== userUid) {
+            // Check if user is the creator of the session
+            const isOwner = sessionData.created_by === userUid || sessionData.createdBy === userUid;
+            
+            if (!isOwner) {
               console.log('User not authorized to delete this session');
               return res.status(403).json({ error: 'Unauthorized to delete this session' });
             }
