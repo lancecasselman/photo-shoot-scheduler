@@ -149,6 +149,7 @@ async function createSessionInFirestore(sessionData) {
     const sessionsRef = firestore.collection('sessions');
     const docRef = await sessionsRef.add({
       ...sessionData,
+      userUid: sessionData.created_by, // Add userUid field for querying
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
     });
@@ -167,7 +168,8 @@ async function getSessionsFromFirestore(userUid) {
     }
 
     const sessionsRef = firestore.collection('sessions');
-    const query = sessionsRef.where('userUid', '==', userUid).orderBy('createdAt', 'desc');
+    // Remove orderBy to avoid index requirement, we'll sort in memory
+    const query = sessionsRef.where('userUid', '==', userUid);
 
     const snapshot = await query.get();
     const sessions = [];
@@ -177,6 +179,13 @@ async function getSessionsFromFirestore(userUid) {
         id: doc.id,
         ...doc.data()
       });
+    });
+
+    // Sort in memory by createdAt
+    sessions.sort((a, b) => {
+      const aTime = a.createdAt?.toDate?.() || new Date(a.createdAt || 0);
+      const bTime = b.createdAt?.toDate?.() || new Date(b.createdAt || 0);
+      return bTime - aTime; // Descending order
     });
 
     return sessions;
