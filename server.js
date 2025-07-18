@@ -135,11 +135,7 @@ async function verifyUser(req) {
   }
 }
 
-// Check if user is admin
-function isAdminUser(email) {
-  const adminEmails = ['lancecasselman@icloud.com']; // Add your admin email here
-  return adminEmails.includes(email);
-}
+
 
 // Firestore helper functions
 async function createSessionInFirestore(sessionData) {
@@ -193,25 +189,7 @@ async function getSessionsFromFirestore(userUid) {
   }
 }
 
-async function getAllSessionsFromFirestore() {
-  if (!firestore) {
-    throw new Error('Firestore not initialized');
-  }
 
-  const sessionsRef = firestore.collection('sessions');
-  const snapshot = await sessionsRef.orderBy('createdAt', 'desc').get();
-
-  const sessions = [];
-
-  snapshot.forEach(doc => {
-    sessions.push({
-      id: doc.id,
-      ...doc.data()
-    });
-  });
-
-  return sessions;
-}
 
 async function updateSessionInFirestore(sessionId, updateData) {
   if (!firestore) {
@@ -519,7 +497,6 @@ app.delete('/api/sessions/:id', async (req, res) => {
     // Get user from authorization header
     const authHeader = req.headers.authorization;
     let userUid = null;
-    let isAdmin = false;
 
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
@@ -527,7 +504,6 @@ app.delete('/api/sessions/:id', async (req, res) => {
         if (isFirebaseInitialized) {
           const decodedToken = await admin.auth().verifyIdToken(token);
           userUid = decodedToken.uid;
-          isAdmin = isAdminUser(decodedToken.email);
         }
       } catch (error) {
         console.error('Token verification failed:', error);
@@ -540,7 +516,7 @@ app.delete('/api/sessions/:id', async (req, res) => {
       userUid = 'fallback-user';
     }
 
-    console.log('Deleting session for user:', userUid, 'isAdmin:', isAdmin);
+    console.log('Deleting session for user:', userUid);
 
     const id = req.params.id;
     const intId = parseInt(id);
@@ -556,15 +532,10 @@ app.delete('/api/sessions/:id', async (req, res) => {
         
         let query, values;
         
-        if (userUid === 'fallback-user' || isAdmin) {
-          // Fallback mode or admin users can delete any session
-          if (isAdmin) {
-            query = 'DELETE FROM sessions WHERE id = $1 RETURNING *';
-            values = [intId];
-          } else {
-            query = 'DELETE FROM sessions WHERE id = $1 AND created_by = $2 RETURNING *';
-            values = [intId, 'fallback-user'];
-          }
+        if (userUid === 'fallback-user') {
+          // Fallback mode can delete any session
+          query = 'DELETE FROM sessions WHERE id = $1 AND created_by = $2 RETURNING *';
+          values = [intId, 'fallback-user'];
         } else {
           // Regular authenticated users can only delete their own sessions
           query = 'DELETE FROM sessions WHERE id = $1 AND created_by = $2 RETURNING *';
@@ -586,39 +557,31 @@ app.delete('/api/sessions/:id', async (req, res) => {
         
         if (firestore) {
           try {
-            // For admin users, skip ownership check and delete directly
-            if (isAdmin) {
-              console.log('Admin user deleting Firestore session without ownership check');
-              await deleteSessionFromFirestore(id);
-              console.log('Admin successfully deleted Firestore session:', id);
-              result = { success: true };
-            } else {
-              // For non-admin users, check ownership
-              console.log('Non-admin user, checking ownership for Firestore session');
-              const sessionRef = firestore.collection('sessions').doc(id);
-              const sessionDoc = await sessionRef.get();
-              
-              if (!sessionDoc.exists) {
-                console.log('Firestore session not found:', id);
-                return res.status(404).json({ error: 'Session not found' });
-              }
-              
-              const sessionData = sessionDoc.data();
-              console.log('Session data for ownership check:', { 
-                created_by: sessionData.created_by, 
-                createdBy: sessionData.createdBy, 
-                userUid 
-              });
-              
-              if (sessionData.created_by !== userUid && sessionData.createdBy !== userUid) {
-                console.log('User not authorized to delete this session');
-                return res.status(403).json({ error: 'Unauthorized to delete this session' });
-              }
-              
-              await deleteSessionFromFirestore(id);
-              console.log('Session deleted successfully from Firestore');
-              result = { success: true };
+            // Check ownership for Firestore session
+            console.log('Checking ownership for Firestore session');
+            const sessionRef = firestore.collection('sessions').doc(id);
+            const sessionDoc = await sessionRef.get();
+            
+            if (!sessionDoc.exists) {
+              console.log('Firestore session not found:', id);
+              return res.status(404).json({ error: 'Session not found' });
             }
+            
+            const sessionData = sessionDoc.data();
+            console.log('Session data for ownership check:', { 
+              created_by: sessionData.created_by, 
+              createdBy: sessionData.createdBy, 
+              userUid 
+            });
+            
+            if (sessionData.created_by !== userUid && sessionData.createdBy !== userUid) {
+              console.log('User not authorized to delete this session');
+              return res.status(403).json({ error: 'Unauthorized to delete this session' });
+            }
+            
+            await deleteSessionFromFirestore(id);
+            console.log('Session deleted successfully from Firestore');
+            result = { success: true };
           } catch (firestoreError) {
             console.error('Failed to delete from Firestore:', firestoreError);
             throw new Error('Failed to delete session from Firestore');
@@ -648,44 +611,7 @@ app.delete('/api/sessions/:id', async (req, res) => {
   }
 });
 
-// Admin endpoint to get all sessions
-app.get('/api/admin/sessions', async (req, res) => {
-  try {
-    let userInfo = null;
-    try {
-      userInfo = await verifyUser(req);
-    } catch (error) {
-      return res.status(401).json({ error: 'Unauthorized: ' + error.message });
-    }
 
-    if (!isAdminUser(userInfo.email)) {
-      return res.status(403).json({ error: 'Forbidden: Admin access required' });
-    }
-
-    let result;
-    if (firestore) {
-      result = await getAllSessionsFromFirestore();
-    } else {
-      // Fallback to PostgreSQL
-      const query = `
-        SELECT s.*, u.email as user_email, u.display_name as user_display_name
-        FROM sessions s
-        LEFT JOIN users u ON s.created_by = u.id
-        ORDER BY s.date_time ASC
-      `;
-      const { rows } = await pool.query(query);
-      result = rows;
-    }
-
-    res.json(result);
-  } catch (error) {
-    console.error('API Error:', error);
-    res.status(500).json({ 
-      error: 'Internal server error',
-      message: error.message
-    });
-  }
-});
 
 // User management endpoints
 app.post('/api/users', async (req, res) => {
