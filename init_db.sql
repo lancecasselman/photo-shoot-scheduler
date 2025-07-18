@@ -24,6 +24,9 @@ CREATE TABLE IF NOT EXISTS sessions (
   paid BOOLEAN DEFAULT false NOT NULL,
   edited BOOLEAN DEFAULT false NOT NULL,
   delivered BOOLEAN DEFAULT false NOT NULL,
+  reminder_enabled BOOLEAN DEFAULT false NOT NULL,
+  gallery_ready_notified BOOLEAN DEFAULT false NOT NULL,
+  reminder_sent BOOLEAN DEFAULT false NOT NULL,
   created_by TEXT REFERENCES users(id) NOT NULL,
   created_at TIMESTAMP DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMP DEFAULT NOW() NOT NULL

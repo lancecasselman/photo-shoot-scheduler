@@ -2,6 +2,8 @@ const express = require('express');
 const path = require('path');
 const { Pool } = require('pg');
 const admin = require('firebase-admin');
+const cron = require('node-cron');
+const { sendSessionReminder, sendGalleryReadyNotification } = require('./notifications');
 
 const app = express();
 
@@ -222,8 +224,8 @@ async function createSessionInPostgreSQL(sessionData) {
       INSERT INTO sessions (
         session_type, client_name, date_time, location, phone_number, 
         email, price, duration, notes, contract_signed, paid, edited, 
-        delivered, created_by
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        delivered, reminder_enabled, gallery_ready_notified, created_by
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
       RETURNING *
     `;
 
@@ -253,6 +255,8 @@ async function createSessionInPostgreSQL(sessionData) {
       Boolean(sessionData.paid),
       Boolean(sessionData.edited),
       Boolean(sessionData.delivered),
+      Boolean(sessionData.reminderEnabled),
+      Boolean(sessionData.galleryReadyNotified),
       sessionData.created_by || 'fallback-user'
     ];
 
@@ -488,6 +492,8 @@ app.put('/api/sessions/:id', async (req, res) => {
         'paid': 'paid',
         'edited': 'edited',
         'delivered': 'delivered',
+        'reminderEnabled': 'reminder_enabled',
+        'galleryReadyNotified': 'gallery_ready_notified',
         'createdBy': 'created_by'
       };
       
@@ -747,6 +753,172 @@ app.post('/api/users/email', async (req, res) => {
 // Serve index.html for all non-API routes (SPA support)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// Notification endpoints
+app.post('/api/sessions/:id/send-gallery-notification', async (req, res) => {
+  try {
+    let userInfo = null;
+    try {
+      userInfo = await verifyUser(req);
+    } catch (error) {
+      if (!isFirebaseInitialized) {
+        userInfo = { uid: 'fallback-user', email: 'fallback@example.com' };
+      } else {
+        return res.status(401).json({ error: 'Unauthorized: ' + error.message });
+      }
+    }
+
+    const sessionId = parseInt(req.params.id);
+    
+    // Get session details
+    const sessionQuery = 'SELECT * FROM sessions WHERE id = $1';
+    const { rows } = await pool.query(sessionQuery, [sessionId]);
+    
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+    
+    const session = rows[0];
+    
+    // Send gallery ready notification
+    const results = await sendGalleryReadyNotification(session);
+    
+    // Update session to mark gallery ready notification as sent
+    const updateQuery = 'UPDATE sessions SET gallery_ready_notified = true, updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *';
+    const updateResult = await pool.query(updateQuery, [sessionId]);
+    
+    res.json({
+      success: true,
+      session: updateResult.rows[0],
+      notifications: results
+    });
+    
+  } catch (error) {
+    console.error('Error sending gallery notification:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: error.message
+    });
+  }
+});
+
+// Cron job to send session reminders (runs daily at 9 AM)
+cron.schedule('0 9 * * *', async () => {
+  console.log('Running daily reminder check...');
+  
+  try {
+    // Find sessions that are 24 hours away and need reminders
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    
+    const dayAfterTomorrow = new Date(tomorrow);
+    dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
+    
+    const query = `
+      SELECT * FROM sessions 
+      WHERE reminder_enabled = true 
+      AND reminder_sent = false 
+      AND date_time >= $1 
+      AND date_time < $2
+    `;
+    
+    const { rows } = await pool.query(query, [tomorrow.toISOString(), dayAfterTomorrow.toISOString()]);
+    
+    console.log(`Found ${rows.length} sessions requiring reminders`);
+    
+    for (const session of rows) {
+      try {
+        console.log(`Sending reminder for session ${session.id} - ${session.client_name}`);
+        
+        const results = await sendSessionReminder(session);
+        
+        // Mark reminder as sent
+        await pool.query(
+          'UPDATE sessions SET reminder_sent = true, updated_at = CURRENT_TIMESTAMP WHERE id = $1',
+          [session.id]
+        );
+        
+        console.log(`Reminder sent for session ${session.id}:`, results);
+        
+      } catch (error) {
+        console.error(`Error sending reminder for session ${session.id}:`, error);
+      }
+    }
+    
+  } catch (error) {
+    console.error('Error in reminder cron job:', error);
+  }
+});
+
+// Manual trigger for testing reminders
+app.post('/api/admin/test-reminders', async (req, res) => {
+  try {
+    let userInfo = null;
+    try {
+      userInfo = await verifyUser(req);
+    } catch (error) {
+      if (!isFirebaseInitialized) {
+        userInfo = { uid: 'fallback-user', email: 'fallback@example.com' };
+      } else {
+        return res.status(401).json({ error: 'Unauthorized: ' + error.message });
+      }
+    }
+
+    // Find sessions that need reminders (for testing, check next 7 days)
+    const now = new Date();
+    const nextWeek = new Date();
+    nextWeek.setDate(nextWeek.getDate() + 7);
+    
+    const query = `
+      SELECT * FROM sessions 
+      WHERE reminder_enabled = true 
+      AND reminder_sent = false 
+      AND date_time >= $1 
+      AND date_time <= $2
+      LIMIT 5
+    `;
+    
+    const { rows } = await pool.query(query, [now.toISOString(), nextWeek.toISOString()]);
+    
+    const results = [];
+    
+    for (const session of rows) {
+      try {
+        const reminderResults = await sendSessionReminder(session);
+        
+        // Don't mark as sent for testing
+        // await pool.query('UPDATE sessions SET reminder_sent = true WHERE id = $1', [session.id]);
+        
+        results.push({
+          sessionId: session.id,
+          clientName: session.client_name,
+          results: reminderResults
+        });
+        
+      } catch (error) {
+        results.push({
+          sessionId: session.id,
+          clientName: session.client_name,
+          error: error.message
+        });
+      }
+    }
+    
+    res.json({
+      success: true,
+      message: `Tested reminders for ${results.length} sessions`,
+      results
+    });
+    
+  } catch (error) {
+    console.error('Error testing reminders:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: error.message
+    });
+  }
 });
 
 // Start server

@@ -67,6 +67,9 @@ function transformSessionData(dbSession) {
         paid: dbSession.paid,
         edited: dbSession.edited,
         delivered: dbSession.delivered,
+        reminderEnabled: dbSession.reminder_enabled,
+        galleryReadyNotified: dbSession.gallery_ready_notified,
+        reminderSent: dbSession.reminder_sent,
         createdBy: dbSession.created_by,
         createdAt: dbSession.created_at,
         updatedAt: dbSession.updated_at,
@@ -194,6 +197,8 @@ async function handleFormSubmit(event) {
             paid: formData.has('paid'),
             edited: formData.has('edited'),
             delivered: formData.has('delivered'),
+            reminderEnabled: formData.has('reminderEnabled'),
+            galleryReadyNotified: formData.has('galleryReadyNotified'),
             createdBy: window.currentUser ? window.currentUser.uid : 'fallback-user'
         };
         
@@ -384,6 +389,12 @@ function createSessionCard(session) {
     calendarBtn.textContent = '📅 Add to Calendar';
     calendarBtn.onclick = () => exportToCalendar(session.id);
     
+    const galleryBtn = document.createElement('button');
+    galleryBtn.className = 'btn btn-warning';
+    galleryBtn.textContent = session.galleryReadyNotified ? '✅ Gallery Sent' : '📧 Send Gallery Ready';
+    galleryBtn.disabled = session.galleryReadyNotified;
+    galleryBtn.onclick = () => sendGalleryNotification(session.id);
+    
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn btn-danger';
     deleteBtn.textContent = '🗑️ Delete';
@@ -391,6 +402,7 @@ function createSessionCard(session) {
     
     actions.appendChild(editBtn);
     actions.appendChild(calendarBtn);
+    actions.appendChild(galleryBtn);
     actions.appendChild(deleteBtn);
     
     header.appendChild(headerInfo);
@@ -521,6 +533,21 @@ function createSessionCard(session) {
     statusIndicators.appendChild(createStatusItem('paid', session.paid, 'Payment', session.paid ? 'Received' : 'Pending'));
     statusIndicators.appendChild(createStatusItem('edited', session.edited, 'Editing', session.edited ? 'Complete' : 'Pending'));
     statusIndicators.appendChild(createStatusItem('delivered', session.delivered, 'Delivery', session.delivered ? 'Complete' : 'Pending'));
+    
+    // Add reminder status indicators (read-only)
+    const reminderStatus = document.createElement('div');
+    reminderStatus.className = 'reminder-status';
+    reminderStatus.innerHTML = `
+        <div class="status-item">
+            <span class="status-icon">${session.reminderEnabled ? '🔔' : '🔕'}</span>
+            <span>Reminder: ${session.reminderEnabled ? (session.reminderSent ? 'Sent' : 'Enabled') : 'Disabled'}</span>
+        </div>
+        <div class="status-item">
+            <span class="status-icon">${session.galleryReadyNotified ? '📧' : '📝'}</span>
+            <span>Gallery: ${session.galleryReadyNotified ? 'Notified' : 'Not Sent'}</span>
+        </div>
+    `;
+    statusIndicators.appendChild(reminderStatus);
     
     // Create notes section if notes exist
     if (session.notes) {
@@ -792,6 +819,8 @@ function editSession(sessionId) {
     document.getElementById('paid').checked = session.paid;
     document.getElementById('edited').checked = session.edited;
     document.getElementById('delivered').checked = session.delivered;
+    document.getElementById('reminderEnabled').checked = session.reminderEnabled;
+    document.getElementById('galleryReadyNotified').checked = session.galleryReadyNotified;
     
     // Update form UI for editing
     const formSection = document.querySelector('.form-section h2');
@@ -874,6 +903,56 @@ async function updateSession(sessionId, sessionData) {
     } catch (error) {
         console.error('Error updating session:', error);
         throw error;
+    }
+}
+
+// Send gallery ready notification
+async function sendGalleryNotification(sessionId) {
+    try {
+        const statusResponse = await fetch('/api/status');
+        const statusData = await statusResponse.json();
+        
+        if (statusData.authenticationEnabled && !window.currentUser) {
+            showMessage('Please log in to send notifications.', 'error');
+            return;
+        }
+    } catch (error) {
+        console.error('Error checking auth status:', error);
+    }
+    
+    if (confirm('Send gallery ready notification to the client?')) {
+        try {
+            const result = await apiCall(`/api/sessions/${sessionId}/send-gallery-notification`, {
+                method: 'POST'
+            });
+            
+            // Update local session object
+            const sessionIndex = sessions.findIndex(s => s.id === sessionId);
+            if (sessionIndex !== -1) {
+                sessions[sessionIndex].galleryReadyNotified = true;
+            }
+            
+            // Re-render sessions
+            renderSessions();
+            
+            const notifications = result.notifications;
+            let message = 'Gallery notification sent successfully!';
+            
+            if (notifications.email.sent && notifications.sms.sent) {
+                message += ' (Email and SMS sent)';
+            } else if (notifications.email.sent) {
+                message += ' (Email sent)';
+            } else if (notifications.sms.sent) {
+                message += ' (SMS sent)';
+            } else {
+                message = 'Notification attempted but may have failed. Check server logs.';
+            }
+            
+            showMessage(message, 'success');
+        } catch (error) {
+            console.error('Error sending gallery notification:', error);
+            showMessage('Error sending gallery notification. Please try again.', 'error');
+        }
     }
 }
 

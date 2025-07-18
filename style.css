@@ -217,6 +217,57 @@ header p {
     background: #218838;
 }
 
+.btn-warning {
+    background: #ffc107;
+    color: #212529;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+}
+
+.btn-warning:hover {
+    background: #e0a800;
+}
+
+.btn-warning:disabled {
+    background: #6c757d;
+    color: white;
+    cursor: not-allowed;
+}
+
+/* Reminder status styles */
+.reminder-status {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #e1e5e9;
+}
+
+.reminder-status .status-item {
+    display: flex;
+    align-items: center;
+    margin: 8px 0;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.reminder-status .status-icon {
+    margin-right: 8px;
+    font-size: 1rem;
+}
+
+/* Form section title */
+.form-section-title {
+    margin: 25px 0 15px 0;
+}
+
+.form-section-title h3 {
+    color: #555;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e1e5e9;
+}
+
 /* Sessions Section */
 .sessions-section {
     background: white;
