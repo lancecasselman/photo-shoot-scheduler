@@ -476,7 +476,7 @@ app.put('/api/sessions/:id', async (req, res) => {
     } else {
       // PostgreSQL update (numeric IDs)
       const intId = parseInt(id);
-      
+
       // Map frontend field names to database column names
       const fieldMapping = {
         'sessionType': 'session_type',
@@ -496,41 +496,41 @@ app.put('/api/sessions/:id', async (req, res) => {
         'galleryReadyNotified': 'gallery_ready_notified',
         'createdBy': 'created_by'
       };
-      
+
       // Build update fields and values
       const updateFields = [];
       const updateValues = [];
       let paramIndex = 1;
-      
+
       for (const [frontendField, value] of Object.entries(req.body)) {
         const dbField = fieldMapping[frontendField] || frontendField;
         updateFields.push(`${dbField} = $${paramIndex}`);
         updateValues.push(value);
         paramIndex++;
       }
-      
+
       if (updateFields.length === 0) {
         return res.status(400).json({ error: 'No valid fields to update' });
       }
-      
+
       const query = `
         UPDATE sessions 
         SET ${updateFields.join(', ')}, updated_at = CURRENT_TIMESTAMP 
         WHERE id = $${paramIndex} AND created_by = $${paramIndex + 1} 
         RETURNING *
       `;
-      
+
       updateValues.push(intId, userInfo.uid);
-      
+
       console.log('Update query:', query);
       console.log('Update values:', updateValues);
-      
+
       const { rows } = await pool.query(query, updateValues);
-      
+
       if (rows.length === 0) {
         return res.status(404).json({ error: 'Session not found or unauthorized' });
       }
-      
+
       result = rows[0];
     }
 
@@ -578,13 +578,13 @@ app.delete('/api/sessions/:id', async (req, res) => {
     try {
       // Check if this is a numeric ID (PostgreSQL) or string ID (Firestore)
       const isNumericId = !isNaN(parseInt(id));
-      
+
       if (isNumericId) {
         // PostgreSQL deletion
         console.log('Deleting PostgreSQL session:', intId, 'for user:', userUid);
-        
+
         let query, values;
-        
+
         if (userUid === 'fallback-user') {
           // Fallback mode can delete any session
           query = 'DELETE FROM sessions WHERE id = $1 AND created_by = $2 RETURNING *';
@@ -597,41 +597,41 @@ app.delete('/api/sessions/:id', async (req, res) => {
 
         console.log('Executing delete query:', query, values);
         const deleteResult = await pool.query(query, values);
-        
+
         if (deleteResult.rowCount === 0) {
           return res.status(404).json({ error: 'Session not found or unauthorized' });
         }
-        
+
         console.log('Session deleted successfully from PostgreSQL:', deleteResult.rows[0]);
         result = { success: true, deleted: deleteResult.rows[0] };
       } else {
         // Firestore deletion
         console.log('Deleting Firestore session:', id, 'isAdmin:', isAdmin);
-        
+
         if (firestore) {
           try {
             // Check ownership for Firestore session
             console.log('Checking ownership for Firestore session');
             const sessionRef = firestore.collection('sessions').doc(id);
             const sessionDoc = await sessionRef.get();
-            
+
             if (!sessionDoc.exists) {
               console.log('Firestore session not found:', id);
               return res.status(404).json({ error: 'Session not found' });
             }
-            
+
             const sessionData = sessionDoc.data();
             console.log('Session data for ownership check:', { 
               created_by: sessionData.created_by, 
               createdBy: sessionData.createdBy, 
               userUid 
             });
-            
+
             if (sessionData.created_by !== userUid && sessionData.createdBy !== userUid) {
               console.log('User not authorized to delete this session');
               return res.status(403).json({ error: 'Unauthorized to delete this session' });
             }
-            
+
             await deleteSessionFromFirestore(id);
             console.log('Session deleted successfully from Firestore');
             result = { success: true };
@@ -643,7 +643,7 @@ app.delete('/api/sessions/:id', async (req, res) => {
           throw new Error('Firestore not available for deletion');
         }
       }
-      
+
     } catch (dbError) {
       console.error('Database deletion error:', dbError);
       console.error('Error details:', {
@@ -670,7 +670,7 @@ app.delete('/api/sessions/:id', async (req, res) => {
 app.post('/api/users', async (req, res) => {
   try {
     console.log('Creating/updating user:', req.body);
-    
+
     // First try to update existing user by email
     const updateQuery = `
       UPDATE users SET 
@@ -680,32 +680,32 @@ app.post('/api/users', async (req, res) => {
       WHERE email = $2
       RETURNING *
     `;
-    
+
     const updateValues = [req.body.id, req.body.email, req.body.displayName];
     console.log('Trying update with values:', updateValues);
-    
+
     const updateResult = await pool.query(updateQuery, updateValues);
-    
+
     if (updateResult.rows.length > 0) {
       console.log('User updated successfully:', updateResult.rows[0]);
       res.json(updateResult.rows[0]);
       return;
     }
-    
+
     // If no existing user found, create new one
     const insertQuery = `
       INSERT INTO users (id, email, display_name)
       VALUES ($1, $2, $3)
       RETURNING *
     `;
-    
+
     const insertValues = [req.body.id, req.body.email, req.body.displayName];
     console.log('Creating new user with values:', insertValues);
-    
+
     const insertResult = await pool.query(insertQuery, insertValues);
     console.log('User created successfully:', insertResult.rows[0]);
     res.json(insertResult.rows[0]);
-    
+
   } catch (error) {
     console.error('User creation error:', error);
     console.error('Error details:', {
@@ -750,6 +750,112 @@ app.post('/api/users/email', async (req, res) => {
   }
 });
 
+// Stripe invoice creation endpoint
+app.post('/api/invoice', async (req, res) => {
+  try {
+    let userInfo = null;
+    try {
+      userInfo = await verifyUser(req);
+    } catch (error) {
+      if (!isFirebaseInitialized) {
+        userInfo = { uid: 'fallback-user', email: 'fallback@example.com' };
+      } else {
+        return res.status(401).json({ error: 'Unauthorized: ' + error.message });
+      }
+    }
+
+    const { customerEmail, clientName, amount, description } = req.body;
+
+    if (!customerEmail || !clientName || !amount || !description) {
+      return res.status(400).json({ 
+        error: 'Missing required fields: customerEmail, clientName, amount, description' 
+      });
+    }
+
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return res.status(500).json({ 
+        error: 'Stripe not configured - missing STRIPE_SECRET_KEY' 
+      });
+    }
+
+    // Check if customer exists, create if not
+    let customer;
+    const existingCustomers = await stripe.customers.list({
+      email: customerEmail,
+      limit: 1
+    });
+
+    if (existingCustomers.data.length > 0) {
+      customer = existingCustomers.data[0];
+      console.log('Found existing customer:', customer.id);
+    } else {
+      customer = await stripe.customers.create({
+        email: customerEmail,
+        name: clientName,
+        description: `Photography client: ${clientName}`
+      });
+      console.log('Created new customer:', customer.id);
+    }
+
+    // Create invoice item
+    const invoiceItem = await stripe.invoiceItems.create({
+      customer: customer.id,
+      amount: Math.round(amount * 100), // Convert to cents
+      currency: 'usd',
+      description: description
+    });
+
+    // Create draft invoice
+    const invoice = await stripe.invoices.create({
+      customer: customer.id,
+      collection_method: 'send_invoice',
+      days_until_due: 30,
+      description: `Photography Services - ${description}`
+    });
+
+    // Send the invoice
+    const sentInvoice = await stripe.invoices.sendInvoice(invoice.id);
+
+    res.json({
+      success: true,
+      message: 'Invoice created and sent successfully',
+      invoice: {
+        id: sentInvoice.id,
+        number: sentInvoice.number,
+        amount: sentInvoice.amount_due / 100,
+        currency: sentInvoice.currency,
+        status: sentInvoice.status,
+        customer: customer.email,
+        hosted_invoice_url: sentInvoice.hosted_invoice_url,
+        invoice_pdf: sentInvoice.invoice_pdf
+      }
+    });
+
+  } catch (error) {
+    console.error('Error creating invoice:', error);
+    res.status(500).json({ 
+      error: 'Failed to create invoice',
+      message: error.message 
+    });
+  }
+});
+
+// Manual trigger for testing gallery notifications
+app.post('/api/admin/test-gallery-notifications', async (req, res) => {
+  try {
+    let userInfo = null;
+    try {
+      userInfo = await verifyUser(req);
+    } catch (error) {
+      if (!isFirebaseInitialized) {
+        userInfo = { uid: 'fallback-user', email: 'fallback@example.com' };
+      } else {
+        return res.status(401).json({ error: 'Unauthorized: ' + error.message });
+      }
+    }
+
 // Serve index.html for all non-API routes (SPA support)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
@@ -770,30 +876,30 @@ app.post('/api/sessions/:id/send-gallery-notification', async (req, res) => {
     }
 
     const sessionId = parseInt(req.params.id);
-    
+
     // Get session details
     const sessionQuery = 'SELECT * FROM sessions WHERE id = $1';
     const { rows } = await pool.query(sessionQuery, [sessionId]);
-    
+
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Session not found' });
     }
-    
+
     const session = rows[0];
-    
+
     // Send gallery ready notification
     const results = await sendGalleryReadyNotification(session);
-    
+
     // Update session to mark gallery ready notification as sent
     const updateQuery = 'UPDATE sessions SET gallery_ready_notified = true, updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *';
     const updateResult = await pool.query(updateQuery, [sessionId]);
-    
+
     res.json({
       success: true,
       session: updateResult.rows[0],
       notifications: results
     });
-    
+
   } catch (error) {
     console.error('Error sending gallery notification:', error);
     res.status(500).json({ 
@@ -806,16 +912,16 @@ app.post('/api/sessions/:id/send-gallery-notification', async (req, res) => {
 // Cron job to send session reminders (runs daily at 9 AM)
 cron.schedule('0 9 * * *', async () => {
   console.log('Running daily reminder check...');
-  
+
   try {
     // Find sessions that are 24 hours away and need reminders
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(0, 0, 0, 0);
-    
+
     const dayAfterTomorrow = new Date(tomorrow);
     dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
-    
+
     const query = `
       SELECT * FROM sessions 
       WHERE reminder_enabled = true 
@@ -823,30 +929,30 @@ cron.schedule('0 9 * * *', async () => {
       AND date_time >= $1 
       AND date_time < $2
     `;
-    
+
     const { rows } = await pool.query(query, [tomorrow.toISOString(), dayAfterTomorrow.toISOString()]);
-    
+
     console.log(`Found ${rows.length} sessions requiring reminders`);
-    
+
     for (const session of rows) {
       try {
         console.log(`Sending reminder for session ${session.id} - ${session.client_name}`);
-        
+
         const results = await sendSessionReminder(session);
-        
+
         // Mark reminder as sent
         await pool.query(
           'UPDATE sessions SET reminder_sent = true, updated_at = CURRENT_TIMESTAMP WHERE id = $1',
           [session.id]
         );
-        
+
         console.log(`Reminder sent for session ${session.id}:`, results);
-        
+
       } catch (error) {
         console.error(`Error sending reminder for session ${session.id}:`, error);
       }
     }
-    
+
   } catch (error) {
     console.error('Error in reminder cron job:', error);
   }
@@ -870,7 +976,7 @@ app.post('/api/admin/test-reminders', async (req, res) => {
     const now = new Date();
     const nextWeek = new Date();
     nextWeek.setDate(nextWeek.getDate() + 7);
-    
+
     const query = `
       SELECT * FROM sessions 
       WHERE reminder_enabled = true 
@@ -879,24 +985,24 @@ app.post('/api/admin/test-reminders', async (req, res) => {
       AND date_time <= $2
       LIMIT 5
     `;
-    
+
     const { rows } = await pool.query(query, [now.toISOString(), nextWeek.toISOString()]);
-    
+
     const results = [];
-    
+
     for (const session of rows) {
       try {
         const reminderResults = await sendSessionReminder(session);
-        
+
         // Don't mark as sent for testing
         // await pool.query('UPDATE sessions SET reminder_sent = true WHERE id = $1', [session.id]);
-        
+
         results.push({
           sessionId: session.id,
           clientName: session.client_name,
           results: reminderResults
         });
-        
+
       } catch (error) {
         results.push({
           sessionId: session.id,
@@ -905,13 +1011,13 @@ app.post('/api/admin/test-reminders', async (req, res) => {
         });
       }
     }
-    
+
     res.json({
       success: true,
       message: `Tested reminders for ${results.length} sessions`,
       results
     });
-    
+
   } catch (error) {
     console.error('Error testing reminders:', error);
     res.status(500).json({ 
