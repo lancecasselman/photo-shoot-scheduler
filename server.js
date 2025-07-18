@@ -783,13 +783,18 @@ app.post('/api/invoice', async (req, res) => {
       });
     }
 
-    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-
     if (!process.env.STRIPE_SECRET_KEY) {
       return res.status(500).json({ 
         error: 'Stripe not configured - missing STRIPE_SECRET_KEY' 
       });
     }
+
+    // Log the key format for debugging (first 10 and last 4 characters)
+    const keyStart = process.env.STRIPE_SECRET_KEY.substring(0, 10);
+    const keyEnd = process.env.STRIPE_SECRET_KEY.substring(process.env.STRIPE_SECRET_KEY.length - 4);
+    console.log(`Using Stripe key: ${keyStart}...${keyEnd} (length: ${process.env.STRIPE_SECRET_KEY.length})`);
+
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
     // Check if customer exists, create if not
     let customer;
