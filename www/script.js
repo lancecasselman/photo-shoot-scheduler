@@ -200,6 +200,8 @@ window.loadSessions = loadSessions;
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', async function() {
+    console.log('DOM Content Loaded - Initializing app');
+    
     // Set minimum datetime to current date/time
     const now = new Date();
     const formattedNow = now.toISOString().slice(0, 16);
@@ -207,6 +209,16 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // Add form submit event listener
     sessionForm.addEventListener('submit', handleFormSubmit);
+    
+    // IMMEDIATELY ensure photo upload section is visible
+    const photoUploadSection = document.querySelector('.photo-upload-section');
+    if (photoUploadSection) {
+        photoUploadSection.style.display = 'block';
+        photoUploadSection.style.visibility = 'visible';
+        console.log('Photo upload section immediately made visible on DOM load');
+    } else {
+        console.error('Photo upload section not found in DOM during initialization');
+    }
     
     // Wait a bit for Firebase to initialize, then set up photo upload
     setTimeout(() => {

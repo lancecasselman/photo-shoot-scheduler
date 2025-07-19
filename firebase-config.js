@@ -93,6 +93,14 @@ async function initializeFirebaseStorage() {
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', initializeFirebaseStorage);
 
+// Also initialize when script loads (in case DOM is already loaded)
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeFirebaseStorage);
+} else {
+    console.log('DOM already loaded, initializing Firebase Storage immediately');
+    initializeFirebaseStorage();
+}
+
 // Also expose the initialization function globally
 window.initializeFirebaseStorage = initializeFirebaseStorage;
 
