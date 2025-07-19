@@ -366,6 +366,15 @@ app.get('/api/status', (req, res) => {
   });
 });
 
+// Firebase config endpoint
+app.get('/api/firebase-config', (req, res) => {
+  res.json({
+    apiKey: process.env.VITE_FIREBASE_API_KEY,
+    projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+    appId: process.env.VITE_FIREBASE_APP_ID
+  });
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({

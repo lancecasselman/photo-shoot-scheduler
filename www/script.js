@@ -5,6 +5,7 @@
 let sessions = [];
 let sessionIdCounter = 1;
 let deferredPrompt; // For PWA installation
+let selectedPhotos = []; // Store selected photos for upload
 
 // PWA Installation
 window.addEventListener('beforeinstallprompt', (e) => {
@@ -206,6 +207,12 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // Add form submit event listener
     sessionForm.addEventListener('submit', handleFormSubmit);
+    
+    // Add photo upload event listener
+    const photoUploadInput = document.getElementById('photoUpload');
+    if (photoUploadInput) {
+        photoUploadInput.addEventListener('change', handlePhotoSelection);
+    }
 
     // Check server status to determine if we should load sessions
     try {
@@ -272,6 +279,11 @@ async function handleFormSubmit(event) {
             return;
         }
 
+        // Handle photo uploads if any photos are selected
+        if (selectedPhotos.length > 0) {
+            showMessage('Uploading photos...', 'info');
+        }
+
         if (editingSessionId) {
             // Update existing session
             const updatedSession = await updateSession(editingSessionId, sessionData);
@@ -309,14 +321,32 @@ async function handleFormSubmit(event) {
                 body: JSON.stringify(sessionData)
             });
 
+            // Upload photos if any are selected
+            if (selectedPhotos.length > 0) {
+                try {
+                    showUploadProgress(0, selectedPhotos.length);
+                    await uploadPhotosToFirebase(savedSession.id, selectedPhotos);
+                    hideUploadProgress();
+                    showMessage(`Session added successfully with ${selectedPhotos.length} photos uploaded!`, 'success');
+                } catch (error) {
+                    console.error('Error uploading photos:', error);
+                    hideUploadProgress();
+                    showMessage('Session added but photo upload failed. You can try uploading photos later.', 'warning');
+                }
+                
+                // Clear selected photos
+                selectedPhotos = [];
+                document.getElementById('photoPreview').innerHTML = '';
+            } else {
+                showMessage('Session added successfully!', 'success');
+            }
+
             // Clear form
             sessionForm.reset();
+            document.getElementById('photoUpload').value = '';
 
             // Reload all sessions from database to ensure we get the current user's data
             await loadSessions();
-
-            // Show success message
-            showMessage('Session added successfully!', 'success');
         }
 
         // Reset minimum datetime
@@ -426,6 +456,7 @@ function createSessionCard(session) {
     // Create main card container
     const card = document.createElement('div');
     card.className = 'session-card';
+    card.setAttribute('data-session-id', session.id);
 
     // Create header section
     const header = document.createElement('div');
@@ -640,6 +671,15 @@ function createSessionCard(session) {
     card.appendChild(header);
     card.appendChild(details);
     card.appendChild(statusIndicators);
+    
+    // Load and display gallery for this session
+    loadSessionGallery(session.id).then(photoUrls => {
+        if (photoUrls.length > 0) {
+            displaySessionGallery(session.id, photoUrls);
+        }
+    }).catch(error => {
+        console.error('Error loading gallery for session:', session.id, error);
+    });
     
     // Create notes section if notes exist
     if (session.notes) {
@@ -1117,6 +1157,261 @@ function viewGallery(sessionId) {
     window.location.href = `/gallery/${sessionId}`;
 }
 
-// Photo management functions temporarily removed for stability
+// Photo Upload and Management Functions
+
+// Handle photo selection
+function handlePhotoSelection(event) {
+    const files = Array.from(event.target.files);
+    selectedPhotos = files;
+    
+    console.log(`Selected ${files.length} photos for upload`);
+    
+    // Display photo previews
+    displayPhotoPreview(files);
+}
+
+// Display photo preview
+function displayPhotoPreview(files) {
+    const previewContainer = document.getElementById('photoPreview');
+    previewContainer.innerHTML = '';
+    
+    if (files.length === 0) {
+        return;
+    }
+    
+    files.forEach((file, index) => {
+        const previewItem = document.createElement('div');
+        previewItem.className = 'photo-preview-item';
+        
+        // Create image element
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(file);
+        img.alt = `Preview ${index + 1}`;
+        
+        // Create remove button
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'photo-preview-remove';
+        removeBtn.innerHTML = '×';
+        removeBtn.title = 'Remove photo';
+        removeBtn.onclick = (e) => {
+            e.preventDefault();
+            removePhotoFromSelection(index);
+        };
+        
+        previewItem.appendChild(img);
+        previewItem.appendChild(removeBtn);
+        previewContainer.appendChild(previewItem);
+    });
+}
+
+// Remove photo from selection
+function removePhotoFromSelection(index) {
+    selectedPhotos.splice(index, 1);
+    displayPhotoPreview(selectedPhotos);
+    
+    // Update the file input
+    const photoUploadInput = document.getElementById('photoUpload');
+    const dt = new DataTransfer();
+    selectedPhotos.forEach(file => dt.items.add(file));
+    photoUploadInput.files = dt.files;
+}
+
+// Upload photos to Firebase Storage
+async function uploadPhotosToFirebase(sessionId, files) {
+    if (!window.firebaseStorage) {
+        throw new Error('Firebase Storage not initialized');
+    }
+    
+    const uploadedUrls = [];
+    let uploadedCount = 0;
+    
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const fileName = `${Date.now()}_${i}_${file.name}`;
+        const storageRef = window.firebaseRef(window.firebaseStorage, `sessions/${sessionId}/${fileName}`);
+        
+        try {
+            const snapshot = await window.firebaseUploadBytes(storageRef, file);
+            const downloadURL = await window.firebaseGetDownloadURL(snapshot.ref);
+            uploadedUrls.push(downloadURL);
+            uploadedCount++;
+            
+            // Update progress
+            updateUploadProgress(uploadedCount, files.length);
+            console.log(`Uploaded photo ${uploadedCount}/${files.length}: ${downloadURL}`);
+        } catch (error) {
+            console.error(`Error uploading photo ${i + 1}:`, error);
+            // Continue with other uploads even if one fails
+        }
+    }
+    
+    return uploadedUrls;
+}
+
+// Show upload progress
+function showUploadProgress(current, total) {
+    const photoUploadSection = document.querySelector('.photo-upload-section');
+    if (!photoUploadSection) return;
+    
+    // Remove existing progress
+    const existingProgress = photoUploadSection.querySelector('.upload-progress');
+    if (existingProgress) {
+        existingProgress.remove();
+    }
+    
+    // Create progress container
+    const progressContainer = document.createElement('div');
+    progressContainer.className = 'upload-progress';
+    
+    // Progress bar
+    const progressBarContainer = document.createElement('div');
+    progressBarContainer.className = 'progress-bar-container';
+    
+    const progressBar = document.createElement('div');
+    progressBar.className = 'progress-bar';
+    progressBar.style.width = `${(current / total) * 100}%`;
+    
+    progressBarContainer.appendChild(progressBar);
+    
+    // Progress text
+    const progressText = document.createElement('div');
+    progressText.className = 'progress-text';
+    progressText.textContent = `Uploading photos... ${current}/${total}`;
+    
+    progressContainer.appendChild(progressBarContainer);
+    progressContainer.appendChild(progressText);
+    photoUploadSection.appendChild(progressContainer);
+}
+
+// Update upload progress
+function updateUploadProgress(current, total) {
+    const progressBar = document.querySelector('.progress-bar');
+    const progressText = document.querySelector('.progress-text');
+    
+    if (progressBar && progressText) {
+        progressBar.style.width = `${(current / total) * 100}%`;
+        progressText.textContent = `Uploading photos... ${current}/${total}`;
+    }
+}
+
+// Hide upload progress
+function hideUploadProgress() {
+    const progressContainer = document.querySelector('.upload-progress');
+    if (progressContainer) {
+        progressContainer.remove();
+    }
+}
+
+// Load session gallery
+async function loadSessionGallery(sessionId) {
+    try {
+        if (!window.firebaseStorage) {
+            console.log('Firebase Storage not available, skipping gallery load');
+            return [];
+        }
+        
+        const listRef = window.firebaseRef(window.firebaseStorage, `sessions/${sessionId}`);
+        const listResult = await window.firebaseListAll(listRef);
+        
+        const photoUrls = await Promise.all(
+            listResult.items.map(itemRef => window.firebaseGetDownloadURL(itemRef))
+        );
+        
+        return photoUrls;
+    } catch (error) {
+        console.error('Error loading session gallery:', error);
+        return [];
+    }
+}
+
+// Display session gallery
+function displaySessionGallery(sessionId, photoUrls) {
+    const sessionCard = document.querySelector(`[data-session-id="${sessionId}"]`);
+    if (!sessionCard) return;
+    
+    // Remove existing gallery
+    const existingGallery = sessionCard.querySelector('.session-gallery');
+    if (existingGallery) {
+        existingGallery.remove();
+    }
+    
+    if (photoUrls.length === 0) return;
+    
+    // Create gallery section
+    const gallerySection = document.createElement('div');
+    gallerySection.className = 'session-gallery';
+    
+    // Gallery header
+    const galleryHeader = document.createElement('div');
+    galleryHeader.className = 'gallery-header';
+    
+    const galleryTitle = document.createElement('h4');
+    galleryTitle.className = 'gallery-title';
+    galleryTitle.textContent = '📸 Session Photos';
+    
+    const galleryCount = document.createElement('span');
+    galleryCount.className = 'gallery-count';
+    galleryCount.textContent = `${photoUrls.length} photo${photoUrls.length !== 1 ? 's' : ''}`;
+    
+    galleryHeader.appendChild(galleryTitle);
+    galleryHeader.appendChild(galleryCount);
+    
+    // Gallery grid
+    const galleryGrid = document.createElement('div');
+    galleryGrid.className = 'gallery-grid';
+    
+    photoUrls.forEach((photoUrl, index) => {
+        const galleryItem = document.createElement('div');
+        galleryItem.className = 'gallery-item';
+        
+        const img = document.createElement('img');
+        img.src = photoUrl;
+        img.alt = `Photo ${index + 1}`;
+        img.loading = 'lazy';
+        img.onclick = () => openPhotoLightbox(photoUrl);
+        
+        galleryItem.appendChild(img);
+        galleryGrid.appendChild(galleryItem);
+    });
+    
+    gallerySection.appendChild(galleryHeader);
+    gallerySection.appendChild(galleryGrid);
+    
+    // Insert gallery before the last element (typically the notes section)
+    const lastChild = sessionCard.lastElementChild;
+    sessionCard.insertBefore(gallerySection, lastChild);
+}
+
+// Open photo in lightbox
+function openPhotoLightbox(photoUrl) {
+    // Create lightbox overlay
+    const lightbox = document.createElement('div');
+    lightbox.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        cursor: pointer;
+    `;
+    
+    const img = document.createElement('img');
+    img.src = photoUrl;
+    img.style.cssText = `
+        max-width: 90%;
+        max-height: 90%;
+        object-fit: contain;
+    `;
+    
+    lightbox.appendChild(img);
+    lightbox.onclick = () => lightbox.remove();
+    
+    document.body.appendChild(lightbox);
+}
 
 // Delete session function

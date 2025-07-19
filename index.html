@@ -96,6 +96,14 @@
                         <textarea id="notes" name="notes" rows="3" placeholder="Additional notes about the session"></textarea>
                     </div>
 
+                    <!-- Photo Upload Section -->
+                    <div class="form-group full-width photo-upload-section">
+                        <label for="photoUpload" class="photo-upload-label">📸 Upload Photos</label>
+                        <input type="file" id="photoUpload" name="photoUpload" multiple accept="image/*" class="photo-upload-input">
+                        <div class="photo-upload-helper">Select multiple photos for this session</div>
+                        <div id="photoPreview" class="photo-preview-container"></div>
+                    </div>
+
                     <div class="checkbox-group">
                         <div class="checkbox-item">
                             <input type="checkbox" id="contractSigned" name="contractSigned">
@@ -163,6 +171,26 @@
         </script>
     </div>
 
+    <script>
+        // Fetch Firebase credentials from server
+        fetch('/api/firebase-config')
+            .then(response => response.json())
+            .then(config => {
+                window.VITE_FIREBASE_API_KEY = config.apiKey;
+                window.VITE_FIREBASE_PROJECT_ID = config.projectId;
+                window.VITE_FIREBASE_APP_ID = config.appId;
+                
+                // Load Firebase configuration after credentials are set
+                import('./firebase-config.js').then(() => {
+                    console.log('Firebase config loaded successfully');
+                }).catch(err => {
+                    console.error('Failed to load Firebase config:', err);
+                });
+            })
+            .catch(err => {
+                console.error('Failed to fetch Firebase config:', err);
+            });
+    </script>
     <script type="module">
         // Cache-busting for auth script
         const cacheBuster = Date.now();
