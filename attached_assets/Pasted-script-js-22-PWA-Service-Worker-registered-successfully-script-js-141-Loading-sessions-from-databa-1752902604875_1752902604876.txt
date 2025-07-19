@@ -1,0 +1,146 @@
+script.js:22 PWA: Service Worker registered successfully
+script.js:141 Loading sessions from database...
+auth.js:141 User signed in: lancecasselman@icloud.com
+auth.js:46 Server auth status: true
+auth.js:53 Server authentication enabled - using Firebase auth
+script.js:143 Sessions loaded: (12) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+script.js:144 Data type: object Array: true
+script.js:148 Transformed sessions: (12) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+script.js:375 renderSessions called with 12 sessions
+script.js:376 Sessions container: <div id=​"sessionsContainer" class=​"sessions-container">​…​</div>​grid
+script.js:394 Rendering 12 session cards
+script.js:398 Sorted sessions: (12) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+script.js:402 Creating card 1 for session: John
+script.js:405 Card 1 appended to container
+script.js:402 Creating card 2 for session: Test
+script.js:405 Card 2 appended to container
+script.js:402 Creating card 3 for session: lance
+script.js:405 Card 3 appended to container
+script.js:402 Creating card 4 for session: John Doe
+script.js:405 Card 4 appended to container
+script.js:402 Creating card 5 for session: lancey
+script.js:405 Card 5 appended to container
+script.js:402 Creating card 6 for session: lance
+script.js:405 Card 6 appended to container
+script.js:402 Creating card 7 for session: lancey
+script.js:405 Card 7 appended to container
+script.js:402 Creating card 8 for session: Test
+script.js:405 Card 8 appended to container
+script.js:402 Creating card 9 for session: test
+script.js:405 Card 9 appended to container
+script.js:402 Creating card 10 for session: Amanda
+script.js:405 Card 10 appended to container
+script.js:402 Creating card 11 for session: lance
+script.js:405 Card 11 appended to container
+script.js:402 Creating card 12 for session: lala
+script.js:405 Card 12 appended to container
+script.js:408 All session cards rendered. Container children count: 12
+script.js:151 Sessions rendered, container should now show 12 sessions
+script.js:156 Successfully loaded 12 sessions
+auth.js:168 Loading sessions for authenticated user
+script.js:141 Loading sessions from database...
+script.js:143 Sessions loaded: (5) [{…}, {…}, {…}, {…}, {…}]
+script.js:144 Data type: object Array: true
+script.js:148 Transformed sessions: (5) [{…}, {…}, {…}, {…}, {…}]
+script.js:375 renderSessions called with 5 sessions
+script.js:376 Sessions container: <div id=​"sessionsContainer" class=​"sessions-container">​…​</div>​grid
+script.js:394 Rendering 5 session cards
+script.js:398 Sorted sessions: (5) [{…}, {…}, {…}, {…}, {…}]
+script.js:402 Creating card 1 for session: lancey
+script.js:405 Card 1 appended to container
+script.js:402 Creating card 2 for session: lance
+script.js:405 Card 2 appended to container
+script.js:402 Creating card 3 for session: lancey
+script.js:405 Card 3 appended to container
+script.js:402 Creating card 4 for session: Amanda
+script.js:405 Card 4 appended to container
+script.js:402 Creating card 5 for session: lala
+script.js:405 Card 5 appended to container
+script.js:408 All session cards rendered. Container children count: 5
+script.js:151 Sessions rendered, container should now show 5 sessions
+script.js:156 Successfully loaded 5 sessions
+photographyschedule.com/:1 [Intervention] Images loaded lazily and replaced with placeholders. Load events are deferred. See https://go.microsoft.com/fwlink/?linkid=2048113
+script.js:1205 Using Firebase Storage for uploads
+(index):1  Access to XMLHttpRequest at 'https://firebasestorage.googleapis.com/v0/b/photoshcheduleapp.firebasestorage.app/o?name=sessions%2F0LFzjACiybbO5KhRppsn%2F1752902579357-qofo2qkcz-20250620220251-DSC_0595.jpg' from origin 'https://photographyschedule.com' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: It does not have HTTP ok status.
+connection.ts:88   POST https://firebasestorage.googleapis.com/v0/b/photoshcheduleapp.firebasestorage.app/o?name=sessions%2F0LFzjACiybbO5KhRppsn%2F1752902579357-qofo2qkcz-20250620220251-DSC_0595.jpg net::ERR_FAILED
+send @ connection.ts:88
+doTheRequest @ request.ts:114
+(anonymous) @ backoff.ts:78
+setTimeout
+callWithDelay @ backoff.ts:74
+start @ backoff.ts:139
+start_ @ request.ts:189
+(anonymous) @ request.ts:90
+NetworkRequest @ request.ts:78
+makeRequest @ request.ts:278
+_makeRequest @ service.ts:316
+makeRequestWithTokens @ service.ts:344
+await in makeRequestWithTokens
+uploadBytes$1 @ reference.ts:268
+uploadBytes @ api.ts:139
+uploadPhotos @ script.js:1214
+fileInput.onchange @ script.js:522
+[NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
+        Don't show again
+(index):1  Access to XMLHttpRequest at 'https://firebasestorage.googleapis.com/v0/b/photoshcheduleapp.firebasestorage.app/o?name=sessions%2F0LFzjACiybbO5KhRppsn%2F1752902579357-qofo2qkcz-20250620220251-DSC_0595.jpg' from origin 'https://photographyschedule.com' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: It does not have HTTP ok status.
+connection.ts:88   POST https://firebasestorage.googleapis.com/v0/b/photoshcheduleapp.firebasestorage.app/o?name=sessions%2F0LFzjACiybbO5KhRppsn%2F1752902579357-qofo2qkcz-20250620220251-DSC_0595.jpg net::ERR_FAILED
+send @ connection.ts:88
+doTheRequest @ request.ts:114
+(anonymous) @ backoff.ts:78
+setTimeout
+callWithDelay @ backoff.ts:74
+responseHandler @ backoff.ts:116
+(anonymous) @ request.ts:134
+Promise.then
+doTheRequest @ request.ts:117
+(anonymous) @ backoff.ts:78
+setTimeout
+callWithDelay @ backoff.ts:74
+start @ backoff.ts:139
+start_ @ request.ts:189
+(anonymous) @ request.ts:90
+NetworkRequest @ request.ts:78
+makeRequest @ request.ts:278
+_makeRequest @ service.ts:316
+makeRequestWithTokens @ service.ts:344
+await in makeRequestWithTokens
+uploadBytes$1 @ reference.ts:268
+uploadBytes @ api.ts:139
+uploadPhotos @ script.js:1214
+fileInput.onchange @ script.js:522
+(index):1  Access to XMLHttpRequest at 'https://firebasestorage.googleapis.com/v0/b/photoshcheduleapp.firebasestorage.app/o?name=sessions%2F0LFzjACiybbO5KhRppsn%2F1752902579357-qofo2qkcz-20250620220251-DSC_0595.jpg' from origin 'https://photographyschedule.com' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: It does not have HTTP ok status.
+connection.ts:88   POST https://firebasestorage.googleapis.com/v0/b/photoshcheduleapp.firebasestorage.app/o?name=sessions%2F0LFzjACiybbO5KhRppsn%2F1752902579357-qofo2qkcz-20250620220251-DSC_0595.jpg net::ERR_FAILED
+send @ connection.ts:88
+doTheRequest @ request.ts:114
+(anonymous) @ backoff.ts:78
+setTimeout
+callWithDelay @ backoff.ts:74
+responseHandler @ backoff.ts:116
+(anonymous) @ request.ts:134
+Promise.then
+doTheRequest @ request.ts:117
+(anonymous) @ backoff.ts:78
+setTimeout
+callWithDelay @ backoff.ts:74
+responseHandler @ backoff.ts:116
+(anonymous) @ request.ts:134
+Promise.then
+doTheRequest @ request.ts:117
+(anonymous) @ backoff.ts:78
+setTimeout
+callWithDelay @ backoff.ts:74
+start @ backoff.ts:139
+start_ @ request.ts:189
+(anonymous) @ request.ts:90
+NetworkRequest @ request.ts:78
+makeRequest @ request.ts:278
+_makeRequest @ service.ts:316
+makeRequestWithTokens @ service.ts:344
+await in makeRequestWithTokens
+uploadBytes$1 @ reference.ts:268
+uploadBytes @ api.ts:139
+uploadPhotos @ script.js:1214
+fileInput.onchange @ script.js:522

@@ -1197,58 +1197,12 @@ async function uploadPhotos(sessionId, files) {
         // Show initial progress
         showUploadProgress(sessionId, 0, totalFiles);
         
-        // Check if Firebase Storage is available
-        const useFirebaseStorage = window.firebaseStorage && window.currentUser;
+        // Due to CORS issues with Firebase Storage, use local storage by default
+        // Only use Firebase Storage if explicitly configured and working
+        let useFirebaseStorage = false; // Temporarily disable Firebase Storage due to CORS
+        console.log('Using local storage for reliable uploads (Firebase Storage disabled due to CORS issues)');
         
-        if (useFirebaseStorage) {
-            // Upload to Firebase Storage
-            console.log('Using Firebase Storage for uploads');
-            
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                try {
-                    const fileName = `sessions/${sessionId}/${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${file.name}`;
-                    const storageRef = window.storageRef(window.firebaseStorage, fileName);
-                    
-                    // Upload file to Firebase Storage
-                    const snapshot = await window.uploadBytes(storageRef, file);
-                    const downloadURL = await window.getDownloadURL(snapshot.ref);
-                    
-                    photoUrls.push(downloadURL);
-                    uploadedCount++;
-                    
-                    // Update progress
-                    showUploadProgress(sessionId, uploadedCount + failedCount, totalFiles);
-                    
-                } catch (error) {
-                    console.error(`Failed to upload ${file.name}:`, error);
-                    failedCount++;
-                    showUploadProgress(sessionId, uploadedCount + failedCount, totalFiles);
-                }
-            }
-            
-            // Update session with Firebase photo URLs by appending to existing photos
-            const existingPhotosResponse = await fetch(`/api/sessions/${sessionId}/photos`);
-            const existingData = await existingPhotosResponse.json();
-            const existingPhotos = existingData.photos || [];
-            const updatedPhotos = [...existingPhotos, ...photoUrls];
-            
-            const response = await fetch(`/api/sessions/${sessionId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': window.currentUser ? `Bearer ${window.currentUser.accessToken}` : ''
-                },
-                body: JSON.stringify({
-                    photos: updatedPhotos
-                })
-            });
-            
-            if (!response.ok) {
-                throw new Error('Failed to update session with uploaded photos');
-            }
-            
-        } else {
+        if (!useFirebaseStorage) {
             // Fallback to local storage upload
             console.log('Using local storage for uploads');
             
