@@ -165,6 +165,7 @@ onAuthStateChanged(auth, async (user) => {
         // Load sessions from database
         if (window.loadSessions) {
             setTimeout(() => {
+                console.log('Loading sessions for authenticated user');
                 window.loadSessions();
             }, 100); // Small delay to ensure DOM is ready
         }

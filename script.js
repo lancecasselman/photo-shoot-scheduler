@@ -206,13 +206,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         const statusResponse = await fetch('/api/status');
         const statusData = await statusResponse.json();
 
-        // Load sessions if user is authenticated OR if authentication is disabled
-        if (window.currentUser || !statusData.authenticationEnabled) {
-            loadSessions();
-        } else {
-            // Initial render for empty state
-            renderSessions();
-        }
+        // Always load sessions since this is a shared business account
+        // Users should see all sessions regardless of authentication state
+        loadSessions();
     } catch (error) {
         console.error('Error checking server status:', error);
         // Fallback to loading sessions if we can't check status
