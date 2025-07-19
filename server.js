@@ -146,23 +146,23 @@ app.get('/gallery/:sessionId', (req, res) => {
 // Serve static files from current directory
 app.use(express.static(path.join(__dirname), {
   setHeaders: (res, path) => {
-    // Set proper MIME types and smart cache control
+    // Set proper MIME types and disable caching completely during development
     if (path.endsWith('.js')) {
       res.setHeader('Content-Type', 'application/javascript');
-      res.setHeader('Cache-Control', 'public, max-age=300'); // 5 minutes for JS files
     } else if (path.endsWith('.css')) {
       res.setHeader('Content-Type', 'text/css');
-      res.setHeader('Cache-Control', 'public, max-age=300'); // 5 minutes for CSS files
     } else if (path.endsWith('.html')) {
       res.setHeader('Content-Type', 'text/html');
-      res.setHeader('Cache-Control', 'no-cache, must-revalidate'); // HTML always fresh
     } else if (path.endsWith('.json')) {
       res.setHeader('Content-Type', 'application/json');
-      res.setHeader('Cache-Control', 'public, max-age=300');
     } else if (path.endsWith('.svg')) {
       res.setHeader('Content-Type', 'image/svg+xml');
-      res.setHeader('Cache-Control', 'public, max-age=3600'); // 1 hour for images
     }
+    
+    // Disable all caching to fix layout consistency issues
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
   }
 }));
 
