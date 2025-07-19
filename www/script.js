@@ -28,6 +28,19 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// IMMEDIATE photo upload section visibility
+console.log('Script loaded, checking for photo upload section...');
+setTimeout(() => {
+    const photoUploadSection = document.querySelector('.photo-upload-section');
+    if (photoUploadSection) {
+        photoUploadSection.style.display = 'block !important';
+        photoUploadSection.style.visibility = 'visible !important';
+        console.log('Photo upload section found and made visible immediately');
+    } else {
+        console.log('Photo upload section not found yet, will retry in DOM loaded event');
+    }
+}, 100);
+
 // Show install prompt
 function showInstallPrompt() {
   // Create install button
@@ -205,10 +218,19 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Set minimum datetime to current date/time
     const now = new Date();
     const formattedNow = now.toISOString().slice(0, 16);
-    document.getElementById('dateTime').min = formattedNow;
+    const dateTimeElement = document.getElementById('dateTime');
+    if (dateTimeElement) {
+        dateTimeElement.min = formattedNow;
+    }
 
     // Add form submit event listener
-    sessionForm.addEventListener('submit', handleFormSubmit);
+    const sessionForm = document.getElementById('sessionForm');
+    if (sessionForm) {
+        sessionForm.addEventListener('submit', handleFormSubmit);
+        console.log('Form submit listener added');
+    } else {
+        console.error('Session form not found');
+    }
     
     // IMMEDIATELY ensure photo upload section is visible
     const photoUploadSection = document.querySelector('.photo-upload-section');
