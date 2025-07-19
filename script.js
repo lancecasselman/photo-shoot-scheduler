@@ -489,7 +489,10 @@ function createSessionCard(session) {
     editBtn.textContent = '✏️ Edit';
     editBtn.onclick = () => editSession(session.id);
 
-    // Upload functionality temporarily removed for stability
+    const uploadBtn = document.createElement('button');
+    uploadBtn.className = 'btn btn-secondary';
+    uploadBtn.textContent = '📤 Upload Photos';
+    uploadBtn.onclick = () => showUploadDialog(session.id);
 
     const calendarBtn = document.createElement('button');
     calendarBtn.className = 'btn btn-success';
@@ -521,6 +524,7 @@ function createSessionCard(session) {
     deleteBtn.onclick = () => deleteSession(session.id);
 
     actions.appendChild(editBtn);
+    actions.appendChild(uploadBtn);
     actions.appendChild(calendarBtn);
     actions.appendChild(galleryBtn);
     actions.appendChild(viewGalleryBtn);
@@ -1292,6 +1296,102 @@ function hideUploadProgress() {
     if (progressContainer) {
         progressContainer.remove();
     }
+}
+
+// Show upload dialog for a session
+function showUploadDialog(sessionId) {
+    console.log('Opening upload dialog for session:', sessionId);
+    
+    // Create upload dialog
+    const dialog = document.createElement('div');
+    dialog.className = 'upload-dialog-overlay';
+    dialog.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    `;
+    
+    const dialogContent = document.createElement('div');
+    dialogContent.className = 'upload-dialog-content';
+    dialogContent.style.cssText = `
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        max-width: 500px;
+        width: 90%;
+        max-height: 80%;
+        overflow-y: auto;
+    `;
+    
+    dialogContent.innerHTML = `
+        <h3>Upload Photos</h3>
+        <p>Select up to 1000 photos (100MB each max)</p>
+        <input type="file" id="photo-upload-input" multiple accept="image/*" style="margin: 20px 0;">
+        <div id="upload-progress" style="display: none;">
+            <div class="progress-bar" style="background: #f0f0f0; height: 20px; border-radius: 10px; overflow: hidden;">
+                <div class="progress-fill" style="background: #4CAF50; height: 100%; width: 0%; transition: width 0.3s;"></div>
+            </div>
+            <p id="upload-status">Uploading...</p>
+        </div>
+        <div style="margin-top: 20px; text-align: right;">
+            <button onclick="this.closest('.upload-dialog-overlay').remove()" style="margin-right: 10px; padding: 10px 20px; background: #ccc; border: none; border-radius: 5px; cursor: pointer;">Cancel</button>
+            <button id="upload-start-btn" style="padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;">Upload Photos</button>
+        </div>
+    `;
+    
+    dialog.appendChild(dialogContent);
+    document.body.appendChild(dialog);
+    
+    // Handle upload
+    const uploadInput = dialog.querySelector('#photo-upload-input');
+    const uploadBtn = dialog.querySelector('#upload-start-btn');
+    const progressDiv = dialog.querySelector('#upload-progress');
+    const progressFill = dialog.querySelector('.progress-fill');
+    const statusText = dialog.querySelector('#upload-status');
+    
+    uploadBtn.onclick = async () => {
+        const files = uploadInput.files;
+        if (files.length === 0) {
+            alert('Please select photos to upload');
+            return;
+        }
+        
+        progressDiv.style.display = 'block';
+        uploadBtn.disabled = true;
+        
+        try {
+            const result = await uploadPhotosToBackend(sessionId, files);
+            progressFill.style.width = '100%';
+            statusText.textContent = `Successfully uploaded ${files.length} photos!`;
+            
+            setTimeout(() => {
+                dialog.remove();
+                loadSessions(); // Refresh sessions to show updated photo count
+                showMessage(`Successfully uploaded ${files.length} photos!`, 'success');
+            }, 2000);
+            
+        } catch (error) {
+            console.error('Upload failed:', error);
+            statusText.textContent = 'Upload failed: ' + error.message;
+            progressFill.style.background = '#f44336';
+            uploadBtn.disabled = false;
+        }
+    };
+    
+    // Close dialog when clicking outside
+    dialog.onclick = (e) => {
+        if (e.target === dialog) {
+            dialog.remove();
+        }
+    };
 }
 
 // Load session gallery
