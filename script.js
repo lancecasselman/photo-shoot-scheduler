@@ -460,16 +460,36 @@ function createSessionCard(session) {
     // Create upload section container
     const uploadSection = document.createElement('div');
     uploadSection.className = 'upload-section';
+    uploadSection.style.cssText = `
+        margin-top: 20px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border: 2px dashed #dee2e6;
+    `;
     uploadSection.innerHTML = `
         <div class="upload-header">
-            <h4>📷 Photo Upload</h4>
+            <h4 style="margin: 0 0 15px 0; color: #495057;">📷 Photo Upload</h4>
         </div>
         <div class="upload-controls">
             <input type="file" id="upload-${session.id}" multiple accept="image/*" style="display: none;">
-            <button class="btn btn-secondary upload-btn" onclick="document.getElementById('upload-${session.id}').click()">
+            <button class="btn btn-primary upload-btn" onclick="document.getElementById('upload-${session.id}').click()" style="
+                background: #007bff;
+                color: white;
+                border: none;
+                padding: 12px 24px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 16px;
+                font-weight: 600;
+                margin-bottom: 10px;
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+            ">
                 📷 Choose Photos
             </button>
-            <span class="upload-info">Select multiple photos for batch upload</span>
+            <div class="upload-info" style="color: #6c757d; font-size: 14px;">Select multiple photos for batch upload</div>
         </div>
         <div id="upload-progress-${session.id}" class="upload-progress" style="display: none;"></div>
         <div id="upload-gallery-${session.id}" class="upload-gallery"></div>
