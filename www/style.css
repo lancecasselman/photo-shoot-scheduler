@@ -783,7 +783,6 @@ header p {
         grid-template-columns: repeat(3, 1fr);
     }
 }
-}
 /* Capacitor iOS App Styles */
 body {
     padding-top: env(safe-area-inset-top);
