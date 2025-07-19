@@ -734,6 +734,55 @@ header p {
 .view-all-btn:hover {
     background: #1976D2;
 }
+
+/* Mobile Responsiveness for Upload System */
+@media (max-width: 768px) {
+    .sessions-container {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .upload-controls {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .upload-btn {
+        width: 100%;
+        text-align: center;
+        padding: 12px 20px;
+    }
+    
+    .photo-thumbnails {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .action-buttons .btn {
+        flex: none;
+        width: 100%;
+        margin-bottom: 5px;
+    }
+}
+
+@media (max-width: 480px) {
+    .upload-section {
+        padding: 12px;
+    }
+    
+    .upload-header h4 {
+        font-size: 1rem;
+    }
+    
+    .photo-thumbnails {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
 }
 /* Capacitor iOS App Styles */
 body {

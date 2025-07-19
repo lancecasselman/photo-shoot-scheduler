@@ -500,6 +500,7 @@ function createSessionCard(session) {
     actions.appendChild(editBtn);
     actions.appendChild(calendarBtn);
     actions.appendChild(galleryBtn);
+    actions.appendChild(viewGalleryBtn);
     actions.appendChild(invoiceBtn);
     actions.appendChild(deleteBtn);
 

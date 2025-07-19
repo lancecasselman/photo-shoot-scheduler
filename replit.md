@@ -6,18 +6,17 @@ This is a client-side web application for managing photography sessions. It's a 
 
 ## Recent Changes
 
-### Client Gallery System Integration (July 19, 2025)
-- **Complete Gallery Functionality**: Added comprehensive client gallery system to photography scheduling app
-- **Photo Upload**: Multi-file upload with drag-and-drop support, image validation, and 10MB per file limit
-- **Gallery Management**: Professional gallery page with responsive grid layout, lightbox viewing, and photo navigation
-- **Database Integration**: Updated PostgreSQL schema with JSONB photos column, Firestore photo arrays support
-- **Session Integration**: Added "Upload Photos" and "View Gallery" buttons to each session card
-- **Photo Operations**: Full CRUD operations - upload, view, download, delete, and share gallery functionality
-- **Authentication**: Secure photo access with user ownership validation and Firebase authentication
-- **Mobile Optimized**: Responsive design works perfectly on iPhone and web browsers
-- **URL Routing**: Clean gallery URLs with `/gallery/:sessionId` structure
-- **File Storage**: Local file storage in uploads directory with unique filename generation
-- **Error Handling**: Comprehensive error handling for uploads, authentication, and file operations
+### Unlimited Batch Photo Upload System - Pixieset Style (July 19, 2025)
+- **Firebase Storage Integration**: Primary cloud storage with unlimited capacity using Firebase Storage
+- **Unlimited Batch Uploads**: Support for 1000+ files per upload with 50MB per file limit (increased from 10MB/20 files)
+- **Smart Storage Routing**: Firebase Storage primary, local storage fallback when not configured
+- **Real-time Progress Tracking**: Individual file upload progress with visual progress bars
+- **Embedded Upload Interface**: Dedicated upload section in each session card with photo thumbnails
+- **Mobile-Optimized Design**: Responsive upload interface with mobile-friendly controls and layouts
+- **Photo Management**: Thumbnail previews, photo counts, and direct gallery access from session cards
+- **Error Handling**: Comprehensive upload failure handling with retry capability and file cleanup
+- **Authentication Integration**: Secure uploads with user ownership validation
+- **Background Processing**: Non-blocking uploads that allow continued app usage during large batches
 
 ### iOS App Conversion - Native iOS App with Capacitor (July 18, 2025)
 - **Native iOS App**: Successfully converted to full native iOS app using Capacitor
