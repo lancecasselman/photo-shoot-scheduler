@@ -16,10 +16,6 @@ author = "agent"
 task = "workflow.run"
 args = "Photography Scheduler"
 
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "iOS Build"
-
 [[workflows.workflow]]
 name = "Photography Scheduler"
 author = "agent"
@@ -37,14 +33,6 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "node server.js"
-
-[[workflows.workflow]]
-name = "iOS Build"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "node build-capacitor.js"
 
 [[ports]]
 localPort = 3000
