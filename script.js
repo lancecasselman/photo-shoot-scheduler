@@ -105,8 +105,12 @@ function showUploadDialog(sessionId) {
 // API helper functions
 
 // DOM elements
+console.log('=== CRITICAL DEBUG: Loading DOM elements...');
 const sessionForm = document.getElementById('sessionForm');
 const sessionsContainer = document.getElementById('sessionsContainer');
+console.log('Session form found:', !!sessionForm);
+console.log('Sessions container found:', !!sessionsContainer);
+console.log('Sessions container element:', sessionsContainer);
 const messageContainer = document.getElementById('messageContainer');
 
 // API call helper with authentication
@@ -179,7 +183,7 @@ function transformSessionData(dbSession) {
 // Load sessions from database
 async function loadSessions() {
     try {
-        console.log('Loading sessions from database...');
+        console.log('=== CRITICAL DEBUG: Loading sessions from database...');
         const data = await apiCall('/api/sessions');
         console.log('Sessions loaded:', data);
         console.log('Data type:', typeof data, 'Array:', Array.isArray(data));
@@ -241,6 +245,7 @@ window.showUploadDialog = showUploadDialog;
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', async function() {
+    console.log('=== CRITICAL DEBUG: DOM Content Loaded ===');
     console.log('DOM Content Loaded - Initializing app');
     
     // Set minimum datetime to current date/time
@@ -494,8 +499,9 @@ function validateSessionData(data) {
 
 // Render all sessions
 function renderSessions() {
-    console.log('renderSessions called with', sessions.length, 'sessions');
+    console.log('=== CRITICAL DEBUG: renderSessions called with', sessions.length, 'sessions');
     console.log('Sessions container:', sessionsContainer);
+    console.log('Container element exists:', !!sessionsContainer);
     
     // Clear existing content
     sessionsContainer.innerHTML = '';
@@ -532,7 +538,8 @@ function renderSessions() {
 
 // Create session card using safe DOM methods
 function createSessionCard(session) {
-    console.log('Creating session card for:', session.clientName);
+    console.log('=== CRITICAL DEBUG: Creating session card for:', session.clientName);
+    console.log('Session object:', session);
     try {
         const sessionDate = new Date(session.dateTime);
         const formattedDate = sessionDate.toLocaleDateString('en-US', {
