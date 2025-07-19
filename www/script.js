@@ -490,13 +490,18 @@ function createSessionCard(session) {
         
         // Check if uploadPhotos function exists
         if (typeof uploadPhotos === 'function') {
-            await uploadPhotos(session.id, files);
+            try {
+                await uploadPhotos(session.id, files);
+            } catch (error) {
+                console.error('Upload error:', error);
+                alert('Upload failed: ' + error.message);
+            }
             // Reset button text
             uploadBtn.textContent = '📁 Upload Photos';
             uploadBtn.disabled = false;
         } else {
-            console.error('uploadPhotos function not found');
-            alert('Upload functionality not available');
+            console.error('uploadPhotos function not found. Available functions:', Object.getOwnPropertyNames(window).filter(n => typeof window[n] === 'function'));
+            alert('Upload functionality not available. Please refresh the page and try again.');
             uploadBtn.textContent = '📁 Upload Photos';
             uploadBtn.disabled = false;
         }
