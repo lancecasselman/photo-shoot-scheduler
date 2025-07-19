@@ -857,6 +857,21 @@ app.post('/api/sessions/upload-photos', upload.array('photos', 20), async (req, 
 
   } catch (error) {
     console.error('Error uploading photos:', error);
+    
+    // Clean up uploaded files if database update failed
+    if (files && files.length > 0) {
+      files.forEach(file => {
+        try {
+          if (fs.existsSync(file.path)) {
+            fs.unlinkSync(file.path);
+            console.log('Cleaned up file:', file.filename);
+          }
+        } catch (cleanupError) {
+          console.error('Error cleaning up file:', file.filename, cleanupError);
+        }
+      });
+    }
+    
     res.status(500).json({
       error: 'Failed to upload photos',
       message: error.message
