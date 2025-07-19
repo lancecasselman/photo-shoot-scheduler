@@ -457,10 +457,34 @@ function createSessionCard(session) {
     invoiceBtn.textContent = '💰 Send Invoice';
     invoiceBtn.onclick = () => createInvoice(session);
 
-    const uploadBtn = document.createElement('button');
-    uploadBtn.className = 'btn btn-secondary';
-    uploadBtn.textContent = '📷 Upload Photos';
-    uploadBtn.onclick = () => openPhotoUpload(session.id);
+    // Create upload section container
+    const uploadSection = document.createElement('div');
+    uploadSection.className = 'upload-section';
+    uploadSection.innerHTML = `
+        <div class="upload-header">
+            <h4>📷 Photo Upload</h4>
+        </div>
+        <div class="upload-controls">
+            <input type="file" id="upload-${session.id}" multiple accept="image/*" style="display: none;">
+            <button class="btn btn-secondary upload-btn" onclick="document.getElementById('upload-${session.id}').click()">
+                📷 Choose Photos
+            </button>
+            <span class="upload-info">Select multiple photos for batch upload</span>
+        </div>
+        <div id="upload-progress-${session.id}" class="upload-progress" style="display: none;"></div>
+        <div id="upload-gallery-${session.id}" class="upload-gallery"></div>
+    `;
+    
+    // Add file input handler
+    const fileInput = uploadSection.querySelector(`#upload-${session.id}`);
+    fileInput.onchange = async (event) => {
+        const files = Array.from(event.target.files);
+        if (files.length === 0) return;
+        
+        await uploadPhotos(session.id, files);
+        // Clear the input to allow re-uploading same files
+        event.target.value = '';
+    };
 
     const viewGalleryBtn = document.createElement('button');
     viewGalleryBtn.className = 'btn btn-info';
@@ -476,8 +500,6 @@ function createSessionCard(session) {
     actions.appendChild(editBtn);
     actions.appendChild(calendarBtn);
     actions.appendChild(galleryBtn);
-    actions.appendChild(uploadBtn);
-    actions.appendChild(viewGalleryBtn);
     actions.appendChild(invoiceBtn);
     actions.appendChild(deleteBtn);
 
@@ -644,11 +666,16 @@ function createSessionCard(session) {
         card.appendChild(details);
         card.appendChild(statusIndicators);
         card.appendChild(notesSection);
+        card.appendChild(uploadSection);
     } else {
         card.appendChild(header);
         card.appendChild(details);
         card.appendChild(statusIndicators);
+        card.appendChild(uploadSection);
     }
+
+    // Load existing photos for this session
+    loadSessionPhotos(session.id);
 
     return card;
     } catch (error) {
@@ -1123,38 +1150,110 @@ async function uploadPhotos(sessionId, files) {
         return;
     }
     
+    const photoUrls = [];
+    const totalFiles = files.length;
+    let uploadedCount = 0;
+    let failedCount = 0;
+    
     try {
-        showMessage(`Uploading ${files.length} photo(s)...`, 'info');
+        // Show initial progress
+        showUploadProgress(sessionId, 0, totalFiles);
         
-        const formData = new FormData();
-        formData.append('sessionId', sessionId);
+        // Check if Firebase Storage is available
+        const useFirebaseStorage = window.firebaseStorage && window.currentUser;
         
-        // Add all files to form data
-        files.forEach((file, index) => {
-            formData.append('photos', file);
-        });
-        
-        const response = await fetch('/api/sessions/upload-photos', {
-            method: 'POST',
-            headers: {
-                'Authorization': window.currentUser ? `Bearer ${window.currentUser.accessToken}` : ''
-            },
-            body: formData
-        });
-        
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Upload failed');
+        if (useFirebaseStorage) {
+            // Upload to Firebase Storage
+            console.log('Using Firebase Storage for uploads');
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                try {
+                    const fileName = `sessions/${sessionId}/${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${file.name}`;
+                    const storageRef = window.storageRef(window.firebaseStorage, fileName);
+                    
+                    // Upload file to Firebase Storage
+                    const snapshot = await window.uploadBytes(storageRef, file);
+                    const downloadURL = await window.getDownloadURL(snapshot.ref);
+                    
+                    photoUrls.push(downloadURL);
+                    uploadedCount++;
+                    
+                    // Update progress
+                    showUploadProgress(sessionId, uploadedCount + failedCount, totalFiles);
+                    
+                } catch (error) {
+                    console.error(`Failed to upload ${file.name}:`, error);
+                    failedCount++;
+                    showUploadProgress(sessionId, uploadedCount + failedCount, totalFiles);
+                }
+            }
+            
+            // Update session with Firebase photo URLs by appending to existing photos
+            const existingPhotosResponse = await fetch(`/api/sessions/${sessionId}/photos`);
+            const existingData = await existingPhotosResponse.json();
+            const existingPhotos = existingData.photos || [];
+            const updatedPhotos = [...existingPhotos, ...photoUrls];
+            
+            const response = await fetch(`/api/sessions/${sessionId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': window.currentUser ? `Bearer ${window.currentUser.accessToken}` : ''
+                },
+                body: JSON.stringify({
+                    photos: updatedPhotos
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to update session with uploaded photos');
+            }
+            
+        } else {
+            // Fallback to local storage upload
+            console.log('Using local storage for uploads');
+            
+            const formData = new FormData();
+            formData.append('sessionId', sessionId);
+            
+            // Add all files to form data
+            files.forEach((file, index) => {
+                formData.append('photos', file);
+            });
+            
+            const response = await fetch('/api/sessions/upload-photos', {
+                method: 'POST',
+                headers: {
+                    'Authorization': window.currentUser ? `Bearer ${window.currentUser.accessToken}` : ''
+                },
+                body: formData
+            });
+            
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Upload failed');
+            }
+            
+            const result = await response.json();
+            uploadedCount = result.uploadedCount;
         }
         
-        const result = await response.json();
-        showMessage(`Successfully uploaded ${result.uploadedCount} photo(s)!`, 'success');
+        // Clear progress and show success
+        clearUploadProgress(sessionId);
+        
+        if (failedCount > 0) {
+            showMessage(`Uploaded ${uploadedCount} photo(s), ${failedCount} failed.`, 'warning');
+        } else {
+            showMessage(`Successfully uploaded ${uploadedCount} photo(s)!`, 'success');
+        }
         
         // Refresh the sessions to show updated photo count
         loadSessions();
         
     } catch (error) {
         console.error('Error uploading photos:', error);
+        clearUploadProgress(sessionId);
         showMessage('Error uploading photos: ' + error.message, 'error');
     }
 }
@@ -1165,6 +1264,66 @@ function viewGallery(sessionId) {
     
     // Navigate to gallery view
     window.location.href = `/gallery/${sessionId}`;
+}
+
+// Upload progress tracking functions
+function showUploadProgress(sessionId, completed, total) {
+    const progressDiv = document.getElementById(`upload-progress-${sessionId}`);
+    if (!progressDiv) return;
+    
+    progressDiv.style.display = 'block';
+    progressDiv.innerHTML = `
+        <div class="progress-bar-container">
+            <div class="progress-bar" style="width: ${(completed / total) * 100}%"></div>
+        </div>
+        <div class="progress-text">
+            Uploading ${completed}/${total} photos...
+        </div>
+    `;
+}
+
+function clearUploadProgress(sessionId) {
+    const progressDiv = document.getElementById(`upload-progress-${sessionId}`);
+    if (progressDiv) {
+        progressDiv.style.display = 'none';
+        progressDiv.innerHTML = '';
+    }
+}
+
+// Load and display existing photos for a session
+async function loadSessionPhotos(sessionId) {
+    try {
+        const response = await fetch(`/api/sessions/${sessionId}/photos`);
+        if (!response.ok) return;
+        
+        const data = await response.json();
+        const photos = data.photos || [];
+        
+        const galleryDiv = document.getElementById(`upload-gallery-${sessionId}`);
+        if (!galleryDiv) return;
+        
+        if (photos.length === 0) {
+            galleryDiv.innerHTML = '<div class="no-photos">No photos uploaded yet</div>';
+            return;
+        }
+        
+        galleryDiv.innerHTML = `
+            <div class="photo-count">${photos.length} photo${photos.length !== 1 ? 's' : ''} uploaded</div>
+            <div class="photo-thumbnails">
+                ${photos.slice(0, 6).map((photo, index) => `
+                    <div class="photo-thumbnail" title="Photo ${index + 1}">
+                        <img src="${photo}" alt="Photo ${index + 1}" loading="lazy">
+                    </div>
+                `).join('')}
+                ${photos.length > 6 ? `<div class="more-photos">+${photos.length - 6} more</div>` : ''}
+            </div>
+            <button class="btn btn-info view-all-btn" onclick="viewGallery('${sessionId}')">
+                🖼️ View All Photos
+            </button>
+        `;
+    } catch (error) {
+        console.error('Error loading session photos:', error);
+    }
 }
 
 // Delete session function

@@ -6,6 +6,12 @@ import {
     signOut, 
     onAuthStateChanged 
 } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+import { 
+    getStorage, 
+    ref, 
+    uploadBytes, 
+    getDownloadURL 
+} from "https://www.gstatic.com/firebasejs/10.7.0/firebase-storage.js";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -21,6 +27,13 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const storage = getStorage(app);
+
+// Make storage available globally
+window.firebaseStorage = storage;
+window.storageRef = ref;
+window.uploadBytes = uploadBytes;
+window.getDownloadURL = getDownloadURL;
 
 // Check server authentication status
 let serverAuthEnabled = true;
