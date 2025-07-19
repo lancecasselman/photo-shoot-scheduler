@@ -521,10 +521,10 @@ function renderSessions() {
 
     // Create and append session cards using DOM methods
     sortedSessions.forEach((session, index) => {
-        console.log(`Creating card ${index + 1} for session:`, session.clientName);
+        console.log(`Creating session card ${index + 1}:`, session.clientName);
         const sessionCard = createSessionCard(session);
         sessionsContainer.appendChild(sessionCard);
-        console.log(`Card ${index + 1} appended to container`);
+        console.log(`Session card ${index + 1} added with upload button`);
     });
     
     console.log('All session cards rendered. Container children count:', sessionsContainer.children.length);
@@ -532,10 +532,7 @@ function renderSessions() {
 
 // Create session card using safe DOM methods
 function createSessionCard(session) {
-    console.log('=== CREATESESSIONCARD DEBUG ===');
-    console.log('Creating card for session:', session.clientName);
-    console.log('Session ID:', session.id);
-    console.log('Full session object:', session);
+    console.log('Creating session card for:', session.clientName);
     try {
         const sessionDate = new Date(session.dateTime);
         const formattedDate = sessionDate.toLocaleDateString('en-US', {
@@ -623,29 +620,16 @@ function createSessionCard(session) {
     deleteBtn.textContent = '🗑️ Delete';
     deleteBtn.onclick = () => deleteSession(session.id);
 
-    console.log('=== BUTTON APPEND DEBUG ===');
-    console.log('Adding buttons to session card for:', session.clientName);
-    console.log('Upload button created:', uploadBtn.textContent);
-    console.log('Upload button element:', uploadBtn);
-    console.log('Upload button className:', uploadBtn.className);
-    
+    // Add all buttons to every session card
     actions.appendChild(editBtn);
-    console.log('Edit button appended');
     actions.appendChild(uploadBtn);
-    console.log('Upload button appended');
     actions.appendChild(calendarBtn);
-    console.log('Calendar button appended');
     actions.appendChild(galleryBtn);
-    console.log('Gallery button appended');
     actions.appendChild(viewGalleryBtn);
-    console.log('View Gallery button appended');
     actions.appendChild(invoiceBtn);
-    console.log('Invoice button appended');
     actions.appendChild(deleteBtn);
-    console.log('Delete button appended');
     
-    console.log('Actions section children count:', actions.children.length);
-    console.log('Actions section HTML:', actions.innerHTML);
+    console.log('All buttons added to session card for:', session.clientName, '- Upload button included:', uploadBtn.textContent);
 
     header.appendChild(headerInfo);
     header.appendChild(actions);
@@ -823,9 +807,7 @@ function createSessionCard(session) {
         card.appendChild(notesSection);
     }
 
-    console.log('=== FINAL CARD DEBUG ===');
-    console.log('Session card created successfully for:', session.clientName);
-    console.log('Card contains upload button:', card.innerHTML.includes('Upload Photos'));
+    console.log('Session card created for:', session.clientName, '- Upload button included:', card.innerHTML.includes('Upload Photos'));
     return card;
     } catch (error) {
         console.error('Error creating session card:', error, session);
