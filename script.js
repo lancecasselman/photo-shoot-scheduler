@@ -141,13 +141,19 @@ async function loadSessions() {
         console.log('Loading sessions from database...');
         const data = await apiCall('/api/sessions');
         console.log('Sessions loaded:', data);
+        console.log('Data type:', typeof data, 'Array:', Array.isArray(data));
 
         // Transform database format to frontend format
         sessions = (data || []).map(transformSessionData);
+        console.log('Transformed sessions:', sessions);
+        
         renderSessions();
+        console.log('Sessions rendered, container should now show', sessions.length, 'sessions');
 
         if (sessions.length === 0) {
             console.log('No sessions found in database');
+        } else {
+            console.log(`Successfully loaded ${sessions.length} sessions`);
         }
     } catch (error) {
         console.error('Error loading sessions:', error);
@@ -366,10 +372,14 @@ function validateSessionData(data) {
 
 // Render all sessions
 function renderSessions() {
+    console.log('renderSessions called with', sessions.length, 'sessions');
+    console.log('Sessions container:', sessionsContainer);
+    
     // Clear existing content
     sessionsContainer.innerHTML = '';
 
     if (sessions.length === 0) {
+        console.log('Showing empty state');
         const emptyState = document.createElement('div');
         emptyState.className = 'empty-state';
 
@@ -381,14 +391,21 @@ function renderSessions() {
         return;
     }
 
+    console.log('Rendering', sessions.length, 'session cards');
+    
     // Sort sessions by date/time
     const sortedSessions = [...sessions].sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
+    console.log('Sorted sessions:', sortedSessions);
 
     // Create and append session cards using DOM methods
-    sortedSessions.forEach(session => {
+    sortedSessions.forEach((session, index) => {
+        console.log(`Creating card ${index + 1} for session:`, session.clientName);
         const sessionCard = createSessionCard(session);
         sessionsContainer.appendChild(sessionCard);
+        console.log(`Card ${index + 1} appended to container`);
     });
+    
+    console.log('All session cards rendered. Container children count:', sessionsContainer.children.length);
 }
 
 // Create session card using safe DOM methods

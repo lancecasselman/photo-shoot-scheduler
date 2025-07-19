@@ -403,12 +403,12 @@ app.get('/api/sessions', async (req, res) => {
       if (firestore && userUid !== 'fallback-user') {
         result = await getSessionsFromFirestore(userUid);
       } else {
-        // Use PostgreSQL for fallback users or when Firestore unavailable
+        // Use PostgreSQL - load ALL sessions for shared business account
         try {
-          const query = 'SELECT * FROM sessions WHERE created_by = $1 ORDER BY date_time ASC';
-          const { rows } = await pool.query(query, [userUid]);
+          const query = 'SELECT * FROM sessions ORDER BY date_time ASC';
+          const { rows } = await pool.query(query);
           result = rows;
-          console.log(`Found ${rows.length} sessions for user ${userUid}`);
+          console.log(`Found ${rows.length} sessions (all sessions for shared business)`);
         } catch (dbError) {
           console.error('Database query error:', dbError);
           // Return empty array if database query fails

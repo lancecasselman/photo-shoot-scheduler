@@ -5,7 +5,7 @@ channel = "stable-24_05"
 packages = ["postgresql"]
 
 [workflows]
-runButton = "Project"
+runButton = "iOS Build"
 
 [[workflows.workflow]]
 name = "Project"
