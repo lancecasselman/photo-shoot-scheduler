@@ -457,6 +457,17 @@ function createSessionCard(session) {
     invoiceBtn.textContent = '💰 Send Invoice';
     invoiceBtn.onclick = () => createInvoice(session);
 
+    const uploadBtn = document.createElement('button');
+    uploadBtn.className = 'btn btn-secondary';
+    uploadBtn.textContent = '📷 Upload Photos';
+    uploadBtn.onclick = () => openPhotoUpload(session.id);
+
+    const viewGalleryBtn = document.createElement('button');
+    viewGalleryBtn.className = 'btn btn-info';
+    const photoCount = session.photos ? session.photos.length : 0;
+    viewGalleryBtn.textContent = photoCount > 0 ? `🖼️ View Gallery (${photoCount})` : '🖼️ View Gallery';
+    viewGalleryBtn.onclick = () => viewGallery(session.id);
+
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn btn-danger';
     deleteBtn.textContent = '🗑️ Delete';
@@ -465,6 +476,8 @@ function createSessionCard(session) {
     actions.appendChild(editBtn);
     actions.appendChild(calendarBtn);
     actions.appendChild(galleryBtn);
+    actions.appendChild(uploadBtn);
+    actions.appendChild(viewGalleryBtn);
     actions.appendChild(invoiceBtn);
     actions.appendChild(deleteBtn);
 
@@ -1081,6 +1094,77 @@ async function createInvoice(session) {
         console.error('Error creating invoice:', error);
         showMessage('Error creating invoice: ' + error.message, 'error');
     }
+}
+
+// Gallery functionality
+function openPhotoUpload(sessionId) {
+    // Create file input dynamically
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.multiple = true;
+    fileInput.accept = 'image/*';
+    fileInput.style.display = 'none';
+    
+    fileInput.onchange = async (event) => {
+        const files = Array.from(event.target.files);
+        if (files.length === 0) return;
+        
+        await uploadPhotos(sessionId, files);
+    };
+    
+    document.body.appendChild(fileInput);
+    fileInput.click();
+    document.body.removeChild(fileInput);
+}
+
+async function uploadPhotos(sessionId, files) {
+    if (files.length === 0) {
+        showMessage('No files selected.', 'error');
+        return;
+    }
+    
+    try {
+        showMessage(`Uploading ${files.length} photo(s)...`, 'info');
+        
+        const formData = new FormData();
+        formData.append('sessionId', sessionId);
+        
+        // Add all files to form data
+        files.forEach((file, index) => {
+            formData.append('photos', file);
+        });
+        
+        const response = await fetch('/api/sessions/upload-photos', {
+            method: 'POST',
+            headers: {
+                'Authorization': window.currentUser ? `Bearer ${window.currentUser.accessToken}` : ''
+            },
+            body: formData
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Upload failed');
+        }
+        
+        const result = await response.json();
+        showMessage(`Successfully uploaded ${result.uploadedCount} photo(s)!`, 'success');
+        
+        // Refresh the sessions to show updated photo count
+        loadSessions();
+        
+    } catch (error) {
+        console.error('Error uploading photos:', error);
+        showMessage('Error uploading photos: ' + error.message, 'error');
+    }
+}
+
+function viewGallery(sessionId) {
+    // Store current session ID for gallery view
+    sessionStorage.setItem('gallerySessionId', sessionId);
+    
+    // Navigate to gallery view
+    window.location.href = `/gallery/${sessionId}`;
 }
 
 // Delete session function

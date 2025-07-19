@@ -3,9 +3,45 @@ const path = require('path');
 const { Pool } = require('pg');
 const admin = require('firebase-admin');
 const cron = require('node-cron');
+const multer = require('multer');
+const fs = require('fs');
 const { sendSessionReminder, sendGalleryReadyNotification } = require('./notifications');
 
 const app = express();
+
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadsDir);
+  },
+  filename: function (req, file, cb) {
+    // Generate unique filename with timestamp and original extension
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit per file
+    files: 20 // Maximum 20 files per upload
+  },
+  fileFilter: function (req, file, cb) {
+    // Accept only image files
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed!'));
+    }
+  }
+});
 
 // Global flag to track Firebase initialization status
 let isFirebaseInitialized = false;
@@ -97,6 +133,14 @@ app.use((req, res, next) => {
     return;
   }
   next();
+});
+
+// Serve uploaded files
+app.use('/uploads', express.static(uploadsDir));
+
+// Gallery route handler
+app.get('/gallery/:sessionId', (req, res) => {
+  res.sendFile(path.join(__dirname, 'gallery.html'));
 });
 
 // Serve static files from current directory
@@ -699,7 +743,153 @@ app.delete('/api/sessions/:id', async (req, res) => {
   }
 });
 
+// Photo upload endpoint
+app.post('/api/sessions/upload-photos', upload.array('photos', 20), async (req, res) => {
+  try {
+    const sessionId = req.body.sessionId;
+    const files = req.files;
 
+    if (!sessionId) {
+      return res.status(400).json({ error: 'Session ID is required' });
+    }
+
+    if (!files || files.length === 0) {
+      return res.status(400).json({ error: 'No files uploaded' });
+    }
+
+    console.log(`Uploading ${files.length} photos for session ${sessionId}`);
+
+    // Get user from authorization header
+    let userUid = null;
+    const authHeader = req.headers.authorization;
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      try {
+        if (isFirebaseInitialized) {
+          const decodedToken = await admin.auth().verifyIdToken(token);
+          userUid = decodedToken.uid;
+        }
+      } catch (error) {
+        console.error('Token verification failed:', error);
+      }
+    }
+
+    if (!userUid) {
+      userUid = 'fallback-user';
+    }
+
+    // Create photo URLs
+    const photoUrls = files.map(file => `/uploads/${file.filename}`);
+    
+    console.log('Generated photo URLs:', photoUrls);
+
+    // Update session with new photos
+    const isNumericId = !isNaN(parseInt(sessionId)) && sessionId.length < 10 && /^\d+$/.test(sessionId);
+    
+    if (isNumericId) {
+      // PostgreSQL update
+      const query = `
+        UPDATE sessions 
+        SET photos = COALESCE(photos, '[]'::jsonb) || $1::jsonb
+        WHERE id = $2 AND created_by = $3
+        RETURNING *
+      `;
+      
+      const result = await pool.query(query, [
+        JSON.stringify(photoUrls),
+        parseInt(sessionId),
+        userUid
+      ]);
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Session not found or unauthorized' });
+      }
+      
+      console.log('Updated PostgreSQL session with photos');
+    } else {
+      // Firestore update
+      if (firestore) {
+        const sessionRef = firestore.collection('sessions').doc(sessionId);
+        const sessionDoc = await sessionRef.get();
+        
+        if (!sessionDoc.exists) {
+          return res.status(404).json({ error: 'Session not found' });
+        }
+        
+        const sessionData = sessionDoc.data();
+        const isOwner = sessionData.created_by === userUid || 
+                       sessionData.createdBy === userUid || 
+                       sessionData.userUid === userUid;
+        
+        if (!isOwner) {
+          return res.status(403).json({ error: 'Unauthorized to upload photos to this session' });
+        }
+        
+        // Add photos to existing array or create new array
+        const existingPhotos = sessionData.photos || [];
+        const updatedPhotos = [...existingPhotos, ...photoUrls];
+        
+        await sessionRef.update({
+          photos: updatedPhotos,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+        
+        console.log('Updated Firestore session with photos');
+      } else {
+        return res.status(500).json({ error: 'Database not available' });
+      }
+    }
+
+    res.json({
+      success: true,
+      uploadedCount: files.length,
+      photoUrls: photoUrls,
+      message: `Successfully uploaded ${files.length} photo(s)`
+    });
+
+  } catch (error) {
+    console.error('Error uploading photos:', error);
+    res.status(500).json({
+      error: 'Failed to upload photos',
+      message: error.message
+    });
+  }
+});
+
+// Get photos for a session
+app.get('/api/sessions/:id/photos', async (req, res) => {
+  try {
+    const sessionId = req.params.id;
+    const isNumericId = !isNaN(parseInt(sessionId)) && sessionId.length < 10 && /^\d+$/.test(sessionId);
+    
+    let photos = [];
+    
+    if (isNumericId) {
+      // PostgreSQL query
+      const query = 'SELECT photos FROM sessions WHERE id = $1';
+      const result = await pool.query(query, [parseInt(sessionId)]);
+      
+      if (result.rows.length > 0) {
+        photos = result.rows[0].photos || [];
+      }
+    } else {
+      // Firestore query
+      if (firestore) {
+        const sessionDoc = await firestore.collection('sessions').doc(sessionId).get();
+        if (sessionDoc.exists) {
+          const sessionData = sessionDoc.data();
+          photos = sessionData.photos || [];
+        }
+      }
+    }
+    
+    res.json({ photos });
+  } catch (error) {
+    console.error('Error fetching photos:', error);
+    res.status(500).json({ error: 'Failed to fetch photos' });
+  }
+});
 
 // User management endpoints
 app.post('/api/users', async (req, res) => {
