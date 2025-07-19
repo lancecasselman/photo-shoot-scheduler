@@ -164,10 +164,10 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     
     // IMMEDIATELY ensure photo upload section is visible
-    const photoUploadSection = document.querySelector('.photo-upload-section');
-    if (photoUploadSection) {
-        photoUploadSection.style.display = 'block';
-        photoUploadSection.style.visibility = 'visible';
+    const mainUploadSection = document.querySelector('.photo-upload-section');
+    if (mainUploadSection) {
+        mainUploadSection.style.display = 'block';
+        mainUploadSection.style.visibility = 'visible';
         console.log('Photo upload section immediately made visible on DOM load');
     } else {
         console.error('Photo upload section not found in DOM during initialization');
@@ -176,22 +176,14 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Set up photo upload with backend API
     setTimeout(() => {
         const photoUploadInput = document.getElementById('photoUpload');
-        const photoUploadSection = document.querySelector('.photo-upload-section');
+        const uploadSectionElement = document.querySelector('.photo-upload-section');
         
         console.log('Photo upload input found:', !!photoUploadInput);
-        console.log('Photo upload section found:', !!photoUploadSection);
+        console.log('Photo upload section found:', !!uploadSectionElement);
         
         if (photoUploadInput) {
             photoUploadInput.addEventListener('change', handlePhotoSelection);
             console.log('Photo upload event listener added successfully');
-        } else {
-            console.error('Photo upload input not found in DOM');
-        }
-        
-        if (photoUploadSection) {
-            console.log('Photo upload section is visible');
-        } else {
-            console.error('Photo upload section not found in DOM');
         }
         
         // Backend photo upload is always available
@@ -210,10 +202,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
         
         // Make sure photo upload section is always visible
-        const photoUploadSection = document.querySelector('.photo-upload-section');
-        if (photoUploadSection) {
-            photoUploadSection.style.display = 'block';
-            photoUploadSection.style.visibility = 'visible';
+        if (uploadSectionElement) {
+            uploadSectionElement.style.display = 'block';
+            uploadSectionElement.style.visibility = 'visible';
             console.log('Photo upload section forced visible');
         }
     }, 500);
@@ -1246,11 +1237,11 @@ async function uploadPhotosToBackend(sessionId, files) {
 
 // Show upload progress
 function showUploadProgress(current, total) {
-    const photoUploadSection = document.querySelector('.photo-upload-section');
-    if (!photoUploadSection) return;
+    const uploadSection = document.querySelector('.photo-upload-section');
+    if (!uploadSection) return;
     
     // Remove existing progress
-    const existingProgress = photoUploadSection.querySelector('.upload-progress');
+    const existingProgress = uploadSection.querySelector('.upload-progress');
     if (existingProgress) {
         existingProgress.remove();
     }
@@ -1276,7 +1267,7 @@ function showUploadProgress(current, total) {
     
     progressContainer.appendChild(progressBarContainer);
     progressContainer.appendChild(progressText);
-    photoUploadSection.appendChild(progressContainer);
+    uploadSection.appendChild(progressContainer);
 }
 
 // Update upload progress
