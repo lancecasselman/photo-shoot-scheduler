@@ -275,6 +275,17 @@ header p {
     background: #e0a800;
 }
 
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+}
+
+.btn-secondary:hover {
+    background: #545b62;
+}
+
 .btn-warning:disabled {
     background: #6c757d;
     color: white;

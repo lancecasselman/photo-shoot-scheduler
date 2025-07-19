@@ -619,6 +619,9 @@ function createSessionCard(session) {
     deleteBtn.textContent = '🗑️ Delete';
     deleteBtn.onclick = () => deleteSession(session.id);
 
+    console.log('Adding buttons to session card for:', session.clientName);
+    console.log('Upload button created:', uploadBtn.textContent);
+    
     actions.appendChild(editBtn);
     actions.appendChild(uploadBtn);
     actions.appendChild(calendarBtn);
@@ -626,6 +629,8 @@ function createSessionCard(session) {
     actions.appendChild(viewGalleryBtn);
     actions.appendChild(invoiceBtn);
     actions.appendChild(deleteBtn);
+    
+    console.log('Actions section children count:', actions.children.length);
 
     header.appendChild(headerInfo);
     header.appendChild(actions);
