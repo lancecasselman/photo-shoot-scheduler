@@ -628,15 +628,35 @@ function createSessionCard(session) {
     deleteBtn.onclick = () => deleteSession(session.id);
 
     // Add all buttons to every session card
-    actions.appendChild(editBtn);
-    actions.appendChild(uploadBtn);
-    actions.appendChild(calendarBtn);
-    actions.appendChild(galleryBtn);
-    actions.appendChild(viewGalleryBtn);
-    actions.appendChild(invoiceBtn);
-    actions.appendChild(deleteBtn);
+    console.log('=== BUTTON APPEND DEBUG ===');
+    console.log('About to append buttons for:', session.clientName);
+    console.log('Upload button exists:', !!uploadBtn);
+    console.log('Upload button text:', uploadBtn ? uploadBtn.textContent : 'UNDEFINED');
     
-    console.log('All buttons added to session card for:', session.clientName, '- Upload button included:', uploadBtn.textContent);
+    actions.appendChild(editBtn);
+    console.log('✓ Edit button appended');
+    
+    actions.appendChild(uploadBtn);
+    console.log('✓ Upload button appended:', uploadBtn.textContent);
+    
+    actions.appendChild(calendarBtn);
+    console.log('✓ Calendar button appended');
+    
+    actions.appendChild(galleryBtn);
+    console.log('✓ Gallery button appended');
+    
+    actions.appendChild(viewGalleryBtn);
+    console.log('✓ View Gallery button appended');
+    
+    actions.appendChild(invoiceBtn);
+    console.log('✓ Invoice button appended');
+    
+    actions.appendChild(deleteBtn);
+    console.log('✓ Delete button appended');
+    
+    console.log('=== FINAL BUTTON COUNT ===');
+    console.log('Actions children count:', actions.children.length);
+    console.log('Actions innerHTML preview:', actions.innerHTML.substring(0, 200) + '...');
 
     header.appendChild(headerInfo);
     header.appendChild(actions);
