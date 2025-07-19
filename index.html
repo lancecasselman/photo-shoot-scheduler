@@ -164,57 +164,24 @@
     </div>
 
     <script>
-        console.log('Starting Firebase config fetch...');
+        console.log('Photo upload backend API ready');
         
-        // Fetch Firebase credentials from server
-        fetch('/api/firebase-config')
-            .then(response => {
-                console.log('Firebase config response received:', response.status);
-                return response.json();
-            })
-            .then(config => {
-                console.log('Firebase config data received');
-                
-                // Store Firebase config globally
-                window.VITE_FIREBASE_API_KEY = config.apiKey;
-                window.VITE_FIREBASE_PROJECT_ID = config.projectId;
-                window.VITE_FIREBASE_APP_ID = config.appId;
-                
-                console.log('Firebase config loaded successfully');
-                
-                // Load Firebase configuration module as ES6 module
-                const script = document.createElement('script');
-                script.type = 'module';
-                script.src = 'firebase-config.js?v=1752951000000';
-                script.onload = function() {
-                    console.log('Firebase config script loaded and executing');
-                };
-                script.onerror = function(err) {
-                    console.error('Failed to load Firebase config script:', err);
-                };
-                document.head.appendChild(script);
-            })
-            .catch(err => {
-                console.error('Failed to fetch Firebase config:', err);
-                console.log('Photo upload will be unavailable');
-                
-                // Initialize photo upload section anyway but disabled
-                setTimeout(() => {
-                    const photoUploadSection = document.querySelector('.photo-upload-section');
-                    const photoUploadHelper = document.querySelector('.photo-upload-helper');
-                    
-                    if (photoUploadSection) {
-                        photoUploadSection.style.display = 'block';
-                        photoUploadSection.style.visibility = 'visible';
-                        console.log('Photo upload section made visible (Firebase unavailable)');
-                    }
-                    
-                    if (photoUploadHelper) {
-                        photoUploadHelper.textContent = 'Photo upload unavailable - Firebase not configured';
-                        photoUploadHelper.style.color = '#e53e3e';
-                    }
-                }, 500);
-            });
+        // Photo upload is always available with backend API
+        setTimeout(() => {
+            const photoUploadSection = document.querySelector('.photo-upload-section');
+            const photoUploadHelper = document.querySelector('.photo-upload-helper');
+            
+            if (photoUploadSection) {
+                photoUploadSection.style.display = 'block';
+                photoUploadSection.style.visibility = 'visible';
+                console.log('Photo upload section made visible (Backend API)');
+            }
+            
+            if (photoUploadHelper) {
+                photoUploadHelper.textContent = 'Select multiple photos for this session';
+                photoUploadHelper.style.color = '';
+            }
+        }, 100);
     </script>
     <script type="module" src="auth.js?v=1752951000000"></script>
 </body>

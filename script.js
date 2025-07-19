@@ -242,7 +242,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         console.error('Photo upload section not found in DOM during initialization');
     }
     
-    // Wait a bit for Firebase to initialize, then set up photo upload
+    // Set up photo upload with backend API
     setTimeout(() => {
         const photoUploadInput = document.getElementById('photoUpload');
         const photoUploadSection = document.querySelector('.photo-upload-section');
@@ -263,35 +263,19 @@ document.addEventListener('DOMContentLoaded', async function() {
             console.error('Photo upload section not found in DOM');
         }
         
-        // Check Firebase Storage availability
-        if (window.firebaseStorage) {
-            console.log('Firebase Storage is available for photo uploads');
-            
-            // Ensure photo upload section is enabled
-            const photoUploadArea = document.querySelector('.photo-upload-area');
-            const photoUploadHelper = document.querySelector('.photo-upload-helper');
-            if (photoUploadArea) {
-                photoUploadArea.style.opacity = '1';
-                photoUploadArea.style.pointerEvents = 'auto';
-            }
-            if (photoUploadHelper) {
-                photoUploadHelper.textContent = 'Select multiple photos for this session';
-                photoUploadHelper.style.color = '';
-            }
-        } else {
-            console.log('Firebase Storage not available, photo uploads disabled');
-            
-            // Show warning but keep section visible
-            const photoUploadArea = document.querySelector('.photo-upload-area');
-            const photoUploadHelper = document.querySelector('.photo-upload-helper');
-            if (photoUploadArea) {
-                photoUploadArea.style.opacity = '0.6';
-                photoUploadArea.style.pointerEvents = 'none';
-            }
-            if (photoUploadHelper) {
-                photoUploadHelper.textContent = 'Photo upload unavailable - Firebase Storage not configured';
-                photoUploadHelper.style.color = '#e53e3e';
-            }
+        // Backend photo upload is always available
+        console.log('Backend photo upload API is available');
+        
+        // Ensure photo upload section is enabled
+        const photoUploadArea = document.querySelector('.photo-upload-area');
+        const photoUploadHelper = document.querySelector('.photo-upload-helper');
+        if (photoUploadArea) {
+            photoUploadArea.style.opacity = '1';
+            photoUploadArea.style.pointerEvents = 'auto';
+        }
+        if (photoUploadHelper) {
+            photoUploadHelper.textContent = 'Select multiple photos for this session';
+            photoUploadHelper.style.color = '';
         }
         
         // Make sure photo upload section is always visible
@@ -301,7 +285,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             photoUploadSection.style.visibility = 'visible';
             console.log('Photo upload section forced visible');
         }
-    }, 1000);
+    }, 500);
 
     // Check server status to determine if we should load sessions
     try {
@@ -414,7 +398,7 @@ async function handleFormSubmit(event) {
             if (selectedPhotos.length > 0) {
                 try {
                     showUploadProgress(0, selectedPhotos.length);
-                    await uploadPhotosToFirebase(savedSession.id, selectedPhotos);
+                    await uploadPhotosToBackend(savedSession.id, selectedPhotos);
                     hideUploadProgress();
                     showMessage(`Session added successfully with ${selectedPhotos.length} photos uploaded!`, 'success');
                 } catch (error) {
@@ -1305,36 +1289,24 @@ function removePhotoFromSelection(index) {
     photoUploadInput.files = dt.files;
 }
 
-// Upload photos to Firebase Storage
-async function uploadPhotosToFirebase(sessionId, files) {
-    if (!window.firebaseStorage) {
-        throw new Error('Firebase Storage not initialized');
-    }
-    
-    const uploadedUrls = [];
-    let uploadedCount = 0;
-    
+// Upload photos to backend API
+async function uploadPhotosToBackend(sessionId, files) {
+    const formData = new FormData();
+    formData.append('sessionId', sessionId);
     for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const fileName = `${Date.now()}_${i}_${file.name}`;
-        const storageRef = window.firebaseRef(window.firebaseStorage, `sessions/${sessionId}/${fileName}`);
-        
-        try {
-            const snapshot = await window.firebaseUploadBytes(storageRef, file);
-            const downloadURL = await window.firebaseGetDownloadURL(snapshot.ref);
-            uploadedUrls.push(downloadURL);
-            uploadedCount++;
-            
-            // Update progress
-            updateUploadProgress(uploadedCount, files.length);
-            console.log(`Uploaded photo ${uploadedCount}/${files.length}: ${downloadURL}`);
-        } catch (error) {
-            console.error(`Error uploading photo ${i + 1}:`, error);
-            // Continue with other uploads even if one fails
-        }
+        formData.append('photos', files[i]);
     }
-    
-    return uploadedUrls;
+
+    const res = await fetch('/api/sessions/upload-photos', {
+        method: 'POST',
+        headers: {
+            Authorization: window.userToken ? `Bearer ${window.userToken}` : undefined
+        },
+        body: formData
+    });
+
+    const data = await res.json();
+    return data.photoUrls || [];
 }
 
 // Show upload progress
@@ -1393,25 +1365,16 @@ function hideUploadProgress() {
 
 // Load session gallery
 async function loadSessionGallery(sessionId) {
-    try {
-        if (!window.firebaseStorage) {
-            console.log('Firebase Storage not available, skipping gallery load');
-            return [];
-        }
-        
-        const listRef = window.firebaseRef(window.firebaseStorage, `sessions/${sessionId}`);
-        const listResult = await window.firebaseListAll(listRef);
-        
-        const photoUrls = await Promise.all(
-            listResult.items.map(itemRef => window.firebaseGetDownloadURL(itemRef))
-        );
-        
-        return photoUrls;
-    } catch (error) {
-        console.error('Error loading session gallery:', error);
-        return [];
-    }
+  try {
+    const res = await fetch(`/api/sessions/${sessionId}/photos`);
+    const data = await res.json();
+    return data.photos || [];
+  } catch (error) {
+    console.error('Error loading session gallery:', error);
+    return [];
+  }
 }
+
 
 // Display session gallery
 function displaySessionGallery(sessionId, photoUrls) {
