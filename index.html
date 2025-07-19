@@ -97,11 +97,15 @@
                     </div>
 
                     <!-- Photo Upload Section -->
-                    <div class="form-group full-width photo-upload-section" style="display: block !important; visibility: visible !important;">
+                    <div class="form-group full-width photo-upload-section">
                         <label for="photoUpload" class="photo-upload-label">📸 Upload Photos</label>
                         <input type="file" id="photoUpload" name="photoUpload" multiple accept="image/*" class="photo-upload-input">
-                        <div class="photo-upload-helper">Select multiple photos for this session</div>
+                        <div class="photo-upload-area" onclick="document.getElementById('photoUpload').click();">
+                            <span class="photo-upload-text">Choose Files - No files chosen</span>
+                            <span class="photo-upload-helper">Select multiple photos for this session</span>
+                        </div>
                         <div id="photoPreview" class="photo-preview-container"></div>
+                        <div id="uploadProgress" class="upload-progress-container"></div>
                     </div>
 
                     <div class="checkbox-group">

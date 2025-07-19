@@ -232,8 +232,40 @@ document.addEventListener('DOMContentLoaded', async function() {
         // Check Firebase Storage availability
         if (window.firebaseStorage) {
             console.log('Firebase Storage is available for photo uploads');
+            
+            // Ensure photo upload section is enabled
+            const photoUploadArea = document.querySelector('.photo-upload-area');
+            const photoUploadHelper = document.querySelector('.photo-upload-helper');
+            if (photoUploadArea) {
+                photoUploadArea.style.opacity = '1';
+                photoUploadArea.style.pointerEvents = 'auto';
+            }
+            if (photoUploadHelper) {
+                photoUploadHelper.textContent = 'Select multiple photos for this session';
+                photoUploadHelper.style.color = '';
+            }
         } else {
             console.log('Firebase Storage not available, photo uploads disabled');
+            
+            // Show warning but keep section visible
+            const photoUploadArea = document.querySelector('.photo-upload-area');
+            const photoUploadHelper = document.querySelector('.photo-upload-helper');
+            if (photoUploadArea) {
+                photoUploadArea.style.opacity = '0.6';
+                photoUploadArea.style.pointerEvents = 'none';
+            }
+            if (photoUploadHelper) {
+                photoUploadHelper.textContent = 'Photo upload unavailable - Firebase Storage not configured';
+                photoUploadHelper.style.color = '#e53e3e';
+            }
+        }
+        
+        // Make sure photo upload section is always visible
+        const photoUploadSection = document.querySelector('.photo-upload-section');
+        if (photoUploadSection) {
+            photoUploadSection.style.display = 'block';
+            photoUploadSection.style.visibility = 'visible';
+            console.log('Photo upload section forced visible');
         }
     }, 1000);
 

@@ -54,9 +54,14 @@ async function initializeFirebaseStorage() {
         
         // Enable photo upload functionality
         const photoUploadSection = document.querySelector('.photo-upload-section');
+        const photoUploadHelper = document.querySelector('.photo-upload-helper');
         if (photoUploadSection) {
             photoUploadSection.style.display = 'block';
             console.log('Photo upload section enabled');
+        }
+        if (photoUploadHelper) {
+            photoUploadHelper.textContent = 'Select multiple photos for this session';
+            photoUploadHelper.style.color = '';
         }
         
         return true;
@@ -64,14 +69,18 @@ async function initializeFirebaseStorage() {
     } catch (error) {
         console.error('Error initializing Firebase Storage:', error);
         
-        // Disable photo upload functionality
+        // Keep photo upload section visible but show warning
         const photoUploadSection = document.querySelector('.photo-upload-section');
-        if (photoUploadSection) {
-            photoUploadSection.style.display = 'none';
-        }
-        
-        // Show error message
+        const photoUploadArea = document.querySelector('.photo-upload-area');
         const uploadHelper = document.querySelector('.photo-upload-helper');
+        
+        if (photoUploadSection) {
+            photoUploadSection.style.display = 'block';
+        }
+        if (photoUploadArea) {
+            photoUploadArea.style.opacity = '0.6';
+            photoUploadArea.style.pointerEvents = 'none';
+        }
         if (uploadHelper) {
             uploadHelper.textContent = 'Photo upload unavailable - Firebase Storage not configured';
             uploadHelper.style.color = '#e53e3e';
