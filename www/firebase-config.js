@@ -11,12 +11,14 @@ import {
 } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js';
 
 // Initialize Firebase Storage when DOM is loaded
-document.addEventListener('DOMContentLoaded', async function() {
+async function initializeFirebaseStorage() {
     try {
+        console.log('Initializing Firebase Storage...');
+        
         // Check if Firebase credentials are available
         if (!window.VITE_FIREBASE_API_KEY || !window.VITE_FIREBASE_PROJECT_ID || !window.VITE_FIREBASE_APP_ID) {
             console.log('Firebase credentials not available, photo upload will be disabled');
-            return;
+            return false;
         }
 
         // Firebase configuration
@@ -42,12 +44,22 @@ document.addEventListener('DOMContentLoaded', async function() {
         window.firebaseListAll = listAll;
         
         console.log('Firebase Storage initialized successfully');
+        console.log('Available Firebase functions:', {
+            storage: !!window.firebaseStorage,
+            ref: !!window.firebaseRef,
+            uploadBytes: !!window.firebaseUploadBytes,
+            getDownloadURL: !!window.firebaseGetDownloadURL,
+            listAll: !!window.firebaseListAll
+        });
         
         // Enable photo upload functionality
         const photoUploadSection = document.querySelector('.photo-upload-section');
         if (photoUploadSection) {
             photoUploadSection.style.display = 'block';
+            console.log('Photo upload section enabled');
         }
+        
+        return true;
         
     } catch (error) {
         console.error('Error initializing Firebase Storage:', error);
@@ -64,8 +76,16 @@ document.addEventListener('DOMContentLoaded', async function() {
             uploadHelper.textContent = 'Photo upload unavailable - Firebase Storage not configured';
             uploadHelper.style.color = '#e53e3e';
         }
+        
+        return false;
     }
-});
+}
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', initializeFirebaseStorage);
+
+// Also expose the initialization function globally
+window.initializeFirebaseStorage = initializeFirebaseStorage;
 
 // Export for module usage
 export { initializeApp };

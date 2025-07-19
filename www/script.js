@@ -208,11 +208,34 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Add form submit event listener
     sessionForm.addEventListener('submit', handleFormSubmit);
     
-    // Add photo upload event listener
-    const photoUploadInput = document.getElementById('photoUpload');
-    if (photoUploadInput) {
-        photoUploadInput.addEventListener('change', handlePhotoSelection);
-    }
+    // Wait a bit for Firebase to initialize, then set up photo upload
+    setTimeout(() => {
+        const photoUploadInput = document.getElementById('photoUpload');
+        const photoUploadSection = document.querySelector('.photo-upload-section');
+        
+        console.log('Photo upload input found:', !!photoUploadInput);
+        console.log('Photo upload section found:', !!photoUploadSection);
+        
+        if (photoUploadInput) {
+            photoUploadInput.addEventListener('change', handlePhotoSelection);
+            console.log('Photo upload event listener added successfully');
+        } else {
+            console.error('Photo upload input not found in DOM');
+        }
+        
+        if (photoUploadSection) {
+            console.log('Photo upload section is visible');
+        } else {
+            console.error('Photo upload section not found in DOM');
+        }
+        
+        // Check Firebase Storage availability
+        if (window.firebaseStorage) {
+            console.log('Firebase Storage is available for photo uploads');
+        } else {
+            console.log('Firebase Storage not available, photo uploads disabled');
+        }
+    }, 1000);
 
     // Check server status to determine if we should load sessions
     try {
