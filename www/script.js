@@ -141,13 +141,19 @@ async function loadSessions() {
         console.log('Loading sessions from database...');
         const data = await apiCall('/api/sessions');
         console.log('Sessions loaded:', data);
+        console.log('Data type:', typeof data, 'Array:', Array.isArray(data));
 
         // Transform database format to frontend format
         sessions = (data || []).map(transformSessionData);
+        console.log('Transformed sessions:', sessions);
+        
         renderSessions();
+        console.log('Sessions rendered, container should now show', sessions.length, 'sessions');
 
         if (sessions.length === 0) {
             console.log('No sessions found in database');
+        } else {
+            console.log(`Successfully loaded ${sessions.length} sessions`);
         }
     } catch (error) {
         console.error('Error loading sessions:', error);
@@ -366,10 +372,14 @@ function validateSessionData(data) {
 
 // Render all sessions
 function renderSessions() {
+    console.log('renderSessions called with', sessions.length, 'sessions');
+    console.log('Sessions container:', sessionsContainer);
+    
     // Clear existing content
     sessionsContainer.innerHTML = '';
 
     if (sessions.length === 0) {
+        console.log('Showing empty state');
         const emptyState = document.createElement('div');
         emptyState.className = 'empty-state';
 
@@ -381,14 +391,21 @@ function renderSessions() {
         return;
     }
 
+    console.log('Rendering', sessions.length, 'session cards');
+    
     // Sort sessions by date/time
     const sortedSessions = [...sessions].sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
+    console.log('Sorted sessions:', sortedSessions);
 
     // Create and append session cards using DOM methods
-    sortedSessions.forEach(session => {
+    sortedSessions.forEach((session, index) => {
+        console.log(`Creating card ${index + 1} for session:`, session.clientName);
         const sessionCard = createSessionCard(session);
         sessionsContainer.appendChild(sessionCard);
+        console.log(`Card ${index + 1} appended to container`);
     });
+    
+    console.log('All session cards rendered. Container children count:', sessionsContainer.children.length);
 }
 
 // Create session card using safe DOM methods
@@ -453,56 +470,88 @@ function createSessionCard(session) {
     invoiceBtn.textContent = '💰 Send Invoice';
     invoiceBtn.onclick = () => createInvoice(session);
 
-    // Create upload section container
+    // Create upload section container with VISIBLE file input
     const uploadSection = document.createElement('div');
     uploadSection.className = 'upload-section';
     uploadSection.style.cssText = `
         margin-top: 20px;
         padding: 20px;
-        background: #f8f9fa;
+        background: #e8f4fd;
         border-radius: 8px;
-        border: 2px dashed #007bff;
+        border: 2px solid #007bff;
         min-height: 120px;
         display: block !important;
         visibility: visible !important;
     `;
-    uploadSection.innerHTML = `
-        <div class="upload-header">
-            <h4 style="margin: 0 0 15px 0; color: #495057; font-size: 1.1rem;">📁 Upload Photos</h4>
-        </div>
-        <div class="upload-controls" style="display: block !important;">
-            <input type="file" id="upload-${session.id}" multiple accept="image/*" style="display: none;">
-            <button class="btn btn-primary upload-btn" onclick="document.getElementById('upload-${session.id}').click()" style="
-                background: #007bff !important;
-                color: white !important;
-                border: none !important;
-                padding: 15px 30px !important;
-                border-radius: 8px !important;
-                cursor: pointer !important;
-                font-size: 16px !important;
-                font-weight: 600 !important;
-                margin-bottom: 15px !important;
-                display: inline-block !important;
-                width: 100%;
-                text-align: center;
-                box-shadow: 0 2px 4px rgba(0,123,255,0.3);
-                transition: all 0.2s ease;
-            " onmouseover="this.style.background='#0056b3'" onmouseout="this.style.background='#007bff'">
-                📁 Upload Photos
-            </button>
-            <div class="upload-info" style="color: #6c757d; font-size: 14px; text-align: center;">Click to select multiple photos for upload</div>
-        </div>
-        <div id="upload-progress-${session.id}" class="upload-progress" style="display: none;"></div>
-        <div id="upload-gallery-${session.id}" class="upload-gallery"></div>
+    
+    // Create upload header
+    const uploadHeader = document.createElement('div');
+    uploadHeader.className = 'upload-header';
+    uploadHeader.style.cssText = 'margin-bottom: 15px;';
+    
+    const uploadTitle = document.createElement('h4');
+    uploadTitle.textContent = '📁 Upload Photos';
+    uploadTitle.style.cssText = 'margin: 0; color: #495057; font-size: 1.1rem; font-weight: 600;';
+    uploadHeader.appendChild(uploadTitle);
+    
+    // Create the VISIBLE file input
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.multiple = true;
+    fileInput.accept = 'image/*';
+    fileInput.id = `upload-${session.id}`;
+    fileInput.style.cssText = `
+        width: 100%;
+        padding: 12px;
+        border: 2px dashed #007bff;
+        border-radius: 8px;
+        background: white;
+        font-size: 14px;
+        color: #495057;
+        cursor: pointer;
+        margin-bottom: 10px;
+        display: block !important;
+        visibility: visible !important;
     `;
     
+    // Create upload info
+    const uploadInfo = document.createElement('div');
+    uploadInfo.textContent = 'Select multiple photos to upload to this session gallery';
+    uploadInfo.style.cssText = 'color: #6c757d; font-size: 14px; text-align: center; margin-top: 10px;';
+    
+    // Create progress container
+    const progressContainer = document.createElement('div');
+    progressContainer.id = `upload-progress-${session.id}`;
+    progressContainer.className = 'upload-progress';
+    progressContainer.style.display = 'none';
+    
+    // Create gallery container
+    const galleryContainer = document.createElement('div');
+    galleryContainer.id = `upload-gallery-${session.id}`;
+    galleryContainer.className = 'upload-gallery';
+    
+    // Assemble upload section
+    uploadSection.appendChild(uploadHeader);
+    uploadSection.appendChild(fileInput);
+    uploadSection.appendChild(uploadInfo);
+    uploadSection.appendChild(progressContainer);
+    uploadSection.appendChild(galleryContainer);
+    
     // Add file input handler
-    const fileInput = uploadSection.querySelector(`#upload-${session.id}`);
     fileInput.onchange = async (event) => {
         const files = Array.from(event.target.files);
         if (files.length === 0) return;
         
-        await uploadPhotos(session.id, files);
+        console.log(`Upload initiated for session ${session.id} with ${files.length} files`);
+        
+        // Check if uploadPhotos function exists
+        if (typeof uploadPhotos === 'function') {
+            await uploadPhotos(session.id, files);
+        } else {
+            console.error('uploadPhotos function not found');
+            alert('Upload functionality not available');
+        }
+        
         // Clear the input to allow re-uploading same files
         event.target.value = '';
     };
