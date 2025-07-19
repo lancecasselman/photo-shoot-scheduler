@@ -104,5 +104,6 @@ if (document.readyState === 'loading') {
 // Also expose the initialization function globally
 window.initializeFirebaseStorage = initializeFirebaseStorage;
 
-// Export for module usage
-export { initializeApp };
+// Immediately call initialization when module loads
+console.log('Firebase config module loaded, starting initialization...');
+initializeFirebaseStorage();

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Photography Session Scheduler</title>
     <link rel="stylesheet" href="style.css?v=1752951000000">
     
@@ -22,17 +22,6 @@
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/icon-192x192.svg">
     <link rel="shortcut icon" href="/icon-192x192.svg">
-
-    <!-- Capacitor Core -->
-    <script type="module" src="https://cdn.jsdelivr.net/npm/@capacitor/core@latest/dist/capacitor.js"></script>
-    <script type="module" src="https://cdn.jsdelivr.net/npm/@capacitor/app@latest/dist/plugin.js"></script>
-    <script type="module" src="https://cdn.jsdelivr.net/npm/@capacitor/camera@latest/dist/plugin.js"></script>
-    <script type="module" src="https://cdn.jsdelivr.net/npm/@capacitor/device@latest/dist/plugin.js"></script>
-    <script type="module" src="https://cdn.jsdelivr.net/npm/@capacitor/keyboard@latest/dist/plugin.js"></script>
-    <script type="module" src="https://cdn.jsdelivr.net/npm/@capacitor/network@latest/dist/plugin.js"></script>
-    <script type="module" src="https://cdn.jsdelivr.net/npm/@capacitor/push-notifications@latest/dist/plugin.js"></script>
-    <script type="module" src="https://cdn.jsdelivr.net/npm/@capacitor/splash-screen@latest/dist/plugin.js"></script>
-    <script type="module" src="https://cdn.jsdelivr.net/npm/@capacitor/status-bar@latest/dist/plugin.js"></script>
 </head>
 <body>
     <div id="auth">
@@ -193,8 +182,9 @@
                 
                 console.log('Firebase config loaded successfully');
                 
-                // Load Firebase configuration module
+                // Load Firebase configuration module as ES6 module
                 const script = document.createElement('script');
+                script.type = 'module';
                 script.src = 'firebase-config.js?v=1752951000000';
                 script.onload = function() {
                     console.log('Firebase config script loaded and executing');

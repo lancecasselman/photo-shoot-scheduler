@@ -182,8 +182,9 @@
                 
                 console.log('Firebase config loaded successfully');
                 
-                // Load Firebase configuration module
+                // Load Firebase configuration module as ES6 module
                 const script = document.createElement('script');
+                script.type = 'module';
                 script.src = 'firebase-config.js?v=1752951000000';
                 script.onload = function() {
                     console.log('Firebase config script loaded and executing');
