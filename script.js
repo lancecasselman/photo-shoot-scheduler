@@ -4,76 +4,7 @@
 // Global variables
 let sessions = [];
 let sessionIdCounter = 1;
-let deferredPrompt; // For PWA installation
 let selectedPhotos = []; // Store selected photos for upload
-
-// PWA Installation
-window.addEventListener('beforeinstallprompt', (e) => {
-  console.log('PWA: beforeinstallprompt event fired');
-  e.preventDefault();
-  deferredPrompt = e;
-  showInstallPrompt();
-});
-
-// Service Worker Registration
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(registration => {
-        console.log('PWA: Service Worker registered successfully');
-      })
-      .catch(error => {
-        console.log('PWA: Service Worker registration failed');
-      });
-  });
-}
-
-// IMMEDIATE photo upload section visibility
-console.log('Script loaded, checking for photo upload section...');
-setTimeout(() => {
-    const photoUploadSection = document.querySelector('.photo-upload-section');
-    if (photoUploadSection) {
-        photoUploadSection.style.display = 'block !important';
-        photoUploadSection.style.visibility = 'visible !important';
-        console.log('Photo upload section found and made visible immediately');
-    } else {
-        console.log('Photo upload section not found yet, will retry in DOM loaded event');
-    }
-}, 100);
-
-// Show install prompt
-function showInstallPrompt() {
-  // Create install button
-  const installButton = document.createElement('button');
-  installButton.textContent = '📱 Install App';
-  installButton.className = 'btn btn-primary install-btn';
-  installButton.style.cssText = `
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 1000;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-  `;
-  
-  installButton.addEventListener('click', async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      console.log('PWA: User choice:', outcome);
-      deferredPrompt = null;
-      installButton.remove();
-    }
-  });
-  
-  document.body.appendChild(installButton);
-  
-  // Auto-hide after 10 seconds
-  setTimeout(() => {
-    if (installButton.parentNode) {
-      installButton.style.opacity = '0.5';
-    }
-  }, 10000);
-}
 
 // API helper functions
 

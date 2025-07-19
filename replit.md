@@ -42,13 +42,13 @@ This is a client-side web application for managing photography sessions. It's a 
 - **Authentication Integration**: Secure uploads with user ownership validation
 - **Background Processing**: Non-blocking uploads that allow continued app usage during large batches
 
-### Backend-Focused Deployment (July 19, 2025)
-- **Simplified Environment**: Temporarily removed iOS Build workflow to focus on backend deployment
-- **Production Backend**: Photography Scheduler running solely on backend infrastructure
-- **Clean Deployment**: Single workflow approach eliminates port conflicts and resource competition
-- **Backend API Focus**: Complete photo management system with all endpoints operational
-- **Future Mobile**: iOS capabilities preserved in project files for future reactivation when needed
-- **Streamlined Development**: Simplified workflow for backend-first deployment strategy
+### Restored to Original Simple State (July 19, 2025)
+- **Clean Environment**: Removed all iOS-specific code, PWA features, and mobile optimizations
+- **Original Architecture**: Back to simple HTML/CSS/JavaScript with backend API photo upload system
+- **Removed iOS Elements**: Eliminated Capacitor files, service workers, PWA manifests, mobile meta tags
+- **Simplified Code**: Cleaned script.js of PWA installation prompts and mobile-specific features
+- **Backend Only**: Single Photography Scheduler workflow with comprehensive photo upload API
+- **Original Experience**: Exactly like before iOS optimization but with enhanced backend photo capabilities
 
 ### Invoice Functionality Fixed (July 18, 2025)
 - **Fixed Stripe API Integration**: Resolved API key truncation issue preventing invoice creation

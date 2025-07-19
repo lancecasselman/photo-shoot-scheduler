@@ -5,7 +5,7 @@ const admin = require('firebase-admin');
 const cron = require('node-cron');
 const multer = require('multer');
 const fs = require('fs');
-const { sendSessionReminder, sendGalleryReadyNotification } = require('./notifications');
+// Notifications functionality removed for simplified deployment
 
 const app = express();
 
