@@ -601,12 +601,15 @@ header p {
 
 /* Upload Section Styles */
 .upload-section {
-    margin-top: 20px;
-    padding: 20px;
-    background: #f8f9fa;
-    border-radius: 8px;
-    border: 2px dashed #007bff;
+    margin-top: 20px !important;
+    padding: 20px !important;
+    background: #f8f9fa !important;
+    border-radius: 8px !important;
+    border: 2px dashed #007bff !important;
     transition: border-color 0.3s ease;
+    display: block !important;
+    visibility: visible !important;
+    min-height: 120px;
 }
 
 .upload-section:hover {
@@ -622,26 +625,29 @@ header p {
 }
 
 .upload-controls {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    display: block !important;
+    text-align: center;
     margin-bottom: 15px;
 }
 
 .upload-btn {
-    background: #667eea;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 500;
+    background: #007bff !important;
+    color: white !important;
+    border: none !important;
+    padding: 15px 30px !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
     transition: background-color 0.2s;
+    display: inline-block !important;
+    width: 100% !important;
+    text-align: center !important;
+    box-shadow: 0 2px 4px rgba(0,123,255,0.3);
 }
 
 .upload-btn:hover {
-    background: #5a6fd8;
+    background: #0056b3 !important;
 }
 
 .upload-info {
