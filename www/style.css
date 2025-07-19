@@ -602,15 +602,21 @@ header p {
 /* Upload Section Styles */
 .upload-section {
     margin-top: 20px;
-    padding: 15px;
-    background: #f1f3f4;
+    padding: 20px;
+    background: #f8f9fa;
     border-radius: 8px;
-    border: 1px solid #dadce0;
+    border: 2px dashed #007bff;
+    transition: border-color 0.3s ease;
+}
+
+.upload-section:hover {
+    border-color: #0056b3;
+    background: #e7f3ff;
 }
 
 .upload-header h4 {
     margin: 0 0 15px 0;
-    color: #333;
+    color: #495057;
     font-size: 1.1rem;
     font-weight: 600;
 }
@@ -741,32 +747,54 @@ header p {
         grid-template-columns: 1fr;
         gap: 15px;
     }
-    
+
     .upload-controls {
         flex-direction: column;
         align-items: flex-start;
         gap: 8px;
     }
-    
+
     .upload-btn {
         width: 100%;
         text-align: center;
         padding: 12px 20px;
     }
-    
+
     .photo-thumbnails {
         grid-template-columns: repeat(4, 1fr);
         gap: 6px;
     }
-    
+
     .action-buttons {
         flex-direction: column;
     }
-    
+
     .action-buttons .btn {
         flex: none;
         width: 100%;
         margin-bottom: 5px;
+    }
+    .upload-section {
+        margin-top: 15px;
+        padding: 15px;
+    }
+
+    .upload-btn {
+        width: 100% !important;
+        text-align: center !important;
+        justify-content: center !important;
+        padding: 15px 20px !important;
+        font-size: 16px !important;
+    }
+
+    .upload-controls {
+        text-align: center;
+    }
+
+    .upload-info {
+        margin-top: 10px !important;
+        display: block !important;
+        text-align: center !important;
     }
 }
 
@@ -774,11 +802,11 @@ header p {
     .upload-section {
         padding: 12px;
     }
-    
+
     .upload-header h4 {
         font-size: 1rem;
     }
-    
+
     .photo-thumbnails {
         grid-template-columns: repeat(3, 1fr);
     }
