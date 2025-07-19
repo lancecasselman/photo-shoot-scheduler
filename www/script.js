@@ -454,6 +454,60 @@ function createSessionCard(session) {
     editBtn.textContent = '✏️ Edit';
     editBtn.onclick = () => editSession(session.id);
 
+    // Create upload button right after edit button
+    const uploadBtn = document.createElement('button');
+    uploadBtn.className = 'btn btn-secondary';
+    uploadBtn.textContent = '📁 Upload Photos';
+    uploadBtn.style.position = 'relative';
+    uploadBtn.style.overflow = 'hidden';
+
+    // Create hidden file input
+    const hiddenFileInput = document.createElement('input');
+    hiddenFileInput.type = 'file';
+    hiddenFileInput.multiple = true;
+    hiddenFileInput.accept = 'image/*';
+    hiddenFileInput.id = `upload-${session.id}`;
+    hiddenFileInput.style.cssText = `
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+    `;
+
+    // Add file input handler
+    hiddenFileInput.onchange = async (event) => {
+        const files = Array.from(event.target.files);
+        if (files.length === 0) return;
+        
+        console.log(`Upload initiated for session ${session.id} with ${files.length} files`);
+        
+        // Update button text to show uploading
+        uploadBtn.textContent = `📤 Uploading ${files.length} file(s)...`;
+        uploadBtn.disabled = true;
+        
+        // Check if uploadPhotos function exists
+        if (typeof uploadPhotos === 'function') {
+            await uploadPhotos(session.id, files);
+            // Reset button text
+            uploadBtn.textContent = '📁 Upload Photos';
+            uploadBtn.disabled = false;
+        } else {
+            console.error('uploadPhotos function not found');
+            alert('Upload functionality not available');
+            uploadBtn.textContent = '📁 Upload Photos';
+            uploadBtn.disabled = false;
+        }
+        
+        // Clear the input to allow re-uploading same files
+        event.target.value = '';
+    };
+
+    // Append file input to upload button
+    uploadBtn.appendChild(hiddenFileInput);
+
     const calendarBtn = document.createElement('button');
     calendarBtn.className = 'btn btn-success';
     calendarBtn.textContent = '📅 Add to Calendar';
@@ -470,91 +524,7 @@ function createSessionCard(session) {
     invoiceBtn.textContent = '💰 Send Invoice';
     invoiceBtn.onclick = () => createInvoice(session);
 
-    // Create upload section container with VISIBLE file input
-    const uploadSection = document.createElement('div');
-    uploadSection.className = 'upload-section';
-    uploadSection.style.cssText = `
-        margin-top: 20px;
-        padding: 20px;
-        background: #e8f4fd;
-        border-radius: 8px;
-        border: 2px solid #007bff;
-        min-height: 120px;
-        display: block !important;
-        visibility: visible !important;
-    `;
-    
-    // Create upload header
-    const uploadHeader = document.createElement('div');
-    uploadHeader.className = 'upload-header';
-    uploadHeader.style.cssText = 'margin-bottom: 15px;';
-    
-    const uploadTitle = document.createElement('h4');
-    uploadTitle.textContent = '📁 Upload Photos';
-    uploadTitle.style.cssText = 'margin: 0; color: #495057; font-size: 1.1rem; font-weight: 600;';
-    uploadHeader.appendChild(uploadTitle);
-    
-    // Create the VISIBLE file input
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.multiple = true;
-    fileInput.accept = 'image/*';
-    fileInput.id = `upload-${session.id}`;
-    fileInput.style.cssText = `
-        width: 100%;
-        padding: 12px;
-        border: 2px dashed #007bff;
-        border-radius: 8px;
-        background: white;
-        font-size: 14px;
-        color: #495057;
-        cursor: pointer;
-        margin-bottom: 10px;
-        display: block !important;
-        visibility: visible !important;
-    `;
-    
-    // Create upload info
-    const uploadInfo = document.createElement('div');
-    uploadInfo.textContent = 'Select multiple photos to upload to this session gallery';
-    uploadInfo.style.cssText = 'color: #6c757d; font-size: 14px; text-align: center; margin-top: 10px;';
-    
-    // Create progress container
-    const progressContainer = document.createElement('div');
-    progressContainer.id = `upload-progress-${session.id}`;
-    progressContainer.className = 'upload-progress';
-    progressContainer.style.display = 'none';
-    
-    // Create gallery container
-    const galleryContainer = document.createElement('div');
-    galleryContainer.id = `upload-gallery-${session.id}`;
-    galleryContainer.className = 'upload-gallery';
-    
-    // Assemble upload section
-    uploadSection.appendChild(uploadHeader);
-    uploadSection.appendChild(fileInput);
-    uploadSection.appendChild(uploadInfo);
-    uploadSection.appendChild(progressContainer);
-    uploadSection.appendChild(galleryContainer);
-    
-    // Add file input handler
-    fileInput.onchange = async (event) => {
-        const files = Array.from(event.target.files);
-        if (files.length === 0) return;
-        
-        console.log(`Upload initiated for session ${session.id} with ${files.length} files`);
-        
-        // Check if uploadPhotos function exists
-        if (typeof uploadPhotos === 'function') {
-            await uploadPhotos(session.id, files);
-        } else {
-            console.error('uploadPhotos function not found');
-            alert('Upload functionality not available');
-        }
-        
-        // Clear the input to allow re-uploading same files
-        event.target.value = '';
-    };
+
 
     const viewGalleryBtn = document.createElement('button');
     viewGalleryBtn.className = 'btn btn-info';
@@ -568,6 +538,7 @@ function createSessionCard(session) {
     deleteBtn.onclick = () => deleteSession(session.id);
 
     actions.appendChild(editBtn);
+    actions.appendChild(uploadBtn);
     actions.appendChild(calendarBtn);
     actions.appendChild(galleryBtn);
     actions.appendChild(viewGalleryBtn);
@@ -741,10 +712,7 @@ function createSessionCard(session) {
         card.appendChild(notesSection);
     }
     
-    // Always append upload section last
-    card.appendChild(uploadSection);
-
-    // Load existing photos for this session
+    // Load existing photos for this session to update gallery button count
     loadSessionPhotos(session.id);
 
     return card;
