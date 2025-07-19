@@ -538,6 +538,8 @@ header p {
 
     .session-actions {
         width: 100%;
+        flex-direction: column;
+        gap: 8px;
     }
 
     .session-details {
