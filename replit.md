@@ -6,7 +6,15 @@ This is a client-side web application for managing photography sessions. It's a 
 
 ## Recent Changes
 
-### Unlimited Batch Photo Upload System - Pixieset Style (July 19, 2025)
+### Photo Upload Feature Temporarily Removed (July 19, 2025)
+- **Stability Focus**: Temporarily removed photo upload functionality to resolve browser compatibility issues
+- **Core App Stability**: Ensured core session management works reliably across all environments (preview, production, downloaded app)
+- **JavaScript Error Resolution**: Fixed undefined function errors that were preventing app functionality
+- **Consistent Performance**: App now works the same way in preview and production environments
+- **Clean Code**: Removed all upload-related functions and UI elements that were causing issues
+- **Future Re-implementation**: Photo upload feature can be re-added later once core stability is ensured
+
+### Previous Photo Upload System Implementation (July 19, 2025) - TEMPORARILY REMOVED
 - **Firebase Storage Integration**: Primary cloud storage with unlimited capacity using Firebase Storage
 - **Unlimited Batch Uploads**: Support for 1000+ files per upload with 50MB per file limit (increased from 10MB/20 files)
 - **Smart Storage Routing**: Firebase Storage primary, local storage fallback when not configured
