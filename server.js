@@ -30,8 +30,8 @@ const storage = multer.diskStorage({
 const upload = multer({ 
   storage: storage,
   limits: {
-    fileSize: 50 * 1024 * 1024, // 50MB limit per file (supports high-res photos)
-    files: 1000 // Support unlimited batch uploads (1000 practical limit)
+    fileSize: 100 * 1024 * 1024, // 100MB limit per file (supports RAW photos)
+    files: 1000 // Support massive batch uploads (1000 file limit)
   },
   fileFilter: function (req, file, cb) {
     // Accept only image files
@@ -136,7 +136,14 @@ app.use((req, res, next) => {
 });
 
 // Serve uploaded files
-app.use('/uploads', express.static(uploadsDir));
+// Serve uploaded files statically with optimized headers
+app.use('/uploads', express.static(uploadsDir, {
+  setHeaders: (res, path) => {
+    // Set proper cache headers for images
+    res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 year cache
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+}));
 
 // Gallery route handler
 app.get('/gallery/:sessionId', (req, res) => {
@@ -768,8 +775,8 @@ app.delete('/api/sessions/:id', async (req, res) => {
   }
 });
 
-// Photo upload endpoint
-app.post('/api/sessions/upload-photos', upload.array('photos', 20), async (req, res) => {
+// Enhanced photo upload endpoint with comprehensive upload options
+app.post('/api/sessions/upload-photos', upload.array('photos', 1000), async (req, res) => {
   try {
     const sessionId = req.body.sessionId;
     const files = req.files;
@@ -870,7 +877,15 @@ app.post('/api/sessions/upload-photos', upload.array('photos', 20), async (req, 
       success: true,
       uploadedCount: files.length,
       photoUrls: photoUrls,
-      message: `Successfully uploaded ${files.length} photo(s)`
+      sessionId: sessionId,
+      message: `Successfully uploaded ${files.length} photo(s)`,
+      uploadDetails: files.map(file => ({
+        originalName: file.originalname,
+        filename: file.filename,
+        size: file.size,
+        mimetype: file.mimetype,
+        url: `/uploads/${file.filename}`
+      }))
     });
 
   } catch (error) {
@@ -894,6 +909,180 @@ app.post('/api/sessions/upload-photos', upload.array('photos', 20), async (req, 
       error: 'Failed to upload photos',
       message: error.message
     });
+  }
+});
+
+// Delete specific photo from session
+app.delete('/api/sessions/:sessionId/photos/:photoFilename', async (req, res) => {
+  try {
+    const { sessionId, photoFilename } = req.params;
+    
+    // Get user from authorization header
+    let userUid = null;
+    const authHeader = req.headers.authorization;
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      try {
+        if (isFirebaseInitialized) {
+          const decodedToken = await admin.auth().verifyIdToken(token);
+          userUid = decodedToken.uid;
+        }
+      } catch (error) {
+        console.error('Token verification failed:', error);
+      }
+    }
+
+    if (!userUid) {
+      userUid = 'fallback-user';
+    }
+
+    const photoUrl = `/uploads/${photoFilename}`;
+    const isNumericId = !isNaN(parseInt(sessionId)) && sessionId.length < 10 && /^\d+$/.test(sessionId);
+    
+    if (isNumericId) {
+      // PostgreSQL - remove photo from array
+      const query = `
+        UPDATE sessions 
+        SET photos = photos - $1
+        WHERE id = $2 AND created_by = $3
+        RETURNING *
+      `;
+      
+      const result = await pool.query(query, [
+        JSON.stringify(photoUrl),
+        parseInt(sessionId),
+        userUid
+      ]);
+      
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Session not found or unauthorized' });
+      }
+    } else {
+      // Firestore - remove photo from array
+      if (firestore) {
+        const sessionRef = firestore.collection('sessions').doc(sessionId);
+        const sessionDoc = await sessionRef.get();
+        
+        if (!sessionDoc.exists) {
+          return res.status(404).json({ error: 'Session not found' });
+        }
+        
+        const sessionData = sessionDoc.data();
+        const photos = sessionData.photos || [];
+        const updatedPhotos = photos.filter(photo => photo !== photoUrl);
+        
+        await sessionRef.update({
+          photos: updatedPhotos,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+      }
+    }
+
+    // Delete physical file
+    const filePath = path.join(__dirname, 'uploads', photoFilename);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+
+    res.json({
+      success: true,
+      message: 'Photo deleted successfully',
+      deletedPhoto: photoUrl
+    });
+
+  } catch (error) {
+    console.error('Error deleting photo:', error);
+    res.status(500).json({ error: 'Failed to delete photo' });
+  }
+});
+
+// Bulk photo operations endpoint
+app.post('/api/sessions/:sessionId/photos/bulk', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { action, photoFilenames } = req.body;
+    
+    // Get user from authorization header
+    let userUid = null;
+    const authHeader = req.headers.authorization;
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      try {
+        if (isFirebaseInitialized) {
+          const decodedToken = await admin.auth().verifyIdToken(token);
+          userUid = decodedToken.uid;
+        }
+      } catch (error) {
+        console.error('Token verification failed:', error);
+      }
+    }
+
+    if (!userUid) {
+      userUid = 'fallback-user';
+    }
+
+    if (action === 'delete' && photoFilenames && photoFilenames.length > 0) {
+      const photoUrls = photoFilenames.map(filename => `/uploads/${filename}`);
+      const isNumericId = !isNaN(parseInt(sessionId)) && sessionId.length < 10 && /^\d+$/.test(sessionId);
+      
+      if (isNumericId) {
+        // PostgreSQL - remove multiple photos
+        for (const photoUrl of photoUrls) {
+          const query = `
+            UPDATE sessions 
+            SET photos = photos - $1
+            WHERE id = $2 AND created_by = $3
+          `;
+          
+          await pool.query(query, [
+            JSON.stringify(photoUrl),
+            parseInt(sessionId),
+            userUid
+          ]);
+        }
+      } else {
+        // Firestore - remove multiple photos
+        if (firestore) {
+          const sessionRef = firestore.collection('sessions').doc(sessionId);
+          const sessionDoc = await sessionRef.get();
+          
+          if (sessionDoc.exists) {
+            const sessionData = sessionDoc.data();
+            const photos = sessionData.photos || [];
+            const updatedPhotos = photos.filter(photo => !photoUrls.includes(photo));
+            
+            await sessionRef.update({
+              photos: updatedPhotos,
+              updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+          }
+        }
+      }
+
+      // Delete physical files
+      const deletedFiles = [];
+      for (const filename of photoFilenames) {
+        const filePath = path.join(__dirname, 'uploads', filename);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+          deletedFiles.push(filename);
+        }
+      }
+
+      res.json({
+        success: true,
+        message: `Deleted ${deletedFiles.length} photos`,
+        deletedFiles: deletedFiles
+      });
+    } else {
+      res.status(400).json({ error: 'Invalid action or missing photo filenames' });
+    }
+
+  } catch (error) {
+    console.error('Error in bulk photo operation:', error);
+    res.status(500).json({ error: 'Failed to perform bulk operation' });
   }
 });
 
