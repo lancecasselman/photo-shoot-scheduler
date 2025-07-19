@@ -532,6 +532,10 @@ function renderSessions() {
 
 // Create session card using safe DOM methods
 function createSessionCard(session) {
+    console.log('=== CREATESESSIONCARD DEBUG ===');
+    console.log('Creating card for session:', session.clientName);
+    console.log('Session ID:', session.id);
+    console.log('Full session object:', session);
     try {
         const sessionDate = new Date(session.dateTime);
         const formattedDate = sessionDate.toLocaleDateString('en-US', {
@@ -619,18 +623,29 @@ function createSessionCard(session) {
     deleteBtn.textContent = '🗑️ Delete';
     deleteBtn.onclick = () => deleteSession(session.id);
 
+    console.log('=== BUTTON APPEND DEBUG ===');
     console.log('Adding buttons to session card for:', session.clientName);
     console.log('Upload button created:', uploadBtn.textContent);
+    console.log('Upload button element:', uploadBtn);
+    console.log('Upload button className:', uploadBtn.className);
     
     actions.appendChild(editBtn);
+    console.log('Edit button appended');
     actions.appendChild(uploadBtn);
+    console.log('Upload button appended');
     actions.appendChild(calendarBtn);
+    console.log('Calendar button appended');
     actions.appendChild(galleryBtn);
+    console.log('Gallery button appended');
     actions.appendChild(viewGalleryBtn);
+    console.log('View Gallery button appended');
     actions.appendChild(invoiceBtn);
+    console.log('Invoice button appended');
     actions.appendChild(deleteBtn);
+    console.log('Delete button appended');
     
     console.log('Actions section children count:', actions.children.length);
+    console.log('Actions section HTML:', actions.innerHTML);
 
     header.appendChild(headerInfo);
     header.appendChild(actions);
@@ -807,9 +822,10 @@ function createSessionCard(session) {
         
         card.appendChild(notesSection);
     }
-    
-    // Photo functionality temporarily removed for stability
 
+    console.log('=== FINAL CARD DEBUG ===');
+    console.log('Session card created successfully for:', session.clientName);
+    console.log('Card contains upload button:', card.innerHTML.includes('Upload Photos'));
     return card;
     } catch (error) {
         console.error('Error creating session card:', error, session);
