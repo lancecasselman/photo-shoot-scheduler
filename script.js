@@ -471,6 +471,7 @@ function createSessionCard(session) {
     invoiceBtn.onclick = () => createInvoice(session);
 
     // Create upload section container with VISIBLE file input
+    console.log(`Creating upload section for session ${session.id}`);
     const uploadSection = document.createElement('div');
     uploadSection.className = 'upload-section';
     uploadSection.style.cssText = `
@@ -742,7 +743,9 @@ function createSessionCard(session) {
     }
     
     // Always append upload section last
+    console.log(`Adding upload section for session ${session.id}`);
     card.appendChild(uploadSection);
+    console.log(`Upload section added. Card children count: ${card.children.length}`);
 
     // Load existing photos for this session
     loadSessionPhotos(session.id);
