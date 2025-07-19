@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Photography Session Scheduler</title>
     <link rel="stylesheet" href="style.css">
     
@@ -22,17 +22,6 @@
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/icon-192x192.svg">
     <link rel="shortcut icon" href="/icon-192x192.svg">
-
-    <!-- Capacitor Core -->
-    <script type="module" src="https://cdn.jsdelivr.net/npm/@capacitor/core@latest/dist/capacitor.js"></script>
-    <script type="module" src="https://cdn.jsdelivr.net/npm/@capacitor/app@latest/dist/plugin.js"></script>
-    <script type="module" src="https://cdn.jsdelivr.net/npm/@capacitor/camera@latest/dist/plugin.js"></script>
-    <script type="module" src="https://cdn.jsdelivr.net/npm/@capacitor/device@latest/dist/plugin.js"></script>
-    <script type="module" src="https://cdn.jsdelivr.net/npm/@capacitor/keyboard@latest/dist/plugin.js"></script>
-    <script type="module" src="https://cdn.jsdelivr.net/npm/@capacitor/network@latest/dist/plugin.js"></script>
-    <script type="module" src="https://cdn.jsdelivr.net/npm/@capacitor/push-notifications@latest/dist/plugin.js"></script>
-    <script type="module" src="https://cdn.jsdelivr.net/npm/@capacitor/splash-screen@latest/dist/plugin.js"></script>
-    <script type="module" src="https://cdn.jsdelivr.net/npm/@capacitor/status-bar@latest/dist/plugin.js"></script>
 </head>
 <body>
     <div id="auth">
@@ -167,19 +156,7 @@
         <!-- Success/Error Messages -->
         <div id="messageContainer" class="message-container"></div>
 
-        <script>
-            // Cache-busting for script loading
-            const cacheBuster = Date.now() + Math.random();
-            const scriptElement = document.createElement('script');
-            scriptElement.src = `script.js?v=${cacheBuster}`;
-            scriptElement.onload = function() {
-                console.log('Main script loaded successfully with cache buster:', cacheBuster);
-            };
-            scriptElement.onerror = function() {
-                console.error('Failed to load main script');
-            };
-            document.head.appendChild(scriptElement);
-        </script>
+        <script src="script.js"></script>
     </div>
 
     <script>
@@ -202,14 +179,6 @@
                 console.error('Failed to fetch Firebase config:', err);
             });
     </script>
-    <script type="module">
-        // Cache-busting for auth script
-        const cacheBuster = Date.now();
-        import(`./auth.js?v=${cacheBuster}`).then(() => {
-            console.log('Auth script loaded successfully');
-        }).catch(err => {
-            console.error('Failed to load auth script:', err);
-        });
-    </script>
+    <script type="module" src="auth.js"></script>
 </body>
 </html>
