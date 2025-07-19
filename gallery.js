@@ -5,8 +5,32 @@ let currentLightboxIndex = 0;
 
 // Initialize gallery when page loads
 document.addEventListener('DOMContentLoaded', async () => {
+    // Wait for authentication to be ready
+    await waitForAuth();
     await initializeGallery();
 });
+
+// Wait for auth state to be established
+async function waitForAuth() {
+    return new Promise((resolve) => {
+        // Check if auth is already loaded
+        if (window.authReady) {
+            resolve();
+            return;
+        }
+        
+        // Wait for auth ready event
+        window.addEventListener('authReady', () => {
+            resolve();
+        });
+        
+        // Fallback timeout
+        setTimeout(() => {
+            console.warn('Auth timeout, proceeding without authentication');
+            resolve();
+        }, 3000);
+    });
+}
 
 async function initializeGallery() {
     try {

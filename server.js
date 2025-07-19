@@ -551,7 +551,8 @@ app.put('/api/sessions/:id', async (req, res) => {
         'delivered': 'delivered',
         'reminderEnabled': 'reminder_enabled',
         'galleryReadyNotified': 'gallery_ready_notified',
-        'createdBy': 'created_by'
+        'createdBy': 'created_by',
+        'photos': 'photos'
       };
 
       // Build update fields and values
@@ -561,8 +562,14 @@ app.put('/api/sessions/:id', async (req, res) => {
 
       for (const [frontendField, value] of Object.entries(req.body)) {
         const dbField = fieldMapping[frontendField] || frontendField;
-        updateFields.push(`${dbField} = $${paramIndex}`);
-        updateValues.push(value);
+        if (dbField === 'photos') {
+          // Handle photos as JSONB
+          updateFields.push(`${dbField} = $${paramIndex}::jsonb`);
+          updateValues.push(JSON.stringify(value));
+        } else {
+          updateFields.push(`${dbField} = $${paramIndex}`);
+          updateValues.push(value);
+        }
         paramIndex++;
       }
 
