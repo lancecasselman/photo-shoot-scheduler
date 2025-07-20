@@ -64,6 +64,30 @@ app.post('/api/sessions', (req, res) => {
     res.json(sessionData);
 });
 
+// Update session
+app.put('/api/sessions/:id', (req, res) => {
+    const sessionId = req.params.id;
+    const sessionIndex = sessions.findIndex(s => s.id === sessionId);
+    
+    if (sessionIndex === -1) {
+        return res.status(404).json({ error: 'Session not found' });
+    }
+    
+    const existingSession = sessions[sessionIndex];
+    const updatedSession = {
+        ...existingSession,
+        ...req.body,
+        id: sessionId, // Preserve the original ID
+        photos: existingSession.photos, // Preserve existing photos
+        createdAt: existingSession.createdAt, // Preserve creation date
+        updatedAt: new Date().toISOString()
+    };
+    
+    sessions[sessionIndex] = updatedSession;
+    console.log(`Updated session: ${updatedSession.clientName} (${sessionId})`);
+    res.json(updatedSession);
+});
+
 // Upload photos to session
 app.post('/api/sessions/:id/upload-photos', upload.array('photos'), (req, res) => {
     const sessionId = req.params.id;

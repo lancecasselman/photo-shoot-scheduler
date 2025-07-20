@@ -437,12 +437,55 @@
             text-align: right;
         }
         
+        .admin-checkboxes {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .admin-checkboxes h3 {
+            margin: 0 0 15px 0;
+            color: #2d3748;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+        
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 12px;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #667eea;
+            cursor: pointer;
+        }
+        
+        .checkbox-group label {
+            cursor: pointer;
+            font-size: 0.95em;
+            color: #4a5568;
+            margin: 0;
+            user-select: none;
+        }
+        
         @media (max-width: 768px) {
             .container { padding: 10px; }
             .sessions-grid { grid-template-columns: 1fr; }
             .form-grid { grid-template-columns: 1fr; }
             .session-actions { flex-direction: column; }
             .btn { width: 100%; margin: 2px 0; }
+            .checkbox-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -491,6 +534,38 @@
                         <input type="number" id="duration" name="duration" required placeholder="60">
                     </div>
                 </div>
+                
+                <!-- Admin Workflow Checkboxes -->
+                <div class="admin-checkboxes">
+                    <h3>Admin Workflow Status</h3>
+                    <div class="checkbox-grid">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="contractSigned" name="contractSigned">
+                            <label for="contractSigned">📝 Contract Signed</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="paid" name="paid">
+                            <label for="paid">💵 Paid</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="edited" name="edited">
+                            <label for="edited">✂️ Edited</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="delivered" name="delivered">
+                            <label for="delivered">📦 Delivered</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="sendReminder" name="sendReminder">
+                            <label for="sendReminder">🔔 Send session reminder 24 hours before</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="notifyGalleryReady" name="notifyGalleryReady">
+                            <label for="notifyGalleryReady">🖼️ Notify when gallery is ready</label>
+                        </div>
+                    </div>
+                </div>
+                
                 <button type="submit" class="btn btn-primary">Add Session</button>
             </form>
         </div>
@@ -568,29 +643,65 @@
                 email: formData.get('email'),
                 price: parseFloat(formData.get('price')),
                 duration: parseInt(formData.get('duration')),
+                contractSigned: formData.get('contractSigned') === 'on',
+                paid: formData.get('paid') === 'on',
+                edited: formData.get('edited') === 'on',
+                delivered: formData.get('delivered') === 'on',
+                sendReminder: formData.get('sendReminder') === 'on',
+                notifyGalleryReady: formData.get('notifyGalleryReady') === 'on',
                 photos: []
             };
 
             try {
-                const response = await fetch('/api/sessions', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(sessionData)
-                });
-                
-                if (response.ok) {
-                    const newSession = await response.json();
-                    sessions.unshift(newSession);
-                    renderSessions();
-                    e.target.reset();
-                    showMessage('Session added successfully!', 'success');
+                if (editingSessionId) {
+                    // Update existing session
+                    const response = await fetch(`/api/sessions/${editingSessionId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(sessionData)
+                    });
+                    
+                    if (response.ok) {
+                        const updatedSession = await response.json();
+                        const sessionIndex = sessions.findIndex(s => s.id === editingSessionId);
+                        if (sessionIndex !== -1) {
+                            sessions[sessionIndex] = updatedSession;
+                        }
+                        renderSessions();
+                        resetForm(e.target);
+                        showMessage('Session updated successfully!', 'success');
+                    } else {
+                        showMessage('Failed to update session', 'error');
+                    }
                 } else {
-                    showMessage('Failed to add session', 'error');
+                    // Create new session
+                    const response = await fetch('/api/sessions', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(sessionData)
+                    });
+                    
+                    if (response.ok) {
+                        const newSession = await response.json();
+                        sessions.unshift(newSession);
+                        renderSessions();
+                        resetForm(e.target);
+                        showMessage('Session added successfully!', 'success');
+                    } else {
+                        showMessage('Failed to add session', 'error');
+                    }
                 }
             } catch (error) {
-                console.error('Error adding session:', error);
-                showMessage('Error adding session', 'error');
+                console.error('Error processing session:', error);
+                showMessage('Error processing session', 'error');
             }
+        }
+
+        function resetForm(form) {
+            form.reset();
+            editingSessionId = null;
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.textContent = 'Add Session';
         }
 
         async function loadSessions() {
@@ -925,12 +1036,41 @@
         }
 
         // Admin-only button functions
+        let editingSessionId = null;
+
         function editSession(sessionId) {
             const session = sessions.find(s => s.id === sessionId);
             if (!session) return;
             
-            // For now, populate the form with existing data for editing
+            editingSessionId = sessionId;
+            
+            // Populate the form with existing data for editing
             document.getElementById('clientName').value = session.clientName;
+            document.getElementById('sessionType').value = session.sessionType;
+            document.getElementById('dateTime').value = session.dateTime;
+            document.getElementById('location').value = session.location;
+            document.getElementById('phoneNumber').value = session.phoneNumber;
+            document.getElementById('email').value = session.email;
+            document.getElementById('price').value = session.price;
+            document.getElementById('duration').value = session.duration;
+            
+            // Set checkbox states
+            document.getElementById('contractSigned').checked = session.contractSigned || false;
+            document.getElementById('paid').checked = session.paid || false;
+            document.getElementById('edited').checked = session.edited || false;
+            document.getElementById('delivered').checked = session.delivered || false;
+            document.getElementById('sendReminder').checked = session.sendReminder || false;
+            document.getElementById('notifyGalleryReady').checked = session.notifyGalleryReady || false;
+            
+            // Update form UI for editing
+            const form = document.getElementById('sessionForm');
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.textContent = 'Update Session';
+            
+            // Scroll to form
+            form.scrollIntoView({ behavior: 'smooth' });
+            
+            showMessage('Form populated for editing. Update and save changes.', 'success');
             document.getElementById('sessionType').value = session.sessionType;
             document.getElementById('dateTime').value = session.dateTime;
             document.getElementById('location').value = session.location;
