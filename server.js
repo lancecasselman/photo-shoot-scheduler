@@ -839,6 +839,77 @@ app.post('/api/sessions/:id/send-invoice', async (req, res) => {
     }
 });
 
+// Generate .ics calendar file for iPhone/iOS Calendar
+app.get('/api/sessions/:id/calendar.ics', async (req, res) => {
+    const sessionId = req.params.id;
+    
+    try {
+        const session = await getSessionById(sessionId);
+        
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+        
+        const startDate = new Date(session.dateTime);
+        const endDate = new Date(startDate.getTime() + session.duration * 60000);
+        
+        // Format date for .ics file (YYYYMMDDTHHMMSSZ)
+        const formatICSDate = (date) => {
+            return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+        };
+        
+        // Generate unique ID for the event
+        const eventUID = `photo-session-${sessionId}@thelegacyphotography.com`;
+        const timestamp = formatICSDate(new Date());
+        
+        // Create .ics file content with proper iPhone Calendar compatibility
+        const icsContent = [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            'PRODID:-//Lance - The Legacy Photography//Photography Session Scheduler//EN',
+            'CALSCALE:GREGORIAN',
+            'METHOD:PUBLISH',
+            'BEGIN:VEVENT',
+            `UID:${eventUID}`,
+            `DTSTAMP:${timestamp}`,
+            `DTSTART:${formatICSDate(startDate)}`,
+            `DTEND:${formatICSDate(endDate)}`,
+            `SUMMARY:${session.sessionType} Photography Session - ${session.clientName}`,
+            `DESCRIPTION:Photography session with ${session.clientName}\\n\\nContact: ${session.phoneNumber}\\nEmail: ${session.email}\\nPrice: $${session.price}\\nDuration: ${session.duration} minutes\\n\\nNotes: ${session.notes || 'No additional notes'}`,
+            `LOCATION:${session.location}`,
+            'ORGANIZER;CN=Lance - The Legacy Photography:mailto:lance@thelegacyphotography.com',
+            `ATTENDEE;CN=${session.clientName};RSVP=TRUE:mailto:${session.email}`,
+            'STATUS:CONFIRMED',
+            'TRANSP:OPAQUE',
+            'CATEGORIES:APPOINTMENT,PHOTOGRAPHY',
+            'BEGIN:VALARM',
+            'TRIGGER:-PT1H',
+            'ACTION:DISPLAY',
+            'DESCRIPTION:Photography session reminder - 1 hour before',
+            'END:VALARM',
+            'BEGIN:VALARM',
+            'TRIGGER:-PT24H',
+            'ACTION:DISPLAY',
+            'DESCRIPTION:Photography session reminder - 1 day before',
+            'END:VALARM',
+            'END:VEVENT',
+            'END:VCALENDAR'
+        ].join('\r\n');
+        
+        // Set proper headers for .ics file download
+        res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="${session.clientName}_${session.sessionType}_Session.ics"`);
+        res.setHeader('Cache-Control', 'no-cache');
+        
+        console.log(`Generated .ics calendar file for session: ${session.clientName} (${sessionId})`);
+        res.send(icsContent);
+        
+    } catch (error) {
+        console.error('Error generating calendar file:', error);
+        res.status(500).json({ error: 'Failed to generate calendar file' });
+    }
+});
+
 // Serve gallery page (legacy endpoint for backward compatibility)
 app.get('/sessions/:id/gallery', (req, res) => {
     res.sendFile(path.join(__dirname, 'gallery.html'));

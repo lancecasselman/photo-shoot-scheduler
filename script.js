@@ -508,7 +508,7 @@ async function deleteSession(sessionId) {
     }
 }
 
-// Export to calendar function
+// Export to calendar function - generates .ics file for iPhone Calendar
 function exportToCalendar(sessionId) {
     const session = sessions.find(s => s.id === sessionId);
     if (!session) {
@@ -519,21 +519,75 @@ function exportToCalendar(sessionId) {
     const startDate = new Date(session.dateTime);
     const endDate = new Date(startDate.getTime() + session.duration * 60000);
     
-    const formatDate = (date) => {
+    // Format date for .ics file (YYYYMMDDTHHMMSSZ)
+    const formatICSDate = (date) => {
         return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
     };
     
-    const eventDetails = {
-        text: `${session.sessionType} - ${session.clientName}`,
-        dates: `${formatDate(startDate)}/${formatDate(endDate)}`,
-        location: session.location,
-        details: `Photography session with ${session.clientName}\nContact: ${session.phoneNumber}\nEmail: ${session.email}\nPrice: $${session.price}\nDuration: ${session.duration} minutes\nNotes: ${session.notes}`
-    };
+    // Generate unique ID for the event
+    const eventUID = `photo-session-${sessionId}@thelegacyphotography.com`;
+    const timestamp = formatICSDate(new Date());
     
-    const params = new URLSearchParams(eventDetails);
-    const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&${params}`;
+    // Create .ics file content
+    const icsContent = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//Lance - The Legacy Photography//Photography Session Scheduler//EN',
+        'CALSCALE:GREGORIAN',
+        'METHOD:PUBLISH',
+        'BEGIN:VEVENT',
+        `UID:${eventUID}`,
+        `DTSTAMP:${timestamp}`,
+        `DTSTART:${formatICSDate(startDate)}`,
+        `DTEND:${formatICSDate(endDate)}`,
+        `SUMMARY:${session.sessionType} Photography Session - ${session.clientName}`,
+        `DESCRIPTION:Photography session with ${session.clientName}\\n\\nContact: ${session.phoneNumber}\\nEmail: ${session.email}\\nPrice: $${session.price}\\nDuration: ${session.duration} minutes\\n\\nNotes: ${session.notes || 'No additional notes'}`,
+        `LOCATION:${session.location}`,
+        'ORGANIZER;CN=Lance - The Legacy Photography:mailto:lance@thelegacyphotography.com',
+        `ATTENDEE;CN=${session.clientName};RSVP=TRUE:mailto:${session.email}`,
+        'STATUS:CONFIRMED',
+        'TRANSP:OPAQUE',
+        'CATEGORIES:APPOINTMENT,PHOTOGRAPHY',
+        'BEGIN:VALARM',
+        'TRIGGER:-PT1H',
+        'ACTION:DISPLAY',
+        'DESCRIPTION:Photography session reminder - 1 hour before',
+        'END:VALARM',
+        'BEGIN:VALARM',
+        'TRIGGER:-PT24H',
+        'ACTION:DISPLAY',
+        'DESCRIPTION:Photography session reminder - 1 day before',
+        'END:VALARM',
+        'END:VEVENT',
+        'END:VCALENDAR'
+    ].join('\r\n');
     
-    window.open(googleCalendarUrl, '_blank');
+    // Option 1: Download .ics file directly (better for desktop)
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${session.clientName}_${session.sessionType}_Session.ics`;
+    
+    // Add to page temporarily and click
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Clean up
+    URL.revokeObjectURL(link.href);
+    
+    // Option 2: Also provide server-generated .ics for better iPhone compatibility
+    const serverIcsUrl = `/api/sessions/${sessionId}/calendar.ics`;
+    
+    // On iPhone/mobile, try to open the server URL directly for better iOS Calendar integration
+    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        setTimeout(() => {
+            window.open(serverIcsUrl, '_blank');
+        }, 500);
+        showMessage(`Calendar event ready! Opening iPhone Calendar integration...`, 'success');
+    } else {
+        showMessage(`Calendar event downloaded! Open the .ics file to add to your calendar, or click here for server version: ${serverIcsUrl}`, 'success');
+    }
 }
 
 // Send gallery notification function

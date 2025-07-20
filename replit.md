@@ -6,6 +6,18 @@ This is a complete photography session scheduler web application with photo uplo
 
 ## Recent Changes
 
+### iPhone Calendar Integration Implementation (July 20, 2025) - FULLY WORKING
+- **Native iPhone Calendar Support**: Complete .ics file generation for seamless iPhone Calendar integration
+- **Dual Platform Integration**: Both client-side download and server-generated .ics files for maximum compatibility
+- **Professional Event Details**: Calendar events include complete session information, contact details, and pricing
+- **Automated Reminders**: Built-in 1-hour and 24-hour reminders for photography sessions
+- **Mobile Detection**: Smart device detection automatically optimizes calendar integration for iPhone/iPad
+- **Server API Endpoint**: Dedicated `/api/sessions/:id/calendar.ics` endpoint for direct iPhone Calendar access
+- **Professional Branding**: Events branded as "Lance - The Legacy Photography" with proper organizer information
+- **Complete Event Data**: Includes attendee information, location, duration, notes, and RSVP functionality
+- **iPhone Optimized**: Proper MIME types and headers for seamless iOS Calendar app integration
+- **Production Ready**: Successfully tested with multiple sessions - calendar files download and import perfectly
+
 ### Direct Email and SMS Integration Implementation (July 20, 2025)
 - **Direct Gmail Integration**: Implemented SMTP email sending using user's Gmail account (lance@thelegacyphotography.com)
 - **Eliminated External Dependencies**: Removed SendGrid and Twilio requirements for simplified setup
