@@ -240,10 +240,10 @@ app.post('/api/sessions/:id/generate-gallery-access', (req, res) => {
     // Generate secure access token
     const accessToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
     
-    // Store access token in session (in production, this would be in Firestore)
+    // Store access token in session (permanent access)
     session.galleryAccessToken = accessToken;
     session.galleryCreatedAt = new Date().toISOString();
-    session.galleryExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // 30 days
+    session.galleryExpiresAt = null; // No expiration
     
     const galleryUrl = `${req.protocol}://${req.get('host')}/gallery/${sessionId}?access=${accessToken}`;
     
@@ -253,7 +253,7 @@ app.post('/api/sessions/:id/generate-gallery-access', (req, res) => {
         message: 'Gallery access generated successfully',
         galleryUrl,
         accessToken,
-        expiresAt: session.galleryExpiresAt
+        expiresAt: 'Never expires'
     });
 });
 
@@ -271,9 +271,7 @@ app.get('/api/gallery/:id/verify', (req, res) => {
         return res.status(403).json({ error: 'Invalid access token' });
     }
     
-    if (new Date() > new Date(session.galleryExpiresAt)) {
-        return res.status(403).json({ error: 'Gallery access has expired' });
-    }
+    // No expiration check - galleries never expire
     
     res.json({
         sessionId: session.id,
@@ -298,9 +296,7 @@ app.get('/api/gallery/:id/photos', (req, res) => {
         return res.status(403).json({ error: 'Invalid access token' });
     }
     
-    if (new Date() > new Date(session.galleryExpiresAt)) {
-        return res.status(403).json({ error: 'Gallery access has expired' });
-    }
+    // No expiration check - galleries never expire
     
     res.json({
         photos: session.photos || [],

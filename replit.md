@@ -24,7 +24,7 @@ This is a complete photography session scheduler web application with photo uplo
 - **Gallery Page**: Created dedicated `/gallery/:sessionId` route with clean, mobile-responsive photo grid
 - **Download Functionality**: Individual photo downloads and bulk ZIP download with JSZip integration
 - **Send Gallery Ready**: Enhanced button generates secure links and sends real email notifications
-- **Token Security**: 30-day expiring access tokens stored in session data with verification endpoints
+- **Permanent Gallery Access**: Gallery tokens never expire - clients have permanent access to their photos
 - **Client Experience**: Professional gallery interface with lightbox viewing, progress tracking, and mobile optimization
 - **Admin Integration**: View/Create Gallery buttons in session cards with automatic access token generation
 - **API Endpoints**: Complete REST API for gallery verification, photo access, and notification sending
