@@ -235,15 +235,17 @@ function createSessionCard(session) {
     editBtn.textContent = '✏️ Edit';
     editBtn.onclick = () => editSession(session.id);
 
-    const calendarBtn = document.createElement('button');
-    calendarBtn.className = 'btn btn-success';
-    calendarBtn.textContent = '📅 Add to Calendar';
-    calendarBtn.onclick = () => exportToCalendar(session.id);
-
     const uploadBtn = document.createElement('button');
     uploadBtn.className = 'btn btn-secondary';
     uploadBtn.textContent = '📸 Upload Photos';
     uploadBtn.onclick = () => openUploadDialog(session.id);
+    uploadBtn.style.display = 'block'; // Ensure visibility
+    uploadBtn.style.width = '100%'; // Full width on mobile
+
+    const calendarBtn = document.createElement('button');
+    calendarBtn.className = 'btn btn-success';
+    calendarBtn.textContent = '📅 Add to Calendar';
+    calendarBtn.onclick = () => exportToCalendar(session.id);
 
     const galleryBtn = document.createElement('button');
     galleryBtn.className = 'btn btn-warning';
@@ -262,6 +264,7 @@ function createSessionCard(session) {
     deleteBtn.onclick = () => deleteSession(session.id);
 
     console.log('About to append buttons for:', session.clientName);
+    console.log('Upload button created:', uploadBtn.textContent);
     
     actions.appendChild(editBtn);
     actions.appendChild(uploadBtn);
