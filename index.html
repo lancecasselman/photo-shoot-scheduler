@@ -930,19 +930,30 @@
                 return;
             }
 
-            // Show upload status
-            const uploadStatus = document.getElementById('uploadStatus');
-            const uploadStatusText = document.getElementById('uploadStatusText');
-            const uploadCounter = document.getElementById('uploadCounter');
-            const overallProgress = document.getElementById('overallProgress');
-            const fileProgressList = document.getElementById('fileProgressList');
-            const uploadBtn = document.getElementById('uploadBtn');
-            
-            uploadStatus.style.display = 'block';
-            uploadBtn.style.display = 'none';
-            uploadStatusText.textContent = 'Preparing unlimited photo upload...';
-            uploadCounter.textContent = `0/${files.length}`;
-            overallProgress.style.width = '0%';
+            try {
+                const formData = new FormData();
+                files.forEach(file => {
+                    formData.append('photos', file);
+                });
+
+                const response = await fetch(`/api/sessions/${currentUploadSessionId}/upload-photos`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showMessage(`Successfully uploaded ${result.uploaded} photos!`, 'success');
+                    closeUploadModal();
+                    loadSessions(); // Refresh to show new photos
+                } else {
+                    throw new Error(result.error || 'Upload failed');
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                showMessage('Upload failed: ' + error.message, 'error');
+            }
             
             // Calculate total size
             const totalSize = files.reduce((sum, file) => sum + file.size, 0);

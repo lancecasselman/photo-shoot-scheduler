@@ -221,7 +221,13 @@ async function updateSession(id, updates) {
         Object.keys(updates).forEach(key => {
             const dbKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
             setClause.push(`${dbKey} = $${paramCount}`);
-            values.push(updates[key]);
+            
+            // Handle JSON fields
+            if (key === 'photos' && Array.isArray(updates[key])) {
+                values.push(JSON.stringify(updates[key]));
+            } else {
+                values.push(updates[key]);
+            }
             paramCount++;
         });
         

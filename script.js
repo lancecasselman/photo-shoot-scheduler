@@ -825,13 +825,11 @@ function openUploadDialog(sessionId) {
     modal.classList.add('active');
 }
 
-// Setup upload modal functionality
+// Setup upload modal functionality - removed old code
 function setupUploadModal(sessionId) {
     // This function is no longer needed since we use HTML upload modal
-    // All functionality is handled by existing HTML modal functions
     console.log('Using existing HTML upload modal for session:', sessionId);
-    
-    let selectedFiles = [];
+    return; // Exit early - all functionality handled by HTML modal
     
     // File input change handler
     fileInput.addEventListener('change', (e) => {
