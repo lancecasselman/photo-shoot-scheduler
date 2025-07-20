@@ -286,35 +286,35 @@
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="clientName">Client Name</label>
-                        <input type="text" id="clientName" required placeholder="Enter client name">
+                        <input type="text" id="clientName" name="clientName" required placeholder="Enter client name">
                     </div>
                     <div class="form-group">
                         <label for="sessionType">Session Type</label>
-                        <input type="text" id="sessionType" required placeholder="Wedding, Portrait, etc.">
+                        <input type="text" id="sessionType" name="sessionType" required placeholder="Wedding, Portrait, etc.">
                     </div>
                     <div class="form-group">
                         <label for="dateTime">Date & Time</label>
-                        <input type="datetime-local" id="dateTime" required>
+                        <input type="datetime-local" id="dateTime" name="dateTime" required min="2025-01-01T00:00">
                     </div>
                     <div class="form-group">
                         <label for="location">Location</label>
-                        <input type="text" id="location" required placeholder="Session location">
+                        <input type="text" id="location" name="location" required placeholder="Session location">
                     </div>
                     <div class="form-group">
                         <label for="phoneNumber">Phone</label>
-                        <input type="tel" id="phoneNumber" required placeholder="+1 (555) 123-4567">
+                        <input type="tel" id="phoneNumber" name="phoneNumber" required placeholder="+1 (555) 123-4567">
                     </div>
                     <div class="form-group">
                         <label for="email">Email</label>
-                        <input type="email" id="email" required placeholder="client@example.com">
+                        <input type="email" id="email" name="email" required placeholder="client@example.com">
                     </div>
                     <div class="form-group">
                         <label for="price">Price</label>
-                        <input type="number" id="price" step="0.01" required placeholder="0.00">
+                        <input type="number" id="price" name="price" step="0.01" required placeholder="0.00">
                     </div>
                     <div class="form-group">
                         <label for="duration">Duration (minutes)</label>
-                        <input type="number" id="duration" required placeholder="60">
+                        <input type="number" id="duration" name="duration" required placeholder="60">
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary">Add Session</button>
