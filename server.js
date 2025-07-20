@@ -12,7 +12,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const createEmailTransporter = () => {
     // Try Gmail SMTP first, then fallback to generic SMTP
     if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-        return nodemailer.createTransporter({
+        return nodemailer.createTransport({
             service: 'gmail',
             auth: {
                 user: process.env.EMAIL_USER,
@@ -23,7 +23,7 @@ const createEmailTransporter = () => {
     
     // Fallback: use any SMTP server
     if (process.env.SMTP_HOST) {
-        return nodemailer.createTransporter({
+        return nodemailer.createTransport({
             host: process.env.SMTP_HOST,
             port: process.env.SMTP_PORT || 587,
             secure: false,
