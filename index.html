@@ -1244,12 +1244,36 @@ END:VCALENDAR`;
             }
         }
 
-        function sendInvoice(sessionId) {
+        async function sendInvoice(sessionId) {
             const session = sessions.find(s => s.id === sessionId);
             if (!session) return;
             
-            showMessage('Invoice sent to ' + session.clientName + ' for $' + session.price, 'success');
-            // TODO: Implement Stripe integration for actual invoice sending
+            try {
+                const response = await fetch(`/api/sessions/${sessionId}/send-invoice`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to send invoice');
+                }
+                
+                const result = await response.json();
+                
+                showMessage(`Invoice sent to ${session.clientName} for $${session.price}!`, 'success');
+                
+                // Optional: Show invoice URL
+                const showUrlConfirm = confirm(`Invoice sent successfully to ${session.clientName}!\n\nInvoice Amount: $${session.price}\nStatus: ${result.invoice.status}\n\nClick OK to view the invoice.`);
+                
+                if (showUrlConfirm && result.invoice.hostedInvoiceUrl) {
+                    window.open(result.invoice.hostedInvoiceUrl, '_blank');
+                }
+                
+            } catch (error) {
+                console.error('Error sending invoice:', error);
+                showMessage('Failed to send invoice: ' + error.message, 'error');
+            }
         }
 
         function callClient(phoneNumber) {

@@ -4,6 +4,11 @@ const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 
+// Email and SMS services
+const nodemailer = require('nodemailer');
+const twilio = require('twilio');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -275,8 +280,8 @@ app.get('/api/gallery/:id/photos', (req, res) => {
     });
 });
 
-// Send gallery notification (placeholder - would integrate with email/SMS service)
-app.post('/api/sessions/:id/send-gallery-notification', (req, res) => {
+// Send gallery notification with email/SMS integration
+app.post('/api/sessions/:id/send-gallery-notification', async (req, res) => {
     const sessionId = req.params.id;
     const session = sessions.find(s => s.id === sessionId);
     
@@ -290,17 +295,74 @@ app.post('/api/sessions/:id/send-gallery-notification', (req, res) => {
     
     const galleryUrl = `${req.protocol}://${req.get('host')}/gallery/${sessionId}?access=${session.galleryAccessToken}`;
     
-    // In production, this would send actual email/SMS
-    console.log(`Gallery notification sent to ${session.clientName} (${session.email})`);
-    console.log(`Gallery URL: ${galleryUrl}`);
+    const message = `Hi ${session.clientName}! Your photos from your ${session.sessionType} session are now ready for viewing and download. View your gallery: ${galleryUrl}`;
+    const subject = `Your Photo Gallery is Ready - ${session.sessionType}`;
     
-    // Simulate sending notification
+    // Send email notification
+    let emailSent = false;
+    let smsSent = false;
+    
+    try {
+        if (process.env.SENDGRID_API_KEY) {
+            // Send email via SendGrid
+            const sgMail = require('@sendgrid/mail');
+            sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+            
+            const emailMsg = {
+                to: session.email,
+                from: process.env.FROM_EMAIL || 'noreply@photography.com',
+                subject: subject,
+                text: message,
+                html: `
+                    <h2>📸 Your Photo Gallery is Ready!</h2>
+                    <p>Hi ${session.clientName},</p>
+                    <p>Your photos from your <strong>${session.sessionType}</strong> session are now ready for viewing and download.</p>
+                    <p><a href="${galleryUrl}" style="background-color: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">View Your Gallery</a></p>
+                    <p>Gallery URL: <a href="${galleryUrl}">${galleryUrl}</a></p>
+                    <p>Best regards,<br>Your Photography Team</p>
+                `
+            };
+            
+            await sgMail.send(emailMsg);
+            emailSent = true;
+            console.log(`Email sent to ${session.email}`);
+        }
+    } catch (error) {
+        console.error('Email sending failed:', error);
+    }
+    
+    try {
+        if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
+            // Send SMS via Twilio
+            const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+            
+            await twilioClient.messages.create({
+                body: `📸 ${session.clientName}, your ${session.sessionType} photos are ready! View gallery: ${galleryUrl}`,
+                from: process.env.TWILIO_PHONE_NUMBER || '+1234567890',
+                to: session.phoneNumber
+            });
+            
+            smsSent = true;
+            console.log(`SMS sent to ${session.phoneNumber}`);
+        }
+    } catch (error) {
+        console.error('SMS sending failed:', error);
+    }
+    
+    // Fallback: log notification details
+    if (!emailSent && !smsSent) {
+        console.log(`Gallery notification sent to ${session.clientName} (${session.email})`);
+        console.log(`Gallery URL: ${galleryUrl}`);
+    }
+    
     const notification = {
         to: session.email,
         phone: session.phoneNumber,
-        subject: `Your Photo Gallery is Ready - ${session.sessionType}`,
-        message: `Hi ${session.clientName}! Your photos from your ${session.sessionType} session are now ready for viewing and download. View your gallery: ${galleryUrl}`,
+        subject: subject,
+        message: message,
         galleryUrl,
+        emailSent,
+        smsSent,
         sentAt: new Date().toISOString()
     };
     
@@ -308,10 +370,120 @@ app.post('/api/sessions/:id/send-gallery-notification', (req, res) => {
     session.lastGalleryNotification = notification;
     
     res.json({
-        message: 'Gallery notification sent successfully',
+        message: `Gallery notification ${emailSent || smsSent ? 'sent successfully' : 'logged (no email/SMS services configured)'}`,
         notification,
-        galleryUrl
+        galleryUrl,
+        emailSent,
+        smsSent
     });
+});
+
+// Send invoice via Stripe
+app.post('/api/sessions/:id/send-invoice', async (req, res) => {
+    const sessionId = req.params.id;
+    const session = sessions.find(s => s.id === sessionId);
+    
+    if (!session) {
+        return res.status(404).json({ error: 'Session not found' });
+    }
+    
+    if (!process.env.STRIPE_SECRET_KEY) {
+        return res.status(500).json({ error: 'Stripe not configured. Please add STRIPE_SECRET_KEY.' });
+    }
+    
+    try {
+        // Create customer if not exists
+        let customer;
+        try {
+            const customers = await stripe.customers.list({
+                email: session.email,
+                limit: 1
+            });
+            
+            if (customers.data.length > 0) {
+                customer = customers.data[0];
+            } else {
+                customer = await stripe.customers.create({
+                    email: session.email,
+                    name: session.clientName,
+                    phone: session.phoneNumber,
+                    metadata: {
+                        sessionId: sessionId,
+                        sessionType: session.sessionType
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Customer creation failed:', error);
+            return res.status(500).json({ error: 'Failed to create customer' });
+        }
+        
+        // Create invoice
+        const invoice = await stripe.invoices.create({
+            customer: customer.id,
+            description: `Photography Session - ${session.sessionType}`,
+            metadata: {
+                sessionId: sessionId,
+                clientName: session.clientName,
+                sessionType: session.sessionType,
+                location: session.location,
+                dateTime: session.dateTime
+            },
+            auto_advance: true
+        });
+        
+        // Add invoice item
+        await stripe.invoiceItems.create({
+            customer: customer.id,
+            invoice: invoice.id,
+            amount: Math.round(session.price * 100), // Convert to cents
+            currency: 'usd',
+            description: `${session.sessionType} Photography Session - ${session.clientName}`,
+            metadata: {
+                sessionId: sessionId,
+                location: session.location,
+                dateTime: session.dateTime,
+                duration: session.duration
+            }
+        });
+        
+        // Finalize and send invoice
+        const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
+        await stripe.invoices.sendInvoice(finalizedInvoice.id);
+        
+        // Store invoice details in session
+        session.stripeInvoice = {
+            invoiceId: finalizedInvoice.id,
+            customerId: customer.id,
+            hostedInvoiceUrl: finalizedInvoice.hosted_invoice_url,
+            invoicePdf: finalizedInvoice.invoice_pdf,
+            amount: session.price,
+            status: finalizedInvoice.status,
+            sentAt: new Date().toISOString()
+        };
+        
+        console.log(`Invoice sent to ${session.clientName} for $${session.price}`);
+        console.log(`Invoice URL: ${finalizedInvoice.hosted_invoice_url}`);
+        
+        res.json({
+            message: 'Invoice sent successfully via Stripe',
+            invoice: {
+                id: finalizedInvoice.id,
+                hostedInvoiceUrl: finalizedInvoice.hosted_invoice_url,
+                invoicePdf: finalizedInvoice.invoice_pdf,
+                amount: session.price,
+                status: finalizedInvoice.status,
+                customer: customer.email
+            }
+        });
+        
+    } catch (error) {
+        console.error('Stripe invoice error:', error);
+        res.status(500).json({ 
+            error: 'Failed to send invoice',
+            details: error.message
+        });
+    }
 });
 
 // Serve gallery page (legacy endpoint for backward compatibility)
