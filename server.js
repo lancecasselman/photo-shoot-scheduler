@@ -27,7 +27,12 @@ const storage = multer.diskStorage({
 
 const upload = multer({ 
     storage: storage,
-    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+    limits: { 
+        fileSize: Infinity, // No file size limit
+        files: Infinity,    // No file count limit
+        parts: Infinity,    // No parts limit
+        fieldSize: Infinity // No field size limit
+    },
     fileFilter: (req, file, cb) => {
         if (file.mimetype.startsWith('image/')) {
             cb(null, true);
@@ -329,9 +334,15 @@ app.listen(PORT, '0.0.0.0', () => {
 app.use((error, req, res, next) => {
     if (error instanceof multer.MulterError) {
         if (error.code === 'LIMIT_FILE_SIZE') {
-            return res.status(400).json({ error: 'File too large. Maximum size is 10MB.' });
+            return res.status(400).json({ error: 'File upload error. Please try again with smaller batches.' });
+        }
+        if (error.code === 'LIMIT_FILE_COUNT') {
+            return res.status(400).json({ error: 'Too many files in single upload. Please upload in smaller batches.' });
+        }
+        if (error.code === 'LIMIT_UNEXPECTED_FILE') {
+            return res.status(400).json({ error: 'Unexpected file upload error. Please try again.' });
         }
     }
     console.error('Server error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Internal server error during upload. Please try uploading fewer files at once.' });
 });
