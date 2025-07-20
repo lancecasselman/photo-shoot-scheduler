@@ -310,7 +310,7 @@ app.post('/api/sessions/:id/send-gallery-notification', async (req, res) => {
             
             const emailMsg = {
                 to: session.email,
-                from: process.env.FROM_EMAIL || 'gallery@thebergsphotography.com',
+                from: process.env.FROM_EMAIL || 'lance@thelegacyphotography.com',
                 subject: subject,
                 text: message,
                 html: `
@@ -319,7 +319,7 @@ app.post('/api/sessions/:id/send-gallery-notification', async (req, res) => {
                     <p>Your photos from your <strong>${session.sessionType}</strong> session are now ready for viewing and download.</p>
                     <p><a href="${galleryUrl}" style="background-color: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">View Your Gallery</a></p>
                     <p>Gallery URL: <a href="${galleryUrl}">${galleryUrl}</a></p>
-                    <p>Best regards,<br>The Bergs Photography</p>
+                    <p>Best regards,<br>Lance - The Legacy Photography</p>
                 `
             };
             

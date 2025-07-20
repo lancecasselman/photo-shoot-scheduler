@@ -223,6 +223,8 @@ This is a complete photography session scheduler web application with photo uplo
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+Business email: lance@thelegacyphotography.com
+Business name: The Legacy Photography
 
 ## System Architecture
 
