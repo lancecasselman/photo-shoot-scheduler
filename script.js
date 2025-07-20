@@ -236,11 +236,14 @@ function createSessionCard(session) {
     editBtn.onclick = () => editSession(session.id);
 
     const uploadBtn = document.createElement('button');
-    uploadBtn.className = 'btn btn-secondary';
+    uploadBtn.className = 'btn btn-secondary upload-photos-btn';
     uploadBtn.textContent = '📸 Upload Photos';
     uploadBtn.onclick = () => openUploadDialog(session.id);
     uploadBtn.style.display = 'block'; // Ensure visibility
     uploadBtn.style.width = '100%'; // Full width on mobile
+    uploadBtn.style.backgroundColor = '#6b7280'; // Gray background
+    uploadBtn.style.color = 'white'; // White text
+    uploadBtn.style.marginBottom = '5px'; // Space between buttons
 
     const calendarBtn = document.createElement('button');
     calendarBtn.className = 'btn btn-success';
@@ -265,6 +268,7 @@ function createSessionCard(session) {
 
     console.log('About to append buttons for:', session.clientName);
     console.log('Upload button created:', uploadBtn.textContent);
+    console.log('Upload button onclick:', uploadBtn.onclick ? 'Set' : 'NOT SET');
     
     actions.appendChild(editBtn);
     actions.appendChild(uploadBtn);
@@ -272,6 +276,12 @@ function createSessionCard(session) {
     actions.appendChild(galleryBtn);
     actions.appendChild(invoiceBtn);
     actions.appendChild(deleteBtn);
+    
+    // Debug: Log all buttons in the actions container
+    console.log('Actions container buttons:', actions.children.length);
+    for (let i = 0; i < actions.children.length; i++) {
+        console.log(`Button ${i}: ${actions.children[i].textContent}`);
+    }
 
     header.appendChild(headerInfo);
     header.appendChild(actions);
