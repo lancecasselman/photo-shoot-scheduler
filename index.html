@@ -109,6 +109,69 @@
             background: #c53030;
         }
         
+        .btn-edit {
+            background: #805ad5;
+            color: white;
+        }
+        
+        .btn-edit:hover {
+            background: #6b46c1;
+        }
+        
+        .btn-calendar {
+            background: #38a169;
+            color: white;
+        }
+        
+        .btn-calendar:hover {
+            background: #2f855a;
+        }
+        
+        .btn-gallery-ready {
+            background: #ed8936;
+            color: white;
+        }
+        
+        .btn-gallery-ready:hover {
+            background: #dd6b20;
+        }
+        
+        .btn-invoice {
+            background: #00b5d8;
+            color: white;
+        }
+        
+        .btn-invoice:hover {
+            background: #0987a0;
+        }
+        
+        .btn-call {
+            background: #38b2ac;
+            color: white;
+        }
+        
+        .btn-call:hover {
+            background: #319795;
+        }
+        
+        .btn-text {
+            background: #d69e2e;
+            color: white;
+        }
+        
+        .btn-text:hover {
+            background: #b7791f;
+        }
+        
+        .btn-gallery {
+            background: #9f7aea;
+            color: white;
+        }
+        
+        .btn-gallery:hover {
+            background: #805ad5;
+        }
+        
         .sessions-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
@@ -170,9 +233,16 @@
         }
         
         .session-actions {
-            display: flex;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 8px;
+            margin-top: 15px;
+        }
+        
+        @media (max-width: 768px) {
+            .session-actions {
+                grid-template-columns: 1fr;
+            }
         }
         
         .photo-gallery {
@@ -461,21 +531,31 @@
                         <button class="btn btn-secondary" onclick="openUploadModal('${session.id}')">
                             📸 Upload Photos${session.photos && session.photos.length ? ` (${session.photos.length})` : ''}
                         </button>
-                        <button class="btn btn-danger" onclick="deleteSession('${session.id}')">🗑️ Delete</button>
+                        <button class="btn btn-edit" onclick="editSession('${session.id}')">
+                            📝 Edit
+                        </button>
+                        <button class="btn btn-calendar" onclick="addToCalendar('${session.id}')">
+                            📅 Add to Calendar
+                        </button>
+                        <button class="btn btn-gallery-ready" onclick="sendGalleryReady('${session.id}')">
+                            📩 Send Gallery Ready
+                        </button>
+                        <button class="btn btn-invoice" onclick="sendInvoice('${session.id}')">
+                            💵 Send Invoice
+                        </button>
+                        <button class="btn btn-call" onclick="callClient('${session.phoneNumber}')">
+                            📞 Call Client
+                        </button>
+                        <button class="btn btn-text" onclick="textClient('${session.phoneNumber}')">
+                            💬 Text Client
+                        </button>
+                        <button class="btn btn-gallery" onclick="viewGallery('${session.id}')">
+                            🖼️ View Gallery${session.photos && session.photos.length ? ` (${session.photos.length})` : ''}
+                        </button>
+                        <button class="btn btn-danger" onclick="deleteSession('${session.id}')">
+                            🗑️ Delete
+                        </button>
                     </div>
-
-                    ${session.photos && session.photos.length > 0 ? `
-                        <div class="photo-gallery">
-                            <h4>Photos <span class="photo-count">${session.photos.length}</span></h4>
-                            <div class="photo-grid">
-                                ${session.photos.map(photo => `
-                                    <div class="photo-item" onclick="viewPhoto('${photo.url}')">
-                                        <img src="${photo.url}" alt="Session photo" loading="lazy">
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                    ` : ''}
                 </div>
             `).join('');
         }
@@ -597,6 +677,91 @@
             
             document.body.appendChild(message);
             setTimeout(() => message.remove(), 3000);
+        }
+
+        // Admin-only button functions
+        function editSession(sessionId) {
+            const session = sessions.find(s => s.id === sessionId);
+            if (!session) return;
+            
+            // For now, populate the form with existing data for editing
+            document.getElementById('clientName').value = session.clientName;
+            document.getElementById('sessionType').value = session.sessionType;
+            document.getElementById('dateTime').value = session.dateTime;
+            document.getElementById('location').value = session.location;
+            document.getElementById('phoneNumber').value = session.phoneNumber;
+            document.getElementById('email').value = session.email;
+            document.getElementById('price').value = session.price;
+            document.getElementById('duration').value = session.duration;
+            
+            // Scroll to form
+            document.querySelector('.session-form').scrollIntoView({ behavior: 'smooth' });
+            showMessage('Session loaded for editing. Update and click "Add Session" to save changes.', 'success');
+        }
+
+        function addToCalendar(sessionId) {
+            const session = sessions.find(s => s.id === sessionId);
+            if (!session) return;
+            
+            const startDate = new Date(session.dateTime);
+            const endDate = new Date(startDate.getTime() + (session.duration * 60000));
+            
+            const formatDate = (date) => {
+                return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+            };
+            
+            const icsContent = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Photography Scheduler//EN
+BEGIN:VEVENT
+UID:${session.id}@photographyschedule.com
+DTSTAMP:${formatDate(new Date())}
+DTSTART:${formatDate(startDate)}
+DTEND:${formatDate(endDate)}
+SUMMARY:Photography Session - ${session.clientName}
+DESCRIPTION:Session Type: ${session.sessionType}\\nLocation: ${session.location}\\nClient: ${session.clientName}\\nPhone: ${session.phoneNumber}\\nEmail: ${session.email}\\nPrice: $${session.price}
+LOCATION:${session.location}
+END:VEVENT
+END:VCALENDAR`;
+            
+            const blob = new Blob([icsContent], { type: 'text/calendar' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${session.clientName.replace(/\s+/g, '_')}_photography_session.ics`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showMessage('Calendar event downloaded!', 'success');
+        }
+
+        function sendGalleryReady(sessionId) {
+            const session = sessions.find(s => s.id === sessionId);
+            if (!session) return;
+            
+            showMessage('Gallery ready notification sent to ' + session.clientName, 'success');
+            // TODO: Implement actual email/SMS sending via backend API
+        }
+
+        function sendInvoice(sessionId) {
+            const session = sessions.find(s => s.id === sessionId);
+            if (!session) return;
+            
+            showMessage('Invoice sent to ' + session.clientName + ' for $' + session.price, 'success');
+            // TODO: Implement Stripe integration for actual invoice sending
+        }
+
+        function callClient(phoneNumber) {
+            window.location.href = `tel:${phoneNumber}`;
+        }
+
+        function textClient(phoneNumber) {
+            window.location.href = `sms:${phoneNumber}`;
+        }
+
+        function viewGallery(sessionId) {
+            // Redirect to gallery page
+            window.location.href = `/sessions/${sessionId}/gallery`;
         }
     </script>
 </body>

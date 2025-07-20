@@ -133,6 +133,23 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+// Get individual session
+app.get('/api/sessions/:id', (req, res) => {
+    const sessionId = req.params.id;
+    const session = sessions.find(s => s.id === sessionId);
+    
+    if (!session) {
+        return res.status(404).json({ error: 'Session not found' });
+    }
+    
+    res.json(session);
+});
+
+// Serve gallery page
+app.get('/sessions/:id/gallery', (req, res) => {
+    res.sendFile(path.join(__dirname, 'gallery.html'));
+});
+
 // Serve main page
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
