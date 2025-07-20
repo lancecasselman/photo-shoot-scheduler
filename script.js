@@ -622,19 +622,6 @@ function createSessionCard(session) {
     viewGalleryBtn.textContent = photoCount > 0 ? `🖼️ View Gallery (${photoCount})` : '🖼️ View Gallery';
     viewGalleryBtn.onclick = () => viewGallery(session.id);
 
-    const uploadBtn = document.createElement('button');
-    uploadBtn.className = 'btn btn-secondary';
-    uploadBtn.textContent = '📤 Upload Photos';
-    uploadBtn.onclick = () => {
-        console.log('Upload button clicked for session:', session.id);
-        if (typeof showUploadDialog === 'function') {
-            showUploadDialog(session.id);
-        } else {
-            console.error('showUploadDialog function not available');
-            alert('Upload function not ready. Please refresh the page.');
-        }
-    };
-
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn btn-danger';
     deleteBtn.textContent = '🗑️ Delete';
