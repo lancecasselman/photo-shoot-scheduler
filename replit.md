@@ -6,6 +6,18 @@ This is a complete photography session scheduler web application with photo uplo
 
 ## Recent Changes
 
+### Enhanced Upload System with Progress Tracking (July 20, 2025)
+- **Visual File Preview**: Selected photos show thumbnails with remove buttons before upload
+- **Comprehensive Progress Tracking**: Individual file progress bars with overall upload status
+- **Real-Time Status Updates**: Live progress indicators showing "Uploading...", "Complete", "Failed" for each file
+- **Upload Counter**: Shows current progress (e.g., "3/5") and completion percentage
+- **Error Handling**: Failed uploads clearly marked with red progress bars and error status
+- **File Management**: Users can preview and remove individual files before starting upload
+- **Professional UI**: Clean progress interface with green gradient progress bars and status text
+- **Batch Upload Support**: Upload multiple files with individual progress tracking per file
+- **Auto-Close on Success**: Modal automatically closes after successful upload completion
+- **Enhanced User Feedback**: Clear success/error messages with file count information
+
 ### Admin Interface Enhancement - Professional Management Tools (July 20, 2025)
 - **Complete Admin Button Suite**: Added 8 professional admin-only buttons to each session card
 - **Replaced Photo Display**: Removed cluttered inline photo display, added "🖼️ View Gallery" button
