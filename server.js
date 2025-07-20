@@ -439,50 +439,69 @@ app.post('/api/sessions/:id/upload-photos', upload.array('photos'), async (req, 
 });
 
 // Delete session
-app.delete('/api/sessions/:id', (req, res) => {
+app.delete('/api/sessions/:id', async (req, res) => {
     const sessionId = req.params.id;
-    const sessionIndex = sessions.findIndex(s => s.id === sessionId);
     
-    if (sessionIndex === -1) {
-        return res.status(404).json({ error: 'Session not found' });
-    }
+    try {
+        const session = await getSessionById(sessionId);
+        
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
 
-    const session = sessions[sessionIndex];
-    
-    // Delete associated photo files
-    if (session.photos && session.photos.length > 0) {
-        session.photos.forEach(photo => {
-            const filePath = path.join(__dirname, 'uploads', photo.filename);
-            if (fs.existsSync(filePath)) {
-                fs.unlinkSync(filePath);
-            }
-        });
-    }
+        // Delete associated photo files
+        if (session.photos && session.photos.length > 0) {
+            session.photos.forEach(photo => {
+                const filePath = path.join(__dirname, 'uploads', photo.filename);
+                if (fs.existsSync(filePath)) {
+                    fs.unlinkSync(filePath);
+                }
+            });
+        }
 
-    sessions.splice(sessionIndex, 1);
-    console.log(`Deleted session: ${session.clientName} (${sessionId})`);
-    res.json({ message: 'Session deleted successfully' });
+        await deleteSession(sessionId);
+        console.log(`Deleted session: ${session.clientName} (${sessionId})`);
+        res.json({ message: 'Session deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting session:', error);
+        res.status(500).json({ error: 'Failed to delete session' });
+    }
 });
 
 // Health check
-app.get('/api/health', (req, res) => {
-    res.json({ 
-        status: 'healthy', 
-        sessions: sessions.length,
-        timestamp: new Date().toISOString() 
-    });
+app.get('/api/health', async (req, res) => {
+    try {
+        const sessions = await getAllSessions();
+        res.json({ 
+            status: 'healthy', 
+            sessions: sessions.length,
+            timestamp: new Date().toISOString() 
+        });
+    } catch (error) {
+        res.json({ 
+            status: 'error', 
+            message: 'Database connection failed',
+            timestamp: new Date().toISOString() 
+        });
+    }
 });
 
 // Get individual session
-app.get('/api/sessions/:id', (req, res) => {
+app.get('/api/sessions/:id', async (req, res) => {
     const sessionId = req.params.id;
-    const session = sessions.find(s => s.id === sessionId);
     
-    if (!session) {
-        return res.status(404).json({ error: 'Session not found' });
+    try {
+        const session = await getSessionById(sessionId);
+        
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+        
+        res.json(session);
+    } catch (error) {
+        console.error('Error getting session:', error);
+        res.status(500).json({ error: 'Failed to get session' });
     }
-    
-    res.json(session);
 });
 
 // Serve client gallery page
@@ -507,98 +526,120 @@ app.get('/gallery/:id', (req, res) => {
 });
 
 // Generate and store gallery access token
-app.post('/api/sessions/:id/generate-gallery-access', (req, res) => {
+app.post('/api/sessions/:id/generate-gallery-access', async (req, res) => {
     const sessionId = req.params.id;
-    const session = sessions.find(s => s.id === sessionId);
     
-    if (!session) {
-        return res.status(404).json({ error: 'Session not found' });
+    try {
+        const session = await getSessionById(sessionId);
+        
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+        
+        // Generate secure access token
+        const accessToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
+        
+        // Store access token in session (permanent access)
+        await updateSession(sessionId, {
+            galleryAccessToken: accessToken,
+            galleryCreatedAt: new Date().toISOString(),
+            galleryExpiresAt: null
+        });
+        
+        const galleryUrl = `${req.protocol}://${req.get('host')}/gallery/${sessionId}?access=${accessToken}`;
+        
+        console.log(`Generated gallery access for session: ${session.clientName} (${sessionId})`);
+        
+        res.json({
+            message: 'Gallery access generated successfully',
+            galleryUrl,
+            accessToken,
+            expiresAt: 'Never expires'
+        });
+    } catch (error) {
+        console.error('Error generating gallery access:', error);
+        res.status(500).json({ error: 'Failed to generate gallery access' });
     }
-    
-    // Generate secure access token
-    const accessToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
-    
-    // Store access token in session (permanent access)
-    session.galleryAccessToken = accessToken;
-    session.galleryCreatedAt = new Date().toISOString();
-    session.galleryExpiresAt = null; // No expiration
-    
-    const galleryUrl = `${req.protocol}://${req.get('host')}/gallery/${sessionId}?access=${accessToken}`;
-    
-    console.log(`Generated gallery access for session: ${session.clientName} (${sessionId})`);
-    
-    res.json({
-        message: 'Gallery access generated successfully',
-        galleryUrl,
-        accessToken,
-        expiresAt: 'Never expires'
-    });
 });
 
 // Verify gallery access (API endpoint for client gallery)
-app.get('/api/gallery/:id/verify', (req, res) => {
+app.get('/api/gallery/:id/verify', async (req, res) => {
     const sessionId = req.params.id;
     const accessToken = req.query.access;
-    const session = sessions.find(s => s.id === sessionId);
     
-    if (!session) {
-        return res.status(404).json({ error: 'Gallery not found' });
+    try {
+        const session = await getSessionById(sessionId);
+        
+        if (!session) {
+            return res.status(404).json({ error: 'Gallery not found' });
+        }
+        
+        if (!session.galleryAccessToken || session.galleryAccessToken !== accessToken) {
+            return res.status(403).json({ error: 'Invalid access token' });
+        }
+        
+        // No expiration check - galleries never expire
+        
+        res.json({
+            sessionId: session.id,
+            clientName: session.clientName,
+            sessionType: session.sessionType,
+            photos: session.photos || [],
+            valid: true
+        });
+    } catch (error) {
+        console.error('Error verifying gallery access:', error);
+        res.status(500).json({ error: 'Failed to verify gallery access' });
     }
-    
-    if (!session.galleryAccessToken || session.galleryAccessToken !== accessToken) {
-        return res.status(403).json({ error: 'Invalid access token' });
-    }
-    
-    // No expiration check - galleries never expire
-    
-    res.json({
-        sessionId: session.id,
-        clientName: session.clientName,
-        sessionType: session.sessionType,
-        photos: session.photos || [],
-        valid: true
-    });
 });
 
 // Get photos for gallery (client endpoint)
-app.get('/api/gallery/:id/photos', (req, res) => {
+app.get('/api/gallery/:id/photos', async (req, res) => {
     const sessionId = req.params.id;
     const accessToken = req.query.access;
-    const session = sessions.find(s => s.id === sessionId);
     
-    if (!session) {
-        return res.status(404).json({ error: 'Gallery not found' });
+    try {
+        const session = await getSessionById(sessionId);
+        
+        if (!session) {
+            return res.status(404).json({ error: 'Gallery not found' });
+        }
+        
+        if (!session.galleryAccessToken || session.galleryAccessToken !== accessToken) {
+            return res.status(403).json({ error: 'Invalid access token' });
+        }
+        
+        // No expiration check - galleries never expire
+        
+        res.json({
+            photos: session.photos || [],
+            totalPhotos: (session.photos || []).length
+        });
+    } catch (error) {
+        console.error('Error getting gallery photos:', error);
+        res.status(500).json({ error: 'Failed to get gallery photos' });
     }
-    
-    if (!session.galleryAccessToken || session.galleryAccessToken !== accessToken) {
-        return res.status(403).json({ error: 'Invalid access token' });
-    }
-    
-    // No expiration check - galleries never expire
-    
-    res.json({
-        photos: session.photos || [],
-        totalPhotos: (session.photos || []).length
-    });
 });
 
 // Send gallery notification with email/SMS integration
 app.post('/api/sessions/:id/send-gallery-notification', async (req, res) => {
     const sessionId = req.params.id;
-    const session = sessions.find(s => s.id === sessionId);
     
-    if (!session) {
-        return res.status(404).json({ error: 'Session not found' });
-    }
-    
-    if (!session.galleryAccessToken) {
-        return res.status(400).json({ error: 'Gallery access not generated. Generate gallery access first.' });
-    }
-    
-    const galleryUrl = `${req.protocol}://${req.get('host')}/gallery/${sessionId}?access=${session.galleryAccessToken}`;
-    
-    const message = `Hi ${session.clientName}! Your photos from your ${session.sessionType} session are now ready for viewing and download. View your gallery: ${galleryUrl}`;
-    const subject = `Your Photo Gallery is Ready - ${session.sessionType}`;
+    try {
+        const session = await getSessionById(sessionId);
+        
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+        
+        if (!session.galleryAccessToken) {
+            return res.status(400).json({ error: 'Gallery access not generated. Generate gallery access first.' });
+        }
+        
+        const galleryUrl = `${req.protocol}://${req.get('host')}/gallery/${sessionId}?access=${session.galleryAccessToken}`;
+        
+        const message = `Hi ${session.clientName}! Your photos from your ${session.sessionType} session are now ready for viewing and download. View your gallery: ${galleryUrl}`;
+        const subject = `Your Photo Gallery is Ready - ${session.sessionType}`;
     
     // Send email notification
     let emailSent = false;
@@ -678,7 +719,7 @@ app.post('/api/sessions/:id/send-gallery-notification', async (req, res) => {
     };
     
     // Store notification in session for tracking
-    session.lastGalleryNotification = notification;
+    await updateSession(sessionId, { lastGalleryNotification: notification, galleryReadyNotified: true });
     
     res.json({
         message: `Gallery notification ${emailSent || smsSent ? 'sent successfully' : 'logged (no email/SMS services configured)'}`,
@@ -687,22 +728,27 @@ app.post('/api/sessions/:id/send-gallery-notification', async (req, res) => {
         emailSent,
         smsSent
     });
+    } catch (error) {
+        console.error('Error sending gallery notification:', error);
+        res.status(500).json({ error: 'Failed to send gallery notification' });
+    }
 });
 
 // Send invoice via Stripe
 app.post('/api/sessions/:id/send-invoice', async (req, res) => {
     const sessionId = req.params.id;
-    const session = sessions.find(s => s.id === sessionId);
+    
+    try {
+        const session = await getSessionById(sessionId);
     
     if (!session) {
         return res.status(404).json({ error: 'Session not found' });
     }
     
-    if (!process.env.STRIPE_SECRET_KEY) {
-        return res.status(500).json({ error: 'Stripe not configured. Please add STRIPE_SECRET_KEY.' });
-    }
-    
-    try {
+        if (!process.env.STRIPE_SECRET_KEY) {
+            return res.status(500).json({ error: 'Stripe not configured. Please add STRIPE_SECRET_KEY.' });
+        }
+        
         // Create customer if not exists
         let customer;
         try {
@@ -787,13 +833,9 @@ app.post('/api/sessions/:id/send-invoice', async (req, res) => {
                 customer: customer.email
             }
         });
-        
     } catch (error) {
-        console.error('Stripe invoice error:', error);
-        res.status(500).json({ 
-            error: 'Failed to send invoice',
-            details: error.message
-        });
+        console.error('Error sending invoice:', error);
+        res.status(500).json({ error: 'Failed to send invoice' });
     }
 });
 
