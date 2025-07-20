@@ -930,9 +930,8 @@ function setupUploadModal(sessionId) {
         if (files.length === 0) return;
         
         try {
-            // Show progress
-            progressContainer.style.display = 'block';
-            uploadBtn.disabled = true;
+            // Show progress in HTML modal
+            console.log('Starting upload process...');
             
             const authToken = await getAuthToken();
             if (!authToken) {
@@ -944,8 +943,8 @@ function setupUploadModal(sessionId) {
                 formData.append('photos', file);
             });
             
-            progressText.textContent = 'Uploading photos...';
-            progressFill.style.width = '50%';
+            // Remove old progress tracking - using HTML modal now
+            console.log('Uploading photos...');
             
             const response = await fetch(`/api/sessions/${sessionId}/photos`, {
                 method: 'POST',
@@ -962,15 +961,18 @@ function setupUploadModal(sessionId) {
             
             const result = await response.json();
             
-            progressFill.style.width = '100%';
-            progressText.textContent = 'Upload complete!';
+            // Upload complete - using HTML modal now
+            console.log('Upload complete!');
             
             console.log('Upload result:', result);
             showMessage(`Successfully uploaded ${result.uploaded} photos!`, 'success');
             
-            // Close modal after a short delay
+            // Close HTML modal after upload
             setTimeout(() => {
-                document.querySelector('.modal-overlay').remove();
+                const modal = document.getElementById('uploadModal');
+                if (modal) {
+                    modal.classList.remove('active');
+                }
             }, 1000);
             
             // Reload photos for this session
@@ -984,8 +986,7 @@ function setupUploadModal(sessionId) {
             console.error('Upload error:', error);
             showMessage('Upload failed: ' + error.message, 'error');
             
-            progressContainer.style.display = 'none';
-            uploadBtn.disabled = false;
+            console.log('Upload failed, hiding progress');
         }
     }
 }
