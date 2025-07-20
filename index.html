@@ -803,6 +803,12 @@
             document.getElementById('uploadStatus').style.display = 'none';
             document.getElementById('uploadBtn').style.display = 'none';
             document.getElementById('fileInput').value = '';
+            
+            // Clear any existing progress intervals
+            if (window.uploadProgressIntervals) {
+                window.uploadProgressIntervals.forEach(interval => clearInterval(interval));
+                window.uploadProgressIntervals = [];
+            }
         }
 
         function handleDragOver(e) {
@@ -817,6 +823,7 @@
             if (files.length > 0) {
                 selectedFiles = files;
                 showFilePreview(files);
+                document.getElementById('fileInput').files = e.dataTransfer.files;
             }
         }
 
@@ -919,12 +926,14 @@
 
                     try {
                         // Simulate progress for visual feedback
+                        window.uploadProgressIntervals = window.uploadProgressIntervals || [];
                         const progressInterval = setInterval(() => {
                             const currentWidth = parseInt(progressFill.style.width) || 0;
                             if (currentWidth < 90) {
                                 progressFill.style.width = (currentWidth + 10) + '%';
                             }
                         }, 100);
+                        window.uploadProgressIntervals.push(progressInterval);
 
                         const response = await fetch(`/api/sessions/${currentUploadSessionId}/upload-photos`, {
                             method: 'POST',
@@ -1071,17 +1080,6 @@
             form.scrollIntoView({ behavior: 'smooth' });
             
             showMessage('Form populated for editing. Update and save changes.', 'success');
-            document.getElementById('sessionType').value = session.sessionType;
-            document.getElementById('dateTime').value = session.dateTime;
-            document.getElementById('location').value = session.location;
-            document.getElementById('phoneNumber').value = session.phoneNumber;
-            document.getElementById('email').value = session.email;
-            document.getElementById('price').value = session.price;
-            document.getElementById('duration').value = session.duration;
-            
-            // Scroll to form
-            document.querySelector('.session-form').scrollIntoView({ behavior: 'smooth' });
-            showMessage('Session loaded for editing. Update and click "Add Session" to save changes.', 'success');
         }
 
         function addToCalendar(sessionId) {
