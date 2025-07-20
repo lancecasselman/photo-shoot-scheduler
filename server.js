@@ -1,838 +1,156 @@
 const express = require('express');
-const path = require('path');
-const { Pool } = require('pg');
-const admin = require('firebase-admin');
-const cron = require('node-cron');
 const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const { v4: uuidv4 } = require('uuid');
 
 const app = express();
-
-// Global flag to track Firebase initialization status
-let isFirebaseInitialized = false;
-let firestore = null;
-let storage = null;
-
-// Configure multer for file uploads (memory storage for Firebase)
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit per file
-    files: 20 // Maximum 20 files per upload
-  },
-  fileFilter: function (req, file, cb) {
-    // Accept only image files
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only image files are allowed!'));
-    }
-  }
-});
-
-// Initialize Firebase Admin SDK (for token verification and Firestore)
-function initializeFirebase() {
-  try {
-    if (!admin.apps.length) {
-      // Check if all required Firebase environment variables are present
-      const requiredEnvVars = [
-        'FIREBASE_PRIVATE_KEY_ID',
-        'FIREBASE_PRIVATE_KEY',
-        'FIREBASE_CLIENT_EMAIL',
-        'FIREBASE_CLIENT_ID'
-      ];
-
-      const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
-
-      if (missingVars.length > 0) {
-        console.warn('Firebase initialization skipped - missing environment variables:', missingVars);
-        console.warn('Authentication features will be disabled. Please set the required Firebase environment variables.');
-        return false;
-      }
-
-      const serviceAccount = {
-        type: "service_account",
-        project_id: "photoshcheduleapp",
-        private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-        private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-        client_email: process.env.FIREBASE_CLIENT_EMAIL,
-        client_id: process.env.FIREBASE_CLIENT_ID,
-        auth_uri: "https://accounts.google.com/o/oauth2/auth",
-        token_uri: "https://oauth2.googleapis.com/token",
-        auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
-        client_x509_cert_url: `https://www.googleapis.com/robot/v1/metadata/x509/${process.env.FIREBASE_CLIENT_EMAIL}`
-      };
-
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-        projectId: 'photoshcheduleapp',
-        storageBucket: 'photoshcheduleapp.appspot.com'
-      });
-
-      // Initialize Firestore and Storage
-      firestore = admin.firestore();
-      storage = admin.storage();
-      isFirebaseInitialized = true;
-      console.log('Firestore initialized successfully');
-      console.log('Firebase Storage initialized successfully');
-      console.log('Firebase Admin SDK initialized successfully');
-      return true;
-    }
-    return true;
-  } catch (error) {
-    console.error('Error initializing Firebase:', error);
-    console.warn('Firebase initialization failed. Authentication features will be disabled.');
-    isFirebaseInitialized = false;
-    return false;
-  }
-}
-
-// Initialize Firebase on startup (with fallback handling)
-initializeFirebase();
-
 const PORT = process.env.PORT || 5000;
 
-// Database connection
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+// In-memory storage for sessions
+let sessions = [];
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const uploadDir = path.join(__dirname, 'uploads');
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
+        }
+        cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+        const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1E9)}-${file.originalname}`;
+        cb(null, uniqueName);
+    }
+});
+
+const upload = multer({ 
+    storage: storage,
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only image files are allowed!'), false);
+        }
+    }
 });
 
 // Middleware
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.static(__dirname));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// CORS middleware
-app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Max-Age', '86400');
-
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
-  next();
-});
-
-// Serve static files from current directory
-app.use(express.static(path.join(__dirname), {
-  setHeaders: (res, path) => {
-    // Set proper MIME types and disable caching completely during development
-    if (path.endsWith('.js')) {
-      res.setHeader('Content-Type', 'application/javascript');
-    } else if (path.endsWith('.css')) {
-      res.setHeader('Content-Type', 'text/css');
-    } else if (path.endsWith('.html')) {
-      res.setHeader('Content-Type', 'text/html');
-    } else if (path.endsWith('.json')) {
-      res.setHeader('Content-Type', 'application/json');
-    } else if (path.endsWith('.svg')) {
-      res.setHeader('Content-Type', 'image/svg+xml');
-    }
-    
-    // Disable all caching to fix layout consistency issues
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
-  }
-}));
-
-// Verify Firebase token and get user info
-async function verifyUser(req) {
-  // Check if Firebase is initialized
-  if (!isFirebaseInitialized) {
-    throw new Error('Authentication service unavailable - Firebase not initialized');
-  }
-
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    throw new Error('No authentication token provided');
-  }
-
-  const token = authHeader.split(' ')[1];
-  try {
-    const decodedToken = await admin.auth().verifyIdToken(token);
-    return {
-      uid: decodedToken.uid,
-      email: decodedToken.email
-    };
-  } catch (error) {
-    throw new Error('Invalid authentication token');
-  }
-}
-
-// Firestore helper functions
-async function createSessionInFirestore(sessionData) {
-  try {
-    if (!firestore) {
-      throw new Error('Firestore not initialized');
-    }
-    
-    const docRef = await firestore.collection('sessions').add({
-      ...sessionData,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp()
-    });
-    
-    console.log('Session created in Firestore with ID:', docRef.id);
-    return docRef.id;
-  } catch (error) {
-    console.error('Error creating session in Firestore:', error);
-    throw error;
-  }
-}
-
-async function getSessionsFromFirestore(userId = null) {
-  try {
-    if (!firestore) {
-      throw new Error('Firestore not initialized');
-    }
-    
-    let query = firestore.collection('sessions');
-    
-    // If userId is provided, filter by user; otherwise get all sessions
-    if (userId) {
-      query = query.where('userUid', '==', userId);
-    }
-    
-    const snapshot = await query.orderBy('createdAt', 'desc').get();
-    
-    const sessions = [];
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      sessions.push({
-        id: doc.id,
-        ...data,
-        // Convert Firestore timestamps to ISO strings
-        createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
-        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt
-      });
-    });
-    
-    console.log(`Retrieved ${sessions.length} sessions from Firestore${userId ? ` for user ${userId}` : ' (all sessions)'}`);
-    return sessions;
-  } catch (error) {
-    console.error('Error getting sessions from Firestore:', error);
-    throw error;
-  }
-}
-
-async function updateSessionInFirestore(sessionId, updateData) {
-  try {
-    if (!firestore) {
-      throw new Error('Firestore not initialized');
-    }
-    
-    await firestore.collection('sessions').doc(sessionId).update({
-      ...updateData,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp()
-    });
-    
-    console.log('Session updated in Firestore:', sessionId);
-    return true;
-  } catch (error) {
-    console.error('Error updating session in Firestore:', error);
-    throw error;
-  }
-}
-
-async function deleteSessionFromFirestore(sessionId) {
-  try {
-    if (!firestore) {
-      throw new Error('Firestore not initialized');
-    }
-    
-    await firestore.collection('sessions').doc(sessionId).delete();
-    console.log('Session deleted from Firestore:', sessionId);
-    return true;
-  } catch (error) {
-    console.error('Error deleting session from Firestore:', error);
-    throw error;
-  }
-}
-
-// PostgreSQL helper functions
-async function createUserIfNotExists(uid, email, displayName = null) {
-  try {
-    // First try to update the user
-    const updateQuery = `
-      UPDATE users 
-      SET email = $2, display_name = $3, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $1
-      RETURNING *
-    `;
-    
-    const displayNameValue = displayName || email;
-    console.log('Trying update with values:', [uid, email, displayNameValue]);
-    
-    const updateResult = await pool.query(updateQuery, [uid, email, displayNameValue]);
-    
-    if (updateResult.rows.length > 0) {
-      console.log('User updated successfully:', updateResult.rows[0]);
-      return updateResult.rows[0];
-    }
-
-    // If update didn't affect any rows, user doesn't exist, so create them
-    const insertQuery = `
-      INSERT INTO users (id, email, display_name, created_at, updated_at)
-      VALUES ($1, $2, $3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-      RETURNING *
-    `;
-    
-    console.log('User not found, creating new user with values:', [uid, email, displayNameValue]);
-    const insertResult = await pool.query(insertQuery, [uid, email, displayNameValue]);
-    console.log('User created successfully:', insertResult.rows[0]);
-    return insertResult.rows[0];
-  } catch (error) {
-    console.error('Error creating/updating user:', error);
-    throw error;
-  }
-}
-
-async function createSessionInPG(sessionData) {
-  const query = `
-    INSERT INTO sessions (
-      session_type, client_name, date_time, location, phone_number, email, 
-      price, duration, notes, contract_signed, paid, edited, 
-      delivered, reminder_enabled, gallery_ready_notified, created_by
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
-    RETURNING *
-  `;
-  
-  const values = [
-    sessionData.sessionType,
-    sessionData.clientName,
-    sessionData.dateTime,
-    sessionData.location,
-    sessionData.phoneNumber,
-    sessionData.email,
-    sessionData.price,
-    sessionData.duration,
-    sessionData.notes,
-    sessionData.contractSigned,
-    sessionData.paid,
-    sessionData.edited,
-    sessionData.delivered,
-    sessionData.reminderEnabled,
-    sessionData.galleryReadyNotified,
-    sessionData.createdBy
-  ];
-  
-  const result = await pool.query(query, values);
-  return result.rows[0];
-}
-
-async function getSessionsFromPG() {
-  const query = `
-    SELECT * FROM sessions 
-    ORDER BY created_at DESC
-  `;
-  
-  const result = await pool.query(query);
-  return result.rows;
-}
-
-async function updateSessionInPG(sessionId, sessionData) {
-  const query = `
-    UPDATE sessions SET
-      session_type = $2,
-      client_name = $3,
-      date_time = $4,
-      location = $5,
-      phone_number = $6,
-      email = $7,
-      price = $8,
-      duration = $9,
-      notes = $10,
-      contract_signed = $11,
-      paid = $12,
-      edited = $13,
-      delivered = $14,
-      reminder_enabled = $15,
-      gallery_ready_notified = $16,
-      updated_at = CURRENT_TIMESTAMP
-    WHERE id = $1
-    RETURNING *
-  `;
-  
-  const values = [
-    sessionId,
-    sessionData.sessionType,
-    sessionData.clientName,
-    sessionData.dateTime,
-    sessionData.location,
-    sessionData.phoneNumber,
-    sessionData.email,
-    sessionData.price,
-    sessionData.duration,
-    sessionData.notes,
-    sessionData.contractSigned,
-    sessionData.paid,
-    sessionData.edited,
-    sessionData.delivered,
-    sessionData.reminderEnabled,
-    sessionData.galleryReadyNotified
-  ];
-  
-  const result = await pool.query(query, values);
-  return result.rows[0];
-}
-
-async function deleteSessionFromPG(sessionId) {
-  const query = 'DELETE FROM sessions WHERE id = $1 RETURNING *';
-  const result = await pool.query(query, [sessionId]);
-  return result.rows[0];
-}
-
-// Main route handlers
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-// Health check endpoints
-app.get('/api/health', (req, res) => {
-  const health = {
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    firebase: isFirebaseInitialized ? 'initialized' : 'not initialized',
-    database: 'connected'
-  };
-  
-  res.json(health);
-});
-
-app.get('/api/status', async (req, res) => {
-  try {
-    // Test database connection
-    await pool.query('SELECT 1');
-    
-    res.json({
-      status: 'ok',
-      database: 'connected',
-      firebase: isFirebaseInitialized ? 'initialized' : 'not initialized',
-      authentication: isFirebaseInitialized ? 'enabled' : 'disabled (fallback mode)',
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    res.status(500).json({
-      status: 'error',
-      database: 'error',
-      firebase: isFirebaseInitialized ? 'initialized' : 'not initialized',
-      error: error.message,
-      timestamp: new Date().toISOString()
-    });
-  }
-});
+// API Routes
 
 // Get all sessions
-app.get('/api/sessions', async (req, res) => {
-  try {
-    let user = null;
-    let userId = 'fallback-user';
-    
-    // Try to verify user if authentication is available
-    if (isFirebaseInitialized) {
-      try {
-        user = await verifyUser(req);
-        userId = user.uid;
-        console.log('Authenticated user:', userId);
-        
-        // Create or update user in database
-        await createUserIfNotExists(user.uid, user.email, user.displayName || user.email);
-      } catch (authError) {
-        console.log('Authentication failed, using fallback mode:', authError.message);
-        userId = 'fallback-user';
-      }
-    }
-    
-    console.log('Loading sessions for user:', userId);
-    
-    let sessions = [];
-    
-    // Try Firestore first, then PostgreSQL fallback
-    if (isFirebaseInitialized) {
-      try {
-        // Load all sessions for shared business (don't filter by user)
-        sessions = await getSessionsFromFirestore();
-        console.log('Found', sessions.length, 'sessions (all sessions for shared business)');
-      } catch (firestoreError) {
-        console.error('Firestore error, falling back to PostgreSQL:', firestoreError);
-        sessions = await getSessionsFromPG();
-      }
-    } else {
-      sessions = await getSessionsFromPG();
-    }
-    
+app.get('/api/sessions', (req, res) => {
+    console.log(`Returning ${sessions.length} sessions`);
     res.json(sessions);
-  } catch (error) {
-    console.error('Error fetching sessions:', error);
-    res.status(500).json({ error: 'Failed to fetch sessions: ' + error.message });
-  }
 });
 
 // Create new session
-app.post('/api/sessions', async (req, res) => {
-  try {
-    let user = null;
-    let userId = 'anonymous';
-    
-    // Try to verify user if authentication is available
-    if (isFirebaseInitialized) {
-      try {
-        user = await verifyUser(req);
-        userId = user.uid;
-        
-        // Create or update user in database
-        await createUserIfNotExists(user.uid, user.email, user.displayName || user.email);
-      } catch (authError) {
-        console.log('Authentication failed, creating session anonymously:', authError.message);
-        userId = 'anonymous';
-      }
-    }
-    
+app.post('/api/sessions', (req, res) => {
     const sessionData = {
-      ...req.body,
-      userUid: userId,
-      userEmail: user?.email || 'anonymous@example.com',
-      createdBy: userId,
-      reminderSent: false
+        id: uuidv4(),
+        ...req.body,
+        photos: [],
+        createdAt: new Date().toISOString()
     };
     
-    console.log('Creating session:', sessionData);
-    
-    let newSession;
-    
-    // Try Firestore first, then PostgreSQL fallback
-    if (isFirebaseInitialized) {
-      try {
-        const sessionId = await createSessionInFirestore(sessionData);
-        newSession = { id: sessionId, ...sessionData };
-      } catch (firestoreError) {
-        console.error('Firestore error, falling back to PostgreSQL:', firestoreError);
-        newSession = await createSessionInPG(sessionData);
-      }
-    } else {
-      newSession = await createSessionInPG(sessionData);
-    }
-    
-    console.log('Session created successfully:', newSession.id);
-    res.json(newSession);
-  } catch (error) {
-    console.error('Error creating session:', error);
-    res.status(500).json({ error: 'Failed to create session: ' + error.message });
-  }
+    sessions.unshift(sessionData); // Add to beginning of array
+    console.log(`Created session: ${sessionData.clientName} (${sessionData.id})`);
+    res.json(sessionData);
 });
 
-// Update session
-app.put('/api/sessions/:id', async (req, res) => {
-  try {
+// Upload photos to session
+app.post('/api/sessions/:id/upload-photos', upload.array('photos'), (req, res) => {
     const sessionId = req.params.id;
-    const sessionData = req.body;
+    const session = sessions.find(s => s.id === sessionId);
     
-    console.log('Updating session:', sessionId, sessionData);
-    
-    let updatedSession;
-    
-    // Try Firestore first, then PostgreSQL fallback
-    if (isFirebaseInitialized) {
-      try {
-        await updateSessionInFirestore(sessionId, sessionData);
-        updatedSession = { id: sessionId, ...sessionData };
-      } catch (firestoreError) {
-        console.error('Firestore error, falling back to PostgreSQL:', firestoreError);
-        updatedSession = await updateSessionInPG(sessionId, sessionData);
-      }
-    } else {
-      updatedSession = await updateSessionInPG(sessionId, sessionData);
+    if (!session) {
+        return res.status(404).json({ error: 'Session not found' });
     }
-    
-    console.log('Session updated successfully:', sessionId);
-    res.json(updatedSession);
-  } catch (error) {
-    console.error('Error updating session:', error);
-    res.status(500).json({ error: 'Failed to update session: ' + error.message });
-  }
+
+    if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ error: 'No files uploaded' });
+    }
+
+    // Add photos to session
+    const newPhotos = req.files.map(file => ({
+        id: uuidv4(),
+        filename: file.filename,
+        originalName: file.originalname,
+        url: `/uploads/${file.filename}`,
+        size: file.size,
+        uploadedAt: new Date().toISOString()
+    }));
+
+    session.photos = session.photos || [];
+    session.photos.push(...newPhotos);
+
+    console.log(`Uploaded ${newPhotos.length} photos to session ${session.clientName}`);
+    res.json({ 
+        message: 'Photos uploaded successfully', 
+        photos: newPhotos,
+        totalPhotos: session.photos.length 
+    });
 });
 
 // Delete session
-app.delete('/api/sessions/:id', async (req, res) => {
-  try {
+app.delete('/api/sessions/:id', (req, res) => {
     const sessionId = req.params.id;
+    const sessionIndex = sessions.findIndex(s => s.id === sessionId);
     
-    console.log('Deleting session:', sessionId);
-    
-    let deletedSession;
-    
-    // Try Firestore first, then PostgreSQL fallback
-    if (isFirebaseInitialized) {
-      try {
-        await deleteSessionFromFirestore(sessionId);
-        deletedSession = { id: sessionId };
-      } catch (firestoreError) {
-        console.error('Firestore error, falling back to PostgreSQL:', firestoreError);
-        deletedSession = await deleteSessionFromPG(sessionId);
-      }
-    } else {
-      deletedSession = await deleteSessionFromPG(sessionId);
+    if (sessionIndex === -1) {
+        return res.status(404).json({ error: 'Session not found' });
     }
-    
-    console.log('Session deleted successfully:', sessionId);
-    res.json({ message: 'Session deleted successfully', session: deletedSession });
-  } catch (error) {
-    console.error('Error deleting session:', error);
-    res.status(500).json({ error: 'Failed to delete session: ' + error.message });
-  }
-});
 
-// Photo management endpoints
-
-// Get photos for a session
-app.get('/api/sessions/:id/photos', async (req, res) => {
-  try {
-    const sessionId = req.params.id;
-    console.log('Getting photos for session:', sessionId);
+    const session = sessions[sessionIndex];
     
-    if (!isFirebaseInitialized) {
-      return res.status(503).json({ error: 'Firebase not initialized' });
-    }
-    
-    // Get session document from Firestore
-    const sessionDoc = await firestore.collection('sessions').doc(sessionId).get();
-    
-    if (!sessionDoc.exists) {
-      return res.status(404).json({ error: 'Session not found' });
-    }
-    
-    const sessionData = sessionDoc.data();
-    const photos = sessionData.photos || [];
-    
-    console.log(`Found ${photos.length} photos for session ${sessionId}`);
-    res.json({ photos });
-    
-  } catch (error) {
-    console.error('Error getting photos:', error);
-    res.status(500).json({ error: 'Failed to get photos: ' + error.message });
-  }
-});
-
-// Upload photos for a session (admin only)
-app.post('/api/sessions/:id/photos', upload.array('photos', 20), async (req, res) => {
-  try {
-    const sessionId = req.params.id;
-    const files = req.files;
-    
-    console.log(`Uploading ${files.length} photos for session:`, sessionId);
-    
-    if (!isFirebaseInitialized) {
-      return res.status(503).json({ error: 'Firebase not initialized' });
-    }
-    
-    if (!files || files.length === 0) {
-      return res.status(400).json({ error: 'No files uploaded' });
-    }
-    
-    // Verify user is admin (optional - for now allow all authenticated users)
-    let user = null;
-    try {
-      user = await verifyUser(req);
-      console.log('Authenticated user uploading photos:', user.uid);
-    } catch (authError) {
-      console.log('Photo upload requires authentication');
-      return res.status(401).json({ error: 'Authentication required for photo upload' });
-    }
-    
-    const bucket = storage.bucket();
-    const uploadedPhotos = [];
-    
-    // Upload each file to Firebase Storage
-    for (const file of files) {
-      try {
-        const fileName = `sessions/${sessionId}/photos/${Date.now()}-${Math.random().toString(36).substring(2)}-${file.originalname}`;
-        const fileUpload = bucket.file(fileName);
-        
-        // Create a write stream to upload the file
-        const stream = fileUpload.createWriteStream({
-          metadata: {
-            contentType: file.mimetype,
-            metadata: {
-              sessionId: sessionId,
-              uploadedBy: user.uid,
-              uploadedAt: new Date().toISOString(),
-              originalName: file.originalname
+    // Delete associated photo files
+    if (session.photos && session.photos.length > 0) {
+        session.photos.forEach(photo => {
+            const filePath = path.join(__dirname, 'uploads', photo.filename);
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
             }
-          }
         });
-        
-        // Upload the file buffer
-        await new Promise((resolve, reject) => {
-          stream.on('error', reject);
-          stream.on('finish', resolve);
-          stream.end(file.buffer);
-        });
-        
-        // Make the file publicly readable
-        await fileUpload.makePublic();
-        
-        // Get the public URL
-        const publicUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
-        
-        uploadedPhotos.push({
-          url: publicUrl,
-          fileName: file.originalname,
-          uploadedAt: new Date().toISOString(),
-          uploadedBy: user.uid
-        });
-        
-        console.log(`Uploaded photo: ${file.originalname} -> ${publicUrl}`);
-        
-      } catch (uploadError) {
-        console.error(`Error uploading file ${file.originalname}:`, uploadError);
-        // Continue with other files even if one fails
-      }
     }
-    
-    if (uploadedPhotos.length === 0) {
-      return res.status(500).json({ error: 'Failed to upload any photos' });
-    }
-    
-    // Update session document with new photos
-    const sessionRef = firestore.collection('sessions').doc(sessionId);
-    
-    // Get current photos and add new ones
-    const sessionDoc = await sessionRef.get();
-    const currentPhotos = sessionDoc.exists ? (sessionDoc.data().photos || []) : [];
-    const allPhotos = [...currentPhotos, ...uploadedPhotos];
-    
-    await sessionRef.update({
-      photos: allPhotos,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp()
-    });
-    
-    console.log(`Successfully uploaded ${uploadedPhotos.length} photos for session ${sessionId}`);
-    
-    res.json({
-      success: true,
-      uploaded: uploadedPhotos.length,
-      photos: uploadedPhotos,
-      message: `Successfully uploaded ${uploadedPhotos.length} photos`
-    });
-    
-  } catch (error) {
-    console.error('Error uploading photos:', error);
-    res.status(500).json({ error: 'Failed to upload photos: ' + error.message });
-  }
+
+    sessions.splice(sessionIndex, 1);
+    console.log(`Deleted session: ${session.clientName} (${sessionId})`);
+    res.json({ message: 'Session deleted successfully' });
 });
 
-// Delete a photo from a session (admin only)
-app.delete('/api/sessions/:id/photos/:photoIndex', async (req, res) => {
-  try {
-    const sessionId = req.params.id;
-    const photoIndex = parseInt(req.params.photoIndex);
-    
-    console.log(`Deleting photo ${photoIndex} from session:`, sessionId);
-    
-    if (!isFirebaseInitialized) {
-      return res.status(503).json({ error: 'Firebase not initialized' });
-    }
-    
-    // Verify user is admin
-    let user = null;
-    try {
-      user = await verifyUser(req);
-      console.log('Authenticated user deleting photo:', user.uid);
-    } catch (authError) {
-      return res.status(401).json({ error: 'Authentication required for photo deletion' });
-    }
-    
-    // Get session document
-    const sessionRef = firestore.collection('sessions').doc(sessionId);
-    const sessionDoc = await sessionRef.get();
-    
-    if (!sessionDoc.exists) {
-      return res.status(404).json({ error: 'Session not found' });
-    }
-    
-    const sessionData = sessionDoc.data();
-    const photos = sessionData.photos || [];
-    
-    if (photoIndex < 0 || photoIndex >= photos.length) {
-      return res.status(400).json({ error: 'Invalid photo index' });
-    }
-    
-    const photoToDelete = photos[photoIndex];
-    
-    // Delete from Firebase Storage
-    try {
-      const bucket = storage.bucket();
-      const fileName = photoToDelete.url.split(`${bucket.name}/`)[1];
-      if (fileName) {
-        await bucket.file(fileName).delete();
-        console.log(`Deleted file from storage: ${fileName}`);
-      }
-    } catch (storageError) {
-      console.error('Error deleting from storage:', storageError);
-      // Continue even if storage deletion fails
-    }
-    
-    // Remove from photos array
-    const updatedPhotos = photos.filter((_, index) => index !== photoIndex);
-    
-    // Update session document
-    await sessionRef.update({
-      photos: updatedPhotos,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+// Health check
+app.get('/api/health', (req, res) => {
+    res.json({ 
+        status: 'healthy', 
+        sessions: sessions.length,
+        timestamp: new Date().toISOString() 
     });
-    
-    console.log(`Successfully deleted photo ${photoIndex} from session ${sessionId}`);
-    
-    res.json({
-      success: true,
-      message: 'Photo deleted successfully',
-      remainingPhotos: updatedPhotos.length
-    });
-    
-  } catch (error) {
-    console.error('Error deleting photo:', error);
-    res.status(500).json({ error: 'Failed to delete photo: ' + error.message });
-  }
 });
 
-// Invoice creation endpoint
-app.post('/api/create-invoice', async (req, res) => {
-  try {
-    const { sessionId, clientName, email, amount, description, dueDate } = req.body;
-    
-    // For now, return a placeholder response
-    // In a real implementation, this would integrate with Stripe or another payment processor
-    const invoiceUrl = `https://example.com/invoice/${sessionId}`;
-    
-    res.json({
-      success: true,
-      invoice_url: invoiceUrl,
-      message: 'Invoice creation feature is not yet implemented'
-    });
-  } catch (error) {
-    console.error('Error creating invoice:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to create invoice: ' + error.message 
-    });
-  }
-});
-
-// Error handling middleware
-app.use((error, req, res, next) => {
-  console.error('Server error:', error);
-  res.status(500).json({ error: 'Internal server error: ' + error.message });
+// Serve main page
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
-  console.log('Photography Scheduler running on http://0.0.0.0:' + PORT);
-  console.log('Database connected and ready');
-  console.log('Firebase Admin SDK:', isFirebaseInitialized ? 'Initialized' : 'Not initialized (fallback mode)');
-  console.log('Authentication:', isFirebaseInitialized ? 'Enabled' : 'Disabled (fallback mode)');
-  console.log('Server ready for requests');
+    console.log(`📸 Photo Session Scheduler running on http://0.0.0.0:${PORT}`);
+    console.log('Fresh start - all data cleared');
+});
+
+// Error handling
+app.use((error, req, res, next) => {
+    if (error instanceof multer.MulterError) {
+        if (error.code === 'LIMIT_FILE_SIZE') {
+            return res.status(400).json({ error: 'File too large. Maximum size is 10MB.' });
+        }
+    }
+    console.error('Server error:', error);
+    res.status(500).json({ error: 'Internal server error' });
 });

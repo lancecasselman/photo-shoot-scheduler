@@ -5,7 +5,7 @@ channel = "stable-24_05"
 packages = ["postgresql"]
 
 [workflows]
-runButton = "Photography Scheduler Node"
+runButton = "Project"
 
 [[workflows.workflow]]
 name = "Project"
@@ -14,10 +14,10 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Photography Scheduler"
+args = "Fresh Photo Scheduler"
 
 [[workflows.workflow]]
-name = "Photography Scheduler"
+name = "Fresh Photo Scheduler"
 author = "agent"
 
 [[workflows.workflow.tasks]]

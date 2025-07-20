@@ -3,143 +3,601 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Photography Session Scheduler</title>
-    <link rel="stylesheet" href="style.css">
-    
-
+    <title>Photo Session Scheduler</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .session-form {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        
+        input, textarea, select {
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #718096;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #4a5568;
+        }
+        
+        .btn-danger {
+            background: #e53e3e;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c53030;
+        }
+        
+        .sessions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        
+        .session-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        
+        .session-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .session-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .session-title {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #2d3748;
+        }
+        
+        .session-type {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+        
+        .session-details {
+            margin-bottom: 20px;
+        }
+        
+        .detail-row {
+            display: flex;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+        
+        .detail-label {
+            font-weight: 600;
+            width: 80px;
+            color: #4a5568;
+        }
+        
+        .detail-value {
+            color: #2d3748;
+        }
+        
+        .session-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .photo-gallery {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+        
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .photo-item {
+            aspect-ratio: 1;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        
+        .photo-item:hover {
+            transform: scale(1.05);
+        }
+        
+        .photo-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .upload-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .upload-modal.active {
+            display: flex;
+        }
+        
+        .upload-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .upload-area {
+            border: 3px dashed #cbd5e0;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .upload-area:hover, .upload-area.dragover {
+            border-color: #667eea;
+            background: #f7fafc;
+        }
+        
+        .photo-count {
+            background: #48bb78;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 50px;
+            color: #718096;
+        }
+        
+        @media (max-width: 768px) {
+            .container { padding: 10px; }
+            .sessions-grid { grid-template-columns: 1fr; }
+            .form-grid { grid-template-columns: 1fr; }
+            .session-actions { flex-direction: column; }
+            .btn { width: 100%; margin: 2px 0; }
+        }
+    </style>
 </head>
 <body>
-    <div id="auth">
-        <h2>Login</h2>
-        <input type="email" id="login-email" placeholder="Email"><br>
-        <input type="password" id="login-password" placeholder="Password"><br>
-        <button onclick="login()">Login</button>
-
-        <h2>Signup</h2>
-        <input type="email" id="signup-email" placeholder="Email"><br>
-        <input type="password" id="signup-password" placeholder="Password"><br>
-        <button onclick="signup()">Signup</button>
-    </div>
-
-    <div id="app" style="display: none;">
-        <div class="container">
-            <header>
-                <h1>📸 Photography Session Scheduler</h1>
-                <p>Manage your photography sessions with ease</p>
-                <button onclick="logout()" style="float: right; margin-top: -40px;">Logout</button>
-            </header>
-
-            <main>
-            <!-- Session Form -->
-            <section class="form-section">
-                <h2>Add New Session</h2>
-                <form id="sessionForm">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="sessionType">Session Type</label>
-                            <input type="text" id="sessionType" name="sessionType" required placeholder="e.g., Wedding, Portrait, Event">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="clientName">Client Name</label>
-                            <input type="text" id="clientName" name="clientName" required placeholder="Enter client name">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="dateTime">Date & Time</label>
-                            <input type="datetime-local" id="dateTime" name="dateTime" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="location">Location</label>
-                            <input type="text" id="location" name="location" required placeholder="Session location">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="phoneNumber">Phone Number</label>
-                            <input type="tel" id="phoneNumber" name="phoneNumber" required placeholder="+1 (555) 123-4567">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="email">Email Address</label>
-                            <input type="email" id="email" name="email" required placeholder="client@example.com">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="price">Price</label>
-                            <input type="number" id="price" name="price" step="0.01" min="0" required placeholder="0.00">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="duration">Length of Shoot (minutes)</label>
-                            <input type="number" id="duration" name="duration" min="1" required placeholder="60">
-                        </div>
-                    </div>
-
-                    <div class="form-group full-width">
-                        <label for="notes">Notes</label>
-                        <textarea id="notes" name="notes" rows="3" placeholder="Additional notes about the session"></textarea>
-                    </div>
-
-
-
-
-                    <div class="checkbox-group">
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="contractSigned" name="contractSigned">
-                            <label for="contractSigned">Contract Signed</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="paid" name="paid">
-                            <label for="paid">Paid</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="edited" name="edited">
-                            <label for="edited">Edited</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="delivered" name="delivered">
-                            <label for="delivered">Delivered</label>
-                        </div>
-                    </div>
-
-                    <div class="form-section-title">
-                        <h3>Notifications</h3>
-                    </div>
-                    <div class="checkbox-group">
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="reminderEnabled" name="reminderEnabled">
-                            <label for="reminderEnabled">Send session reminder 24 hours before</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="galleryReadyNotified" name="galleryReadyNotified">
-                            <label for="galleryReadyNotified">Gallery ready notification</label>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary">Add Session</button>
-                </form>
-            </section>
-
-            <!-- Sessions Display -->
-            <section class="sessions-section">
-                <h2>Scheduled Sessions</h2>
-                <div id="sessionsContainer" class="sessions-container">
-                    <div class="empty-state">
-                        <p>No sessions scheduled yet. Add your first session above!</p>
-                    </div>
-                </div>
-            </section>
-            </main>
+    <div class="container">
+        <div class="header">
+            <h1>📸 Photo Session Scheduler</h1>
+            <p>Manage photography sessions with photo galleries</p>
         </div>
 
-        <!-- Success/Error Messages -->
-        <div id="messageContainer" class="message-container"></div>
+        <!-- Session Form -->
+        <div class="session-form">
+            <h2>Add New Session</h2>
+            <form id="sessionForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="clientName">Client Name</label>
+                        <input type="text" id="clientName" required placeholder="Enter client name">
+                    </div>
+                    <div class="form-group">
+                        <label for="sessionType">Session Type</label>
+                        <input type="text" id="sessionType" required placeholder="Wedding, Portrait, etc.">
+                    </div>
+                    <div class="form-group">
+                        <label for="dateTime">Date & Time</label>
+                        <input type="datetime-local" id="dateTime" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="location">Location</label>
+                        <input type="text" id="location" required placeholder="Session location">
+                    </div>
+                    <div class="form-group">
+                        <label for="phoneNumber">Phone</label>
+                        <input type="tel" id="phoneNumber" required placeholder="+1 (555) 123-4567">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" required placeholder="client@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="price">Price</label>
+                        <input type="number" id="price" step="0.01" required placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="duration">Duration (minutes)</label>
+                        <input type="number" id="duration" required placeholder="60">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Add Session</button>
+            </form>
+        </div>
 
-        <script src="script.js?v=1753001100000"></script>
+        <!-- Sessions Display -->
+        <div id="sessionsContainer" class="sessions-grid">
+            <div class="empty-state">
+                <h3>No sessions yet</h3>
+                <p>Add your first photography session above!</p>
+            </div>
+        </div>
     </div>
 
+    <!-- Upload Modal -->
+    <div id="uploadModal" class="upload-modal">
+        <div class="upload-content">
+            <h3>Upload Photos</h3>
+            <div class="upload-area" id="uploadArea">
+                <p>📸 Click here or drag photos to upload</p>
+                <p style="font-size: 0.9em; color: #718096; margin-top: 10px;">Supports JPG, PNG files</p>
+            </div>
+            <input type="file" id="fileInput" multiple accept="image/*" style="display: none;">
+            <div id="uploadProgress" style="margin: 20px 0;"></div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn btn-secondary" onclick="closeUploadModal()">Close</button>
+            </div>
+        </div>
+    </div>
 
-    <script type="module" src="auth.js?v=1752982000000"></script>
+    <script>
+        let sessions = [];
+        let currentUploadSessionId = null;
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSessions();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            document.getElementById('sessionForm').addEventListener('submit', addSession);
+            
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+            
+            uploadArea.addEventListener('click', () => fileInput.click());
+            uploadArea.addEventListener('dragover', handleDragOver);
+            uploadArea.addEventListener('drop', handleDrop);
+            fileInput.addEventListener('change', handleFileSelect);
+        }
+
+        async function addSession(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const sessionData = {
+                clientName: formData.get('clientName'),
+                sessionType: formData.get('sessionType'),
+                dateTime: formData.get('dateTime'),
+                location: formData.get('location'),
+                phoneNumber: formData.get('phoneNumber'),
+                email: formData.get('email'),
+                price: parseFloat(formData.get('price')),
+                duration: parseInt(formData.get('duration')),
+                photos: []
+            };
+
+            try {
+                const response = await fetch('/api/sessions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(sessionData)
+                });
+                
+                if (response.ok) {
+                    const newSession = await response.json();
+                    sessions.unshift(newSession);
+                    renderSessions();
+                    e.target.reset();
+                    showMessage('Session added successfully!', 'success');
+                } else {
+                    showMessage('Failed to add session', 'error');
+                }
+            } catch (error) {
+                console.error('Error adding session:', error);
+                showMessage('Error adding session', 'error');
+            }
+        }
+
+        async function loadSessions() {
+            try {
+                const response = await fetch('/api/sessions');
+                if (response.ok) {
+                    sessions = await response.json();
+                    renderSessions();
+                }
+            } catch (error) {
+                console.error('Error loading sessions:', error);
+            }
+        }
+
+        function renderSessions() {
+            const container = document.getElementById('sessionsContainer');
+            
+            if (sessions.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>No sessions yet</h3>
+                        <p>Add your first photography session above!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = sessions.map(session => `
+                <div class="session-card">
+                    <div class="session-header">
+                        <div class="session-title">${session.clientName}</div>
+                        <div class="session-type">${session.sessionType}</div>
+                    </div>
+                    
+                    <div class="session-details">
+                        <div class="detail-row">
+                            <span class="detail-label">Date:</span>
+                            <span class="detail-value">${formatDateTime(session.dateTime)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Location:</span>
+                            <span class="detail-value">${session.location}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Phone:</span>
+                            <span class="detail-value">${session.phoneNumber}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Price:</span>
+                            <span class="detail-value">$${session.price}</span>
+                        </div>
+                    </div>
+
+                    <div class="session-actions">
+                        <button class="btn btn-secondary" onclick="openUploadModal('${session.id}')">
+                            📸 Upload Photos${session.photos && session.photos.length ? ` (${session.photos.length})` : ''}
+                        </button>
+                        <button class="btn btn-danger" onclick="deleteSession('${session.id}')">🗑️ Delete</button>
+                    </div>
+
+                    ${session.photos && session.photos.length > 0 ? `
+                        <div class="photo-gallery">
+                            <h4>Photos <span class="photo-count">${session.photos.length}</span></h4>
+                            <div class="photo-grid">
+                                ${session.photos.map(photo => `
+                                    <div class="photo-item" onclick="viewPhoto('${photo.url}')">
+                                        <img src="${photo.url}" alt="Session photo" loading="lazy">
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        function openUploadModal(sessionId) {
+            currentUploadSessionId = sessionId;
+            document.getElementById('uploadModal').classList.add('active');
+        }
+
+        function closeUploadModal() {
+            document.getElementById('uploadModal').classList.remove('active');
+            currentUploadSessionId = null;
+            document.getElementById('uploadProgress').innerHTML = '';
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+            if (files.length > 0) {
+                uploadFiles(files);
+            }
+        }
+
+        function handleFileSelect(e) {
+            const files = Array.from(e.target.files);
+            if (files.length > 0) {
+                uploadFiles(files);
+            }
+        }
+
+        async function uploadFiles(files) {
+            if (!currentUploadSessionId) return;
+
+            const progressDiv = document.getElementById('uploadProgress');
+            progressDiv.innerHTML = '<p>Uploading photos...</p>';
+
+            const formData = new FormData();
+            files.forEach(file => {
+                formData.append('photos', file);
+            });
+
+            try {
+                const response = await fetch(`/api/sessions/${currentUploadSessionId}/upload-photos`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showMessage(`Successfully uploaded ${files.length} photos!`, 'success');
+                    closeUploadModal();
+                    loadSessions(); // Refresh to show new photos
+                } else {
+                    showMessage('Failed to upload photos', 'error');
+                }
+            } catch (error) {
+                console.error('Error uploading photos:', error);
+                showMessage('Error uploading photos', 'error');
+            }
+        }
+
+        async function deleteSession(sessionId) {
+            if (!confirm('Are you sure you want to delete this session?')) return;
+
+            try {
+                const response = await fetch(`/api/sessions/${sessionId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    sessions = sessions.filter(s => s.id !== sessionId);
+                    renderSessions();
+                    showMessage('Session deleted successfully!', 'success');
+                } else {
+                    showMessage('Failed to delete session', 'error');
+                }
+            } catch (error) {
+                console.error('Error deleting session:', error);
+                showMessage('Error deleting session', 'error');
+            }
+        }
+
+        function viewPhoto(url) {
+            window.open(url, '_blank');
+        }
+
+        function formatDateTime(dateTimeString) {
+            const date = new Date(dateTimeString);
+            return date.toLocaleDateString('en-US', {
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function showMessage(text, type) {
+            const message = document.createElement('div');
+            message.textContent = text;
+            message.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 25px;
+                border-radius: 8px;
+                color: white;
+                font-weight: 600;
+                z-index: 10000;
+                background: ${type === 'success' ? '#48bb78' : '#e53e3e'};
+            `;
+            
+            document.body.appendChild(message);
+            setTimeout(() => message.remove(), 3000);
+        }
+    </script>
 </body>
 </html>
