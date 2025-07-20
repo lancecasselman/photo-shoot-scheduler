@@ -815,7 +815,7 @@
                         <button class="btn btn-call" onclick="callClient('${session.phoneNumber}')">
                             📞 Call Client
                         </button>
-                        <button class="btn btn-text" onclick="textClient('${session.phoneNumber}')">
+                        <button class="btn btn-text" onclick="textClient('${session.phoneNumber}', '${session.clientName}', '${session.id}')">
                             💬 Text Client
                         </button>
                         <button class="btn btn-gallery" onclick="viewGallery('${session.id}')">
@@ -1280,8 +1280,16 @@ END:VCALENDAR`;
             window.location.href = `tel:${phoneNumber}`;
         }
 
-        function textClient(phoneNumber) {
-            window.location.href = `sms:${phoneNumber}`;
+        function textClient(phoneNumber, clientName, sessionId) {
+            const session = sessions.find(s => s.id === sessionId);
+            if (session && session.galleryAccessToken) {
+                const galleryUrl = `${window.location.origin}/gallery/${sessionId}?access=${session.galleryAccessToken}`;
+                const message = `📸 ${clientName}, your ${session.sessionType} photos are ready! View gallery: ${galleryUrl}`;
+                window.location.href = `sms:${phoneNumber}?body=${encodeURIComponent(message)}`;
+            } else {
+                const message = `Hi ${clientName}, your photos will be ready soon! We'll send you the gallery link when they're available.`;
+                window.location.href = `sms:${phoneNumber}?body=${encodeURIComponent(message)}`;
+            }
         }
 
         async function viewGallery(sessionId) {
