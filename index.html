@@ -81,17 +81,8 @@
                         <textarea id="notes" name="notes" rows="3" placeholder="Additional notes about the session"></textarea>
                     </div>
 
-                    <!-- Photo Upload Section -->
-                    <div class="form-group full-width photo-upload-section">
-                        <label for="photoUpload" class="photo-upload-label">📸 Upload Photos</label>
-                        <input type="file" id="photoUpload" name="photoUpload" multiple accept="image/*" class="photo-upload-input">
-                        <div class="photo-upload-area" onclick="document.getElementById('photoUpload').click();">
-                            <span class="photo-upload-text">Choose Files - No files chosen</span>
-                            <span class="photo-upload-helper">Select multiple photos for this session</span>
-                        </div>
-                        <div id="photoPreview" class="photo-preview-container"></div>
-                        <div id="uploadProgress" class="upload-progress-container"></div>
-                    </div>
+
+
 
                     <div class="checkbox-group">
                         <div class="checkbox-item">
@@ -122,7 +113,7 @@
                         </div>
                         <div class="checkbox-item">
                             <input type="checkbox" id="galleryReadyNotified" name="galleryReadyNotified">
-                            <label for="galleryReadyNotified">Notify when gallery is ready</label>
+                            <label for="galleryReadyNotified">Gallery ready notification</label>
                         </div>
                     </div>
 
@@ -148,26 +139,7 @@
         <script src="script.js?v=1752982000000"></script>
     </div>
 
-    <script>
-        console.log('Photo upload backend API ready');
-        
-        // Photo upload is always available with backend API
-        setTimeout(() => {
-            const uploadSection = document.querySelector('.photo-upload-section');
-            const uploadHelper = document.querySelector('.photo-upload-helper');
-            
-            if (uploadSection) {
-                uploadSection.style.display = 'block';
-                uploadSection.style.visibility = 'visible';
-                console.log('Photo upload section made visible (Backend API)');
-            }
-            
-            if (uploadHelper) {
-                uploadHelper.textContent = 'Select multiple photos for this session';
-                uploadHelper.style.color = '';
-            }
-        }, 100);
-    </script>
+
     <script type="module" src="auth.js?v=1752982000000"></script>
 </body>
 </html>
