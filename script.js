@@ -805,59 +805,31 @@ function createPhotoItem(photo, index, sessionId) {
     return photoItem;
 }
 
-// Open photo upload dialog
+// Open photo upload dialog - use existing HTML modal
 function openUploadDialog(sessionId) {
     console.log('Opening upload dialog for session:', sessionId);
     
-    // Create modal overlay
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
+    // Use the existing HTML modal
+    const modal = document.getElementById('uploadModal');
+    const fileInput = document.getElementById('fileInput');
+    const filePreview = document.getElementById('filePreview');
     
-    const modal = document.createElement('div');
-    modal.className = 'upload-modal';
+    // Clear previous state
+    fileInput.value = '';
+    filePreview.innerHTML = '';
     
-    modal.innerHTML = `
-        <div class="upload-modal-header">
-            <h3>Upload Photos</h3>
-            <button class="modal-close-btn" onclick="this.closest('.modal-overlay').remove()">×</button>
-        </div>
-        <div class="upload-modal-body">
-            <div class="upload-drop-zone" id="uploadDropZone">
-                <div class="upload-icon">📸</div>
-                <div class="upload-text">Click to select photos or drag and drop</div>
-                <div class="upload-subtext">JPEG, PNG files only • Max 10MB per file • Up to 20 files</div>
-                <input type="file" id="photoFileInput" multiple accept="image/jpeg,image/png" style="display: none;">
-            </div>
-            <div class="upload-progress-container" id="uploadProgressContainer" style="display: none;">
-                <div class="upload-progress-bar">
-                    <div class="upload-progress-fill" id="uploadProgressFill"></div>
-                </div>
-                <div class="upload-progress-text" id="uploadProgressText">Uploading...</div>
-            </div>
-            <div class="upload-preview-container" id="uploadPreviewContainer"></div>
-        </div>
-        <div class="upload-modal-footer">
-            <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
-            <button class="btn btn-primary" id="uploadStartBtn" disabled>Upload Photos</button>
-        </div>
-    `;
+    // Store session ID for upload
+    window.currentUploadSessionId = sessionId;
     
-    overlay.appendChild(modal);
-    document.body.appendChild(overlay);
-    
-    // Setup upload functionality
-    setupUploadModal(sessionId);
+    // Show modal
+    modal.classList.add('active');
 }
 
 // Setup upload modal functionality
 function setupUploadModal(sessionId) {
-    const fileInput = document.getElementById('photoFileInput');
-    const dropZone = document.getElementById('uploadDropZone');
-    const previewContainer = document.getElementById('uploadPreviewContainer');
-    const uploadBtn = document.getElementById('uploadStartBtn');
-    const progressContainer = document.getElementById('uploadProgressContainer');
-    const progressFill = document.getElementById('uploadProgressFill');
-    const progressText = document.getElementById('uploadProgressText');
+    // This function is no longer needed since we use HTML upload modal
+    // All functionality is handled by existing HTML modal functions
+    console.log('Using existing HTML upload modal for session:', sessionId);
     
     let selectedFiles = [];
     
