@@ -15,30 +15,67 @@ const pool = new Pool({
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
-// Create direct email transporter
+// Create professional email transporter with better deliverability
 const createEmailTransporter = () => {
-    // Try Gmail SMTP first, then fallback to generic SMTP
     if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-        return nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS
+        // Use SMTP configuration instead of service for better deliverability
+        const emailDomain = process.env.EMAIL_USER.split('@')[1];
+        
+        if (emailDomain === 'gmail.com') {
+            return nodemailer.createTransport({
+                host: 'smtp.gmail.com',
+                port: 587,
+                secure: false,
+                auth: {
+                    user: process.env.EMAIL_USER,
+                    pass: process.env.EMAIL_PASS
+                },
+                tls: {
+                    rejectUnauthorized: false
+                }
+            });
+        } else if (emailDomain === 'outlook.com' || emailDomain === 'hotmail.com') {
+            return nodemailer.createTransport({
+                host: 'smtp-mail.outlook.com',
+                port: 587,
+                secure: false,
+                auth: {
+                    user: process.env.EMAIL_USER,
+                    pass: process.env.EMAIL_PASS
+                }
+            });
+        } else {
+            // For other domains, check if SMTP_HOST is configured, otherwise use Gmail as fallback
+            if (process.env.SMTP_HOST) {
+                return nodemailer.createTransport({
+                    host: process.env.SMTP_HOST,
+                    port: process.env.SMTP_PORT || 587,
+                    secure: false,
+                    auth: {
+                        user: process.env.EMAIL_USER,
+                        pass: process.env.EMAIL_PASS
+                    },
+                    tls: {
+                        rejectUnauthorized: false
+                    }
+                });
+            } else {
+                // Fallback to Gmail SMTP if no SMTP_HOST specified
+                console.log(`Email domain ${emailDomain} doesn't have built-in SMTP config, using Gmail as fallback`);
+                return nodemailer.createTransport({
+                    host: 'smtp.gmail.com',
+                    port: 587,
+                    secure: false,
+                    auth: {
+                        user: process.env.EMAIL_USER,
+                        pass: process.env.EMAIL_PASS
+                    },
+                    tls: {
+                        rejectUnauthorized: false
+                    }
+                });
             }
-        });
-    }
-    
-    // Fallback: use any SMTP server
-    if (process.env.SMTP_HOST) {
-        return nodemailer.createTransport({
-            host: process.env.SMTP_HOST,
-            port: process.env.SMTP_PORT || 587,
-            secure: false,
-            auth: {
-                user: process.env.SMTP_USER || process.env.EMAIL_USER,
-                pass: process.env.SMTP_PASS || process.env.EMAIL_PASS
-            }
-        });
+        }
     }
     
     return null;
@@ -655,7 +692,7 @@ app.post('/api/sessions/:id/send-gallery-notification', async (req, res) => {
                 text: message,
                 html: `
                     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                        <h2 style="color: #667eea;">📸 Your Photo Gallery is Ready!</h2>
+                        <h2 style="color: #667eea;">Your Photo Gallery is Ready!</h2>
                         <p>Hi ${session.clientName},</p>
                         <p>Your photos from your <strong>${session.sessionType}</strong> session are now ready for viewing and download.</p>
                         <div style="text-align: center; margin: 20px 0;">
@@ -669,7 +706,13 @@ app.post('/api/sessions/:id/send-gallery-notification', async (req, res) => {
                             Professional Photography Services
                         </p>
                     </div>
-                `
+                `,
+                headers: {
+                    'Message-ID': `<${Date.now()}.${sessionId}@thelegacyphotography.com>`,
+                    'X-Mailer': 'The Legacy Photography Gallery System',
+                    'Reply-To': process.env.EMAIL_USER || 'lance@thelegacyphotography.com',
+                    'Return-Path': process.env.EMAIL_USER || 'lance@thelegacyphotography.com'
+                }
             };
             
             await transporter.sendMail(emailMsg);
