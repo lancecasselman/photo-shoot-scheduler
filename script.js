@@ -576,17 +576,52 @@ function exportToCalendar(sessionId) {
     // Clean up
     URL.revokeObjectURL(link.href);
     
-    // Option 2: Also provide server-generated .ics for better iPhone compatibility
+    // Better iPhone Calendar integration
     const serverIcsUrl = `/api/sessions/${sessionId}/calendar.ics`;
     
-    // On iPhone/mobile, try to open the server URL directly for better iOS Calendar integration
-    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+    // For iPhone/iOS devices, use multiple approaches for better Calendar app integration
+    if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        // iPhone Calendar integration - multiple approaches
+        showMessage('Opening iPhone Calendar integration...', 'success');
+        
+        // Approach 1: Create data URL for direct iPhone Calendar integration
+        const dataUrl = `data:text/calendar;charset=utf8,${encodeURIComponent(icsContent)}`;
+        const directLink = document.createElement('a');
+        directLink.href = dataUrl;
+        directLink.download = `${session.clientName}_${session.sessionType}_Session.ics`;
+        directLink.target = '_blank';
+        directLink.rel = 'noopener';
+        directLink.style.display = 'none';
+        document.body.appendChild(directLink);
+        directLink.click();
+        document.body.removeChild(directLink);
+        
+        // Approach 2: Also try server URL for iPhone Safari integration
         setTimeout(() => {
-            window.open(serverIcsUrl, '_blank');
+            window.open(serverIcsUrl, '_blank', 'noopener,noreferrer');
         }, 500);
-        showMessage(`Calendar event ready! Opening iPhone Calendar integration...`, 'success');
+        
+        // Approach 3: For iPhone users, create a simple instruction message
+        setTimeout(() => {
+            showMessage(`📅 To add to iPhone Calendar: Tap the downloaded .ics file in Safari's downloads or visit: ${window.location.origin}${serverIcsUrl}`, 'info');
+        }, 2000);
+        
+        // Approach 4: Create Google Calendar as final fallback
+        const startDate = new Date(session.dateTime);
+        const endDate = new Date(startDate.getTime() + session.duration * 60000);
+        const formatDate = (date) => date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+        
+        const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(session.sessionType + ' - ' + session.clientName)}&dates=${formatDate(startDate)}/${formatDate(endDate)}&location=${encodeURIComponent(session.location)}&details=${encodeURIComponent('Photography session with ' + session.clientName + '\nContact: ' + session.phoneNumber + '\nEmail: ' + session.email + '\nPrice: $' + session.price)}`;
+        
+        setTimeout(() => {
+            if (confirm('📅 Need another option? Open Google Calendar instead?')) {
+                window.open(googleCalendarUrl, '_blank');
+            }
+        }, 5000);
+        
     } else {
-        showMessage(`Calendar event downloaded! Open the .ics file to add to your calendar, or click here for server version: ${serverIcsUrl}`, 'success');
+        // For other devices, provide download and server option
+        showMessage(`Calendar event downloaded! For iPhone users, visit: ${window.location.origin}${serverIcsUrl}`, 'success');
     }
 }
 

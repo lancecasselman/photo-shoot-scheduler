@@ -896,10 +896,23 @@ app.get('/api/sessions/:id/calendar.ics', async (req, res) => {
             'END:VCALENDAR'
         ].join('\r\n');
         
-        // Set proper headers for .ics file download
+        // Set proper headers for iPhone Calendar integration
+        const isIPhone = req.get('User-Agent') && req.get('User-Agent').includes('iPhone');
+        
         res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
-        res.setHeader('Content-Disposition', `attachment; filename="${session.clientName}_${session.sessionType}_Session.ics"`);
-        res.setHeader('Cache-Control', 'no-cache');
+        if (isIPhone) {
+            // For iPhone, use inline to trigger Calendar app
+            res.setHeader('Content-Disposition', `inline; filename="${session.clientName}_${session.sessionType}_Session.ics"`);
+        } else {
+            // For other devices, use attachment to download
+            res.setHeader('Content-Disposition', `attachment; filename="${session.clientName}_${session.sessionType}_Session.ics"`);
+        }
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'GET');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
         
         console.log(`Generated .ics calendar file for session: ${session.clientName} (${sessionId})`);
         res.send(icsContent);
