@@ -6,6 +6,15 @@ This is a client-side web application for managing photography sessions. It's a 
 
 ## Recent Changes
 
+### Cleaned Up Multiple App Versions (July 20, 2025)
+- **Removed Duplicate Versions**: Eliminated www/ directory and current_page.html to prevent confusion
+- **Single Source of Truth**: Only one version now exists at root level (index.html, script.js, style.css)
+- **Fixed JavaScript Error**: Removed duplicate const uploadBtn declaration that was causing PC browser issues
+- **Updated Cache Busting**: Force browser refresh with new version numbers
+- **Confirmed Working**: App successfully loads sessions and displays upload buttons on all platforms
+
+## Recent Changes
+
 ### Comprehensive Backend Photo Upload System (July 19, 2025)
 - **Complete API Architecture**: Full backend photo management with `/api/sessions/upload-photos`, `/api/sessions/{id}/photos`, and deletion endpoints
 - **Massive Upload Support**: 1000 photos per session, 100MB per file (supports RAW photos and high-res images)
