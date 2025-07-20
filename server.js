@@ -3,10 +3,17 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
+const { Pool } = require('pg');
 
 // Direct email service using nodemailer
 const nodemailer = require('nodemailer');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+// PostgreSQL database connection
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+});
 
 // Create direct email transporter
 const createEmailTransporter = () => {
@@ -40,8 +47,239 @@ const createEmailTransporter = () => {
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// In-memory storage for sessions
-let sessions = [];
+// Initialize database table
+async function initializeDatabase() {
+    try {
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS sessions (
+                id VARCHAR(255) PRIMARY KEY,
+                client_name VARCHAR(255) NOT NULL,
+                session_type VARCHAR(255) NOT NULL,
+                date_time TIMESTAMP NOT NULL,
+                location VARCHAR(255) NOT NULL,
+                phone_number VARCHAR(255) NOT NULL,
+                email VARCHAR(255) NOT NULL,
+                price DECIMAL(10,2) NOT NULL,
+                duration INTEGER NOT NULL,
+                notes TEXT,
+                contract_signed BOOLEAN DEFAULT FALSE,
+                paid BOOLEAN DEFAULT FALSE,
+                edited BOOLEAN DEFAULT FALSE,
+                delivered BOOLEAN DEFAULT FALSE,
+                send_reminder BOOLEAN DEFAULT FALSE,
+                notify_gallery_ready BOOLEAN DEFAULT FALSE,
+                photos JSONB DEFAULT '[]',
+                gallery_access_token VARCHAR(255),
+                gallery_created_at TIMESTAMP,
+                gallery_expires_at TIMESTAMP,
+                gallery_ready_notified BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        console.log('Database table initialized successfully');
+    } catch (error) {
+        console.error('Database initialization error:', error);
+    }
+}
+
+// Database helper functions
+async function getAllSessions() {
+    try {
+        const result = await pool.query('SELECT * FROM sessions ORDER BY date_time ASC');
+        return result.rows.map(row => ({
+            id: row.id,
+            clientName: row.client_name,
+            sessionType: row.session_type,
+            dateTime: row.date_time,
+            location: row.location,
+            phoneNumber: row.phone_number,
+            email: row.email,
+            price: parseFloat(row.price),
+            duration: row.duration,
+            notes: row.notes,
+            contractSigned: row.contract_signed,
+            paid: row.paid,
+            edited: row.edited,
+            delivered: row.delivered,
+            sendReminder: row.send_reminder,
+            notifyGalleryReady: row.notify_gallery_ready,
+            photos: row.photos || [],
+            galleryAccessToken: row.gallery_access_token,
+            galleryCreatedAt: row.gallery_created_at,
+            galleryExpiresAt: row.gallery_expires_at,
+            galleryReadyNotified: row.gallery_ready_notified,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at
+        }));
+    } catch (error) {
+        console.error('Error fetching sessions:', error);
+        return [];
+    }
+}
+
+async function createSession(sessionData) {
+    try {
+        const result = await pool.query(`
+            INSERT INTO sessions (
+                id, client_name, session_type, date_time, location, 
+                phone_number, email, price, duration, notes,
+                contract_signed, paid, edited, delivered, 
+                send_reminder, notify_gallery_ready
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+            RETURNING *
+        `, [
+            sessionData.id,
+            sessionData.clientName,
+            sessionData.sessionType,
+            sessionData.dateTime,
+            sessionData.location,
+            sessionData.phoneNumber,
+            sessionData.email,
+            sessionData.price,
+            sessionData.duration,
+            sessionData.notes || '',
+            sessionData.contractSigned || false,
+            sessionData.paid || false,
+            sessionData.edited || false,
+            sessionData.delivered || false,
+            sessionData.sendReminder || false,
+            sessionData.notifyGalleryReady || false
+        ]);
+        
+        const row = result.rows[0];
+        return {
+            id: row.id,
+            clientName: row.client_name,
+            sessionType: row.session_type,
+            dateTime: row.date_time,
+            location: row.location,
+            phoneNumber: row.phone_number,
+            email: row.email,
+            price: parseFloat(row.price),
+            duration: row.duration,
+            notes: row.notes,
+            contractSigned: row.contract_signed,
+            paid: row.paid,
+            edited: row.edited,
+            delivered: row.delivered,
+            sendReminder: row.send_reminder,
+            notifyGalleryReady: row.notify_gallery_ready,
+            photos: row.photos || [],
+            createdAt: row.created_at,
+            updatedAt: row.updated_at
+        };
+    } catch (error) {
+        console.error('Error creating session:', error);
+        throw error;
+    }
+}
+
+async function getSessionById(id) {
+    try {
+        const result = await pool.query('SELECT * FROM sessions WHERE id = $1', [id]);
+        if (result.rows.length === 0) return null;
+        
+        const row = result.rows[0];
+        return {
+            id: row.id,
+            clientName: row.client_name,
+            sessionType: row.session_type,
+            dateTime: row.date_time,
+            location: row.location,
+            phoneNumber: row.phone_number,
+            email: row.email,
+            price: parseFloat(row.price),
+            duration: row.duration,
+            notes: row.notes,
+            contractSigned: row.contract_signed,
+            paid: row.paid,
+            edited: row.edited,
+            delivered: row.delivered,
+            sendReminder: row.send_reminder,
+            notifyGalleryReady: row.notify_gallery_ready,
+            photos: row.photos || [],
+            galleryAccessToken: row.gallery_access_token,
+            galleryCreatedAt: row.gallery_created_at,
+            galleryExpiresAt: row.gallery_expires_at,
+            galleryReadyNotified: row.gallery_ready_notified,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at
+        };
+    } catch (error) {
+        console.error('Error fetching session:', error);
+        return null;
+    }
+}
+
+async function updateSession(id, updates) {
+    try {
+        const setClause = [];
+        const values = [];
+        let paramCount = 1;
+        
+        Object.keys(updates).forEach(key => {
+            const dbKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+            setClause.push(`${dbKey} = $${paramCount}`);
+            values.push(updates[key]);
+            paramCount++;
+        });
+        
+        if (setClause.length === 0) return null;
+        
+        setClause.push(`updated_at = CURRENT_TIMESTAMP`);
+        values.push(id);
+        
+        const result = await pool.query(`
+            UPDATE sessions 
+            SET ${setClause.join(', ')} 
+            WHERE id = $${paramCount}
+            RETURNING *
+        `, values);
+        
+        if (result.rows.length === 0) return null;
+        
+        const row = result.rows[0];
+        return {
+            id: row.id,
+            clientName: row.client_name,
+            sessionType: row.session_type,
+            dateTime: row.date_time,
+            location: row.location,
+            phoneNumber: row.phone_number,
+            email: row.email,
+            price: parseFloat(row.price),
+            duration: row.duration,
+            notes: row.notes,
+            contractSigned: row.contract_signed,
+            paid: row.paid,
+            edited: row.edited,
+            delivered: row.delivered,
+            sendReminder: row.send_reminder,
+            notifyGalleryReady: row.notify_gallery_ready,
+            photos: row.photos || [],
+            galleryAccessToken: row.gallery_access_token,
+            galleryCreatedAt: row.gallery_created_at,
+            galleryExpiresAt: row.gallery_expires_at,
+            galleryReadyNotified: row.gallery_ready_notified,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at
+        };
+    } catch (error) {
+        console.error('Error updating session:', error);
+        throw error;
+    }
+}
+
+async function deleteSession(id) {
+    try {
+        const result = await pool.query('DELETE FROM sessions WHERE id = $1 RETURNING *', [id]);
+        return result.rows.length > 0;
+    } catch (error) {
+        console.error('Error deleting session:', error);
+        throw error;
+    }
+}
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -83,81 +321,115 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // API Routes
 
 // Get all sessions
-app.get('/api/sessions', (req, res) => {
-    console.log(`Returning ${sessions.length} sessions`);
-    res.json(sessions);
+app.get('/api/sessions', async (req, res) => {
+    try {
+        const sessions = await getAllSessions();
+        console.log(`Returning ${sessions.length} sessions from database`);
+        res.json(sessions);
+    } catch (error) {
+        console.error('Error fetching sessions:', error);
+        res.status(500).json({ error: 'Failed to fetch sessions' });
+    }
 });
 
 // Create new session
-app.post('/api/sessions', (req, res) => {
-    const sessionData = {
-        id: uuidv4(),
-        ...req.body,
-        photos: [],
-        createdAt: new Date().toISOString()
-    };
+app.post('/api/sessions', async (req, res) => {
+    const { clientName, sessionType, dateTime, location, phoneNumber, email, price, duration, notes } = req.body;
     
-    sessions.unshift(sessionData); // Add to beginning of array
-    console.log(`Created session: ${sessionData.clientName} (${sessionData.id})`);
-    res.json(sessionData);
+    // Validate required fields
+    if (!clientName || !sessionType || !dateTime || !location || !phoneNumber || !email || !price || !duration) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+    
+    try {
+        const newSession = {
+            id: uuidv4(),
+            clientName,
+            sessionType,
+            dateTime,
+            location,
+            phoneNumber,
+            email,
+            price: parseFloat(price),
+            duration: parseInt(duration),
+            notes: notes || '',
+            contractSigned: false,
+            paid: false,
+            edited: false,
+            delivered: false,
+            sendReminder: false,
+            notifyGalleryReady: false,
+            galleryReadyNotified: false
+        };
+        
+        const savedSession = await createSession(newSession);
+        console.log(`Created session in database: ${savedSession.clientName} (${savedSession.id})`);
+        res.status(201).json(savedSession);
+    } catch (error) {
+        console.error('Error creating session:', error);
+        res.status(500).json({ error: 'Failed to create session' });
+    }
 });
 
 // Update session
-app.put('/api/sessions/:id', (req, res) => {
+app.put('/api/sessions/:id', async (req, res) => {
     const sessionId = req.params.id;
-    const sessionIndex = sessions.findIndex(s => s.id === sessionId);
     
-    if (sessionIndex === -1) {
-        return res.status(404).json({ error: 'Session not found' });
+    try {
+        const updatedSession = await updateSession(sessionId, req.body);
+        
+        if (!updatedSession) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+        
+        console.log(`Updated session in database: ${updatedSession.clientName} (${sessionId})`);
+        res.json(updatedSession);
+    } catch (error) {
+        console.error('Error updating session:', error);
+        res.status(500).json({ error: 'Failed to update session' });
     }
-    
-    const existingSession = sessions[sessionIndex];
-    const updatedSession = {
-        ...existingSession,
-        ...req.body,
-        id: sessionId, // Preserve the original ID
-        photos: existingSession.photos, // Preserve existing photos
-        createdAt: existingSession.createdAt, // Preserve creation date
-        updatedAt: new Date().toISOString()
-    };
-    
-    sessions[sessionIndex] = updatedSession;
-    console.log(`Updated session: ${updatedSession.clientName} (${sessionId})`);
-    res.json(updatedSession);
 });
 
 // Upload photos to session
-app.post('/api/sessions/:id/upload-photos', upload.array('photos'), (req, res) => {
+app.post('/api/sessions/:id/upload-photos', upload.array('photos'), async (req, res) => {
     const sessionId = req.params.id;
-    const session = sessions.find(s => s.id === sessionId);
     
-    if (!session) {
-        return res.status(404).json({ error: 'Session not found' });
+    try {
+        const session = await getSessionById(sessionId);
+        
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        if (!req.files || req.files.length === 0) {
+            return res.status(400).json({ error: 'No files uploaded' });
+        }
+
+        // Add photos to session
+        const newPhotos = req.files.map(file => ({
+            id: uuidv4(),
+            filename: file.filename,
+            originalName: file.originalname,
+            url: `/uploads/${file.filename}`,
+            size: file.size,
+            uploadedAt: new Date().toISOString()
+        }));
+
+        const existingPhotos = session.photos || [];
+        const updatedPhotos = [...existingPhotos, ...newPhotos];
+        
+        await updateSession(sessionId, { photos: updatedPhotos });
+
+        console.log(`Uploaded ${newPhotos.length} photos to session ${session.clientName}`);
+        res.json({ 
+            message: 'Photos uploaded successfully', 
+            uploaded: newPhotos.length,
+            totalPhotos: updatedPhotos.length 
+        });
+    } catch (error) {
+        console.error('Error uploading photos:', error);
+        res.status(500).json({ error: 'Failed to upload photos' });
     }
-
-    if (!req.files || req.files.length === 0) {
-        return res.status(400).json({ error: 'No files uploaded' });
-    }
-
-    // Add photos to session
-    const newPhotos = req.files.map(file => ({
-        id: uuidv4(),
-        filename: file.filename,
-        originalName: file.originalname,
-        url: `/uploads/${file.filename}`,
-        size: file.size,
-        uploadedAt: new Date().toISOString()
-    }));
-
-    session.photos = session.photos || [];
-    session.photos.push(...newPhotos);
-
-    console.log(`Uploaded ${newPhotos.length} photos to session ${session.clientName}`);
-    res.json({ 
-        message: 'Photos uploaded successfully', 
-        photos: newPhotos,
-        totalPhotos: session.photos.length 
-    });
 });
 
 // Delete session
@@ -530,9 +802,19 @@ app.get('/', (req, res) => {
 });
 
 // Start server
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`📸 Photo Session Scheduler running on http://0.0.0.0:${PORT}`);
-    console.log('Fresh start - all data cleared');
+// Initialize database and start server
+async function startServer() {
+    await initializeDatabase();
+    
+    app.listen(PORT, '0.0.0.0', () => {
+        console.log(`📸 Photo Session Scheduler running on http://0.0.0.0:${PORT}`);
+        console.log('Database connected and ready');
+    });
+}
+
+startServer().catch(error => {
+    console.error('Failed to start server:', error);
+    process.exit(1);
 });
 
 // Error handling
