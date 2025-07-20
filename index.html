@@ -765,8 +765,8 @@
                         <button class="btn btn-calendar" onclick="addToCalendar('${session.id}')">
                             📅 Add to Calendar
                         </button>
-                        <button class="btn btn-gallery-ready" onclick="sendGalleryReady('${session.id}')">
-                            📩 Send Gallery Ready
+                        <button class="btn btn-gallery-ready" onclick="sendGalleryReady('${session.id}')" ${(!session.photos || session.photos.length === 0) ? 'disabled title="Upload photos first"' : ''}>
+                            📩 ${session.galleryAccessToken ? 'Resend Gallery' : 'Send Gallery Ready'}
                         </button>
                         <button class="btn btn-invoice" onclick="sendInvoice('${session.id}')">
                             💵 Send Invoice
@@ -778,7 +778,7 @@
                             💬 Text Client
                         </button>
                         <button class="btn btn-gallery" onclick="viewGallery('${session.id}')">
-                            🖼️ View Gallery${session.photos && session.photos.length ? ` (${session.photos.length})` : ''}
+                            🖼️ ${session.galleryAccessToken ? 'View Gallery' : 'Create Gallery'}${session.photos && session.photos.length ? ` (${session.photos.length})` : ''}
                         </button>
                         <button class="btn btn-danger" onclick="deleteSession('${session.id}')">
                             🗑️ Delete
@@ -1118,12 +1118,54 @@ END:VCALENDAR`;
             showMessage('Calendar event downloaded!', 'success');
         }
 
-        function sendGalleryReady(sessionId) {
+        async function sendGalleryReady(sessionId) {
             const session = sessions.find(s => s.id === sessionId);
             if (!session) return;
             
-            showMessage('Gallery ready notification sent to ' + session.clientName, 'success');
-            // TODO: Implement actual email/SMS sending via backend API
+            try {
+                // First, generate gallery access token
+                const generateResponse = await fetch(`/api/sessions/${sessionId}/generate-gallery-access`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (!generateResponse.ok) {
+                    throw new Error('Failed to generate gallery access');
+                }
+                
+                const galleryData = await generateResponse.json();
+                
+                // Then send notification
+                const notifyResponse = await fetch(`/api/sessions/${sessionId}/send-gallery-notification`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (!notifyResponse.ok) {
+                    throw new Error('Failed to send gallery notification');
+                }
+                
+                const notifyData = await notifyResponse.json();
+                
+                // Show success message with gallery URL
+                showMessage(`Gallery ready! Secure link sent to ${session.clientName}`, 'success');
+                
+                // Optional: Show the gallery URL in a popup for copying
+                const showUrlConfirm = confirm(`Gallery notification sent to ${session.clientName}!\n\nGallery URL (for your reference):\n${galleryData.galleryUrl}\n\nClick OK to copy link to clipboard.`);
+                
+                if (showUrlConfirm) {
+                    navigator.clipboard.writeText(galleryData.galleryUrl).then(() => {
+                        showMessage('Gallery URL copied to clipboard!', 'success');
+                    }).catch(() => {
+                        // Fallback for browsers that don't support clipboard API
+                        prompt('Copy this gallery URL:', galleryData.galleryUrl);
+                    });
+                }
+                
+            } catch (error) {
+                console.error('Error sending gallery ready notification:', error);
+                showMessage('Failed to send gallery notification: ' + error.message, 'error');
+            }
         }
 
         function sendInvoice(sessionId) {
@@ -1142,9 +1184,39 @@ END:VCALENDAR`;
             window.location.href = `sms:${phoneNumber}`;
         }
 
-        function viewGallery(sessionId) {
-            // Redirect to gallery page
-            window.location.href = `/sessions/${sessionId}/gallery`;
+        async function viewGallery(sessionId) {
+            const session = sessions.find(s => s.id === sessionId);
+            if (!session) return;
+            
+            // Check if gallery access exists
+            if (session.galleryAccessToken) {
+                // Open existing gallery
+                window.open(`/gallery/${sessionId}?access=${session.galleryAccessToken}`, '_blank');
+            } else {
+                // Generate gallery access first
+                try {
+                    const response = await fetch(`/api/sessions/${sessionId}/generate-gallery-access`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Failed to generate gallery access');
+                    }
+                    
+                    const galleryData = await response.json();
+                    
+                    // Update local session data
+                    session.galleryAccessToken = galleryData.accessToken;
+                    
+                    // Open gallery
+                    window.open(galleryData.galleryUrl, '_blank');
+                    
+                } catch (error) {
+                    console.error('Error generating gallery access:', error);
+                    showMessage('Failed to generate gallery access: ' + error.message, 'error');
+                }
+            }
         }
     </script>
 </body>

@@ -169,7 +169,147 @@ app.get('/api/sessions/:id', (req, res) => {
     res.json(session);
 });
 
-// Serve gallery page
+// Serve client gallery page
+app.get('/gallery/:id', (req, res) => {
+    const sessionId = req.params.id;
+    const accessToken = req.query.access;
+    
+    // Inject Firebase config into the HTML
+    fs.readFile(path.join(__dirname, 'client-gallery.html'), 'utf8', (err, html) => {
+        if (err) {
+            return res.status(500).send('Error loading gallery');
+        }
+        
+        // Replace placeholders with actual Firebase config
+        const configuredHtml = html
+            .replace('{{FIREBASE_API_KEY}}', process.env.VITE_FIREBASE_API_KEY || '')
+            .replace('{{FIREBASE_PROJECT_ID}}', process.env.VITE_FIREBASE_PROJECT_ID || '')
+            .replace('{{FIREBASE_APP_ID}}', process.env.VITE_FIREBASE_APP_ID || '');
+            
+        res.send(configuredHtml);
+    });
+});
+
+// Generate and store gallery access token
+app.post('/api/sessions/:id/generate-gallery-access', (req, res) => {
+    const sessionId = req.params.id;
+    const session = sessions.find(s => s.id === sessionId);
+    
+    if (!session) {
+        return res.status(404).json({ error: 'Session not found' });
+    }
+    
+    // Generate secure access token
+    const accessToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
+    
+    // Store access token in session (in production, this would be in Firestore)
+    session.galleryAccessToken = accessToken;
+    session.galleryCreatedAt = new Date().toISOString();
+    session.galleryExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // 30 days
+    
+    const galleryUrl = `${req.protocol}://${req.get('host')}/gallery/${sessionId}?access=${accessToken}`;
+    
+    console.log(`Generated gallery access for session: ${session.clientName} (${sessionId})`);
+    
+    res.json({
+        message: 'Gallery access generated successfully',
+        galleryUrl,
+        accessToken,
+        expiresAt: session.galleryExpiresAt
+    });
+});
+
+// Verify gallery access (API endpoint for client gallery)
+app.get('/api/gallery/:id/verify', (req, res) => {
+    const sessionId = req.params.id;
+    const accessToken = req.query.access;
+    const session = sessions.find(s => s.id === sessionId);
+    
+    if (!session) {
+        return res.status(404).json({ error: 'Gallery not found' });
+    }
+    
+    if (!session.galleryAccessToken || session.galleryAccessToken !== accessToken) {
+        return res.status(403).json({ error: 'Invalid access token' });
+    }
+    
+    if (new Date() > new Date(session.galleryExpiresAt)) {
+        return res.status(403).json({ error: 'Gallery access has expired' });
+    }
+    
+    res.json({
+        sessionId: session.id,
+        clientName: session.clientName,
+        sessionType: session.sessionType,
+        photos: session.photos || [],
+        valid: true
+    });
+});
+
+// Get photos for gallery (client endpoint)
+app.get('/api/gallery/:id/photos', (req, res) => {
+    const sessionId = req.params.id;
+    const accessToken = req.query.access;
+    const session = sessions.find(s => s.id === sessionId);
+    
+    if (!session) {
+        return res.status(404).json({ error: 'Gallery not found' });
+    }
+    
+    if (!session.galleryAccessToken || session.galleryAccessToken !== accessToken) {
+        return res.status(403).json({ error: 'Invalid access token' });
+    }
+    
+    if (new Date() > new Date(session.galleryExpiresAt)) {
+        return res.status(403).json({ error: 'Gallery access has expired' });
+    }
+    
+    res.json({
+        photos: session.photos || [],
+        totalPhotos: (session.photos || []).length
+    });
+});
+
+// Send gallery notification (placeholder - would integrate with email/SMS service)
+app.post('/api/sessions/:id/send-gallery-notification', (req, res) => {
+    const sessionId = req.params.id;
+    const session = sessions.find(s => s.id === sessionId);
+    
+    if (!session) {
+        return res.status(404).json({ error: 'Session not found' });
+    }
+    
+    if (!session.galleryAccessToken) {
+        return res.status(400).json({ error: 'Gallery access not generated. Generate gallery access first.' });
+    }
+    
+    const galleryUrl = `${req.protocol}://${req.get('host')}/gallery/${sessionId}?access=${session.galleryAccessToken}`;
+    
+    // In production, this would send actual email/SMS
+    console.log(`Gallery notification sent to ${session.clientName} (${session.email})`);
+    console.log(`Gallery URL: ${galleryUrl}`);
+    
+    // Simulate sending notification
+    const notification = {
+        to: session.email,
+        phone: session.phoneNumber,
+        subject: `Your Photo Gallery is Ready - ${session.sessionType}`,
+        message: `Hi ${session.clientName}! Your photos from your ${session.sessionType} session are now ready for viewing and download. View your gallery: ${galleryUrl}`,
+        galleryUrl,
+        sentAt: new Date().toISOString()
+    };
+    
+    // Store notification in session for tracking
+    session.lastGalleryNotification = notification;
+    
+    res.json({
+        message: 'Gallery notification sent successfully',
+        notification,
+        galleryUrl
+    });
+});
+
+// Serve gallery page (legacy endpoint for backward compatibility)
 app.get('/sessions/:id/gallery', (req, res) => {
     res.sendFile(path.join(__dirname, 'gallery.html'));
 });

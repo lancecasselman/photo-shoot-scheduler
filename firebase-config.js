@@ -1,109 +1,114 @@
-// Firebase Configuration and Storage Setup
-// This file initializes Firebase Storage for photo uploads
+// Firebase configuration and initialization
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+import { getStorage, ref, uploadBytes, getDownloadURL, listAll } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-storage.js';
+import { getFirestore, doc, setDoc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js';
 
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
-import { 
-    getStorage, 
-    ref, 
-    uploadBytes, 
-    getDownloadURL, 
-    listAll 
-} from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js';
+const firebaseConfig = {
+    apiKey: window.FIREBASE_CONFIG?.apiKey || '',
+    authDomain: `${window.FIREBASE_CONFIG?.projectId || ''}.firebaseapp.com`,
+    projectId: window.FIREBASE_CONFIG?.projectId || '',
+    storageBucket: `${window.FIREBASE_CONFIG?.projectId || ''}.firebasestorage.app`,
+    appId: window.FIREBASE_CONFIG?.appId || ''
+};
 
-// Initialize Firebase Storage when DOM is loaded
-async function initializeFirebaseStorage() {
-    try {
-        console.log('Initializing Firebase Storage...');
+let app, storage, firestore;
+
+try {
+    app = initializeApp(firebaseConfig);
+    storage = getStorage(app);
+    firestore = getFirestore(app);
+    console.log('Firebase initialized successfully');
+} catch (error) {
+    console.error('Firebase initialization failed:', error);
+}
+
+// Generate secure access token for gallery
+export function generateAccessToken() {
+    return Math.random().toString(36).substring(2) + Date.now().toString(36);
+}
+
+// Upload photos to Firebase Storage
+export async function uploadPhotosToFirebase(sessionId, files) {
+    if (!storage) throw new Error('Firebase Storage not initialized');
+    
+    const uploadPromises = files.map(async (file) => {
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}-${file.name}`;
+        const storageRef = ref(storage, `sessions/${sessionId}/photos/${fileName}`);
         
-        // Check if Firebase credentials are available
-        if (!window.VITE_FIREBASE_API_KEY || !window.VITE_FIREBASE_PROJECT_ID || !window.VITE_FIREBASE_APP_ID) {
-            console.log('Firebase credentials not available, photo upload will be disabled');
-            return false;
-        }
-
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: window.VITE_FIREBASE_API_KEY,
-            authDomain: `${window.VITE_FIREBASE_PROJECT_ID}.firebaseapp.com`,
-            projectId: window.VITE_FIREBASE_PROJECT_ID,
-            storageBucket: `${window.VITE_FIREBASE_PROJECT_ID}.firebasestorage.app`,
-            appId: window.VITE_FIREBASE_APP_ID,
+        const snapshot = await uploadBytes(storageRef, file);
+        const downloadURL = await getDownloadURL(snapshot.ref);
+        
+        return {
+            id: Math.random().toString(36).substring(2),
+            fileName,
+            originalName: file.name,
+            url: downloadURL,
+            size: file.size,
+            uploadedAt: new Date().toISOString()
         };
+    });
+    
+    return Promise.all(uploadPromises);
+}
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        
-        // Initialize Firebase Storage
-        const storage = getStorage(app);
-        
-        // Make Firebase Storage functions available globally
-        window.firebaseStorage = storage;
-        window.firebaseRef = ref;
-        window.firebaseUploadBytes = uploadBytes;
-        window.firebaseGetDownloadURL = getDownloadURL;
-        window.firebaseListAll = listAll;
-        
-        console.log('Firebase Storage initialized successfully');
-        console.log('Available Firebase functions:', {
-            storage: !!window.firebaseStorage,
-            ref: !!window.firebaseRef,
-            uploadBytes: !!window.firebaseUploadBytes,
-            getDownloadURL: !!window.firebaseGetDownloadURL,
-            listAll: !!window.firebaseListAll
-        });
-        
-        // Enable photo upload functionality
-        const photoUploadSection = document.querySelector('.photo-upload-section');
-        const photoUploadHelper = document.querySelector('.photo-upload-helper');
-        if (photoUploadSection) {
-            photoUploadSection.style.display = 'block';
-            console.log('Photo upload section enabled');
-        }
-        if (photoUploadHelper) {
-            photoUploadHelper.textContent = 'Select multiple photos for this session';
-            photoUploadHelper.style.color = '';
-        }
-        
-        return true;
-        
-    } catch (error) {
-        console.error('Error initializing Firebase Storage:', error);
-        
-        // Keep photo upload section visible but show warning
-        const photoUploadSection = document.querySelector('.photo-upload-section');
-        const photoUploadArea = document.querySelector('.photo-upload-area');
-        const uploadHelper = document.querySelector('.photo-upload-helper');
-        
-        if (photoUploadSection) {
-            photoUploadSection.style.display = 'block';
-        }
-        if (photoUploadArea) {
-            photoUploadArea.style.opacity = '0.6';
-            photoUploadArea.style.pointerEvents = 'none';
-        }
-        if (uploadHelper) {
-            uploadHelper.textContent = 'Photo upload unavailable - Firebase Storage not configured';
-            uploadHelper.style.color = '#e53e3e';
-        }
-        
-        return false;
+// Get all photos for a session from Firebase Storage
+export async function getSessionPhotos(sessionId) {
+    if (!storage) throw new Error('Firebase Storage not initialized');
+    
+    const photosRef = ref(storage, `sessions/${sessionId}/photos/`);
+    const result = await listAll(photosRef);
+    
+    const photoPromises = result.items.map(async (itemRef) => {
+        const downloadURL = await getDownloadURL(itemRef);
+        return {
+            id: itemRef.name,
+            fileName: itemRef.name,
+            url: downloadURL,
+            fullPath: itemRef.fullPath
+        };
+    });
+    
+    return Promise.all(photoPromises);
+}
+
+// Store session access token in Firestore
+export async function storeSessionToken(sessionId, accessToken, sessionData) {
+    if (!firestore) throw new Error('Firestore not initialized');
+    
+    const sessionRef = doc(firestore, 'gallery-access', sessionId);
+    await setDoc(sessionRef, {
+        sessionId,
+        accessToken,
+        clientName: sessionData.clientName,
+        sessionType: sessionData.sessionType,
+        createdAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days
+    });
+    
+    return accessToken;
+}
+
+// Verify session access token
+export async function verifySessionToken(sessionId, accessToken) {
+    if (!firestore) throw new Error('Firestore not initialized');
+    
+    const sessionRef = doc(firestore, 'gallery-access', sessionId);
+    const sessionSnap = await getDoc(sessionRef);
+    
+    if (!sessionSnap.exists()) {
+        throw new Error('Gallery not found');
     }
+    
+    const data = sessionSnap.data();
+    if (data.accessToken !== accessToken) {
+        throw new Error('Invalid access token');
+    }
+    
+    if (new Date() > new Date(data.expiresAt)) {
+        throw new Error('Gallery access has expired');
+    }
+    
+    return data;
 }
 
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', initializeFirebaseStorage);
-
-// Also initialize when script loads (in case DOM is already loaded)
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeFirebaseStorage);
-} else {
-    console.log('DOM already loaded, initializing Firebase Storage immediately');
-    initializeFirebaseStorage();
-}
-
-// Also expose the initialization function globally
-window.initializeFirebaseStorage = initializeFirebaseStorage;
-
-// Immediately call initialization when module loads
-console.log('Firebase config module loaded, starting initialization...');
-initializeFirebaseStorage();
+export { storage, firestore };
