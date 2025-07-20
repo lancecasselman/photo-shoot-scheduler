@@ -153,18 +153,18 @@
         
         // Photo upload is always available with backend API
         setTimeout(() => {
-            const photoUploadSection = document.querySelector('.photo-upload-section');
-            const photoUploadHelper = document.querySelector('.photo-upload-helper');
+            const uploadSection = document.querySelector('.photo-upload-section');
+            const uploadHelper = document.querySelector('.photo-upload-helper');
             
-            if (photoUploadSection) {
-                photoUploadSection.style.display = 'block';
-                photoUploadSection.style.visibility = 'visible';
+            if (uploadSection) {
+                uploadSection.style.display = 'block';
+                uploadSection.style.visibility = 'visible';
                 console.log('Photo upload section made visible (Backend API)');
             }
             
-            if (photoUploadHelper) {
-                photoUploadHelper.textContent = 'Select multiple photos for this session';
-                photoUploadHelper.style.color = '';
+            if (uploadHelper) {
+                uploadHelper.textContent = 'Select multiple photos for this session';
+                uploadHelper.style.color = '';
             }
         }, 100);
     </script>
