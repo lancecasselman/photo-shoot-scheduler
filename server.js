@@ -3,12 +3,31 @@ const path = require('path');
 const { Pool } = require('pg');
 const admin = require('firebase-admin');
 const cron = require('node-cron');
+const multer = require('multer');
 
 const app = express();
 
 // Global flag to track Firebase initialization status
 let isFirebaseInitialized = false;
 let firestore = null;
+let storage = null;
+
+// Configure multer for file uploads (memory storage for Firebase)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit per file
+    files: 20 // Maximum 20 files per upload
+  },
+  fileFilter: function (req, file, cb) {
+    // Accept only image files
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed!'));
+    }
+  }
+});
 
 // Initialize Firebase Admin SDK (for token verification and Firestore)
 function initializeFirebase() {
@@ -45,13 +64,16 @@ function initializeFirebase() {
 
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
-        projectId: 'photoshcheduleapp'
+        projectId: 'photoshcheduleapp',
+        storageBucket: 'photoshcheduleapp.appspot.com'
       });
 
-      // Initialize Firestore
+      // Initialize Firestore and Storage
       firestore = admin.firestore();
+      storage = admin.storage();
       isFirebaseInitialized = true;
       console.log('Firestore initialized successfully');
+      console.log('Firebase Storage initialized successfully');
       console.log('Firebase Admin SDK initialized successfully');
       return true;
     }
@@ -561,6 +583,219 @@ app.delete('/api/sessions/:id', async (req, res) => {
   } catch (error) {
     console.error('Error deleting session:', error);
     res.status(500).json({ error: 'Failed to delete session: ' + error.message });
+  }
+});
+
+// Photo management endpoints
+
+// Get photos for a session
+app.get('/api/sessions/:id/photos', async (req, res) => {
+  try {
+    const sessionId = req.params.id;
+    console.log('Getting photos for session:', sessionId);
+    
+    if (!isFirebaseInitialized) {
+      return res.status(503).json({ error: 'Firebase not initialized' });
+    }
+    
+    // Get session document from Firestore
+    const sessionDoc = await firestore.collection('sessions').doc(sessionId).get();
+    
+    if (!sessionDoc.exists) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+    
+    const sessionData = sessionDoc.data();
+    const photos = sessionData.photos || [];
+    
+    console.log(`Found ${photos.length} photos for session ${sessionId}`);
+    res.json({ photos });
+    
+  } catch (error) {
+    console.error('Error getting photos:', error);
+    res.status(500).json({ error: 'Failed to get photos: ' + error.message });
+  }
+});
+
+// Upload photos for a session (admin only)
+app.post('/api/sessions/:id/photos', upload.array('photos', 20), async (req, res) => {
+  try {
+    const sessionId = req.params.id;
+    const files = req.files;
+    
+    console.log(`Uploading ${files.length} photos for session:`, sessionId);
+    
+    if (!isFirebaseInitialized) {
+      return res.status(503).json({ error: 'Firebase not initialized' });
+    }
+    
+    if (!files || files.length === 0) {
+      return res.status(400).json({ error: 'No files uploaded' });
+    }
+    
+    // Verify user is admin (optional - for now allow all authenticated users)
+    let user = null;
+    try {
+      user = await verifyUser(req);
+      console.log('Authenticated user uploading photos:', user.uid);
+    } catch (authError) {
+      console.log('Photo upload requires authentication');
+      return res.status(401).json({ error: 'Authentication required for photo upload' });
+    }
+    
+    const bucket = storage.bucket();
+    const uploadedPhotos = [];
+    
+    // Upload each file to Firebase Storage
+    for (const file of files) {
+      try {
+        const fileName = `sessions/${sessionId}/photos/${Date.now()}-${Math.random().toString(36).substring(2)}-${file.originalname}`;
+        const fileUpload = bucket.file(fileName);
+        
+        // Create a write stream to upload the file
+        const stream = fileUpload.createWriteStream({
+          metadata: {
+            contentType: file.mimetype,
+            metadata: {
+              sessionId: sessionId,
+              uploadedBy: user.uid,
+              uploadedAt: new Date().toISOString(),
+              originalName: file.originalname
+            }
+          }
+        });
+        
+        // Upload the file buffer
+        await new Promise((resolve, reject) => {
+          stream.on('error', reject);
+          stream.on('finish', resolve);
+          stream.end(file.buffer);
+        });
+        
+        // Make the file publicly readable
+        await fileUpload.makePublic();
+        
+        // Get the public URL
+        const publicUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+        
+        uploadedPhotos.push({
+          url: publicUrl,
+          fileName: file.originalname,
+          uploadedAt: new Date().toISOString(),
+          uploadedBy: user.uid
+        });
+        
+        console.log(`Uploaded photo: ${file.originalname} -> ${publicUrl}`);
+        
+      } catch (uploadError) {
+        console.error(`Error uploading file ${file.originalname}:`, uploadError);
+        // Continue with other files even if one fails
+      }
+    }
+    
+    if (uploadedPhotos.length === 0) {
+      return res.status(500).json({ error: 'Failed to upload any photos' });
+    }
+    
+    // Update session document with new photos
+    const sessionRef = firestore.collection('sessions').doc(sessionId);
+    
+    // Get current photos and add new ones
+    const sessionDoc = await sessionRef.get();
+    const currentPhotos = sessionDoc.exists ? (sessionDoc.data().photos || []) : [];
+    const allPhotos = [...currentPhotos, ...uploadedPhotos];
+    
+    await sessionRef.update({
+      photos: allPhotos,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+    
+    console.log(`Successfully uploaded ${uploadedPhotos.length} photos for session ${sessionId}`);
+    
+    res.json({
+      success: true,
+      uploaded: uploadedPhotos.length,
+      photos: uploadedPhotos,
+      message: `Successfully uploaded ${uploadedPhotos.length} photos`
+    });
+    
+  } catch (error) {
+    console.error('Error uploading photos:', error);
+    res.status(500).json({ error: 'Failed to upload photos: ' + error.message });
+  }
+});
+
+// Delete a photo from a session (admin only)
+app.delete('/api/sessions/:id/photos/:photoIndex', async (req, res) => {
+  try {
+    const sessionId = req.params.id;
+    const photoIndex = parseInt(req.params.photoIndex);
+    
+    console.log(`Deleting photo ${photoIndex} from session:`, sessionId);
+    
+    if (!isFirebaseInitialized) {
+      return res.status(503).json({ error: 'Firebase not initialized' });
+    }
+    
+    // Verify user is admin
+    let user = null;
+    try {
+      user = await verifyUser(req);
+      console.log('Authenticated user deleting photo:', user.uid);
+    } catch (authError) {
+      return res.status(401).json({ error: 'Authentication required for photo deletion' });
+    }
+    
+    // Get session document
+    const sessionRef = firestore.collection('sessions').doc(sessionId);
+    const sessionDoc = await sessionRef.get();
+    
+    if (!sessionDoc.exists) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+    
+    const sessionData = sessionDoc.data();
+    const photos = sessionData.photos || [];
+    
+    if (photoIndex < 0 || photoIndex >= photos.length) {
+      return res.status(400).json({ error: 'Invalid photo index' });
+    }
+    
+    const photoToDelete = photos[photoIndex];
+    
+    // Delete from Firebase Storage
+    try {
+      const bucket = storage.bucket();
+      const fileName = photoToDelete.url.split(`${bucket.name}/`)[1];
+      if (fileName) {
+        await bucket.file(fileName).delete();
+        console.log(`Deleted file from storage: ${fileName}`);
+      }
+    } catch (storageError) {
+      console.error('Error deleting from storage:', storageError);
+      // Continue even if storage deletion fails
+    }
+    
+    // Remove from photos array
+    const updatedPhotos = photos.filter((_, index) => index !== photoIndex);
+    
+    // Update session document
+    await sessionRef.update({
+      photos: updatedPhotos,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+    
+    console.log(`Successfully deleted photo ${photoIndex} from session ${sessionId}`);
+    
+    res.json({
+      success: true,
+      message: 'Photo deleted successfully',
+      remainingPhotos: updatedPhotos.length
+    });
+    
+  } catch (error) {
+    console.error('Error deleting photo:', error);
+    res.status(500).json({ error: 'Failed to delete photo: ' + error.message });
   }
 });
 

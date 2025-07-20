@@ -4,6 +4,7 @@
 // Global variables
 let sessions = [];
 let sessionIdCounter = 1;
+let currentUser = null;
 
 // Show message to user
 function showMessage(message, type = 'info') {
@@ -239,6 +240,11 @@ function createSessionCard(session) {
     calendarBtn.textContent = '📅 Add to Calendar';
     calendarBtn.onclick = () => exportToCalendar(session.id);
 
+    const uploadBtn = document.createElement('button');
+    uploadBtn.className = 'btn btn-secondary';
+    uploadBtn.textContent = '📸 Upload Photos';
+    uploadBtn.onclick = () => openUploadDialog(session.id);
+
     const galleryBtn = document.createElement('button');
     galleryBtn.className = 'btn btn-warning';
     galleryBtn.textContent = session.galleryReadyNotified ? '✅ Gallery Sent' : '📧 Send Gallery Ready';
@@ -258,6 +264,7 @@ function createSessionCard(session) {
     console.log('About to append buttons for:', session.clientName);
     
     actions.appendChild(editBtn);
+    actions.appendChild(uploadBtn);
     actions.appendChild(calendarBtn);
     actions.appendChild(galleryBtn);
     actions.appendChild(invoiceBtn);
@@ -343,9 +350,13 @@ function createSessionCard(session) {
     details.appendChild(priceDiv);
     details.appendChild(statusDiv);
 
+    // Create photo gallery section
+    const gallerySection = createPhotoGallery(session);
+
     // Append sections to card
     card.appendChild(header);
     card.appendChild(details);
+    card.appendChild(gallerySection);
 
     console.log('Session card created for:', session.clientName);
     return card;
@@ -665,5 +676,403 @@ async function updateAPISession(sessionId, sessionData) {
     } catch (error) {
         console.error('Error updating session:', error);
         showMessage('Error updating session: ' + error.message, 'error');
+    }
+}
+
+// Photo Gallery Functions
+
+// Create photo gallery section for session card
+function createPhotoGallery(session) {
+    const gallerySection = document.createElement('div');
+    gallerySection.className = 'photo-gallery-section';
+    gallerySection.setAttribute('data-session-id', session.id);
+    
+    const galleryHeader = document.createElement('div');
+    galleryHeader.className = 'gallery-header';
+    
+    const galleryTitle = document.createElement('h4');
+    galleryTitle.className = 'gallery-title';
+    galleryTitle.textContent = 'Photo Gallery';
+    
+    const photoCount = document.createElement('span');
+    photoCount.className = 'photo-count';
+    const count = session.photos ? session.photos.length : 0;
+    photoCount.textContent = `${count} photos`;
+    
+    galleryHeader.appendChild(galleryTitle);
+    galleryHeader.appendChild(photoCount);
+    
+    const galleryGrid = document.createElement('div');
+    galleryGrid.className = 'gallery-grid';
+    galleryGrid.setAttribute('data-session-id', session.id);
+    
+    // Load photos for this session
+    loadSessionPhotos(session.id, galleryGrid, photoCount);
+    
+    gallerySection.appendChild(galleryHeader);
+    gallerySection.appendChild(galleryGrid);
+    
+    return gallerySection;
+}
+
+// Load photos for a specific session
+async function loadSessionPhotos(sessionId, container, countElement) {
+    try {
+        const authToken = await getAuthToken();
+        const headers = {};
+        
+        if (authToken) {
+            headers['Authorization'] = `Bearer ${authToken}`;
+        }
+        
+        const response = await fetch(`/api/sessions/${sessionId}/photos`, { headers });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const photos = data.photos || [];
+        
+        // Update photo count
+        if (countElement) {
+            countElement.textContent = `${photos.length} photos`;
+        }
+        
+        // Clear container
+        container.innerHTML = '';
+        
+        if (photos.length === 0) {
+            const emptyState = document.createElement('div');
+            emptyState.className = 'gallery-empty';
+            emptyState.textContent = 'No photos uploaded yet';
+            container.appendChild(emptyState);
+            return;
+        }
+        
+        // Create photo items
+        photos.forEach((photo, index) => {
+            const photoItem = createPhotoItem(photo, index, sessionId);
+            container.appendChild(photoItem);
+        });
+        
+        console.log(`Loaded ${photos.length} photos for session ${sessionId}`);
+        
+    } catch (error) {
+        console.error('Error loading photos:', error);
+        container.innerHTML = '<div class="gallery-error">Error loading photos</div>';
+    }
+}
+
+// Create individual photo item
+function createPhotoItem(photo, index, sessionId) {
+    const photoItem = document.createElement('div');
+    photoItem.className = 'gallery-photo-item';
+    photoItem.setAttribute('data-photo-index', index);
+    
+    const img = document.createElement('img');
+    img.src = photo.url;
+    img.alt = photo.fileName || `Photo ${index + 1}`;
+    img.loading = 'lazy';
+    img.onclick = () => openPhotoLightbox(photo.url, photo.fileName);
+    
+    // Add delete button for admin users
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'photo-delete-btn';
+    deleteBtn.innerHTML = '×';
+    deleteBtn.title = 'Delete photo';
+    deleteBtn.onclick = (e) => {
+        e.stopPropagation();
+        deletePhoto(sessionId, index);
+    };
+    
+    photoItem.appendChild(img);
+    photoItem.appendChild(deleteBtn);
+    
+    return photoItem;
+}
+
+// Open photo upload dialog
+function openUploadDialog(sessionId) {
+    console.log('Opening upload dialog for session:', sessionId);
+    
+    // Create modal overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    
+    const modal = document.createElement('div');
+    modal.className = 'upload-modal';
+    
+    modal.innerHTML = `
+        <div class="upload-modal-header">
+            <h3>Upload Photos</h3>
+            <button class="modal-close-btn" onclick="this.closest('.modal-overlay').remove()">×</button>
+        </div>
+        <div class="upload-modal-body">
+            <div class="upload-drop-zone" id="uploadDropZone">
+                <div class="upload-icon">📸</div>
+                <div class="upload-text">Click to select photos or drag and drop</div>
+                <div class="upload-subtext">JPEG, PNG files only • Max 10MB per file • Up to 20 files</div>
+                <input type="file" id="photoFileInput" multiple accept="image/jpeg,image/png" style="display: none;">
+            </div>
+            <div class="upload-progress-container" id="uploadProgressContainer" style="display: none;">
+                <div class="upload-progress-bar">
+                    <div class="upload-progress-fill" id="uploadProgressFill"></div>
+                </div>
+                <div class="upload-progress-text" id="uploadProgressText">Uploading...</div>
+            </div>
+            <div class="upload-preview-container" id="uploadPreviewContainer"></div>
+        </div>
+        <div class="upload-modal-footer">
+            <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+            <button class="btn btn-primary" id="uploadStartBtn" disabled>Upload Photos</button>
+        </div>
+    `;
+    
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    
+    // Setup upload functionality
+    setupUploadModal(sessionId);
+}
+
+// Setup upload modal functionality
+function setupUploadModal(sessionId) {
+    const fileInput = document.getElementById('photoFileInput');
+    const dropZone = document.getElementById('uploadDropZone');
+    const previewContainer = document.getElementById('uploadPreviewContainer');
+    const uploadBtn = document.getElementById('uploadStartBtn');
+    const progressContainer = document.getElementById('uploadProgressContainer');
+    const progressFill = document.getElementById('uploadProgressFill');
+    const progressText = document.getElementById('uploadProgressText');
+    
+    let selectedFiles = [];
+    
+    // File input change handler
+    fileInput.addEventListener('change', (e) => {
+        handleFileSelection(e.target.files);
+    });
+    
+    // Drop zone click handler
+    dropZone.addEventListener('click', () => {
+        fileInput.click();
+    });
+    
+    // Drag and drop handlers
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('drag-over');
+    });
+    
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('drag-over');
+    });
+    
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        handleFileSelection(e.dataTransfer.files);
+    });
+    
+    // Upload button handler
+    uploadBtn.addEventListener('click', () => {
+        uploadPhotos(sessionId, selectedFiles);
+    });
+    
+    function handleFileSelection(files) {
+        selectedFiles = Array.from(files).filter(file => {
+            if (!file.type.startsWith('image/')) {
+                showMessage(`${file.name} is not an image file`, 'error');
+                return false;
+            }
+            if (file.size > 10 * 1024 * 1024) {
+                showMessage(`${file.name} is too large (max 10MB)`, 'error');
+                return false;
+            }
+            return true;
+        });
+        
+        if (selectedFiles.length > 20) {
+            selectedFiles = selectedFiles.slice(0, 20);
+            showMessage('Only first 20 files selected (maximum limit)', 'warning');
+        }
+        
+        // Update preview
+        updateUploadPreview();
+        
+        // Enable/disable upload button
+        uploadBtn.disabled = selectedFiles.length === 0;
+        uploadBtn.textContent = selectedFiles.length > 0 ? `Upload ${selectedFiles.length} Photos` : 'Upload Photos';
+    }
+    
+    function updateUploadPreview() {
+        previewContainer.innerHTML = '';
+        
+        if (selectedFiles.length === 0) {
+            return;
+        }
+        
+        selectedFiles.forEach((file, index) => {
+            const previewItem = document.createElement('div');
+            previewItem.className = 'upload-preview-item';
+            
+            const img = document.createElement('img');
+            img.src = URL.createObjectURL(file);
+            img.alt = file.name;
+            
+            const fileName = document.createElement('div');
+            fileName.className = 'preview-file-name';
+            fileName.textContent = file.name;
+            
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'preview-remove-btn';
+            removeBtn.innerHTML = '×';
+            removeBtn.onclick = () => {
+                selectedFiles.splice(index, 1);
+                updateUploadPreview();
+                uploadBtn.disabled = selectedFiles.length === 0;
+                uploadBtn.textContent = selectedFiles.length > 0 ? `Upload ${selectedFiles.length} Photos` : 'Upload Photos';
+            };
+            
+            previewItem.appendChild(img);
+            previewItem.appendChild(fileName);
+            previewItem.appendChild(removeBtn);
+            previewContainer.appendChild(previewItem);
+        });
+    }
+    
+    async function uploadPhotos(sessionId, files) {
+        if (files.length === 0) return;
+        
+        try {
+            // Show progress
+            progressContainer.style.display = 'block';
+            uploadBtn.disabled = true;
+            
+            const authToken = await getAuthToken();
+            if (!authToken) {
+                throw new Error('Authentication required for photo upload');
+            }
+            
+            const formData = new FormData();
+            files.forEach(file => {
+                formData.append('photos', file);
+            });
+            
+            progressText.textContent = 'Uploading photos...';
+            progressFill.style.width = '50%';
+            
+            const response = await fetch(`/api/sessions/${sessionId}/photos`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${authToken}`
+                },
+                body: formData
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Upload failed');
+            }
+            
+            const result = await response.json();
+            
+            progressFill.style.width = '100%';
+            progressText.textContent = 'Upload complete!';
+            
+            console.log('Upload result:', result);
+            showMessage(`Successfully uploaded ${result.uploaded} photos!`, 'success');
+            
+            // Close modal after a short delay
+            setTimeout(() => {
+                document.querySelector('.modal-overlay').remove();
+            }, 1000);
+            
+            // Reload photos for this session
+            const galleryGrid = document.querySelector(`.gallery-grid[data-session-id="${sessionId}"]`);
+            const photoCount = galleryGrid?.parentElement?.querySelector('.photo-count');
+            if (galleryGrid) {
+                loadSessionPhotos(sessionId, galleryGrid, photoCount);
+            }
+            
+        } catch (error) {
+            console.error('Upload error:', error);
+            showMessage('Upload failed: ' + error.message, 'error');
+            
+            progressContainer.style.display = 'none';
+            uploadBtn.disabled = false;
+        }
+    }
+}
+
+// Open photo in lightbox
+function openPhotoLightbox(imageUrl, fileName) {
+    const overlay = document.createElement('div');
+    overlay.className = 'lightbox-overlay';
+    overlay.onclick = () => overlay.remove();
+    
+    const lightbox = document.createElement('div');
+    lightbox.className = 'lightbox';
+    lightbox.onclick = (e) => e.stopPropagation();
+    
+    const img = document.createElement('img');
+    img.src = imageUrl;
+    img.alt = fileName || 'Photo';
+    img.className = 'lightbox-image';
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'lightbox-close';
+    closeBtn.innerHTML = '×';
+    closeBtn.onclick = () => overlay.remove();
+    
+    const title = document.createElement('div');
+    title.className = 'lightbox-title';
+    title.textContent = fileName || 'Photo';
+    
+    lightbox.appendChild(closeBtn);
+    lightbox.appendChild(img);
+    lightbox.appendChild(title);
+    overlay.appendChild(lightbox);
+    document.body.appendChild(overlay);
+}
+
+// Delete photo
+async function deletePhoto(sessionId, photoIndex) {
+    if (!confirm('Are you sure you want to delete this photo?')) {
+        return;
+    }
+    
+    try {
+        const authToken = await getAuthToken();
+        if (!authToken) {
+            throw new Error('Authentication required for photo deletion');
+        }
+        
+        const response = await fetch(`/api/sessions/${sessionId}/photos/${photoIndex}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Delete failed');
+        }
+        
+        const result = await response.json();
+        console.log('Delete result:', result);
+        showMessage('Photo deleted successfully!', 'success');
+        
+        // Reload photos for this session
+        const galleryGrid = document.querySelector(`.gallery-grid[data-session-id="${sessionId}"]`);
+        const photoCount = galleryGrid?.parentElement?.querySelector('.photo-count');
+        if (galleryGrid) {
+            loadSessionPhotos(sessionId, galleryGrid, photoCount);
+        }
+        
+    } catch (error) {
+        console.error('Delete error:', error);
+        showMessage('Delete failed: ' + error.message, 'error');
     }
 }

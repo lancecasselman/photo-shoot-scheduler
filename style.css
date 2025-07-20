@@ -498,6 +498,371 @@ header p {
     }
 }
 
+/* Photo Gallery Styles */
+.photo-gallery-section {
+    margin-top: 20px;
+    padding: 20px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.gallery-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.gallery-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #4a5568;
+}
+
+.photo-count {
+    background: #667eea;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 12px;
+    margin-top: 15px;
+}
+
+.gallery-photo-item {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f7fafc;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+}
+
+.gallery-photo-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.gallery-photo-item img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    display: block;
+}
+
+.photo-delete-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    color: #e53e3e;
+    opacity: 0;
+    transition: opacity 0.2s ease, background-color 0.2s ease;
+}
+
+.gallery-photo-item:hover .photo-delete-btn {
+    opacity: 1;
+}
+
+.photo-delete-btn:hover {
+    background: #e53e3e;
+    color: white;
+}
+
+.gallery-empty, .gallery-error {
+    text-align: center;
+    padding: 40px 20px;
+    color: #718096;
+    font-style: italic;
+    background: #f7fafc;
+    border-radius: 8px;
+    border: 2px dashed #e2e8f0;
+}
+
+.gallery-error {
+    color: #e53e3e;
+    background: #fed7d7;
+    border-color: #fc8181;
+}
+
+/* Upload Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.upload-modal {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.upload-modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.upload-modal-header h3 {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.modal-close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #a0aec0;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.modal-close-btn:hover {
+    background: #f7fafc;
+    color: #4a5568;
+}
+
+.upload-modal-body {
+    padding: 20px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.upload-drop-zone {
+    border: 2px dashed #cbd5e0;
+    border-radius: 12px;
+    padding: 40px 20px;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    background: #f7fafc;
+}
+
+.upload-drop-zone:hover,
+.upload-drop-zone.drag-over {
+    border-color: #667eea;
+    background: #edf2f7;
+}
+
+.upload-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+}
+
+.upload-text {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #4a5568;
+    margin-bottom: 8px;
+}
+
+.upload-subtext {
+    font-size: 0.9rem;
+    color: #718096;
+}
+
+.upload-progress-container {
+    margin: 20px 0;
+}
+
+.upload-progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.upload-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.upload-progress-text {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 0.9rem;
+    color: #4a5568;
+    font-weight: 500;
+}
+
+.upload-preview-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.upload-preview-item {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f7fafc;
+    border: 1px solid #e2e8f0;
+}
+
+.upload-preview-item img {
+    width: 100%;
+    height: 80px;
+    object-fit: cover;
+    display: block;
+}
+
+.preview-file-name {
+    padding: 8px;
+    font-size: 0.75rem;
+    color: #4a5568;
+    background: white;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.preview-remove-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    color: #e53e3e;
+    transition: all 0.2s ease;
+}
+
+.preview-remove-btn:hover {
+    background: #e53e3e;
+    color: white;
+}
+
+.upload-modal-footer {
+    padding: 20px;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+/* Lightbox Styles */
+.lightbox-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1100;
+    cursor: pointer;
+}
+
+.lightbox {
+    position: relative;
+    max-width: 90%;
+    max-height: 90%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.lightbox-image {
+    max-width: 100%;
+    max-height: calc(100vh - 100px);
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.lightbox-close {
+    position: absolute;
+    top: -50px;
+    right: -10px;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 24px;
+    font-weight: bold;
+    color: #4a5568;
+    transition: all 0.2s ease;
+}
+
+.lightbox-close:hover {
+    background: white;
+    transform: scale(1.1);
+}
+
+.lightbox-title {
+    margin-top: 15px;
+    color: white;
+    font-size: 1rem;
+    font-weight: 500;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 8px 16px;
+    border-radius: 20px;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .container {
@@ -548,6 +913,56 @@ header p {
         right: 10px;
         max-width: none;
     }
+
+    /* Photo Gallery Mobile Styles */
+    .gallery-grid {
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 8px;
+    }
+
+    .gallery-photo-item img {
+        height: 80px;
+    }
+
+    .upload-modal {
+        width: 95%;
+        max-height: 90vh;
+    }
+
+    .upload-modal-header,
+    .upload-modal-body,
+    .upload-modal-footer {
+        padding: 15px;
+    }
+
+    .upload-drop-zone {
+        padding: 30px 15px;
+    }
+
+    .upload-icon {
+        font-size: 2rem;
+    }
+
+    .upload-preview-container {
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 8px;
+    }
+
+    .upload-preview-item img {
+        height: 60px;
+    }
+
+    .lightbox-image {
+        max-height: calc(100vh - 60px);
+    }
+
+    .lightbox-close {
+        top: -40px;
+        right: 0;
+        width: 35px;
+        height: 35px;
+        font-size: 20px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -575,5 +990,24 @@ header p {
     .btn {
         padding: 10px 16px;
         font-size: 0.9rem;
+    }
+
+    /* Mobile Photo Gallery */
+    .photo-gallery-section {
+        padding: 15px;
+    }
+
+    .gallery-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .gallery-title {
+        font-size: 1rem;
+    }
+
+    .photo-count {
+        font-size: 0.8rem;
     }
 }
