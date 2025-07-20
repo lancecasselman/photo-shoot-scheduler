@@ -105,12 +105,8 @@ function showUploadDialog(sessionId) {
 // API helper functions
 
 // DOM elements
-console.log('=== CRITICAL DEBUG: Loading DOM elements...');
 const sessionForm = document.getElementById('sessionForm');
 const sessionsContainer = document.getElementById('sessionsContainer');
-console.log('Session form found:', !!sessionForm);
-console.log('Sessions container found:', !!sessionsContainer);
-console.log('Sessions container element:', sessionsContainer);
 const messageContainer = document.getElementById('messageContainer');
 
 // API call helper with authentication
@@ -183,7 +179,7 @@ function transformSessionData(dbSession) {
 // Load sessions from database
 async function loadSessions() {
     try {
-        console.log('=== CRITICAL DEBUG: Loading sessions from database...');
+        console.log('Loading sessions from database...');
         const data = await apiCall('/api/sessions');
         console.log('Sessions loaded:', data);
         console.log('Data type:', typeof data, 'Array:', Array.isArray(data));
@@ -245,7 +241,7 @@ window.showUploadDialog = showUploadDialog;
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', async function() {
-    console.log('=== CRITICAL DEBUG: DOM Content Loaded ===');
+
     console.log('DOM Content Loaded - Initializing app');
     
     // Set minimum datetime to current date/time
@@ -499,9 +495,7 @@ function validateSessionData(data) {
 
 // Render all sessions
 function renderSessions() {
-    console.log('=== CRITICAL DEBUG: renderSessions called with', sessions.length, 'sessions');
-    console.log('Sessions container:', sessionsContainer);
-    console.log('Container element exists:', !!sessionsContainer);
+    console.log('renderSessions called with', sessions.length, 'sessions');
     
     // Clear existing content
     sessionsContainer.innerHTML = '';
@@ -538,8 +532,7 @@ function renderSessions() {
 
 // Create session card using safe DOM methods
 function createSessionCard(session) {
-    console.log('=== CRITICAL DEBUG: Creating session card for:', session.clientName);
-    console.log('Session object:', session);
+    console.log('Creating session card for:', session.clientName);
     try {
         const sessionDate = new Date(session.dateTime);
         const formattedDate = sessionDate.toLocaleDateString('en-US', {
@@ -588,6 +581,7 @@ function createSessionCard(session) {
     const uploadBtn = document.createElement('button');
     uploadBtn.className = 'btn btn-secondary';
     uploadBtn.textContent = '📤 Upload Photos';
+    uploadBtn.style.cssText = 'display: inline-block !important; visibility: visible !important; background: #6c757d !important; color: white !important;';
     uploadBtn.onclick = () => {
         console.log('Upload button clicked for session:', session.id);
         if (typeof showUploadDialog === 'function') {
@@ -628,35 +622,13 @@ function createSessionCard(session) {
     deleteBtn.onclick = () => deleteSession(session.id);
 
     // Add all buttons to every session card
-    console.log('=== BUTTON APPEND DEBUG ===');
-    console.log('About to append buttons for:', session.clientName);
-    console.log('Upload button exists:', !!uploadBtn);
-    console.log('Upload button text:', uploadBtn ? uploadBtn.textContent : 'UNDEFINED');
-    
     actions.appendChild(editBtn);
-    console.log('✓ Edit button appended');
-    
     actions.appendChild(uploadBtn);
-    console.log('✓ Upload button appended:', uploadBtn.textContent);
-    
     actions.appendChild(calendarBtn);
-    console.log('✓ Calendar button appended');
-    
     actions.appendChild(galleryBtn);
-    console.log('✓ Gallery button appended');
-    
     actions.appendChild(viewGalleryBtn);
-    console.log('✓ View Gallery button appended');
-    
     actions.appendChild(invoiceBtn);
-    console.log('✓ Invoice button appended');
-    
     actions.appendChild(deleteBtn);
-    console.log('✓ Delete button appended');
-    
-    console.log('=== FINAL BUTTON COUNT ===');
-    console.log('Actions children count:', actions.children.length);
-    console.log('Actions innerHTML preview:', actions.innerHTML.substring(0, 200) + '...');
 
     header.appendChild(headerInfo);
     header.appendChild(actions);

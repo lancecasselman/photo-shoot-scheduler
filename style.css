@@ -276,14 +276,17 @@ header p {
 }
 
 .btn-secondary {
-    background: #6c757d;
-    color: white;
-    padding: 8px 16px;
-    font-size: 0.9rem;
+    background: #6c757d !important;
+    color: white !important;
+    padding: 8px 16px !important;
+    font-size: 0.9rem !important;
+    border: none !important;
+    display: inline-block !important;
+    visibility: visible !important;
 }
 
 .btn-secondary:hover {
-    background: #545b62;
+    background: #545b62 !important;
 }
 
 .btn-warning:disabled {
@@ -384,6 +387,7 @@ header p {
     gap: 8px;
     flex-wrap: wrap;
     margin-top: 10px;
+    align-items: center;
 }
 
 .session-details {
@@ -604,17 +608,7 @@ header p {
     border-color: #ef6c00;
 }
 
-.btn-secondary {
-    background-color: #6c757d;
-    color: white;
-    border: 1px solid #5a6268;
-    margin-left: 10px;
-}
-
-.btn-secondary:hover {
-    background-color: #5a6268;
-    border-color: #545b62;
-}
+/* Removed duplicate btn-secondary - using the main one above */
 
 /* Form editing state */
 .form-section.editing {
