@@ -29,6 +29,42 @@
             text-align: center;
             color: white;
             margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .user-info {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 25px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 16px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: background-color 0.2s;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
         }
         
         .session-form {
@@ -522,8 +558,15 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>📸 Photo Session Scheduler</h1>
-            <p>Manage photography sessions with photo galleries</p>
+            <div>
+                <h1>📸 Photography Session Scheduler</h1>
+                <p>Manage photography sessions with photo galleries</p>
+            </div>
+            <div id="userInfo" class="user-info" style="display: none;">
+                <img id="userAvatar" class="user-avatar" src="" alt="User Avatar">
+                <span id="userName"></span>
+                <a href="/api/logout" class="logout-btn">Sign Out</a>
+            </div>
         </div>
 
         <!-- Session Form -->

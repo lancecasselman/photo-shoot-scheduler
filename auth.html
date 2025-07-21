@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - Photography Scheduler</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .auth-container {
+            background: white;
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+        
+        .logo {
+            font-size: 2.5rem;
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 2.5rem;
+            line-height: 1.4;
+        }
+        
+        .login-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+            display: inline-block;
+            width: 100%;
+        }
+        
+        .login-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .features {
+            margin-top: 2rem;
+            text-align: left;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.8rem;
+            color: #666;
+        }
+        
+        .feature-icon {
+            color: #667eea;
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+        
+        @media (max-width: 480px) {
+            .auth-container {
+                padding: 2rem;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="logo">📸</div>
+        <h1>Photography Scheduler</h1>
+        <p class="subtitle">
+            Welcome to your professional photography business management platform. 
+            Sign in to manage your sessions, clients, and galleries.
+        </p>
+        
+        <a href="/api/login" class="login-button">
+            Sign In with Replit
+        </a>
+        
+        <div class="features">
+            <div class="feature-item">
+                <span class="feature-icon">✨</span>
+                <span>Session Management</span>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">🖼️</span>
+                <span>Photo Gallery System</span>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">💰</span>
+                <span>Stripe Invoice Integration</span>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">📱</span>
+                <span>Mobile-Friendly Design</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check if user is already authenticated
+        fetch('/api/auth/user')
+            .then(response => {
+                if (response.ok) {
+                    // User is authenticated, redirect to main app
+                    window.location.href = '/';
+                }
+            })
+            .catch(error => {
+                // User not authenticated, stay on auth page
+                console.log('User not authenticated');
+            });
+    </script>
+</body>
+</html>

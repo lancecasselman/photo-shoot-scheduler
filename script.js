@@ -6,6 +6,52 @@ let sessions = [];
 let sessionIdCounter = 1;
 let currentUser = null;
 
+// Authentication functions
+async function checkAuth() {
+    try {
+        const response = await fetch('/api/auth/user');
+        if (response.ok) {
+            currentUser = await response.json();
+            updateUserUI();
+            return true;
+        } else {
+            currentUser = null;
+            redirectToAuth();
+            return false;
+        }
+    } catch (error) {
+        console.error('Auth check failed:', error);
+        currentUser = null;
+        redirectToAuth();
+        return false;
+    }
+}
+
+function updateUserUI() {
+    const userInfo = document.getElementById('userInfo');
+    const userName = document.getElementById('userName');
+    const userAvatar = document.getElementById('userAvatar');
+    
+    if (currentUser) {
+        userName.textContent = currentUser.firstName || currentUser.email;
+        if (currentUser.profileImageUrl) {
+            userAvatar.src = currentUser.profileImageUrl;
+            userAvatar.style.display = 'block';
+        } else {
+            userAvatar.style.display = 'none';
+        }
+        userInfo.style.display = 'flex';
+    } else {
+        userInfo.style.display = 'none';
+    }
+}
+
+function redirectToAuth() {
+    if (window.location.pathname !== '/auth.html') {
+        window.location.href = '/auth.html';
+    }
+}
+
 // Show message to user
 function showMessage(message, type = 'info') {
     const messageContainer = document.getElementById('messageContainer');

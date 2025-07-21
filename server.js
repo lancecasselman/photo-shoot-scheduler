@@ -4,6 +4,12 @@ const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const { Pool } = require('pg');
+const session = require('express-session');
+const passport = require('passport');
+// Import openid-client dynamically to handle ES module
+let openidClient = null;
+let Strategy = null;
+const connectPg = require('connect-pg-simple');
 
 // Direct email service using nodemailer
 const nodemailer = require('nodemailer');
@@ -14,6 +20,19 @@ const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
+
+// Authentication middleware
+const isAuthenticated = (req, res, next) => {
+    if (req.isAuthenticated()) {
+        return next();
+    }
+    res.status(401).json({ message: 'Unauthorized' });
+};
+
+// Get current user info
+const getCurrentUser = (req) => {
+    return req.user ? req.user.claims : null;
+};
 
 // Create professional email transporter with better deliverability
 const createEmailTransporter = () => {
@@ -84,46 +103,117 @@ const createEmailTransporter = () => {
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Initialize database table
+// Session configuration for authentication
+const pgSession = connectPg(session);
+app.use(session({
+    store: new pgSession({
+        conString: process.env.DATABASE_URL,
+        tableName: 'sessions',
+        createTableIfMissing: false
+    }),
+    secret: process.env.SESSION_SECRET || 'your-session-secret',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        httpOnly: true,
+        secure: false, // Set to true in production with HTTPS
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 1 week
+    }
+}));
+
+// Passport configuration
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Setup authentication routes with dynamic import
+async function setupAuth() {
+    try {
+        if (!process.env.REPL_ID) {
+            console.log('No REPL_ID found, authentication disabled');
+            return;
+        }
+
+        // Dynamic import of ES modules
+        openidClient = await import('openid-client');
+        const PassportStrategy = await import('openid-client/passport');
+        Strategy = PassportStrategy.Strategy;
+
+        const issuer = await openidClient.discovery(new URL('https://replit.com/oidc'), process.env.REPL_ID);
+        
+        const strategy = new Strategy({
+            name: 'replit',
+            config: issuer,
+            scope: 'openid email profile',
+            callbackURL: `/api/callback`
+        }, async (tokens, verified) => {
+            const claims = tokens.claims();
+            
+            // Upsert user in database
+            try {
+                await pool.query(`
+                    INSERT INTO users (id, email, first_name, last_name, profile_image_url, updated_at)
+                    VALUES ($1, $2, $3, $4, $5, NOW())
+                    ON CONFLICT (id) DO UPDATE SET
+                        email = $2,
+                        first_name = $3,
+                        last_name = $4,
+                        profile_image_url = $5,
+                        updated_at = NOW()
+                `, [claims.sub, claims.email, claims.first_name, claims.last_name, claims.profile_image_url]);
+            } catch (error) {
+                console.error('Error upserting user:', error);
+            }
+            
+            verified(null, { claims, tokens });
+        });
+        
+        passport.use(strategy);
+        
+        passport.serializeUser((user, done) => done(null, user));
+        passport.deserializeUser((user, done) => done(null, user));
+        
+        // Auth routes
+        app.get('/api/login', passport.authenticate('replit'));
+        app.get('/api/callback', passport.authenticate('replit', {
+            successRedirect: '/',
+            failureRedirect: '/api/login'
+        }));
+        app.get('/api/logout', (req, res) => {
+            req.logout(() => {
+                res.redirect('/');
+            });
+        });
+        
+        console.log('Authentication configured successfully');
+    } catch (error) {
+        console.error('Authentication setup failed:', error);
+        console.log('Running in no-auth mode');
+    }
+}
+
+// Initialize database table (now using photography_sessions table)
 async function initializeDatabase() {
     try {
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS sessions (
-                id VARCHAR(255) PRIMARY KEY,
-                client_name VARCHAR(255) NOT NULL,
-                session_type VARCHAR(255) NOT NULL,
-                date_time TIMESTAMP NOT NULL,
-                location VARCHAR(255) NOT NULL,
-                phone_number VARCHAR(255) NOT NULL,
-                email VARCHAR(255) NOT NULL,
-                price DECIMAL(10,2) NOT NULL,
-                duration INTEGER NOT NULL,
-                notes TEXT,
-                contract_signed BOOLEAN DEFAULT FALSE,
-                paid BOOLEAN DEFAULT FALSE,
-                edited BOOLEAN DEFAULT FALSE,
-                delivered BOOLEAN DEFAULT FALSE,
-                send_reminder BOOLEAN DEFAULT FALSE,
-                notify_gallery_ready BOOLEAN DEFAULT FALSE,
-                photos JSONB DEFAULT '[]',
-                gallery_access_token VARCHAR(255),
-                gallery_created_at TIMESTAMP,
-                gallery_expires_at TIMESTAMP,
-                gallery_ready_notified BOOLEAN DEFAULT FALSE,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
+        // This table already exists, just ensure it's ready
         console.log('Database table initialized successfully');
     } catch (error) {
         console.error('Database initialization error:', error);
     }
 }
 
-// Database helper functions
-async function getAllSessions() {
+// Database helper functions with user separation
+async function getAllSessions(userId) {
     try {
-        const result = await pool.query('SELECT * FROM sessions ORDER BY date_time ASC');
+        let query, params;
+        if (userId) {
+            query = 'SELECT * FROM photography_sessions WHERE user_id = $1 ORDER BY date_time ASC';
+            params = [userId];
+        } else {
+            query = 'SELECT * FROM photography_sessions ORDER BY date_time ASC';
+            params = [];
+        }
+        
+        const result = await pool.query(query, params);
         return result.rows.map(row => ({
             id: row.id,
             clientName: row.client_name,
@@ -155,18 +245,19 @@ async function getAllSessions() {
     }
 }
 
-async function createSession(sessionData) {
+async function createSession(sessionData, userId) {
     try {
         const result = await pool.query(`
-            INSERT INTO sessions (
-                id, client_name, session_type, date_time, location, 
+            INSERT INTO photography_sessions (
+                id, user_id, client_name, session_type, date_time, location, 
                 phone_number, email, price, duration, notes,
                 contract_signed, paid, edited, delivered, 
                 send_reminder, notify_gallery_ready
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
             RETURNING *
         `, [
             sessionData.id,
+            userId,
             sessionData.clientName,
             sessionData.sessionType,
             sessionData.dateTime,
@@ -212,9 +303,18 @@ async function createSession(sessionData) {
     }
 }
 
-async function getSessionById(id) {
+async function getSessionById(id, userId) {
     try {
-        const result = await pool.query('SELECT * FROM sessions WHERE id = $1', [id]);
+        let query, params;
+        if (userId) {
+            query = 'SELECT * FROM photography_sessions WHERE id = $1 AND user_id = $2';
+            params = [id, userId];
+        } else {
+            query = 'SELECT * FROM photography_sessions WHERE id = $1';
+            params = [id];
+        }
+        
+        const result = await pool.query(query, params);
         if (result.rows.length === 0) return null;
         
         const row = result.rows[0];
@@ -274,7 +374,7 @@ async function updateSession(id, updates) {
         values.push(id);
         
         const result = await pool.query(`
-            UPDATE sessions 
+            UPDATE photography_sessions 
             SET ${setClause.join(', ')} 
             WHERE id = $${paramCount}
             RETURNING *
@@ -314,9 +414,18 @@ async function updateSession(id, updates) {
     }
 }
 
-async function deleteSession(id) {
+async function deleteSession(id, userId) {
     try {
-        const result = await pool.query('DELETE FROM sessions WHERE id = $1 RETURNING *', [id]);
+        let query, params;
+        if (userId) {
+            query = 'DELETE FROM photography_sessions WHERE id = $1 AND user_id = $2 RETURNING *';
+            params = [id, userId];
+        } else {
+            query = 'DELETE FROM photography_sessions WHERE id = $1 RETURNING *';
+            params = [id];
+        }
+        
+        const result = await pool.query(query, params);
         return result.rows.length > 0;
     } catch (error) {
         console.error('Error deleting session:', error);
@@ -364,10 +473,27 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // API Routes
 
 // Get all sessions
+// Add authentication endpoint
+app.get('/api/auth/user', (req, res) => {
+    if (req.isAuthenticated()) {
+        const user = req.user.claims;
+        res.json({
+            id: user.sub,
+            email: user.email,
+            firstName: user.first_name,
+            lastName: user.last_name,
+            profileImageUrl: user.profile_image_url
+        });
+    } else {
+        res.status(401).json({ message: 'Not authenticated' });
+    }
+});
+
 app.get('/api/sessions', async (req, res) => {
     try {
-        const sessions = await getAllSessions();
-        console.log(`Returning ${sessions.length} sessions from database`);
+        const userId = req.isAuthenticated() ? req.user.claims.sub : null;
+        const sessions = await getAllSessions(userId);
+        console.log(`Returning ${sessions.length} sessions from database for user: ${userId || 'anonymous'}`);
         res.json(sessions);
     } catch (error) {
         console.error('Error fetching sessions:', error);
@@ -405,8 +531,9 @@ app.post('/api/sessions', async (req, res) => {
             galleryReadyNotified: false
         };
         
-        const savedSession = await createSession(newSession);
-        console.log(`Created session in database: ${savedSession.clientName} (${savedSession.id})`);
+        const userId = req.isAuthenticated() ? req.user.claims.sub : 'anonymous';
+        const savedSession = await createSession(newSession, userId);
+        console.log(`Created session in database: ${savedSession.clientName} (${savedSession.id}) for user: ${userId}`);
         res.status(201).json(savedSession);
     } catch (error) {
         console.error('Error creating session:', error);
@@ -1121,15 +1248,26 @@ app.get('/sessions/:id/gallery', (req, res) => {
     res.sendFile(path.join(__dirname, 'gallery.html'));
 });
 
-// Serve main page
+// Serve auth page for non-authenticated users
+app.get('/auth.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'auth.html'));
+});
+
+// Serve main page with authentication check
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    if (!req.isAuthenticated()) {
+        // Redirect to auth page if not authenticated
+        res.redirect('/auth.html');
+    } else {
+        res.sendFile(path.join(__dirname, 'index.html'));
+    }
 });
 
 // Start server
 // Initialize database and start server
 async function startServer() {
     await initializeDatabase();
+    await setupAuth();
     
     app.listen(PORT, '0.0.0.0', () => {
         console.log(`📸 Photo Session Scheduler running on http://0.0.0.0:${PORT}`);
