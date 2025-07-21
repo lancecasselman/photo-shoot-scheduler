@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FRESH Photo Session Scheduler - July 21 2025 - v2.2</title>
+    <title>FRESH Photo Session Scheduler - July 21 2025 - v2.3</title>
     <style>
         * {
             margin: 0;
@@ -1096,46 +1096,93 @@ lance@thelegacyphotography.com`;
                 const data = await response.json();
                 const session = sessions.find(s => s.id === sessionId);
                 
-                // Try multiple methods to copy URL
-                let copySuccess = false;
+                console.log('Generated gallery URL:', data.galleryUrl);
                 
-                // Method 1: Modern clipboard API (if available and secure context)
-                if (navigator.clipboard && window.isSecureContext) {
+                // Try multiple methods to copy URL with enhanced mobile support
+                let copySuccess = false;
+                let method = '';
+                
+                // Method 1: Modern clipboard API (works on HTTPS and secure contexts)
+                if (navigator.clipboard && navigator.clipboard.writeText) {
                     try {
                         await navigator.clipboard.writeText(data.galleryUrl);
                         copySuccess = true;
-                        showMessage('Gallery URL copied to clipboard!', 'success');
+                        method = 'clipboard API';
+                        console.log('Clipboard API copy successful');
                     } catch (clipboardError) {
-                        console.log('Clipboard API failed, trying fallback method');
+                        console.log('Clipboard API failed:', clipboardError.message);
                     }
                 }
                 
-                // Method 2: Fallback using temporary textarea
+                // Method 2: Enhanced textarea fallback with mobile optimization
                 if (!copySuccess) {
                     try {
                         const textarea = document.createElement('textarea');
                         textarea.value = data.galleryUrl;
+                        
+                        // Enhanced styles for mobile compatibility
                         textarea.style.position = 'fixed';
+                        textarea.style.top = '0';
+                        textarea.style.left = '0';
+                        textarea.style.width = '2em';
+                        textarea.style.height = '2em';
+                        textarea.style.padding = '0';
+                        textarea.style.border = 'none';
+                        textarea.style.outline = 'none';
+                        textarea.style.boxShadow = 'none';
+                        textarea.style.background = 'transparent';
                         textarea.style.opacity = '0';
+                        textarea.style.zIndex = '-1';
+                        
                         document.body.appendChild(textarea);
+                        
+                        // Enhanced selection for mobile devices
                         textarea.focus();
+                        textarea.setSelectionRange(0, 99999);
                         textarea.select();
-                        document.execCommand('copy');
+                        
+                        // Try execCommand
+                        const successful = document.execCommand('copy');
                         document.body.removeChild(textarea);
-                        copySuccess = true;
-                        showMessage('Gallery URL copied to clipboard!', 'success');
+                        
+                        if (successful) {
+                            copySuccess = true;
+                            method = 'execCommand';
+                            console.log('execCommand copy successful');
+                        }
                     } catch (fallbackError) {
-                        console.log('Fallback copy failed');
+                        console.log('Fallback copy failed:', fallbackError.message);
                     }
                 }
                 
-                // Method 3: Show URL in prompt for manual copying
-                if (!copySuccess) {
-                    showMessage('Please copy the gallery URL from the popup', 'info');
-                    prompt(`Copy this gallery URL for ${session.clientName}:`, data.galleryUrl);
-                } else {
+                // Method 3: Share API for mobile devices (if available)
+                if (!copySuccess && navigator.share) {
+                    try {
+                        await navigator.share({
+                            title: `Gallery for ${session.clientName}`,
+                            text: `View your ${session.sessionType} photos:`,
+                            url: data.galleryUrl
+                        });
+                        method = 'share API';
+                        showMessage('Gallery shared successfully!', 'success');
+                        return; // Exit early since sharing was successful
+                    } catch (shareError) {
+                        console.log('Share API failed:', shareError.message);
+                    }
+                }
+                
+                // Show results
+                if (copySuccess) {
+                    showMessage(`Gallery URL copied to clipboard! (${method})`, 'success');
                     // Show confirmation popup with URL
-                    alert(`Gallery URL copied for ${session.clientName}!\n\nURL: ${data.galleryUrl}\n\nYou can now paste this link into your email or text message.`);
+                    alert(`✅ Gallery URL copied for ${session.clientName}!\n\n📱 URL: ${data.galleryUrl}\n\n✉️ You can now paste this link into your email or text message.`);
+                } else {
+                    // Method 4: Manual copy prompt as final fallback
+                    showMessage('Please copy the gallery URL manually', 'info');
+                    const userCopied = prompt(`📸 Copy this gallery URL for ${session.clientName}:\n\n(Select all text and copy)`, data.galleryUrl);
+                    if (userCopied !== null) {
+                        showMessage('Gallery URL provided for manual copy', 'success');
+                    }
                 }
                 
             } catch (error) {
