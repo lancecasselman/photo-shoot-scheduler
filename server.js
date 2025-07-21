@@ -948,18 +948,19 @@ app.post('/api/sessions/:id/send-invoice', async (req, res) => {
             return res.status(500).json({ error: 'Failed to create customer' });
         }
         
-        // Create invoice
+        // Create invoice with proper collection method for manual sending
         const invoice = await stripe.invoices.create({
             customer: customer.id,
             description: `Photography Session - ${session.sessionType}`,
+            collection_method: 'send_invoice',
+            days_until_due: 30,
             metadata: {
                 sessionId: sessionId,
                 clientName: session.clientName,
                 sessionType: session.sessionType,
                 location: session.location,
                 dateTime: session.dateTime
-            },
-            auto_advance: true
+            }
         });
         
         // Add invoice item
