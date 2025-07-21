@@ -678,62 +678,61 @@ app.post('/api/sessions/:id/send-gallery-notification', async (req, res) => {
         const message = `Hi ${session.clientName}! Your photos from your ${session.sessionType} session are now ready for viewing and download. View your gallery: ${galleryUrl}`;
         const subject = `Your Photo Gallery is Ready - ${session.sessionType}`;
     
-    // Email notification approach - use mailto as fallback for iCloud compatibility
+    // Simplified email approach - prioritize mailto for reliability
     let emailSent = false;
     let smsSent = false;
-    let emailMethod = 'none';
+    let emailMethod = 'mailto';
     let mailtoUrl = '';
+    let emailPreviewUrl = '';
     
-    try {
-        const transporter = createEmailTransporter();
-        if (transporter) {
-            const emailMsg = {
-                from: `"Lance - The Legacy Photography" <${process.env.EMAIL_USER || 'lance@thelegacyphotography.com'}>`,
-                to: session.email,
-                subject: subject,
-                text: message,
-                html: `
-                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                        <h2 style="color: #667eea;">Your Photo Gallery is Ready!</h2>
-                        <p>Hi ${session.clientName},</p>
-                        <p>Your photos from your <strong>${session.sessionType}</strong> session are now ready for viewing and download.</p>
-                        <div style="text-align: center; margin: 20px 0;">
-                            <a href="${galleryUrl}" style="background-color: #667eea; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">View Your Gallery</a>
-                        </div>
-                        <p style="color: #666; font-size: 14px;">Gallery URL: <a href="${galleryUrl}">${galleryUrl}</a></p>
-                        <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;">
-                        <p style="color: #888; font-size: 14px;">
-                            Best regards,<br>
-                            <strong>Lance - The Legacy Photography</strong><br>
-                            Professional Photography Services
-                        </p>
-                    </div>
-                `,
-                headers: {
-                    'Message-ID': `<${Date.now()}.${sessionId}@thelegacyphotography.com>`,
-                    'X-Mailer': 'The Legacy Photography Gallery System',
-                    'Reply-To': process.env.EMAIL_USER || 'lance@thelegacyphotography.com',
-                    'Return-Path': process.env.EMAIL_USER || 'lance@thelegacyphotography.com'
-                }
-            };
-            
-            await transporter.sendMail(emailMsg);
-            emailSent = true;
-            emailMethod = 'smtp';
-            console.log(`Email sent to ${session.email} via direct SMTP`);
-        } else {
-            console.log('No email configuration found - creating mailto link instead');
-            emailMethod = 'mailto';
-        }
-    } catch (error) {
-        console.log('Email sending failed:', error.message);
-        emailMethod = 'mailto';
-        // Create mailto URL as fallback
-    }
+    // Create professional email content
+    const emailBody = `Hi ${session.clientName},
+
+Your photos from your ${session.sessionType} session are now ready for viewing and download.
+
+View your gallery: ${galleryUrl}
+
+Best regards,
+Lance - The Legacy Photography
+Professional Photography Services`;
+
+    const emailHtml = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #667eea;">📸 Your Photo Gallery is Ready!</h2>
+            <p>Hi ${session.clientName},</p>
+            <p>Your photos from your <strong>${session.sessionType}</strong> session are now ready for viewing and download.</p>
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="${galleryUrl}" style="background-color: #667eea; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold; font-size: 16px;">View Your Gallery</a>
+            </div>
+            <p style="color: #666; font-size: 14px; word-break: break-all;">Gallery URL: <a href="${galleryUrl}">${galleryUrl}</a></p>
+            <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+            <p style="color: #888; font-size: 14px;">
+                Best regards,<br>
+                <strong>Lance - The Legacy Photography</strong><br>
+                Professional Photography Services
+            </p>
+        </div>
+    `;
     
-    // Always create mailto URL as backup option
-    const emailBody = `Hi ${session.clientName},\n\nYour photos from your ${session.sessionType} session are now ready for viewing and download.\n\nView your gallery: ${galleryUrl}\n\nBest regards,\nLance - The Legacy Photography\nProfessional Photography Services`;
+    // Create mailto URL 
     mailtoUrl = `mailto:${session.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailBody)}`;
+    
+    // Create email preview endpoint URL
+    emailPreviewUrl = `/api/sessions/${sessionId}/email-preview`;
+    
+    // Store email content for preview
+    global.emailPreview = global.emailPreview || {};
+    global.emailPreview[sessionId] = {
+        to: session.email,
+        subject: subject,
+        text: emailBody,
+        html: emailHtml,
+        createdAt: new Date().toISOString()
+    };
+    
+    console.log(`Email notification prepared for ${session.clientName} (${session.email})`);
+    console.log(`Mailto URL: ${mailtoUrl}`);
+    console.log(`Email preview available at: ${emailPreviewUrl}`);
     
     // Direct SMS sending - simplified notification approach
     try {
@@ -766,10 +765,11 @@ app.post('/api/sessions/:id/send-gallery-notification', async (req, res) => {
         subject: subject,
         message: message,
         galleryUrl,
-        emailSent,
+        emailSent: false, // Using mailto approach instead
         smsSent,
         emailMethod,
         mailtoUrl,
+        emailPreviewUrl,
         sentAt: new Date().toISOString()
     };
     
@@ -777,18 +777,79 @@ app.post('/api/sessions/:id/send-gallery-notification', async (req, res) => {
     await updateSession(sessionId, { lastGalleryNotification: notification, galleryReadyNotified: true });
     
     res.json({
-        message: emailSent ? 'Gallery notification sent successfully' : 'Gallery notification prepared - use email link to send manually',
+        message: 'Gallery notification prepared - click to open your email client',
         notification,
         galleryUrl,
-        emailSent,
+        emailSent: false,
         smsSent,
         emailMethod,
-        mailtoUrl
+        mailtoUrl,
+        emailPreviewUrl
     });
     } catch (error) {
         console.error('Error sending gallery notification:', error);
         res.status(500).json({ error: 'Failed to send gallery notification' });
     }
+});
+
+// Email preview endpoint
+app.get('/api/sessions/:id/email-preview', (req, res) => {
+    const sessionId = req.params.id;
+    const emailData = global.emailPreview && global.emailPreview[sessionId];
+    
+    if (!emailData) {
+        return res.status(404).send('<h1>Email preview not found</h1><p>Generate gallery notification first to create email preview.</p>');
+    }
+    
+    // Return HTML email for preview
+    res.setHeader('Content-Type', 'text/html');
+    res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Email Preview - ${emailData.subject}</title>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+                body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+                .email-container { background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin: 0 auto; max-width: 700px; }
+                .email-header { background: #667eea; color: white; padding: 20px; border-radius: 8px 8px 0 0; }
+                .email-body { padding: 20px; }
+                .email-meta { background: #f8f9fa; padding: 15px; border-top: 1px solid #dee2e6; font-size: 14px; color: #6c757d; }
+                .copy-btn { background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin: 10px 5px; }
+                .mailto-btn { background: #007bff; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; margin: 10px 5px; }
+            </style>
+        </head>
+        <body>
+            <div class="email-container">
+                <div class="email-header">
+                    <h1 style="margin: 0;">📧 Email Preview</h1>
+                    <p style="margin: 5px 0 0 0; opacity: 0.9;">Preview of gallery notification email</p>
+                </div>
+                <div class="email-meta">
+                    <strong>To:</strong> ${emailData.to}<br>
+                    <strong>Subject:</strong> ${emailData.subject}<br>
+                    <strong>Created:</strong> ${new Date(emailData.createdAt).toLocaleString()}<br><br>
+                    <a href="mailto:${emailData.to}?subject=${encodeURIComponent(emailData.subject)}&body=${encodeURIComponent(emailData.text)}" class="mailto-btn">📧 Open in Email Client</a>
+                    <button class="copy-btn" onclick="copyToClipboard('${emailData.to}')">Copy Email Address</button>
+                    <button class="copy-btn" onclick="copyToClipboard(\`${emailData.text.replace(/`/g, '\\`')}\`)">Copy Email Body</button>
+                </div>
+                <div class="email-body">
+                    ${emailData.html}
+                </div>
+            </div>
+            <script>
+                function copyToClipboard(text) {
+                    navigator.clipboard.writeText(text).then(() => {
+                        alert('Copied to clipboard!');
+                    }).catch(() => {
+                        alert('Copy failed - please copy manually');
+                    });
+                }
+            </script>
+        </body>
+        </html>
+    `);
 });
 
 // Send invoice via Stripe

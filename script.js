@@ -256,6 +256,18 @@ function createSessionCard(session) {
     galleryBtn.disabled = session.galleryReadyNotified;
     galleryBtn.onclick = () => sendGalleryNotification(session.id);
 
+    // Email preview button (shows after gallery notification is generated)
+    const emailPreviewBtn = document.createElement('button');
+    emailPreviewBtn.className = 'btn btn-outline-primary';
+    emailPreviewBtn.textContent = '📧 Email Preview';
+    emailPreviewBtn.style.fontSize = '0.85em';
+    emailPreviewBtn.onclick = () => {
+        const previewUrl = `/api/sessions/${session.id}/email-preview`;
+        window.open(previewUrl, '_blank');
+    };
+    // Only show if gallery has been notified (meaning email preview exists)
+    emailPreviewBtn.style.display = session.galleryReadyNotified ? 'block' : 'none';
+
     const invoiceBtn = document.createElement('button');
     invoiceBtn.className = 'btn btn-info';
     invoiceBtn.textContent = '💰 Send Invoice';
@@ -274,6 +286,7 @@ function createSessionCard(session) {
     actions.appendChild(uploadBtn);
     actions.appendChild(calendarBtn);
     actions.appendChild(galleryBtn);
+    actions.appendChild(emailPreviewBtn);
     actions.appendChild(invoiceBtn);
     actions.appendChild(deleteBtn);
     
@@ -645,13 +658,11 @@ async function sendGalleryNotification(sessionId) {
         
         const result = await response.json();
         
-        if (result.emailSent) {
-            showMessage('📧 Gallery notification sent successfully via email!', 'success');
-        } else if (result.mailtoUrl) {
-            // Email couldn't be sent automatically, offer mailto option
-            showMessage('📧 Opening your email client to send gallery notification...', 'info');
+        if (result.mailtoUrl) {
+            // Open email client with pre-filled content
+            showMessage('📧 Opening your email client with gallery notification...', 'info');
             
-            // Try to open default email client
+            // Open mailto link
             const emailLink = document.createElement('a');
             emailLink.href = result.mailtoUrl;
             emailLink.target = '_blank';
@@ -660,12 +671,19 @@ async function sendGalleryNotification(sessionId) {
             emailLink.click();
             document.body.removeChild(emailLink);
             
-            // Show success message with additional info
+            // Show success message with preview option
             setTimeout(() => {
-                showMessage('📧 Email draft opened! Send it to notify your client about their gallery.', 'success');
+                showMessage('📧 Email client opened! Or preview the email first:', 'success');
+                
+                // Add email preview button
+                setTimeout(() => {
+                    if (confirm('📧 Want to see the email preview before sending? Click OK to open email preview.')) {
+                        window.open(result.emailPreviewUrl, '_blank');
+                    }
+                }, 2000);
             }, 1000);
         } else {
-            showMessage('⚠️ Gallery notification prepared. Check console for details.', 'warning');
+            showMessage('⚠️ Email notification prepared. Check console for details.', 'warning');
         }
         
         // Always show SMS option
