@@ -250,11 +250,18 @@ function createSessionCard(session) {
     calendarBtn.textContent = '📅 Add to Calendar';
     calendarBtn.onclick = () => exportToCalendar(session.id);
 
+    // Direct email client button
+    const emailClientBtn = document.createElement('button');
+    emailClientBtn.className = 'btn btn-primary';
+    emailClientBtn.textContent = '📧 Email Client';
+    emailClientBtn.onclick = () => openEmailClient(session);
+    emailClientBtn.style.backgroundColor = '#007bff';
+    emailClientBtn.style.marginBottom = '5px';
+
     const galleryBtn = document.createElement('button');
     galleryBtn.className = 'btn btn-warning';
-    galleryBtn.textContent = session.galleryReadyNotified ? '✅ Gallery Sent' : '📧 Send Gallery Ready';
-    galleryBtn.disabled = session.galleryReadyNotified;
-    galleryBtn.onclick = () => sendGalleryNotification(session.id);
+    galleryBtn.textContent = '📸 Copy Gallery URL';
+    galleryBtn.onclick = () => copyGalleryUrl(session.id);
 
     // Email preview button (shows after gallery notification is generated)
     const emailPreviewBtn = document.createElement('button');
@@ -285,6 +292,7 @@ function createSessionCard(session) {
     actions.appendChild(editBtn);
     actions.appendChild(uploadBtn);
     actions.appendChild(calendarBtn);
+    actions.appendChild(emailClientBtn);
     actions.appendChild(galleryBtn);
     actions.appendChild(emailPreviewBtn);
     actions.appendChild(invoiceBtn);
@@ -592,49 +600,120 @@ function exportToCalendar(sessionId) {
     // Better iPhone Calendar integration
     const serverIcsUrl = `/api/sessions/${sessionId}/calendar.ics`;
     
-    // For iPhone/iOS devices, use multiple approaches for better Calendar app integration
+    // Enhanced iPhone Calendar integration
     if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-        // iPhone Calendar integration - multiple approaches
-        showMessage('Opening iPhone Calendar integration...', 'success');
+        showMessage('📅 Opening iPhone Calendar...', 'success');
         
-        // Approach 1: Create data URL for direct iPhone Calendar integration
-        const dataUrl = `data:text/calendar;charset=utf8,${encodeURIComponent(icsContent)}`;
-        const directLink = document.createElement('a');
-        directLink.href = dataUrl;
-        directLink.download = `${session.clientName}_${session.sessionType}_Session.ics`;
-        directLink.target = '_blank';
-        directLink.rel = 'noopener';
-        directLink.style.display = 'none';
-        document.body.appendChild(directLink);
-        directLink.click();
-        document.body.removeChild(directLink);
+        // Primary approach: Direct server .ics URL for iPhone Calendar app
+        window.location.href = serverIcsUrl;
         
-        // Approach 2: Also try server URL for iPhone Safari integration
+        // Backup: Show instructions after a short delay
         setTimeout(() => {
-            window.open(serverIcsUrl, '_blank', 'noopener,noreferrer');
-        }, 500);
-        
-        // Approach 3: For iPhone users, create a simple instruction message
-        setTimeout(() => {
-            showMessage(`📅 To add to iPhone Calendar: Tap the downloaded .ics file in Safari's downloads or visit: ${window.location.origin}${serverIcsUrl}`, 'info');
+            showMessage(`📅 iPhone: If Calendar doesn't open automatically, tap "Add Event" when prompted`, 'info');
         }, 2000);
         
-        // Approach 4: Create Google Calendar as final fallback
-        const startDate = new Date(session.dateTime);
-        const endDate = new Date(startDate.getTime() + session.duration * 60000);
-        const formatDate = (date) => date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-        
-        const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(session.sessionType + ' - ' + session.clientName)}&dates=${formatDate(startDate)}/${formatDate(endDate)}&location=${encodeURIComponent(session.location)}&details=${encodeURIComponent('Photography session with ' + session.clientName + '\nContact: ' + session.phoneNumber + '\nEmail: ' + session.email + '\nPrice: $' + session.price)}`;
-        
+        // Final fallback: Google Calendar option
         setTimeout(() => {
-            if (confirm('📅 Need another option? Open Google Calendar instead?')) {
+            const startDate = new Date(session.dateTime);
+            const endDate = new Date(startDate.getTime() + session.duration * 60000);
+            const formatDate = (date) => date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+            
+            const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(session.sessionType + ' - ' + session.clientName)}&dates=${formatDate(startDate)}/${formatDate(endDate)}&location=${encodeURIComponent(session.location)}&details=${encodeURIComponent('Photography session with ' + session.clientName + '\nContact: ' + session.phoneNumber + '\nEmail: ' + session.email + '\nPrice: $' + session.price)}`;
+            
+            if (confirm('📅 Alternative: Open Google Calendar instead?')) {
                 window.open(googleCalendarUrl, '_blank');
             }
-        }, 5000);
+        }, 4000);
         
     } else {
         // For other devices, provide download and server option
-        showMessage(`Calendar event downloaded! For iPhone users, visit: ${window.location.origin}${serverIcsUrl}`, 'success');
+        showMessage(`📅 Calendar event downloaded! iPhone users can visit: ${window.location.origin}${serverIcsUrl}`, 'success');
+        
+        // Also open server URL for desktop browsers
+        setTimeout(() => {
+            window.open(serverIcsUrl, '_blank');
+        }, 1000);
+    }
+}
+
+// Open email client with session details
+function openEmailClient(session) {
+    const subject = `Photography Session - ${session.sessionType} with ${session.clientName}`;
+    const body = `Hi ${session.clientName},
+
+I hope this email finds you well! I wanted to reach out regarding your upcoming ${session.sessionType} photography session.
+
+Session Details:
+📅 Date & Time: ${new Date(session.dateTime).toLocaleDateString()} at ${new Date(session.dateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+📍 Location: ${session.location}
+💰 Investment: $${session.price}
+⏱️ Duration: ${session.duration} minutes
+
+${session.notes ? `Additional Notes: ${session.notes}` : ''}
+
+Please feel free to reach out if you have any questions or need to make any changes to our session.
+
+Looking forward to capturing some beautiful moments with you!
+
+Best regards,
+Lance - The Legacy Photography
+Professional Photography Services
+📞 Call/Text: ${session.phoneNumber}
+📧 Email: lance@thelegacyphotography.com`;
+
+    const mailtoUrl = `mailto:${session.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    
+    // Open email client
+    const emailLink = document.createElement('a');
+    emailLink.href = mailtoUrl;
+    emailLink.target = '_blank';
+    emailLink.style.display = 'none';
+    document.body.appendChild(emailLink);
+    emailLink.click();
+    document.body.removeChild(emailLink);
+    
+    showMessage(`📧 Opening email client for ${session.clientName}`, 'success');
+}
+
+// Copy gallery URL to clipboard
+async function copyGalleryUrl(sessionId) {
+    try {
+        showMessage('Generating gallery URL...', 'info');
+        
+        // Generate gallery access if not already done
+        const response = await fetch(`/api/sessions/${sessionId}/send-gallery-notification`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.galleryUrl) {
+            // Copy URL to clipboard
+            await navigator.clipboard.writeText(result.galleryUrl);
+            showMessage(`📸 Gallery URL copied to clipboard! ${result.galleryUrl}`, 'success');
+            
+            // Update the button text to show it's been generated
+            const button = document.querySelector(`[data-session-id="${sessionId}"] .btn-warning`);
+            if (button) {
+                button.textContent = '✅ Gallery URL Copied';
+                button.disabled = true;
+                button.style.backgroundColor = '#28a745';
+            }
+            
+            // Reload sessions to update UI
+            loadSessions();
+        }
+        
+    } catch (error) {
+        console.error('Error copying gallery URL:', error);
+        showMessage('Error generating gallery URL: ' + error.message, 'error');
     }
 }
 

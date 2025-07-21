@@ -6,6 +6,17 @@ This is a complete photography session scheduler web application with photo uplo
 
 ## Recent Changes
 
+### Direct Email Client & iPhone Calendar Integration Fix (July 21, 2025) - FULLY IMPLEMENTED
+- **Direct Email Client Button**: Added "📧 Email Client" button that opens user's email app with professional session details
+- **Gallery URL Copy Function**: Changed gallery button to "📸 Copy Gallery URL" - generates and copies secure gallery links to clipboard
+- **Simplified Email Workflow**: User can now copy gallery URL and paste into their own email for complete control
+- **Enhanced iPhone Calendar Integration**: Fixed "📅 Add to Calendar" to properly open iPhone Calendar app using window.location.href
+- **Professional Email Templates**: Email client opens with beautifully formatted session details, contact info, and branding
+- **Clipboard Integration**: Gallery URLs automatically copied to clipboard with success notifications
+- **Mobile-Optimized Calendar**: iPhone users get direct Calendar app integration with proper .ics file handling
+- **User Control**: Photographers now have full control over email sending while maintaining professional templates
+- **Cross-Platform Compatibility**: Email and calendar functions work seamlessly on all devices and platforms
+
 ### Mobile Gallery Access Fix (July 21, 2025) - FULLY WORKING
 - **External Domain URL Generation**: Fixed gallery links to use external Replit domains instead of localhost
 - **Mobile Safari Compatibility**: Gallery URLs now work perfectly on iPhone, iPad, and all mobile devices
