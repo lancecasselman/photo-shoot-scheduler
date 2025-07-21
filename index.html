@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FRESH Photo Session Scheduler - July 21 2025 - v2.6</title>
+    <title>FRESH Photo Session Scheduler - July 21 2025 - v2.7</title>
     <style>
         * {
             margin: 0;
@@ -1301,13 +1301,20 @@ END:VCALENDAR`;
                 
                 const result = await response.json();
                 
-                showMessage(`Invoice sent to ${session.clientName} for $${session.price}!`, 'success');
-                
-                // Optional: Show invoice URL
-                const showUrlConfirm = confirm(`Invoice sent successfully to ${session.clientName}!\n\nInvoice Amount: $${session.price}\nStatus: ${result.invoice.status}\n\nClick OK to view the invoice.`);
-                
-                if (showUrlConfirm && result.invoice.hostedInvoiceUrl) {
-                    window.open(result.invoice.hostedInvoiceUrl, '_blank');
+                if (result.fallbackMode) {
+                    // Handle simulation mode
+                    showMessage(`Invoice simulation completed for ${session.clientName}`, 'info');
+                    alert(`Invoice Simulation Mode\n\nClient: ${result.clientName}\nAmount: $${result.amount}\nSession: ${result.sessionType}\n\n${result.details}`);
+                } else {
+                    // Handle real Stripe invoice
+                    showMessage(`Invoice sent to ${session.clientName} for $${session.price}!`, 'success');
+                    
+                    // Show invoice URL
+                    const showUrlConfirm = confirm(`Invoice sent successfully to ${session.clientName}!\n\nInvoice Amount: $${session.price}\nStatus: ${result.invoice ? result.invoice.status : 'sent'}\n\nClick OK to view the invoice.`);
+                    
+                    if (showUrlConfirm && result.invoice && result.invoice.hostedInvoiceUrl) {
+                        window.open(result.invoice.hostedInvoiceUrl, '_blank');
+                    }
                 }
                 
             } catch (error) {
