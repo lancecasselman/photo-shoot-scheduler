@@ -937,9 +937,12 @@ app.post('/api/sessions/:id/send-invoice', async (req, res) => {
                     email: session.email,
                     name: session.clientName,
                     phone: session.phoneNumber,
+                    description: `Client of Lance - The Legacy Photography`,
                     metadata: {
                         sessionId: sessionId,
-                        sessionType: session.sessionType
+                        sessionType: session.sessionType,
+                        photographer: 'Lance - The Legacy Photography',
+                        business: 'The Legacy Photography'
                     }
                 });
             }
@@ -951,15 +954,29 @@ app.post('/api/sessions/:id/send-invoice', async (req, res) => {
         // Create invoice with proper collection method for manual sending
         const invoice = await stripe.invoices.create({
             customer: customer.id,
-            description: `Photography Session - ${session.sessionType}`,
+            description: `Lance - The Legacy Photography: ${session.sessionType} Session`,
             collection_method: 'send_invoice',
             days_until_due: 30,
+            footer: 'Thank you for choosing Lance - The Legacy Photography! Contact: lance@thelegacyphotography.com',
+            custom_fields: [
+                {
+                    name: 'Photographer',
+                    value: 'Lance - The Legacy Photography'
+                },
+                {
+                    name: 'Session Details',
+                    value: `${session.sessionType} at ${session.location}`
+                }
+            ],
             metadata: {
                 sessionId: sessionId,
                 clientName: session.clientName,
                 sessionType: session.sessionType,
                 location: session.location,
-                dateTime: session.dateTime
+                dateTime: session.dateTime,
+                photographer: 'Lance - The Legacy Photography',
+                businessName: 'The Legacy Photography',
+                businessEmail: 'lance@thelegacyphotography.com'
             }
         });
         
@@ -969,12 +986,14 @@ app.post('/api/sessions/:id/send-invoice', async (req, res) => {
             invoice: invoice.id,
             amount: Math.round(session.price * 100), // Convert to cents
             currency: 'usd',
-            description: `${session.sessionType} Photography Session - ${session.clientName}`,
+            description: `${session.sessionType} Photography Session by Lance - The Legacy Photography`,
             metadata: {
                 sessionId: sessionId,
                 location: session.location,
                 dateTime: session.dateTime,
-                duration: session.duration
+                duration: `${session.duration} minutes`,
+                photographer: 'Lance - The Legacy Photography',
+                businessEmail: 'lance@thelegacyphotography.com'
             }
         });
         
