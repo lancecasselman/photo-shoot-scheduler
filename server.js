@@ -597,7 +597,8 @@ app.post('/api/sessions/:id/generate-gallery-access', async (req, res) => {
                 baseUrl = `${req.protocol}://${host}`;
             }
         } else {
-            baseUrl = `${req.protocol}://${host}`;
+            // Always use HTTPS for external domains
+            baseUrl = `https://${host}`;
         }
         
         const galleryUrl = `${baseUrl}/gallery/${sessionId}?access=${accessToken}`;

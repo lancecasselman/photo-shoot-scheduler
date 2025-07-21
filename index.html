@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FRESH Photo Session Scheduler - July 21 2025 - v2.3</title>
+    <title>FRESH Photo Session Scheduler - July 21 2025 - v2.4</title>
     <style>
         * {
             margin: 0;
@@ -1171,18 +1171,20 @@ lance@thelegacyphotography.com`;
                     }
                 }
                 
-                // Show results
+                // Show results - simplified to just show URL for copying
                 if (copySuccess) {
-                    showMessage(`Gallery URL copied to clipboard! (${method})`, 'success');
-                    // Show confirmation popup with URL
-                    alert(`✅ Gallery URL copied for ${session.clientName}!\n\n📱 URL: ${data.galleryUrl}\n\n✉️ You can now paste this link into your email or text message.`);
+                    showMessage(`Gallery URL copied successfully! (${method})`, 'success');
                 } else {
-                    // Method 4: Manual copy prompt as final fallback
-                    showMessage('Please copy the gallery URL manually', 'info');
-                    const userCopied = prompt(`📸 Copy this gallery URL for ${session.clientName}:\n\n(Select all text and copy)`, data.galleryUrl);
-                    if (userCopied !== null) {
-                        showMessage('Gallery URL provided for manual copy', 'success');
-                    }
+                    showMessage('Copy the URL from the dialog below', 'info');
+                }
+                
+                // Always show the URL for manual copying regardless of copy success
+                const userAction = prompt(`Gallery URL for ${session.clientName}:\n\n(Select all and copy this URL)`, data.galleryUrl);
+                
+                if (copySuccess && userAction !== null) {
+                    showMessage('Gallery URL ready to share!', 'success');
+                } else if (userAction !== null) {
+                    showMessage('URL provided for manual copy', 'success');
                 }
                 
             } catch (error) {
