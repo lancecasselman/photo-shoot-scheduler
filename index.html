@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FRESH Photo Session Scheduler - July 21 2025 - v2.4</title>
+    <title>FRESH Photo Session Scheduler - July 21 2025 - v2.5</title>
     <style>
         * {
             margin: 0;
@@ -1171,20 +1171,18 @@ lance@thelegacyphotography.com`;
                     }
                 }
                 
-                // Show results - simplified to just show URL for copying
+                // Always show the URL in a prompt dialog for copying
                 if (copySuccess) {
                     showMessage(`Gallery URL copied successfully! (${method})`, 'success');
+                    // Show confirmation with the URL
+                    alert(`✅ Gallery URL copied for ${session.clientName}!\n\nURL: ${data.galleryUrl}\n\nYou can now paste this into your email or text message.`);
                 } else {
                     showMessage('Copy the URL from the dialog below', 'info');
-                }
-                
-                // Always show the URL for manual copying regardless of copy success
-                const userAction = prompt(`Gallery URL for ${session.clientName}:\n\n(Select all and copy this URL)`, data.galleryUrl);
-                
-                if (copySuccess && userAction !== null) {
-                    showMessage('Gallery URL ready to share!', 'success');
-                } else if (userAction !== null) {
-                    showMessage('URL provided for manual copy', 'success');
+                    // Show URL in a prompt for manual copying
+                    const userAction = prompt(`Copy this gallery URL for ${session.clientName}:`, data.galleryUrl);
+                    if (userAction !== null) {
+                        showMessage('Gallery URL provided for copying', 'success');
+                    }
                 }
                 
             } catch (error) {
