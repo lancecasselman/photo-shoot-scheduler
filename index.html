@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FRESH Photo Session Scheduler - July 20 2025</title>
+    <title>FRESH Photo Session Scheduler - July 21 2025 - v2.1</title>
     <style>
         * {
             margin: 0;
@@ -797,29 +797,29 @@
                     </div>
 
                     <div class="session-actions">
+                        <button class="btn btn-edit" onclick="editSession('${session.id}')">
+                            ✏️ Edit
+                        </button>
                         <button class="btn btn-secondary" onclick="openUploadModal('${session.id}')">
                             📸 Upload Photos${session.photos && session.photos.length ? ` (${session.photos.length})` : ''}
-                        </button>
-                        <button class="btn btn-edit" onclick="editSession('${session.id}')">
-                            📝 Edit
                         </button>
                         <button class="btn btn-calendar" onclick="addToCalendar('${session.id}')">
                             📅 Add to Calendar
                         </button>
-                        <button class="btn btn-gallery-ready" onclick="sendGalleryReady('${session.id}')" ${(!session.photos || session.photos.length === 0) ? 'disabled title="Upload photos first"' : ''}>
-                            📩 ${session.galleryAccessToken ? 'Resend Gallery' : 'Send Gallery Ready'}
+                        <button class="btn btn-primary" onclick="openEmailClient('${session.id}')">
+                            📧 Email Client
+                        </button>
+                        <button class="btn btn-warning" onclick="copyGalleryUrl('${session.id}')">
+                            📸 Copy Gallery URL
                         </button>
                         <button class="btn btn-invoice" onclick="sendInvoice('${session.id}')">
-                            💵 Send Invoice
+                            💰 Send Invoice
                         </button>
                         <button class="btn btn-call" onclick="callClient('${session.phoneNumber}')">
                             📞 Call Client
                         </button>
                         <button class="btn btn-text" onclick="textClient('${session.phoneNumber}', '${session.clientName}', '${session.id}')">
                             💬 Text Client
-                        </button>
-                        <button class="btn btn-gallery" onclick="viewGallery('${session.id}')">
-                            🖼️ ${session.galleryAccessToken ? 'View Gallery' : 'Create Gallery'}${session.photos && session.photos.length ? ` (${session.photos.length})` : ''}
                         </button>
                         <button class="btn btn-danger" onclick="deleteSession('${session.id}')">
                             🗑️ Delete
@@ -1050,9 +1050,75 @@
             showMessage('Form populated for editing. Update and save changes.', 'success');
         }
 
+        // Open email client with session details  
+        function openEmailClient(sessionId) {
+            const session = sessions.find(s => s.id === sessionId);
+            if (!session) return;
+            
+            const subject = `Photography Session - ${session.sessionType} with ${session.clientName}`;
+            const body = `Hi ${session.clientName},
+
+I hope this email finds you well! I'm writing regarding your upcoming ${session.sessionType} photography session.
+
+Session Details:
+📅 Date: ${new Date(session.dateTime).toLocaleDateString()}
+🕐 Time: ${new Date(session.dateTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+📍 Location: ${session.location}
+💰 Investment: $${session.price}
+📞 Contact: ${session.phoneNumber}
+
+I'm excited to capture these special moments for you! If you have any questions or need to make any changes, please don't hesitate to reach out.
+
+Best regards,
+Lance - The Legacy Photography
+Professional Photography Services
+lance@thelegacyphotography.com`;
+
+            const mailtoUrl = `mailto:${session.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            window.location.href = mailtoUrl;
+        }
+
+        // Copy gallery URL to clipboard
+        async function copyGalleryUrl(sessionId) {
+            try {
+                showMessage('Generating gallery URL...', 'info');
+                
+                // Generate gallery access if not exists
+                const response = await fetch(`/api/sessions/${sessionId}/generate-gallery-access`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to generate gallery access');
+                }
+                
+                const data = await response.json();
+                
+                // Copy to clipboard
+                await navigator.clipboard.writeText(data.galleryUrl);
+                showMessage('Gallery URL copied to clipboard!', 'success');
+                
+                // Optional: Show the URL in a popup for verification
+                const session = sessions.find(s => s.id === sessionId);
+                alert(`Gallery URL copied to clipboard!\n\nFor: ${session.clientName}\nURL: ${data.galleryUrl}\n\nYou can now paste this link into your email or text message.`);
+                
+            } catch (error) {
+                console.error('Error copying gallery URL:', error);
+                showMessage('Failed to copy gallery URL: ' + error.message, 'error');
+            }
+        }
+
         function addToCalendar(sessionId) {
             const session = sessions.find(s => s.id === sessionId);
             if (!session) return;
+            
+            // For iPhone, use the server endpoint
+            if (/iPhone|iPad/.test(navigator.userAgent)) {
+                window.location.href = `/api/sessions/${sessionId}/calendar.ics`;
+                showMessage('Opening iPhone Calendar...', 'success');
+                return;
+            }
             
             const startDate = new Date(session.dateTime);
             const endDate = new Date(startDate.getTime() + (session.duration * 60000));
