@@ -1,8 +1,8 @@
-# Photography Session Scheduler
+# The Client Management Area
 
 ## Overview
 
-This is a complete photography session scheduler web application with photo upload capabilities. Built from scratch with a clean, simple architecture using vanilla JavaScript, HTML/CSS, and Express.js backend. Features drag-and-drop photo uploads, session management, and responsive design optimized for mobile devices.
+This is a complete client management area web application for photography business with session scheduling and photo upload capabilities. Built from scratch with a clean, simple architecture using vanilla JavaScript, HTML/CSS, and Express.js backend. Features drag-and-drop photo uploads, session management, and responsive design optimized for mobile devices.
 
 ## Recent Changes
 
