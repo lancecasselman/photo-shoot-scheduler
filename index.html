@@ -4,6 +4,98 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Client Management Area - July 21 2025 - v2.9</title>
+    
+    <!-- Confetti Animation Styles -->
+    <style>
+        .confetti-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            overflow: hidden;
+        }
+        
+        .confetti-piece {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #ff6b6b;
+            animation: confetti-fall 3s linear forwards;
+        }
+        
+        .confetti-piece:nth-child(odd) {
+            background: #4ecdc4;
+            border-radius: 50%;
+        }
+        
+        .confetti-piece:nth-child(3n) {
+            background: #45b7d1;
+            width: 8px;
+            height: 8px;
+        }
+        
+        .confetti-piece:nth-child(4n) {
+            background: #96ceb4;
+            border-radius: 2px;
+        }
+        
+        .confetti-piece:nth-child(5n) {
+            background: #feca57;
+            width: 12px;
+            height: 6px;
+            border-radius: 6px;
+        }
+        
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        .milestone-toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            font-size: 1.2rem;
+            font-weight: 600;
+            z-index: 10000;
+            animation: milestone-pop 2s ease-out forwards;
+            pointer-events: none;
+        }
+        
+        @keyframes milestone-pop {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+            20% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1.1);
+            }
+            40% {
+                transform: translate(-50%, -50%) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+    </style>
+    
     <style>
         * {
             margin: 0;
@@ -640,6 +732,7 @@
                 </div>
                 
                 <button type="submit" class="btn btn-primary">Add Session</button>
+                <button type="button" class="btn btn-secondary" onclick="celebrateMilestone('session_created', 'Test Client')" style="margin-left: 10px;">🎉 Test Confetti</button>
             </form>
         </div>
 
@@ -771,6 +864,9 @@
                         renderSessions();
                         resetForm(e.target);
                         showMessage('Session added successfully!', 'success');
+                        
+                        // Trigger milestone celebration for new session
+                        celebrateMilestone('session_created', newSession.clientName);
                     } else {
                         showMessage('Failed to add session', 'error');
                     }
@@ -990,6 +1086,9 @@
                     showMessage(`Successfully uploaded ${result.uploaded} photos!`, 'success');
                     closeUploadModal();
                     loadSessions(); // Refresh to show new photos
+                    
+                    // Trigger milestone celebration for photo upload
+                    celebrateMilestone('photos_uploaded');
                 } else {
                     throw new Error(result.error || 'Upload failed');
                 }
@@ -1152,6 +1251,9 @@ lance@thelegacyphotography.com`;
                         copySuccess = true;
                         method = 'clipboard API';
                         console.log('Clipboard API copy successful');
+                        
+                        // Trigger milestone celebration for gallery sharing
+                        celebrateMilestone('gallery_shared');
                     } catch (clipboardError) {
                         console.log('Clipboard API failed:', clipboardError.message);
                     }
@@ -1352,6 +1454,9 @@ END:VCALENDAR`;
                     // Handle real Stripe invoice
                     showMessage(`Invoice sent to ${session.clientName} for $${session.price}!`, 'success');
                     
+                    // Trigger milestone celebration for invoice sent
+                    celebrateMilestone('invoice_sent');
+                    
                     // Show invoice URL
                     const showUrlConfirm = confirm(`Invoice sent successfully to ${session.clientName}!\n\nInvoice Amount: $${session.price}\nStatus: ${result.invoice ? result.invoice.status : 'sent'}\n\nClick OK to view the invoice.`);
                     
@@ -1416,6 +1521,116 @@ END:VCALENDAR`;
                 }
             }
         }
+    </script>
+
+    <!-- Confetti Container for Milestone Celebrations -->
+    <div id="confettiContainer" class="confetti-container"></div>
+
+    <script>
+        // Confetti Animation System for Milestone Celebrations
+        function createConfetti(x, y, count = 50) {
+            const container = document.getElementById('confettiContainer');
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3', '#54a0ff'];
+            
+            for (let i = 0; i < count; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti-piece';
+                
+                // Random positioning and styling
+                const startX = x || Math.random() * window.innerWidth;
+                const startY = y || -20;
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                const size = Math.random() * 8 + 6;
+                const duration = Math.random() * 2 + 2;
+                
+                confetti.style.left = startX + 'px';
+                confetti.style.top = startY + 'px';
+                confetti.style.backgroundColor = color;
+                confetti.style.width = size + 'px';
+                confetti.style.height = size + 'px';
+                confetti.style.animationDuration = duration + 's';
+                confetti.style.animationDelay = Math.random() * 0.5 + 's';
+                
+                container.appendChild(confetti);
+                
+                // Clean up after animation
+                setTimeout(() => {
+                    if (confetti && confetti.parentNode) {
+                        confetti.parentNode.removeChild(confetti);
+                    }
+                }, (duration + 0.5) * 1000);
+            }
+        }
+        
+        function showMilestoneToast(message, emoji = '🎉') {
+            const toast = document.createElement('div');
+            toast.className = 'milestone-toast';
+            toast.innerHTML = `${emoji} ${message}`;
+            
+            document.body.appendChild(toast);
+            
+            // Remove toast after animation
+            setTimeout(() => {
+                if (toast && toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 2000);
+        }
+        
+        function celebrateMilestone(type, sessionName = '') {
+            const celebrations = {
+                'session_created': {
+                    message: `New Session Created: ${sessionName}`,
+                    emoji: '📅',
+                    confetti: 30
+                },
+                'contract_signed': {
+                    message: 'Contract Signed!',
+                    emoji: '📝',
+                    confetti: 25
+                },
+                'payment_received': {
+                    message: 'Payment Received!',
+                    emoji: '💰',
+                    confetti: 40
+                },
+                'photos_uploaded': {
+                    message: 'Photos Uploaded Successfully!',
+                    emoji: '📸',
+                    confetti: 35
+                },
+                'session_delivered': {
+                    message: 'Session Delivered!',
+                    emoji: '📦',
+                    confetti: 45
+                },
+                'gallery_shared': {
+                    message: 'Gallery Shared with Client!',
+                    emoji: '🖼️',
+                    confetti: 30
+                },
+                'invoice_sent': {
+                    message: 'Invoice Sent Successfully!',
+                    emoji: '💳',
+                    confetti: 25
+                }
+            };
+            
+            const celebration = celebrations[type];
+            if (!celebration) return;
+            
+            // Show toast message
+            showMilestoneToast(celebration.message, celebration.emoji);
+            
+            // Trigger confetti from multiple points
+            setTimeout(() => {
+                createConfetti(window.innerWidth * 0.25, -20, celebration.confetti / 2);
+                createConfetti(window.innerWidth * 0.75, -20, celebration.confetti / 2);
+            }, 200);
+        }
+        
+        // Global function to trigger celebrations
+        window.celebrateMilestone = celebrateMilestone;
     </script>
 </body>
 </html>
