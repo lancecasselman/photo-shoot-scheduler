@@ -583,8 +583,26 @@ app.post('/api/sessions/:id/generate-gallery-access', async (req, res) => {
             galleryExpiresAt: null
         });
         
-        const galleryUrl = `${req.protocol}://${req.get('host')}/gallery/${sessionId}?access=${accessToken}`;
+        // Generate gallery URL with external domain detection
+        const host = req.get('host');
+        let baseUrl;
         
+        if (host && host.includes('localhost')) {
+            // For localhost, check for external domain in environment
+            const replitDomains = process.env.REPLIT_DOMAINS;
+            if (replitDomains) {
+                const domains = replitDomains.split(',');
+                baseUrl = `https://${domains[0]}`;
+            } else {
+                baseUrl = `${req.protocol}://${host}`;
+            }
+        } else {
+            baseUrl = `${req.protocol}://${host}`;
+        }
+        
+        const galleryUrl = `${baseUrl}/gallery/${sessionId}?access=${accessToken}`;
+        
+        console.log(`Gallery URL generated: ${galleryUrl} (from host: ${host})`);
         console.log(`Generated gallery access for session: ${session.clientName} (${sessionId})`);
         
         res.json({

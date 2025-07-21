@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FRESH Photo Session Scheduler - July 21 2025 - v2.1</title>
+    <title>FRESH Photo Session Scheduler - July 21 2025 - v2.2</title>
     <style>
         * {
             margin: 0;
@@ -1094,18 +1094,53 @@ lance@thelegacyphotography.com`;
                 }
                 
                 const data = await response.json();
-                
-                // Copy to clipboard
-                await navigator.clipboard.writeText(data.galleryUrl);
-                showMessage('Gallery URL copied to clipboard!', 'success');
-                
-                // Optional: Show the URL in a popup for verification
                 const session = sessions.find(s => s.id === sessionId);
-                alert(`Gallery URL copied to clipboard!\n\nFor: ${session.clientName}\nURL: ${data.galleryUrl}\n\nYou can now paste this link into your email or text message.`);
+                
+                // Try multiple methods to copy URL
+                let copySuccess = false;
+                
+                // Method 1: Modern clipboard API (if available and secure context)
+                if (navigator.clipboard && window.isSecureContext) {
+                    try {
+                        await navigator.clipboard.writeText(data.galleryUrl);
+                        copySuccess = true;
+                        showMessage('Gallery URL copied to clipboard!', 'success');
+                    } catch (clipboardError) {
+                        console.log('Clipboard API failed, trying fallback method');
+                    }
+                }
+                
+                // Method 2: Fallback using temporary textarea
+                if (!copySuccess) {
+                    try {
+                        const textarea = document.createElement('textarea');
+                        textarea.value = data.galleryUrl;
+                        textarea.style.position = 'fixed';
+                        textarea.style.opacity = '0';
+                        document.body.appendChild(textarea);
+                        textarea.focus();
+                        textarea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textarea);
+                        copySuccess = true;
+                        showMessage('Gallery URL copied to clipboard!', 'success');
+                    } catch (fallbackError) {
+                        console.log('Fallback copy failed');
+                    }
+                }
+                
+                // Method 3: Show URL in prompt for manual copying
+                if (!copySuccess) {
+                    showMessage('Please copy the gallery URL from the popup', 'info');
+                    prompt(`Copy this gallery URL for ${session.clientName}:`, data.galleryUrl);
+                } else {
+                    // Show confirmation popup with URL
+                    alert(`Gallery URL copied for ${session.clientName}!\n\nURL: ${data.galleryUrl}\n\nYou can now paste this link into your email or text message.`);
+                }
                 
             } catch (error) {
                 console.error('Error copying gallery URL:', error);
-                showMessage('Failed to copy gallery URL: ' + error.message, 'error');
+                showMessage('Failed to generate gallery URL: ' + error.message, 'error');
             }
         }
 
