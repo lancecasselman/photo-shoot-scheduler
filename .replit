@@ -5,7 +5,7 @@ channel = "stable-24_05"
 packages = ["postgresql"]
 
 [workflows]
-runButton = "Project"
+runButton = "Fresh Photo Scheduler"
 
 [[workflows.workflow]]
 name = "Project"
