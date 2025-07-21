@@ -678,9 +678,11 @@ app.post('/api/sessions/:id/send-gallery-notification', async (req, res) => {
         const message = `Hi ${session.clientName}! Your photos from your ${session.sessionType} session are now ready for viewing and download. View your gallery: ${galleryUrl}`;
         const subject = `Your Photo Gallery is Ready - ${session.sessionType}`;
     
-    // Send email notification
+    // Email notification approach - use mailto as fallback for iCloud compatibility
     let emailSent = false;
     let smsSent = false;
+    let emailMethod = 'none';
+    let mailtoUrl = '';
     
     try {
         const transporter = createEmailTransporter();
@@ -717,13 +719,21 @@ app.post('/api/sessions/:id/send-gallery-notification', async (req, res) => {
             
             await transporter.sendMail(emailMsg);
             emailSent = true;
+            emailMethod = 'smtp';
             console.log(`Email sent to ${session.email} via direct SMTP`);
         } else {
-            console.log('No email configuration found - add EMAIL_USER and EMAIL_PASS for direct email sending');
+            console.log('No email configuration found - creating mailto link instead');
+            emailMethod = 'mailto';
         }
     } catch (error) {
-        console.error('Email sending failed:', error);
+        console.log('Email sending failed:', error.message);
+        emailMethod = 'mailto';
+        // Create mailto URL as fallback
     }
+    
+    // Always create mailto URL as backup option
+    const emailBody = `Hi ${session.clientName},\n\nYour photos from your ${session.sessionType} session are now ready for viewing and download.\n\nView your gallery: ${galleryUrl}\n\nBest regards,\nLance - The Legacy Photography\nProfessional Photography Services`;
+    mailtoUrl = `mailto:${session.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailBody)}`;
     
     // Direct SMS sending - simplified notification approach
     try {
@@ -758,6 +768,8 @@ app.post('/api/sessions/:id/send-gallery-notification', async (req, res) => {
         galleryUrl,
         emailSent,
         smsSent,
+        emailMethod,
+        mailtoUrl,
         sentAt: new Date().toISOString()
     };
     
@@ -765,11 +777,13 @@ app.post('/api/sessions/:id/send-gallery-notification', async (req, res) => {
     await updateSession(sessionId, { lastGalleryNotification: notification, galleryReadyNotified: true });
     
     res.json({
-        message: `Gallery notification ${emailSent || smsSent ? 'sent successfully' : 'logged (no email/SMS services configured)'}`,
+        message: emailSent ? 'Gallery notification sent successfully' : 'Gallery notification prepared - use email link to send manually',
         notification,
         galleryUrl,
         emailSent,
-        smsSent
+        smsSent,
+        emailMethod,
+        mailtoUrl
     });
     } catch (error) {
         console.error('Error sending gallery notification:', error);

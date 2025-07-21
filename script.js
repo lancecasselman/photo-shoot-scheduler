@@ -626,9 +626,59 @@ function exportToCalendar(sessionId) {
 }
 
 // Send gallery notification function
-function sendGalleryNotification(sessionId) {
+async function sendGalleryNotification(sessionId) {
     console.log('Send gallery notification for session:', sessionId);
-    showMessage('Gallery notification feature coming soon!', 'info');
+    
+    try {
+        showMessage('Sending gallery notification...', 'info');
+        
+        const response = await fetch(`/api/sessions/${sessionId}/send-gallery-notification`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.emailSent) {
+            showMessage('📧 Gallery notification sent successfully via email!', 'success');
+        } else if (result.mailtoUrl) {
+            // Email couldn't be sent automatically, offer mailto option
+            showMessage('📧 Opening your email client to send gallery notification...', 'info');
+            
+            // Try to open default email client
+            const emailLink = document.createElement('a');
+            emailLink.href = result.mailtoUrl;
+            emailLink.target = '_blank';
+            emailLink.style.display = 'none';
+            document.body.appendChild(emailLink);
+            emailLink.click();
+            document.body.removeChild(emailLink);
+            
+            // Show success message with additional info
+            setTimeout(() => {
+                showMessage('📧 Email draft opened! Send it to notify your client about their gallery.', 'success');
+            }, 1000);
+        } else {
+            showMessage('⚠️ Gallery notification prepared. Check console for details.', 'warning');
+        }
+        
+        // Always show SMS option
+        if (result.smsSent) {
+            setTimeout(() => {
+                showMessage('💬 SMS link prepared for manual sending if needed.', 'info');
+            }, 2000);
+        }
+        
+    } catch (error) {
+        console.error('Error sending gallery notification:', error);
+        showMessage('Error sending notification: ' + error.message, 'error');
+    }
 }
 
 // Create invoice function
