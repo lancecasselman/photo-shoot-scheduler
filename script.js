@@ -285,11 +285,9 @@ function createSessionCard(session) {
     uploadBtn.className = 'btn btn-secondary upload-photos-btn';
     uploadBtn.textContent = '📸 Upload Photos';
     uploadBtn.onclick = () => openUploadDialog(session.id);
-    uploadBtn.style.display = 'block'; // Ensure visibility
-    uploadBtn.style.width = '100%'; // Full width on mobile
+    // Remove inline styles that interfere with responsive design
     uploadBtn.style.backgroundColor = '#6b7280'; // Gray background
     uploadBtn.style.color = 'white'; // White text
-    uploadBtn.style.marginBottom = '5px'; // Space between buttons
 
     const calendarBtn = document.createElement('button');
     calendarBtn.className = 'btn btn-success';

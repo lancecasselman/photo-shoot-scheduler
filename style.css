@@ -353,6 +353,14 @@ header p {
     font-size: 0.85rem;
     padding: 8px 12px;
     margin: 0;
+    flex: 1;
+    min-width: 120px;
+}
+
+.upload-photos-btn {
+    display: block !important;
+    background-color: #6b7280 !important;
+    color: white !important;
 }
 
 /* Session Details */
@@ -896,6 +904,11 @@ header p {
         flex: none;
         width: 100%;
         margin-bottom: 5px;
+    }
+    
+    .upload-photos-btn {
+        width: 100% !important;
+        margin-bottom: 5px !important;
     }
 
     .checkbox-group {
