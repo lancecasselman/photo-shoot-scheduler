@@ -128,8 +128,9 @@ app.use(passport.session());
 // Setup authentication routes with dynamic import
 async function setupAuth() {
     try {
-        if (!process.env.REPL_ID) {
-            console.log('No REPL_ID found, authentication disabled');
+        if (!process.env.REPL_ID || !process.env.REPLIT_DOMAINS) {
+            console.log('Missing REPL_ID or REPLIT_DOMAINS environment variables - authentication disabled');
+            console.log('The app will run in open access mode for now');
             return;
         }
 
@@ -140,26 +141,28 @@ async function setupAuth() {
 
         const issuer = await openidClient.discovery(new URL('https://replit.com/oidc'), process.env.REPL_ID);
         
+        const callbackURL = process.env.REPLIT_DOMAINS ? 
+            `https://${process.env.REPLIT_DOMAINS.split(',')[0]}/api/callback` : 
+            `http://localhost:${process.env.PORT || 5000}/api/callback`;
+            
         const strategy = new Strategy({
             name: 'replit',
             config: issuer,
             scope: 'openid email profile',
-            callbackURL: `/api/callback`
+            callbackURL: callbackURL
         }, async (tokens, verified) => {
             const claims = tokens.claims();
             
             // Upsert user in database
             try {
                 await pool.query(`
-                    INSERT INTO users (id, email, first_name, last_name, profile_image_url, updated_at)
-                    VALUES ($1, $2, $3, $4, $5, NOW())
+                    INSERT INTO users (id, email, display_name, updated_at)
+                    VALUES ($1, $2, $3, NOW())
                     ON CONFLICT (id) DO UPDATE SET
                         email = $2,
-                        first_name = $3,
-                        last_name = $4,
-                        profile_image_url = $5,
+                        display_name = $3,
                         updated_at = NOW()
-                `, [claims.sub, claims.email, claims.first_name, claims.last_name, claims.profile_image_url]);
+                `, [claims.sub, claims.email, claims.first_name || claims.email]);
             } catch (error) {
                 console.error('Error upserting user:', error);
             }
@@ -1253,14 +1256,11 @@ app.get('/auth.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'auth.html'));
 });
 
-// Serve main page with authentication check
+// Serve main page with optional authentication check
 app.get('/', (req, res) => {
-    if (!req.isAuthenticated()) {
-        // Redirect to auth page if not authenticated
-        res.redirect('/auth.html');
-    } else {
-        res.sendFile(path.join(__dirname, 'index.html'));
-    }
+    // For now, serve main page directly without authentication requirement
+    // This allows the app to work while authentication is being configured
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // Start server
