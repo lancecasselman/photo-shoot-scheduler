@@ -492,11 +492,11 @@ app.get('/api/auth/user', (req, res) => {
     }
 });
 
-app.get('/api/sessions', async (req, res) => {
+app.get('/api/sessions', isAuthenticated, async (req, res) => {
     try {
-        const userId = req.isAuthenticated() ? req.user.claims.sub : null;
+        const userId = req.user.claims.sub;
         const sessions = await getAllSessions(userId);
-        console.log(`Returning ${sessions.length} sessions from database for user: ${userId || 'anonymous'}`);
+        console.log(`Returning ${sessions.length} sessions from database for user: ${userId}`);
         res.json(sessions);
     } catch (error) {
         console.error('Error fetching sessions:', error);
@@ -505,7 +505,7 @@ app.get('/api/sessions', async (req, res) => {
 });
 
 // Create new session
-app.post('/api/sessions', async (req, res) => {
+app.post('/api/sessions', isAuthenticated, async (req, res) => {
     const { clientName, sessionType, dateTime, location, phoneNumber, email, price, duration, notes } = req.body;
     
     // Validate required fields
@@ -534,7 +534,7 @@ app.post('/api/sessions', async (req, res) => {
             galleryReadyNotified: false
         };
         
-        const userId = req.isAuthenticated() ? req.user.claims.sub : 'anonymous';
+        const userId = req.user.claims.sub;
         const savedSession = await createSession(newSession, userId);
         console.log(`Created session in database: ${savedSession.clientName} (${savedSession.id}) for user: ${userId}`);
         res.status(201).json(savedSession);
@@ -545,7 +545,7 @@ app.post('/api/sessions', async (req, res) => {
 });
 
 // Update session
-app.put('/api/sessions/:id', async (req, res) => {
+app.put('/api/sessions/:id', isAuthenticated, async (req, res) => {
     const sessionId = req.params.id;
     
     try {
@@ -564,7 +564,7 @@ app.put('/api/sessions/:id', async (req, res) => {
 });
 
 // Upload photos to session
-app.post('/api/sessions/:id/upload-photos', upload.array('photos'), async (req, res) => {
+app.post('/api/sessions/:id/upload-photos', isAuthenticated, upload.array('photos'), async (req, res) => {
     const sessionId = req.params.id;
     
     try {
@@ -606,7 +606,7 @@ app.post('/api/sessions/:id/upload-photos', upload.array('photos'), async (req, 
 });
 
 // Delete session
-app.delete('/api/sessions/:id', async (req, res) => {
+app.delete('/api/sessions/:id', isAuthenticated, async (req, res) => {
     const sessionId = req.params.id;
     
     try {
@@ -654,7 +654,7 @@ app.get('/api/health', async (req, res) => {
 });
 
 // Get individual session
-app.get('/api/sessions/:id', async (req, res) => {
+app.get('/api/sessions/:id', isAuthenticated, async (req, res) => {
     const sessionId = req.params.id;
     
     try {
@@ -693,7 +693,7 @@ app.get('/gallery/:id', (req, res) => {
 });
 
 // Generate and store gallery access token
-app.post('/api/sessions/:id/generate-gallery-access', async (req, res) => {
+app.post('/api/sessions/:id/generate-gallery-access', isAuthenticated, async (req, res) => {
     const sessionId = req.params.id;
     
     try {
@@ -808,7 +808,7 @@ app.get('/api/gallery/:id/photos', async (req, res) => {
 });
 
 // Send gallery notification with email/SMS integration
-app.post('/api/sessions/:id/send-gallery-notification', async (req, res) => {
+app.post('/api/sessions/:id/send-gallery-notification', isAuthenticated, async (req, res) => {
     const sessionId = req.params.id;
     
     try {
@@ -1256,10 +1256,12 @@ app.get('/auth.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'auth.html'));
 });
 
-// Serve main page with optional authentication check
+// Serve main page with authentication requirement
 app.get('/', (req, res) => {
-    // For now, serve main page directly without authentication requirement
-    // This allows the app to work while authentication is being configured
+    if (!req.isAuthenticated()) {
+        // Redirect to auth page if not authenticated
+        return res.redirect('/auth.html');
+    }
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 

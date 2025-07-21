@@ -16,16 +16,14 @@ async function checkAuth() {
             return true;
         } else {
             currentUser = null;
-            // For now, allow access without authentication
-            console.log('Running in open access mode - authentication not required');
-            return true;
+            redirectToAuth();
+            return false;
         }
     } catch (error) {
         console.error('Auth check failed:', error);
         currentUser = null;
-        // For now, allow access without authentication
-        console.log('Running in open access mode - authentication not required');
-        return true;
+        redirectToAuth();
+        return false;
     }
 }
 
@@ -49,10 +47,6 @@ function updateUserUI() {
 }
 
 function redirectToAuth() {
-    // For now, disable automatic redirect to allow open access
-    console.log('Authentication not required in current mode');
-    return;
-    
     if (window.location.pathname !== '/auth.html') {
         window.location.href = '/auth.html';
     }
