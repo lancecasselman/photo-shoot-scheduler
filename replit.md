@@ -6,6 +6,17 @@ This is a complete photography session scheduler web application with photo uplo
 
 ## Recent Changes
 
+### Mobile Gallery Access Fix (July 21, 2025) - FULLY WORKING
+- **External Domain URL Generation**: Fixed gallery links to use external Replit domains instead of localhost
+- **Mobile Safari Compatibility**: Gallery URLs now work perfectly on iPhone, iPad, and all mobile devices
+- **Automatic Domain Detection**: Server automatically detects and uses REPLIT_DOMAINS environment variable
+- **HTTPS Gallery Links**: All gallery URLs now use HTTPS for secure access from any device
+- **Email Integration Fixed**: Email notifications now contain working external gallery links
+- **SMS Integration Updated**: SMS messages now contain accessible external gallery URLs
+- **Port Conflict Resolution**: Fixed server startup issues and port conflicts for stable deployment
+- **Cross-Platform Gallery Access**: Gallery links work seamlessly on desktop, mobile, and tablet devices
+- **Production Ready**: Complete external access functionality for deployed photography business
+
 ### iPhone Calendar Integration Implementation (July 20, 2025) - FULLY OPTIMIZED
 - **Multi-Approach iPhone Integration**: 4 different methods for maximum iPhone Calendar compatibility
   1. Data URL .ics download for immediate Calendar app recognition

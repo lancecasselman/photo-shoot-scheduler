@@ -673,7 +673,27 @@ app.post('/api/sessions/:id/send-gallery-notification', async (req, res) => {
             return res.status(400).json({ error: 'Gallery access not generated. Generate gallery access first.' });
         }
         
-        const galleryUrl = `${req.protocol}://${req.get('host')}/gallery/${sessionId}?access=${session.galleryAccessToken}`;
+        // Create external-accessible gallery URL
+        const host = req.get('host');
+        let baseUrl;
+        
+        // Always prefer external domain for gallery links to work on mobile devices
+        const externalDomain = process.env.REPLIT_DOMAINS;
+        
+        if (externalDomain) {
+            // Use external Replit domain for mobile compatibility
+            baseUrl = `https://${externalDomain}`;
+        } else if (host.includes('replit.app') || host.includes('repl.co') || host.includes('replit.dev')) {
+            // Replit deployment - use the actual domain
+            baseUrl = `${req.protocol}://${host}`;
+        } else {
+            // Fallback to request host
+            baseUrl = `${req.protocol}://${host}`;
+        }
+        
+        const galleryUrl = `${baseUrl}/gallery/${sessionId}?access=${session.galleryAccessToken}`;
+        
+        console.log(`Gallery URL generated: ${galleryUrl} (from host: ${host})`);
         
         const message = `Hi ${session.clientName}! Your photos from your ${session.sessionType} session are now ready for viewing and download. View your gallery: ${galleryUrl}`;
         const subject = `Your Photo Gallery is Ready - ${session.sessionType}`;
