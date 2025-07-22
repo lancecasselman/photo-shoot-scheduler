@@ -15,6 +15,9 @@ const connectPg = require('connect-pg-simple');
 const nodemailer = require('nodemailer');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
+// Import notification services
+const { initializeNotificationServices, sendWelcomeEmail, sendBillingNotification, broadcastFeatureUpdate } = require('./server/notifications');
+
 // PostgreSQL database connection
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -207,7 +210,26 @@ async function setupAuth() {
 async function initializeDatabase() {
     try {
         // This table already exists, just ensure it's ready
-        console.log('Database table initialized successfully');
+        // Add subscribers table for multi-user management
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS subscribers (
+                id SERIAL PRIMARY KEY,
+                user_id VARCHAR(255) UNIQUE NOT NULL,
+                email VARCHAR(255) UNIQUE NOT NULL,
+                photographer_name VARCHAR(255) NOT NULL,
+                business_name VARCHAR(255),
+                phone VARCHAR(20),
+                subscription_plan VARCHAR(50) DEFAULT 'free',
+                subscription_status VARCHAR(50) DEFAULT 'active',
+                stripe_customer_id VARCHAR(255),
+                last_login TIMESTAMP,
+                welcome_email_sent BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        console.log('Database tables initialized successfully');
     } catch (error) {
         console.error('Database initialization error:', error);
     }
@@ -1260,6 +1282,86 @@ app.get('/sessions/:id/gallery', (req, res) => {
     res.sendFile(path.join(__dirname, 'gallery.html'));
 });
 
+// Subscriber notification API endpoints
+app.post('/api/subscribers/welcome', isAuthenticated, async (req, res) => {
+    try {
+        const { email, photographerName, businessName } = req.body;
+        const result = await sendWelcomeEmail(email, photographerName, businessName);
+        
+        if (result.success) {
+            // Mark welcome email as sent in database
+            await pool.query(
+                'UPDATE subscribers SET welcome_email_sent = TRUE WHERE email = $1',
+                [email]
+            );
+        }
+        
+        res.json(result);
+    } catch (error) {
+        console.error('Welcome email error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.post('/api/subscribers/billing', isAuthenticated, async (req, res) => {
+    try {
+        const { email, photographerName, amount, plan, dueDate } = req.body;
+        const result = await sendBillingNotification(email, photographerName, amount, plan, dueDate);
+        res.json(result);
+    } catch (error) {
+        console.error('Billing notification error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+app.post('/api/subscribers/broadcast', isAuthenticated, async (req, res) => {
+    try {
+        const { title, features } = req.body;
+        
+        // Get all active subscribers
+        const subscribersResult = await pool.query(
+            'SELECT email, photographer_name FROM subscribers WHERE subscription_status = $1',
+            ['active']
+        );
+        
+        const subscribers = subscribersResult.rows.map(row => ({
+            email: row.email,
+            name: row.photographer_name
+        }));
+        
+        const results = await broadcastFeatureUpdate(subscribers, title, features);
+        res.json({ success: true, results, totalSent: results.length });
+    } catch (error) {
+        console.error('Broadcast notification error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Get subscriber statistics
+app.get('/api/subscribers/stats', isAuthenticated, async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT 
+                COUNT(*) as total_subscribers,
+                COUNT(CASE WHEN subscription_status = 'active' THEN 1 END) as active_subscribers,
+                COUNT(CASE WHEN welcome_email_sent = true THEN 1 END) as welcomed_subscribers,
+                COUNT(CASE WHEN subscription_plan = 'free' THEN 1 END) as free_subscribers,
+                COUNT(CASE WHEN subscription_plan = 'pro' THEN 1 END) as pro_subscribers
+            FROM subscribers
+        `);
+        
+        res.json(result.rows[0]);
+    } catch (error) {
+        console.error('Subscriber stats error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Serve admin dashboard
+app.get('/admin', isAuthenticated, (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
 // Serve auth page for non-authenticated users
 app.get('/auth.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'auth.html'));
@@ -1279,6 +1381,9 @@ app.get('/', (req, res) => {
 async function startServer() {
     await initializeDatabase();
     await setupAuth();
+    
+    // Initialize notification services
+    initializeNotificationServices();
     
     app.listen(PORT, '0.0.0.0', () => {
         console.log(`📸 Photo Session Scheduler running on http://0.0.0.0:${PORT}`);
