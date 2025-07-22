@@ -116,12 +116,12 @@ const emailTemplates = {
                     <h2 style="color: #333; margin-top: 0;">What's New:</h2>
                     
                     <div style="margin: 20px 0;">
-                        ${features.map(feature => `
+                        ${Array.isArray(features) ? features.map(feature => `
                             <div style="background: white; padding: 20px; margin: 15px 0; border-radius: 8px; border-left: 4px solid #667eea;">
-                                <h3 style="margin: 0 0 10px; color: #333;">${feature.title}</h3>
-                                <p style="margin: 0; color: #666; line-height: 1.6;">${feature.description}</p>
+                                <h3 style="margin: 0 0 10px; color: #333;">${feature.title || 'New Feature'}</h3>
+                                <p style="margin: 0; color: #666; line-height: 1.6;">${feature.description || 'Feature update available'}</p>
                             </div>
-                        `).join('')}
+                        `).join('') : '<p>Feature updates available in your dashboard!</p>'}
                     </div>
                     
                     <div style="text-align: center; margin: 30px 0;">
@@ -160,14 +160,14 @@ const emailTemplates = {
 };
 
 // Send email notification
-async function sendEmail(to, template, templateData) {
+async function sendEmail(to, template, ...args) {
     if (!sendGridConfigured) {
         console.log('📧 Email not sent - SendGrid not configured');
         return { success: false, error: 'SendGrid not configured' };
     }
 
     try {
-        const emailContent = emailTemplates[template](templateData);
+        const emailContent = emailTemplates[template](...args);
         
         const msg = {
             to: to,
