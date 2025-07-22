@@ -495,7 +495,8 @@ const upload = multer({
 
 // Middleware
 app.use(express.json());
-app.use(express.static(__dirname));
+// Move static file serving after route definitions to ensure authentication checks run first
+// Static files will be served at the bottom of the file
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // API Routes
@@ -1373,6 +1374,9 @@ app.get('/', (req, res) => {
     }
     res.sendFile(path.join(__dirname, 'index.html'));
 });
+
+// Serve static files last to ensure routes run first
+app.use(express.static(__dirname));
 
 // Start server
 // Initialize database and start server
