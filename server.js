@@ -24,21 +24,14 @@ const pool = new Pool({
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
-// Authentication middleware
+// Authentication middleware - requires login for all access
 const isAuthenticated = (req, res, next) => {
     if (req.isAuthenticated()) {
         return next();
     }
     
-    // For testing purposes, allow access with anonymous user
-    // This should be removed in production
-    if (process.env.NODE_ENV !== 'production') {
-        console.log('Development mode: allowing anonymous access for testing');
-        req.user = { claims: { sub: 'anonymous' } };
-        return next();
-    }
-    
-    res.status(401).json({ message: 'Unauthorized' });
+    // No anonymous access allowed - authentication required
+    res.status(401).json({ message: 'Authentication required. Please log in.' });
 };
 
 // Get current user info
@@ -141,8 +134,9 @@ app.use(passport.session());
 async function setupAuth() {
     try {
         if (!process.env.REPL_ID || !process.env.REPLIT_DOMAINS) {
-            console.log('Missing REPL_ID or REPLIT_DOMAINS environment variables - authentication disabled');
-            console.log('The app will run in open access mode for now');
+            console.log('⚠️ Missing REPL_ID or REPLIT_DOMAINS environment variables');
+            console.log('🔐 Authentication is REQUIRED - users must provide these credentials');
+            console.log('📋 Please add REPL_ID and REPLIT_DOMAINS to your Replit secrets');
             return;
         }
 
@@ -1357,8 +1351,12 @@ app.get('/api/subscribers/stats', isAuthenticated, async (req, res) => {
     }
 });
 
-// Serve admin dashboard
-app.get('/admin', isAuthenticated, (req, res) => {
+// Serve admin dashboard with authentication requirement  
+app.get('/admin', (req, res) => {
+    if (!req.isAuthenticated()) {
+        // Redirect to auth page if not authenticated
+        return res.redirect('/auth.html?return=/admin');
+    }
     res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
@@ -1370,8 +1368,8 @@ app.get('/auth.html', (req, res) => {
 // Serve main page with authentication requirement
 app.get('/', (req, res) => {
     if (!req.isAuthenticated()) {
-        // Redirect to auth page if not authenticated
-        return res.redirect('/auth.html');
+        // Redirect to auth page with return parameter
+        return res.redirect('/auth.html?return=/');
     }
     res.sendFile(path.join(__dirname, 'index.html'));
 });
@@ -1388,6 +1386,7 @@ async function startServer() {
     app.listen(PORT, '0.0.0.0', () => {
         console.log(`📸 Photo Session Scheduler running on http://0.0.0.0:${PORT}`);
         console.log('Database connected and ready');
+        console.log('🔐 Authentication required for all access - no anonymous mode');
     });
 }
 

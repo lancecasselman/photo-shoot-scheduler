@@ -68,6 +68,34 @@
             box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
         }
         
+        .signup-info {
+            margin-top: 2rem;
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: left;
+        }
+        
+        .signup-info h3 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+        
+        .signup-info p {
+            color: #666;
+            margin-bottom: 1rem;
+        }
+        
+        .signup-info ul {
+            color: #666;
+            padding-left: 20px;
+        }
+        
+        .signup-info li {
+            margin-bottom: 0.5rem;
+        }
+        
         .features {
             margin-top: 2rem;
             text-align: left;
@@ -100,15 +128,22 @@
 <body>
     <div class="auth-container">
         <div class="logo">📸</div>
-        <h1>Photography Scheduler</h1>
+        <h1>Photography Business Manager</h1>
         <p class="subtitle">
-            Welcome to your professional photography business management platform. 
-            Sign in to manage your sessions, clients, and galleries.
+            Professional session scheduling, client communication, and photo gallery delivery for photographers.
         </p>
         
-        <a href="/api/login" class="login-button">
-            Sign In with Replit
-        </a>
+        <div class="auth-buttons">
+            <a href="/api/login" class="login-button primary">
+                🔑 Sign In / Sign Up
+            </a>
+            
+            <div class="signup-info">
+                <h3>New to the platform?</h3>
+                <p>Click "Sign In / Sign Up" above to create your photographer account using secure authentication.</p>
+                <p>Once logged in, you'll have access to all professional features listed below.</p>
+            </div>
+        </div>
         
         <div class="features">
             <div class="feature-item">
@@ -135,13 +170,25 @@
         fetch('/api/auth/user')
             .then(response => {
                 if (response.ok) {
-                    // User is authenticated, redirect to main app
-                    window.location.href = '/';
+                    // User is authenticated, check for return parameter
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const returnTo = urlParams.get('return');
+                    if (returnTo) {
+                        window.location.href = returnTo;
+                    } else {
+                        window.location.href = '/';
+                    }
                 }
             })
             .catch(error => {
                 // User not authenticated, stay on auth page
-                console.log('User not authenticated');
+                console.log('User authentication required');
+                
+                // Show different message if coming from admin
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('return') === '/admin') {
+                    document.querySelector('.signup-info p').textContent = 'Admin access requires authentication. Sign in to access the admin dashboard.';
+                }
             });
     </script>
 </body>
