@@ -6,6 +6,18 @@ This is a complete client management area web application for photography busine
 
 ## Recent Changes
 
+### Deposit Invoice System Implementation (July 23, 2025) - FULLY IMPLEMENTED
+- **Send Deposit Button**: Added "💳 Send Deposit" button positioned between "Send Invoice" and "Create Payment Plan" buttons
+- **Professional Deposit Modal**: Interactive modal with deposit amount input and live calculation display
+- **Stripe Integration**: Complete Stripe API integration for creating and sending professional deposit invoices
+- **Invoice Branding**: Branded deposit invoices with "Lance - The Legacy Photography" business information
+- **Live Calculations**: Real-time calculation showing total price, deposit amount, and remaining balance
+- **Database Integration**: Added deposit-related fields to database schema (deposit_amount, deposit_stripe_invoice_id, etc.)
+- **API Endpoint**: Created `/api/sessions/:id/send-deposit` endpoint for processing deposit invoice requests
+- **Professional Styling**: Added custom CSS styling for deposit button with teal gradient and hover effects
+- **Error Handling**: Comprehensive error handling with user-friendly messages and validation
+- **Session Integration**: Deposit invoices include complete session details and metadata for professional presentation
+
 ### Complete Retainer System Removal (July 23, 2025) - SYSTEM CLEANUP
 - **Retainer System Completely Removed**: Eliminated all retainer-related functionality per user request
 - **Frontend Cleanup**: Removed retainer button from session cards, eliminated modal HTML and JavaScript functions

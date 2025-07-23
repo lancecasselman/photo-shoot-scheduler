@@ -324,8 +324,10 @@ function createSessionCard(session) {
     invoiceBtn.textContent = '💰 Send Invoice';
     invoiceBtn.onclick = () => createInvoice(session);
 
-
-
+    const depositBtn = document.createElement('button');
+    depositBtn.className = 'btn btn-deposit';
+    depositBtn.textContent = '💳 Send Deposit';
+    depositBtn.onclick = () => openDepositModal(session.id);
 
     const contractBtn = document.createElement('button');
     contractBtn.className = 'btn btn-contract';
@@ -364,6 +366,7 @@ function createSessionCard(session) {
     actions.appendChild(galleryBtn);
     actions.appendChild(emailPreviewBtn);
     actions.appendChild(invoiceBtn);
+    actions.appendChild(depositBtn);
     actions.appendChild(paymentPlanBtn);
     actions.appendChild(contractBtn);
     actions.appendChild(callClientBtn);
@@ -1382,4 +1385,131 @@ async function deletePhoto(sessionId, photoIndex) {
 function openPaymentPlanModal(sessionId) {
     console.log('Opening payment plan modal for session:', sessionId);
     showMessage('Payment plan feature coming soon!', 'info');
+}
+
+// Open deposit modal
+function openDepositModal(sessionId) {
+    const session = sessions.find(s => s.id === sessionId);
+    if (!session) {
+        showMessage('Session not found', 'error');
+        return;
+    }
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>💳 Send Deposit Invoice - ${session.clientName}</h3>
+                <span class="close" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="deposit-amount-modal">Deposit Amount ($)</label>
+                    <input type="number" id="deposit-amount-modal" placeholder="Enter deposit amount" step="0.01" min="0" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                
+                <div id="deposit-calculation" style="display: none; background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span>Total Session Price:</span>
+                        <span>$${session.price}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span>Deposit Amount:</span>
+                        <span id="deposit-display">$0.00</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-top: 1px solid #ddd; padding-top: 8px; font-weight: bold;">
+                        <span>Remaining Balance:</span>
+                        <span id="deposit-remaining-display">$0.00</span>
+                    </div>
+                </div>
+                
+                <div id="deposit-status-modal" style="margin: 15px 0;">
+                    <!-- Status will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" onclick="sendDepositInvoice('${sessionId}')" class="btn btn-deposit">Send Deposit Invoice</button>
+                <button type="button" onclick="this.parentElement.parentElement.parentElement.remove()" class="btn btn-secondary">Close</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Add calculation listener
+    const amountInput = document.getElementById('deposit-amount-modal');
+    amountInput.addEventListener('input', () => calculateDepositModal(session.price));
+    
+    // Focus on input
+    amountInput.focus();
+}
+
+// Calculate deposit in modal
+function calculateDepositModal(sessionPrice) {
+    const amountInput = document.getElementById('deposit-amount-modal');
+    const calcSection = document.getElementById('deposit-calculation');
+    const depositDisplay = document.getElementById('deposit-display');
+    const remainingDisplay = document.getElementById('deposit-remaining-display');
+    
+    const depositAmount = parseFloat(amountInput.value);
+    
+    if (isNaN(depositAmount) || depositAmount <= 0) {
+        calcSection.style.display = 'none';
+        return;
+    }
+    
+    const remainingBalance = Math.max(0, sessionPrice - depositAmount);
+    
+    depositDisplay.textContent = '$' + depositAmount.toFixed(2);
+    remainingDisplay.textContent = '$' + remainingBalance.toFixed(2);
+    calcSection.style.display = 'block';
+}
+
+// Send deposit invoice
+async function sendDepositInvoice(sessionId) {
+    const amountInput = document.getElementById('deposit-amount-modal');
+    const depositAmount = parseFloat(amountInput.value);
+    
+    if (isNaN(depositAmount) || depositAmount <= 0) {
+        showMessage('Please enter a valid deposit amount', 'error');
+        return;
+    }
+    
+    try {
+        showMessage('Creating deposit invoice...', 'info');
+        
+        const response = await fetch(`/api/sessions/${sessionId}/send-deposit`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ depositAmount })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            showMessage('Deposit invoice sent successfully!', 'success');
+            
+            // Open the invoice URL
+            if (result.invoiceUrl) {
+                window.open(result.invoiceUrl, '_blank');
+            }
+            
+            // Close modal
+            const modal = document.querySelector('.modal');
+            if (modal) {
+                modal.remove();
+            }
+            
+            // Refresh sessions
+            await loadSessions();
+        } else {
+            throw new Error(result.error || 'Failed to send deposit invoice');
+        }
+    } catch (error) {
+        console.error('Error sending deposit invoice:', error);
+        showMessage('Error sending deposit invoice: ' + error.message, 'error');
+    }
 }

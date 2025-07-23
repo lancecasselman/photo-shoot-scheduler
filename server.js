@@ -1312,6 +1312,107 @@ const paymentScheduler = new PaymentScheduler();
 // Contract Manager
 const contractManager = new ContractManager();
 
+// Send deposit invoice for a session
+app.post('/api/sessions/:id/send-deposit', isAuthenticated, async (req, res) => {
+    const sessionId = req.params.id;
+    const { depositAmount } = req.body;
+    const user = getCurrentUser(req);
+
+    try {
+        const session = await getSessionById(sessionId);
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        // Verify user owns this session
+        if (session.userId !== user.sub) {
+            return res.status(403).json({ error: 'Unauthorized access to session' });
+        }
+
+        // Create Stripe customer
+        const customer = await stripe.customers.create({
+            name: session.clientName,
+            email: session.email,
+            metadata: {
+                sessionId: sessionId,
+                photographer: 'Lance - The Legacy Photography',
+                businessEmail: 'lance@thelegacyphotography.com'
+            }
+        });
+
+        // Create deposit invoice
+        const invoice = await stripe.invoices.create({
+            customer: customer.id,
+            collection_method: 'send_invoice',
+            days_until_due: 30,
+            description: `Photography Session Deposit - ${session.sessionType}`,
+            metadata: {
+                sessionId: sessionId,
+                invoiceType: 'deposit',
+                photographer: 'Lance - The Legacy Photography',
+                sessionType: session.sessionType,
+                sessionDate: session.dateTime,
+                location: session.location
+            },
+            custom_fields: [
+                {
+                    name: 'Photographer',
+                    value: 'Lance - The Legacy Photography'
+                },
+                {
+                    name: 'Session Type',
+                    value: session.sessionType
+                },
+                {
+                    name: 'Session Date',
+                    value: new Date(session.dateTime).toLocaleDateString()
+                }
+            ],
+            footer: 'Thank you for choosing The Legacy Photography! For questions, contact lance@thelegacyphotography.com'
+        });
+
+        // Add deposit fee as invoice item
+        await stripe.invoiceItems.create({
+            customer: customer.id,
+            invoice: invoice.id,
+            amount: Math.round(parseFloat(depositAmount) * 100), // Convert to cents
+            currency: 'usd',
+            description: `Deposit Fee - ${session.sessionType} Session`,
+            metadata: {
+                sessionId: sessionId,
+                itemType: 'deposit'
+            }
+        });
+
+        // Finalize and send the invoice
+        const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
+        await stripe.invoices.sendInvoice(finalizedInvoice.id);
+
+        // Calculate remaining balance
+        const remainingBalance = Math.max(0, parseFloat(session.price) - parseFloat(depositAmount));
+
+        // Update session with deposit information
+        await updateSession(sessionId, {
+            depositAmount: depositAmount,
+            depositStripeInvoiceId: finalizedInvoice.id,
+            depositStripeInvoiceUrl: finalizedInvoice.hosted_invoice_url,
+            remainingBalance: remainingBalance.toString()
+        });
+
+        res.json({
+            success: true,
+            invoiceId: finalizedInvoice.id,
+            invoiceUrl: finalizedInvoice.hosted_invoice_url,
+            depositAmount: depositAmount,
+            remainingBalance: remainingBalance,
+            message: `Deposit invoice sent to ${session.email}`
+        });
+
+    } catch (error) {
+        console.error('Error sending deposit invoice:', error);
+        res.status(500).json({ error: `Failed to send deposit invoice: ${error.message}` });
+    }
+});
 
 // Create payment plan for a session
 app.post('/api/sessions/:id/payment-plan', isAuthenticated, async (req, res) => {
