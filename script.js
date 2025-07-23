@@ -265,14 +265,14 @@ function createSessionCard(session) {
 
     const title = document.createElement('div');
     title.className = 'session-title';
-    title.textContent = session.sessionType;
+    title.textContent = session.sessionType + ' Session';
 
     const client = document.createElement('div');
     client.className = 'session-client';
     client.textContent = session.clientName;
 
-    headerInfo.appendChild(title);
     headerInfo.appendChild(client);
+    headerInfo.appendChild(title);
 
     // Create actions section
     const actions = document.createElement('div');
@@ -425,6 +425,21 @@ function createSessionCard(session) {
         <div class="detail-label">Price & Duration</div>
         <div class="detail-value">$${session.price} for ${session.duration} minutes</div>
     `;
+    
+    // Deposit amount (if exists)
+    let depositDiv = null;
+    if (session.depositAmount && session.depositAmount > 0) {
+        depositDiv = document.createElement('div');
+        depositDiv.className = 'detail-item';
+        const remainingBalance = session.price - session.depositAmount;
+        depositDiv.innerHTML = `
+            <div class="detail-label">Deposit Info</div>
+            <div class="detail-value">
+                Deposit: $${session.depositAmount} | Remaining: $${remainingBalance.toFixed(2)}
+                ${session.depositPaid ? '<span style="color: #28a745; font-weight: bold;"> ✓ Paid</span>' : '<span style="color: #dc3545;"> ⏳ Pending</span>'}
+            </div>
+        `;
+    }
 
 
 
@@ -463,6 +478,9 @@ function createSessionCard(session) {
     details.appendChild(phoneDiv);
     details.appendChild(emailDiv);
     details.appendChild(priceDiv);
+    if (depositDiv) {
+        details.appendChild(depositDiv);
+    }
     details.appendChild(statusDiv);
 
     // Append sections to card
