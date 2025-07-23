@@ -805,9 +805,24 @@ async function copyGalleryUrl(sessionId) {
         const result = await response.json();
         
         if (result.galleryUrl) {
-            // Copy URL to clipboard
-            await navigator.clipboard.writeText(result.galleryUrl);
-            showMessage(`📸 Gallery URL copied to clipboard! ${result.galleryUrl}`, 'success');
+            // Copy URL to clipboard with fallback
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(result.galleryUrl);
+                } else {
+                    // Fallback for older browsers
+                    const textArea = document.createElement('textarea');
+                    textArea.value = result.galleryUrl;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                }
+                showMessage(`📸 Gallery URL copied to clipboard!`, 'success');
+            } catch (clipboardError) {
+                console.error('Clipboard error:', clipboardError);
+                showMessage(`📸 Gallery URL generated: ${result.galleryUrl}`, 'success');
+            }
             
             // Update the button text to show it's been generated
             const button = document.querySelector(`[data-session-id="${sessionId}"] .btn-warning`);
@@ -818,7 +833,7 @@ async function copyGalleryUrl(sessionId) {
             }
             
             // Reload sessions to update UI
-            loadSessions();
+            await loadSessions();
         }
         
     } catch (error) {
@@ -1482,33 +1497,24 @@ async function updateDeposit(sessionId) {
     }
     
     try {
-        const authToken = await getAuthToken();
-        const headers = {
-            'Content-Type': 'application/json'
-        };
-        
-        if (authToken) {
-            headers['Authorization'] = `Bearer ${authToken}`;
-        }
-        
         const response = await fetch(`/api/sessions/${sessionId}`, {
             method: 'PUT',
-            headers: headers,
+            headers: {
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify({
-                ...session,
                 depositAmount: depositAmount
             })
         });
         
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorText = await response.text();
+            console.error('Server response:', response.status, errorText);
+            throw new Error(`Server error (${response.status}): ${errorText}`);
         }
         
-        // Update local session data
-        session.depositAmount = depositAmount;
-        
         // Reload sessions to update display
-        loadSessions();
+        await loadSessions();
         showMessage('Deposit amount updated successfully!', 'success');
         
     } catch (error) {

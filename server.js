@@ -422,6 +422,9 @@ async function updateSession(id, updates) {
         let paramCount = 1;
         
         Object.keys(updates).forEach(key => {
+            // Skip updatedAt as we'll set it manually
+            if (key === 'updatedAt') return;
+            
             const dbKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
             setClause.push(`${dbKey} = $${paramCount}`);
             
