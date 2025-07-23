@@ -12,11 +12,11 @@ This is a complete client management area web application for photography busine
 - **Payment Status Tracking**: Real-time tracking of retainer payment status with automatic remaining balance calculations
 - **Final Balance Processing**: Automated final balance invoice generation after retainer payment completion
 - **Enhanced Session Cards**: Added retainer button to all session cards for easy retainer management
-- **Inline Retainer Interface**: Professional inline retainer section within each session card with live calculation and status display
+- **Modal Retainer Interface**: Professional modal popup for retainer management with live calculation and status display
 - **Database Integration**: Retainer data stored persistently with PostgreSQL integration for payment tracking
 - **API Endpoints**: Complete REST API for retainer operations (create, mark paid, final balance, status check)
 - **Professional UI/UX**: Enhanced frontend with retainer-specific styling and responsive design
-- **Session-Specific Controls**: Each session has its own retainer controls embedded directly in the session card
+- **Session-Specific Controls**: Each session has its own retainer button positioned between Send Invoice and Create Payment Plan buttons
 - **Error Handling**: Comprehensive error handling for failed payments and API issues
 - **Production Testing**: All retainer functionality tested and ready for live Stripe integration
 

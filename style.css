@@ -1226,42 +1226,37 @@ header p {
     transform: translateY(0);
 }
 
-/* Simple retainer controls styling */
-.retainer-detail {
-    background: #f8f9fa;
-    border-left: 4px solid #28a745;
+/* Retainer button styling */
+.btn-retainer {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.btn-retainer:hover {
+    background: linear-gradient(135deg, #218838, #1fa88a);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
+
+/* Alert styles for retainer status */
+.alert {
     padding: 15px;
-    margin: 10px 0;
     border-radius: 8px;
+    margin-bottom: 15px;
 }
 
-.retainer-controls {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 10px;
+.alert-success {
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
 }
 
-.text-success {
-    color: #28a745 !important;
-}
-
-.text-warning {
-    color: #ffc107 !important;
-}
-
-@media (max-width: 768px) {
-    .retainer-controls {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .retainer-controls input {
-        width: 100% !important;
-        margin-right: 0 !important;
-        margin-bottom: 10px;
-    }
+.alert-warning {
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
 }
 
 .retainer-form-group {

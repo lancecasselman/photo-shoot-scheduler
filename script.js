@@ -324,6 +324,10 @@ function createSessionCard(session) {
     invoiceBtn.textContent = '💰 Send Invoice';
     invoiceBtn.onclick = () => createInvoice(session);
 
+    const retainerBtn = document.createElement('button');
+    retainerBtn.className = 'btn btn-retainer';
+    retainerBtn.textContent = '💵 Retainer';
+    retainerBtn.onclick = () => openRetainerModal(session.id);
 
 
     const contractBtn = document.createElement('button');
@@ -363,6 +367,7 @@ function createSessionCard(session) {
     actions.appendChild(galleryBtn);
     actions.appendChild(emailPreviewBtn);
     actions.appendChild(invoiceBtn);
+    actions.appendChild(retainerBtn);
     actions.appendChild(contractBtn);
     actions.appendChild(paymentPlanBtn);
     actions.appendChild(callClientBtn);
@@ -418,35 +423,7 @@ function createSessionCard(session) {
         <div class="detail-value">$${session.price} for ${session.duration} minutes</div>
     `;
 
-    // Retainer section
-    const retainerDiv = document.createElement('div');
-    retainerDiv.className = 'detail-item retainer-detail';
-    retainerDiv.innerHTML = `
-        <div class="detail-label">💵 Retainer Fee</div>
-        <div class="detail-value">
-            <div class="retainer-controls">
-                <input type="number" 
-                       id="retainer-${session.id}" 
-                       placeholder="Enter retainer amount" 
-                       step="0.01" 
-                       min="0" 
-                       style="width: 150px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-right: 10px;">
-                <button onclick="sendRetainer('${session.id}')" 
-                        class="btn btn-retainer btn-sm" 
-                        style="padding: 8px 12px; font-size: 0.8em;">
-                    Send Invoice
-                </button>
-                <button onclick="markRetainerPaid('${session.id}')" 
-                        class="btn btn-success btn-sm" 
-                        style="padding: 8px 12px; font-size: 0.8em; margin-left: 5px;">
-                    Mark Paid
-                </button>
-            </div>
-            <div id="retainer-status-${session.id}" style="margin-top: 10px; font-size: 0.9em; color: #666;">
-                <!-- Status will be loaded here -->
-            </div>
-        </div>
-    `;
+
 
     // Notes
     if (session.notes && session.notes.trim()) {
@@ -483,10 +460,7 @@ function createSessionCard(session) {
     details.appendChild(phoneDiv);
     details.appendChild(emailDiv);
     details.appendChild(priceDiv);
-    details.appendChild(retainerDiv);
     details.appendChild(statusDiv);
-    
-    console.log('Retainer div appended to details for session:', session.id);
 
     // Create photo gallery section
     const gallerySection = createPhotoGallery(session);
@@ -496,8 +470,7 @@ function createSessionCard(session) {
     card.appendChild(details);
     card.appendChild(gallerySection);
 
-    // Load retainer status after card is created
-    setTimeout(() => loadRetainerStatus(session.id), 100);
+
 
     console.log('Session card created for:', session.clientName);
     return card;
@@ -505,9 +478,123 @@ function createSessionCard(session) {
 
 
 
-// Simple retainer functions
-async function sendRetainer(sessionId) {
-    const amountInput = document.getElementById(`retainer-${sessionId}`);
+// Open retainer modal
+function openRetainerModal(sessionId) {
+    const session = sessions.find(s => s.id === sessionId);
+    if (!session) return;
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>💵 Retainer Invoice - ${session.clientName}</h3>
+                <span class="close" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="retainer-amount-modal">Retainer Amount ($)</label>
+                    <input type="number" id="retainer-amount-modal" placeholder="Enter retainer amount" step="0.01" min="0" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                
+                <div id="retainer-calculation" style="display: none; background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span>Total Session Price:</span>
+                        <span>$${session.price}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span>Retainer Amount:</span>
+                        <span id="retainer-display">$0.00</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-top: 1px solid #ddd; padding-top: 8px; font-weight: bold;">
+                        <span>Remaining Balance:</span>
+                        <span id="remaining-display">$0.00</span>
+                    </div>
+                </div>
+                
+                <div id="retainer-status-modal" style="margin: 15px 0;">
+                    <!-- Status will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" onclick="sendRetainerFromModal('${sessionId}')" class="btn btn-retainer">Send Retainer Invoice</button>
+                <button type="button" onclick="markRetainerPaidFromModal('${sessionId}')" class="btn btn-success">Mark Paid</button>
+                <button type="button" onclick="this.parentElement.parentElement.parentElement.remove()" class="btn btn-secondary">Close</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Add calculation listener
+    const amountInput = document.getElementById('retainer-amount-modal');
+    amountInput.addEventListener('input', () => calculateRetainerModal(session.price));
+    
+    // Load existing retainer status
+    loadRetainerStatusModal(sessionId);
+    
+    // Focus on input
+    amountInput.focus();
+}
+
+// Calculate retainer in modal
+function calculateRetainerModal(sessionPrice) {
+    const amountInput = document.getElementById('retainer-amount-modal');
+    const calcSection = document.getElementById('retainer-calculation');
+    const retainerDisplay = document.getElementById('retainer-display');
+    const remainingDisplay = document.getElementById('remaining-display');
+    
+    const retainerAmount = parseFloat(amountInput.value);
+    
+    if (isNaN(retainerAmount) || retainerAmount <= 0) {
+        calcSection.style.display = 'none';
+        return;
+    }
+    
+    const remainingBalance = Math.max(0, sessionPrice - retainerAmount);
+    
+    retainerDisplay.textContent = '$' + retainerAmount.toFixed(2);
+    remainingDisplay.textContent = '$' + remainingBalance.toFixed(2);
+    calcSection.style.display = 'block';
+}
+
+// Load retainer status in modal
+async function loadRetainerStatusModal(sessionId) {
+    try {
+        const response = await fetch(`/api/sessions/${sessionId}/retainer-status`);
+        if (response.ok) {
+            const status = await response.json();
+            const statusDiv = document.getElementById('retainer-status-modal');
+            
+            if (status.retainerAmount) {
+                let statusText = status.retainerPaid ? 'Paid' : 'Pending Payment';
+                let statusClass = status.retainerPaid ? 'success' : 'warning';
+                
+                statusDiv.innerHTML = `
+                    <div class="alert alert-${statusClass}">
+                        <h4>Current Status: ${statusText}</h4>
+                        <p><strong>Retainer Amount:</strong> $${status.retainerAmount.toFixed(2)}</p>
+                        <p><strong>Remaining Balance:</strong> $${status.remainingBalance.toFixed(2)}</p>
+                        ${status.retainerStripeInvoiceUrl ? `<p><a href="${status.retainerStripeInvoiceUrl}" target="_blank">View Invoice</a></p>` : ''}
+                        ${status.retainerPaid ? `<p><strong>Paid on:</strong> ${new Date(status.retainerPaidDate).toLocaleDateString()}</p>` : ''}
+                    </div>
+                `;
+                
+                // Pre-fill the amount if not paid yet
+                if (!status.retainerPaid) {
+                    document.getElementById('retainer-amount-modal').value = status.retainerAmount;
+                    calculateRetainerModal(status.totalAmount);
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error loading retainer status:', error);
+    }
+}
+
+// Send retainer from modal
+async function sendRetainerFromModal(sessionId) {
+    const amountInput = document.getElementById('retainer-amount-modal');
     const retainerAmount = parseFloat(amountInput.value);
     
     if (isNaN(retainerAmount) || retainerAmount <= 0) {
@@ -530,7 +617,7 @@ async function sendRetainer(sessionId) {
         
         if (response.ok) {
             showMessage('Retainer invoice sent successfully!', 'success');
-            loadRetainerStatus(sessionId);
+            loadRetainerStatusModal(sessionId);
         } else {
             throw new Error(result.error || 'Failed to send retainer invoice');
         }
@@ -540,7 +627,8 @@ async function sendRetainer(sessionId) {
     }
 }
 
-async function markRetainerPaid(sessionId) {
+// Mark retainer paid from modal
+async function markRetainerPaidFromModal(sessionId) {
     try {
         showMessage('Marking retainer as paid...', 'info');
         
@@ -555,7 +643,7 @@ async function markRetainerPaid(sessionId) {
         
         if (response.ok) {
             showMessage('Retainer marked as paid successfully!', 'success');
-            loadRetainerStatus(sessionId);
+            loadRetainerStatusModal(sessionId);
         } else {
             throw new Error(result.error || 'Failed to mark retainer as paid');
         }
@@ -565,31 +653,7 @@ async function markRetainerPaid(sessionId) {
     }
 }
 
-async function loadRetainerStatus(sessionId) {
-    try {
-        const response = await fetch(`/api/sessions/${sessionId}/retainer-status`);
-        if (response.ok) {
-            const status = await response.json();
-            const statusDiv = document.getElementById(`retainer-status-${sessionId}`);
-            
-            if (status.retainerAmount) {
-                let statusText = status.retainerPaid ? 'Paid' : 'Pending Payment';
-                let statusClass = status.retainerPaid ? 'text-success' : 'text-warning';
-                
-                statusDiv.innerHTML = `
-                    <div class="${statusClass}">
-                        <strong>Status:</strong> ${statusText} | 
-                        <strong>Amount:</strong> $${status.retainerAmount.toFixed(2)} | 
-                        <strong>Remaining:</strong> $${status.remainingBalance.toFixed(2)}
-                        ${status.retainerStripeInvoiceUrl ? ` | <a href="${status.retainerStripeInvoiceUrl}" target="_blank">View Invoice</a>` : ''}
-                    </div>
-                `;
-            }
-        }
-    } catch (error) {
-        console.error('Error loading retainer status:', error);
-    }
-}
+
 
 // Helper function to create phone detail item with call and text buttons
 function createPhoneDetailItem(label, phoneNumber) {
