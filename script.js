@@ -328,8 +328,8 @@ function createSessionCard(session) {
 
     const depositBtn = document.createElement('button');
     depositBtn.className = 'btn btn-deposit';
-    depositBtn.textContent = '💳 Send Deposit';
-    depositBtn.onclick = () => openDepositModal(session.id);
+    depositBtn.textContent = '💳 Send Deposit Invoice';
+    depositBtn.onclick = () => sendDepositInvoiceFromCard(session.id);
 
     const contractBtn = document.createElement('button');
     contractBtn.className = 'btn btn-contract';
@@ -384,7 +384,6 @@ function createSessionCard(session) {
     }
 
     header.appendChild(headerInfo);
-    header.appendChild(actions);
 
     // Create details section
     const details = document.createElement('div');
@@ -426,20 +425,29 @@ function createSessionCard(session) {
         <div class="detail-value">$${session.price} for ${session.duration} minutes</div>
     `;
     
-    // Deposit amount (if exists)
-    let depositDiv = null;
-    if (session.depositAmount && session.depositAmount > 0) {
-        depositDiv = document.createElement('div');
-        depositDiv.className = 'detail-item';
-        const remainingBalance = session.price - session.depositAmount;
-        depositDiv.innerHTML = `
-            <div class="detail-label">Deposit Info</div>
-            <div class="detail-value">
-                Deposit: $${session.depositAmount} | Remaining: $${remainingBalance.toFixed(2)}
-                ${session.depositPaid ? '<span style="color: #28a745; font-weight: bold;"> ✓ Paid</span>' : '<span style="color: #dc3545;"> ⏳ Pending</span>'}
-            </div>
-        `;
-    }
+    // Deposit input field
+    const depositDiv = document.createElement('div');
+    depositDiv.className = 'detail-item';
+    const currentDeposit = session.depositAmount || 0;
+    const remainingBalance = session.price - currentDeposit;
+    
+    depositDiv.innerHTML = `
+        <div class="detail-label">Deposit Amount</div>
+        <div class="detail-value" style="display: flex; align-items: center; gap: 10px;">
+            <input type="number" 
+                   id="deposit-input-${session.id}" 
+                   value="${currentDeposit}" 
+                   placeholder="Enter deposit amount" 
+                   step="0.01" 
+                   min="0" 
+                   max="${session.price}"
+                   style="width: 120px; padding: 5px; border: 1px solid #ddd; border-radius: 4px;">
+            <button onclick="updateDeposit('${session.id}')" 
+                    class="btn btn-sm btn-success" 
+                    style="padding: 5px 10px; font-size: 0.8rem;">Update</button>
+            ${currentDeposit > 0 ? `<span style="font-size: 0.9rem; color: #666;">Remaining: $${remainingBalance.toFixed(2)}</span>` : ''}
+        </div>
+    `;
 
 
 
@@ -478,14 +486,13 @@ function createSessionCard(session) {
     details.appendChild(phoneDiv);
     details.appendChild(emailDiv);
     details.appendChild(priceDiv);
-    if (depositDiv) {
-        details.appendChild(depositDiv);
-    }
+    details.appendChild(depositDiv);
     details.appendChild(statusDiv);
 
     // Append sections to card
     card.appendChild(header);
     card.appendChild(details);
+    card.appendChild(actions);
 
 
 
@@ -1453,10 +1460,67 @@ function calculateDepositModal(sessionPrice) {
     calcSection.style.display = 'block';
 }
 
-// Send deposit invoice
-async function sendDepositInvoice(sessionId) {
-    const amountInput = document.getElementById('deposit-amount-modal');
-    const depositAmount = parseFloat(amountInput.value);
+// Update deposit amount for session
+async function updateDeposit(sessionId) {
+    const depositInput = document.getElementById(`deposit-input-${sessionId}`);
+    const depositAmount = parseFloat(depositInput.value);
+    
+    if (isNaN(depositAmount) || depositAmount < 0) {
+        showMessage('Please enter a valid deposit amount', 'error');
+        return;
+    }
+    
+    const session = sessions.find(s => s.id === sessionId);
+    if (!session) {
+        showMessage('Session not found', 'error');
+        return;
+    }
+    
+    if (depositAmount > session.price) {
+        showMessage('Deposit cannot exceed session price', 'error');
+        return;
+    }
+    
+    try {
+        const authToken = await getAuthToken();
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        if (authToken) {
+            headers['Authorization'] = `Bearer ${authToken}`;
+        }
+        
+        const response = await fetch(`/api/sessions/${sessionId}`, {
+            method: 'PUT',
+            headers: headers,
+            body: JSON.stringify({
+                ...session,
+                depositAmount: depositAmount
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        // Update local session data
+        session.depositAmount = depositAmount;
+        
+        // Reload sessions to update display
+        loadSessions();
+        showMessage('Deposit amount updated successfully!', 'success');
+        
+    } catch (error) {
+        console.error('Error updating deposit:', error);
+        showMessage('Error updating deposit: ' + error.message, 'error');
+    }
+}
+
+// Send deposit invoice from card
+async function sendDepositInvoiceFromCard(sessionId) {
+    const depositInput = document.getElementById(`deposit-input-${sessionId}`);
+    const depositAmount = parseFloat(depositInput.value);
     
     if (isNaN(depositAmount) || depositAmount <= 0) {
         showMessage('Please enter a valid deposit amount', 'error');
