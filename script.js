@@ -248,8 +248,7 @@ function renderSessions() {
 
 // Create individual session card
 function createSessionCard(session) {
-    console.log('=== CRITICAL DEBUG: Creating session card for:', session.clientName);
-    console.log('Session object:', session);
+    console.log('Creating session card for:', session.clientName);
 
     // Create main card container
     const card = document.createElement('div');
