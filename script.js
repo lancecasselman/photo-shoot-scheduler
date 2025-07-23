@@ -324,6 +324,11 @@ function createSessionCard(session) {
     invoiceBtn.textContent = '💰 Send Invoice';
     invoiceBtn.onclick = () => createInvoice(session);
 
+    const retainerBtn = document.createElement('button');
+    retainerBtn.className = 'btn btn-retainer';
+    retainerBtn.textContent = '💵 Retainer';
+    retainerBtn.onclick = () => openRetainerModal(session.id);
+
     const contractBtn = document.createElement('button');
     contractBtn.className = 'btn btn-contract';
     contractBtn.textContent = '📝 Send Contract';
@@ -345,6 +350,7 @@ function createSessionCard(session) {
     actions.appendChild(galleryBtn);
     actions.appendChild(emailPreviewBtn);
     actions.appendChild(invoiceBtn);
+    actions.appendChild(retainerBtn);
     actions.appendChild(contractBtn);
     actions.appendChild(deleteBtn);
     
@@ -1346,3 +1352,260 @@ async function deletePhoto(sessionId, photoIndex) {
         showMessage('Delete failed: ' + error.message, 'error');
     }
 }
+// Global variables for retainer modal
+let currentRetainerSessionId = null;
+let currentRetainerSession = null;
+
+// Open retainer modal
+function openRetainerModal(sessionId) {
+    console.log('Opening retainer modal for session:', sessionId);
+    
+    const session = getSessionById(sessionId);
+    if (!session) {
+        showMessage('Session not found', 'error');
+        return;
+    }
+
+    currentRetainerSessionId = sessionId;
+    currentRetainerSession = session;
+
+    // Clear previous values
+    document.getElementById('retainerAmount').value = '';
+    document.getElementById('retainerCalculation').style.display = 'none';
+    document.getElementById('retainerStatus').style.display = 'none';
+
+    // Set up calculation listener
+    const retainerAmountInput = document.getElementById('retainerAmount');
+    retainerAmountInput.addEventListener('input', calculateRetainer);
+
+    // Load existing retainer status
+    loadRetainerStatus(sessionId);
+
+    // Show modal
+    document.getElementById('retainerModal').classList.add('show');
+}
+
+// Close retainer modal
+function closeRetainerModal() {
+    document.getElementById('retainerModal').classList.remove('show');
+    currentRetainerSessionId = null;
+    currentRetainerSession = null;
+}
+
+// Calculate retainer breakdown
+function calculateRetainer() {
+    const retainerAmount = parseFloat(document.getElementById('retainerAmount').value);
+    const sessionPrice = parseFloat(currentRetainerSession.price);
+    
+    if (isNaN(retainerAmount) || retainerAmount <= 0) {
+        document.getElementById('retainerCalculation').style.display = 'none';
+        return;
+    }
+
+    const remainingBalance = Math.max(0, sessionPrice - retainerAmount);
+
+    // Update calculation display
+    document.getElementById('totalPrice').textContent = '$' + sessionPrice.toFixed(2);
+    document.getElementById('retainerAmountDisplay').textContent = '$' + retainerAmount.toFixed(2);
+    document.getElementById('remainingBalance').textContent = '$' + remainingBalance.toFixed(2);
+    
+    document.getElementById('retainerCalculation').style.display = 'block';
+}
+
+// Load retainer status for session
+async function loadRetainerStatus(sessionId) {
+    try {
+        const response = await fetch(`/api/sessions/${sessionId}/retainer-status`);
+        if (response.ok) {
+            const status = await response.json();
+            displayRetainerStatus(status);
+        }
+    } catch (error) {
+        console.error('Error loading retainer status:', error);
+    }
+}
+
+// Display retainer status
+function displayRetainerStatus(status) {
+    const statusDiv = document.getElementById('retainerStatus');
+    
+    if (status.hasRetainer) {
+        let statusClass = status.retainerPaid ? 'paid' : 'pending';
+        let statusText = status.retainerPaid ? 'Paid' : 'Pending Payment';
+        
+        statusDiv.innerHTML = `
+            <h4>Retainer Status: ${statusText}</h4>
+            <div class="calc-row">
+                <span>Retainer Amount:</span>
+                <span>$${status.retainerAmount.toFixed(2)}</span>
+            </div>
+            <div class="calc-row">
+                <span>Remaining Balance:</span>
+                <span>$${status.remainingBalance.toFixed(2)}</span>
+            </div>
+            ${status.retainerStripeInvoiceUrl ? `<p><a href="${status.retainerStripeInvoiceUrl}" target="_blank">View Invoice</a></p>` : ''}
+            ${status.retainerPaid ? `<p>Paid on: ${new Date(status.retainerPaidDate).toLocaleDateString()}</p>` : ''}
+        `;
+        
+        statusDiv.className = `retainer-status ${statusClass}`;
+        statusDiv.style.display = 'block';
+        
+        // Update button text based on status
+        const sendBtn = document.getElementById('sendRetainerBtn');
+        if (status.retainerPaid && status.remainingBalance > 0) {
+            sendBtn.textContent = 'Send Final Balance Invoice';
+            sendBtn.onclick = sendFinalBalanceInvoice;
+        } else if (!status.retainerPaid) {
+            sendBtn.textContent = 'Mark as Paid';
+            sendBtn.onclick = markRetainerPaid;
+        } else {
+            sendBtn.textContent = 'Retainer Complete';
+            sendBtn.disabled = true;
+        }
+    } else {
+        statusDiv.style.display = 'none';
+    }
+}
+
+// Send retainer invoice
+async function sendRetainerInvoice() {
+    const retainerAmount = parseFloat(document.getElementById('retainerAmount').value);
+    
+    if (isNaN(retainerAmount) || retainerAmount <= 0) {
+        showMessage('Please enter a valid retainer amount', 'error');
+        return;
+    }
+
+    if (retainerAmount >= parseFloat(currentRetainerSession.price)) {
+        showMessage('Retainer amount cannot be equal to or greater than the total session price', 'error');
+        return;
+    }
+
+    try {
+        showMessage('Creating retainer invoice...', 'info');
+        
+        const response = await fetch(`/api/sessions/${currentRetainerSessionId}/send-retainer`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ retainerAmount })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.success) {
+            showMessage('Retainer invoice sent successfully!', 'success');
+            
+            // Open the invoice URL
+            if (result.invoiceUrl) {
+                window.open(result.invoiceUrl, '_blank');
+            }
+            
+            // Reload retainer status
+            await loadRetainerStatus(currentRetainerSessionId);
+            
+            // Refresh sessions to show updated data
+            await loadSessions();
+            
+        } else {
+            throw new Error(result.error || 'Failed to send retainer invoice');
+        }
+        
+    } catch (error) {
+        console.error('Error sending retainer invoice:', error);
+        showMessage('Error sending retainer invoice: ' + error.message, 'error');
+    }
+}
+
+// Mark retainer as paid
+async function markRetainerPaid() {
+    try {
+        showMessage('Marking retainer as paid...', 'info');
+        
+        const response = await fetch(`/api/sessions/${currentRetainerSessionId}/mark-retainer-paid`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.success) {
+            showMessage('Retainer marked as paid!', 'success');
+            
+            // Reload retainer status
+            await loadRetainerStatus(currentRetainerSessionId);
+            
+            // Refresh sessions
+            await loadSessions();
+            
+        } else {
+            throw new Error(result.error || 'Failed to mark retainer as paid');
+        }
+        
+    } catch (error) {
+        console.error('Error marking retainer as paid:', error);
+        showMessage('Error marking retainer as paid: ' + error.message, 'error');
+    }
+}
+
+// Send final balance invoice
+async function sendFinalBalanceInvoice() {
+    try {
+        showMessage('Creating final balance invoice...', 'info');
+        
+        const response = await fetch(`/api/sessions/${currentRetainerSessionId}/send-final-balance`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.success) {
+            showMessage('Final balance invoice sent successfully!', 'success');
+            
+            // Open the invoice URL
+            if (result.invoiceUrl) {
+                window.open(result.invoiceUrl, '_blank');
+            }
+            
+            // Reload retainer status
+            await loadRetainerStatus(currentRetainerSessionId);
+            
+            // Refresh sessions
+            await loadSessions();
+            
+        } else {
+            throw new Error(result.error || 'Failed to send final balance invoice');
+        }
+        
+    } catch (error) {
+        console.error('Error sending final balance invoice:', error);
+        showMessage('Error sending final balance invoice: ' + error.message, 'error');
+    }
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', function(event) {
+    const retainerModal = document.getElementById('retainerModal');
+    if (event.target === retainerModal) {
+        closeRetainerModal();
+    }
+});
+

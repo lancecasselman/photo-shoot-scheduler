@@ -24,6 +24,7 @@ const PaymentScheduler = require('./server/paymentScheduler');
 
 // Import contract management
 const ContractManager = require('./server/contracts');
+const { RetainerSystem } = require('./server/retainerSystem');
 
 // PostgreSQL database connection
 const pool = new Pool({
@@ -1310,6 +1311,7 @@ const paymentScheduler = new PaymentScheduler();
 
 // Contract Manager
 const contractManager = new ContractManager();
+const retainerSystem = new RetainerSystem();
 
 // Create payment plan for a session
 app.post('/api/sessions/:id/payment-plan', isAuthenticated, async (req, res) => {
@@ -1783,6 +1785,61 @@ app.get('/', (req, res) => {
         return res.redirect('/auth.html?return=/');
     }
     res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// Retainer System API Endpoints
+
+// Create and send retainer invoice
+app.post('/api/sessions/:id/send-retainer', isAuthenticated, async (req, res) => {
+    const sessionId = req.params.id;
+    const { retainerAmount } = req.body;
+
+    try {
+        const result = await retainerSystem.createRetainerInvoice(sessionId, retainerAmount, getSessionById, updateSession);
+        res.json(result);
+    } catch (error) {
+        console.error('Error sending retainer invoice:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Mark retainer as paid
+app.post('/api/sessions/:id/mark-retainer-paid', isAuthenticated, async (req, res) => {
+    const sessionId = req.params.id;
+
+    try {
+        const result = await retainerSystem.markRetainerPaid(sessionId, getSessionById, updateSession);
+        res.json(result);
+    } catch (error) {
+        console.error('Error marking retainer as paid:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Send final balance invoice
+app.post('/api/sessions/:id/send-final-balance', isAuthenticated, async (req, res) => {
+    const sessionId = req.params.id;
+
+    try {
+        const result = await retainerSystem.createFinalBalanceInvoice(sessionId, getSessionById, updateSession);
+        res.json(result);
+    } catch (error) {
+        console.error('Error sending final balance invoice:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get retainer status
+app.get('/api/sessions/:id/retainer-status', isAuthenticated, async (req, res) => {
+    const sessionId = req.params.id;
+
+    try {
+        const result = await retainerSystem.getRetainerStatus(sessionId, getSessionById);
+        res.json(result);
+    } catch (error) {
+        console.error('Error getting retainer status:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
 // Serve static files last to ensure routes run first
