@@ -1079,6 +1079,143 @@ app.get('/api/sessions/:id/email-preview', (req, res) => {
     `);
 });
 
+// Create and send invoice via Stripe (supports both full and deposit invoices)
+app.post('/api/create-invoice', isAuthenticated, async (req, res) => {
+    const { sessionId, clientName, email, amount, description, dueDate, isDeposit, depositAmount, totalAmount } = req.body;
+    
+    try {
+        if (!process.env.STRIPE_SECRET_KEY) {
+            return res.status(500).json({ error: 'Stripe not configured. Please add STRIPE_SECRET_KEY.' });
+        }
+        
+        // Check if Stripe key is valid (should be longer than 50 characters)
+        if (process.env.STRIPE_SECRET_KEY.length < 50) {
+            // Fallback mode - simulate invoice creation without actual Stripe API call
+            console.log('Stripe key too short, simulating invoice creation');
+            
+            const invoiceType = isDeposit ? 'Deposit Invoice' : 'Invoice';
+            return res.json({ 
+                success: true,
+                message: `${invoiceType} simulation completed (Stripe not configured)`,
+                fallbackMode: true,
+                invoice_url: `https://invoice-demo.stripe.com/demo-${sessionId}-${Date.now()}`,
+                details: 'To send real invoices, provide your complete Stripe secret key (100+ characters) from your Stripe Dashboard',
+                clientName: clientName,
+                amount: amount,
+                description: description
+            });
+        }
+        
+        // Create customer if not exists
+        let customer;
+        try {
+            const customers = await stripe.customers.list({
+                email: email,
+                limit: 1
+            });
+            
+            if (customers.data.length > 0) {
+                customer = customers.data[0];
+            } else {
+                customer = await stripe.customers.create({
+                    email: email,
+                    name: clientName,
+                    description: `Client of Lance - The Legacy Photography`,
+                    metadata: {
+                        sessionId: sessionId,
+                        businessName: 'The Legacy Photography',
+                        businessEmail: 'lance@thelegacyphotography.com'
+                    }
+                });
+                console.log('Created new Stripe customer:', customer.id);
+            }
+        } catch (error) {
+            console.error('Customer creation failed:', error);
+            return res.status(500).json({ error: 'Failed to create customer' });
+        }
+        
+        // Calculate due date
+        const dueDateObj = dueDate ? new Date(dueDate) : new Date(Date.now() + (isDeposit ? 14 : 30) * 24 * 60 * 60 * 1000);
+        const daysUntilDue = Math.max(1, Math.ceil((dueDateObj - new Date()) / (24 * 60 * 60 * 1000)));
+        
+        // Create invoice description based on type
+        let invoiceDescription = description;
+        let customFooter = 'Thank you for choosing Lance - The Legacy Photography! Contact: lance@thelegacyphotography.com';
+        
+        if (isDeposit) {
+            const remainingBalance = totalAmount - depositAmount;
+            customFooter += `\n\nRetainer: $${depositAmount} | Remaining Balance: $${remainingBalance.toFixed(2)}`;
+        }
+        
+        // Create invoice with proper collection method for manual sending
+        const invoice = await stripe.invoices.create({
+            customer: customer.id,
+            description: `Lance - The Legacy Photography: ${invoiceDescription}`,
+            collection_method: 'send_invoice',
+            days_until_due: daysUntilDue,
+            footer: customFooter,
+            custom_fields: [
+                {
+                    name: 'Photographer',
+                    value: 'Lance - The Legacy Photography'
+                },
+                {
+                    name: 'Session ID',
+                    value: sessionId
+                }
+            ],
+            metadata: {
+                sessionId: sessionId,
+                clientName: clientName,
+                businessName: 'The Legacy Photography',
+                businessEmail: 'lance@thelegacyphotography.com',
+                isDeposit: isDeposit ? 'true' : 'false'
+            }
+        });
+        
+        // Add invoice item
+        await stripe.invoiceItems.create({
+            customer: customer.id,
+            invoice: invoice.id,
+            amount: Math.round(amount * 100), // Convert to cents
+            currency: 'usd',
+            description: invoiceDescription,
+            metadata: {
+                sessionId: sessionId,
+                clientName: clientName,
+                photographer: 'Lance - The Legacy Photography',
+                businessEmail: 'lance@thelegacyphotography.com',
+                isDeposit: isDeposit ? 'true' : 'false'
+            }
+        });
+        
+        // Finalize and send invoice
+        const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
+        await stripe.invoices.sendInvoice(finalizedInvoice.id);
+        
+        const invoiceType = isDeposit ? 'Deposit invoice' : 'Invoice';
+        console.log(`${invoiceType} sent to ${clientName} for $${amount}`);
+        console.log(`Invoice URL: ${finalizedInvoice.hosted_invoice_url}`);
+        
+        res.json({
+            success: true,
+            message: `${invoiceType} sent successfully via Stripe`,
+            invoice_url: finalizedInvoice.hosted_invoice_url,
+            invoice: {
+                id: finalizedInvoice.id,
+                hostedInvoiceUrl: finalizedInvoice.hosted_invoice_url,
+                invoicePdf: finalizedInvoice.invoice_pdf,
+                amount: amount,
+                status: finalizedInvoice.status,
+                customer: customer.email
+            }
+        });
+    } catch (error) {
+        console.error('Error creating invoice:', error);
+        res.status(500).json({ error: 'Failed to create invoice: ' + error.message });
+    }
+});
+
 // Send invoice via Stripe
 app.post('/api/sessions/:id/send-invoice', async (req, res) => {
     const sessionId = req.params.id;

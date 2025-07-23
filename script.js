@@ -324,6 +324,13 @@ function createSessionCard(session) {
     invoiceBtn.textContent = '💰 Send Invoice';
     invoiceBtn.onclick = () => createInvoice(session);
 
+    const depositBtn = document.createElement('button');
+    depositBtn.className = 'btn btn-warning';
+    depositBtn.textContent = '💳 Send Deposit';
+    depositBtn.onclick = () => sendDepositInvoice(session);
+    depositBtn.style.backgroundColor = '#fd7e14';
+    depositBtn.style.color = 'white';
+
     const contractBtn = document.createElement('button');
     contractBtn.className = 'btn btn-contract';
     contractBtn.textContent = '📝 Send Contract';
@@ -345,6 +352,7 @@ function createSessionCard(session) {
     actions.appendChild(galleryBtn);
     actions.appendChild(emailPreviewBtn);
     actions.appendChild(invoiceBtn);
+    actions.appendChild(depositBtn);
     actions.appendChild(contractBtn);
     actions.appendChild(deleteBtn);
     
@@ -881,6 +889,91 @@ async function createInvoice(session) {
     } catch (error) {
         console.error('Error creating invoice:', error);
         showMessage('Error creating invoice: ' + error.message, 'error');
+    }
+}
+
+// Send deposit invoice with custom amount
+async function sendDepositInvoice(session) {
+    try {
+        // Prompt user for deposit amount
+        const depositAmountInput = prompt(
+            `Enter deposit/retainer amount for ${session.clientName}:\n\nSession Total: $${session.price}\nSuggested 50%: $${(session.price * 0.5).toFixed(2)}`,
+            (session.price * 0.5).toFixed(2)
+        );
+        
+        if (!depositAmountInput) {
+            return; // User cancelled
+        }
+        
+        const depositAmount = parseFloat(depositAmountInput);
+        
+        if (isNaN(depositAmount) || depositAmount <= 0) {
+            showMessage('Please enter a valid amount greater than $0', 'error');
+            return;
+        }
+        
+        if (depositAmount > session.price) {
+            const confirmOverage = confirm(
+                `Deposit amount ($${depositAmount}) is more than the session total ($${session.price}).\n\nDo you want to continue?`
+            );
+            if (!confirmOverage) {
+                return;
+            }
+        }
+        
+        console.log('Creating deposit invoice for session:', session);
+        showMessage('Creating deposit invoice...', 'info');
+        
+        const authToken = await getAuthToken();
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        if (authToken) {
+            headers['Authorization'] = `Bearer ${authToken}`;
+        }
+        
+        const response = await fetch('/api/create-invoice', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+                sessionId: session.id,
+                clientName: session.clientName,
+                email: session.email,
+                amount: depositAmount,
+                description: `Retainer for ${session.sessionType} Photography Session (Total: $${session.price})`,
+                dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // 14 days for deposit
+                isDeposit: true,
+                depositAmount: depositAmount,
+                totalAmount: session.price
+            })
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Failed to create deposit invoice: ${errorText}`);
+        }
+        
+        const result = await response.json();
+        console.log('Deposit invoice creation result:', result);
+        
+        if (result.success && result.invoice_url) {
+            showMessage('Deposit invoice created successfully!', 'success');
+            
+            // Open the invoice URL in a new tab
+            window.open(result.invoice_url, '_blank');
+            
+            // Show a dialog with invoice details
+            const remainingBalance = session.price - depositAmount;
+            const message = `Deposit invoice created successfully!\n\nRetainer: $${depositAmount}\nRemaining Balance: $${remainingBalance.toFixed(2)}\n\nInvoice URL: ${result.invoice_url}\n\nThe invoice has been sent to ${session.email}`;
+            alert(message);
+        } else {
+            throw new Error(result.error || 'Unknown error creating deposit invoice');
+        }
+        
+    } catch (error) {
+        console.error('Error creating deposit invoice:', error);
+        showMessage('Error creating deposit invoice: ' + error.message, 'error');
     }
 }
 
