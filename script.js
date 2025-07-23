@@ -1545,27 +1545,24 @@ async function sendDepositInvoiceFromCard(sessionId) {
             body: JSON.stringify({ depositAmount })
         });
         
-        const result = await response.json();
-        
-        if (response.ok) {
-            showMessage('Deposit invoice sent successfully!', 'success');
-            
-            // Open the invoice URL
-            if (result.invoiceUrl) {
-                window.open(result.invoiceUrl, '_blank');
-            }
-            
-            // Close modal
-            const modal = document.querySelector('.modal');
-            if (modal) {
-                modal.remove();
-            }
-            
-            // Refresh sessions
-            await loadSessions();
-        } else {
-            throw new Error(result.error || 'Failed to send deposit invoice');
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Server response:', response.status, errorText);
+            throw new Error(`Server error (${response.status}): ${errorText}`);
         }
+        
+        const result = await response.json();
+        console.log('Deposit invoice response:', result);
+        
+        showMessage('Deposit invoice sent successfully!', 'success');
+        
+        // Open the invoice URL
+        if (result.invoiceUrl) {
+            window.open(result.invoiceUrl, '_blank');
+        }
+        
+        // Refresh sessions to show updated deposit information
+        await loadSessions();
     } catch (error) {
         console.error('Error sending deposit invoice:', error);
         showMessage('Error sending deposit invoice: ' + error.message, 'error');
