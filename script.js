@@ -334,6 +334,22 @@ function createSessionCard(session) {
     contractBtn.textContent = '📝 Send Contract';
     contractBtn.onclick = () => openContractModal(session.id);
 
+    // Call and text buttons for main actions
+    const callClientBtn = document.createElement('button');
+    callClientBtn.className = 'btn btn-success';
+    callClientBtn.textContent = '📞 Call Client';
+    callClientBtn.onclick = () => window.location.href = `tel:${session.phoneNumber}`;
+
+    const textClientBtn = document.createElement('button');
+    textClientBtn.className = 'btn btn-info';
+    textClientBtn.textContent = '💬 Text Client';
+    textClientBtn.onclick = () => window.location.href = `sms:${session.phoneNumber}`;
+
+    const paymentPlanBtn = document.createElement('button');
+    paymentPlanBtn.className = 'btn btn-warning';
+    paymentPlanBtn.textContent = '📅 Create Payment Plan';
+    paymentPlanBtn.onclick = () => openPaymentPlanModal(session.id);
+
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn btn-danger';
     deleteBtn.textContent = '🗑️ Delete';
@@ -352,6 +368,9 @@ function createSessionCard(session) {
     actions.appendChild(invoiceBtn);
     actions.appendChild(retainerBtn);
     actions.appendChild(contractBtn);
+    actions.appendChild(paymentPlanBtn);
+    actions.appendChild(callClientBtn);
+    actions.appendChild(textClientBtn);
     actions.appendChild(deleteBtn);
     
     // Debug: Log all buttons in the actions container
@@ -1355,6 +1374,12 @@ async function deletePhoto(sessionId, photoIndex) {
 // Global variables for retainer modal
 let currentRetainerSessionId = null;
 let currentRetainerSession = null;
+
+// Open payment plan modal (placeholder)
+function openPaymentPlanModal(sessionId) {
+    console.log('Opening payment plan modal for session:', sessionId);
+    showMessage('Payment plan feature coming soon!', 'info');
+}
 
 // Open retainer modal
 function openRetainerModal(sessionId) {
