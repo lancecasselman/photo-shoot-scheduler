@@ -356,12 +356,6 @@ function createSessionCard(session) {
     deleteBtn.textContent = '🗑️ Delete';
     deleteBtn.onclick = () => deleteSession(session.id);
 
-    console.log('About to append buttons for:', session.clientName);
-    console.log('Upload button created:', uploadBtn.textContent);
-    console.log('Upload button onclick:', uploadBtn.onclick ? 'Set' : 'NOT SET');
-    console.log('Deposit button created:', depositBtn.textContent);
-    console.log('Deposit button onclick:', depositBtn.onclick ? 'Set' : 'NOT SET');
-    
     actions.appendChild(editBtn);
     actions.appendChild(uploadBtn);
     actions.appendChild(calendarBtn);
@@ -375,12 +369,6 @@ function createSessionCard(session) {
     actions.appendChild(callClientBtn);
     actions.appendChild(textClientBtn);
     actions.appendChild(deleteBtn);
-    
-    // Debug: Log all buttons in the actions container
-    console.log('Actions container buttons:', actions.children.length);
-    for (let i = 0; i < actions.children.length; i++) {
-        console.log(`Button ${i}: ${actions.children[i].textContent}`);
-    }
 
     header.appendChild(headerInfo);
 
