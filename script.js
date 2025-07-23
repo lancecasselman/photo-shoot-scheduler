@@ -1519,7 +1519,14 @@ async function updateDeposit(sessionId) {
 
 // Send deposit invoice from card
 async function sendDepositInvoiceFromCard(sessionId) {
+    console.log('Sending deposit invoice for session:', sessionId);
+    
     const depositInput = document.getElementById(`deposit-input-${sessionId}`);
+    if (!depositInput) {
+        showMessage('Deposit input not found', 'error');
+        return;
+    }
+    
     const depositAmount = parseFloat(depositInput.value);
     
     if (isNaN(depositAmount) || depositAmount <= 0) {
