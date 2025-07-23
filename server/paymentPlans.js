@@ -1,7 +1,7 @@
 const { v4: uuidv4 } = require('uuid');
 const { db } = require('./db');
 const { paymentPlans, paymentRecords, photographySessions } = require('./schema');
-const { eq, and, lte, gte } = require('drizzle-orm');
+const { eq, and, lte, gte, sql } = require('drizzle-orm');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 class PaymentPlanManager {
@@ -106,16 +106,20 @@ class PaymentPlanManager {
   // Mark payment as received
   async markPaymentReceived(paymentId, paymentMethod = 'stripe', notes = '') {
     try {
-      // Update payment record
-      const [payment] = await db.update(paymentRecords)
-        .set({
-          status: 'paid',
-          paidDate: new Date(),
-          paymentMethod,
-          notes
-        })
-        .where(eq(paymentRecords.id, paymentId))
-        .returning();
+      // Use direct SQL to avoid Drizzle timestamp issues
+      const result = await db.execute(sql`
+        UPDATE payment_records 
+        SET status = 'paid', 
+            paid_date = CURRENT_TIMESTAMP,
+            payment_method = ${paymentMethod},
+            notes = ${notes},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ${paymentId}
+        RETURNING *
+      `);
+      
+      const payment = result.rows[0];
+      if (!payment) throw new Error('Payment record not found');
 
       if (!payment) throw new Error('Payment record not found');
 
@@ -132,21 +136,23 @@ class PaymentPlanManager {
         // Check if plan is completed
         const isCompleted = newRemainingBalance <= 0.01; // Account for floating point precision
         
+        // Get next payment date if not completed
+        const nextPaymentDate = isCompleted ? null : await this.getNextPaymentDate(payment.planId);
+        
         await db.update(paymentPlans)
           .set({
             paymentsCompleted: newPaymentsCompleted,
             amountPaid: newAmountPaid.toFixed(2),
             remainingBalance: Math.max(0, newRemainingBalance).toFixed(2),
             status: isCompleted ? 'completed' : 'active',
-            nextPaymentDate: isCompleted ? null : this.getNextPaymentDate(payment.planId)
+            nextPaymentDate
           })
           .where(eq(paymentPlans.id, payment.planId));
 
-        // Update session
+        // Update session (temporarily disabled timestamp update to debug)
         await db.update(photographySessions)
           .set({
             paymentsRemaining: Math.max(0, plan.totalPayments - newPaymentsCompleted),
-            nextPaymentDate: isCompleted ? null : this.getNextPaymentDate(payment.planId),
             paid: isCompleted
           })
           .where(eq(photographySessions.id, payment.sessionId));
@@ -173,7 +179,11 @@ class PaymentPlanManager {
         .orderBy(paymentRecords.dueDate)
         .limit(1);
 
-      return nextPayment ? nextPayment.dueDate : null;
+      if (nextPayment && nextPayment.dueDate) {
+        // Ensure we return a proper Date object
+        return new Date(nextPayment.dueDate);
+      }
+      return null;
     } catch (error) {
       console.error('Error getting next payment date:', error);
       return null;

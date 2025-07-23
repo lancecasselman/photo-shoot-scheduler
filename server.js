@@ -34,6 +34,20 @@ const isAuthenticated = (req, res, next) => {
         return next();
     }
     
+    // Development testing bypass - set TEST_MODE=true to enable testing without auth
+    if (process.env.TEST_MODE === 'true') {
+        // Create a test user for development
+        req.user = {
+            claims: {
+                sub: 'test-user-123',
+                email: 'test@example.com',
+                first_name: 'Test',
+                last_name: 'User'
+            }
+        };
+        return next();
+    }
+    
     // No anonymous access allowed - authentication required
     res.status(401).json({ message: 'Authentication required. Please log in.' });
 };
@@ -248,6 +262,7 @@ async function getAllSessions(userId) {
         const result = await pool.query(query, params);
         return result.rows.map(row => ({
             id: row.id,
+            userId: row.user_id,
             clientName: row.client_name,
             sessionType: row.session_type,
             dateTime: row.date_time,
@@ -352,6 +367,7 @@ async function getSessionById(id, userId) {
         const row = result.rows[0];
         return {
             id: row.id,
+            userId: row.user_id,
             clientName: row.client_name,
             sessionType: row.session_type,
             dateTime: row.date_time,
@@ -1529,7 +1545,11 @@ async function startServer() {
     app.listen(PORT, '0.0.0.0', () => {
         console.log(`📸 Photo Session Scheduler running on http://0.0.0.0:${PORT}`);
         console.log('Database connected and ready');
-        console.log('🔐 Authentication required for all access - no anonymous mode');
+        if (process.env.TEST_MODE === 'true') {
+            console.log('🧪 TEST MODE ENABLED - Development authentication bypass active');
+        } else {
+            console.log('🔐 Authentication required for all access - no anonymous mode');
+        }
     });
 }
 
