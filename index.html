@@ -957,7 +957,6 @@
     </div>
 
     <script>
-        let sessions = [];
         let currentUploadSessionId = null;
         let currentPaymentPlanSessionId = null;
 
@@ -1012,9 +1011,9 @@
                     
                     if (response.ok) {
                         const updatedSession = await response.json();
-                        const sessionIndex = sessions.findIndex(s => s.id === editingSessionId);
+                        const sessionIndex = window.sessions.findIndex(s => s.id === editingSessionId);
                         if (sessionIndex !== -1) {
-                            sessions[sessionIndex] = updatedSession;
+                            window.sessions[sessionIndex] = updatedSession;
                         }
                         renderSessions();
                         resetForm(e.target);

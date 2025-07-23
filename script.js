@@ -1,8 +1,10 @@
 // Photography Session Scheduler
 // Session management system with cloud database
 
-// Global variables
-let sessions = [];
+// Global variables - Check if already declared to prevent duplicates
+if (typeof sessions === 'undefined') {
+    var sessions = [];
+}
 let sessionIdCounter = 1;
 let currentUser = null;
 
