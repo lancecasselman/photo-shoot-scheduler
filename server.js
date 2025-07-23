@@ -18,6 +18,10 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 // Import notification services
 const { initializeNotificationServices, sendWelcomeEmail, sendBillingNotification, broadcastFeatureUpdate } = require('./server/notifications');
 
+// Import payment plan services
+const PaymentPlanManager = require('./server/paymentPlans');
+const PaymentScheduler = require('./server/paymentScheduler');
+
 // PostgreSQL database connection
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -1272,6 +1276,138 @@ app.get('/api/sessions/:id/calendar.ics', async (req, res) => {
     }
 });
 
+// Payment Plan API Endpoints
+const paymentManager = new PaymentPlanManager();
+const paymentScheduler = new PaymentScheduler();
+
+// Create payment plan for a session
+app.post('/api/sessions/:id/payment-plan', isAuthenticated, async (req, res) => {
+    const sessionId = req.params.id;
+    const { totalAmount, startDate, endDate, reminderDays = 3 } = req.body;
+    const user = getCurrentUser(req);
+    
+    try {
+        const session = await getSessionById(sessionId);
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+        
+        // Verify user owns this session
+        if (session.userId !== user.sub) {
+            return res.status(403).json({ error: 'Unauthorized access to session' });
+        }
+        
+        const result = await paymentManager.createPaymentPlan(
+            sessionId, 
+            user.sub, 
+            parseFloat(totalAmount), 
+            startDate, 
+            endDate, 
+            reminderDays
+        );
+        
+        res.json({
+            message: 'Payment plan created successfully',
+            plan: result.plan,
+            payments: result.payments
+        });
+    } catch (error) {
+        console.error('Error creating payment plan:', error);
+        res.status(500).json({ error: 'Failed to create payment plan' });
+    }
+});
+
+// Get payment plan for a session
+app.get('/api/sessions/:id/payment-plan', isAuthenticated, async (req, res) => {
+    const sessionId = req.params.id;
+    const user = getCurrentUser(req);
+    
+    try {
+        const session = await getSessionById(sessionId);
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+        
+        // Verify user owns this session
+        if (session.userId !== user.sub) {
+            return res.status(403).json({ error: 'Unauthorized access to session' });
+        }
+        
+        const paymentPlan = await paymentManager.getPaymentPlan(sessionId);
+        
+        if (!paymentPlan) {
+            return res.status(404).json({ error: 'No payment plan found for this session' });
+        }
+        
+        res.json(paymentPlan);
+    } catch (error) {
+        console.error('Error getting payment plan:', error);
+        res.status(500).json({ error: 'Failed to get payment plan' });
+    }
+});
+
+// Mark payment as received
+app.post('/api/payments/:id/mark-paid', isAuthenticated, async (req, res) => {
+    const paymentId = req.params.id;
+    const { paymentMethod = 'manual', notes = '' } = req.body;
+    
+    try {
+        const payment = await paymentManager.markPaymentReceived(paymentId, paymentMethod, notes);
+        
+        res.json({
+            message: 'Payment marked as received',
+            payment
+        });
+    } catch (error) {
+        console.error('Error marking payment received:', error);
+        res.status(500).json({ error: 'Failed to mark payment as received' });
+    }
+});
+
+// Send invoice for specific payment
+app.post('/api/payments/:id/send-invoice', isAuthenticated, async (req, res) => {
+    const paymentId = req.params.id;
+    const { forceResend = false } = req.body;
+    
+    try {
+        const payment = await paymentManager.sendPaymentInvoice(paymentId, forceResend);
+        
+        res.json({
+            message: 'Invoice sent successfully',
+            payment
+        });
+    } catch (error) {
+        console.error('Error sending payment invoice:', error);
+        res.status(500).json({ error: 'Failed to send invoice' });
+    }
+});
+
+// Manual trigger for payment processing (for testing)
+app.post('/api/payments/process-automated', isAuthenticated, async (req, res) => {
+    try {
+        const results = await paymentScheduler.manualTrigger();
+        
+        res.json({
+            message: 'Automated payment processing completed',
+            results
+        });
+    } catch (error) {
+        console.error('Error in manual payment processing:', error);
+        res.status(500).json({ error: 'Failed to process payments' });
+    }
+});
+
+// Get payment scheduler status
+app.get('/api/payments/scheduler-status', isAuthenticated, (req, res) => {
+    try {
+        const status = paymentScheduler.getStatus();
+        res.json(status);
+    } catch (error) {
+        console.error('Error getting scheduler status:', error);
+        res.status(500).json({ error: 'Failed to get scheduler status' });
+    }
+});
+
 // Serve gallery page (legacy endpoint for backward compatibility)
 app.get('/sessions/:id/gallery', (req, res) => {
     res.sendFile(path.join(__dirname, 'gallery.html'));
@@ -1386,6 +1522,9 @@ async function startServer() {
     
     // Initialize notification services
     initializeNotificationServices();
+    
+    // Start automated payment scheduler
+    paymentScheduler.start();
     
     app.listen(PORT, '0.0.0.0', () => {
         console.log(`📸 Photo Session Scheduler running on http://0.0.0.0:${PORT}`);
