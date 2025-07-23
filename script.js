@@ -169,7 +169,7 @@ async function loadSessions() {
             paid: session.paid || false,
             edited: session.edited || false,
             delivered: session.delivered || false,
-            reminderEnabled: session.reminder_enabled || session.reminderEnabled || false,
+            reminderEnabled: session.sendReminder || session.reminderEnabled || false,
             galleryReadyNotified: session.gallery_ready_notified || session.galleryReadyNotified || false,
             reminderSent: session.reminder_sent || session.reminderSent || false,
             createdBy: session.created_by || session.createdBy,
