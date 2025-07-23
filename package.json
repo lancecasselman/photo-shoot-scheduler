@@ -38,6 +38,7 @@
     "memoizee": "^0.4.17",
     "multer": "^2.0.2",
     "node-cron": "^4.2.1",
+    "node-fetch": "^3.3.2",
     "nodemailer": "^7.0.5",
     "openid-client": "^6.6.2",
     "passport": "^0.7.0",

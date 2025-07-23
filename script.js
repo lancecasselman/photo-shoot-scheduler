@@ -358,6 +358,8 @@ function createSessionCard(session) {
     console.log('About to append buttons for:', session.clientName);
     console.log('Upload button created:', uploadBtn.textContent);
     console.log('Upload button onclick:', uploadBtn.onclick ? 'Set' : 'NOT SET');
+    console.log('Deposit button created:', depositBtn.textContent);
+    console.log('Deposit button onclick:', depositBtn.onclick ? 'Set' : 'NOT SET');
     
     actions.appendChild(editBtn);
     actions.appendChild(uploadBtn);
