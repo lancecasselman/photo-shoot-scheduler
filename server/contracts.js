@@ -99,8 +99,7 @@ Balance due 30 days before wedding: $\{{balance_amount\}}
 \{{/if\}}
 
 3. DELIVERY
-- Online gallery delivered within 4-6 weeks after wedding
-- High-resolution digital files included
+- Online gallery with high-resolution digital files
 - Print release included for personal use
 
 4. CANCELLATION POLICY
@@ -171,8 +170,7 @@ Payment due: Upon completion of session
 For outdoor sessions, photographer will work with client to reschedule if weather conditions are unsuitable.
 
 5. DELIVERY
-- Online gallery delivered within 2-3 weeks
-- High-resolution digital images included
+- Online gallery with high-resolution digital images
 - Minimum of \{{min_photos\}} edited photos guaranteed
 
 6. USAGE RIGHTS
