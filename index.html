@@ -1128,6 +1128,9 @@
                         <button class="btn btn-warning" onclick="copyGalleryUrl('${session.id}')">
                             📸 Copy Gallery URL
                         </button>
+                        <button class="btn btn-contract" onclick="openContractModal('${session.id}')">
+                            📝 Send Contract
+                        </button>
                         ${session.hasPaymentPlan ? `
                             <button class="btn btn-success" onclick="viewPaymentPlan('${session.id}')">
                                 💳 View Payment Plan
@@ -2093,6 +2096,184 @@ END:VCALENDAR`;
                 showMessage('Failed to process payments: ' + error.message, 'error');
             }
         }
+
+        // Contract Management Functions
+        let currentContractSessionId = null;
+
+        async function openContractModal(sessionId) {
+            currentContractSessionId = sessionId;
+            const session = sessions.find(s => s.id === sessionId);
+            if (!session) return;
+
+            // Load existing contracts for this session
+            await loadExistingContracts(sessionId);
+            
+            document.getElementById('contractModal').classList.add('active');
+        }
+
+        function closeContractModal() {
+            document.getElementById('contractModal').classList.remove('active');
+            currentContractSessionId = null;
+        }
+
+        async function loadExistingContracts(sessionId) {
+            try {
+                const response = await fetch(`/api/sessions/${sessionId}/contracts`);
+                if (!response.ok) {
+                    throw new Error('Failed to load contracts');
+                }
+
+                const contracts = await response.json();
+                const existingContractsDiv = document.getElementById('existingContracts');
+                
+                if (contracts.length === 0) {
+                    existingContractsDiv.innerHTML = '';
+                    return;
+                }
+
+                existingContractsDiv.innerHTML = `
+                    <h4>Existing Contracts:</h4>
+                    <div class="existing-contracts-list">
+                        ${contracts.map(contract => `
+                            <div class="contract-item ${contract.status}">
+                                <div class="contract-item-info">
+                                    <h5>${contract.contract_title}</h5>
+                                    <p>Status: ${contract.status.charAt(0).toUpperCase() + contract.status.slice(1)}</p>
+                                    <p>Created: ${new Date(contract.created_at).toLocaleDateString()}</p>
+                                    ${contract.signed_date ? `<p>Signed: ${new Date(contract.signed_date).toLocaleDateString()}</p>` : ''}
+                                </div>
+                                <div class="contract-item-actions">
+                                    ${contract.status === 'pending' ? `
+                                        <button class="btn btn-primary btn-sm" onclick="sendContract('${contract.id}')">
+                                            📧 Send Contract
+                                        </button>
+                                    ` : contract.status === 'sent' ? `
+                                        <span class="contract-status-badge sent">📤 Sent</span>
+                                    ` : contract.status === 'signed' ? `
+                                        <span class="contract-status-badge signed">✅ Signed</span>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Error loading contracts:', error);
+                showMessage('Failed to load existing contracts', 'error');
+            }
+        }
+
+        async function createContract(sessionId, contractType) {
+            try {
+                showMessage('Creating contract...', 'info');
+                
+                const response = await fetch(`/api/sessions/${sessionId}/contracts`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        contractType: contractType
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to create contract');
+                }
+
+                const result = await response.json();
+                
+                showMessage('Contract created successfully!', 'success');
+                
+                // Reload the existing contracts to show the new one
+                await loadExistingContracts(sessionId);
+                
+                // Trigger milestone celebration
+                celebrateMilestone('contract_signed');
+                
+            } catch (error) {
+                console.error('Error creating contract:', error);
+                showMessage('Failed to create contract: ' + error.message, 'error');
+            }
+        }
+
+        async function sendContract(contractId) {
+            try {
+                showMessage('Sending contract to client...', 'info');
+                
+                const response = await fetch(`/api/contracts/${contractId}/send`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to send contract');
+                }
+
+                const result = await response.json();
+                
+                showMessage('Contract sent successfully!', 'success');
+                
+                // Show the signing URL for reference
+                alert(`Contract sent to client!\n\nSigning URL: ${result.signingUrl}\n\nThe client will receive an email with the signing link.`);
+                
+                // Reload existing contracts to update status
+                await loadExistingContracts(currentContractSessionId);
+                
+            } catch (error) {
+                console.error('Error sending contract:', error);
+                showMessage('Failed to send contract: ' + error.message, 'error');
+            }
+        }
     </script>
+
+    <!-- Contract Selection Modal -->
+    <div id="contractModal" class="payment-plan-modal">
+        <div class="payment-plan-content">
+            <h3>📝 Send Contract</h3>
+            
+            <div class="contract-selection">
+                <h4>Select Contract Type:</h4>
+                
+                <div class="contract-options">
+                    <div class="contract-option" onclick="createContract(currentContractSessionId, 'photo_release')">
+                        <div class="contract-icon">📷</div>
+                        <div class="contract-info">
+                            <h5>Photo Print Release</h5>
+                            <p>Grants clients permission to print and share photos for personal use</p>
+                        </div>
+                    </div>
+                    
+                    <div class="contract-option" onclick="createContract(currentContractSessionId, 'wedding_contract')">
+                        <div class="contract-icon">💒</div>
+                        <div class="contract-info">
+                            <h5>Wedding Photography Contract</h5>
+                            <p>Comprehensive contract for wedding photography services</p>
+                        </div>
+                    </div>
+                    
+                    <div class="contract-option" onclick="createContract(currentContractSessionId, 'general_contract')">
+                        <div class="contract-icon">📸</div>
+                        <div class="contract-info">
+                            <h5>General Photography Contract</h5>
+                            <p>Standard contract for portrait sessions and general photography services</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="existing-contracts" id="existingContracts">
+                <!-- Existing contracts will be loaded here -->
+            </div>
+            
+            <div class="payment-actions">
+                <button class="btn btn-secondary" onclick="closeContractModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>

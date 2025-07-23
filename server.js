@@ -22,6 +22,9 @@ const { initializeNotificationServices, sendWelcomeEmail, sendBillingNotificatio
 const PaymentPlanManager = require('./server/paymentPlans');
 const PaymentScheduler = require('./server/paymentScheduler');
 
+// Import contract management
+const ContractManager = require('./server/contracts');
+
 // PostgreSQL database connection
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -1305,6 +1308,9 @@ app.get('/api/sessions/:id/calendar.ics', async (req, res) => {
 const paymentManager = new PaymentPlanManager();
 const paymentScheduler = new PaymentScheduler();
 
+// Contract Manager
+const contractManager = new ContractManager();
+
 // Create payment plan for a session
 app.post('/api/sessions/:id/payment-plan', isAuthenticated, async (req, res) => {
     const sessionId = req.params.id;
@@ -1510,6 +1516,249 @@ app.get('/api/subscribers/stats', isAuthenticated, async (req, res) => {
     } catch (error) {
         console.error('Subscriber stats error:', error);
         res.status(500).json({ error: error.message });
+    }
+});
+
+// Contract API Endpoints
+
+// Get contract templates
+app.get('/api/contracts/templates', isAuthenticated, async (req, res) => {
+    try {
+        const templates = contractManager.getContractTemplates();
+        res.json(templates);
+    } catch (error) {
+        console.error('Error getting contract templates:', error);
+        res.status(500).json({ error: 'Failed to get contract templates' });
+    }
+});
+
+// Create contract for session
+app.post('/api/sessions/:id/contracts', isAuthenticated, async (req, res) => {
+    const sessionId = req.params.id;
+    const { contractType } = req.body;
+    const user = getCurrentUser(req);
+    
+    try {
+        const session = await getSessionById(sessionId);
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+        
+        // Verify user owns this session
+        if (session.userId !== user.sub) {
+            return res.status(403).json({ error: 'Unauthorized access to session' });
+        }
+        
+        // Prepare session data for contract template
+        const contractData = {
+            client_name: session.clientName,
+            client_email: session.email,
+            photographer_name: 'Lance Casselman',
+            photographer_email: 'lance@thelegacyphotography.com',
+            session_type: session.sessionType,
+            session_date: new Date(session.dateTime).toLocaleDateString(),
+            location: session.location,
+            price: session.price,
+            duration: session.duration,
+            reception_location: session.location, // For wedding contracts
+            coverage_hours: Math.round(session.duration / 60), // Convert minutes to hours
+            payment_plan: session.hasPaymentPlan,
+            payment_schedule: session.hasPaymentPlan ? `${session.paymentsRemaining} monthly payments of $${session.monthlyPayment}` : null,
+            deposit_amount: session.hasPaymentPlan ? (session.price * 0.5).toFixed(2) : null,
+            balance_amount: session.hasPaymentPlan ? (session.price * 0.5).toFixed(2) : null,
+            min_photos: '25'
+        };
+        
+        const contract = await contractManager.createContract(sessionId, user.sub, contractType, contractData);
+        
+        res.json({
+            message: 'Contract created successfully',
+            contract: contract
+        });
+    } catch (error) {
+        console.error('Error creating contract:', error);
+        res.status(500).json({ error: 'Failed to create contract' });
+    }
+});
+
+// Get contracts for session
+app.get('/api/sessions/:id/contracts', isAuthenticated, async (req, res) => {
+    const sessionId = req.params.id;
+    const user = getCurrentUser(req);
+    
+    try {
+        const session = await getSessionById(sessionId);
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+        
+        // Verify user owns this session
+        if (session.userId !== user.sub) {
+            return res.status(403).json({ error: 'Unauthorized access to session' });
+        }
+        
+        const contracts = await contractManager.getSessionContracts(sessionId);
+        res.json(contracts);
+    } catch (error) {
+        console.error('Error getting session contracts:', error);
+        res.status(500).json({ error: 'Failed to get session contracts' });
+    }
+});
+
+// Send contract to client
+app.post('/api/contracts/:id/send', isAuthenticated, async (req, res) => {
+    const contractId = req.params.id;
+    const user = getCurrentUser(req);
+    
+    try {
+        const contract = await contractManager.getContract(contractId);
+        if (!contract) {
+            return res.status(404).json({ error: 'Contract not found' });
+        }
+        
+        // Verify user owns this contract
+        if (contract.user_id !== user.sub) {
+            return res.status(403).json({ error: 'Unauthorized access to contract' });
+        }
+        
+        // Mark contract as sent
+        const updatedContract = await contractManager.sendContract(contractId);
+        
+        // Generate signing URL
+        const host = req.get('host');
+        let baseUrl;
+        
+        if (host && host.includes('localhost')) {
+            const replitDomains = process.env.REPLIT_DOMAINS;
+            if (replitDomains) {
+                const domains = replitDomains.split(',');
+                baseUrl = `https://${domains[0]}`;
+            } else {
+                baseUrl = `${req.protocol}://${host}`;
+            }
+        } else {
+            baseUrl = `https://${host}`;
+        }
+        
+        const signingUrl = `${baseUrl}/contract-signing.html?token=${contract.access_token}`;
+        
+        // Send email notification to client
+        if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+            try {
+                const transporter = createEmailTransporter();
+                const emailSubject = `📝 Contract Ready for Signature - ${contract.contract_title}`;
+                const emailBody = `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center;">
+                            <h1>📝 Contract Ready for Signature</h1>
+                            <h2>The Legacy Photography</h2>
+                        </div>
+                        
+                        <div style="padding: 30px; background: #f9f9f9;">
+                            <h3>Hello ${contract.client_name},</h3>
+                            
+                            <p>Your photography contract is ready for your electronic signature.</p>
+                            
+                            <div style="background: white; border-left: 4px solid #667eea; padding: 20px; margin: 20px 0;">
+                                <h4>${contract.contract_title}</h4>
+                                <p><strong>Photographer:</strong> ${contract.photographer_name}</p>
+                                <p><strong>Created:</strong> ${new Date(contract.created_at).toLocaleDateString()}</p>
+                            </div>
+                            
+                            <div style="text-align: center; margin: 30px 0;">
+                                <a href="${signingUrl}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+                                    📝 Sign Contract Now
+                                </a>
+                            </div>
+                            
+                            <p style="color: #666; font-size: 14px;">
+                                Please review the contract carefully and sign electronically using the link above. 
+                                Once signed, you'll receive a copy for your records.
+                            </p>
+                            
+                            <p style="color: #666; font-size: 14px;">
+                                If you have any questions, please don't hesitate to contact us.
+                            </p>
+                        </div>
+                        
+                        <div style="background: #333; color: white; padding: 20px; text-align: center;">
+                            <p>The Legacy Photography<br>
+                            Email: ${contract.photographer_email}<br>
+                            Creating lasting memories through professional photography</p>
+                        </div>
+                    </div>
+                `;
+                
+                await transporter.sendMail({
+                    from: `"The Legacy Photography" <${process.env.EMAIL_USER}>`,
+                    to: contract.client_email,
+                    subject: emailSubject,
+                    html: emailBody
+                });
+                
+                console.log(`✅ Contract email sent to: ${contract.client_email}`);
+            } catch (emailError) {
+                console.error('Error sending contract email:', emailError);
+            }
+        }
+        
+        res.json({
+            message: 'Contract sent successfully',
+            signingUrl: signingUrl,
+            contract: updatedContract
+        });
+    } catch (error) {
+        console.error('Error sending contract:', error);
+        res.status(500).json({ error: 'Failed to send contract' });
+    }
+});
+
+// View contract (client access)
+app.get('/api/contracts/view/:token', async (req, res) => {
+    const accessToken = req.params.token;
+    
+    try {
+        const contract = await contractManager.getContractByToken(accessToken);
+        if (!contract) {
+            return res.status(404).json({ error: 'Contract not found or access denied' });
+        }
+        
+        res.json(contract);
+    } catch (error) {
+        console.error('Error viewing contract:', error);
+        res.status(500).json({ error: 'Failed to view contract' });
+    }
+});
+
+// Sign contract (client endpoint)
+app.post('/api/contracts/:id/sign', async (req, res) => {
+    const contractId = req.params.id;
+    const { signature, access_token } = req.body;
+    
+    try {
+        // Verify access token
+        const contract = await contractManager.getContractByToken(access_token);
+        if (!contract || contract.id !== contractId) {
+            return res.status(404).json({ error: 'Contract not found or access denied' });
+        }
+        
+        if (contract.status === 'signed') {
+            return res.status(400).json({ error: 'Contract already signed' });
+        }
+        
+        // Sign the contract
+        const signedContract = await contractManager.signContract(contractId, signature);
+        
+        // Update session contract status
+        await updateSession(contract.session_id, { contractSigned: true });
+        
+        res.json({
+            message: 'Contract signed successfully',
+            contract: signedContract
+        });
+    } catch (error) {
+        console.error('Error signing contract:', error);
+        res.status(500).json({ error: 'Failed to sign contract' });
     }
 });
 

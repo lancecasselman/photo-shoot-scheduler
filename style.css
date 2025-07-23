@@ -1024,3 +1024,144 @@ header p {
         font-size: 0.8rem;
     }
 }
+
+/* Contract Button Styles */
+.btn-contract {
+    background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%);
+    color: white;
+}
+
+.btn-contract:hover {
+    background: linear-gradient(135deg, #805ad5 0%, #6b46c1 100%);
+}
+
+/* Contract Modal Styles */
+.contract-selection {
+    margin-bottom: 30px;
+}
+
+.contract-options {
+    display: grid;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.contract-option {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.contract-option:hover {
+    border-color: #9f7aea;
+    background: #faf5ff;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(159, 122, 234, 0.2);
+}
+
+.contract-icon {
+    font-size: 2.5rem;
+    min-width: 60px;
+    text-align: center;
+}
+
+.contract-info h5 {
+    margin: 0 0 8px 0;
+    color: #2d3748;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.contract-info p {
+    margin: 0;
+    color: #4a5568;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+/* Existing Contracts List */
+.existing-contracts {
+    margin-top: 30px;
+}
+
+.existing-contracts h4 {
+    color: #2d3748;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+}
+
+.existing-contracts-list {
+    display: grid;
+    gap: 15px;
+}
+
+.contract-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: white;
+}
+
+.contract-item.pending {
+    border-color: #f6ad55;
+    background: #fffaf0;
+}
+
+.contract-item.sent {
+    border-color: #4299e1;
+    background: #ebf8ff;
+}
+
+.contract-item.signed {
+    border-color: #48bb78;
+    background: #f0fff4;
+}
+
+.contract-item-info h5 {
+    margin: 0 0 5px 0;
+    color: #2d3748;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.contract-item-info p {
+    margin: 2px 0;
+    color: #4a5568;
+    font-size: 0.85rem;
+}
+
+.contract-item-actions {
+    flex-shrink: 0;
+}
+
+.contract-status-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.contract-status-badge.sent {
+    background: #bee3f8;
+    color: #2c5282;
+}
+
+.contract-status-badge.signed {
+    background: #c6f6d5;
+    color: #22543d;
+}
+
+.btn-sm {
+    font-size: 0.8rem;
+    padding: 6px 12px;
+}

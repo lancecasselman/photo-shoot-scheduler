@@ -54,6 +54,34 @@ const paymentRecords = pgTable("payment_records", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Contracts table for e-signature management
+const contracts = pgTable("contracts", {
+  id: varchar("id").primaryKey().notNull(),
+  sessionId: varchar("session_id").notNull(),
+  userId: varchar("user_id").notNull(),
+  contractType: varchar("contract_type").notNull(), // 'photo_release', 'wedding_contract', 'general_contract'
+  contractTitle: varchar("contract_title").notNull(),
+  contractContent: text("contract_content").notNull(),
+  status: varchar("status").notNull().default("pending"), // pending, sent, signed, cancelled
+  clientName: varchar("client_name").notNull(),
+  clientEmail: varchar("client_email").notNull(),
+  photographerName: varchar("photographer_name").notNull(),
+  photographerEmail: varchar("photographer_email").notNull(),
+  signedDate: timestamp("signed_date"),
+  clientSignature: text("client_signature"), // Base64 signature data
+  clientSignatureDate: timestamp("client_signature_date"),
+  photographerSignature: text("photographer_signature"),
+  photographerSignatureDate: timestamp("photographer_signature_date"),
+  accessToken: varchar("access_token").notNull(), // Secure token for client access
+  sentAt: timestamp("sent_at"),
+  viewedAt: timestamp("viewed_at"),
+  remindersSent: integer("reminders_sent").default(0),
+  lastReminderSent: timestamp("last_reminder_sent"),
+  customFields: jsonb("custom_fields").default("{}"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Photography sessions table (simplified for CommonJS)
 const photographySessions = pgTable("photography_sessions", {
   id: varchar("id").primaryKey().notNull(),
@@ -97,4 +125,5 @@ module.exports = {
   paymentPlans,
   paymentRecords,
   photographySessions,
+  contracts,
 };

@@ -324,6 +324,11 @@ function createSessionCard(session) {
     invoiceBtn.textContent = '💰 Send Invoice';
     invoiceBtn.onclick = () => createInvoice(session);
 
+    const contractBtn = document.createElement('button');
+    contractBtn.className = 'btn btn-contract';
+    contractBtn.textContent = '📝 Send Contract';
+    contractBtn.onclick = () => openContractModal(session.id);
+
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn btn-danger';
     deleteBtn.textContent = '🗑️ Delete';
@@ -340,6 +345,7 @@ function createSessionCard(session) {
     actions.appendChild(galleryBtn);
     actions.appendChild(emailPreviewBtn);
     actions.appendChild(invoiceBtn);
+    actions.appendChild(contractBtn);
     actions.appendChild(deleteBtn);
     
     // Debug: Log all buttons in the actions container
