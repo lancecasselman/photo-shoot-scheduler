@@ -876,6 +876,88 @@ app.get('/api/gallery/:id/photos', async (req, res) => {
     }
 });
 
+// Create invoice endpoint
+app.post('/api/create-invoice', isAuthenticated, async (req, res) => {
+    try {
+        const { sessionId, clientName, email, amount, description, dueDate } = req.body;
+        const userId = req.user.claims.sub;
+        
+        if (!stripe) {
+            return res.status(400).json({ error: 'Stripe not configured' });
+        }
+        
+        // Create or retrieve customer
+        let customer;
+        try {
+            const customers = await stripe.customers.list({ email: email, limit: 1 });
+            if (customers.data.length > 0) {
+                customer = customers.data[0];
+            } else {
+                customer = await stripe.customers.create({
+                    email: email,
+                    name: clientName,
+                    metadata: {
+                        business: 'Lance - The Legacy Photography',
+                        photographer: 'Lance',
+                        user_id: userId
+                    }
+                });
+            }
+        } catch (customerError) {
+            console.error('Customer creation error:', customerError);
+            return res.status(500).json({ error: 'Failed to create customer' });
+        }
+        
+        // Create invoice
+        const invoice = await stripe.invoices.create({
+            customer: customer.id,
+            collection_method: 'send_invoice',
+            days_until_due: 30,
+            description: description,
+            footer: `Thank you for choosing Lance - The Legacy Photography!\n\nFor any questions, please contact us at lance@thelegacyphotography.com`,
+            custom_fields: [
+                {
+                    name: 'Photographer',
+                    value: 'Lance - The Legacy Photography'
+                },
+                {
+                    name: 'Session Details',
+                    value: description
+                }
+            ],
+            metadata: {
+                session_id: sessionId,
+                user_id: userId,
+                business: 'Lance - The Legacy Photography'
+            }
+        });
+        
+        // Add invoice item
+        await stripe.invoiceItems.create({
+            customer: customer.id,
+            invoice: invoice.id,
+            amount: Math.round(amount * 100), // Convert to cents
+            currency: 'usd',
+            description: description
+        });
+        
+        // Finalize and send invoice
+        const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
+        await stripe.invoices.sendInvoice(invoice.id);
+        
+        res.json({
+            success: true,
+            invoice_id: finalizedInvoice.id,
+            invoice_url: finalizedInvoice.hosted_invoice_url,
+            customer_id: customer.id
+        });
+        
+    } catch (error) {
+        console.error('Invoice creation error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Send gallery notification with email/SMS integration
 app.post('/api/sessions/:id/send-gallery-notification', isAuthenticated, async (req, res) => {
     const sessionId = req.params.id;
@@ -887,8 +969,21 @@ app.post('/api/sessions/:id/send-gallery-notification', isAuthenticated, async (
             return res.status(404).json({ error: 'Session not found' });
         }
         
+        // Generate gallery access token if it doesn't exist
         if (!session.galleryAccessToken) {
-            return res.status(400).json({ error: 'Gallery access not generated. Generate gallery access first.' });
+            const accessToken = require('crypto').randomBytes(32).toString('hex');
+            const galleryCreatedAt = new Date().toISOString();
+            
+            // Update session with gallery access token
+            await pool.query(`
+                UPDATE photography_sessions 
+                SET gallery_access_token = $1, gallery_created_at = $2, updated_at = NOW()
+                WHERE id = $3
+            `, [accessToken, galleryCreatedAt, sessionId]);
+            
+            // Update local session object
+            session.galleryAccessToken = accessToken;
+            session.galleryCreatedAt = galleryCreatedAt;
         }
         
         // Create external-accessible gallery URL
