@@ -485,6 +485,8 @@ function createSessionCard(session) {
     details.appendChild(priceDiv);
     details.appendChild(retainerDiv);
     details.appendChild(statusDiv);
+    
+    console.log('Retainer div appended to details for session:', session.id);
 
     // Create photo gallery section
     const gallerySection = createPhotoGallery(session);
