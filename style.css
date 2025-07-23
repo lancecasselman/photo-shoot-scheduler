@@ -1226,6 +1226,107 @@ header p {
     transform: translateY(0);
 }
 
+/* Inline Retainer Section Styles */
+.retainer-section {
+    background: #f8f9fa;
+    border: 2px solid #28a745;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 15px 0;
+    transition: all 0.3s ease;
+}
+
+.retainer-content {
+    margin-top: 10px;
+}
+
+.retainer-input-group {
+    margin-bottom: 15px;
+}
+
+.retainer-input-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #555;
+}
+
+.retainer-amount-input {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+.retainer-amount-input:focus {
+    outline: none;
+    border-color: #28a745;
+}
+
+.retainer-calculation {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 15px 0;
+}
+
+.calc-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.calc-row.calc-total {
+    border-top: 1px solid #dee2e6;
+    padding-top: 8px;
+    margin-top: 8px;
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.retainer-status {
+    margin: 15px 0;
+}
+
+.retainer-status-content {
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.retainer-status-content.paid {
+    background: #d4edda;
+    border-color: #c3e6cb;
+    color: #155724;
+}
+
+.retainer-status-content.pending {
+    background: #fff3cd;
+    border-color: #ffeaa7;
+    color: #856404;
+}
+
+.retainer-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 15px;
+}
+
+.retainer-actions .btn {
+    flex: 1;
+    min-width: 100px;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 0.875rem;
+}
+
 .retainer-form-group {
     margin-bottom: 20px;
 }
