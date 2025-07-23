@@ -2278,7 +2278,10 @@ END:VCALENDAR`;
     <!-- Retainer Modal -->
     <div class="retainer-modal" id="retainerModal">
         <div class="retainer-modal-content">
-            <h2>💰 Send Retainer Invoice</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0;">💰 Send Retainer Invoice</h2>
+                <button type="button" onclick="closeRetainerModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">&times;</button>
+            </div>
             
             <div class="retainer-form-group">
                 <label for="retainerAmount">Retainer Amount ($)</label>
