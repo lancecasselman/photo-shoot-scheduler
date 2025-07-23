@@ -368,8 +368,8 @@ function createSessionCard(session) {
     actions.appendChild(emailPreviewBtn);
     actions.appendChild(invoiceBtn);
     actions.appendChild(retainerBtn);
-    actions.appendChild(contractBtn);
     actions.appendChild(paymentPlanBtn);
+    actions.appendChild(contractBtn);
     actions.appendChild(callClientBtn);
     actions.appendChild(textClientBtn);
     actions.appendChild(deleteBtn);
