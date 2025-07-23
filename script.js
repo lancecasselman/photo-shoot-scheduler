@@ -465,13 +465,9 @@ function createSessionCard(session) {
     details.appendChild(priceDiv);
     details.appendChild(statusDiv);
 
-    // Create photo gallery section
-    const gallerySection = createPhotoGallery(session);
-
     // Append sections to card
     card.appendChild(header);
     card.appendChild(details);
-    card.appendChild(gallerySection);
 
 
 
@@ -1019,39 +1015,8 @@ async function updateAPISession(sessionId, sessionData) {
 
 // Photo Gallery Functions
 
-// Create photo gallery section for session card
-function createPhotoGallery(session) {
-    const gallerySection = document.createElement('div');
-    gallerySection.className = 'photo-gallery-section';
-    gallerySection.setAttribute('data-session-id', session.id);
-    
-    const galleryHeader = document.createElement('div');
-    galleryHeader.className = 'gallery-header';
-    
-    const galleryTitle = document.createElement('h4');
-    galleryTitle.className = 'gallery-title';
-    galleryTitle.textContent = 'Photo Gallery';
-    
-    const photoCount = document.createElement('span');
-    photoCount.className = 'photo-count';
-    const count = session.photos ? session.photos.length : 0;
-    photoCount.textContent = `${count} photos`;
-    
-    galleryHeader.appendChild(galleryTitle);
-    galleryHeader.appendChild(photoCount);
-    
-    const galleryGrid = document.createElement('div');
-    galleryGrid.className = 'gallery-grid';
-    galleryGrid.setAttribute('data-session-id', session.id);
-    
-    // Load photos for this session
-    loadSessionPhotos(session.id, galleryGrid, photoCount);
-    
-    gallerySection.appendChild(galleryHeader);
-    gallerySection.appendChild(galleryGrid);
-    
-    return gallerySection;
-}
+// Photo gallery creation disabled for session cards to prevent loading errors
+// Gallery will be accessed via the "📸 Copy Gallery URL" button instead
 
 // Load photos for a specific session
 async function loadSessionPhotos(sessionId, container, countElement) {
