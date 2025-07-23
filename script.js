@@ -1573,3 +1573,51 @@ async function sendDepositInvoiceFromCard(sessionId) {
         showMessage('Error sending deposit invoice: ' + error.message, 'error');
     }
 }
+
+// Open contract modal function (missing implementation)
+function openContractModal(sessionId) {
+    const session = sessions.find(s => s.id === sessionId);
+    if (!session) {
+        showMessage('Session not found', 'error');
+        return;
+    }
+    
+    // Simple contract sending without modal for now
+    if (confirm(`Send contract to ${session.clientName} at ${session.email}?`)) {
+        sendContract(sessionId);
+    }
+}
+
+// Send contract function
+async function sendContract(sessionId) {
+    try {
+        showMessage('Sending contract...', 'info');
+        
+        const response = await fetch(`/api/sessions/${sessionId}/send-contract`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                contractType: 'general_contract'
+            })
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Server error (${response.status}): ${errorText}`);
+        }
+        
+        const result = await response.json();
+        showMessage('Contract sent successfully!', 'success');
+        
+        if (result.signingUrl) {
+            window.open(result.signingUrl, '_blank');
+        }
+        
+        await loadSessions();
+    } catch (error) {
+        console.error('Error sending contract:', error);
+        showMessage('Error sending contract: ' + error.message, 'error');
+    }
+}
