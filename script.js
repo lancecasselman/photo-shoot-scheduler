@@ -1,10 +1,8 @@
 // Photography Session Scheduler
 // Session management system with cloud database
 
-// Global variables - Check if already declared to prevent duplicates
-if (typeof sessions === 'undefined') {
-    var sessions = [];
-}
+// Global variables
+let sessions = [];
 let sessionIdCounter = 1;
 let currentUser = null;
 
@@ -169,7 +167,7 @@ async function loadSessions() {
             paid: session.paid || false,
             edited: session.edited || false,
             delivered: session.delivered || false,
-            reminderEnabled: session.sendReminder || session.reminderEnabled || false,
+            reminderEnabled: session.reminder_enabled || session.reminderEnabled || false,
             galleryReadyNotified: session.gallery_ready_notified || session.galleryReadyNotified || false,
             reminderSent: session.reminder_sent || session.reminderSent || false,
             createdBy: session.created_by || session.createdBy,
@@ -248,7 +246,8 @@ function renderSessions() {
 
 // Create individual session card
 function createSessionCard(session) {
-    console.log('Creating session card for:', session.clientName);
+    console.log('=== CRITICAL DEBUG: Creating session card for:', session.clientName);
+    console.log('Session object:', session);
 
     // Create main card container
     const card = document.createElement('div');
@@ -264,14 +263,14 @@ function createSessionCard(session) {
 
     const title = document.createElement('div');
     title.className = 'session-title';
-    title.textContent = session.sessionType + ' Session';
+    title.textContent = session.sessionType;
 
     const client = document.createElement('div');
     client.className = 'session-client';
     client.textContent = session.clientName;
 
-    headerInfo.appendChild(client);
     headerInfo.appendChild(title);
+    headerInfo.appendChild(client);
 
     // Create actions section
     const actions = document.createElement('div');
@@ -325,37 +324,20 @@ function createSessionCard(session) {
     invoiceBtn.textContent = '💰 Send Invoice';
     invoiceBtn.onclick = () => createInvoice(session);
 
-    const depositBtn = document.createElement('button');
-    depositBtn.className = 'btn btn-deposit';
-    depositBtn.textContent = '💳 Send Deposit Invoice';
-    depositBtn.onclick = () => sendDepositInvoiceFromCard(session.id);
-
     const contractBtn = document.createElement('button');
     contractBtn.className = 'btn btn-contract';
     contractBtn.textContent = '📝 Send Contract';
     contractBtn.onclick = () => openContractModal(session.id);
-
-    // Call and text buttons for main actions
-    const callClientBtn = document.createElement('button');
-    callClientBtn.className = 'btn btn-success';
-    callClientBtn.textContent = '📞 Call Client';
-    callClientBtn.onclick = () => window.location.href = `tel:${session.phoneNumber}`;
-
-    const textClientBtn = document.createElement('button');
-    textClientBtn.className = 'btn btn-info';
-    textClientBtn.textContent = '💬 Text Client';
-    textClientBtn.onclick = () => window.location.href = `sms:${session.phoneNumber}`;
-
-    const paymentPlanBtn = document.createElement('button');
-    paymentPlanBtn.className = 'btn btn-warning';
-    paymentPlanBtn.textContent = '📅 Create Payment Plan';
-    paymentPlanBtn.onclick = () => openPaymentPlanModal(session.id);
 
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn btn-danger';
     deleteBtn.textContent = '🗑️ Delete';
     deleteBtn.onclick = () => deleteSession(session.id);
 
+    console.log('About to append buttons for:', session.clientName);
+    console.log('Upload button created:', uploadBtn.textContent);
+    console.log('Upload button onclick:', uploadBtn.onclick ? 'Set' : 'NOT SET');
+    
     actions.appendChild(editBtn);
     actions.appendChild(uploadBtn);
     actions.appendChild(calendarBtn);
@@ -363,14 +345,17 @@ function createSessionCard(session) {
     actions.appendChild(galleryBtn);
     actions.appendChild(emailPreviewBtn);
     actions.appendChild(invoiceBtn);
-    actions.appendChild(depositBtn);
-    actions.appendChild(paymentPlanBtn);
     actions.appendChild(contractBtn);
-    actions.appendChild(callClientBtn);
-    actions.appendChild(textClientBtn);
     actions.appendChild(deleteBtn);
+    
+    // Debug: Log all buttons in the actions container
+    console.log('Actions container buttons:', actions.children.length);
+    for (let i = 0; i < actions.children.length; i++) {
+        console.log(`Button ${i}: ${actions.children[i].textContent}`);
+    }
 
     header.appendChild(headerInfo);
+    header.appendChild(actions);
 
     // Create details section
     const details = document.createElement('div');
@@ -411,32 +396,6 @@ function createSessionCard(session) {
         <div class="detail-label">Price & Duration</div>
         <div class="detail-value">$${session.price} for ${session.duration} minutes</div>
     `;
-    
-    // Deposit input field
-    const depositDiv = document.createElement('div');
-    depositDiv.className = 'detail-item';
-    const currentDeposit = session.depositAmount || 0;
-    const remainingBalance = session.price - currentDeposit;
-    
-    depositDiv.innerHTML = `
-        <div class="detail-label">Deposit Amount</div>
-        <div class="detail-value" style="display: flex; align-items: center; gap: 10px;">
-            <input type="number" 
-                   id="deposit-input-${session.id}" 
-                   value="${currentDeposit}" 
-                   placeholder="Enter deposit amount" 
-                   step="0.01" 
-                   min="0" 
-                   max="${session.price}"
-                   style="width: 120px; padding: 5px; border: 1px solid #ddd; border-radius: 4px;">
-            <button onclick="updateDeposit('${session.id}')" 
-                    class="btn btn-sm btn-success" 
-                    style="padding: 5px 10px; font-size: 0.8rem;">Update</button>
-            ${currentDeposit > 0 ? `<span style="font-size: 0.9rem; color: #666;">Remaining: $${remainingBalance.toFixed(2)}</span>` : ''}
-        </div>
-    `;
-
-
 
     // Notes
     if (session.notes && session.notes.trim()) {
@@ -473,25 +432,19 @@ function createSessionCard(session) {
     details.appendChild(phoneDiv);
     details.appendChild(emailDiv);
     details.appendChild(priceDiv);
-    details.appendChild(depositDiv);
     details.appendChild(statusDiv);
+
+    // Create photo gallery section
+    const gallerySection = createPhotoGallery(session);
 
     // Append sections to card
     card.appendChild(header);
     card.appendChild(details);
-    card.appendChild(actions);
-
-
+    card.appendChild(gallerySection);
 
     console.log('Session card created for:', session.clientName);
     return card;
 }
-
-
-
-
-
-
 
 // Helper function to create phone detail item with call and text buttons
 function createPhoneDetailItem(label, phoneNumber) {
@@ -792,24 +745,9 @@ async function copyGalleryUrl(sessionId) {
         const result = await response.json();
         
         if (result.galleryUrl) {
-            // Copy URL to clipboard with fallback
-            try {
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    await navigator.clipboard.writeText(result.galleryUrl);
-                } else {
-                    // Fallback for older browsers
-                    const textArea = document.createElement('textarea');
-                    textArea.value = result.galleryUrl;
-                    document.body.appendChild(textArea);
-                    textArea.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(textArea);
-                }
-                showMessage(`📸 Gallery URL copied to clipboard!`, 'success');
-            } catch (clipboardError) {
-                console.error('Clipboard error:', clipboardError);
-                showMessage(`📸 Gallery URL generated: ${result.galleryUrl}`, 'success');
-            }
+            // Copy URL to clipboard
+            await navigator.clipboard.writeText(result.galleryUrl);
+            showMessage(`📸 Gallery URL copied to clipboard! ${result.galleryUrl}`, 'success');
             
             // Update the button text to show it's been generated
             const button = document.querySelector(`[data-session-id="${sessionId}"] .btn-warning`);
@@ -820,7 +758,7 @@ async function copyGalleryUrl(sessionId) {
             }
             
             // Reload sessions to update UI
-            await loadSessions();
+            loadSessions();
         }
         
     } catch (error) {
@@ -1042,8 +980,39 @@ async function updateAPISession(sessionId, sessionData) {
 
 // Photo Gallery Functions
 
-// Photo gallery creation disabled for session cards to prevent loading errors
-// Gallery will be accessed via the "📸 Copy Gallery URL" button instead
+// Create photo gallery section for session card
+function createPhotoGallery(session) {
+    const gallerySection = document.createElement('div');
+    gallerySection.className = 'photo-gallery-section';
+    gallerySection.setAttribute('data-session-id', session.id);
+    
+    const galleryHeader = document.createElement('div');
+    galleryHeader.className = 'gallery-header';
+    
+    const galleryTitle = document.createElement('h4');
+    galleryTitle.className = 'gallery-title';
+    galleryTitle.textContent = 'Photo Gallery';
+    
+    const photoCount = document.createElement('span');
+    photoCount.className = 'photo-count';
+    const count = session.photos ? session.photos.length : 0;
+    photoCount.textContent = `${count} photos`;
+    
+    galleryHeader.appendChild(galleryTitle);
+    galleryHeader.appendChild(photoCount);
+    
+    const galleryGrid = document.createElement('div');
+    galleryGrid.className = 'gallery-grid';
+    galleryGrid.setAttribute('data-session-id', session.id);
+    
+    // Load photos for this session
+    loadSessionPhotos(session.id, galleryGrid, photoCount);
+    
+    gallerySection.appendChild(galleryHeader);
+    gallerySection.appendChild(galleryGrid);
+    
+    return gallerySection;
+}
 
 // Load photos for a specific session
 async function loadSessionPhotos(sessionId, container, countElement) {
@@ -1375,237 +1344,5 @@ async function deletePhoto(sessionId, photoIndex) {
     } catch (error) {
         console.error('Delete error:', error);
         showMessage('Delete failed: ' + error.message, 'error');
-    }
-}
-// Open payment plan modal (placeholder)
-function openPaymentPlanModal(sessionId) {
-    console.log('Opening payment plan modal for session:', sessionId);
-    showMessage('Payment plan feature coming soon!', 'info');
-}
-
-// Open deposit modal
-function openDepositModal(sessionId) {
-    const session = sessions.find(s => s.id === sessionId);
-    if (!session) {
-        showMessage('Session not found', 'error');
-        return;
-    }
-    
-    const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.innerHTML = `
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>💳 Send Deposit Invoice - ${session.clientName}</h3>
-                <span class="close" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</span>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label for="deposit-amount-modal">Deposit Amount ($)</label>
-                    <input type="number" id="deposit-amount-modal" placeholder="Enter deposit amount" step="0.01" min="0" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
-                </div>
-                
-                <div id="deposit-calculation" style="display: none; background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                        <span>Total Session Price:</span>
-                        <span>$${session.price}</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                        <span>Deposit Amount:</span>
-                        <span id="deposit-display">$0.00</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; border-top: 1px solid #ddd; padding-top: 8px; font-weight: bold;">
-                        <span>Remaining Balance:</span>
-                        <span id="deposit-remaining-display">$0.00</span>
-                    </div>
-                </div>
-                
-                <div id="deposit-status-modal" style="margin: 15px 0;">
-                    <!-- Status will be loaded here -->
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" onclick="sendDepositInvoice('${sessionId}')" class="btn btn-deposit">Send Deposit Invoice</button>
-                <button type="button" onclick="this.parentElement.parentElement.parentElement.remove()" class="btn btn-secondary">Close</button>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
-    
-    // Add calculation listener
-    const amountInput = document.getElementById('deposit-amount-modal');
-    amountInput.addEventListener('input', () => calculateDepositModal(session.price));
-    
-    // Focus on input
-    amountInput.focus();
-}
-
-// Calculate deposit in modal
-function calculateDepositModal(sessionPrice) {
-    const amountInput = document.getElementById('deposit-amount-modal');
-    const calcSection = document.getElementById('deposit-calculation');
-    const depositDisplay = document.getElementById('deposit-display');
-    const remainingDisplay = document.getElementById('deposit-remaining-display');
-    
-    const depositAmount = parseFloat(amountInput.value);
-    
-    if (isNaN(depositAmount) || depositAmount <= 0) {
-        calcSection.style.display = 'none';
-        return;
-    }
-    
-    const remainingBalance = Math.max(0, sessionPrice - depositAmount);
-    
-    depositDisplay.textContent = '$' + depositAmount.toFixed(2);
-    remainingDisplay.textContent = '$' + remainingBalance.toFixed(2);
-    calcSection.style.display = 'block';
-}
-
-// Update deposit amount for session
-async function updateDeposit(sessionId) {
-    const depositInput = document.getElementById(`deposit-input-${sessionId}`);
-    const depositAmount = parseFloat(depositInput.value);
-    
-    if (isNaN(depositAmount) || depositAmount < 0) {
-        showMessage('Please enter a valid deposit amount', 'error');
-        return;
-    }
-    
-    const session = sessions.find(s => s.id === sessionId);
-    if (!session) {
-        showMessage('Session not found', 'error');
-        return;
-    }
-    
-    if (depositAmount > session.price) {
-        showMessage('Deposit cannot exceed session price', 'error');
-        return;
-    }
-    
-    try {
-        const response = await fetch(`/api/sessions/${sessionId}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                depositAmount: depositAmount
-            })
-        });
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Server response:', response.status, errorText);
-            throw new Error(`Server error (${response.status}): ${errorText}`);
-        }
-        
-        // Reload sessions to update display
-        await loadSessions();
-        showMessage('Deposit amount updated successfully!', 'success');
-        
-    } catch (error) {
-        console.error('Error updating deposit:', error);
-        showMessage('Error updating deposit: ' + error.message, 'error');
-    }
-}
-
-// Send deposit invoice from card
-async function sendDepositInvoiceFromCard(sessionId) {
-    console.log('Sending deposit invoice for session:', sessionId);
-    
-    const depositInput = document.getElementById(`deposit-input-${sessionId}`);
-    if (!depositInput) {
-        showMessage('Deposit input not found', 'error');
-        return;
-    }
-    
-    const depositAmount = parseFloat(depositInput.value);
-    
-    if (isNaN(depositAmount) || depositAmount <= 0) {
-        showMessage('Please enter a valid deposit amount', 'error');
-        return;
-    }
-    
-    try {
-        showMessage('Creating deposit invoice...', 'info');
-        
-        const response = await fetch(`/api/sessions/${sessionId}/send-deposit`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ depositAmount })
-        });
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Server response:', response.status, errorText);
-            throw new Error(`Server error (${response.status}): ${errorText}`);
-        }
-        
-        const result = await response.json();
-        console.log('Deposit invoice response:', result);
-        
-        showMessage('Deposit invoice sent successfully!', 'success');
-        
-        // Open the invoice URL
-        if (result.invoiceUrl) {
-            window.open(result.invoiceUrl, '_blank');
-        }
-        
-        // Refresh sessions to show updated deposit information
-        await loadSessions();
-    } catch (error) {
-        console.error('Error sending deposit invoice:', error);
-        showMessage('Error sending deposit invoice: ' + error.message, 'error');
-    }
-}
-
-// Open contract modal function (missing implementation)
-function openContractModal(sessionId) {
-    const session = sessions.find(s => s.id === sessionId);
-    if (!session) {
-        showMessage('Session not found', 'error');
-        return;
-    }
-    
-    // Simple contract sending without modal for now
-    if (confirm(`Send contract to ${session.clientName} at ${session.email}?`)) {
-        sendContract(sessionId);
-    }
-}
-
-// Send contract function
-async function sendContract(sessionId) {
-    try {
-        showMessage('Sending contract...', 'info');
-        
-        const response = await fetch(`/api/sessions/${sessionId}/send-contract`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                contractType: 'general_contract'
-            })
-        });
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Server error (${response.status}): ${errorText}`);
-        }
-        
-        const result = await response.json();
-        showMessage('Contract sent successfully!', 'success');
-        
-        if (result.signingUrl) {
-            window.open(result.signingUrl, '_blank');
-        }
-        
-        await loadSessions();
-    } catch (error) {
-        console.error('Error sending contract:', error);
-        showMessage('Error sending contract: ' + error.message, 'error');
     }
 }

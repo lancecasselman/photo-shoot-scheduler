@@ -87,7 +87,7 @@ export class DatabaseStorage implements IStorage {
       : eq(photographySessions.id, sessionId);
     
     const result = await db.delete(photographySessions).where(conditions);
-    return (result.rowCount || 0) > 0;
+    return result.rowCount > 0;
   }
 }
 

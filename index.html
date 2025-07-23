@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Client Management Area - July 23 2025 - v3.0</title>
-    <link rel="stylesheet" href="style.css?v=deposit-2024-07-23">
+    <title>The Client Management Area - July 21 2025 - v2.9</title>
     
     <!-- Confetti Animation Styles -->
     <style>
@@ -957,6 +956,7 @@
     </div>
 
     <script>
+        let sessions = [];
         let currentUploadSessionId = null;
         let currentPaymentPlanSessionId = null;
 
@@ -1011,9 +1011,9 @@
                     
                     if (response.ok) {
                         const updatedSession = await response.json();
-                        const sessionIndex = window.sessions.findIndex(s => s.id === editingSessionId);
+                        const sessionIndex = sessions.findIndex(s => s.id === editingSessionId);
                         if (sessionIndex !== -1) {
-                            window.sessions[sessionIndex] = updatedSession;
+                            sessions[sessionIndex] = updatedSession;
                         }
                         renderSessions();
                         resetForm(e.target);
@@ -2275,8 +2275,5 @@ END:VCALENDAR`;
         </div>
     </div>
 
-
-
-    <script src="script.js?v=1753303500000"></script>
 </body>
 </html>

@@ -25,7 +25,6 @@ const PaymentScheduler = require('./server/paymentScheduler');
 // Import contract management
 const ContractManager = require('./server/contracts');
 
-
 // PostgreSQL database connection
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -289,10 +288,8 @@ async function getAllSessions(userId) {
             paid: row.paid,
             edited: row.edited,
             delivered: row.delivered,
-            reminderEnabled: row.send_reminder || false,
             sendReminder: row.send_reminder,
             notifyGalleryReady: row.notify_gallery_ready,
-            depositAmount: row.deposit_amount ? parseFloat(row.deposit_amount) : 0,
             photos: row.photos || [],
             galleryAccessToken: row.gallery_access_token,
             galleryCreatedAt: row.gallery_created_at,
@@ -355,7 +352,6 @@ async function createSession(sessionData, userId) {
             delivered: row.delivered,
             sendReminder: row.send_reminder,
             notifyGalleryReady: row.notify_gallery_ready,
-            depositAmount: row.deposit_amount ? parseFloat(row.deposit_amount) : 0,
             photos: row.photos || [],
             createdAt: row.created_at,
             updatedAt: row.updated_at
@@ -397,10 +393,8 @@ async function getSessionById(id, userId) {
             paid: row.paid,
             edited: row.edited,
             delivered: row.delivered,
-            reminderEnabled: row.send_reminder || false,
             sendReminder: row.send_reminder,
             notifyGalleryReady: row.notify_gallery_ready,
-            depositAmount: row.deposit_amount ? parseFloat(row.deposit_amount) : 0,
             photos: row.photos || [],
             galleryAccessToken: row.gallery_access_token,
             galleryCreatedAt: row.gallery_created_at,
@@ -422,9 +416,6 @@ async function updateSession(id, updates) {
         let paramCount = 1;
         
         Object.keys(updates).forEach(key => {
-            // Skip updatedAt as we'll set it manually
-            if (key === 'updatedAt') return;
-            
             const dbKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
             setClause.push(`${dbKey} = $${paramCount}`);
             
@@ -467,10 +458,8 @@ async function updateSession(id, updates) {
             paid: row.paid,
             edited: row.edited,
             delivered: row.delivered,
-            reminderEnabled: row.send_reminder || false,
             sendReminder: row.send_reminder,
             notifyGalleryReady: row.notify_gallery_ready,
-            depositAmount: row.deposit_amount ? parseFloat(row.deposit_amount) : 0,
             photos: row.photos || [],
             galleryAccessToken: row.gallery_access_token,
             galleryCreatedAt: row.gallery_created_at,
@@ -876,88 +865,6 @@ app.get('/api/gallery/:id/photos', async (req, res) => {
     }
 });
 
-// Create invoice endpoint
-app.post('/api/create-invoice', isAuthenticated, async (req, res) => {
-    try {
-        const { sessionId, clientName, email, amount, description, dueDate } = req.body;
-        const userId = req.user.claims.sub;
-        
-        if (!stripe) {
-            return res.status(400).json({ error: 'Stripe not configured' });
-        }
-        
-        // Create or retrieve customer
-        let customer;
-        try {
-            const customers = await stripe.customers.list({ email: email, limit: 1 });
-            if (customers.data.length > 0) {
-                customer = customers.data[0];
-            } else {
-                customer = await stripe.customers.create({
-                    email: email,
-                    name: clientName,
-                    metadata: {
-                        business: 'Lance - The Legacy Photography',
-                        photographer: 'Lance',
-                        user_id: userId
-                    }
-                });
-            }
-        } catch (customerError) {
-            console.error('Customer creation error:', customerError);
-            return res.status(500).json({ error: 'Failed to create customer' });
-        }
-        
-        // Create invoice
-        const invoice = await stripe.invoices.create({
-            customer: customer.id,
-            collection_method: 'send_invoice',
-            days_until_due: 30,
-            description: description,
-            footer: `Thank you for choosing Lance - The Legacy Photography!\n\nFor any questions, please contact us at lance@thelegacyphotography.com`,
-            custom_fields: [
-                {
-                    name: 'Photographer',
-                    value: 'Lance - The Legacy Photography'
-                },
-                {
-                    name: 'Session Details',
-                    value: description
-                }
-            ],
-            metadata: {
-                session_id: sessionId,
-                user_id: userId,
-                business: 'Lance - The Legacy Photography'
-            }
-        });
-        
-        // Add invoice item
-        await stripe.invoiceItems.create({
-            customer: customer.id,
-            invoice: invoice.id,
-            amount: Math.round(amount * 100), // Convert to cents
-            currency: 'usd',
-            description: description
-        });
-        
-        // Finalize and send invoice
-        const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
-        await stripe.invoices.sendInvoice(invoice.id);
-        
-        res.json({
-            success: true,
-            invoice_id: finalizedInvoice.id,
-            invoice_url: finalizedInvoice.hosted_invoice_url,
-            customer_id: customer.id
-        });
-        
-    } catch (error) {
-        console.error('Invoice creation error:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
 // Send gallery notification with email/SMS integration
 app.post('/api/sessions/:id/send-gallery-notification', isAuthenticated, async (req, res) => {
     const sessionId = req.params.id;
@@ -969,21 +876,8 @@ app.post('/api/sessions/:id/send-gallery-notification', isAuthenticated, async (
             return res.status(404).json({ error: 'Session not found' });
         }
         
-        // Generate gallery access token if it doesn't exist
         if (!session.galleryAccessToken) {
-            const accessToken = require('crypto').randomBytes(32).toString('hex');
-            const galleryCreatedAt = new Date().toISOString();
-            
-            // Update session with gallery access token
-            await pool.query(`
-                UPDATE photography_sessions 
-                SET gallery_access_token = $1, gallery_created_at = $2, updated_at = NOW()
-                WHERE id = $3
-            `, [accessToken, galleryCreatedAt, sessionId]);
-            
-            // Update local session object
-            session.galleryAccessToken = accessToken;
-            session.galleryCreatedAt = galleryCreatedAt;
+            return res.status(400).json({ error: 'Gallery access not generated. Generate gallery access first.' });
         }
         
         // Create external-accessible gallery URL
@@ -1416,108 +1310,6 @@ const paymentScheduler = new PaymentScheduler();
 
 // Contract Manager
 const contractManager = new ContractManager();
-
-// Send deposit invoice for a session
-app.post('/api/sessions/:id/send-deposit', isAuthenticated, async (req, res) => {
-    const sessionId = req.params.id;
-    const { depositAmount } = req.body;
-    const user = getCurrentUser(req);
-
-    try {
-        const session = await getSessionById(sessionId);
-        if (!session) {
-            return res.status(404).json({ error: 'Session not found' });
-        }
-
-        // Verify user owns this session
-        if (session.userId !== user.sub) {
-            return res.status(403).json({ error: 'Unauthorized access to session' });
-        }
-
-        // Create Stripe customer
-        const customer = await stripe.customers.create({
-            name: session.clientName,
-            email: session.email,
-            metadata: {
-                sessionId: sessionId,
-                photographer: 'Lance - The Legacy Photography',
-                businessEmail: 'lance@thelegacyphotography.com'
-            }
-        });
-
-        // Create deposit invoice
-        const invoice = await stripe.invoices.create({
-            customer: customer.id,
-            collection_method: 'send_invoice',
-            days_until_due: 30,
-            description: `Photography Session Deposit - ${session.sessionType}`,
-            metadata: {
-                sessionId: sessionId,
-                invoiceType: 'deposit',
-                photographer: 'Lance - The Legacy Photography',
-                sessionType: session.sessionType,
-                sessionDate: session.dateTime,
-                location: session.location
-            },
-            custom_fields: [
-                {
-                    name: 'Photographer',
-                    value: 'Lance - The Legacy Photography'
-                },
-                {
-                    name: 'Session Type',
-                    value: session.sessionType
-                },
-                {
-                    name: 'Session Date',
-                    value: new Date(session.dateTime).toLocaleDateString()
-                }
-            ],
-            footer: 'Thank you for choosing The Legacy Photography! For questions, contact lance@thelegacyphotography.com'
-        });
-
-        // Add deposit fee as invoice item
-        await stripe.invoiceItems.create({
-            customer: customer.id,
-            invoice: invoice.id,
-            amount: Math.round(parseFloat(depositAmount) * 100), // Convert to cents
-            currency: 'usd',
-            description: `Deposit Fee - ${session.sessionType} Session`,
-            metadata: {
-                sessionId: sessionId,
-                itemType: 'deposit'
-            }
-        });
-
-        // Finalize and send the invoice
-        const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
-        await stripe.invoices.sendInvoice(finalizedInvoice.id);
-
-        // Calculate remaining balance
-        const remainingBalance = Math.max(0, parseFloat(session.price) - parseFloat(depositAmount));
-
-        // Update session with deposit information
-        await updateSession(sessionId, {
-            depositAmount: depositAmount,
-            depositStripeInvoiceId: finalizedInvoice.id,
-            depositStripeInvoiceUrl: finalizedInvoice.hosted_invoice_url,
-            remainingBalance: remainingBalance.toString()
-        });
-
-        res.json({
-            success: true,
-            invoiceId: finalizedInvoice.id,
-            invoiceUrl: finalizedInvoice.hosted_invoice_url,
-            depositAmount: depositAmount,
-            remainingBalance: remainingBalance,
-            message: `Deposit invoice sent to ${session.email}`
-        });
-
-    } catch (error) {
-        console.error('Error sending deposit invoice:', error);
-        res.status(500).json({ error: `Failed to send deposit invoice: ${error.message}` });
-    }
-});
 
 // Create payment plan for a session
 app.post('/api/sessions/:id/payment-plan', isAuthenticated, async (req, res) => {
@@ -1992,8 +1784,6 @@ app.get('/', (req, res) => {
     }
     res.sendFile(path.join(__dirname, 'index.html'));
 });
-
-
 
 // Serve static files last to ensure routes run first
 app.use(express.static(__dirname));

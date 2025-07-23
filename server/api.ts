@@ -1,19 +1,19 @@
 import { db } from './db';
-import { users, photographySessions } from '../shared/schema';
+import { users, sessions } from '../shared/schema';
 import { eq } from 'drizzle-orm';
-import type { User, UpsertUser } from '../shared/schema';
+import type { User, InsertUser, Session, InsertSession } from '../shared/schema';
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
-  createUser(insertUser: UpsertUser): Promise<User>;
+  createUser(insertUser: InsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<User>): Promise<User>;
   
-  getSessions(): Promise<any[]>;
-  getSession(id: string): Promise<any | undefined>;
-  createSession(sessionData: any): Promise<any>;
-  updateSession(id: string, updates: any): Promise<any>;
-  deleteSession(id: string): Promise<boolean>;
+  getSessions(): Promise<Session[]>;
+  getSession(id: number): Promise<Session | undefined>;
+  createSession(insertSession: InsertSession): Promise<Session>;
+  updateSession(id: number, updates: Partial<Session>): Promise<Session>;
+  deleteSession(id: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -27,7 +27,7 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
-  async createUser(insertUser: UpsertUser): Promise<User> {
+  async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db
       .insert(users)
       .values(insertUser)
@@ -44,35 +44,35 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async getSessions(): Promise<any[]> {
-    return await db.select().from(photographySessions);
+  async getSessions(): Promise<Session[]> {
+    return await db.select().from(sessions);
   }
 
-  async getSession(id: string): Promise<any | undefined> {
-    const [session] = await db.select().from(photographySessions).where(eq(photographySessions.id, id));
+  async getSession(id: number): Promise<Session | undefined> {
+    const [session] = await db.select().from(sessions).where(eq(sessions.id, id));
     return session || undefined;
   }
 
-  async createSession(sessionData: any): Promise<any> {
+  async createSession(insertSession: InsertSession): Promise<Session> {
     const [session] = await db
-      .insert(photographySessions)
-      .values(sessionData)
+      .insert(sessions)
+      .values(insertSession)
       .returning();
     return session;
   }
 
-  async updateSession(id: string, updates: any): Promise<any> {
+  async updateSession(id: number, updates: Partial<Session>): Promise<Session> {
     const [session] = await db
-      .update(photographySessions)
+      .update(sessions)
       .set({ ...updates, updatedAt: new Date() })
-      .where(eq(photographySessions.id, id))
+      .where(eq(sessions.id, id))
       .returning();
     return session;
   }
 
-  async deleteSession(id: string): Promise<boolean> {
-    const result = await db.delete(photographySessions).where(eq(photographySessions.id, id));
-    return (result.rowCount ?? 0) > 0;
+  async deleteSession(id: number): Promise<boolean> {
+    const result = await db.delete(sessions).where(eq(sessions.id, id));
+    return result.rowCount > 0;
   }
 }
 

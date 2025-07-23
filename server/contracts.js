@@ -94,7 +94,7 @@ Total Investment: $\{{price\}}
 \{{#if payment_plan\}}
 Payment Schedule: \{{payment_schedule\}}
 \{{else\}}
-50% deposit due upon signing: $\{{deposit_amount\}}
+50% retainer due upon signing: $\{{deposit_amount\}}
 Balance due 30 days before wedding: $\{{balance_amount\}}
 \{{/if\}}
 

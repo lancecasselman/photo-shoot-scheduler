@@ -63,11 +63,6 @@ export const photographySessions = pgTable("photography_sessions", {
   galleryReadyNotified: boolean("gallery_ready_notified").default(false),
   lastGalleryNotification: jsonb("last_gallery_notification"),
   stripeInvoice: jsonb("stripe_invoice"),
-  // Deposit fields
-  depositAmount: decimal("deposit_amount", { precision: 10, scale: 2 }),
-  depositStripeInvoiceId: varchar("deposit_stripe_invoice_id"),
-  depositStripeInvoiceUrl: varchar("deposit_stripe_invoice_url"),
-  remainingBalance: decimal("remaining_balance", { precision: 10, scale: 2 }),
   // Payment plan fields
   hasPaymentPlan: boolean("has_payment_plan").default(false),
   paymentPlanId: varchar("payment_plan_id"),

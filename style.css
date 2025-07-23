@@ -329,35 +329,32 @@ header p {
     position: relative;
 }
 
-.session-client {
-    font-size: 1.4rem;
+.session-title {
+    font-size: 1.2rem;
     font-weight: 700;
     margin-bottom: 5px;
-}
-
-.session-title {
-    font-size: 1.1rem;
-    font-weight: 500;
-    opacity: 0.9;
     text-transform: capitalize;
 }
 
+.session-client {
+    font-size: 1.4rem;
+    font-weight: 600;
+    opacity: 0.9;
+}
+
 .session-actions {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    display: flex;
+    flex-wrap: wrap;
     gap: 8px;
-    padding: 15px 20px 20px 20px;
-    background: #f8f9fa;
-    border-top: 1px solid #e9ecef;
+    margin-top: 15px;
 }
 
 .session-actions .btn {
-    font-size: 0.8rem;
-    padding: 6px 10px;
+    font-size: 0.85rem;
+    padding: 8px 12px;
     margin: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    flex: 1;
+    min-width: 120px;
 }
 
 .upload-photos-btn {
@@ -900,13 +897,13 @@ header p {
     }
 
     .session-actions {
-        grid-template-columns: 1fr;
-        gap: 5px;
+        flex-direction: column;
     }
 
     .session-actions .btn {
+        flex: none;
         width: 100%;
-        margin-bottom: 0;
+        margin-bottom: 5px;
     }
     
     .upload-photos-btn {
@@ -1168,30 +1165,3 @@ header p {
     font-size: 0.8rem;
     padding: 6px 12px;
 }
-
-/* Deposit button styling */
-.btn-deposit {
-    background: linear-gradient(135deg, #17a2b8, #138496);
-    color: white;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.85em;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(23, 162, 184, 0.2);
-}
-
-.btn-deposit:hover {
-    background: linear-gradient(135deg, #138496, #117a8b);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
-}
-
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-}
-
-
