@@ -2275,45 +2275,7 @@ END:VCALENDAR`;
         </div>
     </div>
 
-    <!-- Retainer Modal -->
-    <div class="retainer-modal" id="retainerModal">
-        <div class="retainer-modal-content">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 style="margin: 0;">💰 Send Retainer Invoice</h2>
-                <button type="button" onclick="closeRetainerModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">&times;</button>
-            </div>
-            
-            <div class="retainer-form-group">
-                <label for="retainerAmount">Retainer Amount ($)</label>
-                <input type="number" id="retainerAmount" placeholder="Enter retainer amount" step="0.01" min="0">
-            </div>
 
-            <div class="retainer-calculation" id="retainerCalculation" style="display: none;">
-                <h4>Invoice Breakdown</h4>
-                <div class="calc-row">
-                    <span>Total Session Price:</span>
-                    <span id="totalPrice">$0.00</span>
-                </div>
-                <div class="calc-row">
-                    <span>Retainer Amount:</span>
-                    <span id="retainerAmountDisplay">$0.00</span>
-                </div>
-                <div class="calc-row calc-total">
-                    <span>Remaining Balance:</span>
-                    <span id="remainingBalance">$0.00</span>
-                </div>
-            </div>
-
-            <div class="retainer-status" id="retainerStatus" style="display: none;">
-                <!-- Status content will be populated dynamically -->
-            </div>
-
-            <div class="retainer-actions">
-                <button type="button" onclick="closeRetainerModal()" class="btn btn-secondary">Cancel</button>
-                <button type="button" onclick="sendRetainerInvoice()" class="btn btn-retainer" id="sendRetainerBtn">Send Retainer Invoice</button>
-            </div>
-        </div>
-    </div>
 
 </body>
 </html>
