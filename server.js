@@ -177,18 +177,27 @@ async function setupAuth() {
         }, async (tokens, verified) => {
             const claims = tokens.claims();
             
-            // Upsert user in database
+            // Upsert user in database with proper conflict resolution
             try {
                 await pool.query(`
                     INSERT INTO users (id, email, display_name, updated_at)
                     VALUES ($1, $2, $3, NOW())
-                    ON CONFLICT (id) DO UPDATE SET
-                        email = $2,
-                        display_name = $3,
+                    ON CONFLICT (email) DO UPDATE SET
+                        id = EXCLUDED.id,
+                        display_name = EXCLUDED.display_name,
                         updated_at = NOW()
                 `, [claims.sub, claims.email, claims.first_name || claims.email]);
             } catch (error) {
                 console.error('Error upserting user:', error);
+                // Try to update existing user with new ID
+                try {
+                    await pool.query(`
+                        UPDATE users SET id = $1, display_name = $3, updated_at = NOW()
+                        WHERE email = $2
+                    `, [claims.sub, claims.email, claims.first_name || claims.email]);
+                } catch (updateError) {
+                    console.error('Error updating existing user:', updateError);
+                }
             }
             
             verified(null, { claims, tokens });
