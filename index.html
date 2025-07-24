@@ -3016,10 +3016,27 @@
 
                 const response = await fetch(`/api/sessions/${currentUploadSessionId}/upload-photos`, {
                     method: 'POST',
-                    body: formData
+                    body: formData,
+                    credentials: 'include' // Include authentication cookies
                 });
 
                 updateProgress(75, 'Processing upload...', 'Server is processing your photos');
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error(`Upload failed: ${response.status} - ${errorText}`);
+                    
+                    if (response.status === 401) {
+                        updateProgress(0, 'Authentication required', 'Please log in to upload photos');
+                        showMessage('Please log in to upload photos', 'error');
+                        setTimeout(() => {
+                            window.location.href = '/api/login';
+                        }, 2000);
+                        return;
+                    }
+                    
+                    throw new Error(`Upload failed: ${response.status} - ${errorText}`);
+                }
 
                 const result = await response.json();
 
@@ -3033,11 +3050,6 @@
                         // Trigger milestone celebration for photo upload
                         celebrateMilestone('photos_uploaded');
                     }, 1000);
-                } else if (response.status === 401) {
-                    showMessage('Authentication required. Please log in to upload photos.', 'error');
-                    setTimeout(() => {
-                        window.location.href = '/api/login';
-                    }, 2000);
                 } else {
                     console.error('Upload response error:', {
                         status: response.status,
@@ -3050,9 +3062,11 @@
                 console.error('Upload error details:', {
                     error: error,
                     message: error.message,
-                    stack: error.stack
+                    stack: error.stack,
+                    filesCount: files.length,
+                    totalSizeMB: totalSizeMB.toFixed(2)
                 });
-                updateProgress(0, 'Upload failed', error.message);
+                updateProgress(0, 'Upload failed', error.message || 'Unknown error');
                 setTimeout(() => {
                     showUploadProgress(false);
                     showMessage('Upload failed: ' + error.message, 'error');
@@ -3083,7 +3097,8 @@
 
                     const response = await fetch(`/api/sessions/${currentUploadSessionId}/upload-photos`, {
                         method: 'POST',
-                        body: formData
+                        body: formData,
+                        credentials: 'include' // Include authentication cookies
                     });
 
                     const result = await response.json();

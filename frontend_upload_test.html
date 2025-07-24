@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Frontend Upload Test</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            background: #1a1a1a; 
+            color: white; 
+        }
+        .test-container { 
+            max-width: 1000px; 
+            margin: 0 auto; 
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .progress-bar { 
+            background: #333; 
+            border-radius: 8px; 
+            padding: 3px; 
+            margin: 10px 0; 
+        }
+        .progress-fill { 
+            background: linear-gradient(135deg, #d4af37, #ffd700); 
+            height: 24px; 
+            border-radius: 6px; 
+            width: 0%; 
+            transition: width 0.3s ease; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            color: black; 
+            font-weight: bold; 
+            font-size: 12px; 
+        }
+        .file-input { 
+            margin: 20px 0; 
+            padding: 20px;
+            border: 2px dashed #d4af37;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .upload-btn { 
+            background: linear-gradient(135deg, #d4af37, #ffd700); 
+            color: black; 
+            border: none; 
+            padding: 12px 24px; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            margin: 10px;
+        }
+        .test-log { 
+            background: #333; 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin: 20px 0; 
+            max-height: 400px; 
+            overflow-y: auto; 
+            font-family: monospace; 
+            font-size: 12px; 
+        }
+        .auth-test {
+            background: #2d4a3d;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .file-preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .file-preview-item {
+            background: #333;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Frontend Upload System Test</h1>
+        
+        <div class="test-section">
+            <h2>1. Authentication Test</h2>
+            <div class="auth-test">
+                <button class="upload-btn" onclick="testAuth()">Test Authentication Status</button>
+                <div id="authResult">Click to test authentication...</div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>2. File Selection Test</h2>
+            <div class="file-input">
+                <input type="file" id="testFileInput" multiple accept="image/*">
+                <div>Select multiple large image files (test-large-photo-*.jpg)</div>
+                <div id="fileInfo" style="margin-top: 10px; color: #d4af37;"></div>
+            </div>
+            <div id="filePreview" class="file-preview"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>3. Upload Progress Test</h2>
+            <button class="upload-btn" onclick="testUploadProgress()" id="testProgressBtn">Test Progress Bar</button>
+            <div id="progressContainer" style="display: none;">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="testProgressBar">0%</div>
+                </div>
+                <div id="testProgressText">Ready to upload...</div>
+                <div id="testProgressDetails" style="color: #999; margin-top: 5px;"></div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>4. Live Upload Test</h2>
+            <button class="upload-btn" onclick="testLiveUpload()" id="liveUploadBtn">Test Live Upload</button>
+            <div id="liveUploadProgress" style="display: none;">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="liveProgressBar">0%</div>
+                </div>
+                <div id="liveProgressText">Ready...</div>
+                <div id="liveProgressDetails" style="color: #999; margin-top: 5px;"></div>
+            </div>
+        </div>
+
+        <div class="test-log" id="testLog">
+            <div><strong>Frontend Upload Test Log:</strong></div>
+            <div>- Test authentication status and session management</div>
+            <div>- Verify file selection and preview functionality</div>
+            <div>- Test progress bar animations and updates</div>
+            <div>- Perform live upload with error handling</div>
+        </div>
+    </div>
+
+    <script>
+        let selectedTestFiles = [];
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('testLog');
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? '#ff6b6b' : type === 'success' ? '#51cf66' : '#74c0fc';
+            logDiv.innerHTML += `<div style="color: ${color}">[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        // 1. Test Authentication
+        async function testAuth() {
+            log('Testing authentication status...');
+            try {
+                const response = await fetch('/api/sessions', {
+                    credentials: 'include'
+                });
+                
+                const authResult = document.getElementById('authResult');
+                
+                if (response.ok) {
+                    const sessions = await response.json();
+                    authResult.innerHTML = `✅ Authenticated - Found ${sessions.length} sessions`;
+                    authResult.style.color = '#51cf66';
+                    log('Authentication: SUCCESS', 'success');
+                    
+                    if (sessions.length > 0) {
+                        window.testSessionId = sessions[0].id;
+                        log(`Using session ID for tests: ${window.testSessionId}`, 'success');
+                    }
+                } else if (response.status === 401) {
+                    authResult.innerHTML = `❌ Not authenticated - Status: ${response.status}`;
+                    authResult.style.color = '#ff6b6b';
+                    log('Authentication: FAILED - Login required', 'error');
+                } else {
+                    authResult.innerHTML = `⚠️ Unexpected response - Status: ${response.status}`;
+                    authResult.style.color = '#ffd43b';
+                    log(`Authentication: UNEXPECTED - Status: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log(`Authentication test error: ${error.message}`, 'error');
+                document.getElementById('authResult').innerHTML = `❌ Error: ${error.message}`;
+            }
+        }
+
+        // 2. File Selection Test
+        document.getElementById('testFileInput').addEventListener('change', function(e) {
+            selectedTestFiles = Array.from(e.target.files);
+            
+            if (selectedTestFiles.length === 0) {
+                document.getElementById('fileInfo').textContent = 'No files selected';
+                document.getElementById('filePreview').innerHTML = '';
+                return;
+            }
+
+            const totalSize = selectedTestFiles.reduce((sum, file) => sum + file.size, 0);
+            const totalSizeMB = (totalSize / 1024 / 1024).toFixed(2);
+            
+            document.getElementById('fileInfo').innerHTML = 
+                `Selected ${selectedTestFiles.length} files (${totalSizeMB}MB total)`;
+            
+            // Show file preview
+            const preview = document.getElementById('filePreview');
+            preview.innerHTML = selectedTestFiles.map((file, index) => {
+                const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+                return `
+                    <div class="file-preview-item">
+                        <div>${file.name}</div>
+                        <div style="color: #d4af37;">${sizeMB}MB</div>
+                    </div>
+                `;
+            }).join('');
+
+            log(`File selection: ${selectedTestFiles.length} files (${totalSizeMB}MB)`, 'success');
+        });
+
+        // 3. Progress Bar Test
+        async function testUploadProgress() {
+            log('Testing progress bar functionality...');
+            document.getElementById('progressContainer').style.display = 'block';
+            document.getElementById('testProgressBtn').disabled = true;
+
+            const stages = [
+                { percent: 0, text: 'Initializing...', details: 'Preparing upload system' },
+                { percent: 15, text: 'Validating files...', details: 'Checking file formats and sizes' },
+                { percent: 35, text: 'Creating form data...', details: 'Building upload payload' },
+                { percent: 60, text: 'Uploading to server...', details: 'Network transfer in progress' },
+                { percent: 85, text: 'Server processing...', details: 'Files being processed' },
+                { percent: 100, text: 'Complete!', details: 'Upload finished successfully' }
+            ];
+
+            for (const stage of stages) {
+                updateTestProgress(stage.percent, stage.text, stage.details);
+                await sleep(800);
+            }
+
+            log('Progress bar test completed', 'success');
+            document.getElementById('testProgressBtn').disabled = false;
+            
+            setTimeout(() => {
+                document.getElementById('progressContainer').style.display = 'none';
+            }, 2000);
+        }
+
+        function updateTestProgress(percent, text, details) {
+            const progressBar = document.getElementById('testProgressBar');
+            const progressText = document.getElementById('testProgressText');
+            const progressDetails = document.getElementById('testProgressDetails');
+            
+            progressBar.style.width = `${percent}%`;
+            progressBar.textContent = `${Math.round(percent)}%`;
+            progressText.textContent = text;
+            progressDetails.textContent = details;
+        }
+
+        // 4. Live Upload Test
+        async function testLiveUpload() {
+            if (selectedTestFiles.length === 0) {
+                log('Please select files first', 'error');
+                return;
+            }
+
+            if (!window.testSessionId) {
+                log('No session ID available - run authentication test first', 'error');
+                return;
+            }
+
+            log(`Starting live upload test with ${selectedTestFiles.length} files...`);
+            
+            document.getElementById('liveUploadProgress').style.display = 'block';
+            document.getElementById('liveUploadBtn').disabled = true;
+
+            try {
+                updateLiveProgress(0, 'Preparing upload...', `${selectedTestFiles.length} files`);
+                
+                const formData = new FormData();
+                selectedTestFiles.forEach((file, index) => {
+                    formData.append('photos', file);
+                    log(`Adding file ${index + 1}: ${file.name}`);
+                });
+
+                updateLiveProgress(25, 'Uploading photos...', 'Network transfer...');
+
+                const response = await fetch(`/api/sessions/${window.testSessionId}/upload-photos`, {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'include'
+                });
+
+                updateLiveProgress(75, 'Processing response...', 'Server processing...');
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Upload failed: ${response.status} - ${errorText}`);
+                }
+
+                const result = await response.json();
+                updateLiveProgress(100, 'Upload complete!', `${result.uploaded} photos uploaded`);
+                log(`Live upload SUCCESS: ${result.uploaded} photos uploaded`, 'success');
+
+            } catch (error) {
+                updateLiveProgress(0, 'Upload failed', error.message);
+                log(`Live upload FAILED: ${error.message}`, 'error');
+                
+                if (error.message.includes('401')) {
+                    log('Authentication required - redirecting to login...', 'error');
+                    setTimeout(() => {
+                        window.location.href = '/api/login';
+                    }, 2000);
+                }
+            }
+
+            document.getElementById('liveUploadBtn').disabled = false;
+            setTimeout(() => {
+                document.getElementById('liveUploadProgress').style.display = 'none';
+            }, 3000);
+        }
+
+        function updateLiveProgress(percent, text, details) {
+            const progressBar = document.getElementById('liveProgressBar');
+            const progressText = document.getElementById('liveProgressText');
+            const progressDetails = document.getElementById('liveProgressDetails');
+            
+            progressBar.style.width = `${percent}%`;
+            progressBar.textContent = `${Math.round(percent)}%`;
+            progressText.textContent = text;
+            progressDetails.textContent = details;
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // Initialize
+        log('Frontend upload test system loaded');
+        log('Run tests in order: Auth → File Selection → Progress → Live Upload');
+        
+        // Auto-run auth test on load
+        setTimeout(testAuth, 1000);
+    </script>
+</body>
+</html>
