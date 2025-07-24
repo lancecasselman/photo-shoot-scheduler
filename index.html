@@ -286,7 +286,7 @@
         /* ALL session action buttons - gold background with dark text and bold font like Email Client */
         .btn-edit, .btn-calendar, .btn-gallery-ready, .btn-call, 
         .btn-text, .btn-gallery, .btn-warning, .btn-contract, .btn-success,
-        .btn-invoice, .btn-email, .btn-secondary, .btn-tip {
+        .btn-invoice, .btn-email, .btn-secondary {
             background: linear-gradient(135deg, #d4af37 0%, #f4e4bc 100%);
             color: #1a1a1a;
             border: 1px solid rgba(212, 175, 55, 0.4);
@@ -300,7 +300,7 @@
         .btn-edit:hover, .btn-calendar:hover, .btn-gallery-ready:hover, 
         .btn-call:hover, .btn-text:hover, .btn-gallery:hover,
         .btn-warning:hover, .btn-contract:hover, .btn-success:hover,
-        .btn-invoice:hover, .btn-email:hover, .btn-secondary:hover, .btn-tip:hover {
+        .btn-invoice:hover, .btn-email:hover, .btn-secondary:hover {
             background: linear-gradient(135deg, #f4e4bc 0%, #d4af37 100%);
             color: #1a1a1a;
             transform: translateY(-2px);
@@ -2794,12 +2794,13 @@
                             <button class="btn btn-invoice" onclick="sendInvoice('${session.id}')">
                                 Send Invoice
                             </button>
+                            <button class="btn btn-invoice" onclick="sendInvoiceWithTip('${session.id}')">
+                                💰 Invoice + Tip Option
+                            </button>
                             <button class="btn btn-invoice" onclick="sendDepositInvoice('${session.id}')">
                                 Send Deposit
                             </button>
-                            <button class="btn btn-tip" onclick="sendTipLink('${session.id}')">
-                                💰 Send Tip Link
-                            </button>
+
                             <button class="btn btn-success" onclick="openPaymentPlanModal('${session.id}')">
                                 Create Payment Plan
                             </button>
@@ -3048,52 +3049,50 @@
             showMessage('Form populated for editing. Update and save changes.', 'success');
         }
 
-        // Send tip link to client
-        async function sendTipLink(sessionId) {
+
+
+        // Send invoice with optional tip
+        async function sendInvoiceWithTip(sessionId) {
             const session = sessions.find(s => s.id === sessionId);
             if (!session) return;
             
-            // Prompt for tip suggestions
-            const tipSuggestions = prompt(`Send tip link to ${session.clientName}?\n\nSuggested tip amounts (comma-separated):`);
-            if (!tipSuggestions) return;
-            
-            const amounts = tipSuggestions.split(',').map(a => parseFloat(a.trim())).filter(a => !isNaN(a) && a > 0);
-            if (amounts.length === 0) {
-                showMessage('Please enter valid tip amounts', 'error');
-                return;
-            }
+            const includeGratuity = confirm(`Send invoice to ${session.clientName} with optional gratuity line item?\n\nThis will allow the client to add a tip when paying the invoice.`);
+            if (!includeGratuity) return;
             
             try {
-                const response = await fetch(`/api/sessions/${sessionId}/tip-link`, {
+                const response = await fetch('/api/create-invoice', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        amounts: amounts,
+                    body: JSON.stringify({
+                        sessionId: session.id,
                         clientName: session.clientName,
-                        clientEmail: session.email
+                        email: session.email,
+                        amount: session.price,
+                        description: `${session.sessionType} Photography Session`,
+                        dueDate: 30,
+                        includeTip: true
                     })
                 });
                 
                 const result = await response.json();
                 
                 if (response.ok) {
-                    showMessage(`Tip link sent to ${session.clientName}! 💰`, 'success');
+                    showMessage(`Invoice with tip option sent to ${session.clientName}!`, 'success');
                     
-                    // Show tip link for copying
-                    const copyLink = confirm(`Tip link created successfully!\n\nLink: ${result.tip_url}\n\nClick OK to copy link to clipboard, or Cancel to dismiss.`);
-                    if (copyLink) {
-                        navigator.clipboard.writeText(result.tip_url);
-                        showMessage('Tip link copied to clipboard!', 'success');
+                    if (result.invoice_url) {
+                        const viewInvoice = confirm(`Invoice sent successfully!\n\nWould you like to view the invoice?`);
+                        if (viewInvoice) {
+                            window.open(result.invoice_url, '_blank');
+                        }
                     }
                     
-                    // Trigger milestone celebration
-                    celebrateMilestone('tip_sent', session.clientName);
+                    celebrateMilestone('invoice_sent', session.clientName);
                 } else {
-                    showMessage(`Failed to create tip link: ${result.error || 'Unknown error'}`, 'error');
+                    showMessage(`Failed to send invoice: ${result.error || 'Please check your Stripe configuration'}`, 'error');
                 }
             } catch (error) {
-                console.error('Error creating tip link:', error);
-                showMessage('Error creating tip link', 'error');
+                console.error('Error sending invoice with tip:', error);
+                showMessage('Error sending invoice', 'error');
             }
         }
 
