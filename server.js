@@ -526,7 +526,8 @@ const upload = multer({
 });
 
 // Middleware
-app.use(express.json());
+app.use(express.json({ limit: '500mb' }));
+app.use(express.urlencoded({ limit: '500mb', extended: true }));
 // Move static file serving after route definitions to ensure authentication checks run first
 // Static files will be served at the bottom of the file
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -632,6 +633,8 @@ app.post('/api/sessions/:id/upload-photos', isAuthenticated, upload.array('photo
             return res.status(404).json({ error: 'Session not found' });
         }
 
+        console.log(`Upload attempt for session ${sessionId}: ${req.files ? req.files.length : 0} files received`);
+        
         if (!req.files || req.files.length === 0) {
             return res.status(400).json({ error: 'No files uploaded' });
         }

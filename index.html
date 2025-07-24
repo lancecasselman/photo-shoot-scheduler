@@ -2955,9 +2955,12 @@
                 return;
             }
 
+            console.log(`Starting upload of ${files.length} files to session ${currentUploadSessionId}`);
+
             try {
                 const formData = new FormData();
-                files.forEach(file => {
+                files.forEach((file, index) => {
+                    console.log(`Adding file ${index + 1}: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
                     formData.append('photos', file);
                 });
 
