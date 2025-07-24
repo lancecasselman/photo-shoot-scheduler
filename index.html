@@ -1556,9 +1556,55 @@
             color: #FDF5E6;
         }
 
-        .wedding-preview {
-            background: linear-gradient(135deg, #FFB6C1 0%, #FFC0CB 100%);
-            color: white;
+        .legacy-elite-preview {
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #2c1810 100%);
+            color: #d4af37;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .legacy-elite-preview::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 30% 30%, rgba(212, 175, 55, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .legacy-elite-preview .preview-tagline {
+            font-size: 0.9rem;
+            font-style: italic;
+            color: rgba(212, 175, 55, 0.8);
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        .legacy-photo-1 {
+            background: linear-gradient(45deg, #8b7355, #d4af37);
+            position: relative;
+        }
+
+        .legacy-photo-2 {
+            background: linear-gradient(45deg, #2c1810, #8b7355);
+        }
+
+        .legacy-photo-3 {
+            background: linear-gradient(45deg, #d4af37, #f4e4bc);
+        }
+
+        .legacy-elite-btn {
+            background: linear-gradient(135deg, #d4af37 0%, #f4e4bc 100%) !important;
+            color: #1a1a1a !important;
+            font-weight: 700 !important;
+            text-shadow: none !important;
+        }
+
+        .legacy-elite-btn:hover {
+            transform: translateY(-3px) !important;
+            box-shadow: 0 12px 28px rgba(212, 175, 55, 0.4) !important;
         }
 
         .preview-header {
@@ -4503,25 +4549,48 @@ END:VCALENDAR`;
                     });
                 },
                 
-                wedding: () => {
-                    brandSettings.colors.primary = '#FFB6C1';
-                    brandSettings.colors.secondary = '#FFC0CB';
-                    brandSettings.colors.accent = '#FF69B4';
+                'legacy-elite': () => {
+                    // Your custom colors based on actual website
+                    brandSettings.colors.primary = '#d4af37';
+                    brandSettings.colors.secondary = '#8b7355';
+                    brandSettings.colors.accent = '#f4e4bc';
+                    brandSettings.colors.text = '#ffffff';
                     brandSettings.primaryFont = 'playfair';
+                    brandSettings.businessName = 'The Legacy Photography';
                     
                     const components = [
-                        { type: 'hero', style: 'background: linear-gradient(135deg, #FFB6C1 0%, #FFC0CB 100%);' },
-                        { type: 'about', style: 'background: #FFF0F5;' },
-                        { type: 'gallery', style: 'background: white;' },
-                        { type: 'services', style: 'background: #FFB6C1; color: white;' },
-                        { type: 'contact', style: 'background: #FFC0CB; color: #8B008B;' }
+                        { 
+                            type: 'legacy-hero', 
+                            style: 'background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #2c1810 100%); position: relative;' 
+                        },
+                        { 
+                            type: 'legacy-philosophy', 
+                            style: 'background: linear-gradient(135deg, #2c1810 0%, #1a1a1a 100%); color: #d4af37;' 
+                        },
+                        { 
+                            type: 'legacy-gallery', 
+                            style: 'background: #0f0f0f; color: #d4af37;' 
+                        },
+                        { 
+                            type: 'legacy-about', 
+                            style: 'background: linear-gradient(135deg, #1a1a1a 0%, #2c1810 100%); color: #f4e4bc;' 
+                        },
+                        { 
+                            type: 'legacy-contact', 
+                            style: 'background: linear-gradient(135deg, #8b7355 0%, #d4af37 100%); color: #1a1a1a;' 
+                        }
                     ];
                     
                     components.forEach((comp, index) => {
                         setTimeout(() => {
-                            createTemplateComponent(comp.type, index * 300, comp.style);
-                        }, index * 300);
+                            createTemplateComponent(comp.type, index * 400, comp.style);
+                        }, index * 400);
                     });
+                    
+                    // Show special confetti for your custom template
+                    setTimeout(() => {
+                        triggerMilestoneAnimation('🔥 Your custom Legacy Elite template is ready! This is YOUR brand perfectly captured! ✨', 'legacy');
+                    }, 2000);
                 }
             };
             
@@ -4594,6 +4663,93 @@ END:VCALENDAR`;
                             <input type="email" placeholder="Your Email" style="padding: 18px; border: none; border-radius: 8px; font-size: 16px;">
                             <textarea placeholder="Tell us about your photography needs..." rows="6" style="padding: 18px; border: none; border-radius: 8px; font-size: 16px; resize: vertical;"></textarea>
                             <button style="background: ${brandSettings.colors.accent}; color: white; border: none; padding: 18px 30px; border-radius: 8px; font-weight: bold; font-size: 18px; cursor: pointer;">Send Message</button>
+                        </div>
+                    </div>
+                </div>`,
+
+                // Custom Legacy Elite Components
+                'legacy-hero': `<div style="${customStyle} padding: 120px 20px; text-align: center; position: relative; overflow: hidden;">
+                    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at 30% 30%, rgba(212, 175, 55, 0.1) 0%, transparent 70%); pointer-events: none;"></div>
+                    <div style="position: relative; z-index: 1;">
+                        <div class="logo-placeholder" style="margin-bottom: 30px; display: flex; justify-content: center;">
+                            ${brandSettings.logo ? `<img src="${brandSettings.logo}" style="height: 80px; width: auto;">` : '<div style="font-size: 4em;">📸</div>'}
+                        </div>
+                        <h1 class="business-name" style="font-size: 4em; margin-bottom: 15px; color: #d4af37; font-family: 'Playfair Display', serif; font-weight: 400; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">${brandSettings.businessName}</h1>
+                        <h2 style="font-size: 2.2em; margin-bottom: 20px; color: #f4e4bc; font-weight: 300; font-style: italic;">Lance Casselman</h2>
+                        <p style="font-size: 1.4em; margin-bottom: 40px; color: rgba(244, 228, 188, 0.9); max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.6;">"Your Life, Your Legacy, Perfectly Captured!"</p>
+                        <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+                            <button style="background: linear-gradient(135deg, #d4af37 0%, #f4e4bc 100%); color: #1a1a1a; border: none; padding: 18px 35px; border-radius: 8px; font-weight: bold; font-size: 18px; cursor: pointer; transition: all 0.3s ease;">View Portfolio</button>
+                            <button style="background: transparent; color: #d4af37; border: 2px solid #d4af37; padding: 16px 33px; border-radius: 8px; font-weight: bold; font-size: 18px; cursor: pointer; transition: all 0.3s ease;">📱 Text: 843-485-1315</button>
+                        </div>
+                    </div>
+                </div>`,
+
+                'legacy-philosophy': `<div style="${customStyle} padding: 100px 20px;">
+                    <div style="max-width: 1000px; margin: 0 auto; text-align: center;">
+                        <h2 style="color: #d4af37; font-size: 3em; margin-bottom: 40px; font-family: 'Playfair Display', serif; font-weight: 400; font-style: italic;">Capturing Unforgettable South Carolina Moments</h2>
+                        <div style="font-size: 1.4em; line-height: 1.8; color: #f4e4bc; margin-bottom: 40px;">
+                            <p style="margin-bottom: 25px; font-style: italic;">"Time doesn't wait... We blink and the kids are grown... We laugh and the moment slips away..."</p>
+                            <p style="margin-bottom: 25px; color: #d4af37; font-weight: 500;">"But through photography, we get to hold on."</p>
+                            <p style="margin-bottom: 25px;">I created this brand to honor that idea—to give families, couples, and individuals a way to capture life exactly as it is… and to make sure it lives on.</p>
+                            <p style="color: #d4af37; font-weight: 500; font-size: 1.1em;">"You bring your story, your people, your love—I bring the lens, the light, and the vision to preserve it forever. Together, we create something timeless."</p>
+                        </div>
+                    </div>
+                </div>`,
+
+                'legacy-gallery': `<div style="${customStyle} padding: 100px 20px;">
+                    <h2 style="text-align: center; margin-bottom: 60px; color: #d4af37; font-size: 3em; font-family: 'Playfair Display', serif; font-weight: 400;">Featured Work</h2>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; max-width: 1200px; margin: 0 auto;">
+                        <div style="aspect-ratio: 4/5; background: linear-gradient(45deg, #8b7355, #d4af37); border-radius: 12px; border: 3px solid #d4af37; position: relative; overflow: hidden;">
+                            <div style="position: absolute; bottom: 15px; left: 15px; color: white; font-weight: bold; background: rgba(0,0,0,0.5); padding: 8px 12px; border-radius: 6px;">Beach Sessions</div>
+                        </div>
+                        <div style="aspect-ratio: 4/5; background: linear-gradient(45deg, #2c1810, #8b7355); border-radius: 12px; border: 3px solid #d4af37; position: relative; overflow: hidden;">
+                            <div style="position: absolute; bottom: 15px; left: 15px; color: white; font-weight: bold; background: rgba(0,0,0,0.5); padding: 8px 12px; border-radius: 6px;">Family Portraits</div>
+                        </div>
+                        <div style="aspect-ratio: 4/5; background: linear-gradient(45deg, #d4af37, #f4e4bc); border-radius: 12px; border: 3px solid #d4af37; position: relative; overflow: hidden;">
+                            <div style="position: absolute; bottom: 15px; left: 15px; color: #1a1a1a; font-weight: bold; background: rgba(255,255,255,0.8); padding: 8px 12px; border-radius: 6px;">Wedding Photography</div>
+                        </div>
+                        <div style="aspect-ratio: 4/5; background: linear-gradient(45deg, #1a1a1a, #d4af37); border-radius: 12px; border: 3px solid #d4af37; position: relative; overflow: hidden;">
+                            <div style="position: absolute; bottom: 15px; left: 15px; color: white; font-weight: bold; background: rgba(0,0,0,0.5); padding: 8px 12px; border-radius: 6px;">Senior Photos</div>
+                        </div>
+                        <div style="aspect-ratio: 4/5; background: linear-gradient(45deg, #8b7355, #2c1810); border-radius: 12px; border: 3px solid #d4af37; position: relative; overflow: hidden;">
+                            <div style="position: absolute; bottom: 15px; left: 15px; color: white; font-weight: bold; background: rgba(0,0,0,0.5); padding: 8px 12px; border-radius: 6px;">Charleston Charm</div>
+                        </div>
+                        <div style="aspect-ratio: 4/5; background: linear-gradient(45deg, #f4e4bc, #8b7355); border-radius: 12px; border: 3px solid #d4af37; position: relative; overflow: hidden;">
+                            <div style="position: absolute; bottom: 15px; left: 15px; color: #1a1a1a; font-weight: bold; background: rgba(255,255,255,0.8); padding: 8px 12px; border-radius: 6px;">Myrtle Beach</div>
+                        </div>
+                    </div>
+                    <div style="text-align: center; margin-top: 50px;">
+                        <button style="background: linear-gradient(135deg, #d4af37 0%, #f4e4bc 100%); color: #1a1a1a; border: none; padding: 18px 35px; border-radius: 8px; font-weight: bold; font-size: 18px; cursor: pointer;">View Complete Portfolio</button>
+                    </div>
+                </div>`,
+
+                'legacy-about': `<div style="${customStyle} padding: 100px 20px;">
+                    <div style="max-width: 1000px; margin: 0 auto;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center;">
+                            <div>
+                                <h2 style="color: #d4af37; font-size: 3em; margin-bottom: 30px; font-family: 'Playfair Display', serif; font-weight: 400;">My Goal For You</h2>
+                                <p style="font-size: 1.3em; line-height: 1.8; color: #f4e4bc; margin-bottom: 25px;">My goal for you is more than just taking pictures — it's to create something that moves you every single time you look back.</p>
+                                <p style="font-size: 1.3em; line-height: 1.8; color: #f4e4bc; margin-bottom: 25px;">I want you to feel proud, radiant, and seen. I want your photos to transport you back to those moments — the laughter, the love, the light in your eyes — with all the depth and emotion still intact.</p>
+                                <p style="font-size: 1.3em; line-height: 1.8; color: #d4af37; font-weight: 500;">Because your story matters. And it deserves to be captured in a way that feels just as unforgettable as the moments themselves.</p>
+                            </div>
+                            <div style="background: linear-gradient(45deg, #d4af37, #f4e4bc); aspect-ratio: 4/5; border-radius: 12px; border: 3px solid #d4af37;"></div>
+                        </div>
+                    </div>
+                </div>`,
+
+                'legacy-contact': `<div style="${customStyle} padding: 100px 20px;">
+                    <div style="max-width: 800px; margin: 0 auto; text-align: center;">
+                        <h2 style="margin-bottom: 20px; font-size: 3em; font-family: 'Playfair Display', serif; font-weight: 400;">Ready to Capture Your Legacy?</h2>
+                        <p style="font-size: 1.4em; margin-bottom: 50px; line-height: 1.6;">Call or Text 843-485-1315 or Submit a Message Below</p>
+                        <div style="display: grid; gap: 20px; margin-bottom: 40px;">
+                            <input type="text" placeholder="Your Name" style="padding: 20px; border: 2px solid #8b7355; border-radius: 8px; font-size: 16px; background: rgba(255,255,255,0.95);">
+                            <input type="email" placeholder="Your Email" style="padding: 20px; border: 2px solid #8b7355; border-radius: 8px; font-size: 16px; background: rgba(255,255,255,0.95);">
+                            <textarea placeholder="Tell me about your photography vision..." rows="6" style="padding: 20px; border: 2px solid #8b7355; border-radius: 8px; font-size: 16px; resize: vertical; background: rgba(255,255,255,0.95);"></textarea>
+                            <button style="background: linear-gradient(135deg, #8b7355 0%, #2c1810 100%); color: #f4e4bc; border: none; padding: 20px 35px; border-radius: 8px; font-weight: bold; font-size: 18px; cursor: pointer;">Send Message</button>
+                        </div>
+                        <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+                            <a href="sms:8434851315" style="background: transparent; color: #1a1a1a; border: 2px solid #1a1a1a; padding: 15px 30px; border-radius: 8px; font-weight: bold; text-decoration: none; display: inline-block;">📱 Text Now</a>
+                            <a href="tel:8434851315" style="background: transparent; color: #1a1a1a; border: 2px solid #1a1a1a; padding: 15px 30px; border-radius: 8px; font-weight: bold; text-decoration: none; display: inline-block;">📞 Call Now</a>
                         </div>
                     </div>
                 </div>`
@@ -4673,6 +4829,20 @@ END:VCALENDAR`;
             }
             
             console.log(`🔤 Font changed to: ${fontFamily}`);
+        }
+
+        // Initialize website builder when tab is opened
+        function initializeWebsiteBuilder() {
+            console.log('Initializing photography website builder...');
+            
+            // Load Playfair Display font for your template
+            loadGoogleFont('playfair');
+            
+            // Set default business name to yours
+            const businessNameInput = document.getElementById('businessName');
+            if (businessNameInput) {
+                businessNameInput.value = 'The Legacy Photography';
+            }
         }
 
         function loadGoogleFont(font) {
@@ -4997,26 +5167,27 @@ END:VCALENDAR`;
                             </div>
                         </div>
 
-                        <div class="template-card" onclick="useTemplate('wedding')">
-                            <div class="template-preview wedding-preview">
-                                <div class="preview-header">Wedding Specialist</div>
-                                <div class="preview-hero">Forever Moments</div>
+                        <div class="template-card" onclick="useTemplate('legacy-elite')">
+                            <div class="template-preview legacy-elite-preview">
+                                <div class="preview-header">The Legacy Photography</div>
+                                <div class="preview-hero">Lance Casselman</div>
+                                <div class="preview-tagline">Timeless Elegance • Authentic Moments</div>
                                 <div class="preview-gallery">
-                                    <div class="preview-photo"></div>
-                                    <div class="preview-photo"></div>
-                                    <div class="preview-photo"></div>
+                                    <div class="preview-photo legacy-photo-1"></div>
+                                    <div class="preview-photo legacy-photo-2"></div>
+                                    <div class="preview-photo legacy-photo-3"></div>
                                 </div>
                             </div>
                             <div class="template-info">
-                                <h3>Wedding Specialist</h3>
-                                <p>Romantic design optimized specifically for wedding photographers</p>
+                                <h3>🔥 Legacy Elite (Custom For You)</h3>
+                                <p>Luxurious dark theme with gold accents, designed specifically for The Legacy Photography's sophisticated brand</p>
                                 <div class="template-features">
-                                    <span class="feature-tag">Romantic Colors</span>
-                                    <span class="feature-tag">Couple Stories</span>
-                                    <span class="feature-tag">Wedding Packages</span>
-                                    <span class="feature-tag">Booking Form</span>
+                                    <span class="feature-tag">🌟 Premium Dark Design</span>
+                                    <span class="feature-tag">✨ Gold Luxury Accents</span>
+                                    <span class="feature-tag">📸 Your Actual Photos</span>
+                                    <span class="feature-tag">🎯 Brand-Matched</span>
                                 </div>
-                                <button class="use-template-btn">Use This Template</button>
+                                <button class="use-template-btn legacy-elite-btn">🚀 Use My Custom Template</button>
                             </div>
                         </div>
                     </div>
