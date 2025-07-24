@@ -4444,14 +4444,14 @@ END:VCALENDAR`;
         // Website Builder State
         let builderMode = 'template';
         let brandSettings = {
-            logo: null,
+            logo: 'attached_assets/logo_1753330290399.png',
             businessName: 'The Legacy Photography',
             primaryFont: 'system',
             colors: {
-                primary: '#667eea',
-                secondary: '#764ba2',
-                accent: '#f39c12',
-                text: '#333333'
+                primary: '#d4af37',
+                secondary: '#f4e4bc',
+                accent: '#8b7355',
+                text: '#ffffff'
             }
         };
         let selectedElement = null;
@@ -4680,7 +4680,7 @@ END:VCALENDAR`;
                     <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at 30% 30%, rgba(212, 175, 55, 0.1) 0%, transparent 70%); pointer-events: none;"></div>
                     <div style="position: relative; z-index: 1;">
                         <div class="logo-placeholder" style="margin-bottom: 30px; display: flex; justify-content: center;">
-                            ${brandSettings.logo ? `<img src="${brandSettings.logo}" style="height: 80px; width: auto;">` : '<div style="font-size: 4em;">📸</div>'}
+                            <img src="attached_assets/logo_1753330290399.png" style="height: 120px; width: auto; filter: drop-shadow(0 8px 16px rgba(0,0,0,0.8)) drop-shadow(0 0 20px rgba(212,175,55,0.3));">
                         </div>
                         <h1 class="business-name" style="font-size: 4em; margin-bottom: 15px; color: #d4af37; font-family: 'Playfair Display', serif; font-weight: 400; text-shadow: 3px 3px 6px rgba(0,0,0,0.8);">${brandSettings.businessName}</h1>
                         <h2 style="font-size: 2.2em; margin-bottom: 20px; color: #f4e4bc; font-weight: 300; font-style: italic; text-shadow: 2px 2px 4px rgba(0,0,0,0.7);">Lance Casselman</h2>
