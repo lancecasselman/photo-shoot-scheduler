@@ -2957,12 +2957,12 @@
 
             console.log(`Starting upload of ${files.length} files to session ${currentUploadSessionId}`);
 
-            // Check if we need to batch upload (more than 20 files or total size > 150MB)
+            // Check if we need to batch upload (more than 100 files or total size > 1GB)
             const totalSize = files.reduce((sum, file) => sum + file.size, 0);
             const totalSizeMB = totalSize / (1024 * 1024);
             
-            if (files.length > 20 || totalSizeMB > 150) {
-                console.log(`Large upload detected (${files.length} files, ${totalSizeMB.toFixed(2)}MB) - using batch upload`);
+            if (files.length > 100 || totalSizeMB > 1024) {
+                console.log(`Massive upload detected (${files.length} files, ${totalSizeMB.toFixed(2)}MB) - using batch upload`);
                 return uploadFilesInBatches(files);
             }
 
@@ -3001,9 +3001,9 @@
             }
         }
 
-        // Upload files in smaller batches to prevent 413 errors
+        // Upload files in larger batches for faster processing
         async function uploadFilesInBatches(files) {
-            const batchSize = 10; // Upload 10 files at a time
+            const batchSize = 50; // Upload 50 files at a time
             const totalBatches = Math.ceil(files.length / batchSize);
             let uploadedCount = 0;
             

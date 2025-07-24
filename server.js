@@ -511,10 +511,10 @@ const storage = multer.diskStorage({
 const upload = multer({ 
     storage: storage,
     limits: { 
-        fileSize: 100 * 1024 * 1024, // 100MB per file
-        files: 50,                    // 50 files max per batch
-        parts: 100,                   // 100 parts max
-        fieldSize: 10 * 1024 * 1024   // 10MB field size
+        fileSize: 500 * 1024 * 1024,  // 500MB per file (for RAW photos)
+        files: 200,                   // 200 files max per batch
+        parts: 1000,                  // 1000 parts max
+        fieldSize: 50 * 1024 * 1024   // 50MB field size
     },
     fileFilter: (req, file, cb) => {
         if (file.mimetype.startsWith('image/')) {
@@ -525,9 +525,9 @@ const upload = multer({
     }
 });
 
-// Middleware - increase payload limits for large uploads
-app.use(express.json({ limit: '200mb' }));
-app.use(express.urlencoded({ limit: '200mb', extended: true, parameterLimit: 50000 }));
+// Middleware - massive payload limits for professional photography uploads
+app.use(express.json({ limit: '2gb' }));
+app.use(express.urlencoded({ limit: '2gb', extended: true, parameterLimit: 100000 }));
 // Move static file serving after route definitions to ensure authentication checks run first
 // Static files will be served at the bottom of the file
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
