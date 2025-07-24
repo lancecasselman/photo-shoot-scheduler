@@ -511,11 +511,13 @@ const storage = multer.diskStorage({
 const upload = multer({ 
     storage: storage,
     limits: { 
-        fileSize: 5 * 1024 * 1024 * 1024,  // 5GB per file (ridiculous amount)
-        files: 2000,                       // 2000 files max per batch
-        parts: 10000,                      // 10000 parts max
-        fieldSize: 1024 * 1024 * 1024,     // 1GB field size
-        headerPairs: 10000                 // 10000 header pairs
+        fileSize: 50 * 1024 * 1024 * 1024, // 50GB per file (MAXIMUM)
+        files: 10000,                      // 10000 files max per batch
+        parts: 100000,                     // 100000 parts max
+        fieldSize: 10 * 1024 * 1024 * 1024, // 10GB field size
+        headerPairs: 100000,               // 100000 header pairs
+        fieldNameSize: 1024 * 1024,        // 1MB field name size
+        fieldValue: 10 * 1024 * 1024 * 1024 // 10GB field value
     },
     fileFilter: (req, file, cb) => {
         console.log(`🔍 File filter check: ${file.originalname} (${file.mimetype})`);
@@ -527,9 +529,9 @@ const upload = multer({
     }
 });
 
-// Middleware - ridiculous payload limits for professional photography uploads
-app.use(express.json({ limit: '10gb' }));
-app.use(express.urlencoded({ limit: '10gb', extended: true, parameterLimit: 1000000 }));
+// Middleware - MAXIMUM payload limits for professional photography uploads
+app.use(express.json({ limit: '50gb' }));
+app.use(express.urlencoded({ limit: '50gb', extended: true, parameterLimit: 10000000 }));
 // Move static file serving after route definitions to ensure authentication checks run first
 // Static files will be served at the bottom of the file
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -630,11 +632,11 @@ app.post('/api/sessions/:id/upload-photos', isAuthenticated, (req, res) => {
     
     console.log(`🔍 Starting upload for session ${sessionId}...`);
     
-    // Set shorter timeout to force quick processing
-    req.setTimeout(5 * 60 * 1000, () => {
-        console.error('❌ Upload timeout after 5 minutes');
+    // Set maximum timeout for large files
+    req.setTimeout(60 * 60 * 1000, () => {
+        console.error('❌ Upload timeout after 1 hour');
         if (!res.headersSent) {
-            res.status(408).json({ error: 'Upload timeout - processing too slow' });
+            res.status(408).json({ error: 'Upload timeout - file too large' });
         }
     });
     
@@ -2478,11 +2480,12 @@ async function startServer() {
         }
     });
     
-    // Set optimized server timeouts for faster processing (10 minutes)
-    server.timeout = 10 * 60 * 1000;
-    server.keepAliveTimeout = 11 * 60 * 1000;
-    server.headersTimeout = 12 * 60 * 1000;
-    console.log('📁 Server configured with optimized timeouts - 10 minutes for uploads!');
+    // Set MAXIMUM server timeouts for large uploads (2 hours)
+    server.timeout = 2 * 60 * 60 * 1000;
+    server.keepAliveTimeout = 2 * 60 * 60 * 1000 + 60000;
+    server.headersTimeout = 2 * 60 * 60 * 1000 + 120000;
+    server.maxHeadersCount = 0; // Remove header count limit
+    console.log('📁 Server configured with MAXIMUM timeouts - 2 hours for uploads!');
 }
 
 startServer().catch(error => {
