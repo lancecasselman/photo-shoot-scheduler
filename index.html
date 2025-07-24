@@ -2527,6 +2527,16 @@
                         <div class="progress-bar" id="overallProgress"></div>
                     </div>
                     <div id="fileProgressList" style="margin-top: 15px;"></div>
+                    
+                    <!-- Upload Progress Bar -->
+                    <div id="uploadProgress" style="display: none; margin-top: 20px; padding: 15px; background: rgba(212, 175, 55, 0.1); border-radius: 8px; border: 1px solid #d4af37;">
+                        <div style="margin-bottom: 10px; color: #d4af37; font-weight: bold; text-align: center;" id="progressTitle">Uploading Photos...</div>
+                        <div style="background: #333; border-radius: 8px; padding: 3px; margin-bottom: 10px;">
+                            <div id="progressBar" style="background: linear-gradient(135deg, #d4af37, #ffd700); height: 24px; border-radius: 6px; width: 0%; transition: width 0.3s ease; display: flex; align-items: center; justify-content: center; color: black; font-weight: bold; font-size: 12px;"></div>
+                        </div>
+                        <div id="progressText" style="color: #d4af37; font-size: 14px; text-align: center;">Preparing upload...</div>
+                        <div id="progressDetails" style="color: #999; font-size: 12px; text-align: center; margin-top: 5px;"></div>
+                    </div>
                 </div>
             </div>
             <div style="text-align: center; margin-top: 20px;">
@@ -2868,6 +2878,7 @@
             document.getElementById('filePreview').innerHTML = '';
             document.getElementById('uploadStatus').style.display = 'none';
             document.getElementById('uploadBtn').style.display = 'none';
+            document.getElementById('uploadProgress').style.display = 'none';
             document.getElementById('fileInput').value = '';
             
             // Clear any existing progress intervals
@@ -2949,6 +2960,30 @@
             uploadFiles(selectedFiles);
         }
 
+        function showUploadProgress(show = true) {
+            const progressDiv = document.getElementById('uploadProgress');
+            const uploadBtn = document.getElementById('uploadBtn');
+            
+            if (show) {
+                progressDiv.style.display = 'block';
+                uploadBtn.style.display = 'none';
+            } else {
+                progressDiv.style.display = 'none';
+                uploadBtn.style.display = 'block';
+            }
+        }
+
+        function updateProgress(percent, text, details = '') {
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const progressDetails = document.getElementById('progressDetails');
+            
+            progressBar.style.width = `${percent}%`;
+            progressBar.textContent = `${Math.round(percent)}%`;
+            progressText.textContent = text;
+            progressDetails.textContent = details;
+        }
+
         async function uploadFiles(files) {
             if (!currentUploadSessionId) {
                 showMessage('No session selected for upload', 'error');
@@ -2957,14 +2992,18 @@
 
             console.log(`Starting upload of ${files.length} files to session ${currentUploadSessionId}`);
 
-            // Check if we need to batch upload (more than 100 files or total size > 1GB)
+            // Check if we need to batch upload (more than 50 files or total size > 500MB)
             const totalSize = files.reduce((sum, file) => sum + file.size, 0);
             const totalSizeMB = totalSize / (1024 * 1024);
             
-            if (files.length > 100 || totalSizeMB > 1024) {
-                console.log(`Massive upload detected (${files.length} files, ${totalSizeMB.toFixed(2)}MB) - using batch upload`);
+            if (files.length > 50 || totalSizeMB > 500) {
+                console.log(`Large upload detected (${files.length} files, ${totalSizeMB.toFixed(2)}MB) - using batch upload`);
                 return uploadFilesInBatches(files);
             }
+
+            // Show progress and start upload
+            showUploadProgress(true);
+            updateProgress(0, 'Preparing upload...', `${files.length} files (${totalSizeMB.toFixed(1)}MB)`);
 
             try {
                 const formData = new FormData();
@@ -2973,20 +3012,27 @@
                     formData.append('photos', file);
                 });
 
+                updateProgress(25, 'Uploading photos...', 'Please wait, this may take a few minutes for large files');
+
                 const response = await fetch(`/api/sessions/${currentUploadSessionId}/upload-photos`, {
                     method: 'POST',
                     body: formData
                 });
 
+                updateProgress(75, 'Processing upload...', 'Server is processing your photos');
+
                 const result = await response.json();
 
                 if (response.ok) {
-                    showMessage(`Successfully uploaded ${result.uploaded} photos!`, 'success');
-                    closeUploadModal();
-                    loadSessions(); // Refresh to show new photos
-                    
-                    // Trigger milestone celebration for photo upload
-                    celebrateMilestone('photos_uploaded');
+                    updateProgress(100, 'Upload complete!', `Successfully uploaded ${result.uploaded} photos`);
+                    setTimeout(() => {
+                        showMessage(`Successfully uploaded ${result.uploaded} photos!`, 'success');
+                        closeUploadModal();
+                        loadSessions(); // Refresh to show new photos
+                        
+                        // Trigger milestone celebration for photo upload
+                        celebrateMilestone('photos_uploaded');
+                    }, 1000);
                 } else if (response.status === 401) {
                     showMessage('Authentication required. Please log in to upload photos.', 'error');
                     setTimeout(() => {
@@ -3006,7 +3052,11 @@
                     message: error.message,
                     stack: error.stack
                 });
-                showMessage('Upload failed: ' + error.message, 'error');
+                updateProgress(0, 'Upload failed', error.message);
+                setTimeout(() => {
+                    showUploadProgress(false);
+                    showMessage('Upload failed: ' + error.message, 'error');
+                }, 2000);
             }
         }
 
