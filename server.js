@@ -511,12 +511,14 @@ const storage = multer.diskStorage({
 const upload = multer({ 
     storage: storage,
     limits: { 
-        fileSize: 500 * 1024 * 1024,  // 500MB per file (for RAW photos)
-        files: 200,                   // 200 files max per batch
-        parts: 1000,                  // 1000 parts max
-        fieldSize: 50 * 1024 * 1024   // 50MB field size
+        fileSize: 5 * 1024 * 1024 * 1024,  // 5GB per file (ridiculous amount)
+        files: 2000,                       // 2000 files max per batch
+        parts: 10000,                      // 10000 parts max
+        fieldSize: 1024 * 1024 * 1024,     // 1GB field size
+        headerPairs: 10000                 // 10000 header pairs
     },
     fileFilter: (req, file, cb) => {
+        console.log(`🔍 File filter check: ${file.originalname} (${file.mimetype})`);
         if (file.mimetype.startsWith('image/')) {
             cb(null, true);
         } else {
@@ -525,9 +527,9 @@ const upload = multer({
     }
 });
 
-// Middleware - massive payload limits for professional photography uploads
-app.use(express.json({ limit: '2gb' }));
-app.use(express.urlencoded({ limit: '2gb', extended: true, parameterLimit: 100000 }));
+// Middleware - ridiculous payload limits for professional photography uploads
+app.use(express.json({ limit: '10gb' }));
+app.use(express.urlencoded({ limit: '10gb', extended: true, parameterLimit: 1000000 }));
 // Move static file serving after route definitions to ensure authentication checks run first
 // Static files will be served at the bottom of the file
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -628,21 +630,34 @@ app.post('/api/sessions/:id/upload-photos', isAuthenticated, (req, res) => {
     
     console.log(`🔍 Starting upload for session ${sessionId}...`);
     
-    // Set longer timeout for large uploads
-    req.setTimeout(10 * 60 * 1000, () => {
-        console.error('❌ Upload timeout after 10 minutes');
-        res.status(408).json({ error: 'Upload timeout - please try smaller batches' });
+    // Set ridiculous timeout for large uploads
+    req.setTimeout(30 * 60 * 1000, () => {
+        console.error('❌ Upload timeout after 30 minutes');
+        res.status(408).json({ error: 'Upload timeout - even 30 minutes wasn\'t enough!' });
     });
     
+    console.log(`📊 Request started - method: ${req.method}, content-length: ${req.headers['content-length']}`);
+    console.log(`📊 Headers:`, req.headers);
+    
+    console.log(`🚀 Starting multer processing for session ${sessionId}...`);
+    
     upload.array('photos')(req, res, async (uploadError) => {
+        console.log(`📊 Multer callback triggered - error: ${uploadError ? 'YES' : 'NO'}`);
+        
         if (uploadError) {
             console.error('❌ Multer upload error:', uploadError);
+            console.error('❌ Error stack:', uploadError.stack);
+            console.error('❌ Error code:', uploadError.code);
+            console.error('❌ Error field:', uploadError.field);
             return res.status(400).json({ 
                 error: 'Upload failed', 
                 details: uploadError.message,
-                code: uploadError.code
+                code: uploadError.code,
+                field: uploadError.field
             });
         }
+        
+        console.log(`📊 Multer success - starting async processing...`);
         
         try {
             console.log(`📋 Verifying session ${sessionId} exists...`);
@@ -2404,11 +2419,11 @@ async function startServer() {
         }
     });
     
-    // Set server timeout for large file uploads (15 minutes)
-    server.timeout = 15 * 60 * 1000;
-    server.keepAliveTimeout = 16 * 60 * 1000;
-    server.headersTimeout = 17 * 60 * 1000;
-    console.log('📁 Server configured for large file uploads with 15-minute timeout');
+    // Set ridiculous server timeouts for massive file uploads (45 minutes)
+    server.timeout = 45 * 60 * 1000;
+    server.keepAliveTimeout = 46 * 60 * 1000;
+    server.headersTimeout = 47 * 60 * 1000;
+    console.log('📁 Server configured with RIDICULOUS timeouts - 45 minutes for uploads!');
 }
 
 startServer().catch(error => {

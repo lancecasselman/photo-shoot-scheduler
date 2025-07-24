@@ -2993,14 +2993,16 @@
                 return;
             }
 
-            console.log(`Starting upload of ${files.length} files to session ${currentUploadSessionId}`);
+            console.log(`🚀 ENHANCED DEBUG: Starting upload of ${files.length} files to session ${currentUploadSessionId}`);
 
             // Check if we need to batch upload (more than 50 files or total size > 500MB)
             const totalSize = files.reduce((sum, file) => sum + file.size, 0);
             const totalSizeMB = totalSize / (1024 * 1024);
             
+            console.log(`📊 Upload analysis: ${files.length} files, ${totalSizeMB.toFixed(2)}MB total`);
+            
             if (files.length > 50 || totalSizeMB > 500) {
-                console.log(`Large upload detected (${files.length} files, ${totalSizeMB.toFixed(2)}MB) - using batch upload`);
+                console.log(`📦 Large upload detected - using batch upload method`);
                 return uploadFilesInBatches(files);
             }
 
@@ -3008,22 +3010,118 @@
             showUploadProgress(true);
             updateProgress(0, 'Preparing upload...', `${files.length} files (${totalSizeMB.toFixed(1)}MB)`);
 
-            try {
-                const formData = new FormData();
-                files.forEach((file, index) => {
-                    console.log(`Adding file ${index + 1}: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
-                    formData.append('photos', file);
-                });
+            return new Promise((resolve, reject) => {
+                try {
+                    const formData = new FormData();
+                    files.forEach((file, index) => {
+                        console.log(`📁 Adding file ${index + 1}: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
+                        formData.append('photos', file);
+                    });
 
-                updateProgress(25, 'Uploading photos...', 'Please wait, this may take a few minutes for large files');
+                    console.log(`📤 FormData ready - creating XMLHttpRequest with progress tracking`);
+                    updateProgress(5, 'Starting upload...', 'Connecting to server...');
 
-                const response = await fetch(`/api/sessions/${currentUploadSessionId}/upload-photos`, {
-                    method: 'POST',
-                    body: formData,
-                    credentials: 'include' // Include authentication cookies
-                });
+                    const xhr = new XMLHttpRequest();
+                    
+                    // Enhanced progress tracking with detailed logging
+                    xhr.upload.addEventListener('progress', (e) => {
+                        if (e.lengthComputable) {
+                            const percentComplete = (e.loaded / e.total) * 100;
+                            const loadedMB = (e.loaded / 1024 / 1024).toFixed(2);
+                            const totalMB = (e.total / 1024 / 1024).toFixed(2);
+                            
+                            console.log(`📊 Upload Progress: ${percentComplete.toFixed(1)}% (${loadedMB}MB / ${totalMB}MB)`);
+                            updateProgress(
+                                Math.min(percentComplete * 0.7, 70), // 70% max for upload phase
+                                `Uploading: ${percentComplete.toFixed(1)}%`,
+                                `${loadedMB}MB / ${totalMB}MB transferred`
+                            );
+                        }
+                    });
 
-                updateProgress(75, 'Processing upload...', 'Server is processing your photos');
+                    xhr.upload.addEventListener('loadstart', () => {
+                        console.log(`🚀 Upload transfer started`);
+                        updateProgress(10, 'Upload in progress...', 'Transferring files to server');
+                    });
+
+                    xhr.addEventListener('load', () => {
+                        console.log(`📊 XHR load event - status: ${xhr.status}, readyState: ${xhr.readyState}`);
+                        updateProgress(75, 'Processing upload...', 'Server is processing your photos');
+                        
+                        if (xhr.status === 200) {
+                            try {
+                                const result = JSON.parse(xhr.responseText);
+                                console.log(`✅ Upload successful:`, result);
+                                
+                                updateProgress(100, 'Upload complete!', `Successfully uploaded ${result.uploaded} photos`);
+                                setTimeout(() => {
+                                    showMessage(`Successfully uploaded ${result.uploaded} photos!`, 'success');
+                                    closeUploadModal();
+                                    loadSessions(); // Refresh to show new photos
+                                    celebrateMilestone('photos_uploaded');
+                                    resolve(result);
+                                }, 1000);
+                                
+                            } catch (parseError) {
+                                console.error(`❌ Error parsing response:`, parseError);
+                                console.error(`❌ Raw response:`, xhr.responseText);
+                                updateProgress(0, 'Upload failed', 'Invalid server response');
+                                showMessage('Upload failed: Invalid server response', 'error');
+                                reject(parseError);
+                            }
+                        } else if (xhr.status === 401) {
+                            console.error(`❌ Authentication error (401)`);
+                            updateProgress(0, 'Authentication required', 'Please log in to upload photos');
+                            showMessage('Please log in to upload photos', 'error');
+                            setTimeout(() => {
+                                window.location.href = '/api/login';
+                            }, 2000);
+                            reject(new Error('Authentication required'));
+                        } else {
+                            console.error(`❌ Upload failed with status ${xhr.status}: ${xhr.responseText}`);
+                            updateProgress(0, 'Upload failed', xhr.responseText);
+                            showMessage(`Upload failed: ${xhr.responseText}`, 'error');
+                            reject(new Error(`Upload failed: ${xhr.responseText}`));
+                        }
+                    });
+
+                    xhr.addEventListener('error', (e) => {
+                        console.error(`❌ XHR error event:`, e);
+                        console.error(`❌ XHR details:`, {
+                            status: xhr.status,
+                            statusText: xhr.statusText,
+                            responseText: xhr.responseText,
+                            readyState: xhr.readyState
+                        });
+                        updateProgress(0, 'Upload failed', 'Network or server error');
+                        showMessage('Upload failed: Network or server error', 'error');
+                        reject(new Error('Network or server error'));
+                    });
+
+                    xhr.addEventListener('timeout', () => {
+                        console.error(`❌ Upload timeout`);
+                        updateProgress(0, 'Upload timeout', 'Upload took too long');
+                        showMessage('Upload timeout - try smaller batches', 'error');
+                        reject(new Error('Upload timeout'));
+                    });
+
+                    // Set 30-minute timeout
+                    xhr.timeout = 30 * 60 * 1000;
+                    
+                    console.log(`📤 Opening connection to /api/sessions/${currentUploadSessionId}/upload-photos`);
+                    xhr.open('POST', `/api/sessions/${currentUploadSessionId}/upload-photos`, true);
+                    xhr.withCredentials = true;
+                    
+                    console.log(`📤 Sending FormData...`);
+                    xhr.send(formData);
+
+                } catch (error) {
+                    console.error('❌ Error setting up upload:', error);
+                    updateProgress(0, 'Upload failed', error.message);
+                    showMessage(`Upload failed: ${error.message}`, 'error');
+                    reject(error);
+                }
+            });
 
                 if (!response.ok) {
                     const errorText = await response.text();
