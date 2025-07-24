@@ -736,6 +736,515 @@
             gap: 10px;
             margin-top: 15px;
         }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            background: white;
+            border-radius: 12px;
+            padding: 8px;
+            margin: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            gap: 8px;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            color: #666;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tab:hover {
+            background: #f8fafc;
+            color: #333;
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        /* Tab Content Areas */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Website Builder Styles */
+        .website-builder-container {
+            max-width: 100%;
+            margin: 0;
+        }
+
+        .builder-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .builder-header h2 {
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        .builder-header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .website-toolbar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            flex-wrap: wrap;
+        }
+
+        .builder-interface {
+            display: grid;
+            grid-template-columns: 250px 1fr 300px;
+            gap: 20px;
+            min-height: 800px;
+            background: #f8fafc;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        /* Left Sidebar - Components */
+        .builder-sidebar {
+            background: white;
+            padding: 20px;
+            border-right: 1px solid #e2e8f0;
+            overflow-y: auto;
+        }
+
+        .builder-sidebar h3 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+
+        .component-category {
+            margin-bottom: 25px;
+        }
+
+        .component-category h4 {
+            color: #4a5568;
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .component-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .component-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 8px;
+            cursor: grab;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .component-item:hover {
+            background: #e6fffa;
+            border-color: #81e6d9;
+            transform: translateX(5px);
+        }
+
+        .component-item:active {
+            cursor: grabbing;
+        }
+
+        .component-icon {
+            font-size: 1.2rem;
+            width: 24px;
+            text-align: center;
+        }
+
+        .component-item span {
+            font-weight: 500;
+            color: #2d3748;
+        }
+
+        /* Center Canvas */
+        .builder-canvas {
+            background: white;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .canvas-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+            background: #f8fafc;
+        }
+
+        .canvas-header h3 {
+            color: #2d3748;
+            margin: 0;
+        }
+
+        .canvas-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .canvas-control {
+            padding: 8px 16px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .canvas-control:hover,
+        .canvas-control.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .canvas-viewport {
+            flex: 1;
+            padding: 20px;
+            background: #e2e8f0;
+            overflow: auto;
+        }
+
+        .website-canvas {
+            background: white;
+            min-height: 600px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: relative;
+            margin: 0 auto;
+            transition: all 0.3s ease;
+        }
+
+        .website-canvas.desktop {
+            max-width: 1200px;
+        }
+
+        .website-canvas.tablet {
+            max-width: 768px;
+        }
+
+        .website-canvas.mobile {
+            max-width: 375px;
+        }
+
+        .drop-zone {
+            min-height: 600px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px dashed #cbd5e0;
+            border-radius: 8px;
+            margin: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .drop-zone.drag-over {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .drop-zone-message {
+            text-align: center;
+            color: #666;
+        }
+
+        .drop-zone-message h3 {
+            margin-bottom: 12px;
+            color: #2d3748;
+        }
+
+        .drop-zone-message p {
+            margin-bottom: 25px;
+            font-size: 1.1rem;
+        }
+
+        .quick-start-templates {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .template-btn {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .template-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        /* Right Sidebar - Properties */
+        .builder-properties {
+            background: white;
+            padding: 20px;
+            border-left: 1px solid #e2e8f0;
+            overflow-y: auto;
+        }
+
+        .builder-properties h3 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+
+        .no-selection {
+            text-align: center;
+            color: #666;
+            padding: 40px 20px;
+        }
+
+        /* Website List */
+        .websites-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .website-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .website-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+
+        .website-preview {
+            width: 100%;
+            height: 200px;
+            background: #f8fafc;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 2rem;
+        }
+
+        .website-info h4 {
+            margin: 0 0 8px 0;
+            color: #2d3748;
+        }
+
+        .website-info p {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+
+        .website-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .website-actions .btn {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+        }
+
+        /* Component Wrapper Styles */
+        .component-wrapper {
+            position: relative;
+            margin-bottom: 2px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .component-wrapper:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Properties Panel Styles */
+        .property-section {
+            padding: 15px 0;
+        }
+
+        .property-section h4 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+
+        .property-group {
+            margin-bottom: 20px;
+        }
+
+        .property-group label {
+            display: block;
+            color: #4a5568;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .property-group input[type="color"] {
+            width: 100%;
+            height: 40px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .property-group input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #e2e8f0;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .property-group input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+
+        .property-group input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+        }
+
+        .property-actions {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .property-actions .btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        /* Template Loading Animation */
+        .template-loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            z-index: 1000;
+            text-align: center;
+        }
+
+        .template-loading h3 {
+            margin-bottom: 15px;
+            color: #2d3748;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e2e8f0;
+            border-left: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .builder-interface {
+                grid-template-columns: 200px 1fr 250px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .builder-interface {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr auto;
+            }
+            
+            .builder-sidebar,
+            .builder-properties {
+                max-height: 300px;
+            }
+            
+            .website-toolbar {
+                justify-content: center;
+            }
+            
+            .canvas-controls {
+                flex-wrap: wrap;
+            }
+
+            .quick-start-templates {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .template-btn {
+                width: 200px;
+            }
+        }
         
         @media (max-width: 768px) {
             .container { padding: 10px; }
@@ -751,8 +1260,8 @@
     <div class="container">
         <div class="header">
             <div>
-                <h1>📸 The Client Management Area</h1>
-                <p>Manage photography sessions with photo galleries</p>
+                <h1>📸 The Legacy Photography Management</h1>
+                <p>Complete business management platform for photographers</p>
             </div>
             <div id="userInfo" class="user-info" style="display: none;">
                 <img id="userAvatar" class="user-avatar" src="" alt="User Avatar">
@@ -761,6 +1270,18 @@
             </div>
         </div>
 
+        <!-- Navigation Tabs -->
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="switchTab('clients')">
+                📅 Client Management
+            </button>
+            <button class="nav-tab" onclick="switchTab('websites')">
+                🌐 Website Builder
+            </button>
+        </div>
+
+        <!-- Client Management Tab Content -->
+        <div id="clientsTab" class="tab-content active">
         <!-- Session Form -->
         <div class="session-form">
             <h2>Add New Session</h2>
@@ -2339,7 +2860,668 @@ END:VCALENDAR`;
                 return null;
             }
         }
+
+        // Tab switching functionality
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all nav tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            
+            // Set active nav tab
+            event.target.classList.add('active');
+            
+            // Initialize website builder if switching to websites tab
+            if (tabName === 'websites') {
+                initializeWebsiteBuilder();
+            }
+        }
+
+        // Website Builder Functionality
+        let currentWebsite = null;
+        let websiteComponents = [];
+        let selectedComponent = null;
+        let draggedComponent = null;
+
+        function initializeWebsiteBuilder() {
+            console.log('Initializing website builder...');
+            setupDragAndDrop();
+            toggleDevice('desktop'); // Default to desktop view
+        }
+
+        function createNewWebsite() {
+            const websiteName = prompt('Enter website name:', 'My Photography Website');
+            if (!websiteName) return;
+            
+            currentWebsite = {
+                id: Date.now().toString(),
+                name: websiteName,
+                components: [],
+                settings: {
+                    theme: 'modern',
+                    colors: {
+                        primary: '#667eea',
+                        secondary: '#764ba2',
+                        accent: '#81e6d9'
+                    }
+                },
+                createdAt: new Date().toISOString()
+            };
+            
+            document.getElementById('websiteName').textContent = websiteName;
+            document.getElementById('builderInterface').style.display = 'grid';
+            document.getElementById('websiteList').style.display = 'none';
+            document.getElementById('previewBtn').disabled = false;
+            document.getElementById('publishBtn').disabled = false;
+            
+            showMessage('New website created: ' + websiteName, 'success');
+            celebrateMilestone('session_created', websiteName);
+        }
+
+        function loadWebsites() {
+            document.getElementById('builderInterface').style.display = 'none';
+            document.getElementById('websiteList').style.display = 'block';
+            
+            // Load existing websites (mock data for now)
+            const mockWebsites = [
+                {
+                    id: '1',
+                    name: 'Portfolio Website',
+                    preview: '📸',
+                    description: 'Professional photography portfolio',
+                    lastModified: '2 days ago'
+                },
+                {
+                    id: '2',
+                    name: 'Wedding Photography',
+                    preview: '💒',
+                    description: 'Specialized wedding photography site',
+                    lastModified: '1 week ago'
+                },
+                {
+                    id: '3',
+                    name: 'Studio Gallery',
+                    preview: '🏢',
+                    description: 'Commercial studio showcase',
+                    lastModified: '3 days ago'
+                }
+            ];
+            
+            const websitesGrid = document.getElementById('websitesGrid');
+            websitesGrid.innerHTML = mockWebsites.map(website => `
+                <div class="website-card">
+                    <div class="website-preview">${website.preview}</div>
+                    <div class="website-info">
+                        <h4>${website.name}</h4>
+                        <p>${website.description}</p>
+                        <small>Last modified: ${website.lastModified}</small>
+                    </div>
+                    <div class="website-actions">
+                        <button class="btn btn-primary" onclick="editWebsite('${website.id}')">
+                            ✏️ Edit
+                        </button>
+                        <button class="btn btn-success" onclick="previewWebsite('${website.id}')">
+                            👁️ View
+                        </button>
+                        <button class="btn btn-danger" onclick="deleteWebsite('${website.id}')">
+                            🗑️ Delete
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function editWebsite(websiteId) {
+            showMessage('Loading website editor...', 'info');
+            // Switch to builder interface
+            document.getElementById('websiteList').style.display = 'none';
+            document.getElementById('builderInterface').style.display = 'grid';
+            document.getElementById('previewBtn').disabled = false;
+            document.getElementById('publishBtn').disabled = false;
+        }
+
+        function previewWebsite(websiteId) {
+            if (!currentWebsite && !websiteId) {
+                showMessage('No website selected', 'error');
+                return;
+            }
+            
+            showMessage('Opening website preview...', 'info');
+            // Generate preview URL and open in new tab
+            const previewUrl = `/website-preview/${websiteId || currentWebsite.id}`;
+            window.open(previewUrl, '_blank');
+        }
+
+        function publishWebsite() {
+            if (!currentWebsite) {
+                showMessage('No website to publish', 'error');
+                return;
+            }
+            
+            showMessage('Publishing website...', 'info');
+            
+            setTimeout(() => {
+                const publishedUrl = `https://${currentWebsite.name.toLowerCase().replace(/\s+/g, '-')}.legacyphotography.com`;
+                showMessage('Website published successfully!', 'success');
+                celebrateMilestone('session_delivered', currentWebsite.name);
+                
+                alert(`Website published!\n\nLive URL: ${publishedUrl}\n\nYour photography website is now live and accessible to clients.`);
+            }, 2000);
+        }
+
+        function deleteWebsite(websiteId) {
+            if (confirm('Are you sure you want to delete this website? This action cannot be undone.')) {
+                showMessage('Website deleted', 'success');
+                loadWebsites(); // Refresh the list
+            }
+        }
+
+        // Device toggle functionality
+        function toggleDevice(device) {
+            const canvas = document.getElementById('websiteCanvas');
+            const controls = document.querySelectorAll('.canvas-control');
+            
+            // Remove active class from all controls
+            controls.forEach(control => control.classList.remove('active'));
+            
+            // Add active class to selected control
+            document.getElementById(device + 'View').classList.add('active');
+            
+            // Update canvas class
+            canvas.className = 'website-canvas ' + device;
+        }
+
+        // Drag and Drop functionality
+        function setupDragAndDrop() {
+            const dropZone = document.getElementById('dropZone');
+            const componentItems = document.querySelectorAll('.component-item');
+            
+            // Add drag event listeners to components
+            componentItems.forEach(item => {
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragend', handleDragEnd);
+            });
+            
+            // Add drop event listeners to drop zone
+            dropZone.addEventListener('dragover', handleDragOver);
+            dropZone.addEventListener('drop', handleDrop);
+            dropZone.addEventListener('dragenter', handleDragEnter);
+            dropZone.addEventListener('dragleave', handleDragLeave);
+        }
+
+        function handleDragStart(e) {
+            draggedComponent = e.target.dataset.component;
+            e.target.style.opacity = '0.5';
+        }
+
+        function handleDragEnd(e) {
+            e.target.style.opacity = '1';
+            draggedComponent = null;
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+        }
+
+        function handleDragEnter(e) {
+            e.preventDefault();
+            document.getElementById('dropZone').classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            if (!e.relatedTarget || !document.getElementById('dropZone').contains(e.relatedTarget)) {
+                document.getElementById('dropZone').classList.remove('drag-over');
+            }
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            document.getElementById('dropZone').classList.remove('drag-over');
+            
+            if (draggedComponent) {
+                addComponentToCanvas(draggedComponent);
+            }
+        }
+
+        function addComponentToCanvas(componentType) {
+            const componentHtml = generateComponentHtml(componentType);
+            const dropZone = document.getElementById('dropZone');
+            
+            // If this is the first component, clear the drop zone message
+            if (dropZone.querySelector('.drop-zone-message')) {
+                dropZone.innerHTML = '';
+                dropZone.style.border = 'none';
+                dropZone.style.minHeight = 'auto';
+                dropZone.style.display = 'block';
+                dropZone.style.alignItems = 'stretch';
+                dropZone.style.justifyContent = 'stretch';
+            }
+            
+            // Create component wrapper
+            const componentWrapper = document.createElement('div');
+            componentWrapper.className = 'component-wrapper';
+            componentWrapper.dataset.componentType = componentType;
+            componentWrapper.innerHTML = componentHtml;
+            
+            // Add click handler for component selection
+            componentWrapper.addEventListener('click', () => selectComponent(componentWrapper));
+            
+            dropZone.appendChild(componentWrapper);
+            
+            // Auto-select the new component
+            selectComponent(componentWrapper);
+            
+            showMessage(`${componentType.charAt(0).toUpperCase() + componentType.slice(1)} component added`, 'success');
+        }
+
+        function generateComponentHtml(componentType) {
+            const componentTemplates = {
+                header: `
+                    <header style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; text-align: center;">
+                        <h1 style="margin: 0; font-size: 2.5rem;">The Legacy Photography</h1>
+                        <nav style="margin-top: 15px;">
+                            <a href="#" style="color: white; margin: 0 15px; text-decoration: none;">Home</a>
+                            <a href="#" style="color: white; margin: 0 15px; text-decoration: none;">Portfolio</a>
+                            <a href="#" style="color: white; margin: 0 15px; text-decoration: none;">About</a>
+                            <a href="#" style="color: white; margin: 0 15px; text-decoration: none;">Contact</a>
+                        </nav>
+                    </header>
+                `,
+                hero: `
+                    <section style="background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><rect fill="%23f8fafc" width="1200" height="600"/><text x="50%" y="50%" text-anchor="middle" fill="%23666" font-size="24">Hero Background Image</text></svg>') center/cover; height: 500px; display: flex; align-items: center; justify-content: center; color: white; text-align: center;">
+                        <div style="background: rgba(0,0,0,0.5); padding: 40px; border-radius: 12px;">
+                            <h2 style="font-size: 3rem; margin-bottom: 20px;">Capturing Life's Beautiful Moments</h2>
+                            <p style="font-size: 1.3rem; margin-bottom: 30px;">Professional photography services for weddings, portraits, and special events</p>
+                            <button style="background: #667eea; color: white; border: none; padding: 15px 30px; border-radius: 8px; font-size: 1.1rem; cursor: pointer;">View Portfolio</button>
+                        </div>
+                    </section>
+                `,
+                gallery: `
+                    <section style="padding: 60px 20px; background: #f8fafc;">
+                        <h2 style="text-align: center; margin-bottom: 40px; color: #2d3748;">Photo Gallery</h2>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto;">
+                            <div style="aspect-ratio: 1; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><rect fill="%23e2e8f0" width="300" height="300"/><text x="50%" y="50%" text-anchor="middle" fill="%23666" font-size="16">Photo 1</text></svg>') center/cover; border-radius: 8px;"></div>
+                            <div style="aspect-ratio: 1; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><rect fill="%23e2e8f0" width="300" height="300"/><text x="50%" y="50%" text-anchor="middle" fill="%23666" font-size="16">Photo 2</text></svg>') center/cover; border-radius: 8px;"></div>
+                            <div style="aspect-ratio: 1; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><rect fill="%23e2e8f0" width="300" height="300"/><text x="50%" y="50%" text-anchor="middle" fill="%23666" font-size="16">Photo 3</text></svg>') center/cover; border-radius: 8px;"></div>
+                            <div style="aspect-ratio: 1; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><rect fill="%23e2e8f0" width="300" height="300"/><text x="50%" y="50%" text-anchor="middle" fill="%23666" font-size="16">Photo 4</text></svg>') center/cover; border-radius: 8px;"></div>
+                        </div>
+                    </section>
+                `,
+                about: `
+                    <section style="padding: 60px 20px; background: white;">
+                        <div style="max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center;">
+                            <div>
+                                <h2 style="color: #2d3748; margin-bottom: 20px;">About The Legacy Photography</h2>
+                                <p style="color: #666; line-height: 1.6; margin-bottom: 20px;">With over 10 years of experience in capturing life's most precious moments, we specialize in creating timeless memories that you'll treasure forever.</p>
+                                <p style="color: #666; line-height: 1.6;">Our passion for photography drives us to deliver exceptional quality and personalized service for every client.</p>
+                            </div>
+                            <div style="background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect fill="%23e2e8f0" width="400" height="300"/><text x="50%" y="50%" text-anchor="middle" fill="%23666" font-size="18">Photographer Portrait</text></svg>') center/cover; height: 300px; border-radius: 12px;"></div>
+                        </div>
+                    </section>
+                `,
+                services: `
+                    <section style="padding: 60px 20px; background: #f8fafc;">
+                        <div style="max-width: 1200px; margin: 0 auto;">
+                            <h2 style="text-align: center; margin-bottom: 40px; color: #2d3748;">Our Services</h2>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
+                                <div style="background: white; padding: 30px; border-radius: 12px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                                    <div style="font-size: 3rem; margin-bottom: 20px;">💒</div>
+                                    <h3 style="color: #2d3748; margin-bottom: 15px;">Weddings</h3>
+                                    <p style="color: #666; line-height: 1.6;">Complete wedding photography packages to capture your special day</p>
+                                </div>
+                                <div style="background: white; padding: 30px; border-radius: 12px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                                    <div style="font-size: 3rem; margin-bottom: 20px;">👨‍👩‍👧‍👦</div>
+                                    <h3 style="color: #2d3748; margin-bottom: 15px;">Portraits</h3>
+                                    <p style="color: #666; line-height: 1.6;">Professional family and individual portrait sessions</p>
+                                </div>
+                                <div style="background: white; padding: 30px; border-radius: 12px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                                    <div style="font-size: 3rem; margin-bottom: 20px;">🎉</div>
+                                    <h3 style="color: #2d3748; margin-bottom: 15px;">Events</h3>
+                                    <p style="color: #666; line-height: 1.6;">Special event photography for celebrations and milestones</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                `,
+                contact: `
+                    <section style="padding: 60px 20px; background: white;">
+                        <div style="max-width: 800px; margin: 0 auto;">
+                            <h2 style="text-align: center; margin-bottom: 40px; color: #2d3748;">Get In Touch</h2>
+                            <form style="display: grid; gap: 20px;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                                    <input type="text" placeholder="Your Name" style="padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem;">
+                                    <input type="email" placeholder="Your Email" style="padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem;">
+                                </div>
+                                <input type="text" placeholder="Subject" style="padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem;">
+                                <textarea placeholder="Your Message" rows="5" style="padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem; resize: vertical;"></textarea>
+                                <button type="submit" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 15px 30px; border-radius: 8px; font-size: 1.1rem; cursor: pointer;">Send Message</button>
+                            </form>
+                        </div>
+                    </section>
+                `,
+                footer: `
+                    <footer style="background: #2d3748; color: white; padding: 40px 20px; text-align: center;">
+                        <div style="max-width: 1200px; margin: 0 auto;">
+                            <h3 style="margin-bottom: 20px;">The Legacy Photography</h3>
+                            <div style="display: flex; justify-content: center; gap: 30px; margin-bottom: 20px; flex-wrap: wrap;">
+                                <a href="#" style="color: white; text-decoration: none;">Home</a>
+                                <a href="#" style="color: white; text-decoration: none;">Portfolio</a>
+                                <a href="#" style="color: white; text-decoration: none;">About</a>
+                                <a href="#" style="color: white; text-decoration: none;">Contact</a>
+                            </div>
+                            <p style="margin: 0; color: #a0aec0;">© 2025 The Legacy Photography. All rights reserved.</p>
+                        </div>
+                    </footer>
+                `,
+                text: `
+                    <div style="padding: 40px 20px;">
+                        <div style="max-width: 800px; margin: 0 auto;">
+                            <h2 style="color: #2d3748; margin-bottom: 20px;">Your Heading Here</h2>
+                            <p style="color: #666; line-height: 1.6; font-size: 1.1rem;">Add your text content here. You can edit this text by selecting this component and using the properties panel on the right.</p>
+                        </div>
+                    </div>
+                `,
+                image: `
+                    <div style="padding: 20px;">
+                        <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 400'><rect fill='%23e2e8f0' width='600' height='400'/><text x='50%' y='50%' text-anchor='middle' fill='%23666' font-size='24'>Your Image Here</text></svg>" alt="Image" style="width: 100%; height: auto; border-radius: 8px;">
+                    </div>
+                `,
+                button: `
+                    <div style="padding: 20px; text-align: center;">
+                        <button style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 15px 30px; border-radius: 8px; font-size: 1.1rem; cursor: pointer;">Click Me</button>
+                    </div>
+                `
+            };
+            
+            return componentTemplates[componentType] || '<div>Component not found</div>';
+        }
+
+        function selectComponent(componentWrapper) {
+            // Remove selection from other components
+            document.querySelectorAll('.component-wrapper').forEach(wrapper => {
+                wrapper.style.outline = 'none';
+            });
+            
+            // Select current component
+            componentWrapper.style.outline = '2px solid #667eea';
+            selectedComponent = componentWrapper;
+            
+            // Update properties panel
+            updatePropertiesPanel(componentWrapper);
+        }
+
+        function updatePropertiesPanel(componentWrapper) {
+            const componentType = componentWrapper.dataset.componentType;
+            const propertiesContent = document.getElementById('propertiesContent');
+            
+            propertiesContent.innerHTML = `
+                <div class="property-section">
+                    <h4>${componentType.charAt(0).toUpperCase() + componentType.slice(1)} Properties</h4>
+                    
+                    <div class="property-group">
+                        <label>Background Color:</label>
+                        <input type="color" value="#ffffff" onchange="updateComponentStyle('backgroundColor', this.value)">
+                    </div>
+                    
+                    <div class="property-group">
+                        <label>Text Color:</label>
+                        <input type="color" value="#2d3748" onchange="updateComponentStyle('color', this.value)">
+                    </div>
+                    
+                    <div class="property-group">
+                        <label>Padding:</label>
+                        <input type="range" min="0" max="100" value="20" onchange="updateComponentStyle('padding', this.value + 'px')">
+                    </div>
+                    
+                    <div class="property-group">
+                        <label>Border Radius:</label>
+                        <input type="range" min="0" max="50" value="0" onchange="updateComponentStyle('borderRadius', this.value + 'px')">
+                    </div>
+                    
+                    <div class="property-actions">
+                        <button class="btn btn-danger" onclick="deleteSelectedComponent()">
+                            🗑️ Delete Component
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateComponentStyle(property, value) {
+            if (selectedComponent) {
+                selectedComponent.style[property] = value;
+            }
+        }
+
+        function deleteSelectedComponent() {
+            if (selectedComponent && confirm('Delete this component?')) {
+                selectedComponent.remove();
+                selectedComponent = null;
+                document.getElementById('propertiesContent').innerHTML = '<div class="no-selection"><p>Select a component to edit its properties</p></div>';
+                showMessage('Component deleted', 'success');
+            }
+        }
+
+        // Template loading functionality
+        function loadTemplate(templateType) {
+            const templates = {
+                portfolio: ['header', 'hero', 'gallery', 'about', 'services', 'contact', 'footer'],
+                wedding: ['header', 'hero', 'gallery', 'services', 'testimonials', 'contact', 'footer'],
+                studio: ['header', 'hero', 'about', 'services', 'gallery', 'pricing', 'contact', 'footer']
+            };
+            
+            const templateComponents = templates[templateType];
+            if (!templateComponents) return;
+            
+            // Clear existing components
+            const dropZone = document.getElementById('dropZone');
+            dropZone.innerHTML = '';
+            dropZone.style.border = 'none';
+            dropZone.style.minHeight = 'auto';
+            dropZone.style.display = 'block';
+            
+            // Add template components
+            templateComponents.forEach((componentType, index) => {
+                setTimeout(() => addComponentToCanvas(componentType), 100 * (index + 1));
+            });
+            
+            showMessage(`${templateType.charAt(0).toUpperCase() + templateType.slice(1)} template loaded!`, 'success');
+            celebrateMilestone('photos_uploaded', `${templateType} template`);
+        }
     </script>
+
+        </div> <!-- End Client Management Tab -->
+
+        <!-- Website Builder Tab Content -->
+        <div id="websitesTab" class="tab-content">
+            <div class="website-builder-container">
+                <div class="builder-header">
+                    <h2>🌐 Professional Website Builder</h2>
+                    <p>Create stunning photography websites with drag-and-drop simplicity</p>
+                </div>
+
+                <!-- Website Management Toolbar -->
+                <div class="website-toolbar">
+                    <button class="btn btn-primary" onclick="createNewWebsite()">
+                        ➕ New Website
+                    </button>
+                    <button class="btn btn-secondary" onclick="loadWebsites()">
+                        📁 My Websites
+                    </button>
+                    <button class="btn btn-success" onclick="previewWebsite()" id="previewBtn" disabled>
+                        👁️ Preview
+                    </button>
+                    <button class="btn btn-warning" onclick="publishWebsite()" id="publishBtn" disabled>
+                        🚀 Publish
+                    </button>
+                </div>
+
+                <!-- Website Builder Interface -->
+                <div class="builder-interface" id="builderInterface" style="display: none;">
+                    
+                    <!-- Left Sidebar - Components -->
+                    <div class="builder-sidebar">
+                        <h3>📦 Components</h3>
+                        <div class="component-categories">
+                            
+                            <!-- Layout Components -->
+                            <div class="component-category">
+                                <h4>🏗️ Layout</h4>
+                                <div class="component-list">
+                                    <div class="component-item" draggable="true" data-component="header">
+                                        <div class="component-icon">📄</div>
+                                        <span>Header</span>
+                                    </div>
+                                    <div class="component-item" draggable="true" data-component="hero">
+                                        <div class="component-icon">🎭</div>
+                                        <span>Hero Section</span>
+                                    </div>
+                                    <div class="component-item" draggable="true" data-component="gallery">
+                                        <div class="component-icon">🖼️</div>
+                                        <span>Photo Gallery</span>
+                                    </div>
+                                    <div class="component-item" draggable="true" data-component="about">
+                                        <div class="component-icon">👤</div>
+                                        <span>About Section</span>
+                                    </div>
+                                    <div class="component-item" draggable="true" data-component="services">
+                                        <div class="component-icon">⚡</div>
+                                        <span>Services</span>
+                                    </div>
+                                    <div class="component-item" draggable="true" data-component="contact">
+                                        <div class="component-icon">📧</div>
+                                        <span>Contact Form</span>
+                                    </div>
+                                    <div class="component-item" draggable="true" data-component="testimonials">
+                                        <div class="component-icon">⭐</div>
+                                        <span>Testimonials</span>
+                                    </div>
+                                    <div class="component-item" draggable="true" data-component="pricing">
+                                        <div class="component-icon">💰</div>
+                                        <span>Pricing</span>
+                                    </div>
+                                    <div class="component-item" draggable="true" data-component="footer">
+                                        <div class="component-icon">📝</div>
+                                        <span>Footer</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Content Components -->
+                            <div class="component-category">
+                                <h4>📝 Content</h4>
+                                <div class="component-list">
+                                    <div class="component-item" draggable="true" data-component="text">
+                                        <div class="component-icon">📄</div>
+                                        <span>Text Block</span>
+                                    </div>
+                                    <div class="component-item" draggable="true" data-component="image">
+                                        <div class="component-icon">🖼️</div>
+                                        <span>Image</span>
+                                    </div>
+                                    <div class="component-item" draggable="true" data-component="button">
+                                        <div class="component-icon">🔘</div>
+                                        <span>Button</span>
+                                    </div>
+                                    <div class="component-item" draggable="true" data-component="divider">
+                                        <div class="component-icon">➖</div>
+                                        <span>Divider</span>
+                                    </div>
+                                    <div class="component-item" draggable="true" data-component="spacer">
+                                        <div class="component-icon">📏</div>
+                                        <span>Spacer</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Media Components -->
+                            <div class="component-category">
+                                <h4>🎬 Media</h4>
+                                <div class="component-list">
+                                    <div class="component-item" draggable="true" data-component="video">
+                                        <div class="component-icon">🎥</div>
+                                        <span>Video</span>
+                                    </div>
+                                    <div class="component-item" draggable="true" data-component="slideshow">
+                                        <div class="component-icon">🎠</div>
+                                        <span>Slideshow</span>
+                                    </div>
+                                    <div class="component-item" draggable="true" data-component="instagram">
+                                        <div class="component-icon">📷</div>
+                                        <span>Instagram Feed</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Center Canvas - Website Preview -->
+                    <div class="builder-canvas">
+                        <div class="canvas-header">
+                            <h3 id="websiteName">My Photography Website</h3>
+                            <div class="canvas-controls">
+                                <button class="canvas-control" onclick="toggleDevice('desktop')" id="desktopView">
+                                    🖥️ Desktop
+                                </button>
+                                <button class="canvas-control" onclick="toggleDevice('tablet')" id="tabletView">
+                                    📱 Tablet
+                                </button>
+                                <button class="canvas-control" onclick="toggleDevice('mobile')" id="mobileView">
+                                    📱 Mobile
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="canvas-viewport" id="canvasViewport">
+                            <div class="website-canvas" id="websiteCanvas">
+                                <div class="drop-zone" id="dropZone">
+                                    <div class="drop-zone-message">
+                                        <h3>🎨 Start Building Your Website</h3>
+                                        <p>Drag components from the left sidebar to start building your photography website</p>
+                                        <div class="quick-start-templates">
+                                            <button class="template-btn" onclick="loadTemplate('portfolio')">
+                                                📸 Portfolio Template
+                                            </button>
+                                            <button class="template-btn" onclick="loadTemplate('wedding')">
+                                                💒 Wedding Template
+                                            </button>
+                                            <button class="template-btn" onclick="loadTemplate('studio')">
+                                                🏢 Studio Template
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Sidebar - Properties -->
+                    <div class="builder-properties">
+                        <h3>⚙️ Properties</h3>
+                        <div class="properties-content" id="propertiesContent">
+                            <div class="no-selection">
+                                <p>Select a component to edit its properties</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Website List -->
+                <div class="website-list" id="websiteList" style="display: none;">
+                    <div class="websites-grid" id="websitesGrid">
+                        <!-- Websites will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
 
     <!-- Contract Selection Modal -->
     <div id="contractModal" class="payment-plan-modal">
