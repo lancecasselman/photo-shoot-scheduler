@@ -3144,59 +3144,49 @@
             showMessage(`Uploading ${files.length} files in ${totalBatches} high-capacity batches...`, 'info');
             showUploadProgress(true);
             
-            // Process batches with parallel upload capability for mobile
-            const maxParallelBatches = isMobile ? 2 : 3; // Allow 2 parallel uploads on mobile
-            let batchIndex = 0;
-            
-            const processBatch = async () => {
-                if (batchIndex >= totalBatches) return;
-                
-                const currentBatch = batchIndex++;
-                const start = currentBatch * batchSize;
-                const end = Math.min(start + batchSize, files.length);
-                const batch = files.slice(start, end);
-                
-                console.log(`🚀 Uploading batch ${currentBatch + 1}/${totalBatches}: files ${start + 1}-${end}`);
-                updateProgress((currentBatch / totalBatches) * 80, `Uploading batch ${currentBatch + 1}/${totalBatches}`, `${uploadedCount}/${files.length} photos uploaded`);
-                
-                try {
-                    const formData = new FormData();
-                    batch.forEach(file => {
-                        formData.append('photos', file);
-                    });
-
-                    const response = await fetch(`/api/sessions/${currentUploadSessionId}/upload-photos`, {
-                        method: 'POST',
-                        body: formData,
-                        credentials: 'include'
-                    });
-
-                    const result = await response.json();
-
-                    if (response.ok) {
-                        uploadedCount += result.uploaded;
-                        console.log(`✅ Batch ${currentBatch + 1} complete: ${result.uploaded} photos uploaded`);
-                        updateProgress(((currentBatch + 1) / totalBatches) * 80, `Batch ${currentBatch + 1}/${totalBatches} complete`, `${uploadedCount}/${files.length} photos uploaded`);
-                    } else if (response.status === 401) {
-                        showMessage('Authentication required. Please log in to upload photos.', 'error');
-                        setTimeout(() => {
-                            window.location.href = '/api/login';
-                        }, 2000);
-                        return;
-                    } else {
-                        throw new Error(result.error || 'Batch upload failed');
-                    }
-                } catch (error) {
-                    console.error(`❌ Batch ${currentBatch + 1} upload error:`, error);
-                    showMessage(`Batch ${currentBatch + 1} failed: ${error.message}`, 'error');
-                    throw error;
-                }
-            };
-            
+            // Process batches sequentially for reliability
             try {
-                // Sequential processing with high-capacity batches for reliability
                 for (let i = 0; i < totalBatches; i++) {
-                    await processBatch();
+                    const start = i * batchSize;
+                    const end = Math.min(start + batchSize, files.length);
+                    const batch = files.slice(start, end);
+                    
+                    console.log(`🚀 Uploading batch ${i + 1}/${totalBatches}: files ${start + 1}-${end}`);
+                    updateProgress((i / totalBatches) * 80, `Uploading batch ${i + 1}/${totalBatches}`, `${uploadedCount}/${files.length} photos uploaded`);
+                    
+                    try {
+                        const formData = new FormData();
+                        batch.forEach(file => {
+                            formData.append('photos', file);
+                        });
+
+                        const response = await fetch(`/api/sessions/${currentUploadSessionId}/upload-photos`, {
+                            method: 'POST',
+                            body: formData,
+                            credentials: 'include'
+                        });
+
+                        const result = await response.json();
+
+                        if (response.ok) {
+                            uploadedCount += result.uploaded;
+                            console.log(`✅ Batch ${i + 1} complete: ${result.uploaded} photos uploaded`);
+                            updateProgress(((i + 1) / totalBatches) * 80, `Batch ${i + 1}/${totalBatches} complete`, `${uploadedCount}/${files.length} photos uploaded`);
+                        } else if (response.status === 401) {
+                            showMessage('Authentication required. Please log in to upload photos.', 'error');
+                            setTimeout(() => {
+                                window.location.href = '/api/login';
+                            }, 2000);
+                            return;
+                        } else {
+                            throw new Error(result.error || 'Batch upload failed');
+                        }
+                    } catch (error) {
+                        console.error(`❌ Batch ${i + 1} upload error:`, error);
+                        showMessage(`Batch ${i + 1} failed: ${error.message}`, 'error');
+                        showUploadProgress(false);
+                        return;
+                    }
                 }
                 
                 updateProgress(100, 'Upload complete!', `${uploadedCount} photos uploaded successfully`);
