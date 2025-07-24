@@ -1016,6 +1016,20 @@
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
         }
 
+        .template-btn.legacy-style {
+            background: linear-gradient(135deg, #1a1a1a 0%, #333 100%);
+            border: 2px solid #d4af37;
+        }
+
+        .template-btn.modern-style {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .template-btn.elegant-style {
+            background: linear-gradient(135deg, #2c1810 0%, #8b4513 100%);
+            border: 2px solid #ddd6c1;
+        }
+
         /* Right Sidebar - Properties */
         .builder-properties {
             background: white;
@@ -1103,6 +1117,19 @@
         .component-wrapper:hover {
             transform: translateY(-1px);
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Gallery hover effects */
+        .component-wrapper:hover [style*="aspect-ratio"] > [style*="position: absolute"] {
+            transform: translateY(0) !important;
+        }
+
+        .component-wrapper:hover [style*="aspect-ratio"]:hover {
+            transform: scale(1.05);
+        }
+
+        .component-wrapper:hover [style*="opacity: 0"]:hover {
+            opacity: 1 !important;
         }
 
         /* Properties Panel Styles */
@@ -3241,7 +3268,289 @@ END:VCALENDAR`;
                 `
             };
             
-            return componentTemplates[componentType] || '<div>Component not found</div>';
+            // Legacy Photography inspired templates based on actual website
+            const legacyTemplates = {
+                legacy_header: `
+                    <header style="background: #1a1a1a; color: white; padding: 15px 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
+                        <div style="max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 0 20px;">
+                            <div style="font-size: 1.8rem; font-weight: bold; color: #d4af37;">Legacy Photography</div>
+                            <nav style="display: flex; gap: 30px;">
+                                <a href="#" style="color: white; text-decoration: none; font-weight: 500; transition: color 0.3s;">Home</a>
+                                <a href="#" style="color: white; text-decoration: none; font-weight: 500; transition: color 0.3s;">About</a>
+                                <a href="#" style="color: white; text-decoration: none; font-weight: 500; transition: color 0.3s;">Portfolio</a>
+                                <a href="#" style="color: white; text-decoration: none; font-weight: 500; transition: color 0.3s;">Client Galleries</a>
+                                <a href="#" style="color: white; text-decoration: none; font-weight: 500; transition: color 0.3s;">Contact</a>
+                            </nav>
+                        </div>
+                    </header>
+                `,
+                legacy_hero: `
+                    <section style="background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.4)), url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800"><defs><linearGradient id="sunset" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%23ff7f50;stop-opacity:1" /><stop offset="50%" style="stop-color:%23ff6347;stop-opacity:1" /><stop offset="100%" style="stop-color:%23ff4500;stop-opacity:1" /></linearGradient></defs><rect fill="url(%23sunset)" width="1200" height="800"/><text x="50%" y="45%" text-anchor="middle" fill="white" font-size="48" font-weight="bold" opacity="0.3">Beautiful Sunset Beach</text></svg>') center/cover; height: 100vh; display: flex; align-items: center; justify-content: center; color: white; text-align: center; position: relative;">
+                        <div style="max-width: 800px; padding: 60px 40px; background: rgba(0,0,0,0.3); border-radius: 20px; backdrop-filter: blur(10px);">
+                            <h1 style="font-size: 4rem; margin-bottom: 20px; font-style: italic; text-shadow: 2px 2px 4px rgba(0,0,0,0.7);">Your Life, Your Legacy, Perfectly Captured!</h1>
+                            <p style="font-size: 1.5rem; margin-bottom: 40px; line-height: 1.6; opacity: 0.95;">Premier photographer serving Myrtle Beach, Charleston, and the beautiful South Carolina coast. Specializing in stunning family portraits, beach sessions, weddings, and senior photos.</p>
+                            <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+                                <button style="background: #d4af37; color: #1a1a1a; border: none; padding: 18px 35px; border-radius: 8px; font-size: 1.2rem; font-weight: bold; cursor: pointer; transition: all 0.3s; text-transform: uppercase;">View Portfolio</button>
+                                <button style="background: transparent; color: white; border: 2px solid white; padding: 18px 35px; border-radius: 8px; font-size: 1.2rem; font-weight: bold; cursor: pointer; transition: all 0.3s; text-transform: uppercase;">Book Session</button>
+                            </div>
+                        </div>
+                    </section>
+                `,
+                legacy_services: `
+                    <section style="padding: 100px 20px; background: #f8f6f0;">
+                        <div style="max-width: 1200px; margin: 0 auto; text-align: center;">
+                            <h2 style="font-size: 3.5rem; margin-bottom: 20px; color: #1a1a1a; font-style: italic;">Beach Photography That Celebrates Your Life and Legacy</h2>
+                            <p style="font-size: 1.3rem; color: #666; margin-bottom: 60px; max-width: 800px; margin-left: auto; margin-right: auto; line-height: 1.8;">Time doesn't wait... We blink and the kids are grown... We laugh and the moment slips away... But through photography, we get to hold on.</p>
+                            
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 40px; margin-top: 60px;">
+                                <div style="text-align: center; padding: 40px 30px; background: white; border-radius: 15px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); transition: transform 0.3s;">
+                                    <div style="font-size: 4rem; margin-bottom: 25px;">🏖️</div>
+                                    <h3 style="color: #1a1a1a; margin-bottom: 20px; font-size: 1.8rem;">Beach Photography</h3>
+                                    <p style="color: #666; line-height: 1.7;">Stunning coastal sessions along Myrtle Beach and Charleston shores, capturing your family against breathtaking ocean backdrops.</p>
+                                </div>
+                                
+                                <div style="text-align: center; padding: 40px 30px; background: white; border-radius: 15px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); transition: transform 0.3s;">
+                                    <div style="font-size: 4rem; margin-bottom: 25px;">💒</div>
+                                    <h3 style="color: #1a1a1a; margin-bottom: 20px; font-size: 1.8rem;">Wedding Photography</h3>
+                                    <p style="color: #666; line-height: 1.7;">Complete wedding packages capturing your special day with creative lighting and personalized touches throughout South Carolina.</p>
+                                </div>
+                                
+                                <div style="text-align: center; padding: 40px 30px; background: white; border-radius: 15px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); transition: transform 0.3s;">
+                                    <div style="font-size: 4rem; margin-bottom: 25px;">👨‍👩‍👧‍👦</div>
+                                    <h3 style="color: #1a1a1a; margin-bottom: 20px; font-size: 1.8rem;">Family Portraits</h3>
+                                    <p style="color: #666; line-height: 1.7;">Heartfelt family sessions that preserve precious memories, celebrating your unique story with timeless, artistic photography.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                `,
+                legacy_gallery: `
+                    <section style="padding: 100px 20px; background: #1a1a1a;">
+                        <div style="max-width: 1400px; margin: 0 auto;">
+                            <h2 style="text-align: center; font-size: 3.5rem; margin-bottom: 60px; color: white; font-style: italic;">Portfolio Highlights</h2>
+                            
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
+                                <div style="aspect-ratio: 4/5; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500"><defs><linearGradient id="beach1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%23ff7f50;stop-opacity:1" /><stop offset="100%" style="stop-color:%23ff4500;stop-opacity:1" /></linearGradient></defs><rect fill="url(%23beach1)" width="400" height="500"/><text x="50%" y="50%" text-anchor="middle" fill="white" font-size="16" opacity="0.8">Beach Portrait</text></svg>') center/cover; border-radius: 10px; position: relative; overflow: hidden; cursor: pointer; transition: transform 0.3s;">
+                                    <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.8)); color: white; padding: 20px; transform: translateY(100%); transition: transform 0.3s;">
+                                        <h4 style="margin: 0 0 5px 0;">Beach Family Session</h4>
+                                        <p style="margin: 0; opacity: 0.8; font-size: 0.9rem;">Myrtle Beach, SC</p>
+                                    </div>
+                                </div>
+                                
+                                <div style="aspect-ratio: 3/4; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400"><defs><linearGradient id="wedding1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%23ddd6c1;stop-opacity:1" /><stop offset="100%" style="stop-color:%238b4513;stop-opacity:1" /></linearGradient></defs><rect fill="url(%23wedding1)" width="300" height="400"/><text x="50%" y="50%" text-anchor="middle" fill="white" font-size="14" opacity="0.8">Wedding Portrait</text></svg>') center/cover; border-radius: 10px; position: relative; overflow: hidden; cursor: pointer; transition: transform 0.3s;">
+                                    <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.8)); color: white; padding: 20px; transform: translateY(100%); transition: transform 0.3s;">
+                                        <h4 style="margin: 0 0 5px 0;">Charleston Wedding</h4>
+                                        <p style="margin: 0; opacity: 0.8; font-size: 0.9rem;">Historic Downtown</p>
+                                    </div>
+                                </div>
+                                
+                                <div style="aspect-ratio: 1/1; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><defs><linearGradient id="sunset1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%23ff6347;stop-opacity:1" /><stop offset="100%" style="stop-color:%23ff7f50;stop-opacity:1" /></linearGradient></defs><rect fill="url(%23sunset1)" width="400" height="400"/><text x="50%" y="50%" text-anchor="middle" fill="white" font-size="16" opacity="0.8">Sunset Session</text></svg>') center/cover; border-radius: 10px; position: relative; overflow: hidden; cursor: pointer; transition: transform 0.3s;">
+                                    <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.8)); color: white; padding: 20px; transform: translateY(100%); transition: transform 0.3s;">
+                                        <h4 style="margin: 0 0 5px 0;">Senior Portrait</h4>
+                                        <p style="margin: 0; opacity: 0.8; font-size: 0.9rem;">Golden Hour Magic</p>
+                                    </div>
+                                </div>
+                                
+                                <div style="aspect-ratio: 5/4; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 400"><defs><linearGradient id="family1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%234682b4;stop-opacity:1" /><stop offset="100%" style="stop-color:%23006994;stop-opacity:1" /></linearGradient></defs><rect fill="url(%23family1)" width="500" height="400"/><text x="50%" y="50%" text-anchor="middle" fill="white" font-size="16" opacity="0.8">Family Session</text></svg>') center/cover; border-radius: 10px; position: relative; overflow: hidden; cursor: pointer; transition: transform 0.3s;">
+                                    <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.8)); color: white; padding: 20px; transform: translateY(100%); transition: transform 0.3s;">
+                                        <h4 style="margin: 0 0 5px 0;">Family Legacy</h4>
+                                        <p style="margin: 0; opacity: 0.8; font-size: 0.9rem;">Generational Love</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div style="text-align: center; margin-top: 50px;">
+                                <button style="background: #d4af37; color: #1a1a1a; border: none; padding: 18px 35px; border-radius: 8px; font-size: 1.2rem; font-weight: bold; cursor: pointer; transition: all 0.3s; text-transform: uppercase;">See More Galleries</button>
+                            </div>
+                        </div>
+                    </section>
+                `,
+                legacy_about: `
+                    <section style="padding: 100px 20px; background: white;">
+                        <div style="max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center;">
+                            <div>
+                                <h2 style="font-size: 3.5rem; margin-bottom: 30px; color: #1a1a1a; font-style: italic; line-height: 1.2;">My Goal For You.</h2>
+                                <p style="color: #666; line-height: 1.8; margin-bottom: 25px; font-size: 1.2rem;">My goal for you is more than just taking pictures — it's to create something that moves you every single time you look back.</p>
+                                <p style="color: #666; line-height: 1.8; margin-bottom: 25px; font-size: 1.1rem;">I want you to feel proud, radiant, and seen. I want your photos to transport you back to those moments — the laughter, the love, the light in your eyes — with all the depth and emotion still intact.</p>
+                                <p style="color: #666; line-height: 1.8; margin-bottom: 35px; font-size: 1.1rem;">These aren't meant to be snapshots. My goal is to create art — bold, beautiful, and timeless — pieces that you'll hang on your walls, share with your family, and treasure for generations.</p>
+                                <p style="color: #1a1a1a; font-weight: bold; font-size: 1.2rem; font-style: italic;">Because your story matters. And it deserves to be captured in a way that feels just as unforgettable as the moments themselves.</p>
+                            </div>
+                            <div style="background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 600"><defs><linearGradient id="portrait" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%23ddd6c1;stop-opacity:1" /><stop offset="100%" style="stop-color:%23a0956b;stop-opacity:1" /></linearGradient></defs><rect fill="url(%23portrait)" width="500" height="600"/><text x="50%" y="50%" text-anchor="middle" fill="white" font-size="20" opacity="0.7">Photographer Portrait</text></svg>') center/cover; height: 500px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);"></div>
+                        </div>
+                    </section>
+                `,
+                legacy_contact: `
+                    <section style="padding: 100px 20px; background: #f8f6f0;">
+                        <div style="max-width: 1000px; margin: 0 auto; text-align: center;">
+                            <h2 style="font-size: 3.5rem; margin-bottom: 30px; color: #1a1a1a; font-style: italic;">Ready to Create Your Legacy?</h2>
+                            <p style="font-size: 1.3rem; color: #666; margin-bottom: 50px; line-height: 1.6;">Let's capture your story with the beauty and artistry it deserves. Contact me today to book your session.</p>
+                            
+                            <div style="background: white; padding: 60px 40px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); margin-bottom: 40px;">
+                                <form style="display: grid; gap: 25px; max-width: 600px; margin: 0 auto;">
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
+                                        <input type="text" placeholder="Your Name" style="padding: 18px 20px; border: 2px solid #e8e8e8; border-radius: 10px; font-size: 1.1rem; transition: border-color 0.3s;">
+                                        <input type="email" placeholder="Your Email" style="padding: 18px 20px; border: 2px solid #e8e8e8; border-radius: 10px; font-size: 1.1rem; transition: border-color 0.3s;">
+                                    </div>
+                                    <input type="tel" placeholder="Phone Number" style="padding: 18px 20px; border: 2px solid #e8e8e8; border-radius: 10px; font-size: 1.1rem; transition: border-color 0.3s;">
+                                    <select style="padding: 18px 20px; border: 2px solid #e8e8e8; border-radius: 10px; font-size: 1.1rem; transition: border-color 0.3s;">
+                                        <option>Select Session Type</option>
+                                        <option>Beach Family Portrait</option>
+                                        <option>Wedding Photography</option>
+                                        <option>Senior Portraits</option>
+                                        <option>Engagement Session</option>
+                                        <option>Other</option>
+                                    </select>
+                                    <textarea placeholder="Tell me about your vision and any specific requests..." rows="5" style="padding: 18px 20px; border: 2px solid #e8e8e8; border-radius: 10px; font-size: 1.1rem; resize: vertical; transition: border-color 0.3s;"></textarea>
+                                    <button type="submit" style="background: #d4af37; color: #1a1a1a; border: none; padding: 20px 40px; border-radius: 10px; font-size: 1.2rem; font-weight: bold; cursor: pointer; transition: all 0.3s; text-transform: uppercase;">Send Message</button>
+                                </form>
+                            </div>
+                            
+                            <div style="display: flex; justify-content: center; gap: 30px; flex-wrap: wrap;">
+                                <div style="text-align: center;">
+                                    <h4 style="color: #1a1a1a; margin-bottom: 10px;">Call or Text</h4>
+                                    <a href="tel:8434851315" style="color: #d4af37; font-size: 1.2rem; font-weight: bold; text-decoration: none;">843-485-1315</a>
+                                </div>
+                                <div style="text-align: center;">
+                                    <h4 style="color: #1a1a1a; margin-bottom: 10px;">Quick Text</h4>
+                                    <a href="sms:8434851315?&body=Hi! I'm interested in booking a photo session with Legacy Photography" style="background: #d4af37; color: #1a1a1a; padding: 12px 25px; border-radius: 6px; text-decoration: none; font-weight: bold; transition: all 0.3s;">📱 Text Now</a>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                `,
+                legacy_footer: `
+                    <footer style="background: #1a1a1a; color: white; padding: 60px 20px 40px;">
+                        <div style="max-width: 1200px; margin: 0 auto;">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 40px; margin-bottom: 40px;">
+                                <div>
+                                    <h3 style="color: #d4af37; margin-bottom: 20px; font-size: 1.8rem;">Legacy Photography</h3>
+                                    <p style="color: #ccc; line-height: 1.6; margin-bottom: 20px;">Premier photographer serving Myrtle Beach, Charleston, and the beautiful South Carolina coast. Creating timeless memories for families, couples, and individuals.</p>
+                                    <div style="display: flex; gap: 15px;">
+                                        <a href="#" style="color: #d4af37; font-size: 1.5rem; transition: color 0.3s;">📘</a>
+                                        <a href="#" style="color: #d4af37; font-size: 1.5rem; transition: color 0.3s;">📷</a>
+                                        <a href="#" style="color: #d4af37; font-size: 1.5rem; transition: color 0.3s;">📧</a>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <h4 style="color: white; margin-bottom: 20px;">Services</h4>
+                                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                                        <a href="#" style="color: #ccc; text-decoration: none; transition: color 0.3s;">Beach Photography</a>
+                                        <a href="#" style="color: #ccc; text-decoration: none; transition: color 0.3s;">Wedding Photography</a>
+                                        <a href="#" style="color: #ccc; text-decoration: none; transition: color 0.3s;">Family Portraits</a>
+                                        <a href="#" style="color: #ccc; text-decoration: none; transition: color 0.3s;">Senior Portraits</a>
+                                        <a href="#" style="color: #ccc; text-decoration: none; transition: color 0.3s;">Engagement Sessions</a>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <h4 style="color: white; margin-bottom: 20px;">Contact Info</h4>
+                                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                                        <div style="color: #ccc;">📍 Serving Myrtle Beach & Charleston, SC</div>
+                                        <div style="color: #ccc;">📞 <a href="tel:8434851315" style="color: #d4af37; text-decoration: none;">843-485-1315</a></div>
+                                        <div style="color: #ccc;">✉️ lance@thelegacyphotography.com</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div style="border-top: 1px solid #333; padding-top: 30px; text-align: center;">
+                                <p style="color: #888; margin: 0;">© 2025 Legacy Photography. All rights reserved. | Your Life, Your Legacy, Perfectly Captured!</p>
+                            </div>
+                        </div>
+                    </footer>
+                `,
+                
+                // Modern Portfolio Templates
+                modern_header: `
+                    <header style="background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); color: #2d3748; padding: 20px 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 20px rgba(0,0,0,0.1);">
+                        <div style="max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 0 20px;">
+                            <div style="font-size: 2rem; font-weight: 300; color: #667eea;">LEGACY</div>
+                            <nav style="display: flex; gap: 40px;">
+                                <a href="#" style="color: #2d3748; text-decoration: none; font-weight: 400; position: relative; transition: color 0.3s;">Work</a>
+                                <a href="#" style="color: #2d3748; text-decoration: none; font-weight: 400; position: relative; transition: color 0.3s;">About</a>
+                                <a href="#" style="color: #2d3748; text-decoration: none; font-weight: 400; position: relative; transition: color 0.3s;">Process</a>
+                                <a href="#" style="color: #2d3748; text-decoration: none; font-weight: 400; position: relative; transition: color 0.3s;">Contact</a>
+                            </nav>
+                        </div>
+                    </header>
+                `,
+                modern_hero: `
+                    <section style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); height: 90vh; display: flex; align-items: center; justify-content: center; color: white; text-align: center; position: relative; overflow: hidden;">
+                        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="1" fill="white" opacity="0.1"/><circle cx="80" cy="40" r="1" fill="white" opacity="0.1"/><circle cx="60" cy="80" r="1" fill="white" opacity="0.1"/></svg>'); animation: float 20s infinite linear;"></div>
+                        <div style="max-width: 900px; z-index: 1; position: relative;">
+                            <h1 style="font-size: 5rem; margin-bottom: 30px; font-weight: 100; letter-spacing: -2px; line-height: 1.1;">Modern Photography</h1>
+                            <p style="font-size: 1.4rem; margin-bottom: 50px; opacity: 0.9; font-weight: 300; max-width: 600px; margin-left: auto; margin-right: auto;">Creating contemporary visual stories that capture authentic moments with a fresh, artistic perspective.</p>
+                            <div style="display: flex; gap: 25px; justify-content: center; flex-wrap: wrap;">
+                                <button style="background: white; color: #667eea; border: none; padding: 18px 40px; border-radius: 50px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s; letter-spacing: 1px;">EXPLORE WORK</button>
+                                <button style="background: transparent; color: white; border: 2px solid white; padding: 18px 40px; border-radius: 50px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s; letter-spacing: 1px;">GET IN TOUCH</button>
+                            </div>
+                        </div>
+                    </section>
+                `,
+                modern_portfolio: `
+                    <section style="padding: 120px 20px; background: #f8fafc;">
+                        <div style="max-width: 1400px; margin: 0 auto;">
+                            <h2 style="text-align: center; font-size: 3rem; margin-bottom: 20px; color: #2d3748; font-weight: 300; letter-spacing: -1px;">Selected Work</h2>
+                            <p style="text-align: center; font-size: 1.1rem; color: #666; margin-bottom: 80px; max-width: 600px; margin-left: auto; margin-right: auto;">A curated collection of contemporary photography showcasing diverse styles and creative vision.</p>
+                            
+                            <div style="display: grid; grid-template-columns: repeat(12, 1fr); gap: 20px; grid-auto-rows: 300px;">
+                                <div style="grid-column: span 6; grid-row: span 2; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600"><defs><linearGradient id="mod1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%23667eea;stop-opacity:1" /><stop offset="100%" style="stop-color:%23764ba2;stop-opacity:1" /></linearGradient></defs><rect fill="url(%23mod1)" width="600" height="600"/><text x="50%" y="50%" text-anchor="middle" fill="white" font-size="18" opacity="0.7">Portfolio Image 1</text></svg>') center/cover; border-radius: 12px; position: relative; overflow: hidden; cursor: pointer; transition: transform 0.3s;">
+                                    <div style="position: absolute; inset: 0; background: linear-gradient(45deg, rgba(102,126,234,0.8), rgba(118,75,162,0.8)); opacity: 0; transition: opacity 0.3s; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem; font-weight: 600;">Modern Portrait Series</div>
+                                </div>
+                                
+                                <div style="grid-column: span 3; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><defs><linearGradient id="mod2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%23ff6b6b;stop-opacity:1" /><stop offset="100%" style="stop-color:%23ee5a24;stop-opacity:1" /></linearGradient></defs><rect fill="url(%23mod2)" width="300" height="300"/><text x="50%" y="50%" text-anchor="middle" fill="white" font-size="14" opacity="0.7">Urban</text></svg>') center/cover; border-radius: 12px; position: relative; overflow: hidden; cursor: pointer; transition: transform 0.3s;">
+                                    <div style="position: absolute; inset: 0; background: rgba(255,107,107,0.8); opacity: 0; transition: opacity 0.3s; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">Urban Sessions</div>
+                                </div>
+                                
+                                <div style="grid-column: span 3; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><defs><linearGradient id="mod3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%2355a3ff;stop-opacity:1" /><stop offset="100%" style="stop-color:%232d3561;stop-opacity:1" /></linearGradient></defs><rect fill="url(%23mod3)" width="300" height="300"/><text x="50%" y="50%" text-anchor="middle" fill="white" font-size="14" opacity="0.7">Creative</text></svg>') center/cover; border-radius: 12px; position: relative; overflow: hidden; cursor: pointer; transition: transform 0.3s;">
+                                    <div style="position: absolute; inset: 0; background: rgba(85,163,255,0.8); opacity: 0; transition: opacity 0.3s; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">Creative Work</div>
+                                </div>
+                                
+                                <div style="grid-column: span 4; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><defs><linearGradient id="mod4" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%2300d2d3;stop-opacity:1" /><stop offset="100%" style="stop-color:%2300a085;stop-opacity:1" /></linearGradient></defs><rect fill="url(%23mod4)" width="400" height="300"/><text x="50%" y="50%" text-anchor="middle" fill="white" font-size="16" opacity="0.7">Nature</text></svg>') center/cover; border-radius: 12px; position: relative; overflow: hidden; cursor: pointer; transition: transform 0.3s;">
+                                    <div style="position: absolute; inset: 0; background: rgba(0,210,211,0.8); opacity: 0; transition: opacity 0.3s; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">Natural Light</div>
+                                </div>
+                                
+                                <div style="grid-column: span 2; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 300"><defs><linearGradient id="mod5" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%23a55eea;stop-opacity:1" /><stop offset="100%" style="stop-color:%238854d0;stop-opacity:1" /></linearGradient></defs><rect fill="url(%23mod5)" width="200" height="300"/><text x="50%" y="50%" text-anchor="middle" fill="white" font-size="12" opacity="0.7">Art</text></svg>') center/cover; border-radius: 12px; position: relative; overflow: hidden; cursor: pointer; transition: transform 0.3s;">
+                                    <div style="position: absolute; inset: 0; background: rgba(165,94,234,0.8); opacity: 0; transition: opacity 0.3s; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">Artistic</div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                `,
+                
+                // Elegant Gallery Templates
+                elegant_header: `
+                    <header style="background: #2c1810; color: #ddd6c1; padding: 25px 0; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #8b4513;">
+                        <div style="max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 0 20px;">
+                            <div style="font-size: 2.2rem; font-weight: 400; font-family: serif; color: #ddd6c1;">𝒢𝒶𝓁𝓁𝑒𝓇𝓎 𝐿𝑒𝑔𝒶𝒸𝓎</div>
+                            <nav style="display: flex; gap: 35px;">
+                                <a href="#" style="color: #ddd6c1; text-decoration: none; font-weight: 400; font-size: 1.1rem; transition: color 0.3s;">Collections</a>
+                                <a href="#" style="color: #ddd6c1; text-decoration: none; font-weight: 400; font-size: 1.1rem; transition: color 0.3s;">Artist</a>
+                                <a href="#" style="color: #ddd6c1; text-decoration: none; font-weight: 400; font-size: 1.1rem; transition: color 0.3s;">Gallery</a>
+                                <a href="#" style="color: #ddd6c1; text-decoration: none; font-weight: 400; font-size: 1.1rem; transition: color 0.3s;">Inquire</a>
+                            </nav>
+                        </div>
+                    </header>
+                `,
+                elegant_hero: `
+                    <section style="background: linear-gradient(rgba(44,24,16,0.7), rgba(139,69,19,0.7)), url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800"><defs><pattern id="texture" patternUnits="userSpaceOnUse" width="40" height="40"><rect width="40" height="40" fill="%23ddd6c1" opacity="0.1"/><circle cx="20" cy="20" r="15" fill="none" stroke="%23ddd6c1" stroke-width="0.5" opacity="0.2"/></pattern></defs><rect fill="url(%23texture)" width="1200" height="800"/><text x="50%" y="45%" text-anchor="middle" fill="%23ddd6c1" font-size="36" opacity="0.3">Elegant Gallery Space</text></svg>') center/cover; height: 85vh; display: flex; align-items: center; justify-content: center; color: #ddd6c1; text-align: center; position: relative;">
+                        <div style="max-width: 900px; padding: 80px 60px; background: rgba(44,24,16,0.8); border: 2px solid #ddd6c1; border-radius: 5px; backdrop-filter: blur(5px);">
+                            <h1 style="font-size: 4.5rem; margin-bottom: 25px; font-family: serif; font-weight: 300; letter-spacing: 2px; line-height: 1.2;">Timeless Elegance</h1>
+                            <div style="width: 100px; height: 2px; background: #ddd6c1; margin: 30px auto;"></div>
+                            <p style="font-size: 1.3rem; margin-bottom: 45px; line-height: 1.7; font-style: italic; opacity: 0.9;">Fine art photography capturing the essence of beauty, grace, and sophistication in every frame.</p>
+                            <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+                                <button style="background: transparent; color: #ddd6c1; border: 2px solid #ddd6c1; padding: 15px 35px; border-radius: 0; font-size: 1rem; font-weight: 500; cursor: pointer; transition: all 0.3s; letter-spacing: 1px; text-transform: uppercase;">View Collections</button>
+                                <button style="background: #ddd6c1; color: #2c1810; border: none; padding: 15px 35px; border-radius: 0; font-size: 1rem; font-weight: 500; cursor: pointer; transition: all 0.3s; letter-spacing: 1px; text-transform: uppercase;">Commission Work</button>
+                            </div>
+                        </div>
+                    </section>
+                `
+            };
+
+            // Merge with existing templates
+            const allTemplates = { ...componentTemplates, ...legacyTemplates };
+            
+            return allTemplates[componentType] || '<div>Component not found</div>';
         }
 
         function selectComponent(componentWrapper) {
@@ -3315,11 +3624,17 @@ END:VCALENDAR`;
             const templates = {
                 portfolio: ['header', 'hero', 'gallery', 'about', 'services', 'contact', 'footer'],
                 wedding: ['header', 'hero', 'gallery', 'services', 'testimonials', 'contact', 'footer'],
-                studio: ['header', 'hero', 'about', 'services', 'gallery', 'pricing', 'contact', 'footer']
+                studio: ['header', 'hero', 'about', 'services', 'gallery', 'pricing', 'contact', 'footer'],
+                legacy: ['legacy_header', 'legacy_hero', 'legacy_services', 'legacy_gallery', 'legacy_about', 'legacy_contact', 'legacy_footer'],
+                modern: ['modern_header', 'modern_hero', 'modern_portfolio', 'modern_services', 'modern_testimonials', 'modern_contact', 'modern_footer'],
+                elegant: ['elegant_header', 'elegant_hero', 'elegant_gallery', 'elegant_story', 'elegant_services', 'elegant_contact', 'elegant_footer']
             };
             
             const templateComponents = templates[templateType];
             if (!templateComponents) return;
+            
+            // Show loading animation
+            showTemplateLoading();
             
             // Clear existing components
             const dropZone = document.getElementById('dropZone');
@@ -3328,13 +3643,37 @@ END:VCALENDAR`;
             dropZone.style.minHeight = 'auto';
             dropZone.style.display = 'block';
             
-            // Add template components
+            // Add template components with staggered timing
             templateComponents.forEach((componentType, index) => {
-                setTimeout(() => addComponentToCanvas(componentType), 100 * (index + 1));
+                setTimeout(() => {
+                    addComponentToCanvas(componentType);
+                    if (index === templateComponents.length - 1) {
+                        hideTemplateLoading();
+                    }
+                }, 300 * (index + 1));
             });
             
             showMessage(`${templateType.charAt(0).toUpperCase() + templateType.slice(1)} template loaded!`, 'success');
             celebrateMilestone('photos_uploaded', `${templateType} template`);
+        }
+
+        function showTemplateLoading() {
+            const loader = document.createElement('div');
+            loader.id = 'templateLoader';
+            loader.className = 'template-loading';
+            loader.innerHTML = `
+                <h3>Loading Template...</h3>
+                <div class="loading-spinner"></div>
+                <p>Building your professional website</p>
+            `;
+            document.body.appendChild(loader);
+        }
+
+        function hideTemplateLoading() {
+            const loader = document.getElementById('templateLoader');
+            if (loader) {
+                loader.remove();
+            }
         }
     </script>
 
@@ -3487,14 +3826,14 @@ END:VCALENDAR`;
                                         <h3>🎨 Start Building Your Website</h3>
                                         <p>Drag components from the left sidebar to start building your photography website</p>
                                         <div class="quick-start-templates">
-                                            <button class="template-btn" onclick="loadTemplate('portfolio')">
-                                                📸 Portfolio Template
+                                            <button class="template-btn legacy-style" onclick="loadTemplate('legacy')">
+                                                ✨ Legacy Style Template
                                             </button>
-                                            <button class="template-btn" onclick="loadTemplate('wedding')">
-                                                💒 Wedding Template
+                                            <button class="template-btn modern-style" onclick="loadTemplate('modern')">
+                                                🎯 Modern Portfolio Template
                                             </button>
-                                            <button class="template-btn" onclick="loadTemplate('studio')">
-                                                🏢 Studio Template
+                                            <button class="template-btn elegant-style" onclick="loadTemplate('elegant')">
+                                                💎 Elegant Gallery Template
                                             </button>
                                         </div>
                                     </div>
