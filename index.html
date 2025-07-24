@@ -2831,9 +2831,7 @@
                             <button class="btn btn-invoice" onclick="sendInvoice('${session.id}')">
                                 Send Invoice
                             </button>
-                            <button class="btn btn-invoice" onclick="sendInvoiceWithTip('${session.id}')">
-                                💰 Invoice + Tip Option
-                            </button>
+
                             <button class="btn btn-invoice" onclick="sendDepositInvoice('${session.id}')">
                                 Send Deposit
                             </button>
@@ -3088,50 +3086,7 @@
 
 
 
-        // Send invoice with optional tip
-        async function sendInvoiceWithTip(sessionId) {
-            const session = sessions.find(s => s.id === sessionId);
-            if (!session) return;
-            
-            const includeGratuity = confirm(`Send invoice to ${session.clientName} with optional gratuity line item?\n\nThis will allow the client to add a tip when paying the invoice.`);
-            if (!includeGratuity) return;
-            
-            try {
-                const response = await fetch('/api/create-invoice', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        sessionId: session.id,
-                        clientName: session.clientName,
-                        email: session.email,
-                        amount: session.price,
-                        description: `${session.sessionType} Photography Session`,
-                        dueDate: 30,
-                        includeTip: true
-                    })
-                });
-                
-                const result = await response.json();
-                
-                if (response.ok) {
-                    showMessage(`Invoice with tip option sent to ${session.clientName}!`, 'success');
-                    
-                    if (result.invoice_url) {
-                        const viewInvoice = confirm(`Invoice sent successfully!\n\nWould you like to view the invoice?`);
-                        if (viewInvoice) {
-                            window.open(result.invoice_url, '_blank');
-                        }
-                    }
-                    
-                    celebrateMilestone('invoice_sent', session.clientName);
-                } else {
-                    showMessage(`Failed to send invoice: ${result.error || 'Please check your Stripe configuration'}`, 'error');
-                }
-            } catch (error) {
-                console.error('Error sending invoice with tip:', error);
-                showMessage('Error sending invoice', 'error');
-            }
-        }
+
 
         // Open email client with session details  
         function openEmailClient(sessionId) {
