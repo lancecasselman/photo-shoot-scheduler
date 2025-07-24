@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Client Management Area - July 21 2025 - v2.9</title>
+    <title>The Client Management Area - July 24 2025 - v3.0 - Deposit System</title>
     
     <!-- Confetti Animation Styles -->
     <style>
@@ -1139,6 +1139,9 @@
                             <button class="btn btn-invoice" onclick="sendInvoice('${session.id}')">
                                 💰 Send Invoice
                             </button>
+                            <button class="btn" style="background: #fd7e14; color: white;" onclick="sendDepositInvoice('${session.id}')">
+                                💳 Send Deposit
+                            </button>
                             <button class="btn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;" onclick="openPaymentPlanModal('${session.id}')">
                                 💳 Create Payment Plan
                             </button>
@@ -2226,6 +2229,114 @@ END:VCALENDAR`;
             } catch (error) {
                 console.error('Error sending contract:', error);
                 showMessage('Failed to send contract: ' + error.message, 'error');
+            }
+        }
+
+        // Send deposit invoice with custom amount
+        async function sendDepositInvoice(sessionId) {
+            try {
+                const session = sessions.find(s => s.id === sessionId);
+                if (!session) {
+                    showMessage('Session not found', 'error');
+                    return;
+                }
+
+                // Prompt user for deposit amount
+                const depositAmountInput = prompt(
+                    `Enter deposit/retainer amount for ${session.clientName}:\n\nSession Total: $${session.price}\nSuggested 50%: $${(session.price * 0.5).toFixed(2)}`,
+                    (session.price * 0.5).toFixed(2)
+                );
+                
+                if (!depositAmountInput) {
+                    return; // User cancelled
+                }
+                
+                const depositAmount = parseFloat(depositAmountInput);
+                
+                if (isNaN(depositAmount) || depositAmount <= 0) {
+                    showMessage('Please enter a valid amount greater than $0', 'error');
+                    return;
+                }
+                
+                if (depositAmount > session.price) {
+                    const confirmOverage = confirm(
+                        `Deposit amount ($${depositAmount}) is more than the session total ($${session.price}).\n\nDo you want to continue?`
+                    );
+                    if (!confirmOverage) {
+                        return;
+                    }
+                }
+                
+                console.log('Creating deposit invoice for session:', session);
+                showMessage('Creating deposit invoice...', 'info');
+                
+                const authToken = await getAuthToken();
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                
+                if (authToken) {
+                    headers['Authorization'] = `Bearer ${authToken}`;
+                }
+                
+                const response = await fetch('/api/create-invoice', {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({
+                        sessionId: session.id,
+                        clientName: session.clientName,
+                        email: session.email,
+                        amount: depositAmount,
+                        description: `Retainer for ${session.sessionType} Photography Session (Total: $${session.price})`,
+                        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // 14 days for deposit
+                        isDeposit: true,
+                        depositAmount: depositAmount,
+                        totalAmount: session.price
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Failed to create deposit invoice: ${errorText}`);
+                }
+                
+                const result = await response.json();
+                console.log('Deposit invoice creation result:', result);
+                
+                if (result.success && result.invoice_url) {
+                    showMessage('Deposit invoice created successfully!', 'success');
+                    
+                    // Trigger celebration confetti
+                    celebrateMilestone('invoice_sent', session.clientName);
+                    
+                    // Open the invoice URL in a new tab
+                    window.open(result.invoice_url, '_blank');
+                    
+                    // Show a dialog with invoice details
+                    const remainingBalance = session.price - depositAmount;
+                    const message = `Deposit invoice created successfully!\n\nRetainer: $${depositAmount}\nRemaining Balance: $${remainingBalance.toFixed(2)}\n\nInvoice URL: ${result.invoice_url}\n\nThe invoice has been sent to ${session.email}`;
+                    alert(message);
+                } else {
+                    throw new Error(result.error || 'Unknown error creating deposit invoice');
+                }
+                
+            } catch (error) {
+                console.error('Error creating deposit invoice:', error);
+                showMessage('Error creating deposit invoice: ' + error.message, 'error');
+            }
+        }
+
+        // Get authentication token helper function
+        async function getAuthToken() {
+            try {
+                const response = await fetch('/api/auth/user');
+                if (response.ok) {
+                    return 'authenticated'; // Simplified token for authenticated requests
+                }
+                return null;
+            } catch (error) {
+                console.error('Error getting auth token:', error);
+                return null;
             }
         }
     </script>

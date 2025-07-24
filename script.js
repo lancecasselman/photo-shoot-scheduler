@@ -324,12 +324,14 @@ function createSessionCard(session) {
     invoiceBtn.textContent = '💰 Send Invoice';
     invoiceBtn.onclick = () => createInvoice(session);
 
+    console.log('DEBUG: Creating deposit button for session:', session.clientName);
     const depositBtn = document.createElement('button');
     depositBtn.className = 'btn btn-warning';
     depositBtn.textContent = '💳 Send Deposit';
     depositBtn.onclick = () => sendDepositInvoice(session);
     depositBtn.style.backgroundColor = '#fd7e14';
     depositBtn.style.color = 'white';
+    console.log('DEBUG: Deposit button created:', depositBtn.textContent);
 
     const contractBtn = document.createElement('button');
     contractBtn.className = 'btn btn-contract';
@@ -352,7 +354,9 @@ function createSessionCard(session) {
     actions.appendChild(galleryBtn);
     actions.appendChild(emailPreviewBtn);
     actions.appendChild(invoiceBtn);
+    console.log('DEBUG: About to append deposit button:', depositBtn);
     actions.appendChild(depositBtn);
+    console.log('DEBUG: Deposit button appended successfully');
     actions.appendChild(contractBtn);
     actions.appendChild(deleteBtn);
     
