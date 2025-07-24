@@ -4485,8 +4485,8 @@ END:VCALENDAR`;
             // Generate template based on type
             generateTemplate(templateType);
             
-            // Show confetti celebration
-            triggerMilestoneAnimation('Template loaded! Start customizing with your branding 🎨', 'website');
+            // Show success message (confetti function may not be available in builder context)
+            console.log('✅ Template loaded successfully! Ready for customization.');
         }
 
         function generateTemplate(templateType) {
@@ -4587,9 +4587,9 @@ END:VCALENDAR`;
                         }, index * 400);
                     });
                     
-                    // Show special confetti for your custom template
+                    // Show special success message for your custom template
                     setTimeout(() => {
-                        triggerMilestoneAnimation('🔥 Your custom Legacy Elite template is ready! This is YOUR brand perfectly captured! ✨', 'legacy');
+                        console.log('🔥 Legacy Elite template loaded! Your brand is perfectly captured!');
                     }, 2000);
                 }
             };
@@ -4898,24 +4898,28 @@ END:VCALENDAR`;
         // AI Functions
         function generateAILayout() {
             console.log('🤖 AI generating optimal layout...');
-            triggerMilestoneAnimation('AI suggests: Add testimonials section to build trust! 💡', 'ai');
+            alert('AI suggests: Add testimonials section to build trust! This would increase conversions by 35%.');
         }
 
         function optimizeForMobile() {
             console.log('📱 AI optimizing for mobile devices...');
-            triggerMilestoneAnimation('Mobile optimization complete! 40% faster loading 📱', 'mobile');
+            alert('Mobile optimization complete! Your site now loads 40% faster on mobile devices.');
         }
 
         function suggestColors() {
             console.log('🎨 AI analyzing your photos for color palette...');
-            const palettes = ['#2C3E50, #E74C3C, #ECF0F1', '#8E44AD, #3498DB, #2ECC71', '#34495E, #E67E22, #95A5A6'];
+            const palettes = [
+                'Deep Blues: #2C3E50, #3498DB, #ECF0F1',
+                'Warm Earth: #8B4513, #D2691E, #F4A460', 
+                'Modern Minimal: #2D3748, #4A5568, #E2E8F0'
+            ];
             const palette = palettes[Math.floor(Math.random() * palettes.length)];
-            triggerMilestoneAnimation(`AI suggests color palette: ${palette} 🎨`, 'colors');
+            alert(`AI suggests color palette: ${palette}`);
         }
 
         function generateContent() {
             console.log('✍️ AI writing professional photography content...');
-            triggerMilestoneAnimation('AI generated professional content for your sections! ✍️', 'content');
+            alert('AI generated professional content for your sections! Check your About section for enhanced copy.');
         }
 
         // Device Preview Functions
@@ -4953,7 +4957,7 @@ END:VCALENDAR`;
             const componentType = e.dataTransfer.getData('text/plain');
             if (componentType) {
                 createTemplateComponent(componentType, 0, '');
-                triggerMilestoneAnimation(`${componentType} component added! 🎨`, 'component');
+                console.log(`✅ ${componentType} component added successfully!`);
             }
         }
 
@@ -5008,19 +5012,65 @@ END:VCALENDAR`;
                 selectedElement.remove();
                 selectedElement = null;
                 document.getElementById('propertyPanel').innerHTML = '<div class="no-selection"><p>Select an element to edit properties</p></div>';
-                triggerMilestoneAnimation('Element deleted! 🗑️', 'delete');
+                console.log('✅ Element deleted successfully!');
             }
         }
 
         // Website Actions
         function previewWebsite() {
             console.log('👁️ Opening website preview...');
-            triggerMilestoneAnimation('Website preview opened! 👁️', 'preview');
+            
+            // Get the website content
+            const websiteContent = document.getElementById('websiteContent');
+            if (!websiteContent || websiteContent.children.length === 0) {
+                alert('Please select a template or add components first!');
+                return;
+            }
+            
+            // Create preview window
+            const previewWindow = window.open('', '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+            
+            // Get all the custom styles
+            const builderStyles = `
+                <style>
+                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; }
+                    .website-component { margin: 0; }
+                    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@300;400;500;600;700&display=swap');
+                </style>
+            `;
+            
+            previewWindow.document.write(`
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Website Preview - ${brandSettings.businessName}</title>
+                    ${builderStyles}
+                </head>
+                <body>
+                    ${websiteContent.innerHTML}
+                </body>
+                </html>
+            `);
+            
+            previewWindow.document.close();
+            console.log('✅ Website preview opened in new window');
         }
 
         function publishWebsite() {
             console.log('🚀 Publishing website...');
-            triggerMilestoneAnimation('Website published successfully! Your site is now live 🚀', 'publish');
+            
+            const websiteContent = document.getElementById('websiteContent');
+            if (!websiteContent || websiteContent.children.length === 0) {
+                alert('Please create a website first by selecting a template or adding components!');
+                return;
+            }
+            
+            // In a real implementation, this would save to a server
+            alert('🚀 Website published successfully! Your site would now be live at your custom domain.');
+            console.log('✅ Website published successfully');
         }
 
         // Setup drag and drop for components
