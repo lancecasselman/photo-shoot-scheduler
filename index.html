@@ -1247,29 +1247,169 @@
         @media (max-width: 768px) {
             .builder-interface {
                 grid-template-columns: 1fr;
-                grid-template-rows: auto 1fr auto;
+                grid-template-rows: auto auto 1fr auto;
+                height: auto;
+                min-height: 100vh;
             }
             
             .builder-sidebar,
             .builder-properties {
-                max-height: 300px;
+                max-height: 250px;
+                overflow-y: auto;
+                position: relative;
+                z-index: 10;
+            }
+            
+            .builder-sidebar {
+                order: 1;
+                background: #f8fafc;
+                border-bottom: 1px solid #e2e8f0;
+                padding: 15px;
+            }
+            
+            .builder-canvas {
+                order: 2;
+                padding: 10px;
+                min-height: 400px;
+            }
+            
+            .builder-properties {
+                order: 3;
+                background: #f8fafc;
+                border-top: 1px solid #e2e8f0;
+                padding: 15px;
             }
             
             .website-toolbar {
                 justify-content: center;
+                flex-wrap: wrap;
+                gap: 10px;
+                padding: 10px;
             }
             
             .canvas-controls {
                 flex-wrap: wrap;
+                justify-content: center;
+                gap: 8px;
+            }
+            
+            .canvas-control {
+                padding: 8px 15px;
+                font-size: 0.9rem;
             }
 
             .quick-start-templates {
                 flex-direction: column;
                 align-items: center;
+                gap: 10px;
             }
 
             .template-btn {
                 width: 200px;
+                padding: 12px 20px;
+                font-size: 0.9rem;
+            }
+            
+            .component-library h4,
+            .builder-properties h3 {
+                font-size: 1.1rem;
+                margin-bottom: 15px;
+            }
+            
+            .component-category {
+                margin-bottom: 20px;
+            }
+            
+            .component-item {
+                padding: 12px;
+                font-size: 0.9rem;
+            }
+            
+            .website-canvas {
+                min-height: 300px;
+                border-radius: 8px;
+            }
+            
+            .website-canvas.mobile {
+                max-width: 375px;
+                margin: 0 auto;
+            }
+            
+            .website-canvas.tablet {
+                max-width: 768px;
+                margin: 0 auto;
+            }
+            
+            .drop-zone {
+                min-height: 300px;
+            }
+            
+            .drop-zone-message h3 {
+                font-size: 1.5rem;
+            }
+            
+            .drop-zone-message p {
+                font-size: 1rem;
+            }
+            
+            /* Mobile-friendly component editing */
+            .component-wrapper {
+                outline: none !important;
+                border: 2px solid transparent;
+                margin-bottom: 1px;
+                position: relative;
+            }
+            
+            .component-wrapper.selected {
+                border-color: #667eea !important;
+                background: rgba(102, 126, 234, 0.05);
+            }
+            
+            .component-wrapper::after {
+                content: '✎ Tap to Edit';
+                position: absolute;
+                top: 5px;
+                right: 5px;
+                background: rgba(102, 126, 234, 0.9);
+                color: white;
+                padding: 2px 6px;
+                border-radius: 4px;
+                font-size: 0.7rem;
+                opacity: 0;
+                transition: opacity 0.3s;
+                pointer-events: none;
+            }
+            
+            .component-wrapper:hover::after,
+            .component-wrapper.selected::after {
+                opacity: 1;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .builder-sidebar,
+            .builder-properties {
+                max-height: 200px;
+            }
+            
+            .website-toolbar {
+                padding: 8px;
+            }
+            
+            .canvas-control {
+                padding: 6px 12px;
+                font-size: 0.8rem;
+            }
+            
+            .template-btn {
+                width: 180px;
+                padding: 10px 15px;
+                font-size: 0.8rem;
+            }
+            
+            .component-item {
+                padding: 10px;
+                font-size: 0.8rem;
             }
         }
         
@@ -3021,10 +3161,61 @@ END:VCALENDAR`;
                 return;
             }
             
-            showMessage('Opening website preview...', 'info');
-            // Generate preview URL and open in new tab
-            const previewUrl = `/website-preview/${websiteId || currentWebsite.id}`;
-            window.open(previewUrl, '_blank');
+            showMessage('Generating website preview...', 'info');
+            
+            // Get the current website content
+            const dropZone = document.getElementById('dropZone');
+            const websiteContent = dropZone.innerHTML;
+            
+            if (!websiteContent || websiteContent.includes('drop-zone-message')) {
+                showMessage('Please add some components to preview the website', 'error');
+                return;
+            }
+            
+            // Create a complete HTML page for preview
+            const previewHTML = `
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>${currentWebsite ? currentWebsite.name : 'Website Preview'} - Legacy Photography</title>
+                    <style>
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; }
+                        .component-wrapper { margin: 0; }
+                        .component-wrapper:hover { transform: none; box-shadow: none; }
+                        
+                        /* Mobile responsive styles */
+                        @media (max-width: 768px) {
+                            [style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+                            [style*="font-size: 4rem"], [style*="font-size: 4.5rem"], [style*="font-size: 5rem"] { font-size: 2.5rem !important; }
+                            [style*="font-size: 3.5rem"] { font-size: 2rem !important; }
+                            [style*="font-size: 3rem"] { font-size: 1.8rem !important; }
+                            [style*="padding: 100px"] { padding: 50px 20px !important; }
+                            [style*="padding: 80px"] { padding: 40px 20px !important; }
+                            [style*="padding: 60px"] { padding: 30px 20px !important; }
+                            [style*="gap: 80px"] { gap: 40px !important; }
+                            [style*="gap: 40px"] { gap: 20px !important; }
+                            [style*="height: 100vh"] { height: 70vh !important; }
+                            [style*="height: 90vh"] { height: 60vh !important; }
+                            [style*="height: 85vh"] { height: 50vh !important; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${websiteContent}
+                </body>
+                </html>
+            `;
+            
+            // Create a new window with the preview
+            const previewWindow = window.open('', '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+            previewWindow.document.write(previewHTML);
+            previewWindow.document.close();
+            
+            showMessage('Website preview opened in new tab!', 'success');
+            celebrateMilestone('gallery_shared', 'Website Preview');
         }
 
         function publishWebsite() {
@@ -3073,8 +3264,35 @@ END:VCALENDAR`;
             
             // Add drag event listeners to components
             componentItems.forEach(item => {
+                // Desktop drag and drop
                 item.addEventListener('dragstart', handleDragStart);
                 item.addEventListener('dragend', handleDragEnd);
+                
+                // Mobile tap to add
+                item.addEventListener('click', function(e) {
+                    if (window.innerWidth <= 768) {
+                        e.preventDefault();
+                        const componentType = this.dataset.component;
+                        addComponentToCanvas(componentType);
+                        
+                        // Show feedback for mobile users
+                        this.style.transform = 'scale(0.95)';
+                        setTimeout(() => {
+                            this.style.transform = 'scale(1)';
+                        }, 150);
+                    }
+                });
+                
+                // Add touch feedback
+                item.addEventListener('touchstart', function() {
+                    this.style.backgroundColor = 'rgba(102, 126, 234, 0.1)';
+                }, { passive: true });
+                
+                item.addEventListener('touchend', function() {
+                    setTimeout(() => {
+                        this.style.backgroundColor = '';
+                    }, 200);
+                }, { passive: true });
             });
             
             // Add drop event listeners to drop zone
@@ -3557,19 +3775,33 @@ END:VCALENDAR`;
             // Remove selection from other components
             document.querySelectorAll('.component-wrapper').forEach(wrapper => {
                 wrapper.style.outline = 'none';
+                wrapper.classList.remove('selected');
             });
             
             // Select current component
             componentWrapper.style.outline = '2px solid #667eea';
+            componentWrapper.classList.add('selected');
             selectedComponent = componentWrapper;
             
             // Update properties panel
             updatePropertiesPanel(componentWrapper);
+            
+            // Scroll properties panel into view on mobile
+            if (window.innerWidth <= 768) {
+                const propertiesPanel = document.getElementById('propertiesContent');
+                if (propertiesPanel) {
+                    propertiesPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            }
         }
 
         function updatePropertiesPanel(componentWrapper) {
             const componentType = componentWrapper.dataset.componentType;
             const propertiesContent = document.getElementById('propertiesContent');
+            
+            // Get current styles from the component
+            const currentBgColor = getComputedStyle(componentWrapper).backgroundColor || '#ffffff';
+            const currentTextColor = getComputedStyle(componentWrapper).color || '#2d3748';
             
             propertiesContent.innerHTML = `
                 <div class="property-section">
@@ -3578,25 +3810,38 @@ END:VCALENDAR`;
                     <div class="property-group">
                         <label>Background Color:</label>
                         <input type="color" value="#ffffff" onchange="updateComponentStyle('backgroundColor', this.value)">
+                        <small style="color: #666; font-size: 0.8rem;">Changes the background color</small>
                     </div>
                     
                     <div class="property-group">
                         <label>Text Color:</label>
                         <input type="color" value="#2d3748" onchange="updateComponentStyle('color', this.value)">
+                        <small style="color: #666; font-size: 0.8rem;">Changes the text color</small>
                     </div>
                     
                     <div class="property-group">
-                        <label>Padding:</label>
-                        <input type="range" min="0" max="100" value="20" onchange="updateComponentStyle('padding', this.value + 'px')">
+                        <label>Padding: <span id="paddingValue">20px</span></label>
+                        <input type="range" min="0" max="100" value="20" onchange="updateComponentStyle('padding', this.value + 'px'); document.getElementById('paddingValue').textContent = this.value + 'px'">
+                        <small style="color: #666; font-size: 0.8rem;">Adjusts inner spacing</small>
                     </div>
                     
                     <div class="property-group">
-                        <label>Border Radius:</label>
-                        <input type="range" min="0" max="50" value="0" onchange="updateComponentStyle('borderRadius', this.value + 'px')">
+                        <label>Border Radius: <span id="radiusValue">0px</span></label>
+                        <input type="range" min="0" max="50" value="0" onchange="updateComponentStyle('borderRadius', this.value + 'px'); document.getElementById('radiusValue').textContent = this.value + 'px'">
+                        <small style="color: #666; font-size: 0.8rem;">Rounds the corners</small>
+                    </div>
+                    
+                    <div class="property-group">
+                        <label>Margin: <span id="marginValue">0px</span></label>
+                        <input type="range" min="0" max="50" value="0" onchange="updateComponentStyle('margin', this.value + 'px'); document.getElementById('marginValue').textContent = this.value + 'px'">
+                        <small style="color: #666; font-size: 0.8rem;">Adjusts outer spacing</small>
                     </div>
                     
                     <div class="property-actions">
-                        <button class="btn btn-danger" onclick="deleteSelectedComponent()">
+                        <button class="btn btn-primary" onclick="duplicateSelectedComponent()" style="margin-bottom: 10px; width: 100%;">
+                            📋 Duplicate Component
+                        </button>
+                        <button class="btn btn-danger" onclick="deleteSelectedComponent()" style="width: 100%;">
                             🗑️ Delete Component
                         </button>
                     </div>
@@ -3618,6 +3863,60 @@ END:VCALENDAR`;
                 showMessage('Component deleted', 'success');
             }
         }
+
+        function duplicateSelectedComponent() {
+            if (!selectedComponent) {
+                showMessage('No component selected', 'error');
+                return;
+            }
+            
+            const clone = selectedComponent.cloneNode(true);
+            const dropZone = document.getElementById('dropZone');
+            
+            // Insert the clone after the selected component
+            selectedComponent.parentNode.insertBefore(clone, selectedComponent.nextSibling);
+            
+            // Add click handler to the clone
+            clone.addEventListener('click', () => selectComponent(clone));
+            
+            showMessage('Component duplicated', 'success');
+        }
+
+        // Add mobile-friendly touch events
+        function addMobileSupport() {
+            let touchStartY = 0;
+            let touchEndY = 0;
+            
+            // Add touch support for component selection
+            document.addEventListener('touchstart', function(e) {
+                touchStartY = e.changedTouches[0].screenY;
+            }, { passive: true });
+            
+            document.addEventListener('touchend', function(e) {
+                touchEndY = e.changedTouches[0].screenY;
+                
+                // If it's a tap (not a scroll), handle component selection
+                if (Math.abs(touchEndY - touchStartY) < 10) {
+                    const target = e.target.closest('.component-wrapper');
+                    if (target) {
+                        selectComponent(target);
+                        e.preventDefault();
+                    }
+                }
+            }, { passive: false });
+            
+            // Prevent default drag behavior on mobile
+            document.addEventListener('touchmove', function(e) {
+                if (e.target.closest('.component-item')) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+        }
+
+        // Initialize mobile support when website builder loads
+        document.addEventListener('DOMContentLoaded', function() {
+            addMobileSupport();
+        });
 
         // Template loading functionality
         function loadTemplate(templateType) {
