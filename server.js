@@ -632,13 +632,8 @@ app.post('/api/sessions/:id/upload-photos', isAuthenticated, (req, res) => {
     
     console.log(`🔍 Starting upload for session ${sessionId}...`);
     
-    // Set maximum timeout for large files
-    req.setTimeout(60 * 60 * 1000, () => {
-        console.error('❌ Upload timeout after 1 hour');
-        if (!res.headersSent) {
-            res.status(408).json({ error: 'Upload timeout - file too large' });
-        }
-    });
+    // Disable request timeout to prevent connection drops
+    req.setTimeout(0); // 0 = infinite timeout
     
     console.log(`📊 Request started - method: ${req.method}, content-length: ${req.headers['content-length']}`);
     console.log(`📊 Headers:`, req.headers);
@@ -2394,12 +2389,12 @@ async function startServer() {
         }
     });
     
-    // Set MAXIMUM server timeouts for large uploads (2 hours)
-    server.timeout = 2 * 60 * 60 * 1000;
-    server.keepAliveTimeout = 2 * 60 * 60 * 1000 + 60000;
-    server.headersTimeout = 2 * 60 * 60 * 1000 + 120000;
+    // Set INFINITE timeouts for large uploads
+    server.timeout = 0; // 0 = infinite
+    server.keepAliveTimeout = 0; // 0 = infinite  
+    server.headersTimeout = 0; // 0 = infinite
     server.maxHeadersCount = 0; // Remove header count limit
-    console.log('📁 Server configured with MAXIMUM timeouts - 2 hours for uploads!');
+    console.log('📁 Server configured with INFINITE timeouts - no upload limits!');
 }
 
 startServer().catch(error => {

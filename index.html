@@ -3105,8 +3105,8 @@
                         reject(new Error('Upload timeout'));
                     });
 
-                    // Set 30-minute timeout
-                    xhr.timeout = 30 * 60 * 1000;
+                    // Set 2-hour timeout to match server
+                    xhr.timeout = 2 * 60 * 60 * 1000;
                     
                     console.log(`📤 Opening connection to /api/sessions/${currentUploadSessionId}/upload-photos`);
                     xhr.open('POST', `/api/sessions/${currentUploadSessionId}/upload-photos`, true);
