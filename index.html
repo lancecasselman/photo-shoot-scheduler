@@ -2993,10 +2993,19 @@
                         window.location.href = '/api/login';
                     }, 2000);
                 } else {
-                    throw new Error(result.error || 'Upload failed');
+                    console.error('Upload response error:', {
+                        status: response.status,
+                        statusText: response.statusText,
+                        result: result
+                    });
+                    throw new Error(result.error || result.details || 'Upload failed');
                 }
             } catch (error) {
-                console.error('Upload error:', error);
+                console.error('Upload error details:', {
+                    error: error,
+                    message: error.message,
+                    stack: error.stack
+                });
                 showMessage('Upload failed: ' + error.message, 'error');
             }
         }

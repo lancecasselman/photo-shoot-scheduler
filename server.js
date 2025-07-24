@@ -654,15 +654,26 @@ app.post('/api/sessions/:id/upload-photos', isAuthenticated, upload.array('photo
         
         await updateSession(sessionId, { photos: updatedPhotos });
 
-        console.log(`Uploaded ${newPhotos.length} photos to session ${session.clientName}`);
+        console.log(`✅ Successfully uploaded ${newPhotos.length} photos to session ${session.clientName} (${sessionId})`);
         res.json({ 
             message: 'Photos uploaded successfully', 
             uploaded: newPhotos.length,
-            totalPhotos: updatedPhotos.length 
+            totalPhotos: updatedPhotos.length,
+            sessionId: sessionId
         });
     } catch (error) {
-        console.error('Error uploading photos:', error);
-        res.status(500).json({ error: 'Failed to upload photos' });
+        console.error('❌ Error uploading photos:', error);
+        console.error('Error details:', {
+            message: error.message,
+            stack: error.stack,
+            sessionId: sessionId,
+            filesReceived: req.files ? req.files.length : 0
+        });
+        res.status(500).json({ 
+            error: 'Failed to upload photos',
+            details: error.message,
+            sessionId: sessionId
+        });
     }
 });
 
