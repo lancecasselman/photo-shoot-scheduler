@@ -2621,15 +2621,16 @@
                 
                 // Ensure the datetime picker is clickable and functional
                 dateTimeInput.style.cursor = 'pointer';
+                
+                // Remove showPicker() calls due to cross-origin security restrictions
+                // The native datetime-local input will show picker automatically when clicked
                 dateTimeInput.addEventListener('click', function() {
-                    this.showPicker ? this.showPicker() : this.focus();
+                    this.focus();
                 });
                 
                 // Add manual focus trigger for better compatibility
                 dateTimeInput.addEventListener('focus', function() {
-                    if (this.showPicker) {
-                        this.showPicker();
-                    }
+                    // Let the browser handle the native datetime picker
                 });
             }
         }
