@@ -49,6 +49,110 @@
             gap: 15px;
         }
 
+        .builder-mode-switch {
+            display: flex;
+            gap: 5px;
+            background: #f8f9fa;
+            padding: 4px;
+            border-radius: 10px;
+        }
+
+        .template-gallery {
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            margin: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .template-gallery.active {
+            display: block;
+        }
+
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .template-card {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .template-card:hover {
+            border-color: #667eea;
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.2);
+        }
+
+        .template-preview {
+            height: 200px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 48px;
+        }
+
+        .template-info {
+            padding: 20px;
+        }
+
+        .template-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2d3748;
+        }
+
+        .template-description {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.4;
+            margin-bottom: 15px;
+        }
+
+        .template-features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 15px;
+        }
+
+        .feature-tag {
+            background: #f1f3f4;
+            color: #5f6368;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+
+        .use-template-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .use-template-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+        }
+
         .device-preview {
             display: flex;
             gap: 10px;
@@ -448,6 +552,11 @@
         <div class="canvas-area">
             <!-- Canvas Header -->
             <div class="canvas-header">
+                <div class="builder-mode-switch">
+                    <button class="preview-btn active" onclick="switchBuilderMode('custom')" id="customModeBtn">🎨 Custom Builder</button>
+                    <button class="preview-btn" onclick="switchBuilderMode('template')" id="templateModeBtn">⚡ Quick Templates</button>
+                </div>
+
                 <div class="device-preview">
                     <button class="preview-btn active" onclick="setPreviewMode('desktop')">💻 Desktop</button>
                     <button class="preview-btn" onclick="setPreviewMode('tablet')">📱 Tablet</button>
@@ -458,6 +567,74 @@
                 
                 <button class="preview-btn" onclick="previewWebsite()">👁️ Preview</button>
                 <button class="preview-btn" onclick="publishWebsite()">🚀 Publish</button>
+            </div>
+
+            <!-- Template Gallery -->
+            <div class="template-gallery" id="templateGallery">
+                <h2 style="text-align: center; margin-bottom: 10px;">⚡ Quick Start Templates</h2>
+                <p style="text-align: center; color: #666; margin-bottom: 30px;">Choose a professional template and customize with your branding</p>
+                
+                <div class="template-grid">
+                    <div class="template-card" onclick="useTemplate('legacy')">
+                        <div class="template-preview" style="background: linear-gradient(135deg, #1a1a1a 0%, #8b7355 100%);">📸</div>
+                        <div class="template-info">
+                            <div class="template-title">Legacy Style</div>
+                            <div class="template-description">Dark elegant theme with gold accents, perfect for luxury photography brands</div>
+                            <div class="template-features">
+                                <span class="feature-tag">Hero Section</span>
+                                <span class="feature-tag">Portfolio Grid</span>
+                                <span class="feature-tag">Contact Form</span>
+                                <span class="feature-tag">About Page</span>
+                            </div>
+                            <button class="use-template-btn">Use This Template</button>
+                        </div>
+                    </div>
+
+                    <div class="template-card" onclick="useTemplate('modern')">
+                        <div class="template-preview" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">🌟</div>
+                        <div class="template-info">
+                            <div class="template-title">Modern Portfolio</div>
+                            <div class="template-description">Clean contemporary design with gradient overlays and responsive grids</div>
+                            <div class="template-features">
+                                <span class="feature-tag">Animated Hero</span>
+                                <span class="feature-tag">Gallery Lightbox</span>
+                                <span class="feature-tag">Testimonials</span>
+                                <span class="feature-tag">Pricing Table</span>
+                            </div>
+                            <button class="use-template-btn">Use This Template</button>
+                        </div>
+                    </div>
+
+                    <div class="template-card" onclick="useTemplate('elegant')">
+                        <div class="template-preview" style="background: linear-gradient(135deg, #8B4513 0%, #D2B48C 100%);">✨</div>
+                        <div class="template-info">
+                            <div class="template-title">Elegant Gallery</div>
+                            <div class="template-description">Sophisticated serif typography with rich brown and cream color palette</div>
+                            <div class="template-features">
+                                <span class="feature-tag">Full-Screen Gallery</span>
+                                <span class="feature-tag">Elegant Typography</span>
+                                <span class="feature-tag">Service Cards</span>
+                                <span class="feature-tag">Social Links</span>
+                            </div>
+                            <button class="use-template-btn">Use This Template</button>
+                        </div>
+                    </div>
+
+                    <div class="template-card" onclick="useTemplate('wedding')">
+                        <div class="template-preview" style="background: linear-gradient(135deg, #FFB6C1 0%, #FFC0CB 100%);">💕</div>
+                        <div class="template-info">
+                            <div class="template-title">Wedding Specialist</div>
+                            <div class="template-description">Romantic design optimized specifically for wedding photographers</div>
+                            <div class="template-features">
+                                <span class="feature-tag">Romantic Colors</span>
+                                <span class="feature-tag">Couple Stories</span>
+                                <span class="feature-tag">Wedding Packages</span>
+                                <span class="feature-tag">Booking Form</span>
+                            </div>
+                            <button class="use-template-btn">Use This Template</button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Main Canvas -->
@@ -482,6 +659,7 @@
     <script>
         // Revolutionary Website Builder JavaScript
         let currentPreviewMode = 'desktop';
+        let currentBuilderMode = 'custom';
         let selectedElement = null;
         let collaborativeUsers = [];
         let websiteData = { components: [] };
@@ -1055,6 +1233,215 @@
         // Update the original createComponent function
         function createComponent(type, x, y) {
             createComponentWithBranding(type, x, y);
+        }
+
+        // Builder Mode Switching
+        function switchBuilderMode(mode) {
+            currentBuilderMode = mode;
+            
+            // Update button states
+            document.getElementById('customModeBtn').classList.toggle('active', mode === 'custom');
+            document.getElementById('templateModeBtn').classList.toggle('active', mode === 'template');
+            
+            // Show/hide appropriate interface
+            document.getElementById('templateGallery').classList.toggle('active', mode === 'template');
+            document.getElementById('websiteCanvas').style.display = mode === 'custom' ? 'block' : 'none';
+            
+            console.log(`🔄 Switched to ${mode} mode`);
+        }
+
+        // Template System
+        function useTemplate(templateType) {
+            console.log(`📋 Loading ${templateType} template...`);
+            
+            // Switch to custom mode to show the built template
+            switchBuilderMode('custom');
+            
+            // Clear existing content
+            const websiteContent = document.getElementById('websiteContent');
+            websiteContent.innerHTML = '';
+            
+            // Generate template based on type
+            generateTemplate(templateType);
+            
+            alert(`✅ ${templateType.charAt(0).toUpperCase() + templateType.slice(1)} template loaded! Customize it with your branding and content.`);
+        }
+
+        function generateTemplate(templateType) {
+            const templates = {
+                legacy: () => {
+                    const components = [
+                        { type: 'hero', customStyle: 'background: linear-gradient(135deg, #1a1a1a 0%, #8b7355 100%);' },
+                        { type: 'about', customStyle: 'background: #f8f6f0;' },
+                        { type: 'gallery', customStyle: 'background: white;' },
+                        { type: 'services', customStyle: 'background: #1a1a1a; color: #8b7355;' },
+                        { type: 'contact', customStyle: 'background: #8b7355;' }
+                    ];
+                    
+                    // Update brand colors for legacy theme
+                    brandSettings.colors.primary = '#1a1a1a';
+                    brandSettings.colors.secondary = '#8b7355';
+                    brandSettings.colors.accent = '#d4af37';
+                    
+                    components.forEach((comp, index) => {
+                        setTimeout(() => {
+                            createTemplateComponent(comp.type, index * 300, comp.customStyle);
+                        }, index * 200);
+                    });
+                },
+                
+                modern: () => {
+                    const components = [
+                        { type: 'hero', customStyle: 'background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);' },
+                        { type: 'gallery', customStyle: 'background: #f8f9fa;' },
+                        { type: 'about', customStyle: 'background: white;' },
+                        { type: 'services', customStyle: 'background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;' },
+                        { type: 'contact', customStyle: 'background: #2d3748; color: white;' }
+                    ];
+                    
+                    components.forEach((comp, index) => {
+                        setTimeout(() => {
+                            createTemplateComponent(comp.type, index * 350, comp.customStyle);
+                        }, index * 200);
+                    });
+                },
+                
+                elegant: () => {
+                    const components = [
+                        { type: 'hero', customStyle: 'background: linear-gradient(135deg, #8B4513 0%, #D2B48C 100%);' },
+                        { type: 'gallery', customStyle: 'background: #FDF5E6;' },
+                        { type: 'about', customStyle: 'background: white;' },
+                        { type: 'services', customStyle: 'background: #8B4513; color: #D2B48C;' },
+                        { type: 'contact', customStyle: 'background: #D2B48C; color: #8B4513;' }
+                    ];
+                    
+                    // Update brand colors for elegant theme
+                    brandSettings.colors.primary = '#8B4513';
+                    brandSettings.colors.secondary = '#D2B48C';
+                    brandSettings.colors.accent = '#CD853F';
+                    brandSettings.primaryFont = 'serif';
+                    
+                    components.forEach((comp, index) => {
+                        setTimeout(() => {
+                            createTemplateComponent(comp.type, index * 300, comp.customStyle);
+                        }, index * 200);
+                    });
+                },
+                
+                wedding: () => {
+                    const components = [
+                        { type: 'hero', customStyle: 'background: linear-gradient(135deg, #FFB6C1 0%, #FFC0CB 100%);' },
+                        { type: 'about', customStyle: 'background: #FFF0F5;' },
+                        { type: 'gallery', customStyle: 'background: white;' },
+                        { type: 'services', customStyle: 'background: #FFB6C1; color: white;' },
+                        { type: 'contact', customStyle: 'background: #FFC0CB; color: #8B008B;' }
+                    ];
+                    
+                    // Update brand colors for wedding theme
+                    brandSettings.colors.primary = '#FFB6C1';
+                    brandSettings.colors.secondary = '#FFC0CB';
+                    brandSettings.colors.accent = '#FF69B4';
+                    brandSettings.primaryFont = 'playfair';
+                    
+                    components.forEach((comp, index) => {
+                        setTimeout(() => {
+                            createTemplateComponent(comp.type, index * 300, comp.customStyle);
+                        }, index * 200);
+                    });
+                }
+            };
+            
+            if (templates[templateType]) {
+                templates[templateType]();
+            }
+        }
+
+        function createTemplateComponent(type, y, customStyle) {
+            const element = document.createElement('div');
+            element.className = 'draggable-element element-enter';
+            element.style.top = y + 'px';
+            element.style.left = '0px';
+            element.style.width = '100%';
+            element.style.fontFamily = getFontFamily();
+            
+            // Apply custom styling
+            if (customStyle) {
+                const tempDiv = document.createElement('div');
+                tempDiv.style.cssText = customStyle;
+                // Apply the custom style properties
+                Object.assign(element.style, tempDiv.style);
+            }
+            
+            // Get component HTML
+            const components = {
+                hero: `<div class="hero-section" style="${customStyle || ''} padding: 80px 20px; text-align: center; color: white;">
+                    <div data-logo-placeholder style="margin-bottom: 20px; display: flex; justify-content: center;">
+                        ${brandSettings.logo ? `<img src="${brandSettings.logo}" style="height: 60px; width: auto;">` : '🏢 Logo Here'}
+                    </div>
+                    <h1 data-business-name style="font-size: 3em; margin-bottom: 20px;">${brandSettings.businessName}</h1>
+                    <p style="font-size: 1.4em; margin-bottom: 30px;">Capturing life's precious moments with artistic vision</p>
+                    <button style="background: white; color: ${brandSettings.colors.primary}; border: none; padding: 15px 30px; border-radius: 8px; font-weight: bold; font-size: 18px;">View Portfolio</button>
+                </div>`,
+                
+                gallery: `<div class="gallery-section" style="${customStyle || ''} padding: 60px 20px;">
+                    <h2 style="text-align: center; margin-bottom: 40px; color: ${brandSettings.colors.primary}; font-size: 2.5em;">Featured Work</h2>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto;">
+                        <div style="aspect-ratio: 1; background: linear-gradient(45deg, #ddd, #eee); border-radius: 8px; border: 3px solid ${brandSettings.colors.accent};"></div>
+                        <div style="aspect-ratio: 1; background: linear-gradient(45deg, #ddd, #eee); border-radius: 8px; border: 3px solid ${brandSettings.colors.accent};"></div>
+                        <div style="aspect-ratio: 1; background: linear-gradient(45deg, #ddd, #eee); border-radius: 8px; border: 3px solid ${brandSettings.colors.accent};"></div>
+                        <div style="aspect-ratio: 1; background: linear-gradient(45deg, #ddd, #eee); border-radius: 8px; border: 3px solid ${brandSettings.colors.accent};"></div>
+                        <div style="aspect-ratio: 1; background: linear-gradient(45deg, #ddd, #eee); border-radius: 8px; border: 3px solid ${brandSettings.colors.accent};"></div>
+                        <div style="aspect-ratio: 1; background: linear-gradient(45deg, #ddd, #eee); border-radius: 8px; border: 3px solid ${brandSettings.colors.accent};"></div>
+                    </div>
+                </div>`,
+                
+                about: `<div class="about-section" style="${customStyle || ''} padding: 80px 20px;">
+                    <div style="max-width: 800px; margin: 0 auto; text-align: center;">
+                        <h2 style="color: ${brandSettings.colors.primary}; font-size: 2.5em; margin-bottom: 30px;">About <span data-business-name>${brandSettings.businessName}</span></h2>
+                        <p style="font-size: 1.3em; line-height: 1.8; color: ${brandSettings.colors.text};">We specialize in capturing the authentic emotions and beautiful moments that make your story unique. With over 10 years of experience, we bring artistic vision and technical expertise to every session, creating timeless memories that you'll treasure forever.</p>
+                    </div>
+                </div>`,
+                
+                services: `<div class="services-section" style="${customStyle || ''} padding: 80px 20px;">
+                    <h2 style="text-align: center; margin-bottom: 50px; font-size: 2.5em;">Our Services</h2>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; max-width: 1000px; margin: 0 auto;">
+                        <div style="text-align: center; padding: 40px 20px;">
+                            <h3 style="font-size: 1.8em; margin-bottom: 15px;">Wedding Photography</h3>
+                            <p style="font-size: 1.1em; line-height: 1.6;">Capturing your special day with elegance and emotion</p>
+                        </div>
+                        <div style="text-align: center; padding: 40px 20px;">
+                            <h3 style="font-size: 1.8em; margin-bottom: 15px;">Portrait Sessions</h3>
+                            <p style="font-size: 1.1em; line-height: 1.6;">Professional headshots and family portraits</p>
+                        </div>
+                        <div style="text-align: center; padding: 40px 20px;">
+                            <h3 style="font-size: 1.8em; margin-bottom: 15px;">Event Photography</h3>
+                            <p style="font-size: 1.1em; line-height: 1.6;">Corporate events and special celebrations</p>
+                        </div>
+                    </div>
+                </div>`,
+                
+                contact: `<div class="contact-section" style="${customStyle || ''} padding: 80px 20px;">
+                    <div style="max-width: 600px; margin: 0 auto;">
+                        <h2 style="text-align: center; margin-bottom: 40px; font-size: 2.5em;">Contact <span data-business-name>${brandSettings.businessName}</span></h2>
+                        <div style="display: grid; gap: 20px;">
+                            <input type="text" placeholder="Your Name" style="padding: 18px; border: none; border-radius: 8px; font-size: 16px;">
+                            <input type="email" placeholder="Your Email" style="padding: 18px; border: none; border-radius: 8px; font-size: 16px;">
+                            <textarea placeholder="Tell us about your photography needs..." rows="6" style="padding: 18px; border: none; border-radius: 8px; font-size: 16px; resize: vertical;"></textarea>
+                            <button style="background: ${brandSettings.colors.accent}; color: white; border: none; padding: 18px 30px; border-radius: 8px; font-weight: bold; font-size: 18px; cursor: pointer;">Send Message</button>
+                        </div>
+                    </div>
+                </div>`
+            };
+            
+            element.innerHTML = components[type] || '';
+            element.style.minHeight = '300px';
+            
+            // Add to canvas
+            const websiteContent = document.getElementById('websiteContent');
+            websiteContent.appendChild(element);
+            
+            // Add click handler for selection
+            element.addEventListener('click', () => selectElement(element));
         }
 
         // Initialize everything when page loads
