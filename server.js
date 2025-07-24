@@ -622,59 +622,116 @@ app.put('/api/sessions/:id', isAuthenticated, async (req, res) => {
     }
 });
 
-// Upload photos to session
-app.post('/api/sessions/:id/upload-photos', isAuthenticated, upload.array('photos'), async (req, res) => {
+// Upload photos to session with enhanced error handling and processing
+app.post('/api/sessions/:id/upload-photos', isAuthenticated, (req, res) => {
     const sessionId = req.params.id;
     
-    try {
-        const session = await getSessionById(sessionId);
-        
-        if (!session) {
-            return res.status(404).json({ error: 'Session not found' });
+    console.log(`🔍 Starting upload for session ${sessionId}...`);
+    
+    // Set longer timeout for large uploads
+    req.setTimeout(10 * 60 * 1000, () => {
+        console.error('❌ Upload timeout after 10 minutes');
+        res.status(408).json({ error: 'Upload timeout - please try smaller batches' });
+    });
+    
+    upload.array('photos')(req, res, async (uploadError) => {
+        if (uploadError) {
+            console.error('❌ Multer upload error:', uploadError);
+            return res.status(400).json({ 
+                error: 'Upload failed', 
+                details: uploadError.message,
+                code: uploadError.code
+            });
         }
-
-        console.log(`Upload attempt for session ${sessionId}: ${req.files ? req.files.length : 0} files received`);
         
-        if (!req.files || req.files.length === 0) {
-            return res.status(400).json({ error: 'No files uploaded' });
+        try {
+            console.log(`📋 Verifying session ${sessionId} exists...`);
+            const session = await getSessionById(sessionId);
+            
+            if (!session) {
+                console.error(`❌ Session ${sessionId} not found`);
+                return res.status(404).json({ error: 'Session not found' });
+            }
+
+            const filesReceived = req.files ? req.files.length : 0;
+            console.log(`📸 Processing ${filesReceived} files for session ${sessionId}`);
+            
+            if (!req.files || req.files.length === 0) {
+                console.error('❌ No files received in upload');
+                return res.status(400).json({ error: 'No files uploaded' });
+            }
+
+            // Calculate total upload size
+            const totalSize = req.files.reduce((sum, file) => sum + file.size, 0);
+            const totalSizeMB = (totalSize / 1024 / 1024).toFixed(2);
+            console.log(`📊 Processing ${filesReceived} files (${totalSizeMB}MB total)`);
+
+            // Process files in smaller batches to prevent memory issues
+            const newPhotos = [];
+            const batchSize = 10;
+            
+            for (let i = 0; i < req.files.length; i += batchSize) {
+                const batch = req.files.slice(i, i + batchSize);
+                console.log(`🔄 Processing batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(req.files.length/batchSize)}`);
+                
+                const batchPhotos = batch.map(file => ({
+                    id: uuidv4(),
+                    filename: file.filename,
+                    originalName: file.originalname,
+                    url: `/uploads/${file.filename}`,
+                    size: file.size,
+                    uploadedAt: new Date().toISOString()
+                }));
+                
+                newPhotos.push(...batchPhotos);
+                
+                // Small delay to prevent overwhelming the system
+                if (i + batchSize < req.files.length) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+            }
+
+            console.log(`💾 Updating database with ${newPhotos.length} new photos...`);
+            const existingPhotos = session.photos || [];
+            const updatedPhotos = [...existingPhotos, ...newPhotos];
+            
+            await updateSession(sessionId, { photos: updatedPhotos });
+
+            console.log(`✅ Successfully uploaded ${newPhotos.length} photos to session ${session.clientName} (${sessionId})`);
+            res.json({ 
+                message: 'Photos uploaded successfully', 
+                uploaded: newPhotos.length,
+                totalPhotos: updatedPhotos.length,
+                sessionId: sessionId,
+                totalSizeMB: totalSizeMB
+            });
+        } catch (error) {
+            console.error('❌ Error processing upload:', error);
+            console.error('Error details:', {
+                message: error.message,
+                stack: error.stack,
+                sessionId: sessionId,
+                filesReceived: req.files ? req.files.length : 0
+            });
+            
+            // Clean up uploaded files on error
+            if (req.files) {
+                req.files.forEach(file => {
+                    try {
+                        fs.unlinkSync(file.path);
+                    } catch (cleanupError) {
+                        console.error('Error cleaning up file:', cleanupError);
+                    }
+                });
+            }
+            
+            res.status(500).json({ 
+                error: 'Failed to process upload',
+                details: error.message,
+                sessionId: sessionId
+            });
         }
-
-        // Add photos to session
-        const newPhotos = req.files.map(file => ({
-            id: uuidv4(),
-            filename: file.filename,
-            originalName: file.originalname,
-            url: `/uploads/${file.filename}`,
-            size: file.size,
-            uploadedAt: new Date().toISOString()
-        }));
-
-        const existingPhotos = session.photos || [];
-        const updatedPhotos = [...existingPhotos, ...newPhotos];
-        
-        await updateSession(sessionId, { photos: updatedPhotos });
-
-        console.log(`✅ Successfully uploaded ${newPhotos.length} photos to session ${session.clientName} (${sessionId})`);
-        res.json({ 
-            message: 'Photos uploaded successfully', 
-            uploaded: newPhotos.length,
-            totalPhotos: updatedPhotos.length,
-            sessionId: sessionId
-        });
-    } catch (error) {
-        console.error('❌ Error uploading photos:', error);
-        console.error('Error details:', {
-            message: error.message,
-            stack: error.stack,
-            sessionId: sessionId,
-            filesReceived: req.files ? req.files.length : 0
-        });
-        res.status(500).json({ 
-            error: 'Failed to upload photos',
-            details: error.message,
-            sessionId: sessionId
-        });
-    }
+    });
 });
 
 // Delete session
@@ -2337,7 +2394,7 @@ async function startServer() {
     // Start automated payment scheduler
     paymentScheduler.start();
     
-    app.listen(PORT, '0.0.0.0', () => {
+    const server = app.listen(PORT, '0.0.0.0', () => {
         console.log(`📸 Photo Session Scheduler running on http://0.0.0.0:${PORT}`);
         console.log('Database connected and ready');
         if (process.env.TEST_MODE === 'true') {
@@ -2346,6 +2403,12 @@ async function startServer() {
             console.log('🔐 Authentication required for all access - no anonymous mode');
         }
     });
+    
+    // Set server timeout for large file uploads (15 minutes)
+    server.timeout = 15 * 60 * 1000;
+    server.keepAliveTimeout = 16 * 60 * 1000;
+    server.headersTimeout = 17 * 60 * 1000;
+    console.log('📁 Server configured for large file uploads with 15-minute timeout');
 }
 
 startServer().catch(error => {
