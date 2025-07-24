@@ -381,6 +381,58 @@
                 </div>
             </div>
 
+            <!-- Branding & Design -->
+            <div class="component-library">
+                <div class="section-title">🎨 Branding</div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 500;">Logo Upload:</label>
+                    <input type="file" accept="image/*" onchange="uploadLogo(this)" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px;">
+                    <div id="logoPreview" style="margin-top: 10px; text-align: center;"></div>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 500;">Business Name:</label>
+                    <input type="text" id="businessName" placeholder="Your Photography Studio" onchange="updateBusinessName()" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px;">
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 500;">Primary Font:</label>
+                    <select onchange="changePrimaryFont(this.value)" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px;">
+                        <option value="system">System Default</option>
+                        <option value="serif">Elegant Serif</option>
+                        <option value="playfair">Playfair Display</option>
+                        <option value="lora">Lora</option>
+                        <option value="crimson">Crimson Text</option>
+                        <option value="modern">Modern Sans</option>
+                        <option value="montserrat">Montserrat</option>
+                        <option value="opensans">Open Sans</option>
+                        <option value="roboto">Roboto</option>
+                    </select>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 500;">Brand Colors:</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div>
+                            <label style="font-size: 12px; color: #666;">Primary</label>
+                            <input type="color" value="#667eea" onchange="updateBrandColor('primary', this.value)" style="width: 100%; height: 35px; border: none; border-radius: 4px; cursor: pointer;">
+                        </div>
+                        <div>
+                            <label style="font-size: 12px; color: #666;">Secondary</label>
+                            <input type="color" value="#764ba2" onchange="updateBrandColor('secondary', this.value)" style="width: 100%; height: 35px; border: none; border-radius: 4px; cursor: pointer;">
+                        </div>
+                        <div>
+                            <label style="font-size: 12px; color: #666;">Accent</label>
+                            <input type="color" value="#f39c12" onchange="updateBrandColor('accent', this.value)" style="width: 100%; height: 35px; border: none; border-radius: 4px; cursor: pointer;">
+                        </div>
+                        <div>
+                            <label style="font-size: 12px; color: #666;">Text</label>
+                            <input type="color" value="#333333" onchange="updateBrandColor('text', this.value)" style="width: 100%; height: 35px; border: none; border-radius: 4px; cursor: pointer;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Advanced Properties -->
             <div class="component-library">
                 <div class="section-title">⚙️ Properties</div>
@@ -433,6 +485,17 @@
         let selectedElement = null;
         let collaborativeUsers = [];
         let websiteData = { components: [] };
+        let brandSettings = {
+            logo: null,
+            businessName: 'Your Photography Studio',
+            primaryFont: 'system',
+            colors: {
+                primary: '#667eea',
+                secondary: '#764ba2',
+                accent: '#f39c12',
+                text: '#333333'
+            }
+        };
 
         // Initialize the builder
         function initializeBuilder() {
@@ -786,6 +849,212 @@
         function publishWebsite() {
             console.log('🚀 Publishing website...');
             alert('✅ Website published successfully! Your photography website is now live.');
+        }
+
+        // Branding Functions
+        function uploadLogo(input) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    brandSettings.logo = e.target.result;
+                    
+                    // Show logo preview
+                    const preview = document.getElementById('logoPreview');
+                    preview.innerHTML = `<img src="${e.target.result}" style="max-width: 100%; max-height: 60px; border-radius: 4px;">`;
+                    
+                    // Update all logo instances on the website
+                    updateLogosOnWebsite();
+                    
+                    console.log('✅ Logo uploaded and applied to website');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function updateBusinessName() {
+            const name = document.getElementById('businessName').value;
+            brandSettings.businessName = name;
+            
+            // Update all business name instances
+            const elements = document.querySelectorAll('[data-business-name]');
+            elements.forEach(el => {
+                el.textContent = name;
+            });
+            
+            console.log(`📝 Business name updated to: ${name}`);
+        }
+
+        function changePrimaryFont(fontFamily) {
+            brandSettings.primaryFont = fontFamily;
+            
+            const fontMap = {
+                'system': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                'serif': 'Georgia, "Times New Roman", serif',
+                'playfair': '"Playfair Display", serif',
+                'lora': '"Lora", serif',
+                'crimson': '"Crimson Text", serif',
+                'modern': '"Helvetica Neue", Helvetica, Arial, sans-serif',
+                'montserrat': '"Montserrat", sans-serif',
+                'opensans': '"Open Sans", sans-serif',
+                'roboto': '"Roboto", sans-serif'
+            };
+            
+            // Load Google Fonts if needed
+            if (['playfair', 'lora', 'crimson', 'montserrat', 'opensans', 'roboto'].includes(fontFamily)) {
+                loadGoogleFont(fontFamily);
+            }
+            
+            // Apply font to website
+            const websiteContent = document.getElementById('websiteContent');
+            websiteContent.style.fontFamily = fontMap[fontFamily];
+            
+            console.log(`🔤 Font changed to: ${fontFamily}`);
+        }
+
+        function loadGoogleFont(font) {
+            const fontUrls = {
+                'playfair': 'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&display=swap',
+                'lora': 'https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600&display=swap',
+                'crimson': 'https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600&display=swap',
+                'montserrat': 'https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap',
+                'opensans': 'https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&display=swap',
+                'roboto': 'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap'
+            };
+            
+            if (!document.querySelector(`link[href="${fontUrls[font]}"]`)) {
+                const link = document.createElement('link');
+                link.href = fontUrls[font];
+                link.rel = 'stylesheet';
+                document.head.appendChild(link);
+            }
+        }
+
+        function updateBrandColor(colorType, colorValue) {
+            brandSettings.colors[colorType] = colorValue;
+            
+            // Apply color changes to website elements
+            const websiteContent = document.getElementById('websiteContent');
+            
+            if (colorType === 'primary') {
+                // Update primary color elements
+                const primaryElements = websiteContent.querySelectorAll('.hero-section, .component-item');
+                primaryElements.forEach(el => {
+                    if (el.classList.contains('hero-section')) {
+                        el.style.background = `linear-gradient(135deg, ${colorValue} 0%, ${brandSettings.colors.secondary} 100%)`;
+                    }
+                });
+            }
+            
+            if (colorType === 'text') {
+                // Update text color
+                websiteContent.style.color = colorValue;
+            }
+            
+            console.log(`🎨 ${colorType} color updated to: ${colorValue}`);
+        }
+
+        function updateLogosOnWebsite() {
+            if (!brandSettings.logo) return;
+            
+            // Find and update all logo placeholders
+            const logoElements = document.querySelectorAll('[data-logo-placeholder]');
+            logoElements.forEach(el => {
+                el.innerHTML = `<img src="${brandSettings.logo}" style="height: 40px; width: auto;">`;
+            });
+        }
+
+        // Enhanced component creation with branding
+        function createComponentWithBranding(type, x, y) {
+            const components = {
+                hero: {
+                    html: `<div class="hero-section" style="background: linear-gradient(135deg, ${brandSettings.colors.primary} 0%, ${brandSettings.colors.secondary} 100%); color: white; padding: 80px 20px; text-align: center;">
+                        <div data-logo-placeholder style="margin-bottom: 20px; display: flex; justify-content: center;">
+                            ${brandSettings.logo ? `<img src="${brandSettings.logo}" style="height: 60px; width: auto;">` : '🏢 Logo Here'}
+                        </div>
+                        <h1 data-business-name>${brandSettings.businessName}</h1>
+                        <p>Capturing life's precious moments with artistic vision</p>
+                        <button style="background: white; color: ${brandSettings.colors.primary}; border: none; padding: 15px 30px; border-radius: 8px; font-weight: bold; margin-top: 20px;">View Portfolio</button>
+                    </div>`,
+                    height: 350
+                },
+                gallery: {
+                    html: `<div class="gallery-section" style="padding: 60px 20px; background: #f8f9fa; color: ${brandSettings.colors.text};">
+                        <h2 style="text-align: center; margin-bottom: 40px; color: ${brandSettings.colors.primary};">Featured Work</h2>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                            <div style="aspect-ratio: 1; background: linear-gradient(45deg, #ddd, #eee); border-radius: 8px; border: 3px solid ${brandSettings.colors.accent};"></div>
+                            <div style="aspect-ratio: 1; background: linear-gradient(45deg, #ddd, #eee); border-radius: 8px; border: 3px solid ${brandSettings.colors.accent};"></div>
+                            <div style="aspect-ratio: 1; background: linear-gradient(45deg, #ddd, #eee); border-radius: 8px; border: 3px solid ${brandSettings.colors.accent};"></div>
+                        </div>
+                    </div>`,
+                    height: 400
+                },
+                about: {
+                    html: `<div class="about-section" style="padding: 60px 20px; background: white; color: ${brandSettings.colors.text};">
+                        <div style="max-width: 800px; margin: 0 auto; text-align: center;">
+                            <h2 style="color: ${brandSettings.colors.primary};">About <span data-business-name>${brandSettings.businessName}</span></h2>
+                            <p style="font-size: 18px; line-height: 1.6; color: ${brandSettings.colors.text}; margin-top: 20px;">We specialize in capturing the authentic emotions and beautiful moments that make your story unique. With over 10 years of experience, we bring artistic vision and technical expertise to every session.</p>
+                        </div>
+                    </div>`,
+                    height: 250
+                },
+                contact: {
+                    html: `<div class="contact-section" style="padding: 60px 20px; background: ${brandSettings.colors.primary}; color: white;">
+                        <div style="max-width: 600px; margin: 0 auto;">
+                            <h2 style="text-align: center; margin-bottom: 40px;">Contact <span data-business-name>${brandSettings.businessName}</span></h2>
+                            <div style="display: grid; gap: 20px;">
+                                <input type="text" placeholder="Your Name" style="padding: 15px; border: none; border-radius: 8px; font-size: 16px;">
+                                <input type="email" placeholder="Your Email" style="padding: 15px; border: none; border-radius: 8px; font-size: 16px;">
+                                <textarea placeholder="Tell us about your photography needs..." rows="5" style="padding: 15px; border: none; border-radius: 8px; font-size: 16px; resize: vertical;"></textarea>
+                                <button style="background: ${brandSettings.colors.accent}; color: white; border: none; padding: 15px 30px; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer;">Send Message</button>
+                            </div>
+                        </div>
+                    </div>`,
+                    height: 450
+                }
+            };
+            
+            const component = components[type];
+            if (!component) return;
+            
+            // Create element with branding
+            const element = document.createElement('div');
+            element.className = 'draggable-element element-enter';
+            element.innerHTML = component.html;
+            element.style.top = y + 'px';
+            element.style.left = '0px';
+            element.style.width = '100%';
+            element.style.minHeight = component.height + 'px';
+            element.style.fontFamily = getFontFamily();
+            
+            // Add to canvas
+            const websiteContent = document.getElementById('websiteContent');
+            websiteContent.appendChild(element);
+            
+            // Add click handler for selection
+            element.addEventListener('click', () => selectElement(element));
+            
+            console.log(`✨ Added ${type} component with custom branding!`);
+        }
+
+        function getFontFamily() {
+            const fontMap = {
+                'system': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                'serif': 'Georgia, "Times New Roman", serif',
+                'playfair': '"Playfair Display", serif',
+                'lora': '"Lora", serif',
+                'crimson': '"Crimson Text", serif',
+                'modern': '"Helvetica Neue", Helvetica, Arial, sans-serif',
+                'montserrat': '"Montserrat", sans-serif',
+                'opensans': '"Open Sans", sans-serif',
+                'roboto': '"Roboto", sans-serif'
+            };
+            return fontMap[brandSettings.primaryFont];
+        }
+
+        // Update the original createComponent function
+        function createComponent(type, x, y) {
+            createComponentWithBranding(type, x, y);
         }
 
         // Initialize everything when page loads
