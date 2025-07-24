@@ -283,88 +283,28 @@
             box-shadow: 0 8px 25px rgba(255, 107, 107, 0.2);
         }
         
-        .btn-edit {
-            background: linear-gradient(135deg, #d4af37 0%, #f4e4bc 100%);
-            color: #1a1a1a;
+        .btn-edit, .btn-calendar, .btn-gallery-ready, .btn-invoice, 
+        .btn-call, .btn-text, .btn-gallery, .btn-email,
+        .btn-warning, .btn-contract, .btn-success {
+            background: rgba(0, 0, 0, 0.8);
+            color: #d4af37;
             border: 1px solid rgba(212, 175, 55, 0.4);
+            font-weight: 500;
+            font-size: 0.9rem;
+            letter-spacing: 0.01em;
+            text-align: center;
+            backdrop-filter: blur(10px);
         }
         
-        .btn-edit:hover {
-            background: linear-gradient(135deg, #f4e4bc 0%, #d4af37 100%);
+        .btn-edit:hover, .btn-calendar:hover, .btn-gallery-ready:hover, 
+        .btn-invoice:hover, .btn-call:hover, .btn-text:hover, 
+        .btn-gallery:hover, .btn-email:hover,
+        .btn-warning:hover, .btn-contract:hover, .btn-success:hover {
+            background: rgba(212, 175, 55, 0.15);
+            color: #f4e4bc;
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(212, 175, 55, 0.3);
-        }
-        
-        .btn-calendar {
-            background: rgba(0, 0, 0, 0.7);
-            color: #d4af37;
-            border: 1px solid rgba(212, 175, 55, 0.4);
-        }
-        
-        .btn-calendar:hover {
-            background: rgba(212, 175, 55, 0.1);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.2);
-        }
-        
-        .btn-gallery-ready {
-            background: rgba(0, 0, 0, 0.7);
-            color: #d4af37;
-            border: 1px solid rgba(212, 175, 55, 0.4);
-        }
-        
-        .btn-gallery-ready:hover {
-            background: rgba(212, 175, 55, 0.1);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.2);
-        }
-        
-        .btn-invoice {
-            background: linear-gradient(135deg, #d4af37 0%, #f4e4bc 100%);
-            color: #1a1a1a;
-            border: 1px solid rgba(212, 175, 55, 0.4);
-        }
-        
-        .btn-invoice:hover {
-            background: linear-gradient(135deg, #f4e4bc 0%, #d4af37 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.3);
-        }
-        
-        .btn-call {
-            background: rgba(0, 0, 0, 0.7);
-            color: #d4af37;
-            border: 1px solid rgba(212, 175, 55, 0.4);
-        }
-        
-        .btn-call:hover {
-            background: rgba(212, 175, 55, 0.1);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.2);
-        }
-        
-        .btn-text {
-            background: rgba(0, 0, 0, 0.7);
-            color: #d4af37;
-            border: 1px solid rgba(212, 175, 55, 0.4);
-        }
-        
-        .btn-text:hover {
-            background: rgba(212, 175, 55, 0.1);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.2);
-        }
-        
-        .btn-gallery {
-            background: rgba(0, 0, 0, 0.7);
-            color: #d4af37;
-            border: 1px solid rgba(212, 175, 55, 0.4);
-        }
-        
-        .btn-gallery:hover {
-            background: rgba(212, 175, 55, 0.1);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.2);
+            border-color: rgba(212, 175, 55, 0.6);
         }
         
         .sessions-grid {
@@ -2820,10 +2760,10 @@
                             <button class="btn btn-invoice" onclick="sendInvoice('${session.id}')">
                                 Send Invoice
                             </button>
-                            <button class="btn" style="background: linear-gradient(135deg, #d4af37 0%, #f4e4bc 100%); color: #1a1a1a; border: 1px solid rgba(212, 175, 55, 0.4);" onclick="sendDepositInvoice('${session.id}')">
+                            <button class="btn btn-invoice" onclick="sendDepositInvoice('${session.id}')">
                                 Send Deposit
                             </button>
-                            <button class="btn" style="background: rgba(0, 0, 0, 0.7); color: #d4af37; border: 1px solid rgba(212, 175, 55, 0.4);" onclick="openPaymentPlanModal('${session.id}')">
+                            <button class="btn btn-success" onclick="openPaymentPlanModal('${session.id}')">
                                 Create Payment Plan
                             </button>
                         `}
