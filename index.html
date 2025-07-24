@@ -2957,6 +2957,15 @@
 
             console.log(`Starting upload of ${files.length} files to session ${currentUploadSessionId}`);
 
+            // Check if we need to batch upload (more than 20 files or total size > 150MB)
+            const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+            const totalSizeMB = totalSize / (1024 * 1024);
+            
+            if (files.length > 20 || totalSizeMB > 150) {
+                console.log(`Large upload detected (${files.length} files, ${totalSizeMB.toFixed(2)}MB) - using batch upload`);
+                return uploadFilesInBatches(files);
+            }
+
             try {
                 const formData = new FormData();
                 files.forEach((file, index) => {
@@ -2990,6 +2999,59 @@
                 console.error('Upload error:', error);
                 showMessage('Upload failed: ' + error.message, 'error');
             }
+        }
+
+        // Upload files in smaller batches to prevent 413 errors
+        async function uploadFilesInBatches(files) {
+            const batchSize = 10; // Upload 10 files at a time
+            const totalBatches = Math.ceil(files.length / batchSize);
+            let uploadedCount = 0;
+            
+            showMessage(`Uploading ${files.length} files in ${totalBatches} batches...`, 'info');
+            
+            for (let i = 0; i < totalBatches; i++) {
+                const start = i * batchSize;
+                const end = Math.min(start + batchSize, files.length);
+                const batch = files.slice(start, end);
+                
+                console.log(`Uploading batch ${i + 1}/${totalBatches}: files ${start + 1}-${end}`);
+                
+                try {
+                    const formData = new FormData();
+                    batch.forEach(file => {
+                        formData.append('photos', file);
+                    });
+
+                    const response = await fetch(`/api/sessions/${currentUploadSessionId}/upload-photos`, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        uploadedCount += result.uploaded;
+                        showMessage(`Batch ${i + 1}/${totalBatches} complete: ${uploadedCount}/${files.length} photos uploaded`, 'success');
+                    } else if (response.status === 401) {
+                        showMessage('Authentication required. Please log in to upload photos.', 'error');
+                        setTimeout(() => {
+                            window.location.href = '/api/login';
+                        }, 2000);
+                        return;
+                    } else {
+                        throw new Error(result.error || 'Batch upload failed');
+                    }
+                } catch (error) {
+                    console.error(`Batch ${i + 1} upload error:`, error);
+                    showMessage(`Batch ${i + 1} failed: ${error.message}`, 'error');
+                    return; // Stop on first batch failure
+                }
+            }
+            
+            showMessage(`All ${uploadedCount} photos uploaded successfully!`, 'success');
+            closeUploadModal();
+            loadSessions();
+            celebrateMilestone('photos_uploaded');
         }
 
         async function deleteSession(sessionId) {
