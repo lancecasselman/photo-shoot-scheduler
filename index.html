@@ -4475,6 +4475,9 @@ END:VCALENDAR`;
                 <style>
                     @keyframes lightboxFadeIn { from { opacity: 0; } to { opacity: 1; } }
                     @keyframes lightboxZoomIn { from { transform: scale(0.7) rotate(-5deg); opacity: 0; } to { transform: scale(1) rotate(0deg); opacity: 1; } }
+                    @keyframes pulse-invite { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+                    @keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-8px); } 60% { transform: translateY(-4px); } }
+                    @keyframes galleryBounce { 0% { transform: translateY(0); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0); } }
                 </style>
             `;
             
@@ -4768,13 +4771,14 @@ END:VCALENDAR`;
                         <div onclick="openLightbox('https://images-pw.pixiuset.com/elementfield/M5P7qxd/DSC_2077-37d27fdd-1500.jpg', 'Heartwarming family portrait capturing genuine emotions, connections, and the love that binds us together')" style="aspect-ratio: 4/5; background-image: url('https://images-pw.pixiuset.com/elementfield/M5P7qxd/DSC_2077-37d27fdd-1500.jpg'); background-size: cover; background-position: center; border-radius: 12px; border: 3px solid #d4af37; position: relative; overflow: hidden; cursor: pointer; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform: perspective(1000px) rotateX(0deg);" onmouseover="this.style.transform='perspective(1000px) rotateX(-8deg) rotateY(5deg) scale(1.08)'; this.style.boxShadow='0 25px 50px rgba(212,175,55,0.6), 0 15px 30px rgba(0,0,0,0.4)'" onmouseout="this.style.transform='perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)'; this.style.boxShadow='none'">
                             <div style="position: absolute; bottom: 15px; left: 15px; color: white; font-weight: bold; background: rgba(0,0,0,0.85); padding: 10px 15px; border-radius: 8px; backdrop-filter: blur(10px); border: 1px solid rgba(212,175,55,0.3);">Family Moments</div>
                         </div>
-                        <div style="aspect-ratio: 4/5; background-image: url('https://images-pw.pixieset.com/elementfield/na3yK1b/DSC_3189-e16d3c7e-1500.jpg'); background-size: cover; background-position: top; border-radius: 12px; border: 3px solid #d4af37; position: relative; overflow: hidden;">
-                            <div style="position: absolute; bottom: 15px; left: 15px; color: white; font-weight: bold; background: rgba(0,0,0,0.7); padding: 8px 12px; border-radius: 6px;">Charleston Architecture</div>
+                        <div onclick="openLightbox('https://images-pw.pixieset.com/elementfield/na3yK1b/DSC_3189-e16d3c7e-1500.jpg', 'Stunning Charleston architecture providing the perfect historic backdrop for timeless portraits')" style="aspect-ratio: 4/5; background-image: url('https://images-pw.pixieset.com/elementfield/na3yK1b/DSC_3189-e16d3c7e-1500.jpg'); background-size: cover; background-position: top; border-radius: 12px; border: 3px solid #d4af37; position: relative; overflow: hidden; cursor: pointer; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform: perspective(1000px) rotateX(0deg);" onmouseover="this.style.transform='perspective(1000px) rotateX(-8deg) rotateY(-5deg) scale(1.08)'; this.style.boxShadow='0 25px 50px rgba(212,175,55,0.6), 0 15px 30px rgba(0,0,0,0.4)'" onmouseout="this.style.transform='perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)'; this.style.boxShadow='none'">
+                            <div style="position: absolute; bottom: 15px; left: 15px; color: white; font-weight: bold; background: rgba(0,0,0,0.85); padding: 10px 15px; border-radius: 8px; backdrop-filter: blur(10px); border: 1px solid rgba(212,175,55,0.3);">Charleston Architecture</div>
                         </div>
-                        <div style="aspect-ratio: 4/5; background: linear-gradient(135deg, #8b7355 0%, #d4af37 50%, #f4e4bc 100%); border-radius: 12px; border: 3px solid #d4af37; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; color: #1a1a1a; font-size: 1.2em; text-align: center; font-family: 'Playfair Display', serif;">
-                            <div style="background: rgba(255,255,255,0.9); padding: 20px; border-radius: 8px; backdrop-filter: blur(10px);">
-                                <div style="font-size: 2em; margin-bottom: 10px;">📸</div>
-                                <div style="font-weight: bold;">Your Next<br>Masterpiece</div>
+                        <div style="aspect-ratio: 4/5; background: linear-gradient(135deg, #8b7355 0%, #d4af37 50%, #f4e4bc 100%); border-radius: 12px; border: 3px solid #d4af37; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; color: #1a1a1a; font-size: 1.2em; text-align: center; font-family: 'Playfair Display', serif; cursor: pointer; transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);" onclick="window.open('sms:8434851315?&body=Hi Lance! I absolutely love your photography style and would like to book a session. When are you available?', '_self')" onmouseover="this.style.transform='scale(1.1) rotate(3deg)'; this.style.boxShadow='0 20px 40px rgba(212,175,55,0.4)'" onmouseout="this.style.transform='scale(1) rotate(0deg)'; this.style.boxShadow='none'">
+                            <div style="background: rgba(255,255,255,0.95); padding: 25px; border-radius: 12px; backdrop-filter: blur(15px); box-shadow: 0 8px 32px rgba(0,0,0,0.1); animation: pulse-invite 3s ease-in-out infinite;">
+                                <div style="font-size: 2.5em; margin-bottom: 15px; animation: bounce 2s ease-in-out infinite;">📸</div>
+                                <div style="font-weight: bold; margin-bottom: 10px; font-size: 1.1em;">Book Your Session</div>
+                                <div style="font-size: 0.9em; opacity: 0.8; color: #8b7355;">Tap to Get Started</div>
                             </div>
                         </div>
                     </div>
