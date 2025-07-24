@@ -719,96 +719,10 @@ app.post('/api/sessions/:id/upload-photos', isAuthenticated, (req, res) => {
         });
 
         return; // Exit early to prevent double response
-        
-        try {
-            console.log(`📋 Verifying session ${sessionId} exists...`);
-            const session = await getSessionById(sessionId);
-            
-            if (!session) {
-                console.error(`❌ Session ${sessionId} not found`);
-                return res.status(404).json({ error: 'Session not found' });
-            }
-
-            const filesReceived = req.files ? req.files.length : 0;
-            console.log(`📸 Processing ${filesReceived} files for session ${sessionId}`);
-            
-            if (!req.files || req.files.length === 0) {
-                console.error('❌ No files received in upload');
-                return res.status(400).json({ error: 'No files uploaded' });
-            }
-
-            // Calculate total upload size
-            const totalSize = req.files.reduce((sum, file) => sum + file.size, 0);
-            const totalSizeMB = (totalSize / 1024 / 1024).toFixed(2);
-            console.log(`📊 Processing ${filesReceived} files (${totalSizeMB}MB total)`);
-
-            // Process files in smaller batches to prevent memory issues
-            const newPhotos = [];
-            const batchSize = 10;
-            
-            for (let i = 0; i < req.files.length; i += batchSize) {
-                const batch = req.files.slice(i, i + batchSize);
-                console.log(`🔄 Processing batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(req.files.length/batchSize)}`);
-                
-                const batchPhotos = batch.map(file => ({
-                    id: uuidv4(),
-                    filename: file.filename,
-                    originalName: file.originalname,
-                    url: `/uploads/${file.filename}`,
-                    size: file.size,
-                    uploadedAt: new Date().toISOString()
-                }));
-                
-                newPhotos.push(...batchPhotos);
-                
-                // Small delay to prevent overwhelming the system
-                if (i + batchSize < req.files.length) {
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                }
-            }
-
-            console.log(`💾 Updating database with ${newPhotos.length} new photos...`);
-            const existingPhotos = session.photos || [];
-            const updatedPhotos = [...existingPhotos, ...newPhotos];
-            
-            await updateSession(sessionId, { photos: updatedPhotos });
-
-            console.log(`✅ Successfully uploaded ${newPhotos.length} photos to session ${session.clientName} (${sessionId})`);
-            res.json({ 
-                message: 'Photos uploaded successfully', 
-                uploaded: newPhotos.length,
-                totalPhotos: updatedPhotos.length,
-                sessionId: sessionId,
-                totalSizeMB: totalSizeMB
-            });
-        } catch (error) {
-            console.error('❌ Error processing upload:', error);
-            console.error('Error details:', {
-                message: error.message,
-                stack: error.stack,
-                sessionId: sessionId,
-                filesReceived: req.files ? req.files.length : 0
-            });
-            
-            // Clean up uploaded files on error
-            if (req.files) {
-                req.files.forEach(file => {
-                    try {
-                        fs.unlinkSync(file.path);
-                    } catch (cleanupError) {
-                        console.error('Error cleaning up file:', cleanupError);
-                    }
-                });
-            }
-            
-            res.status(500).json({ 
-                error: 'Failed to process upload',
-                details: error.message,
-                sessionId: sessionId
-            });
-        }
     });
 });
+
+// DEAD CODE BLOCK REMOVED - was unreachable after return statement
 
 // Delete session
 app.delete('/api/sessions/:id', isAuthenticated, async (req, res) => {
