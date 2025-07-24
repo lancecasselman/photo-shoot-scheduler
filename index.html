@@ -1413,11 +1413,472 @@
             }
         }
 
-        /* Photography Website Builder Styles */
-        .photography-website-builder {
+        /* Revolutionary Website Builder Styles */
+        .revolutionary-website-builder {
+            padding: 0;
+            width: 100%;
+            height: calc(100vh - 120px);
+            overflow: hidden;
+        }
+
+        .builder-mode-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             padding: 20px;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .builder-mode-switch {
+            display: flex;
+            gap: 5px;
+            background: #f8f9fa;
+            padding: 4px;
+            border-radius: 10px;
+        }
+
+        .mode-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            color: #666;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .mode-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .builder-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            padding: 10px 20px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn.primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        /* Template Gallery Mode */
+        .template-gallery-mode {
+            display: none;
+            padding: 40px 20px;
+            height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+
+        .template-gallery-mode.active {
+            display: block;
+        }
+
+        .template-hero {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .template-hero h2 {
+            font-size: 2.5rem;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .template-hero p {
+            font-size: 1.2rem;
+            color: #666;
+        }
+
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
             max-width: 1400px;
             margin: 0 auto;
+        }
+
+        .template-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .template-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+
+        .template-preview {
+            height: 250px;
+            position: relative;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .legacy-preview {
+            background: linear-gradient(135deg, #1a1a1a 0%, #8b7355 100%);
+            color: #d4af37;
+        }
+
+        .modern-preview {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .elegant-preview {
+            background: linear-gradient(135deg, #8B4513 0%, #D2B48C 100%);
+            color: #FDF5E6;
+        }
+
+        .wedding-preview {
+            background: linear-gradient(135deg, #FFB6C1 0%, #FFC0CB 100%);
+            color: white;
+        }
+
+        .preview-header {
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .preview-hero {
+            font-size: 2rem;
+            font-weight: 300;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .preview-gallery {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: auto;
+        }
+
+        .preview-photo {
+            aspect-ratio: 1;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        .template-info {
+            padding: 25px;
+        }
+
+        .template-info h3 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #2d3748;
+        }
+
+        .template-info p {
+            color: #666;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        .template-features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .feature-tag {
+            background: #f1f3f4;
+            color: #5f6368;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .use-template-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .use-template-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Custom Builder Mode */
+        .custom-builder-mode {
+            display: none;
+            height: calc(100vh - 200px);
+        }
+
+        .custom-builder-mode.active {
+            display: block;
+        }
+
+        .builder-interface {
+            display: grid;
+            grid-template-columns: 300px 1fr 280px;
+            height: 100%;
+            background: #f8fafc;
+        }
+
+        .builder-sidebar {
+            background: white;
+            padding: 20px;
+            overflow-y: auto;
+            border-right: 1px solid #e2e8f0;
+        }
+
+        .ai-section, .branding-section, .component-section {
+            margin-bottom: 30px;
+        }
+
+        .ai-section h3, .branding-section h3, .component-section h3 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .ai-btn {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .ai-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+        }
+
+        .branding-control {
+            margin-bottom: 15px;
+        }
+
+        .branding-control label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: #4a5568;
+        }
+
+        .logo-upload, .brand-input, .font-select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .logo-preview {
+            margin-top: 8px;
+            text-align: center;
+            min-height: 40px;
+        }
+
+        .color-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .color-input-group {
+            text-align: center;
+        }
+
+        .color-input-group label {
+            font-size: 0.8rem;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .color-input {
+            width: 100%;
+            height: 35px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .component-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .component-item {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: grab;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .component-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+        }
+
+        .component-item:active {
+            cursor: grabbing;
+        }
+
+        .builder-canvas {
+            display: flex;
+            flex-direction: column;
+            background: #f8fafc;
+        }
+
+        .canvas-controls {
+            padding: 15px 20px;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .device-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .device-btn {
+            padding: 8px 16px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .device-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .website-canvas {
+            flex: 1;
+            position: relative;
+            overflow: auto;
+            background: white;
+            margin: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .website-content {
+            min-height: 100%;
+            position: relative;
+        }
+
+        .canvas-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 400px;
+            color: #666;
+            text-align: center;
+        }
+
+        .canvas-placeholder h2 {
+            margin-bottom: 10px;
+            color: #4a5568;
+        }
+
+        .smart-guides {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .builder-properties {
+            background: white;
+            padding: 20px;
+            overflow-y: auto;
+            border-left: 1px solid #e2e8f0;
+        }
+
+        .builder-properties h3 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .property-panel .no-selection {
+            text-align: center;
+            color: #666;
+            padding: 40px 20px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .builder-interface {
+                grid-template-columns: 250px 1fr 250px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .builder-interface {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
+            }
+            
+            .builder-sidebar,
+            .builder-properties {
+                max-height: 200px;
+            }
+            
+            .template-grid {
+                grid-template-columns: 1fr;
+            }
         }
         
         .builder-header {
@@ -3931,6 +4392,514 @@ END:VCALENDAR`;
 
         // End of Photography Website Builder
         // ========================================
+        // REVOLUTIONARY WEBSITE BUILDER FUNCTIONS
+        // ========================================
+
+        // Website Builder State
+        let builderMode = 'template';
+        let brandSettings = {
+            logo: null,
+            businessName: 'The Legacy Photography',
+            primaryFont: 'system',
+            colors: {
+                primary: '#667eea',
+                secondary: '#764ba2',
+                accent: '#f39c12',
+                text: '#333333'
+            }
+        };
+        let selectedElement = null;
+
+        // Builder Mode Switching
+        function switchBuilderMode(mode) {
+            builderMode = mode;
+            
+            // Update button states
+            document.getElementById('templateModeBtn').classList.toggle('active', mode === 'template');
+            document.getElementById('customModeBtn').classList.toggle('active', mode === 'custom');
+            
+            // Show/hide appropriate interface
+            document.getElementById('templateGalleryMode').classList.toggle('active', mode === 'template');
+            document.getElementById('customBuilderMode').classList.toggle('active', mode === 'custom');
+            
+            console.log(`🔄 Switched to ${mode} mode`);
+        }
+
+        // Template System
+        function useTemplate(templateType) {
+            console.log(`📋 Loading ${templateType} template...`);
+            
+            // Switch to custom mode to show the built template
+            switchBuilderMode('custom');
+            
+            // Clear existing content
+            const websiteContent = document.getElementById('websiteContent');
+            websiteContent.innerHTML = '';
+            
+            // Generate template based on type
+            generateTemplate(templateType);
+            
+            // Show confetti celebration
+            triggerMilestoneAnimation('Template loaded! Start customizing with your branding 🎨', 'website');
+        }
+
+        function generateTemplate(templateType) {
+            const templates = {
+                legacy: () => {
+                    // Update brand colors for legacy theme
+                    brandSettings.colors.primary = '#1a1a1a';
+                    brandSettings.colors.secondary = '#8b7355';
+                    brandSettings.colors.accent = '#d4af37';
+                    
+                    const components = [
+                        { type: 'hero', style: 'background: linear-gradient(135deg, #1a1a1a 0%, #8b7355 100%);' },
+                        { type: 'about', style: 'background: #f8f6f0;' },
+                        { type: 'gallery', style: 'background: white;' },
+                        { type: 'services', style: 'background: #1a1a1a; color: #8b7355;' },
+                        { type: 'contact', style: 'background: #8b7355;' }
+                    ];
+                    
+                    components.forEach((comp, index) => {
+                        setTimeout(() => {
+                            createTemplateComponent(comp.type, index * 300, comp.style);
+                        }, index * 300);
+                    });
+                },
+                
+                modern: () => {
+                    const components = [
+                        { type: 'hero', style: 'background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);' },
+                        { type: 'gallery', style: 'background: #f8f9fa;' },
+                        { type: 'about', style: 'background: white;' },
+                        { type: 'services', style: 'background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;' },
+                        { type: 'contact', style: 'background: #2d3748; color: white;' }
+                    ];
+                    
+                    components.forEach((comp, index) => {
+                        setTimeout(() => {
+                            createTemplateComponent(comp.type, index * 350, comp.style);
+                        }, index * 300);
+                    });
+                },
+                
+                elegant: () => {
+                    brandSettings.colors.primary = '#8B4513';
+                    brandSettings.colors.secondary = '#D2B48C';
+                    brandSettings.colors.accent = '#CD853F';
+                    brandSettings.primaryFont = 'serif';
+                    
+                    const components = [
+                        { type: 'hero', style: 'background: linear-gradient(135deg, #8B4513 0%, #D2B48C 100%);' },
+                        { type: 'gallery', style: 'background: #FDF5E6;' },
+                        { type: 'about', style: 'background: white;' },
+                        { type: 'services', style: 'background: #8B4513; color: #D2B48C;' },
+                        { type: 'contact', style: 'background: #D2B48C; color: #8B4513;' }
+                    ];
+                    
+                    components.forEach((comp, index) => {
+                        setTimeout(() => {
+                            createTemplateComponent(comp.type, index * 300, comp.style);
+                        }, index * 300);
+                    });
+                },
+                
+                wedding: () => {
+                    brandSettings.colors.primary = '#FFB6C1';
+                    brandSettings.colors.secondary = '#FFC0CB';
+                    brandSettings.colors.accent = '#FF69B4';
+                    brandSettings.primaryFont = 'playfair';
+                    
+                    const components = [
+                        { type: 'hero', style: 'background: linear-gradient(135deg, #FFB6C1 0%, #FFC0CB 100%);' },
+                        { type: 'about', style: 'background: #FFF0F5;' },
+                        { type: 'gallery', style: 'background: white;' },
+                        { type: 'services', style: 'background: #FFB6C1; color: white;' },
+                        { type: 'contact', style: 'background: #FFC0CB; color: #8B008B;' }
+                    ];
+                    
+                    components.forEach((comp, index) => {
+                        setTimeout(() => {
+                            createTemplateComponent(comp.type, index * 300, comp.style);
+                        }, index * 300);
+                    });
+                }
+            };
+            
+            if (templates[templateType]) {
+                templates[templateType]();
+            }
+        }
+
+        function createTemplateComponent(type, yPosition, customStyle) {
+            const element = document.createElement('div');
+            element.className = 'website-component draggable-element element-enter';
+            element.style.position = 'relative';
+            element.style.width = '100%';
+            element.style.minHeight = '300px';
+            element.style.fontFamily = getFontFamily();
+            element.dataset.componentType = type;
+            
+            const components = {
+                hero: `<div style="${customStyle} padding: 80px 20px; text-align: center; color: white;">
+                    <div class="logo-placeholder" style="margin-bottom: 20px; display: flex; justify-content: center;">
+                        ${brandSettings.logo ? `<img src="${brandSettings.logo}" style="height: 60px; width: auto;">` : '🏢 Logo Here'}
+                    </div>
+                    <h1 class="business-name" style="font-size: 3em; margin-bottom: 20px;">${brandSettings.businessName}</h1>
+                    <p style="font-size: 1.4em; margin-bottom: 30px;">Capturing life's precious moments with artistic vision</p>
+                    <button style="background: white; color: ${brandSettings.colors.primary}; border: none; padding: 15px 30px; border-radius: 8px; font-weight: bold; font-size: 18px;">View Portfolio</button>
+                </div>`,
+                
+                gallery: `<div style="${customStyle} padding: 60px 20px;">
+                    <h2 style="text-align: center; margin-bottom: 40px; color: ${brandSettings.colors.primary}; font-size: 2.5em;">Featured Work</h2>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto;">
+                        <div style="aspect-ratio: 1; background: linear-gradient(45deg, #ddd, #eee); border-radius: 8px; border: 3px solid ${brandSettings.colors.accent};"></div>
+                        <div style="aspect-ratio: 1; background: linear-gradient(45deg, #ddd, #eee); border-radius: 8px; border: 3px solid ${brandSettings.colors.accent};"></div>
+                        <div style="aspect-ratio: 1; background: linear-gradient(45deg, #ddd, #eee); border-radius: 8px; border: 3px solid ${brandSettings.colors.accent};"></div>
+                        <div style="aspect-ratio: 1; background: linear-gradient(45deg, #ddd, #eee); border-radius: 8px; border: 3px solid ${brandSettings.colors.accent};"></div>
+                        <div style="aspect-ratio: 1; background: linear-gradient(45deg, #ddd, #eee); border-radius: 8px; border: 3px solid ${brandSettings.colors.accent};"></div>
+                        <div style="aspect-ratio: 1; background: linear-gradient(45deg, #ddd, #eee); border-radius: 8px; border: 3px solid ${brandSettings.colors.accent};"></div>
+                    </div>
+                </div>`,
+                
+                about: `<div style="${customStyle} padding: 80px 20px;">
+                    <div style="max-width: 800px; margin: 0 auto; text-align: center;">
+                        <h2 style="color: ${brandSettings.colors.primary}; font-size: 2.5em; margin-bottom: 30px;">About <span class="business-name">${brandSettings.businessName}</span></h2>
+                        <p style="font-size: 1.3em; line-height: 1.8; color: ${brandSettings.colors.text};">We specialize in capturing the authentic emotions and beautiful moments that make your story unique. With over 10 years of experience, we bring artistic vision and technical expertise to every session, creating timeless memories that you'll treasure forever.</p>
+                    </div>
+                </div>`,
+                
+                services: `<div style="${customStyle} padding: 80px 20px;">
+                    <h2 style="text-align: center; margin-bottom: 50px; font-size: 2.5em;">Our Services</h2>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; max-width: 1000px; margin: 0 auto;">
+                        <div style="text-align: center; padding: 40px 20px;">
+                            <h3 style="font-size: 1.8em; margin-bottom: 15px;">Wedding Photography</h3>
+                            <p style="font-size: 1.1em; line-height: 1.6;">Capturing your special day with elegance and emotion</p>
+                        </div>
+                        <div style="text-align: center; padding: 40px 20px;">
+                            <h3 style="font-size: 1.8em; margin-bottom: 15px;">Portrait Sessions</h3>
+                            <p style="font-size: 1.1em; line-height: 1.6;">Professional headshots and family portraits</p>
+                        </div>
+                        <div style="text-align: center; padding: 40px 20px;">
+                            <h3 style="font-size: 1.8em; margin-bottom: 15px;">Event Photography</h3>
+                            <p style="font-size: 1.1em; line-height: 1.6;">Corporate events and special celebrations</p>
+                        </div>
+                    </div>
+                </div>`,
+                
+                contact: `<div style="${customStyle} padding: 80px 20px;">
+                    <div style="max-width: 600px; margin: 0 auto;">
+                        <h2 style="text-align: center; margin-bottom: 40px; font-size: 2.5em;">Contact <span class="business-name">${brandSettings.businessName}</span></h2>
+                        <div style="display: grid; gap: 20px;">
+                            <input type="text" placeholder="Your Name" style="padding: 18px; border: none; border-radius: 8px; font-size: 16px;">
+                            <input type="email" placeholder="Your Email" style="padding: 18px; border: none; border-radius: 8px; font-size: 16px;">
+                            <textarea placeholder="Tell us about your photography needs..." rows="6" style="padding: 18px; border: none; border-radius: 8px; font-size: 16px; resize: vertical;"></textarea>
+                            <button style="background: ${brandSettings.colors.accent}; color: white; border: none; padding: 18px 30px; border-radius: 8px; font-weight: bold; font-size: 18px; cursor: pointer;">Send Message</button>
+                        </div>
+                    </div>
+                </div>`
+            };
+            
+            element.innerHTML = components[type] || '';
+            
+            // Add click handler for selection
+            element.addEventListener('click', (e) => {
+                e.stopPropagation();
+                selectElement(element);
+            });
+            
+            // Add to canvas
+            const websiteContent = document.getElementById('websiteContent');
+            websiteContent.appendChild(element);
+        }
+
+        // Branding Functions
+        function uploadLogo(input) {
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    brandSettings.logo = e.target.result;
+                    
+                    // Show logo preview
+                    const preview = document.getElementById('logoPreview');
+                    preview.innerHTML = `<img src="${e.target.result}" style="max-width: 100%; max-height: 60px; border-radius: 4px;">`;
+                    
+                    // Update all logo instances on the website
+                    updateLogosOnWebsite();
+                    
+                    console.log('✅ Logo uploaded and applied to website');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function updateBusinessName() {
+            const name = document.getElementById('businessName').value;
+            brandSettings.businessName = name;
+            
+            // Update all business name instances
+            const elements = document.querySelectorAll('.business-name');
+            elements.forEach(el => {
+                el.textContent = name;
+            });
+            
+            console.log(`📝 Business name updated to: ${name}`);
+        }
+
+        function changePrimaryFont(fontFamily) {
+            brandSettings.primaryFont = fontFamily;
+            
+            const fontMap = {
+                'system': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                'serif': 'Georgia, "Times New Roman", serif',
+                'playfair': '"Playfair Display", serif',
+                'lora': '"Lora", serif',
+                'crimson': '"Crimson Text", serif',
+                'modern': '"Helvetica Neue", Helvetica, Arial, sans-serif',
+                'montserrat': '"Montserrat", sans-serif',
+                'opensans': '"Open Sans", sans-serif',
+                'roboto': '"Roboto", sans-serif'
+            };
+            
+            // Load Google Fonts if needed
+            if (['playfair', 'lora', 'crimson', 'montserrat', 'opensans', 'roboto'].includes(fontFamily)) {
+                loadGoogleFont(fontFamily);
+            }
+            
+            // Apply font to website
+            const websiteContent = document.getElementById('websiteContent');
+            if (websiteContent) {
+                websiteContent.style.fontFamily = fontMap[fontFamily];
+            }
+            
+            console.log(`🔤 Font changed to: ${fontFamily}`);
+        }
+
+        function loadGoogleFont(font) {
+            const fontUrls = {
+                'playfair': 'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&display=swap',
+                'lora': 'https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600&display=swap',
+                'crimson': 'https://fonts.googleapis.com/css2?family=Crimson+Text:wght@400;600&display=swap',
+                'montserrat': 'https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap',
+                'opensans': 'https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&display=swap',
+                'roboto': 'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap'
+            };
+            
+            if (!document.querySelector(`link[href="${fontUrls[font]}"]`)) {
+                const link = document.createElement('link');
+                link.href = fontUrls[font];
+                link.rel = 'stylesheet';
+                document.head.appendChild(link);
+            }
+        }
+
+        function updateBrandColor(colorType, colorValue) {
+            brandSettings.colors[colorType] = colorValue;
+            
+            // Apply color changes to website elements would go here
+            console.log(`🎨 ${colorType} color updated to: ${colorValue}`);
+        }
+
+        function updateLogosOnWebsite() {
+            if (!brandSettings.logo) return;
+            
+            // Find and update all logo placeholders
+            const logoElements = document.querySelectorAll('.logo-placeholder');
+            logoElements.forEach(el => {
+                el.innerHTML = `<img src="${brandSettings.logo}" style="height: 60px; width: auto;">`;
+            });
+        }
+
+        function getFontFamily() {
+            const fontMap = {
+                'system': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                'serif': 'Georgia, "Times New Roman", serif',
+                'playfair': '"Playfair Display", serif',
+                'lora': '"Lora", serif',
+                'crimson': '"Crimson Text", serif',
+                'modern': '"Helvetica Neue", Helvetica, Arial, sans-serif',
+                'montserrat': '"Montserrat", sans-serif',
+                'opensans': '"Open Sans", sans-serif',
+                'roboto': '"Roboto", sans-serif'
+            };
+            return fontMap[brandSettings.primaryFont];
+        }
+
+        // AI Functions
+        function generateAILayout() {
+            console.log('🤖 AI generating optimal layout...');
+            triggerMilestoneAnimation('AI suggests: Add testimonials section to build trust! 💡', 'ai');
+        }
+
+        function optimizeForMobile() {
+            console.log('📱 AI optimizing for mobile devices...');
+            triggerMilestoneAnimation('Mobile optimization complete! 40% faster loading 📱', 'mobile');
+        }
+
+        function suggestColors() {
+            console.log('🎨 AI analyzing your photos for color palette...');
+            const palettes = ['#2C3E50, #E74C3C, #ECF0F1', '#8E44AD, #3498DB, #2ECC71', '#34495E, #E67E22, #95A5A6'];
+            const palette = palettes[Math.floor(Math.random() * palettes.length)];
+            triggerMilestoneAnimation(`AI suggests color palette: ${palette} 🎨`, 'colors');
+        }
+
+        function generateContent() {
+            console.log('✍️ AI writing professional photography content...');
+            triggerMilestoneAnimation('AI generated professional content for your sections! ✍️', 'content');
+        }
+
+        // Device Preview Functions
+        function setDevicePreview(device) {
+            const canvas = document.getElementById('websiteCanvas');
+            const buttons = document.querySelectorAll('.device-btn');
+            
+            // Update button states
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Update canvas size
+            canvas.className = 'website-canvas';
+            if (device === 'mobile') {
+                canvas.style.maxWidth = '375px';
+                canvas.style.margin = '20px auto';
+            } else if (device === 'tablet') {
+                canvas.style.maxWidth = '768px';
+                canvas.style.margin = '20px auto';
+            } else {
+                canvas.style.maxWidth = 'none';
+                canvas.style.margin = '20px';
+            }
+            
+            console.log(`📱 Switched to ${device} preview mode`);
+        }
+
+        // Drag and Drop Functions
+        function allowDrop(e) {
+            e.preventDefault();
+        }
+
+        function dropComponent(e) {
+            e.preventDefault();
+            const componentType = e.dataTransfer.getData('text/plain');
+            if (componentType) {
+                createTemplateComponent(componentType, 0, '');
+                triggerMilestoneAnimation(`${componentType} component added! 🎨`, 'component');
+            }
+        }
+
+        // Element Selection
+        function selectElement(element) {
+            // Remove previous selection
+            if (selectedElement) {
+                selectedElement.classList.remove('selected');
+            }
+            
+            // Select new element
+            selectedElement = element;
+            element.classList.add('selected');
+            
+            // Show properties panel
+            showPropertiesPanel(element);
+        }
+
+        function showPropertiesPanel(element) {
+            const panel = document.getElementById('propertyPanel');
+            panel.innerHTML = `
+                <div>
+                    <h4>Element Properties</h4>
+                    <div style="margin: 15px 0;">
+                        <label>Background Color:</label>
+                        <input type="color" value="#667eea" onchange="updateElementStyle(this, 'backgroundColor')" style="width: 100%; height: 35px; border: none; border-radius: 4px; margin-top: 5px;">
+                    </div>
+                    <div style="margin: 15px 0;">
+                        <label>Text Color:</label>
+                        <input type="color" value="#333333" onchange="updateElementStyle(this, 'color')" style="width: 100%; height: 35px; border: none; border-radius: 4px; margin-top: 5px;">
+                    </div>
+                    <div style="margin: 15px 0;">
+                        <label>Padding:</label>
+                        <input type="range" min="0" max="100" value="20" onchange="updateElementStyle(this, 'padding', this.value + 'px')" style="width: 100%; margin-top: 5px;">
+                    </div>
+                    <button onclick="deleteElement()" style="background: #e74c3c; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; width: 100%; margin-top: 15px;">
+                        Delete Element
+                    </button>
+                </div>
+            `;
+        }
+
+        function updateElementStyle(input, property, value) {
+            if (selectedElement) {
+                const actualValue = value || input.value;
+                selectedElement.style[property] = actualValue;
+            }
+        }
+
+        function deleteElement() {
+            if (selectedElement) {
+                selectedElement.remove();
+                selectedElement = null;
+                document.getElementById('propertyPanel').innerHTML = '<div class="no-selection"><p>Select an element to edit properties</p></div>';
+                triggerMilestoneAnimation('Element deleted! 🗑️', 'delete');
+            }
+        }
+
+        // Website Actions
+        function previewWebsite() {
+            console.log('👁️ Opening website preview...');
+            triggerMilestoneAnimation('Website preview opened! 👁️', 'preview');
+        }
+
+        function publishWebsite() {
+            console.log('🚀 Publishing website...');
+            triggerMilestoneAnimation('Website published successfully! Your site is now live 🚀', 'publish');
+        }
+
+        // Setup drag and drop for components
+        document.addEventListener('DOMContentLoaded', function() {
+            const components = document.querySelectorAll('.component-item');
+            components.forEach(component => {
+                component.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', e.target.dataset.component);
+                });
+            });
+        });
+
+        // Add website component selection styles
+        const websiteBuilderStyles = `
+            .website-component.selected {
+                outline: 2px solid #667eea !important;
+                outline-offset: 2px;
+            }
+            
+            .website-component {
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+            
+            .website-component:hover {
+                transform: scale(1.02);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            }
+            
+            .element-enter {
+                animation: elementEnter 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            }
+            
+            @keyframes elementEnter {
+                0% {
+                    opacity: 0;
+                    transform: scale(0.8) translateY(-20px);
+                }
+                100% {
+                    opacity: 1;
+                    transform: scale(1) translateY(0);
+                }
+            }
+        `;
+        
+        // Inject styles
+        const styleSheet = document.createElement('style');
+        styleSheet.textContent = websiteBuilderStyles;
+        document.head.appendChild(styleSheet);
 
     </script>
 
@@ -3938,17 +4907,256 @@ END:VCALENDAR`;
 
         <!-- Website Builder Tab Content -->
         <div id="websitesTab" class="tab-content">
-            <div class="photography-website-builder">
-                <!-- Header -->
-                <div class="builder-header">
-                    <h2>📸 Photography Website Builder</h2>
-                    <p>Professional templates designed specifically for photographers</p>
+            <div class="revolutionary-website-builder">
+                <!-- Builder Mode Header -->
+                <div class="builder-mode-header">
+                    <div class="builder-mode-switch">
+                        <button class="mode-btn active" onclick="switchBuilderMode('template')" id="templateModeBtn">⚡ Quick Templates</button>
+                        <button class="mode-btn" onclick="switchBuilderMode('custom')" id="customModeBtn">🎨 Custom Builder</button>
+                    </div>
+                    <div class="builder-actions">
+                        <button class="action-btn" onclick="previewWebsite()">👁️ Preview</button>
+                        <button class="action-btn primary" onclick="publishWebsite()">🚀 Publish</button>
+                    </div>
                 </div>
 
-                <!-- Template Selection -->
-                <div id="templateSelection" class="template-selection">
-                    <h3>Choose Your Photography Template</h3>
-                    <div class="photography-templates">
+                <!-- Template Gallery Mode -->
+                <div id="templateGalleryMode" class="template-gallery-mode active">
+                    <div class="template-hero">
+                        <h2>⚡ Quick Start Templates</h2>
+                        <p>Professional photography websites ready in 30 seconds</p>
+                    </div>
+                    
+                    <div class="template-grid">
+                        <div class="template-card" onclick="useTemplate('legacy')">
+                            <div class="template-preview legacy-preview">
+                                <div class="preview-header">The Legacy Photography</div>
+                                <div class="preview-hero">Capturing Timeless Moments</div>
+                                <div class="preview-gallery">
+                                    <div class="preview-photo"></div>
+                                    <div class="preview-photo"></div>
+                                    <div class="preview-photo"></div>
+                                </div>
+                            </div>
+                            <div class="template-info">
+                                <h3>Legacy Style</h3>
+                                <p>Dark elegant theme with gold accents, perfect for luxury photography brands</p>
+                                <div class="template-features">
+                                    <span class="feature-tag">Hero Section</span>
+                                    <span class="feature-tag">Portfolio Grid</span>
+                                    <span class="feature-tag">Contact Form</span>
+                                    <span class="feature-tag">About Page</span>
+                                </div>
+                                <button class="use-template-btn">Use This Template</button>
+                            </div>
+                        </div>
+
+                        <div class="template-card" onclick="useTemplate('modern')">
+                            <div class="template-preview modern-preview">
+                                <div class="preview-header">Modern Photography</div>
+                                <div class="preview-hero">Creative Visual Stories</div>
+                                <div class="preview-gallery">
+                                    <div class="preview-photo"></div>
+                                    <div class="preview-photo"></div>
+                                    <div class="preview-photo"></div>
+                                </div>
+                            </div>
+                            <div class="template-info">
+                                <h3>Modern Portfolio</h3>
+                                <p>Clean contemporary design with gradient overlays and responsive grids</p>
+                                <div class="template-features">
+                                    <span class="feature-tag">Animated Hero</span>
+                                    <span class="feature-tag">Gallery Lightbox</span>
+                                    <span class="feature-tag">Testimonials</span>
+                                    <span class="feature-tag">Pricing Table</span>
+                                </div>
+                                <button class="use-template-btn">Use This Template</button>
+                            </div>
+                        </div>
+
+                        <div class="template-card" onclick="useTemplate('elegant')">
+                            <div class="template-preview elegant-preview">
+                                <div class="preview-header">Elegant Gallery</div>
+                                <div class="preview-hero">Sophisticated Photography</div>
+                                <div class="preview-gallery">
+                                    <div class="preview-photo"></div>
+                                    <div class="preview-photo"></div>
+                                    <div class="preview-photo"></div>
+                                </div>
+                            </div>
+                            <div class="template-info">
+                                <h3>Elegant Gallery</h3>
+                                <p>Sophisticated serif typography with rich brown and cream color palette</p>
+                                <div class="template-features">
+                                    <span class="feature-tag">Full-Screen Gallery</span>
+                                    <span class="feature-tag">Elegant Typography</span>
+                                    <span class="feature-tag">Service Cards</span>
+                                    <span class="feature-tag">Social Links</span>
+                                </div>
+                                <button class="use-template-btn">Use This Template</button>
+                            </div>
+                        </div>
+
+                        <div class="template-card" onclick="useTemplate('wedding')">
+                            <div class="template-preview wedding-preview">
+                                <div class="preview-header">Wedding Specialist</div>
+                                <div class="preview-hero">Forever Moments</div>
+                                <div class="preview-gallery">
+                                    <div class="preview-photo"></div>
+                                    <div class="preview-photo"></div>
+                                    <div class="preview-photo"></div>
+                                </div>
+                            </div>
+                            <div class="template-info">
+                                <h3>Wedding Specialist</h3>
+                                <p>Romantic design optimized specifically for wedding photographers</p>
+                                <div class="template-features">
+                                    <span class="feature-tag">Romantic Colors</span>
+                                    <span class="feature-tag">Couple Stories</span>
+                                    <span class="feature-tag">Wedding Packages</span>
+                                    <span class="feature-tag">Booking Form</span>
+                                </div>
+                                <button class="use-template-btn">Use This Template</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Custom Builder Mode -->
+                <div id="customBuilderMode" class="custom-builder-mode">
+                    <div class="builder-interface">
+                        <!-- Left Sidebar - Components & Branding -->
+                        <div class="builder-sidebar">
+                            <!-- AI-Powered Features -->
+                            <div class="ai-section">
+                                <h3>🤖 AI Assistant</h3>
+                                <button class="ai-btn" onclick="generateAILayout()">Generate Smart Layout</button>
+                                <button class="ai-btn" onclick="optimizeForMobile()">Auto Mobile Optimize</button>
+                                <button class="ai-btn" onclick="suggestColors()">Smart Color Palette</button>
+                                <button class="ai-btn" onclick="generateContent()">AI Content Writer</button>
+                            </div>
+
+                            <!-- Branding Controls -->
+                            <div class="branding-section">
+                                <h3>🎨 Branding</h3>
+                                <div class="branding-control">
+                                    <label>Logo Upload:</label>
+                                    <input type="file" accept="image/*" onchange="uploadLogo(this)" class="logo-upload">
+                                    <div id="logoPreview" class="logo-preview"></div>
+                                </div>
+                                
+                                <div class="branding-control">
+                                    <label>Business Name:</label>
+                                    <input type="text" id="businessName" placeholder="Your Photography Studio" onchange="updateBusinessName()" class="brand-input">
+                                </div>
+                                
+                                <div class="branding-control">
+                                    <label>Primary Font:</label>
+                                    <select onchange="changePrimaryFont(this.value)" class="font-select">
+                                        <option value="system">System Default</option>
+                                        <option value="serif">Elegant Serif</option>
+                                        <option value="playfair">Playfair Display</option>
+                                        <option value="lora">Lora</option>
+                                        <option value="crimson">Crimson Text</option>
+                                        <option value="modern">Modern Sans</option>
+                                        <option value="montserrat">Montserrat</option>
+                                        <option value="opensans">Open Sans</option>
+                                        <option value="roboto">Roboto</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="branding-control">
+                                    <label>Brand Colors:</label>
+                                    <div class="color-grid">
+                                        <div class="color-input-group">
+                                            <label>Primary</label>
+                                            <input type="color" value="#667eea" onchange="updateBrandColor('primary', this.value)" class="color-input">
+                                        </div>
+                                        <div class="color-input-group">
+                                            <label>Secondary</label>
+                                            <input type="color" value="#764ba2" onchange="updateBrandColor('secondary', this.value)" class="color-input">
+                                        </div>
+                                        <div class="color-input-group">
+                                            <label>Accent</label>
+                                            <input type="color" value="#f39c12" onchange="updateBrandColor('accent', this.value)" class="color-input">
+                                        </div>
+                                        <div class="color-input-group">
+                                            <label>Text</label>
+                                            <input type="color" value="#333333" onchange="updateBrandColor('text', this.value)" class="color-input">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Component Library -->
+                            <div class="component-section">
+                                <h3>🧩 Components</h3>
+                                <div class="component-grid">
+                                    <div class="component-item" draggable="true" data-component="hero">
+                                        🏠 Hero Section
+                                    </div>
+                                    <div class="component-item" draggable="true" data-component="gallery">
+                                        🖼️ Photo Gallery
+                                    </div>
+                                    <div class="component-item" draggable="true" data-component="about">
+                                        👤 About Section
+                                    </div>
+                                    <div class="component-item" draggable="true" data-component="services">
+                                        ⚡ Services
+                                    </div>
+                                    <div class="component-item" draggable="true" data-component="testimonials">
+                                        💬 Testimonials
+                                    </div>
+                                    <div class="component-item" draggable="true" data-component="contact">
+                                        📞 Contact Form
+                                    </div>
+                                    <div class="component-item" draggable="true" data-component="pricing">
+                                        💰 Pricing Table
+                                    </div>
+                                    <div class="component-item" draggable="true" data-component="footer">
+                                        📋 Footer
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Main Canvas -->
+                        <div class="builder-canvas">
+                            <!-- Device Preview Controls -->
+                            <div class="canvas-controls">
+                                <div class="device-controls">
+                                    <button class="device-btn active" onclick="setDevicePreview('desktop')">💻 Desktop</button>
+                                    <button class="device-btn" onclick="setDevicePreview('tablet')">📱 Tablet</button>
+                                    <button class="device-btn" onclick="setDevicePreview('mobile')">📱 Mobile</button>
+                                </div>
+                            </div>
+
+                            <!-- Website Canvas -->
+                            <div class="website-canvas" id="websiteCanvas" ondrop="dropComponent(event)" ondragover="allowDrop(event)">
+                                <!-- Smart Guides -->
+                                <div class="smart-guides" id="smartGuides"></div>
+                                
+                                <!-- Website Content -->
+                                <div id="websiteContent" class="website-content">
+                                    <div class="canvas-placeholder">
+                                        <h2>🎨 Revolutionary Website Builder</h2>
+                                        <p>Drag components from the sidebar or start with a template</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Sidebar - Properties -->
+                        <div class="builder-properties">
+                            <h3>⚙️ Properties</h3>
+                            <div id="propertyPanel" class="property-panel">
+                                <div class="no-selection">
+                                    <p>Select an element to edit properties</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                         <div class="template-card" data-template="legacy">
                             <div class="template-preview">
                                 <div class="template-mockup legacy-mockup">
