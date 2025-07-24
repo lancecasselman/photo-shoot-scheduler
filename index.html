@@ -1412,6 +1412,403 @@
                 font-size: 0.8rem;
             }
         }
+
+        /* Photography Website Builder Styles */
+        .photography-website-builder {
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .builder-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .builder-header h2 {
+            color: #2d3748;
+            margin: 0 0 10px 0;
+            font-size: 2.5rem;
+        }
+        
+        .builder-header p {
+            color: #4a5568;
+            font-size: 1.2rem;
+        }
+        
+        /* Template Selection Styles */
+        .template-selection {
+            margin-bottom: 40px;
+        }
+        
+        .template-selection h3 {
+            text-align: center;
+            color: #2d3748;
+            margin-bottom: 30px;
+            font-size: 1.8rem;
+        }
+        
+        .photography-templates {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .template-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s;
+            cursor: pointer;
+            text-align: center;
+        }
+        
+        .template-card:hover {
+            border-color: #667eea;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .template-preview {
+            margin-bottom: 20px;
+            height: 200px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .template-mockup {
+            height: 100%;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            font-size: 0.8rem;
+        }
+        
+        /* Template Mockup Styles */
+        .legacy-mockup {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #D4AF37;
+        }
+        
+        .modern-mockup {
+            background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+            color: #2d3748;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .romantic-mockup {
+            background: linear-gradient(135deg, #fdf7f0 0%, #f7e6d7 100%);
+            color: #8b5a3c;
+        }
+        
+        .bold-mockup {
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+            color: #ffffff;
+        }
+        
+        .mockup-header {
+            font-weight: bold;
+            font-size: 0.9rem;
+            text-align: center;
+            border-bottom: 1px solid currentColor;
+            padding-bottom: 5px;
+        }
+        
+        .mockup-hero {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        
+        .mockup-gallery {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            height: 40px;
+        }
+        
+        .mockup-photo {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+        
+        .template-card h4 {
+            color: #2d3748;
+            margin: 0 0 10px 0;
+            font-size: 1.3rem;
+        }
+        
+        .template-card p {
+            color: #4a5568;
+            margin: 0 0 20px 0;
+            line-height: 1.5;
+        }
+        
+        /* Website Customization Interface */
+        .website-customization {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            margin-top: 20px;
+        }
+        
+        .customization-header {
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .customization-header h3 {
+            color: #2d3748;
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        
+        .website-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .customization-interface {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            min-height: 600px;
+        }
+        
+        /* Customization Panel */
+        .customization-panel {
+            background: #f8fafc;
+            border-right: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .customization-tabs {
+            display: flex;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .customization-tab {
+            flex: 1;
+            padding: 15px 10px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #4a5568;
+            transition: all 0.2s;
+        }
+        
+        .customization-tab.active {
+            background: white;
+            color: #667eea;
+            border-bottom: 2px solid #667eea;
+        }
+        
+        .customization-tab:hover:not(.active) {
+            background: #f1f5f9;
+        }
+        
+        .customization-section {
+            padding: 20px;
+            display: none;
+            overflow-y: auto;
+            flex: 1;
+        }
+        
+        .customization-section.active {
+            display: block;
+        }
+        
+        .customization-section h4 {
+            margin: 0 0 20px 0;
+            color: #2d3748;
+            font-size: 1.2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #2d3748;
+        }
+        
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: border-color 0.2s;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .form-group input[type="color"] {
+            height: 45px;
+            padding: 5px;
+            cursor: pointer;
+        }
+        
+        .form-group small {
+            display: block;
+            margin-top: 5px;
+            color: #6b7280;
+            font-size: 0.8rem;
+        }
+        
+        .photo-upload-section {
+            margin-top: 20px;
+            padding: 20px;
+            border: 2px dashed #cbd5e0;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .photo-preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .photo-preview-item {
+            aspect-ratio: 1;
+            background: #f1f5f9;
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .photo-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        /* Live Preview */
+        .website-preview {
+            background: white;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .preview-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .preview-header h4 {
+            margin: 0;
+            color: #2d3748;
+        }
+        
+        .preview-controls {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .preview-control {
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        
+        .preview-control:hover {
+            background: #f7fafc;
+        }
+        
+        .preview-control.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .website-preview-frame {
+            flex: 1;
+            padding: 20px;
+            overflow: auto;
+            background: #f8fafc;
+        }
+        
+        .website-preview-frame.desktop {
+            padding: 20px;
+        }
+        
+        .website-preview-frame.tablet {
+            padding: 20px 60px;
+        }
+        
+        .website-preview-frame.mobile {
+            padding: 20px 100px;
+        }
+        
+        /* Mobile Responsive for Photography Builder */
+        @media (max-width: 768px) {
+            .photography-templates {
+                grid-template-columns: 1fr;
+            }
+            
+            .customization-interface {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
+            }
+            
+            .customization-panel {
+                order: 1;
+            }
+            
+            .website-preview {
+                order: 2;
+                min-height: 400px;
+            }
+            
+            .customization-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 15px;
+            }
+            
+            .website-actions {
+                justify-content: center;
+            }
+            
+            .website-preview-frame.tablet,
+            .website-preview-frame.mobile {
+                padding: 20px;
+            }
+        }
         
         @media (max-width: 768px) {
             .container { padding: 10px; }
@@ -3052,164 +3449,332 @@ END:VCALENDAR`;
             }
         }
 
-        // Website Builder Functionality
-        let currentWebsite = null;
-        let websiteComponents = [];
-        let selectedComponent = null;
-        let draggedComponent = null;
+        // Photography Website Builder Functionality
+        let currentTemplate = null;
+        let websiteSettings = {
+            businessName: 'The Legacy Photography',
+            tagline: 'Capturing Timeless Moments',
+            aboutText: 'Professional photographer specializing in weddings, portraits, and special moments. Creating beautiful memories that last a lifetime.',
+            contactPhone: '843-485-1315',
+            contactEmail: 'lance@thelegacyphotography.com',
+            primaryColor: '#D4AF37',
+            backgroundColor: '#1a1a1a',
+            textColor: '#ffffff',
+            fontStyle: 'serif',
+            galleryLayout: 'grid',
+            websiteUrl: '',
+            seoTitle: 'The Legacy Photography - Professional Wedding & Portrait Photographer',
+            seoDescription: 'Professional photography services specializing in weddings, portraits, and special moments. Book your session today.',
+            portfolioPhotos: []
+        };
 
         function initializeWebsiteBuilder() {
-            console.log('Initializing website builder...');
-            setupDragAndDrop();
-            toggleDevice('desktop'); // Default to desktop view
+            console.log('Initializing photography website builder...');
+            // Show template selection by default
+            showTemplateSelection();
         }
 
-        function createNewWebsite() {
-            const websiteName = prompt('Enter website name:', 'My Photography Website');
-            if (!websiteName) return;
+        function showTemplateSelection() {
+            document.getElementById('templateSelection').style.display = 'block';
+            document.getElementById('websiteCustomization').style.display = 'none';
+        }
+
+        function selectTemplate(templateType) {
+            currentTemplate = templateType;
             
-            currentWebsite = {
-                id: Date.now().toString(),
-                name: websiteName,
-                components: [],
-                settings: {
-                    theme: 'modern',
-                    colors: {
-                        primary: '#667eea',
-                        secondary: '#764ba2',
-                        accent: '#81e6d9'
-                    }
+            // Update UI
+            document.getElementById('templateSelection').style.display = 'none';
+            document.getElementById('websiteCustomization').style.display = 'block';
+            document.getElementById('selectedTemplateName').textContent = `Customizing: ${getTemplateDisplayName(templateType)}`;
+            
+            // Load template-specific default settings
+            loadTemplateDefaults(templateType);
+            
+            // Generate initial preview
+            updateWebsitePreview();
+            
+            showMessage(`${getTemplateDisplayName(templateType)} template selected!`, 'success');
+            celebrateMilestone('session_created', `${getTemplateDisplayName(templateType)} Website`);
+        }
+
+        function getTemplateDisplayName(templateType) {
+            const names = {
+                legacy: 'Legacy Style',
+                modern: 'Modern Portfolio',
+                romantic: 'Romantic Style',
+                bold: 'Bold & Dramatic'
+            };
+            return names[templateType] || templateType;
+        }
+
+        function loadTemplateDefaults(templateType) {
+            const templateDefaults = {
+                legacy: {
+                    primaryColor: '#D4AF37',
+                    backgroundColor: '#1a1a1a',
+                    textColor: '#ffffff',
+                    fontStyle: 'serif'
                 },
-                createdAt: new Date().toISOString()
+                modern: {
+                    primaryColor: '#667eea',
+                    backgroundColor: '#ffffff',
+                    textColor: '#2d3748',
+                    fontStyle: 'sans-serif'
+                },
+                romantic: {
+                    primaryColor: '#d4a574',
+                    backgroundColor: '#fdf7f0',
+                    textColor: '#8b5a3c',
+                    fontStyle: 'serif'
+                },
+                bold: {
+                    primaryColor: '#ffffff',
+                    backgroundColor: '#000000',
+                    textColor: '#ffffff',
+                    fontStyle: 'sans-serif'
+                }
+            };
+
+            const defaults = templateDefaults[templateType];
+            if (defaults) {
+                Object.assign(websiteSettings, defaults);
+                updateFormFields();
+            }
+        }
+
+        function backToTemplates() {
+            // Reset current template
+            currentTemplate = null;
+            
+            // Show template selection
+            document.getElementById('templateSelection').style.display = 'block';
+            document.getElementById('websiteCustomization').style.display = 'none';
+            
+            showMessage('Back to template selection', 'info');
+        }
+
+        function showCustomizationSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.customization-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(sectionName + 'Customization').classList.add('active');
+            
+            // Update tab states
+            document.querySelectorAll('.customization-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        function updateFormFields() {
+            // Update form fields with current settings
+            document.getElementById('businessName').value = websiteSettings.businessName;
+            document.getElementById('tagline').value = websiteSettings.tagline;
+            document.getElementById('aboutText').value = websiteSettings.aboutText;
+            document.getElementById('contactPhone').value = websiteSettings.contactPhone;
+            document.getElementById('contactEmail').value = websiteSettings.contactEmail;
+            document.getElementById('primaryColor').value = websiteSettings.primaryColor;
+            document.getElementById('backgroundColor').value = websiteSettings.backgroundColor;
+            document.getElementById('textColor').value = websiteSettings.textColor;
+            document.getElementById('fontStyle').value = websiteSettings.fontStyle;
+            document.getElementById('galleryLayout').value = websiteSettings.galleryLayout;
+            document.getElementById('websiteUrl').value = websiteSettings.websiteUrl;
+            document.getElementById('seoTitle').value = websiteSettings.seoTitle;
+            document.getElementById('seoDescription').value = websiteSettings.seoDescription;
+        }
+
+        function updateWebsiteContent() {
+            // Update settings from form fields
+            websiteSettings.businessName = document.getElementById('businessName').value;
+            websiteSettings.tagline = document.getElementById('tagline').value;
+            websiteSettings.aboutText = document.getElementById('aboutText').value;
+            websiteSettings.contactPhone = document.getElementById('contactPhone').value;
+            websiteSettings.contactEmail = document.getElementById('contactEmail').value;
+            
+            // Update preview
+            updateWebsitePreview();
+        }
+
+        function updateWebsiteDesign() {
+            // Update design settings from form fields
+            websiteSettings.primaryColor = document.getElementById('primaryColor').value;
+            websiteSettings.backgroundColor = document.getElementById('backgroundColor').value;
+            websiteSettings.textColor = document.getElementById('textColor').value;
+            websiteSettings.fontStyle = document.getElementById('fontStyle').value;
+            
+            // Update preview
+            updateWebsitePreview();
+        }
+
+        function updateGallerySettings() {
+            websiteSettings.galleryLayout = document.getElementById('galleryLayout').value;
+            updateWebsitePreview();
+        }
+
+        function updateWebsiteSettings() {
+            websiteSettings.websiteUrl = document.getElementById('websiteUrl').value;
+            websiteSettings.seoTitle = document.getElementById('seoTitle').value;
+            websiteSettings.seoDescription = document.getElementById('seoDescription').value;
+        }
+
+        function handlePhotoUpload() {
+            const files = document.getElementById('portfolioPhotos').files;
+            const photoPreview = document.getElementById('photoPreview');
+            
+            photoPreview.innerHTML = '';
+            websiteSettings.portfolioPhotos = [];
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    websiteSettings.portfolioPhotos.push({
+                        url: e.target.result,
+                        name: file.name
+                    });
+                    
+                    const photoItem = document.createElement('div');
+                    photoItem.className = 'photo-preview-item';
+                    photoItem.innerHTML = `<img src="${e.target.result}" alt="${file.name}">`;
+                    photoPreview.appendChild(photoItem);
+                    
+                    updateWebsitePreview();
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function setPreviewDevice(device) {
+            const previewFrame = document.getElementById('websitePreview');
+            const controls = document.querySelectorAll('.preview-control');
+            
+            // Remove active class from all controls
+            controls.forEach(control => control.classList.remove('active'));
+            
+            // Add active class to selected control
+            event.target.classList.add('active');
+            
+            // Update preview frame class
+            previewFrame.className = `website-preview-frame ${device}`;
+        }
+
+        function updateWebsitePreview() {
+            if (!currentTemplate) return;
+            
+            const previewFrame = document.getElementById('websitePreview');
+            const websiteHTML = generateWebsiteHTML();
+            
+            previewFrame.innerHTML = websiteHTML;
+        }
+
+        function generateWebsiteHTML() {
+            const templates = {
+                legacy: generateLegacyTemplate(),
+                modern: generateModernTemplate(),
+                romantic: generateRomanticTemplate(),
+                bold: generateBoldTemplate()
             };
             
-            document.getElementById('websiteName').textContent = websiteName;
-            document.getElementById('builderInterface').style.display = 'grid';
-            document.getElementById('websiteList').style.display = 'none';
-            document.getElementById('previewBtn').disabled = false;
-            document.getElementById('publishBtn').disabled = false;
-            
-            showMessage('New website created: ' + websiteName, 'success');
-            celebrateMilestone('session_created', websiteName);
+            return templates[currentTemplate] || templates.legacy;
         }
 
-        function loadWebsites() {
-            document.getElementById('builderInterface').style.display = 'none';
-            document.getElementById('websiteList').style.display = 'block';
-            
-            // Load existing websites (mock data for now)
-            const mockWebsites = [
-                {
-                    id: '1',
-                    name: 'Portfolio Website',
-                    preview: '📸',
-                    description: 'Professional photography portfolio',
-                    lastModified: '2 days ago'
-                },
-                {
-                    id: '2',
-                    name: 'Wedding Photography',
-                    preview: '💒',
-                    description: 'Specialized wedding photography site',
-                    lastModified: '1 week ago'
-                },
-                {
-                    id: '3',
-                    name: 'Studio Gallery',
-                    preview: '🏢',
-                    description: 'Commercial studio showcase',
-                    lastModified: '3 days ago'
-                }
-            ];
-            
-            const websitesGrid = document.getElementById('websitesGrid');
-            websitesGrid.innerHTML = mockWebsites.map(website => `
-                <div class="website-card">
-                    <div class="website-preview">${website.preview}</div>
-                    <div class="website-info">
-                        <h4>${website.name}</h4>
-                        <p>${website.description}</p>
-                        <small>Last modified: ${website.lastModified}</small>
-                    </div>
-                    <div class="website-actions">
-                        <button class="btn btn-primary" onclick="editWebsite('${website.id}')">
-                            ✏️ Edit
-                        </button>
-                        <button class="btn btn-success" onclick="previewWebsite('${website.id}')">
-                            👁️ View
-                        </button>
-                        <button class="btn btn-danger" onclick="deleteWebsite('${website.id}')">
-                            🗑️ Delete
-                        </button>
-                    </div>
+        function generateLegacyTemplate() {
+            const galleryPhotos = websiteSettings.portfolioPhotos.length > 0 
+                ? websiteSettings.portfolioPhotos.slice(0, 6)
+                : [
+                    { url: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200"%3E%3Crect fill="%23333" width="300" height="200"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" fill="%23D4AF37" font-size="16"%3EPortfolio%3C/text%3E%3C/svg%3E', name: 'sample1' },
+                    { url: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200"%3E%3Crect fill="%23333" width="300" height="200"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" fill="%23D4AF37" font-size="16"%3EPhoto 1%3C/text%3E%3C/svg%3E', name: 'sample2' },
+                    { url: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200"%3E%3Crect fill="%23333" width="300" height="200"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" fill="%23D4AF37" font-size="16"%3EPhoto 2%3C/text%3E%3C/svg%3E', name: 'sample3' }
+                ];
+
+            return `
+                <div style="font-family: ${websiteSettings.fontStyle === 'serif' ? 'Georgia, serif' : websiteSettings.fontStyle === 'script' ? 'Dancing Script, cursive' : 'Arial, sans-serif'}; background: ${websiteSettings.backgroundColor}; color: ${websiteSettings.textColor}; min-height: 100vh;">
+                    <!-- Header -->
+                    <header style="background: linear-gradient(135deg, ${websiteSettings.backgroundColor} 0%, #2d2d2d 100%); padding: 20px; text-align: center; border-bottom: 2px solid ${websiteSettings.primaryColor};">
+                        <h1 style="color: ${websiteSettings.primaryColor}; font-size: 2.5rem; margin: 0;">${websiteSettings.businessName}</h1>
+                        <nav style="margin-top: 15px;">
+                            <a href="#home" style="color: ${websiteSettings.textColor}; margin: 0 20px; text-decoration: none; opacity: 0.8;">Home</a>
+                            <a href="#portfolio" style="color: ${websiteSettings.textColor}; margin: 0 20px; text-decoration: none; opacity: 0.8;">Portfolio</a>
+                            <a href="#about" style="color: ${websiteSettings.textColor}; margin: 0 20px; text-decoration: none; opacity: 0.8;">About</a>
+                            <a href="#contact" style="color: ${websiteSettings.textColor}; margin: 0 20px; text-decoration: none; opacity: 0.8;">Contact</a>
+                        </nav>
+                    </header>
+
+                    <!-- Hero Section -->
+                    <section style="padding: 100px 20px; text-align: center; background: linear-gradient(135deg, ${websiteSettings.backgroundColor} 0%, #2d2d2d 100%);">
+                        <h2 style="font-size: 3.5rem; color: ${websiteSettings.primaryColor}; margin-bottom: 20px;">${websiteSettings.tagline}</h2>
+                        <p style="font-size: 1.3rem; color: ${websiteSettings.textColor}; opacity: 0.9; max-width: 600px; margin: 0 auto 40px auto;">${websiteSettings.aboutText}</p>
+                        <button style="background: ${websiteSettings.primaryColor}; color: ${websiteSettings.backgroundColor}; padding: 15px 30px; border: none; border-radius: 8px; font-size: 1.1rem; cursor: pointer;">Book Your Session</button>
+                    </section>
+
+                    <!-- Portfolio Gallery -->
+                    <section style="padding: 80px 20px; background: ${websiteSettings.backgroundColor};">
+                        <h3 style="text-align: center; font-size: 2.5rem; color: ${websiteSettings.primaryColor}; margin-bottom: 50px;">Portfolio</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto;">
+                            ${galleryPhotos.map(photo => `
+                                <div style="aspect-ratio: 4/3; overflow: hidden; border-radius: 8px; border: 2px solid ${websiteSettings.primaryColor};">
+                                    <img src="${photo.url}" alt="${photo.name}" style="width: 100%; height: 100%; object-fit: cover;">
+                                </div>
+                            `).join('')}
+                        </div>
+                    </section>
+
+                    <!-- Contact Section -->
+                    <section style="padding: 80px 20px; background: linear-gradient(135deg, #2d2d2d 0%, ${websiteSettings.backgroundColor} 100%); text-align: center;">
+                        <h3 style="font-size: 2.5rem; color: ${websiteSettings.primaryColor}; margin-bottom: 30px;">Contact</h3>
+                        <p style="font-size: 1.2rem; color: ${websiteSettings.textColor}; margin-bottom: 20px;">Ready to capture your special moments?</p>
+                        <p style="color: ${websiteSettings.primaryColor}; font-size: 1.3rem; margin-bottom: 10px;">${websiteSettings.contactPhone}</p>
+                        <p style="color: ${websiteSettings.primaryColor}; font-size: 1.1rem;">${websiteSettings.contactEmail}</p>
+                    </section>
+
+                    <!-- Footer -->
+                    <footer style="background: ${websiteSettings.backgroundColor}; padding: 40px 20px; text-align: center; border-top: 1px solid ${websiteSettings.primaryColor};">
+                        <p style="color: ${websiteSettings.textColor}; opacity: 0.7;">© 2025 ${websiteSettings.businessName}. All rights reserved.</p>
+                    </footer>
                 </div>
-            `).join('');
+            `;
         }
 
-        function editWebsite(websiteId) {
-            showMessage('Loading website editor...', 'info');
-            // Switch to builder interface
-            document.getElementById('websiteList').style.display = 'none';
-            document.getElementById('builderInterface').style.display = 'grid';
-            document.getElementById('previewBtn').disabled = false;
-            document.getElementById('publishBtn').disabled = false;
-        }
-
-        function previewWebsite(websiteId) {
-            if (!currentWebsite && !websiteId) {
-                showMessage('No website selected', 'error');
+        function previewWebsite() {
+            if (!currentTemplate) {
+                showMessage('Please select a template first', 'error');
                 return;
             }
             
-            showMessage('Generating website preview...', 'info');
+            showMessage('Generating full website preview...', 'info');
             
-            // Get the current website content
-            const dropZone = document.getElementById('dropZone');
-            const websiteContent = dropZone.innerHTML;
-            
-            if (!websiteContent || websiteContent.includes('drop-zone-message')) {
-                showMessage('Please add some components to preview the website', 'error');
-                return;
-            }
-            
-            // Create a complete HTML page for preview
+            const websiteHTML = generateWebsiteHTML();
             const previewHTML = `
                 <!DOCTYPE html>
                 <html lang="en">
                 <head>
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>${currentWebsite ? currentWebsite.name : 'Website Preview'} - Legacy Photography</title>
+                    <title>${websiteSettings.seoTitle}</title>
+                    <meta name="description" content="${websiteSettings.seoDescription}">
                     <style>
                         * { margin: 0; padding: 0; box-sizing: border-box; }
-                        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; }
-                        .component-wrapper { margin: 0; }
-                        .component-wrapper:hover { transform: none; box-shadow: none; }
-                        
-                        /* Mobile responsive styles */
+                        body { line-height: 1.6; }
                         @media (max-width: 768px) {
                             [style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
-                            [style*="font-size: 4rem"], [style*="font-size: 4.5rem"], [style*="font-size: 5rem"] { font-size: 2.5rem !important; }
-                            [style*="font-size: 3.5rem"] { font-size: 2rem !important; }
-                            [style*="font-size: 3rem"] { font-size: 1.8rem !important; }
+                            [style*="font-size: 3.5rem"] { font-size: 2.5rem !important; }
+                            [style*="font-size: 2.5rem"] { font-size: 1.8rem !important; }
                             [style*="padding: 100px"] { padding: 50px 20px !important; }
                             [style*="padding: 80px"] { padding: 40px 20px !important; }
-                            [style*="padding: 60px"] { padding: 30px 20px !important; }
-                            [style*="gap: 80px"] { gap: 40px !important; }
-                            [style*="gap: 40px"] { gap: 20px !important; }
-                            [style*="height: 100vh"] { height: 70vh !important; }
-                            [style*="height: 90vh"] { height: 60vh !important; }
-                            [style*="height: 85vh"] { height: 50vh !important; }
                         }
                     </style>
                 </head>
                 <body>
-                    ${websiteContent}
+                    ${websiteHTML}
                 </body>
                 </html>
             `;
             
-            // Create a new window with the preview
             const previewWindow = window.open('', '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
             previewWindow.document.write(previewHTML);
             previewWindow.document.close();
@@ -3218,992 +3783,387 @@ END:VCALENDAR`;
             celebrateMilestone('gallery_shared', 'Website Preview');
         }
 
+        function generateModernTemplate() {
+            const galleryPhotos = websiteSettings.portfolioPhotos.length > 0 
+                ? websiteSettings.portfolioPhotos.slice(0, 6)
+                : [
+                    { url: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200"%3E%3Crect fill="%23f8fafc" width="300" height="200"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" fill="%23667eea" font-size="16"%3EModern%3C/text%3E%3C/svg%3E', name: 'sample1' },
+                    { url: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200"%3E%3Crect fill="%23f8fafc" width="300" height="200"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" fill="%23667eea" font-size="16"%3EPhoto 1%3C/text%3E%3C/svg%3E', name: 'sample2' },
+                    { url: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200"%3E%3Crect fill="%23f8fafc" width="300" height="200"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" fill="%23667eea" font-size="16"%3EPhoto 2%3C/text%3E%3C/svg%3E', name: 'sample3' }
+                ];
+
+            return `
+                <div style="font-family: ${websiteSettings.fontStyle === 'serif' ? 'Georgia, serif' : websiteSettings.fontStyle === 'script' ? 'Dancing Script, cursive' : 'Arial, sans-serif'}; background: ${websiteSettings.backgroundColor}; color: ${websiteSettings.textColor}; min-height: 100vh;">
+                    <!-- Header -->
+                    <header style="background: ${websiteSettings.backgroundColor}; padding: 20px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                        <h1 style="color: ${websiteSettings.primaryColor}; font-size: 2.5rem; margin: 0; font-weight: 300;">${websiteSettings.businessName}</h1>
+                        <nav style="margin-top: 15px;">
+                            <a href="#home" style="color: ${websiteSettings.textColor}; margin: 0 20px; text-decoration: none;">Home</a>
+                            <a href="#portfolio" style="color: ${websiteSettings.textColor}; margin: 0 20px; text-decoration: none;">Portfolio</a>
+                            <a href="#about" style="color: ${websiteSettings.textColor}; margin: 0 20px; text-decoration: none;">About</a>
+                            <a href="#contact" style="color: ${websiteSettings.textColor}; margin: 0 20px; text-decoration: none;">Contact</a>
+                        </nav>
+                    </header>
+
+                    <!-- Hero Section -->
+                    <section style="padding: 120px 20px; text-align: center; background: linear-gradient(135deg, ${websiteSettings.backgroundColor} 0%, #f8fafc 100%);">
+                        <h2 style="font-size: 4rem; color: ${websiteSettings.primaryColor}; margin-bottom: 20px; font-weight: 100;">${websiteSettings.tagline}</h2>
+                        <p style="font-size: 1.2rem; color: ${websiteSettings.textColor}; opacity: 0.8; max-width: 600px; margin: 0 auto 40px auto;">${websiteSettings.aboutText}</p>
+                        <button style="background: ${websiteSettings.primaryColor}; color: white; padding: 15px 40px; border: none; border-radius: 30px; font-size: 1rem; cursor: pointer; font-weight: 500;">Get Started</button>
+                    </section>
+
+                    <!-- Portfolio Gallery -->
+                    <section style="padding: 100px 20px; background: ${websiteSettings.backgroundColor};">
+                        <h3 style="text-align: center; font-size: 3rem; color: ${websiteSettings.textColor}; margin-bottom: 60px; font-weight: 200;">Portfolio</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 30px; max-width: 1200px; margin: 0 auto;">
+                            ${galleryPhotos.map(photo => `
+                                <div style="aspect-ratio: 4/3; overflow: hidden; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+                                    <img src="${photo.url}" alt="${photo.name}" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s;">
+                                </div>
+                            `).join('')}
+                        </div>
+                    </section>
+
+                    <!-- Contact Section -->
+                    <section style="padding: 100px 20px; background: linear-gradient(135deg, #f8fafc 0%, ${websiteSettings.backgroundColor} 100%); text-align: center;">
+                        <h3 style="font-size: 3rem; color: ${websiteSettings.textColor}; margin-bottom: 30px; font-weight: 200;">Let's Connect</h3>
+                        <p style="font-size: 1.1rem; color: ${websiteSettings.textColor}; margin-bottom: 30px; opacity: 0.8;">Ready to create something beautiful together?</p>
+                        <p style="color: ${websiteSettings.primaryColor}; font-size: 1.4rem; margin-bottom: 10px; font-weight: 500;">${websiteSettings.contactPhone}</p>
+                        <p style="color: ${websiteSettings.primaryColor}; font-size: 1.1rem;">${websiteSettings.contactEmail}</p>
+                    </section>
+
+                    <!-- Footer -->
+                    <footer style="background: ${websiteSettings.textColor}; padding: 40px 20px; text-align: center;">
+                        <p style="color: ${websiteSettings.backgroundColor}; opacity: 0.7;">© 2025 ${websiteSettings.businessName}. Crafted with care.</p>
+                    </footer>
+                </div>
+            `;
+        }
+
+        function generateRomanticTemplate() {
+            return generateLegacyTemplate(); // Use legacy template structure with romantic colors
+        }
+
+        function generateBoldTemplate() {
+            return generateModernTemplate(); // Use modern template structure with bold colors
+        }
+
         function publishWebsite() {
-            if (!currentWebsite) {
-                showMessage('No website to publish', 'error');
+            if (!currentTemplate) {
+                showMessage('Please select a template first', 'error');
                 return;
             }
             
             showMessage('Publishing website...', 'info');
             
             setTimeout(() => {
-                const publishedUrl = `https://${currentWebsite.name.toLowerCase().replace(/\s+/g, '-')}.legacyphotography.com`;
+                const websiteUrl = websiteSettings.websiteUrl || websiteSettings.businessName.toLowerCase().replace(/\s+/g, '-');
+                const publishedUrl = `https://${websiteUrl}.replit.app`;
                 showMessage('Website published successfully!', 'success');
-                celebrateMilestone('session_delivered', currentWebsite.name);
+                celebrateMilestone('session_delivered', websiteSettings.businessName);
                 
-                alert(`Website published!\n\nLive URL: ${publishedUrl}\n\nYour photography website is now live and accessible to clients.`);
+                alert(`Website Published!\n\nLive URL: ${publishedUrl}\n\nYour photography website is now live and ready for clients. Share this link to showcase your work!`);
             }, 2000);
         }
 
-        function deleteWebsite(websiteId) {
-            if (confirm('Are you sure you want to delete this website? This action cannot be undone.')) {
-                showMessage('Website deleted', 'success');
-                loadWebsites(); // Refresh the list
-            }
-        }
-
-        // Device toggle functionality
-        function toggleDevice(device) {
-            const canvas = document.getElementById('websiteCanvas');
-            const controls = document.querySelectorAll('.canvas-control');
-            
-            // Remove active class from all controls
-            controls.forEach(control => control.classList.remove('active'));
-            
-            // Add active class to selected control
-            document.getElementById(device + 'View').classList.add('active');
-            
-            // Update canvas class
-            canvas.className = 'website-canvas ' + device;
-        }
-
-        // Drag and Drop functionality
-        function setupDragAndDrop() {
-            const dropZone = document.getElementById('dropZone');
-            const componentItems = document.querySelectorAll('.component-item');
-            
-            // Add drag event listeners to components
-            componentItems.forEach(item => {
-                // Desktop drag and drop
-                item.addEventListener('dragstart', handleDragStart);
-                item.addEventListener('dragend', handleDragEnd);
-                
-                // Mobile tap to add
-                item.addEventListener('click', function(e) {
-                    if (window.innerWidth <= 768) {
-                        e.preventDefault();
-                        const componentType = this.dataset.component;
-                        addComponentToCanvas(componentType);
-                        
-                        // Show feedback for mobile users
-                        this.style.transform = 'scale(0.95)';
-                        setTimeout(() => {
-                            this.style.transform = 'scale(1)';
-                        }, 150);
-                    }
-                });
-                
-                // Add touch feedback
-                item.addEventListener('touchstart', function() {
-                    this.style.backgroundColor = 'rgba(102, 126, 234, 0.1)';
-                }, { passive: true });
-                
-                item.addEventListener('touchend', function() {
-                    setTimeout(() => {
-                        this.style.backgroundColor = '';
-                    }, 200);
-                }, { passive: true });
-            });
-            
-            // Add drop event listeners to drop zone
-            dropZone.addEventListener('dragover', handleDragOver);
-            dropZone.addEventListener('drop', handleDrop);
-            dropZone.addEventListener('dragenter', handleDragEnter);
-            dropZone.addEventListener('dragleave', handleDragLeave);
-        }
-
-        function handleDragStart(e) {
-            draggedComponent = e.target.dataset.component;
-            e.target.style.opacity = '0.5';
-        }
-
-        function handleDragEnd(e) {
-            e.target.style.opacity = '1';
-            draggedComponent = null;
-        }
-
-        function handleDragOver(e) {
-            e.preventDefault();
-        }
-
-        function handleDragEnter(e) {
-            e.preventDefault();
-            document.getElementById('dropZone').classList.add('drag-over');
-        }
-
-        function handleDragLeave(e) {
-            if (!e.relatedTarget || !document.getElementById('dropZone').contains(e.relatedTarget)) {
-                document.getElementById('dropZone').classList.remove('drag-over');
-            }
-        }
-
-        function handleDrop(e) {
-            e.preventDefault();
-            document.getElementById('dropZone').classList.remove('drag-over');
-            
-            if (draggedComponent) {
-                addComponentToCanvas(draggedComponent);
-            }
-        }
-
-        function addComponentToCanvas(componentType) {
-            const componentHtml = generateComponentHtml(componentType);
-            const dropZone = document.getElementById('dropZone');
-            
-            // If this is the first component, clear the drop zone message
-            if (dropZone.querySelector('.drop-zone-message')) {
-                dropZone.innerHTML = '';
-                dropZone.style.border = 'none';
-                dropZone.style.minHeight = 'auto';
-                dropZone.style.display = 'block';
-                dropZone.style.alignItems = 'stretch';
-                dropZone.style.justifyContent = 'stretch';
-            }
-            
-            // Create component wrapper
-            const componentWrapper = document.createElement('div');
-            componentWrapper.className = 'component-wrapper';
-            componentWrapper.dataset.componentType = componentType;
-            componentWrapper.innerHTML = componentHtml;
-            
-            // Add click handler for component selection
-            componentWrapper.addEventListener('click', () => selectComponent(componentWrapper));
-            
-            dropZone.appendChild(componentWrapper);
-            
-            // Auto-select the new component
-            selectComponent(componentWrapper);
-            
-            showMessage(`${componentType.charAt(0).toUpperCase() + componentType.slice(1)} component added`, 'success');
-        }
-
-        function generateComponentHtml(componentType) {
-            const componentTemplates = {
-                header: `
-                    <header style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; text-align: center;">
-                        <h1 style="margin: 0; font-size: 2.5rem;">The Legacy Photography</h1>
-                        <nav style="margin-top: 15px;">
-                            <a href="#" style="color: white; margin: 0 15px; text-decoration: none;">Home</a>
-                            <a href="#" style="color: white; margin: 0 15px; text-decoration: none;">Portfolio</a>
-                            <a href="#" style="color: white; margin: 0 15px; text-decoration: none;">About</a>
-                            <a href="#" style="color: white; margin: 0 15px; text-decoration: none;">Contact</a>
-                        </nav>
-                    </header>
-                `,
-                hero: `
-                    <section style="background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><rect fill="%23f8fafc" width="1200" height="600"/><text x="50%" y="50%" text-anchor="middle" fill="%23666" font-size="24">Hero Background Image</text></svg>') center/cover; height: 500px; display: flex; align-items: center; justify-content: center; color: white; text-align: center;">
-                        <div style="background: rgba(0,0,0,0.5); padding: 40px; border-radius: 12px;">
-                            <h2 style="font-size: 3rem; margin-bottom: 20px;">Capturing Life's Beautiful Moments</h2>
-                            <p style="font-size: 1.3rem; margin-bottom: 30px;">Professional photography services for weddings, portraits, and special events</p>
-                            <button style="background: #667eea; color: white; border: none; padding: 15px 30px; border-radius: 8px; font-size: 1.1rem; cursor: pointer;">View Portfolio</button>
-                        </div>
-                    </section>
-                `,
-                gallery: `
-                    <section style="padding: 60px 20px; background: #f8fafc;">
-                        <h2 style="text-align: center; margin-bottom: 40px; color: #2d3748;">Photo Gallery</h2>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto;">
-                            <div style="aspect-ratio: 1; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><rect fill="%23e2e8f0" width="300" height="300"/><text x="50%" y="50%" text-anchor="middle" fill="%23666" font-size="16">Photo 1</text></svg>') center/cover; border-radius: 8px;"></div>
-                            <div style="aspect-ratio: 1; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><rect fill="%23e2e8f0" width="300" height="300"/><text x="50%" y="50%" text-anchor="middle" fill="%23666" font-size="16">Photo 2</text></svg>') center/cover; border-radius: 8px;"></div>
-                            <div style="aspect-ratio: 1; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><rect fill="%23e2e8f0" width="300" height="300"/><text x="50%" y="50%" text-anchor="middle" fill="%23666" font-size="16">Photo 3</text></svg>') center/cover; border-radius: 8px;"></div>
-                            <div style="aspect-ratio: 1; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><rect fill="%23e2e8f0" width="300" height="300"/><text x="50%" y="50%" text-anchor="middle" fill="%23666" font-size="16">Photo 4</text></svg>') center/cover; border-radius: 8px;"></div>
-                        </div>
-                    </section>
-                `,
-                about: `
-                    <section style="padding: 60px 20px; background: white;">
-                        <div style="max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center;">
-                            <div>
-                                <h2 style="color: #2d3748; margin-bottom: 20px;">About The Legacy Photography</h2>
-                                <p style="color: #666; line-height: 1.6; margin-bottom: 20px;">With over 10 years of experience in capturing life's most precious moments, we specialize in creating timeless memories that you'll treasure forever.</p>
-                                <p style="color: #666; line-height: 1.6;">Our passion for photography drives us to deliver exceptional quality and personalized service for every client.</p>
-                            </div>
-                            <div style="background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect fill="%23e2e8f0" width="400" height="300"/><text x="50%" y="50%" text-anchor="middle" fill="%23666" font-size="18">Photographer Portrait</text></svg>') center/cover; height: 300px; border-radius: 12px;"></div>
-                        </div>
-                    </section>
-                `,
-                services: `
-                    <section style="padding: 60px 20px; background: #f8fafc;">
-                        <div style="max-width: 1200px; margin: 0 auto;">
-                            <h2 style="text-align: center; margin-bottom: 40px; color: #2d3748;">Our Services</h2>
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
-                                <div style="background: white; padding: 30px; border-radius: 12px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                                    <div style="font-size: 3rem; margin-bottom: 20px;">💒</div>
-                                    <h3 style="color: #2d3748; margin-bottom: 15px;">Weddings</h3>
-                                    <p style="color: #666; line-height: 1.6;">Complete wedding photography packages to capture your special day</p>
-                                </div>
-                                <div style="background: white; padding: 30px; border-radius: 12px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                                    <div style="font-size: 3rem; margin-bottom: 20px;">👨‍👩‍👧‍👦</div>
-                                    <h3 style="color: #2d3748; margin-bottom: 15px;">Portraits</h3>
-                                    <p style="color: #666; line-height: 1.6;">Professional family and individual portrait sessions</p>
-                                </div>
-                                <div style="background: white; padding: 30px; border-radius: 12px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                                    <div style="font-size: 3rem; margin-bottom: 20px;">🎉</div>
-                                    <h3 style="color: #2d3748; margin-bottom: 15px;">Events</h3>
-                                    <p style="color: #666; line-height: 1.6;">Special event photography for celebrations and milestones</p>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                `,
-                contact: `
-                    <section style="padding: 60px 20px; background: white;">
-                        <div style="max-width: 800px; margin: 0 auto;">
-                            <h2 style="text-align: center; margin-bottom: 40px; color: #2d3748;">Get In Touch</h2>
-                            <form style="display: grid; gap: 20px;">
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                                    <input type="text" placeholder="Your Name" style="padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem;">
-                                    <input type="email" placeholder="Your Email" style="padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem;">
-                                </div>
-                                <input type="text" placeholder="Subject" style="padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem;">
-                                <textarea placeholder="Your Message" rows="5" style="padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 1rem; resize: vertical;"></textarea>
-                                <button type="submit" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 15px 30px; border-radius: 8px; font-size: 1.1rem; cursor: pointer;">Send Message</button>
-                            </form>
-                        </div>
-                    </section>
-                `,
-                footer: `
-                    <footer style="background: #2d3748; color: white; padding: 40px 20px; text-align: center;">
-                        <div style="max-width: 1200px; margin: 0 auto;">
-                            <h3 style="margin-bottom: 20px;">The Legacy Photography</h3>
-                            <div style="display: flex; justify-content: center; gap: 30px; margin-bottom: 20px; flex-wrap: wrap;">
-                                <a href="#" style="color: white; text-decoration: none;">Home</a>
-                                <a href="#" style="color: white; text-decoration: none;">Portfolio</a>
-                                <a href="#" style="color: white; text-decoration: none;">About</a>
-                                <a href="#" style="color: white; text-decoration: none;">Contact</a>
-                            </div>
-                            <p style="margin: 0; color: #a0aec0;">© 2025 The Legacy Photography. All rights reserved.</p>
-                        </div>
-                    </footer>
-                `,
-                text: `
-                    <div style="padding: 40px 20px;">
-                        <div style="max-width: 800px; margin: 0 auto;">
-                            <h2 style="color: #2d3748; margin-bottom: 20px;">Your Heading Here</h2>
-                            <p style="color: #666; line-height: 1.6; font-size: 1.1rem;">Add your text content here. You can edit this text by selecting this component and using the properties panel on the right.</p>
-                        </div>
-                    </div>
-                `,
-                image: `
-                    <div style="padding: 20px;">
-                        <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 400'><rect fill='%23e2e8f0' width='600' height='400'/><text x='50%' y='50%' text-anchor='middle' fill='%23666' font-size='24'>Your Image Here</text></svg>" alt="Image" style="width: 100%; height: auto; border-radius: 8px;">
-                    </div>
-                `,
-                button: `
-                    <div style="padding: 20px; text-align: center;">
-                        <button style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 15px 30px; border-radius: 8px; font-size: 1.1rem; cursor: pointer;">Click Me</button>
-                    </div>
-                `
+        // Website builder utility functions
+        function resetWebsiteBuilder() {
+            currentTemplate = null;
+            websiteSettings = {
+                businessName: 'The Legacy Photography',
+                tagline: 'Capturing Timeless Moments',
+                aboutText: 'Professional photographer specializing in weddings, portraits, and special moments. Creating beautiful memories that last a lifetime.',
+                contactPhone: '843-485-1315',
+                contactEmail: 'lance@thelegacyphotography.com',
+                primaryColor: '#D4AF37',
+                backgroundColor: '#1a1a1a',
+                textColor: '#ffffff',
+                fontStyle: 'serif',
+                galleryLayout: 'grid',
+                websiteUrl: '',
+                seoTitle: 'The Legacy Photography - Professional Wedding & Portrait Photographer',
+                seoDescription: 'Professional photography services specializing in weddings, portraits, and special moments. Book your session today.',
+                portfolioPhotos: []
             };
-            
-            // Legacy Photography inspired templates based on actual website
-            const legacyTemplates = {
-                legacy_header: `
-                    <header style="background: #1a1a1a; color: white; padding: 15px 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
-                        <div style="max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 0 20px;">
-                            <div style="font-size: 1.8rem; font-weight: bold; color: #d4af37;">Legacy Photography</div>
-                            <nav style="display: flex; gap: 30px;">
-                                <a href="#" style="color: white; text-decoration: none; font-weight: 500; transition: color 0.3s;">Home</a>
-                                <a href="#" style="color: white; text-decoration: none; font-weight: 500; transition: color 0.3s;">About</a>
-                                <a href="#" style="color: white; text-decoration: none; font-weight: 500; transition: color 0.3s;">Portfolio</a>
-                                <a href="#" style="color: white; text-decoration: none; font-weight: 500; transition: color 0.3s;">Client Galleries</a>
-                                <a href="#" style="color: white; text-decoration: none; font-weight: 500; transition: color 0.3s;">Contact</a>
-                            </nav>
-                        </div>
-                    </header>
-                `,
-                legacy_hero: `
-                    <section style="background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.4)), url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800"><defs><linearGradient id="sunset" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%23ff7f50;stop-opacity:1" /><stop offset="50%" style="stop-color:%23ff6347;stop-opacity:1" /><stop offset="100%" style="stop-color:%23ff4500;stop-opacity:1" /></linearGradient></defs><rect fill="url(%23sunset)" width="1200" height="800"/><text x="50%" y="45%" text-anchor="middle" fill="white" font-size="48" font-weight="bold" opacity="0.3">Beautiful Sunset Beach</text></svg>') center/cover; height: 100vh; display: flex; align-items: center; justify-content: center; color: white; text-align: center; position: relative;">
-                        <div style="max-width: 800px; padding: 60px 40px; background: rgba(0,0,0,0.3); border-radius: 20px; backdrop-filter: blur(10px);">
-                            <h1 style="font-size: 4rem; margin-bottom: 20px; font-style: italic; text-shadow: 2px 2px 4px rgba(0,0,0,0.7);">Your Life, Your Legacy, Perfectly Captured!</h1>
-                            <p style="font-size: 1.5rem; margin-bottom: 40px; line-height: 1.6; opacity: 0.95;">Premier photographer serving Myrtle Beach, Charleston, and the beautiful South Carolina coast. Specializing in stunning family portraits, beach sessions, weddings, and senior photos.</p>
-                            <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
-                                <button style="background: #d4af37; color: #1a1a1a; border: none; padding: 18px 35px; border-radius: 8px; font-size: 1.2rem; font-weight: bold; cursor: pointer; transition: all 0.3s; text-transform: uppercase;">View Portfolio</button>
-                                <button style="background: transparent; color: white; border: 2px solid white; padding: 18px 35px; border-radius: 8px; font-size: 1.2rem; font-weight: bold; cursor: pointer; transition: all 0.3s; text-transform: uppercase;">Book Session</button>
-                            </div>
-                        </div>
-                    </section>
-                `,
-                legacy_services: `
-                    <section style="padding: 100px 20px; background: #f8f6f0;">
-                        <div style="max-width: 1200px; margin: 0 auto; text-align: center;">
-                            <h2 style="font-size: 3.5rem; margin-bottom: 20px; color: #1a1a1a; font-style: italic;">Beach Photography That Celebrates Your Life and Legacy</h2>
-                            <p style="font-size: 1.3rem; color: #666; margin-bottom: 60px; max-width: 800px; margin-left: auto; margin-right: auto; line-height: 1.8;">Time doesn't wait... We blink and the kids are grown... We laugh and the moment slips away... But through photography, we get to hold on.</p>
-                            
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 40px; margin-top: 60px;">
-                                <div style="text-align: center; padding: 40px 30px; background: white; border-radius: 15px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); transition: transform 0.3s;">
-                                    <div style="font-size: 4rem; margin-bottom: 25px;">🏖️</div>
-                                    <h3 style="color: #1a1a1a; margin-bottom: 20px; font-size: 1.8rem;">Beach Photography</h3>
-                                    <p style="color: #666; line-height: 1.7;">Stunning coastal sessions along Myrtle Beach and Charleston shores, capturing your family against breathtaking ocean backdrops.</p>
-                                </div>
-                                
-                                <div style="text-align: center; padding: 40px 30px; background: white; border-radius: 15px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); transition: transform 0.3s;">
-                                    <div style="font-size: 4rem; margin-bottom: 25px;">💒</div>
-                                    <h3 style="color: #1a1a1a; margin-bottom: 20px; font-size: 1.8rem;">Wedding Photography</h3>
-                                    <p style="color: #666; line-height: 1.7;">Complete wedding packages capturing your special day with creative lighting and personalized touches throughout South Carolina.</p>
-                                </div>
-                                
-                                <div style="text-align: center; padding: 40px 30px; background: white; border-radius: 15px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); transition: transform 0.3s;">
-                                    <div style="font-size: 4rem; margin-bottom: 25px;">👨‍👩‍👧‍👦</div>
-                                    <h3 style="color: #1a1a1a; margin-bottom: 20px; font-size: 1.8rem;">Family Portraits</h3>
-                                    <p style="color: #666; line-height: 1.7;">Heartfelt family sessions that preserve precious memories, celebrating your unique story with timeless, artistic photography.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                `,
-                legacy_gallery: `
-                    <section style="padding: 100px 20px; background: #1a1a1a;">
-                        <div style="max-width: 1400px; margin: 0 auto;">
-                            <h2 style="text-align: center; font-size: 3.5rem; margin-bottom: 60px; color: white; font-style: italic;">Portfolio Highlights</h2>
-                            
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
-                                <div style="aspect-ratio: 4/5; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500"><defs><linearGradient id="beach1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%23ff7f50;stop-opacity:1" /><stop offset="100%" style="stop-color:%23ff4500;stop-opacity:1" /></linearGradient></defs><rect fill="url(%23beach1)" width="400" height="500"/><text x="50%" y="50%" text-anchor="middle" fill="white" font-size="16" opacity="0.8">Beach Portrait</text></svg>') center/cover; border-radius: 10px; position: relative; overflow: hidden; cursor: pointer; transition: transform 0.3s;">
-                                    <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.8)); color: white; padding: 20px; transform: translateY(100%); transition: transform 0.3s;">
-                                        <h4 style="margin: 0 0 5px 0;">Beach Family Session</h4>
-                                        <p style="margin: 0; opacity: 0.8; font-size: 0.9rem;">Myrtle Beach, SC</p>
-                                    </div>
-                                </div>
-                                
-                                <div style="aspect-ratio: 3/4; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400"><defs><linearGradient id="wedding1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%23ddd6c1;stop-opacity:1" /><stop offset="100%" style="stop-color:%238b4513;stop-opacity:1" /></linearGradient></defs><rect fill="url(%23wedding1)" width="300" height="400"/><text x="50%" y="50%" text-anchor="middle" fill="white" font-size="14" opacity="0.8">Wedding Portrait</text></svg>') center/cover; border-radius: 10px; position: relative; overflow: hidden; cursor: pointer; transition: transform 0.3s;">
-                                    <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.8)); color: white; padding: 20px; transform: translateY(100%); transition: transform 0.3s;">
-                                        <h4 style="margin: 0 0 5px 0;">Charleston Wedding</h4>
-                                        <p style="margin: 0; opacity: 0.8; font-size: 0.9rem;">Historic Downtown</p>
-                                    </div>
-                                </div>
-                                
-                                <div style="aspect-ratio: 1/1; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><defs><linearGradient id="sunset1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%23ff6347;stop-opacity:1" /><stop offset="100%" style="stop-color:%23ff7f50;stop-opacity:1" /></linearGradient></defs><rect fill="url(%23sunset1)" width="400" height="400"/><text x="50%" y="50%" text-anchor="middle" fill="white" font-size="16" opacity="0.8">Sunset Session</text></svg>') center/cover; border-radius: 10px; position: relative; overflow: hidden; cursor: pointer; transition: transform 0.3s;">
-                                    <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.8)); color: white; padding: 20px; transform: translateY(100%); transition: transform 0.3s;">
-                                        <h4 style="margin: 0 0 5px 0;">Senior Portrait</h4>
-                                        <p style="margin: 0; opacity: 0.8; font-size: 0.9rem;">Golden Hour Magic</p>
-                                    </div>
-                                </div>
-                                
-                                <div style="aspect-ratio: 5/4; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 400"><defs><linearGradient id="family1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%234682b4;stop-opacity:1" /><stop offset="100%" style="stop-color:%23006994;stop-opacity:1" /></linearGradient></defs><rect fill="url(%23family1)" width="500" height="400"/><text x="50%" y="50%" text-anchor="middle" fill="white" font-size="16" opacity="0.8">Family Session</text></svg>') center/cover; border-radius: 10px; position: relative; overflow: hidden; cursor: pointer; transition: transform 0.3s;">
-                                    <div style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.8)); color: white; padding: 20px; transform: translateY(100%); transition: transform 0.3s;">
-                                        <h4 style="margin: 0 0 5px 0;">Family Legacy</h4>
-                                        <p style="margin: 0; opacity: 0.8; font-size: 0.9rem;">Generational Love</p>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div style="text-align: center; margin-top: 50px;">
-                                <button style="background: #d4af37; color: #1a1a1a; border: none; padding: 18px 35px; border-radius: 8px; font-size: 1.2rem; font-weight: bold; cursor: pointer; transition: all 0.3s; text-transform: uppercase;">See More Galleries</button>
-                            </div>
-                        </div>
-                    </section>
-                `,
-                legacy_about: `
-                    <section style="padding: 100px 20px; background: white;">
-                        <div style="max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center;">
-                            <div>
-                                <h2 style="font-size: 3.5rem; margin-bottom: 30px; color: #1a1a1a; font-style: italic; line-height: 1.2;">My Goal For You.</h2>
-                                <p style="color: #666; line-height: 1.8; margin-bottom: 25px; font-size: 1.2rem;">My goal for you is more than just taking pictures — it's to create something that moves you every single time you look back.</p>
-                                <p style="color: #666; line-height: 1.8; margin-bottom: 25px; font-size: 1.1rem;">I want you to feel proud, radiant, and seen. I want your photos to transport you back to those moments — the laughter, the love, the light in your eyes — with all the depth and emotion still intact.</p>
-                                <p style="color: #666; line-height: 1.8; margin-bottom: 35px; font-size: 1.1rem;">These aren't meant to be snapshots. My goal is to create art — bold, beautiful, and timeless — pieces that you'll hang on your walls, share with your family, and treasure for generations.</p>
-                                <p style="color: #1a1a1a; font-weight: bold; font-size: 1.2rem; font-style: italic;">Because your story matters. And it deserves to be captured in a way that feels just as unforgettable as the moments themselves.</p>
-                            </div>
-                            <div style="background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 600"><defs><linearGradient id="portrait" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%23ddd6c1;stop-opacity:1" /><stop offset="100%" style="stop-color:%23a0956b;stop-opacity:1" /></linearGradient></defs><rect fill="url(%23portrait)" width="500" height="600"/><text x="50%" y="50%" text-anchor="middle" fill="white" font-size="20" opacity="0.7">Photographer Portrait</text></svg>') center/cover; height: 500px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);"></div>
-                        </div>
-                    </section>
-                `,
-                legacy_contact: `
-                    <section style="padding: 100px 20px; background: #f8f6f0;">
-                        <div style="max-width: 1000px; margin: 0 auto; text-align: center;">
-                            <h2 style="font-size: 3.5rem; margin-bottom: 30px; color: #1a1a1a; font-style: italic;">Ready to Create Your Legacy?</h2>
-                            <p style="font-size: 1.3rem; color: #666; margin-bottom: 50px; line-height: 1.6;">Let's capture your story with the beauty and artistry it deserves. Contact me today to book your session.</p>
-                            
-                            <div style="background: white; padding: 60px 40px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); margin-bottom: 40px;">
-                                <form style="display: grid; gap: 25px; max-width: 600px; margin: 0 auto;">
-                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
-                                        <input type="text" placeholder="Your Name" style="padding: 18px 20px; border: 2px solid #e8e8e8; border-radius: 10px; font-size: 1.1rem; transition: border-color 0.3s;">
-                                        <input type="email" placeholder="Your Email" style="padding: 18px 20px; border: 2px solid #e8e8e8; border-radius: 10px; font-size: 1.1rem; transition: border-color 0.3s;">
-                                    </div>
-                                    <input type="tel" placeholder="Phone Number" style="padding: 18px 20px; border: 2px solid #e8e8e8; border-radius: 10px; font-size: 1.1rem; transition: border-color 0.3s;">
-                                    <select style="padding: 18px 20px; border: 2px solid #e8e8e8; border-radius: 10px; font-size: 1.1rem; transition: border-color 0.3s;">
-                                        <option>Select Session Type</option>
-                                        <option>Beach Family Portrait</option>
-                                        <option>Wedding Photography</option>
-                                        <option>Senior Portraits</option>
-                                        <option>Engagement Session</option>
-                                        <option>Other</option>
-                                    </select>
-                                    <textarea placeholder="Tell me about your vision and any specific requests..." rows="5" style="padding: 18px 20px; border: 2px solid #e8e8e8; border-radius: 10px; font-size: 1.1rem; resize: vertical; transition: border-color 0.3s;"></textarea>
-                                    <button type="submit" style="background: #d4af37; color: #1a1a1a; border: none; padding: 20px 40px; border-radius: 10px; font-size: 1.2rem; font-weight: bold; cursor: pointer; transition: all 0.3s; text-transform: uppercase;">Send Message</button>
-                                </form>
-                            </div>
-                            
-                            <div style="display: flex; justify-content: center; gap: 30px; flex-wrap: wrap;">
-                                <div style="text-align: center;">
-                                    <h4 style="color: #1a1a1a; margin-bottom: 10px;">Call or Text</h4>
-                                    <a href="tel:8434851315" style="color: #d4af37; font-size: 1.2rem; font-weight: bold; text-decoration: none;">843-485-1315</a>
-                                </div>
-                                <div style="text-align: center;">
-                                    <h4 style="color: #1a1a1a; margin-bottom: 10px;">Quick Text</h4>
-                                    <a href="sms:8434851315?&body=Hi! I'm interested in booking a photo session with Legacy Photography" style="background: #d4af37; color: #1a1a1a; padding: 12px 25px; border-radius: 6px; text-decoration: none; font-weight: bold; transition: all 0.3s;">📱 Text Now</a>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                `,
-                legacy_footer: `
-                    <footer style="background: #1a1a1a; color: white; padding: 60px 20px 40px;">
-                        <div style="max-width: 1200px; margin: 0 auto;">
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 40px; margin-bottom: 40px;">
-                                <div>
-                                    <h3 style="color: #d4af37; margin-bottom: 20px; font-size: 1.8rem;">Legacy Photography</h3>
-                                    <p style="color: #ccc; line-height: 1.6; margin-bottom: 20px;">Premier photographer serving Myrtle Beach, Charleston, and the beautiful South Carolina coast. Creating timeless memories for families, couples, and individuals.</p>
-                                    <div style="display: flex; gap: 15px;">
-                                        <a href="#" style="color: #d4af37; font-size: 1.5rem; transition: color 0.3s;">📘</a>
-                                        <a href="#" style="color: #d4af37; font-size: 1.5rem; transition: color 0.3s;">📷</a>
-                                        <a href="#" style="color: #d4af37; font-size: 1.5rem; transition: color 0.3s;">📧</a>
-                                    </div>
-                                </div>
-                                
-                                <div>
-                                    <h4 style="color: white; margin-bottom: 20px;">Services</h4>
-                                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                                        <a href="#" style="color: #ccc; text-decoration: none; transition: color 0.3s;">Beach Photography</a>
-                                        <a href="#" style="color: #ccc; text-decoration: none; transition: color 0.3s;">Wedding Photography</a>
-                                        <a href="#" style="color: #ccc; text-decoration: none; transition: color 0.3s;">Family Portraits</a>
-                                        <a href="#" style="color: #ccc; text-decoration: none; transition: color 0.3s;">Senior Portraits</a>
-                                        <a href="#" style="color: #ccc; text-decoration: none; transition: color 0.3s;">Engagement Sessions</a>
-                                    </div>
-                                </div>
-                                
-                                <div>
-                                    <h4 style="color: white; margin-bottom: 20px;">Contact Info</h4>
-                                    <div style="display: flex; flex-direction: column; gap: 12px;">
-                                        <div style="color: #ccc;">📍 Serving Myrtle Beach & Charleston, SC</div>
-                                        <div style="color: #ccc;">📞 <a href="tel:8434851315" style="color: #d4af37; text-decoration: none;">843-485-1315</a></div>
-                                        <div style="color: #ccc;">✉️ lance@thelegacyphotography.com</div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div style="border-top: 1px solid #333; padding-top: 30px; text-align: center;">
-                                <p style="color: #888; margin: 0;">© 2025 Legacy Photography. All rights reserved. | Your Life, Your Legacy, Perfectly Captured!</p>
-                            </div>
-                        </div>
-                    </footer>
-                `,
-                
-                // Modern Portfolio Templates
-                modern_header: `
-                    <header style="background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); color: #2d3748; padding: 20px 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 20px rgba(0,0,0,0.1);">
-                        <div style="max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 0 20px;">
-                            <div style="font-size: 2rem; font-weight: 300; color: #667eea;">LEGACY</div>
-                            <nav style="display: flex; gap: 40px;">
-                                <a href="#" style="color: #2d3748; text-decoration: none; font-weight: 400; position: relative; transition: color 0.3s;">Work</a>
-                                <a href="#" style="color: #2d3748; text-decoration: none; font-weight: 400; position: relative; transition: color 0.3s;">About</a>
-                                <a href="#" style="color: #2d3748; text-decoration: none; font-weight: 400; position: relative; transition: color 0.3s;">Process</a>
-                                <a href="#" style="color: #2d3748; text-decoration: none; font-weight: 400; position: relative; transition: color 0.3s;">Contact</a>
-                            </nav>
-                        </div>
-                    </header>
-                `,
-                modern_hero: `
-                    <section style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); height: 90vh; display: flex; align-items: center; justify-content: center; color: white; text-align: center; position: relative; overflow: hidden;">
-                        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="1" fill="white" opacity="0.1"/><circle cx="80" cy="40" r="1" fill="white" opacity="0.1"/><circle cx="60" cy="80" r="1" fill="white" opacity="0.1"/></svg>'); animation: float 20s infinite linear;"></div>
-                        <div style="max-width: 900px; z-index: 1; position: relative;">
-                            <h1 style="font-size: 5rem; margin-bottom: 30px; font-weight: 100; letter-spacing: -2px; line-height: 1.1;">Modern Photography</h1>
-                            <p style="font-size: 1.4rem; margin-bottom: 50px; opacity: 0.9; font-weight: 300; max-width: 600px; margin-left: auto; margin-right: auto;">Creating contemporary visual stories that capture authentic moments with a fresh, artistic perspective.</p>
-                            <div style="display: flex; gap: 25px; justify-content: center; flex-wrap: wrap;">
-                                <button style="background: white; color: #667eea; border: none; padding: 18px 40px; border-radius: 50px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s; letter-spacing: 1px;">EXPLORE WORK</button>
-                                <button style="background: transparent; color: white; border: 2px solid white; padding: 18px 40px; border-radius: 50px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s; letter-spacing: 1px;">GET IN TOUCH</button>
-                            </div>
-                        </div>
-                    </section>
-                `,
-                modern_portfolio: `
-                    <section style="padding: 120px 20px; background: #f8fafc;">
-                        <div style="max-width: 1400px; margin: 0 auto;">
-                            <h2 style="text-align: center; font-size: 3rem; margin-bottom: 20px; color: #2d3748; font-weight: 300; letter-spacing: -1px;">Selected Work</h2>
-                            <p style="text-align: center; font-size: 1.1rem; color: #666; margin-bottom: 80px; max-width: 600px; margin-left: auto; margin-right: auto;">A curated collection of contemporary photography showcasing diverse styles and creative vision.</p>
-                            
-                            <div style="display: grid; grid-template-columns: repeat(12, 1fr); gap: 20px; grid-auto-rows: 300px;">
-                                <div style="grid-column: span 6; grid-row: span 2; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600"><defs><linearGradient id="mod1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%23667eea;stop-opacity:1" /><stop offset="100%" style="stop-color:%23764ba2;stop-opacity:1" /></linearGradient></defs><rect fill="url(%23mod1)" width="600" height="600"/><text x="50%" y="50%" text-anchor="middle" fill="white" font-size="18" opacity="0.7">Portfolio Image 1</text></svg>') center/cover; border-radius: 12px; position: relative; overflow: hidden; cursor: pointer; transition: transform 0.3s;">
-                                    <div style="position: absolute; inset: 0; background: linear-gradient(45deg, rgba(102,126,234,0.8), rgba(118,75,162,0.8)); opacity: 0; transition: opacity 0.3s; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem; font-weight: 600;">Modern Portrait Series</div>
-                                </div>
-                                
-                                <div style="grid-column: span 3; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><defs><linearGradient id="mod2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%23ff6b6b;stop-opacity:1" /><stop offset="100%" style="stop-color:%23ee5a24;stop-opacity:1" /></linearGradient></defs><rect fill="url(%23mod2)" width="300" height="300"/><text x="50%" y="50%" text-anchor="middle" fill="white" font-size="14" opacity="0.7">Urban</text></svg>') center/cover; border-radius: 12px; position: relative; overflow: hidden; cursor: pointer; transition: transform 0.3s;">
-                                    <div style="position: absolute; inset: 0; background: rgba(255,107,107,0.8); opacity: 0; transition: opacity 0.3s; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">Urban Sessions</div>
-                                </div>
-                                
-                                <div style="grid-column: span 3; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><defs><linearGradient id="mod3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%2355a3ff;stop-opacity:1" /><stop offset="100%" style="stop-color:%232d3561;stop-opacity:1" /></linearGradient></defs><rect fill="url(%23mod3)" width="300" height="300"/><text x="50%" y="50%" text-anchor="middle" fill="white" font-size="14" opacity="0.7">Creative</text></svg>') center/cover; border-radius: 12px; position: relative; overflow: hidden; cursor: pointer; transition: transform 0.3s;">
-                                    <div style="position: absolute; inset: 0; background: rgba(85,163,255,0.8); opacity: 0; transition: opacity 0.3s; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">Creative Work</div>
-                                </div>
-                                
-                                <div style="grid-column: span 4; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><defs><linearGradient id="mod4" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%2300d2d3;stop-opacity:1" /><stop offset="100%" style="stop-color:%2300a085;stop-opacity:1" /></linearGradient></defs><rect fill="url(%23mod4)" width="400" height="300"/><text x="50%" y="50%" text-anchor="middle" fill="white" font-size="16" opacity="0.7">Nature</text></svg>') center/cover; border-radius: 12px; position: relative; overflow: hidden; cursor: pointer; transition: transform 0.3s;">
-                                    <div style="position: absolute; inset: 0; background: rgba(0,210,211,0.8); opacity: 0; transition: opacity 0.3s; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">Natural Light</div>
-                                </div>
-                                
-                                <div style="grid-column: span 2; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 300"><defs><linearGradient id="mod5" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%23a55eea;stop-opacity:1" /><stop offset="100%" style="stop-color:%238854d0;stop-opacity:1" /></linearGradient></defs><rect fill="url(%23mod5)" width="200" height="300"/><text x="50%" y="50%" text-anchor="middle" fill="white" font-size="12" opacity="0.7">Art</text></svg>') center/cover; border-radius: 12px; position: relative; overflow: hidden; cursor: pointer; transition: transform 0.3s;">
-                                    <div style="position: absolute; inset: 0; background: rgba(165,94,234,0.8); opacity: 0; transition: opacity 0.3s; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">Artistic</div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                `,
-                
-                // Elegant Gallery Templates
-                elegant_header: `
-                    <header style="background: #2c1810; color: #ddd6c1; padding: 25px 0; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #8b4513;">
-                        <div style="max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 0 20px;">
-                            <div style="font-size: 2.2rem; font-weight: 400; font-family: serif; color: #ddd6c1;">𝒢𝒶𝓁𝓁𝑒𝓇𝓎 𝐿𝑒𝑔𝒶𝒸𝓎</div>
-                            <nav style="display: flex; gap: 35px;">
-                                <a href="#" style="color: #ddd6c1; text-decoration: none; font-weight: 400; font-size: 1.1rem; transition: color 0.3s;">Collections</a>
-                                <a href="#" style="color: #ddd6c1; text-decoration: none; font-weight: 400; font-size: 1.1rem; transition: color 0.3s;">Artist</a>
-                                <a href="#" style="color: #ddd6c1; text-decoration: none; font-weight: 400; font-size: 1.1rem; transition: color 0.3s;">Gallery</a>
-                                <a href="#" style="color: #ddd6c1; text-decoration: none; font-weight: 400; font-size: 1.1rem; transition: color 0.3s;">Inquire</a>
-                            </nav>
-                        </div>
-                    </header>
-                `,
-                elegant_hero: `
-                    <section style="background: linear-gradient(rgba(44,24,16,0.7), rgba(139,69,19,0.7)), url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800"><defs><pattern id="texture" patternUnits="userSpaceOnUse" width="40" height="40"><rect width="40" height="40" fill="%23ddd6c1" opacity="0.1"/><circle cx="20" cy="20" r="15" fill="none" stroke="%23ddd6c1" stroke-width="0.5" opacity="0.2"/></pattern></defs><rect fill="url(%23texture)" width="1200" height="800"/><text x="50%" y="45%" text-anchor="middle" fill="%23ddd6c1" font-size="36" opacity="0.3">Elegant Gallery Space</text></svg>') center/cover; height: 85vh; display: flex; align-items: center; justify-content: center; color: #ddd6c1; text-align: center; position: relative;">
-                        <div style="max-width: 900px; padding: 80px 60px; background: rgba(44,24,16,0.8); border: 2px solid #ddd6c1; border-radius: 5px; backdrop-filter: blur(5px);">
-                            <h1 style="font-size: 4.5rem; margin-bottom: 25px; font-family: serif; font-weight: 300; letter-spacing: 2px; line-height: 1.2;">Timeless Elegance</h1>
-                            <div style="width: 100px; height: 2px; background: #ddd6c1; margin: 30px auto;"></div>
-                            <p style="font-size: 1.3rem; margin-bottom: 45px; line-height: 1.7; font-style: italic; opacity: 0.9;">Fine art photography capturing the essence of beauty, grace, and sophistication in every frame.</p>
-                            <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
-                                <button style="background: transparent; color: #ddd6c1; border: 2px solid #ddd6c1; padding: 15px 35px; border-radius: 0; font-size: 1rem; font-weight: 500; cursor: pointer; transition: all 0.3s; letter-spacing: 1px; text-transform: uppercase;">View Collections</button>
-                                <button style="background: #ddd6c1; color: #2c1810; border: none; padding: 15px 35px; border-radius: 0; font-size: 1rem; font-weight: 500; cursor: pointer; transition: all 0.3s; letter-spacing: 1px; text-transform: uppercase;">Commission Work</button>
-                            </div>
-                        </div>
-                    </section>
-                `
-            };
-
-            // Merge with existing templates
-            const allTemplates = { ...componentTemplates, ...legacyTemplates };
-            
-            return allTemplates[componentType] || '<div>Component not found</div>';
+            showTemplateSelection();
         }
 
-        function selectComponent(componentWrapper) {
-            // Remove selection from other components
-            document.querySelectorAll('.component-wrapper').forEach(wrapper => {
-                wrapper.style.outline = 'none';
-                wrapper.classList.remove('selected');
-            });
+        // Template Loading Functions
+        function showTemplateLoading(templateType) {
+            showMessage(`Loading ${getTemplateDisplayName(templateType)} template...`, 'info');
             
-            // Select current component
-            componentWrapper.style.outline = '2px solid #667eea';
-            componentWrapper.classList.add('selected');
-            selectedComponent = componentWrapper;
-            
-            // Update properties panel
-            updatePropertiesPanel(componentWrapper);
-            
-            // Scroll properties panel into view on mobile
-            if (window.innerWidth <= 768) {
-                const propertiesPanel = document.getElementById('propertiesContent');
-                if (propertiesPanel) {
-                    propertiesPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }
-            }
+            // Show loading animation
+            setTimeout(() => {
+                selectTemplate(templateType);
+            }, 800);
         }
 
-        function updatePropertiesPanel(componentWrapper) {
-            const componentType = componentWrapper.dataset.componentType;
-            const propertiesContent = document.getElementById('propertiesContent');
-            
-            // Get current styles from the component
-            const currentBgColor = getComputedStyle(componentWrapper).backgroundColor || '#ffffff';
-            const currentTextColor = getComputedStyle(componentWrapper).color || '#2d3748';
-            
-            propertiesContent.innerHTML = `
-                <div class="property-section">
-                    <h4>${componentType.charAt(0).toUpperCase() + componentType.slice(1)} Properties</h4>
-                    
-                    <div class="property-group">
-                        <label>Background Color:</label>
-                        <input type="color" value="#ffffff" onchange="updateComponentStyle('backgroundColor', this.value)">
-                        <small style="color: #666; font-size: 0.8rem;">Changes the background color</small>
-                    </div>
-                    
-                    <div class="property-group">
-                        <label>Text Color:</label>
-                        <input type="color" value="#2d3748" onchange="updateComponentStyle('color', this.value)">
-                        <small style="color: #666; font-size: 0.8rem;">Changes the text color</small>
-                    </div>
-                    
-                    <div class="property-group">
-                        <label>Padding: <span id="paddingValue">20px</span></label>
-                        <input type="range" min="0" max="100" value="20" onchange="updateComponentStyle('padding', this.value + 'px'); document.getElementById('paddingValue').textContent = this.value + 'px'">
-                        <small style="color: #666; font-size: 0.8rem;">Adjusts inner spacing</small>
-                    </div>
-                    
-                    <div class="property-group">
-                        <label>Border Radius: <span id="radiusValue">0px</span></label>
-                        <input type="range" min="0" max="50" value="0" onchange="updateComponentStyle('borderRadius', this.value + 'px'); document.getElementById('radiusValue').textContent = this.value + 'px'">
-                        <small style="color: #666; font-size: 0.8rem;">Rounds the corners</small>
-                    </div>
-                    
-                    <div class="property-group">
-                        <label>Margin: <span id="marginValue">0px</span></label>
-                        <input type="range" min="0" max="50" value="0" onchange="updateComponentStyle('margin', this.value + 'px'); document.getElementById('marginValue').textContent = this.value + 'px'">
-                        <small style="color: #666; font-size: 0.8rem;">Adjusts outer spacing</small>
-                    </div>
-                    
-                    <div class="property-actions">
-                        <button class="btn btn-primary" onclick="duplicateSelectedComponent()" style="margin-bottom: 10px; width: 100%;">
-                            📋 Duplicate Component
-                        </button>
-                        <button class="btn btn-danger" onclick="deleteSelectedComponent()" style="width: 100%;">
-                            🗑️ Delete Component
-                        </button>
-                    </div>
-                </div>
-            `;
-        }
-
-        function updateComponentStyle(property, value) {
-            if (selectedComponent) {
-                selectedComponent.style[property] = value;
-            }
-        }
-
-        function deleteSelectedComponent() {
-            if (selectedComponent && confirm('Delete this component?')) {
-                selectedComponent.remove();
-                selectedComponent = null;
-                document.getElementById('propertiesContent').innerHTML = '<div class="no-selection"><p>Select a component to edit its properties</p></div>';
-                showMessage('Component deleted', 'success');
-            }
-        }
-
-        function duplicateSelectedComponent() {
-            if (!selectedComponent) {
-                showMessage('No component selected', 'error');
+        // Website Save/Load Functions
+        function saveWebsite() {
+            if (!currentTemplate) {
+                showMessage('Please select a template first', 'error');
                 return;
             }
             
-            const clone = selectedComponent.cloneNode(true);
-            const dropZone = document.getElementById('dropZone');
-            
-            // Insert the clone after the selected component
-            selectedComponent.parentNode.insertBefore(clone, selectedComponent.nextSibling);
-            
-            // Add click handler to the clone
-            clone.addEventListener('click', () => selectComponent(clone));
-            
-            showMessage('Component duplicated', 'success');
-        }
-
-        // Add mobile-friendly touch events
-        function addMobileSupport() {
-            let touchStartY = 0;
-            let touchEndY = 0;
-            
-            // Add touch support for component selection
-            document.addEventListener('touchstart', function(e) {
-                touchStartY = e.changedTouches[0].screenY;
-            }, { passive: true });
-            
-            document.addEventListener('touchend', function(e) {
-                touchEndY = e.changedTouches[0].screenY;
-                
-                // If it's a tap (not a scroll), handle component selection
-                if (Math.abs(touchEndY - touchStartY) < 10) {
-                    const target = e.target.closest('.component-wrapper');
-                    if (target) {
-                        selectComponent(target);
-                        e.preventDefault();
-                    }
-                }
-            }, { passive: false });
-            
-            // Prevent default drag behavior on mobile
-            document.addEventListener('touchmove', function(e) {
-                if (e.target.closest('.component-item')) {
-                    e.preventDefault();
-                }
-            }, { passive: false });
-        }
-
-        // Initialize mobile support when website builder loads
-        document.addEventListener('DOMContentLoaded', function() {
-            addMobileSupport();
-        });
-
-        // Template loading functionality
-        function loadTemplate(templateType) {
-            const templates = {
-                portfolio: ['header', 'hero', 'gallery', 'about', 'services', 'contact', 'footer'],
-                wedding: ['header', 'hero', 'gallery', 'services', 'testimonials', 'contact', 'footer'],
-                studio: ['header', 'hero', 'about', 'services', 'gallery', 'pricing', 'contact', 'footer'],
-                legacy: ['legacy_header', 'legacy_hero', 'legacy_services', 'legacy_gallery', 'legacy_about', 'legacy_contact', 'legacy_footer'],
-                modern: ['modern_header', 'modern_hero', 'modern_portfolio', 'modern_services', 'modern_testimonials', 'modern_contact', 'modern_footer'],
-                elegant: ['elegant_header', 'elegant_hero', 'elegant_gallery', 'elegant_story', 'elegant_services', 'elegant_contact', 'elegant_footer']
+            const websiteData = {
+                template: currentTemplate,
+                settings: websiteSettings,
+                savedAt: new Date().toISOString()
             };
             
-            const templateComponents = templates[templateType];
-            if (!templateComponents) return;
-            
-            // Show loading animation
-            showTemplateLoading();
-            
-            // Clear existing components
-            const dropZone = document.getElementById('dropZone');
-            dropZone.innerHTML = '';
-            dropZone.style.border = 'none';
-            dropZone.style.minHeight = 'auto';
-            dropZone.style.display = 'block';
-            
-            // Add template components with staggered timing
-            templateComponents.forEach((componentType, index) => {
-                setTimeout(() => {
-                    addComponentToCanvas(componentType);
-                    if (index === templateComponents.length - 1) {
-                        hideTemplateLoading();
-                    }
-                }, 300 * (index + 1));
-            });
-            
-            showMessage(`${templateType.charAt(0).toUpperCase() + templateType.slice(1)} template loaded!`, 'success');
-            celebrateMilestone('photos_uploaded', `${templateType} template`);
+            localStorage.setItem('photography_website', JSON.stringify(websiteData));
+            showMessage('Website saved successfully!', 'success');
         }
 
-        function showTemplateLoading() {
-            const loader = document.createElement('div');
-            loader.id = 'templateLoader';
-            loader.className = 'template-loading';
-            loader.innerHTML = `
-                <h3>Loading Template...</h3>
-                <div class="loading-spinner"></div>
-                <p>Building your professional website</p>
-            `;
-            document.body.appendChild(loader);
-        }
-
-        function hideTemplateLoading() {
-            const loader = document.getElementById('templateLoader');
-            if (loader) {
-                loader.remove();
+        function loadSavedWebsite() {
+            const savedData = localStorage.getItem('photography_website');
+            if (savedData) {
+                const websiteData = JSON.parse(savedData);
+                currentTemplate = websiteData.template;
+                websiteSettings = websiteData.settings;
+                
+                selectTemplate(currentTemplate);
+                showMessage('Saved website loaded!', 'success');
+            } else {
+                showMessage('No saved website found', 'error');
             }
         }
+
+        // End of Photography Website Builder
+        // ========================================
+
     </script>
 
         </div> <!-- End Client Management Tab -->
 
         <!-- Website Builder Tab Content -->
         <div id="websitesTab" class="tab-content">
-            <div class="website-builder-container">
+            <div class="photography-website-builder">
+                <!-- Header -->
                 <div class="builder-header">
-                    <h2>🌐 Professional Website Builder</h2>
-                    <p>Create stunning photography websites with drag-and-drop simplicity</p>
+                    <h2>📸 Photography Website Builder</h2>
+                    <p>Professional templates designed specifically for photographers</p>
                 </div>
 
-                <!-- Website Management Toolbar -->
-                <div class="website-toolbar">
-                    <button class="btn btn-primary" onclick="createNewWebsite()">
-                        ➕ New Website
-                    </button>
-                    <button class="btn btn-secondary" onclick="loadWebsites()">
-                        📁 My Websites
-                    </button>
-                    <button class="btn btn-success" onclick="previewWebsite()" id="previewBtn" disabled>
-                        👁️ Preview
-                    </button>
-                    <button class="btn btn-warning" onclick="publishWebsite()" id="publishBtn" disabled>
-                        🚀 Publish
-                    </button>
-                </div>
-
-                <!-- Website Builder Interface -->
-                <div class="builder-interface" id="builderInterface" style="display: none;">
-                    
-                    <!-- Left Sidebar - Components -->
-                    <div class="builder-sidebar">
-                        <h3>📦 Components</h3>
-                        <div class="component-categories">
-                            
-                            <!-- Layout Components -->
-                            <div class="component-category">
-                                <h4>🏗️ Layout</h4>
-                                <div class="component-list">
-                                    <div class="component-item" draggable="true" data-component="header">
-                                        <div class="component-icon">📄</div>
-                                        <span>Header</span>
-                                    </div>
-                                    <div class="component-item" draggable="true" data-component="hero">
-                                        <div class="component-icon">🎭</div>
-                                        <span>Hero Section</span>
-                                    </div>
-                                    <div class="component-item" draggable="true" data-component="gallery">
-                                        <div class="component-icon">🖼️</div>
-                                        <span>Photo Gallery</span>
-                                    </div>
-                                    <div class="component-item" draggable="true" data-component="about">
-                                        <div class="component-icon">👤</div>
-                                        <span>About Section</span>
-                                    </div>
-                                    <div class="component-item" draggable="true" data-component="services">
-                                        <div class="component-icon">⚡</div>
-                                        <span>Services</span>
-                                    </div>
-                                    <div class="component-item" draggable="true" data-component="contact">
-                                        <div class="component-icon">📧</div>
-                                        <span>Contact Form</span>
-                                    </div>
-                                    <div class="component-item" draggable="true" data-component="testimonials">
-                                        <div class="component-icon">⭐</div>
-                                        <span>Testimonials</span>
-                                    </div>
-                                    <div class="component-item" draggable="true" data-component="pricing">
-                                        <div class="component-icon">💰</div>
-                                        <span>Pricing</span>
-                                    </div>
-                                    <div class="component-item" draggable="true" data-component="footer">
-                                        <div class="component-icon">📝</div>
-                                        <span>Footer</span>
+                <!-- Template Selection -->
+                <div id="templateSelection" class="template-selection">
+                    <h3>Choose Your Photography Template</h3>
+                    <div class="photography-templates">
+                        <div class="template-card" data-template="legacy">
+                            <div class="template-preview">
+                                <div class="template-mockup legacy-mockup">
+                                    <div class="mockup-header">The Legacy Photography</div>
+                                    <div class="mockup-hero">Capturing Timeless Moments</div>
+                                    <div class="mockup-gallery">
+                                        <div class="mockup-photo"></div>
+                                        <div class="mockup-photo"></div>
+                                        <div class="mockup-photo"></div>
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Content Components -->
-                            <div class="component-category">
-                                <h4>📝 Content</h4>
-                                <div class="component-list">
-                                    <div class="component-item" draggable="true" data-component="text">
-                                        <div class="component-icon">📄</div>
-                                        <span>Text Block</span>
-                                    </div>
-                                    <div class="component-item" draggable="true" data-component="image">
-                                        <div class="component-icon">🖼️</div>
-                                        <span>Image</span>
-                                    </div>
-                                    <div class="component-item" draggable="true" data-component="button">
-                                        <div class="component-icon">🔘</div>
-                                        <span>Button</span>
-                                    </div>
-                                    <div class="component-item" draggable="true" data-component="divider">
-                                        <div class="component-icon">➖</div>
-                                        <span>Divider</span>
-                                    </div>
-                                    <div class="component-item" draggable="true" data-component="spacer">
-                                        <div class="component-icon">📏</div>
-                                        <span>Spacer</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Media Components -->
-                            <div class="component-category">
-                                <h4>🎬 Media</h4>
-                                <div class="component-list">
-                                    <div class="component-item" draggable="true" data-component="video">
-                                        <div class="component-icon">🎥</div>
-                                        <span>Video</span>
-                                    </div>
-                                    <div class="component-item" draggable="true" data-component="slideshow">
-                                        <div class="component-icon">🎠</div>
-                                        <span>Slideshow</span>
-                                    </div>
-                                    <div class="component-item" draggable="true" data-component="instagram">
-                                        <div class="component-icon">📷</div>
-                                        <span>Instagram Feed</span>
-                                    </div>
-                                </div>
-                            </div>
+                            <h4>Legacy Style</h4>
+                            <p>Dark elegance with gold accents - perfect for luxury photography</p>
+                            <button class="btn btn-primary" onclick="selectTemplate('legacy')">
+                                Choose Template
+                            </button>
                         </div>
-                    </div>
 
-                    <!-- Center Canvas - Website Preview -->
-                    <div class="builder-canvas">
-                        <div class="canvas-header">
-                            <h3 id="websiteName">My Photography Website</h3>
-                            <div class="canvas-controls">
-                                <button class="canvas-control" onclick="toggleDevice('desktop')" id="desktopView">
-                                    🖥️ Desktop
-                                </button>
-                                <button class="canvas-control" onclick="toggleDevice('tablet')" id="tabletView">
-                                    📱 Tablet
-                                </button>
-                                <button class="canvas-control" onclick="toggleDevice('mobile')" id="mobileView">
-                                    📱 Mobile
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="canvas-viewport" id="canvasViewport">
-                            <div class="website-canvas" id="websiteCanvas">
-                                <div class="drop-zone" id="dropZone">
-                                    <div class="drop-zone-message">
-                                        <h3>🎨 Start Building Your Website</h3>
-                                        <p>Drag components from the left sidebar to start building your photography website</p>
-                                        <div class="quick-start-templates">
-                                            <button class="template-btn legacy-style" onclick="loadTemplate('legacy')">
-                                                ✨ Legacy Style Template
-                                            </button>
-                                            <button class="template-btn modern-style" onclick="loadTemplate('modern')">
-                                                🎯 Modern Portfolio Template
-                                            </button>
-                                            <button class="template-btn elegant-style" onclick="loadTemplate('elegant')">
-                                                💎 Elegant Gallery Template
-                                            </button>
-                                        </div>
+                        <div class="template-card" data-template="modern">
+                            <div class="template-preview">
+                                <div class="template-mockup modern-mockup">
+                                    <div class="mockup-header">Studio Photography</div>
+                                    <div class="mockup-hero">Modern. Clean. Beautiful.</div>
+                                    <div class="mockup-gallery">
+                                        <div class="mockup-photo"></div>
+                                        <div class="mockup-photo"></div>
+                                        <div class="mockup-photo"></div>
                                     </div>
                                 </div>
                             </div>
+                            <h4>Modern Portfolio</h4>
+                            <p>Clean contemporary design with bold typography</p>
+                            <button class="btn btn-primary" onclick="selectTemplate('modern')">
+                                Choose Template
+                            </button>
                         </div>
-                    </div>
 
-                    <!-- Right Sidebar - Properties -->
-                    <div class="builder-properties">
-                        <h3>⚙️ Properties</h3>
-                        <div class="properties-content" id="propertiesContent">
-                            <div class="no-selection">
-                                <p>Select a component to edit its properties</p>
+                        <div class="template-card" data-template="romantic">
+                            <div class="template-preview">
+                                <div class="template-mockup romantic-mockup">
+                                    <div class="mockup-header">Romantic Photography</div>
+                                    <div class="mockup-hero">Love Stories Captured</div>
+                                    <div class="mockup-gallery">
+                                        <div class="mockup-photo"></div>
+                                        <div class="mockup-photo"></div>
+                                        <div class="mockup-photo"></div>
+                                    </div>
+                                </div>
                             </div>
+                            <h4>Romantic Style</h4>
+                            <p>Warm tones and elegant serif fonts for wedding photography</p>
+                            <button class="btn btn-primary" onclick="selectTemplate('romantic')">
+                                Choose Template
+                            </button>
+                        </div>
+
+                        <div class="template-card" data-template="bold">
+                            <div class="template-preview">
+                                <div class="template-mockup bold-mockup">
+                                    <div class="mockup-header">BOLD PHOTOGRAPHY</div>
+                                    <div class="mockup-hero">DRAMATIC. POWERFUL.</div>
+                                    <div class="mockup-gallery">
+                                        <div class="mockup-photo"></div>
+                                        <div class="mockup-photo"></div>
+                                        <div class="mockup-photo"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <h4>Bold & Dramatic</h4>
+                            <p>High contrast design for fashion and artistic photography</p>
+                            <button class="btn btn-primary" onclick="selectTemplate('bold')">
+                                Choose Template
+                            </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Website List -->
-                <div class="website-list" id="websiteList" style="display: none;">
-                    <div class="websites-grid" id="websitesGrid">
-                        <!-- Websites will be loaded here -->
+                <!-- Website Customization -->
+                <div id="websiteCustomization" class="website-customization" style="display: none;">
+                    <div class="customization-header">
+                        <button class="btn btn-secondary" onclick="backToTemplates()">← Back to Templates</button>
+                        <h3 id="selectedTemplateName">Customizing Template</h3>
+                        <div class="customization-actions">
+                            <button class="btn btn-secondary" onclick="saveWebsite()">💾 Save</button>
+                            <button class="btn btn-primary" onclick="previewWebsite()">👁️ Preview</button>
+                            <button class="btn btn-success" onclick="publishWebsite()">🚀 Publish</button>
+                        </div>
+                    </div>
+
+                    <div class="customization-layout">
+                        <!-- Customization Tabs -->
+                        <div class="customization-sidebar">
+                            <div class="customization-tabs">
+                                <button class="customization-tab active" onclick="showCustomizationSection('content')">
+                                    📝 Content
+                                </button>
+                                <button class="customization-tab" onclick="showCustomizationSection('design')">
+                                    🎨 Design
+                                </button>
+                                <button class="customization-tab" onclick="showCustomizationSection('photos')">
+                                    📸 Photos
+                                </button>
+                                <button class="customization-tab" onclick="showCustomizationSection('settings')">
+                                    ⚙️ Settings
+                                </button>
+                            </div>
+
+                            <!-- Content Customization -->
+                            <div id="contentCustomization" class="customization-section active">
+                                <h4>Business Information</h4>
+                                <div class="form-group">
+                                    <label>Business Name</label>
+                                    <input type="text" id="businessName" placeholder="Your Photography Business" onchange="updateWebsiteContent()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Tagline</label>
+                                    <input type="text" id="tagline" placeholder="Your Professional Tagline" onchange="updateWebsiteContent()">
+                                </div>
+                                <div class="form-group">
+                                    <label>About Text</label>
+                                    <textarea id="aboutText" rows="4" placeholder="Tell clients about your photography services..." onchange="updateWebsiteContent()"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label>Phone Number</label>
+                                    <input type="tel" id="contactPhone" placeholder="(555) 123-4567" onchange="updateWebsiteContent()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Email Address</label>
+                                    <input type="email" id="contactEmail" placeholder="your@email.com" onchange="updateWebsiteContent()">
+                                </div>
+                            </div>
+
+                            <!-- Design Customization -->
+                            <div id="designCustomization" class="customization-section">
+                                <h4>Colors & Fonts</h4>
+                                <div class="form-group">
+                                    <label>Primary Color</label>
+                                    <input type="color" id="primaryColor" onchange="updateWebsiteDesign()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Background Color</label>
+                                    <input type="color" id="backgroundColor" onchange="updateWebsiteDesign()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Text Color</label>
+                                    <input type="color" id="textColor" onchange="updateWebsiteDesign()">
+                                </div>
+                                <div class="form-group">
+                                    <label>Font Style</label>
+                                    <select id="fontStyle" onchange="updateWebsiteDesign()">
+                                        <option value="serif">Serif (Elegant)</option>
+                                        <option value="sans-serif">Sans-serif (Modern)</option>
+                                        <option value="script">Script (Decorative)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Photos Customization -->
+                            <div id="photosCustomization" class="customization-section">
+                                <h4>Portfolio Photos</h4>
+                                <div class="form-group">
+                                    <label>Upload Photos</label>
+                                    <input type="file" id="portfolioPhotos" multiple accept="image/*" onchange="handlePhotoUpload()">
+                                    <p class="form-help">Upload your best portfolio photos (recommended: 6-12 images)</p>
+                                </div>
+                                <div id="photoPreview" class="photo-preview-grid"></div>
+                                <div class="form-group">
+                                    <label>Gallery Layout</label>
+                                    <select id="galleryLayout" onchange="updateGallerySettings()">
+                                        <option value="grid">Grid Layout</option>
+                                        <option value="masonry">Masonry Layout</option>
+                                        <option value="carousel">Carousel Slider</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Settings Customization -->
+                            <div id="settingsCustomization" class="customization-section">
+                                <h4>Website Settings</h4>
+                                <div class="form-group">
+                                    <label>Website URL</label>
+                                    <input type="text" id="websiteUrl" placeholder="your-website-name" onchange="updateWebsiteSettings()">
+                                    <p class="form-help">Will be: your-website-name.replit.app</p>
+                                </div>
+                                <div class="form-group">
+                                    <label>SEO Title</label>
+                                    <input type="text" id="seoTitle" placeholder="Professional Photography Services" onchange="updateWebsiteSettings()">
+                                </div>
+                                <div class="form-group">
+                                    <label>SEO Description</label>
+                                    <textarea id="seoDescription" rows="3" placeholder="Professional photography services for weddings, portraits, and events..." onchange="updateWebsiteSettings()"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Website Preview -->
+                        <div class="website-preview-area">
+                            <div class="preview-controls">
+                                <button class="preview-control active" onclick="setPreviewDevice('desktop')">💻 Desktop</button>
+                                <button class="preview-control" onclick="setPreviewDevice('tablet')">📱 Tablet</button>
+                                <button class="preview-control" onclick="setPreviewDevice('mobile')">📱 Mobile</button>
+                            </div>
+                            <div id="websitePreview" class="website-preview-frame desktop">
+                                <div class="preview-placeholder">
+                                    <h3>Select a template to start building your website</h3>
+                                    <p>Your website preview will appear here</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-    <!-- Contract Selection Modal -->
-    <div id="contractModal" class="payment-plan-modal">
-        <div class="payment-plan-content">
-            <h3>📝 Send Contract</h3>
-            
-            <div class="contract-selection">
-                <h4>Select Contract Type:</h4>
-                
-                <div class="contract-options">
-                    <div class="contract-option" onclick="createContract(currentContractSessionId, 'photo_release')">
-                        <div class="contract-icon">📷</div>
-                        <div class="contract-info">
-                            <h5>Photo Print Release</h5>
-                            <p>Grants clients permission to print and share photos for personal use</p>
-                        </div>
-                    </div>
-                    
-                    <div class="contract-option" onclick="createContract(currentContractSessionId, 'wedding_contract')">
-                        <div class="contract-icon">💒</div>
-                        <div class="contract-info">
-                            <h5>Wedding Photography Contract</h5>
-                            <p>Comprehensive contract for wedding photography services</p>
-                        </div>
-                    </div>
-                    
-                    <div class="contract-option" onclick="createContract(currentContractSessionId, 'general_contract')">
-                        <div class="contract-icon">📸</div>
-                        <div class="contract-info">
-                            <h5>General Photography Contract</h5>
-                            <p>Standard contract for portrait sessions and general photography services</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="existing-contracts" id="existingContracts">
-                <!-- Existing contracts will be loaded here -->
-            </div>
-            
-            <div class="payment-actions">
-                <button class="btn btn-secondary" onclick="closeContractModal()">Cancel</button>
-            </div>
-        </div>
     </div>
 
 </body>
