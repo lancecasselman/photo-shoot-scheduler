@@ -729,25 +729,382 @@ app.get('/api/sessions/:id', isAuthenticated, async (req, res) => {
     }
 });
 
-// Serve client gallery page
-app.get('/gallery/:id', (req, res) => {
+// Serve client gallery page with custom black and gold design
+app.get('/gallery/:id', async (req, res) => {
     const sessionId = req.params.id;
     const accessToken = req.query.access;
     
-    // Inject Firebase config into the HTML
-    fs.readFile(path.join(__dirname, 'client-gallery.html'), 'utf8', (err, html) => {
-        if (err) {
-            return res.status(500).send('Error loading gallery');
+    try {
+        // Verify access first
+        const session = await getSessionById(sessionId);
+        
+        if (!session) {
+            return res.status(404).send('<h1>Gallery not found</h1>');
         }
         
-        // Replace placeholders with actual Firebase config
-        const configuredHtml = html
-            .replace('{{FIREBASE_API_KEY}}', process.env.VITE_FIREBASE_API_KEY || '')
-            .replace('{{FIREBASE_PROJECT_ID}}', process.env.VITE_FIREBASE_PROJECT_ID || '')
-            .replace('{{FIREBASE_APP_ID}}', process.env.VITE_FIREBASE_APP_ID || '');
-            
-        res.send(configuredHtml);
-    });
+        if (!session.galleryAccessToken || session.galleryAccessToken !== accessToken) {
+            return res.status(403).send('<h1>Access denied</h1><p>Invalid gallery access token.</p>');
+        }
+        
+        const photos = session.photos || [];
+        
+        // Generate custom gallery HTML with black and gold design
+        const galleryHtml = `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>📸 Photo Gallery - ${session.clientName}</title>
+                <style>
+                    * {
+                        margin: 0;
+                        padding: 0;
+                        box-sizing: border-box;
+                    }
+                    
+                    body {
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+                        background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+                        min-height: 100vh;
+                        padding: 20px;
+                        color: #ffffff;
+                    }
+                    
+                    .gallery-container {
+                        max-width: 1400px;
+                        margin: 0 auto;
+                        background: rgba(42, 42, 42, 0.95);
+                        border-radius: 20px;
+                        padding: 40px;
+                        backdrop-filter: blur(15px);
+                        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+                        border: 1px solid rgba(212, 175, 55, 0.2);
+                    }
+                    
+                    .gallery-header {
+                        text-align: center;
+                        margin-bottom: 40px;
+                        padding-bottom: 20px;
+                        border-bottom: 2px solid rgba(212, 175, 55, 0.3);
+                    }
+                    
+                    .gallery-header h1 {
+                        color: #d4af37;
+                        font-size: 3rem;
+                        margin-bottom: 15px;
+                        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+                        font-weight: 700;
+                    }
+                    
+                    .gallery-header p {
+                        color: #f4e4bc;
+                        font-size: 1.2rem;
+                        font-weight: 500;
+                    }
+                    
+                    .photo-grid {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                        gap: 25px;
+                        margin-bottom: 40px;
+                    }
+                    
+                    .photo-item {
+                        background: rgba(30, 30, 30, 0.9);
+                        border-radius: 15px;
+                        overflow: hidden;
+                        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+                        transition: all 0.3s ease;
+                        border: 1px solid rgba(212, 175, 55, 0.2);
+                    }
+                    
+                    .photo-item:hover {
+                        transform: translateY(-8px);
+                        box-shadow: 0 20px 40px rgba(212, 175, 55, 0.2);
+                        border-color: rgba(212, 175, 55, 0.5);
+                    }
+                    
+                    .photo-item img {
+                        width: 100%;
+                        height: 220px;
+                        object-fit: cover;
+                        cursor: pointer;
+                        transition: transform 0.3s ease;
+                    }
+                    
+                    .photo-item:hover img {
+                        transform: scale(1.05);
+                    }
+                    
+                    .photo-controls {
+                        padding: 18px;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        background: rgba(42, 42, 42, 0.8);
+                    }
+                    
+                    .photo-number {
+                        color: #d4af37;
+                        font-size: 0.95rem;
+                        font-weight: 600;
+                    }
+                    
+                    .download-btn {
+                        background: linear-gradient(135deg, #d4af37 0%, #f4e4bc 100%);
+                        color: #1a1a1a;
+                        border: none;
+                        padding: 10px 18px;
+                        border-radius: 25px;
+                        cursor: pointer;
+                        font-size: 0.9rem;
+                        font-weight: 700;
+                        transition: all 0.3s ease;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                    }
+                    
+                    .download-btn:hover {
+                        background: linear-gradient(135deg, #f4e4bc 0%, #d4af37 100%);
+                        transform: translateY(-2px);
+                        box-shadow: 0 8px 20px rgba(212, 175, 55, 0.4);
+                    }
+                    
+                    .bulk-actions {
+                        text-align: center;
+                        margin-top: 40px;
+                        padding-top: 30px;
+                        border-top: 2px solid rgba(212, 175, 55, 0.3);
+                    }
+                    
+                    .bulk-download-btn {
+                        background: linear-gradient(135deg, #d4af37 0%, #f4e4bc 100%);
+                        color: #1a1a1a;
+                        border: none;
+                        padding: 18px 40px;
+                        border-radius: 30px;
+                        cursor: pointer;
+                        font-size: 1.2rem;
+                        font-weight: 700;
+                        transition: all 0.3s ease;
+                        text-transform: uppercase;
+                        letter-spacing: 1px;
+                    }
+                    
+                    .bulk-download-btn:hover {
+                        background: linear-gradient(135deg, #f4e4bc 0%, #d4af37 100%);
+                        transform: translateY(-4px);
+                        box-shadow: 0 15px 35px rgba(212, 175, 55, 0.4);
+                    }
+                    
+                    /* Lightbox styles */
+                    .lightbox {
+                        display: none;
+                        position: fixed;
+                        z-index: 1000;
+                        left: 0;
+                        top: 0;
+                        width: 100%;
+                        height: 100%;
+                        background-color: rgba(0, 0, 0, 0.95);
+                    }
+                    
+                    .lightbox-content {
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        max-width: 95%;
+                        max-height: 95%;
+                    }
+                    
+                    .lightbox-content img {
+                        width: 100%;
+                        height: auto;
+                        border-radius: 10px;
+                        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+                    }
+                    
+                    .lightbox-close {
+                        position: absolute;
+                        top: 30px;
+                        right: 40px;
+                        color: #d4af37;
+                        font-size: 50px;
+                        font-weight: bold;
+                        cursor: pointer;
+                        z-index: 1001;
+                        transition: all 0.3s ease;
+                    }
+                    
+                    .lightbox-close:hover {
+                        color: #f4e4bc;
+                        transform: scale(1.1);
+                    }
+                    
+                    @media (max-width: 768px) {
+                        body {
+                            padding: 15px;
+                        }
+                        
+                        .gallery-container {
+                            padding: 25px;
+                        }
+                        
+                        .photo-grid {
+                            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                            gap: 20px;
+                        }
+                        
+                        .gallery-header h1 {
+                            font-size: 2.2rem;
+                        }
+                        
+                        .gallery-header p {
+                            font-size: 1rem;
+                        }
+                        
+                        .photo-item img {
+                            height: 200px;
+                        }
+                        
+                        .photo-controls {
+                            padding: 15px;
+                        }
+                        
+                        .bulk-download-btn {
+                            padding: 15px 30px;
+                            font-size: 1.1rem;
+                        }
+                        
+                        .lightbox-close {
+                            top: 20px;
+                            right: 25px;
+                            font-size: 40px;
+                        }
+                    }
+                    
+                    @media (max-width: 480px) {
+                        .photo-grid {
+                            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                            gap: 15px;
+                        }
+                        
+                        .gallery-header h1 {
+                            font-size: 1.8rem;
+                        }
+                        
+                        .photo-item img {
+                            height: 180px;
+                        }
+                        
+                        .download-btn {
+                            padding: 8px 14px;
+                            font-size: 0.8rem;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="gallery-container">
+                    <div class="gallery-header">
+                        <h1>📸 Photo Gallery</h1>
+                        <p>Client: <strong>${session.clientName}</strong> | Session: ${session.sessionType} | Date: ${new Date(session.dateTime).toLocaleDateString()}</p>
+                    </div>
+                    
+                    <div class="photo-grid" id="photoGrid">
+                        ${photos.map((photo, index) => `
+                            <div class="photo-item">
+                                <img src="/uploads/${photo.filename}" alt="Photo ${index + 1}" onclick="openLightbox('/uploads/${photo.filename}')">
+                                <div class="photo-controls">
+                                    <span class="photo-number">📷 Photo ${index + 1}</span>
+                                    <button class="download-btn" onclick="downloadPhoto('/uploads/${photo.filename}', '${photo.filename}')">
+                                        💾 Download
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="bulk-actions">
+                        <button class="bulk-download-btn" onclick="downloadAllPhotos()">
+                            📦 Download All Photos (ZIP)
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Lightbox -->
+                <div id="lightbox" class="lightbox" onclick="closeLightbox()">
+                    <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
+                    <div class="lightbox-content">
+                        <img id="lightboxImage" src="">
+                    </div>
+                </div>
+                
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+                <script>
+                    function openLightbox(imageSrc) {
+                        document.getElementById('lightbox').style.display = 'block';
+                        document.getElementById('lightboxImage').src = imageSrc;
+                    }
+                    
+                    function closeLightbox() {
+                        document.getElementById('lightbox').style.display = 'none';
+                    }
+                    
+                    function downloadPhoto(photoUrl, filename) {
+                        const link = document.createElement('a');
+                        link.href = photoUrl;
+                        link.download = filename;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    }
+                    
+                    async function downloadAllPhotos() {
+                        const photos = ${JSON.stringify(photos)};
+                        const zip = new JSZip();
+                        const folder = zip.folder('${session.clientName}_Photos');
+                        
+                        try {
+                            for (let i = 0; i < photos.length; i++) {
+                                const photo = photos[i];
+                                const response = await fetch('/uploads/' + photo.filename);
+                                const blob = await response.blob();
+                                folder.file(photo.filename, blob);
+                            }
+                            
+                            const content = await zip.generateAsync({type: 'blob'});
+                            const link = document.createElement('a');
+                            link.href = URL.createObjectURL(content);
+                            link.download = '${session.clientName}_Photos.zip';
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                        } catch (error) {
+                            console.error('Error creating ZIP:', error);
+                            alert('Error downloading photos. Please try again.');
+                        }
+                    }
+                    
+                    // Close lightbox on Escape key
+                    document.addEventListener('keydown', function(e) {
+                        if (e.key === 'Escape') {
+                            closeLightbox();
+                        }
+                    });
+                </script>
+            </body>
+            </html>
+        `;
+        
+        res.send(galleryHtml);
+        
+    } catch (error) {
+        console.error('Error serving gallery:', error);
+        res.status(500).send('<h1>Error loading gallery</h1>');
+    }
 });
 
 // Generate and store gallery access token
