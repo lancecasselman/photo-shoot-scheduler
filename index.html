@@ -2486,7 +2486,7 @@
                 </div>
                 
                 <button type="submit" class="btn btn-primary">Add Session</button>
-                <button type="button" class="btn btn-secondary" onclick="celebrateMilestone('session_created', 'Test Client')" style="margin-left: 10px;">🎉 Test Confetti</button>
+
             </form>
         </div>
 
@@ -3122,19 +3122,6 @@
                     reject(error);
                 }
             });
-        } catch (error) {
-            console.error('Upload error details:', {
-                error: error,
-                message: error.message,
-                stack: error.stack,
-                filesCount: files.length,
-                totalSizeMB: totalSizeMB.toFixed(2)
-            });
-            updateProgress(0, 'Upload failed', error.message || 'Unknown error');
-            setTimeout(() => {
-                showUploadProgress(false);
-                showMessage('Upload failed: ' + error.message, 'error');
-            }, 2000);
         }
 
         // Upload files in larger batches for faster processing
