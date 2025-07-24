@@ -76,12 +76,15 @@ This is a comprehensive photography business management platform featuring sessi
 - **Cross-Platform Compatibility**: Works seamlessly with all email clients and messaging apps
 - **Complete Template Integration**: Contact section properly included in Legacy Elite template at end of website
 
-### Mobile Upload Database Integration Fix (July 24, 2025) - MOBILE COMPATIBILITY ENHANCED
+### Mobile Upload Optimization System (July 24, 2025) - MOBILE COMPATIBILITY ENHANCED
 - **Mobile Upload Issue Resolved**: Fixed database timing issue where photos uploaded but didn't appear on mobile refresh
 - **Synchronous Database Updates**: Changed from async database updates to synchronous for reliable mobile completion
 - **Mobile-Specific Page Reload**: Added automatic page reload for mobile devices after successful upload
 - **Database Persistence Fixed**: Photos now guaranteed to be saved to database before response sent to mobile clients
 - **Enhanced Mobile Detection**: Improved mobile device detection for iOS/Android specific handling
+- **Smart Batch Processing**: Mobile devices automatically use 2-file batches vs 10-file batches on desktop
+- **Lower Mobile Thresholds**: Mobile triggers batch processing at 5+ files or 100MB (vs 50 files/500MB desktop)
+- **Network Timeout Prevention**: Smaller batches prevent mobile network timeouts on large uploads
 - **Progress Bar Compatibility**: Upload progress tracking works consistently across all mobile browsers
 - **Cross-Platform Database Sync**: Ensures upload completion and photo display works identically on desktop and mobile
 
