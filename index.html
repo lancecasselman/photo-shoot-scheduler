@@ -4499,6 +4499,44 @@ END:VCALENDAR`;
             }
         }
 
+        // CONTACT FORM FUNCTIONALITY
+        function sendContactEmail() {
+            const name = document.getElementById('contactName')?.value || '';
+            const email = document.getElementById('contactEmail')?.value || '';
+            const phone = document.getElementById('contactPhone')?.value || '';
+            const message = document.getElementById('contactMessage')?.value || '';
+
+            if (!name || !email || !message) {
+                alert('Please fill in your name, email, and message before sending.');
+                return;
+            }
+
+            const subject = `Photography Inquiry from ${name}`;
+            const body = `Hi Lance,
+
+${message}
+
+Contact Details:
+- Name: ${name}
+- Email: ${email}
+${phone ? `- Phone: ${phone}` : ''}
+
+Looking forward to hearing from you!
+
+Best regards,
+${name}`;
+
+            const mailtoLink = `mailto:lance@thelegacyphotography.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            window.open(mailtoLink, '_self');
+        }
+
+        function sendQuickText() {
+            const name = document.getElementById('contactName')?.value || 'Someone';
+            const message = `Hi Lance! ${name} here. I found your website and absolutely love your photography style! I'm interested in booking a session. When are you available to chat about my vision?`;
+            const smsLink = `sms:8434851315?&body=${encodeURIComponent(message)}`;
+            window.open(smsLink, '_self');
+        }
+
         // Builder Mode Switching
         function switchBuilderMode(mode) {
             builderMode = mode;
@@ -4810,14 +4848,16 @@ END:VCALENDAR`;
                         <h2 style="margin-bottom: 20px; font-size: 3em; font-family: 'Playfair Display', serif; font-weight: 400;">Ready to Capture Your Legacy?</h2>
                         <p style="font-size: 1.4em; margin-bottom: 50px; line-height: 1.6;">Call or Text 843-485-1315 or Submit a Message Below</p>
                         <div style="display: grid; gap: 20px; margin-bottom: 40px;">
-                            <input type="text" placeholder="Your Name" style="padding: 20px; border: 2px solid #8b7355; border-radius: 8px; font-size: 16px; background: rgba(255,255,255,0.95);">
-                            <input type="email" placeholder="Your Email" style="padding: 20px; border: 2px solid #8b7355; border-radius: 8px; font-size: 16px; background: rgba(255,255,255,0.95);">
-                            <textarea placeholder="Tell me about your photography vision..." rows="6" style="padding: 20px; border: 2px solid #8b7355; border-radius: 8px; font-size: 16px; resize: vertical; background: rgba(255,255,255,0.95);"></textarea>
-                            <button style="background: linear-gradient(135deg, #8b7355 0%, #2c1810 100%); color: #f4e4bc; border: none; padding: 20px 35px; border-radius: 8px; font-weight: bold; font-size: 18px; cursor: pointer;">Send Message</button>
+                            <input id="contactName" type="text" placeholder="Your Name" style="padding: 20px; border: 2px solid #8b7355; border-radius: 8px; font-size: 16px; background: rgba(255,255,255,0.95); transition: all 0.3s ease;" onfocus="this.style.borderColor='#d4af37'; this.style.boxShadow='0 0 10px rgba(212,175,55,0.3)'" onblur="this.style.borderColor='#8b7355'; this.style.boxShadow='none'">
+                            <input id="contactEmail" type="email" placeholder="Your Email" style="padding: 20px; border: 2px solid #8b7355; border-radius: 8px; font-size: 16px; background: rgba(255,255,255,0.95); transition: all 0.3s ease;" onfocus="this.style.borderColor='#d4af37'; this.style.boxShadow='0 0 10px rgba(212,175,55,0.3)'" onblur="this.style.borderColor='#8b7355'; this.style.boxShadow='none'">
+                            <input id="contactPhone" type="tel" placeholder="Your Phone Number (optional)" style="padding: 20px; border: 2px solid #8b7355; border-radius: 8px; font-size: 16px; background: rgba(255,255,255,0.95); transition: all 0.3s ease;" onfocus="this.style.borderColor='#d4af37'; this.style.boxShadow='0 0 10px rgba(212,175,55,0.3)'" onblur="this.style.borderColor='#8b7355'; this.style.boxShadow='none'">
+                            <textarea id="contactMessage" placeholder="Tell me about your photography vision..." rows="6" style="padding: 20px; border: 2px solid #8b7355; border-radius: 8px; font-size: 16px; resize: vertical; background: rgba(255,255,255,0.95); transition: all 0.3s ease;" onfocus="this.style.borderColor='#d4af37'; this.style.boxShadow='0 0 10px rgba(212,175,55,0.3)'" onblur="this.style.borderColor='#8b7355'; this.style.boxShadow='none'"></textarea>
+                            <button onclick="sendContactEmail()" style="background: linear-gradient(135deg, #d4af37 0%, #f4e4bc 100%); color: #1a1a1a; border: none; padding: 20px 35px; border-radius: 8px; font-weight: bold; font-size: 18px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(212,175,55,0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(212,175,55,0.4)'" onmouseout="this.style.transform='translateY(0px)'; this.style.boxShadow='0 4px 15px rgba(212,175,55,0.3)'">📧 Send Email</button>
                         </div>
-                        <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
-                            <a href="sms:8434851315?&body=Hi! I'm interested in booking a photo session with Legacy Photography and have a few questions." style="background: rgba(26, 26, 26, 0.8); color: #d4af37; border: 2px solid #d4af37; padding: 15px 30px; border-radius: 8px; font-weight: bold; text-decoration: none; display: inline-block; backdrop-filter: blur(10px); transition: all 0.3s ease;">📱 Text Now</a>
-                            <a href="tel:8434851315" style="background: rgba(26, 26, 26, 0.8); color: #d4af37; border: 2px solid #d4af37; padding: 15px 30px; border-radius: 8px; font-weight: bold; text-decoration: none; display: inline-block; backdrop-filter: blur(10px); transition: all 0.3s ease;">📞 Call Now</a>
+                        <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-top: 30px;">
+                            <a href="sms:8434851315?&body=Hi Lance! I'm interested in booking a photo session with The Legacy Photography. I found your website and love your style! When are you available?" style="background: rgba(26, 26, 26, 0.8); color: #d4af37; border: 2px solid #d4af37; padding: 15px 30px; border-radius: 8px; font-weight: bold; text-decoration: none; display: inline-block; backdrop-filter: blur(10px); transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.3);" onmouseover="this.style.background='#d4af37'; this.style.color='#1a1a1a'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(26, 26, 26, 0.8)'; this.style.color='#d4af37'; this.style.transform='translateY(0px)'">📱 Text Message</a>
+                            <a href="tel:8434851315" style="background: rgba(26, 26, 26, 0.8); color: #d4af37; border: 2px solid #d4af37; padding: 15px 30px; border-radius: 8px; font-weight: bold; text-decoration: none; display: inline-block; backdrop-filter: blur(10px); transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.3);" onmouseover="this.style.background='#d4af37'; this.style.color='#1a1a1a'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(26, 26, 26, 0.8)'; this.style.color='#d4af37'; this.style.transform='translateY(0px)'">📞 Call Direct</a>
+                            <button onclick="sendQuickText()" style="background: rgba(26, 26, 26, 0.8); color: #d4af37; border: 2px solid #d4af37; padding: 15px 30px; border-radius: 8px; font-weight: bold; cursor: pointer; backdrop-filter: blur(10px); transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.3);" onmouseover="this.style.background='#d4af37'; this.style.color='#1a1a1a'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(26, 26, 26, 0.8)'; this.style.color='#d4af37'; this.style.transform='translateY(0px)'">⚡ Quick Booking</button>
                         </div>
                     </div>
                 </div>`,
