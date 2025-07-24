@@ -1913,11 +1913,24 @@ app.get('/auth.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'auth.html'));
 });
 
-// Serve main page with authentication requirement
+// Serve landing page (no authentication required)
 app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'landing.html'));
+});
+
+// Serve main app with authentication requirement
+app.get('/app', (req, res) => {
     if (!req.isAuthenticated()) {
         // Redirect to auth page with return parameter
-        return res.redirect('/auth.html?return=/');
+        return res.redirect('/auth.html?return=/app');
+    }
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// Alternative dashboard route
+app.get('/dashboard', (req, res) => {
+    if (!req.isAuthenticated()) {
+        return res.redirect('/auth.html?return=/dashboard');
     }
     res.sendFile(path.join(__dirname, 'index.html'));
 });
