@@ -4926,7 +4926,14 @@ ${name}`;
                 </div>`
             };
             
-            element.innerHTML = components[type] || '';
+            const componentHTML = components[type];
+            if (!componentHTML) {
+                console.error(`❌ Component "${type}" not found! Available components:`, Object.keys(components));
+                element.innerHTML = `<div style="padding: 50px; text-align: center; background: #ffebee; color: #c62828; border: 2px dashed #e57373;">Component "${type}" not found!</div>`;
+            } else {
+                element.innerHTML = componentHTML;
+                console.log(`✅ Component "${type}" loaded successfully`);
+            }
             
             // Add click handler for selection
             element.addEventListener('click', (e) => {
