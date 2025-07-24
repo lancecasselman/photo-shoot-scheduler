@@ -659,6 +659,19 @@ app.post('/api/sessions/:id/upload-photos', isAuthenticated, (req, res) => {
         
         console.log(`📊 Multer success - starting async processing...`);
         
+        // Add database connection recovery
+        try {
+            // Test database connection
+            await db.select().from(photographySessions).limit(1);
+            console.log(`✅ Database connection healthy`);
+        } catch (dbTestError) {
+            console.error(`❌ Database connection error detected, attempting recovery:`, dbTestError);
+            // Reinitialize database connection
+            const { initializeDatabase } = require('./server/db');
+            await initializeDatabase();
+            console.log(`✅ Database connection recovered`);
+        }
+        
         try {
             console.log(`📋 Verifying session ${sessionId} exists...`);
             const session = await getSessionById(sessionId);

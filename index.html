@@ -3122,57 +3122,19 @@
                     reject(error);
                 }
             });
-
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error(`Upload failed: ${response.status} - ${errorText}`);
-                    
-                    if (response.status === 401) {
-                        updateProgress(0, 'Authentication required', 'Please log in to upload photos');
-                        showMessage('Please log in to upload photos', 'error');
-                        setTimeout(() => {
-                            window.location.href = '/api/login';
-                        }, 2000);
-                        return;
-                    }
-                    
-                    throw new Error(`Upload failed: ${response.status} - ${errorText}`);
-                }
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    updateProgress(100, 'Upload complete!', `Successfully uploaded ${result.uploaded} photos`);
-                    setTimeout(() => {
-                        showMessage(`Successfully uploaded ${result.uploaded} photos!`, 'success');
-                        closeUploadModal();
-                        loadSessions(); // Refresh to show new photos
-                        
-                        // Trigger milestone celebration for photo upload
-                        celebrateMilestone('photos_uploaded');
-                    }, 1000);
-                } else {
-                    console.error('Upload response error:', {
-                        status: response.status,
-                        statusText: response.statusText,
-                        result: result
-                    });
-                    throw new Error(result.error || result.details || 'Upload failed');
-                }
-            } catch (error) {
-                console.error('Upload error details:', {
-                    error: error,
-                    message: error.message,
-                    stack: error.stack,
-                    filesCount: files.length,
-                    totalSizeMB: totalSizeMB.toFixed(2)
-                });
-                updateProgress(0, 'Upload failed', error.message || 'Unknown error');
-                setTimeout(() => {
-                    showUploadProgress(false);
-                    showMessage('Upload failed: ' + error.message, 'error');
-                }, 2000);
-            }
+        } catch (error) {
+            console.error('Upload error details:', {
+                error: error,
+                message: error.message,
+                stack: error.stack,
+                filesCount: files.length,
+                totalSizeMB: totalSizeMB.toFixed(2)
+            });
+            updateProgress(0, 'Upload failed', error.message || 'Unknown error');
+            setTimeout(() => {
+                showUploadProgress(false);
+                showMessage('Upload failed: ' + error.message, 'error');
+            }, 2000);
         }
 
         // Upload files in larger batches for faster processing
