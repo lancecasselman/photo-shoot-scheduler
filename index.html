@@ -2975,6 +2975,11 @@
                     
                     // Trigger milestone celebration for photo upload
                     celebrateMilestone('photos_uploaded');
+                } else if (response.status === 401) {
+                    showMessage('Authentication required. Please log in to upload photos.', 'error');
+                    setTimeout(() => {
+                        window.location.href = '/api/login';
+                    }, 2000);
                 } else {
                     throw new Error(result.error || 'Upload failed');
                 }
