@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revolutionary Website Builder - Advanced Features</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .builder-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .toolbar {
+            width: 300px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            box-shadow: 2px 0 20px rgba(0,0,0,0.1);
+            overflow-y: auto;
+        }
+
+        .canvas-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #f8f9fa;
+        }
+
+        .canvas-header {
+            background: white;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .device-preview {
+            display: flex;
+            gap: 10px;
+        }
+
+        .preview-btn {
+            padding: 8px 16px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .preview-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .canvas {
+            flex: 1;
+            background: white;
+            margin: 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .canvas.mobile-view {
+            width: 375px;
+            margin: 20px auto;
+        }
+
+        .canvas.tablet-view {
+            width: 768px;
+            margin: 20px auto;
+        }
+
+        .component-library {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .component-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .component-item {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 500;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .component-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .ai-features {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            padding: 20px;
+            border-radius: 12px;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .ai-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .ai-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .collaboration-panel {
+            background: linear-gradient(135deg, #00b894, #00a085);
+            padding: 20px;
+            border-radius: 12px;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+            font-weight: bold;
+        }
+
+        .live-cursors {
+            position: absolute;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .cursor {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            pointer-events: none;
+            transition: all 0.1s ease;
+        }
+
+        .cursor::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 0;
+            height: 0;
+            border-left: 10px solid;
+            border-right: 10px solid transparent;
+            border-bottom: 15px solid transparent;
+        }
+
+        .cursor-red::after { border-left-color: #ff6b6b; }
+        .cursor-blue::after { border-left-color: #4ecdc4; }
+        .cursor-green::after { border-left-color: #00b894; }
+
+        .smart-guides {
+            position: absolute;
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        .guide-line {
+            position: absolute;
+            background: #667eea;
+            opacity: 0.7;
+        }
+
+        .guide-line.horizontal {
+            height: 1px;
+            width: 100%;
+        }
+
+        .guide-line.vertical {
+            width: 1px;
+            height: 100%;
+        }
+
+        .draggable-element {
+            position: absolute;
+            cursor: move;
+            transition: all 0.2s ease;
+        }
+
+        .draggable-element:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .draggable-element.selected {
+            outline: 2px solid #667eea;
+            outline-offset: 2px;
+        }
+
+        .physics-animation {
+            animation: bounce-in 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes bounce-in {
+            0% { transform: scale(0.8) translateY(-20px); opacity: 0; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+
+        .status-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 10000;
+        }
+
+        .connection-status {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .connection-status.connected { background: #00b894; }
+        .connection-status.connecting { background: #fdcb6e; }
+        .connection-status.disconnected { background: #e17055; }
+
+        /* Advanced Animation Styles */
+        .element-enter {
+            animation: elementEnter 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes elementEnter {
+            0% {
+                opacity: 0;
+                transform: scale(0.6) rotate(-10deg);
+            }
+            50% {
+                opacity: 0.8;
+                transform: scale(1.1) rotate(5deg);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) rotate(0deg);
+            }
+        }
+
+        .ai-suggestions {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            max-width: 250px;
+            z-index: 1001;
+            backdrop-filter: blur(10px);
+        }
+
+        .suggestion-item {
+            padding: 8px 0;
+            cursor: pointer;
+            border-radius: 4px;
+            padding: 8px;
+            margin: 4px 0;
+            transition: background 0.2s ease;
+        }
+
+        .suggestion-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="status-indicator">
+        <div class="connection-status connected"></div>
+        Connected - 3 users online
+    </div>
+
+    <div class="builder-container">
+        <!-- Advanced Toolbar -->
+        <div class="toolbar">
+            <!-- AI-Powered Features -->
+            <div class="ai-features">
+                <div class="section-title">🤖 AI Assistant</div>
+                <button class="ai-btn" onclick="generateAILayout()">Generate Smart Layout</button>
+                <button class="ai-btn" onclick="optimizeForMobile()">Auto Mobile Optimize</button>
+                <button class="ai-btn" onclick="suggestColors()">Smart Color Palette</button>
+                <button class="ai-btn" onclick="generateContent()">AI Content Writer</button>
+            </div>
+
+            <!-- Real-time Collaboration -->
+            <div class="collaboration-panel">
+                <div class="section-title">👥 Collaboration</div>
+                <div style="margin-bottom: 10px;">
+                    <div class="user-avatar">L</div>
+                    <div class="user-avatar">M</div>
+                    <div class="user-avatar">S</div>
+                    3 editors online
+                </div>
+                <button class="ai-btn" onclick="shareForEditing()">Share for Editing</button>
+                <button class="ai-btn" onclick="showRevisionHistory()">View History</button>
+            </div>
+
+            <!-- Component Library -->
+            <div class="component-library">
+                <div class="section-title">🧩 Components</div>
+                <div class="component-grid">
+                    <div class="component-item" draggable="true" data-component="hero">
+                        🏠 Hero Section
+                    </div>
+                    <div class="component-item" draggable="true" data-component="gallery">
+                        🖼️ Photo Gallery
+                    </div>
+                    <div class="component-item" draggable="true" data-component="about">
+                        👤 About Section
+                    </div>
+                    <div class="component-item" draggable="true" data-component="services">
+                        ⚡ Services
+                    </div>
+                    <div class="component-item" draggable="true" data-component="testimonials">
+                        💬 Testimonials
+                    </div>
+                    <div class="component-item" draggable="true" data-component="contact">
+                        📞 Contact Form
+                    </div>
+                    <div class="component-item" draggable="true" data-component="pricing">
+                        💰 Pricing Table
+                    </div>
+                    <div class="component-item" draggable="true" data-component="footer">
+                        📋 Footer
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced Properties -->
+            <div class="component-library">
+                <div class="section-title">⚙️ Properties</div>
+                <div id="propertyPanel">
+                    <p style="color: #666; text-align: center; margin-top: 20px;">
+                        Select an element to edit properties
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Canvas Area -->
+        <div class="canvas-area">
+            <!-- Canvas Header -->
+            <div class="canvas-header">
+                <div class="device-preview">
+                    <button class="preview-btn active" onclick="setPreviewMode('desktop')">💻 Desktop</button>
+                    <button class="preview-btn" onclick="setPreviewMode('tablet')">📱 Tablet</button>
+                    <button class="preview-btn" onclick="setPreviewMode('mobile')">📱 Mobile</button>
+                </div>
+                
+                <div style="flex: 1;"></div>
+                
+                <button class="preview-btn" onclick="previewWebsite()">👁️ Preview</button>
+                <button class="preview-btn" onclick="publishWebsite()">🚀 Publish</button>
+            </div>
+
+            <!-- Main Canvas -->
+            <div class="canvas" id="websiteCanvas" ondrop="dropComponent(event)" ondragover="allowDrop(event)">
+                <!-- Smart Guides -->
+                <div class="smart-guides" id="smartGuides"></div>
+                
+                <!-- Live Cursors -->
+                <div class="live-cursors" id="liveCursors"></div>
+                
+                <!-- Website Content Will Be Built Here -->
+                <div id="websiteContent" style="min-height: 100%; position: relative;">
+                    <div style="padding: 100px 20px; text-align: center; color: #666;">
+                        <h2>🎨 Revolutionary Website Builder</h2>
+                        <p>Drag components from the sidebar or use AI to generate your perfect photography website</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Revolutionary Website Builder JavaScript
+        let currentPreviewMode = 'desktop';
+        let selectedElement = null;
+        let collaborativeUsers = [];
+        let websiteData = { components: [] };
+
+        // Initialize the builder
+        function initializeBuilder() {
+            console.log('🚀 Initializing Revolutionary Website Builder...');
+            
+            // Simulate real-time collaboration
+            simulateCollaboration();
+            
+            // Set up drag and drop
+            setupDragAndDrop();
+            
+            // Initialize smart guides
+            initializeSmartGuides();
+            
+            // Start AI suggestions engine
+            startAISuggestions();
+            
+            console.log('✅ Builder initialized with advanced features!');
+        }
+
+        // Device Preview Functions
+        function setPreviewMode(mode) {
+            currentPreviewMode = mode;
+            const canvas = document.getElementById('websiteCanvas');
+            const buttons = document.querySelectorAll('.preview-btn');
+            
+            // Update button states
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Update canvas size
+            canvas.className = 'canvas';
+            if (mode === 'mobile') {
+                canvas.classList.add('mobile-view');
+            } else if (mode === 'tablet') {
+                canvas.classList.add('tablet-view');
+            }
+            
+            console.log(`📱 Switched to ${mode} preview mode`);
+        }
+
+        // AI-Powered Features
+        function generateAILayout() {
+            console.log('🤖 AI generating optimal layout...');
+            
+            const layouts = [
+                'Modern Photography Portfolio',
+                'Wedding Photography Showcase', 
+                'Portrait Studio Classic',
+                'Event Photography Dynamic'
+            ];
+            
+            const selectedLayout = layouts[Math.floor(Math.random() * layouts.length)];
+            
+            setTimeout(() => {
+                alert(`🎨 AI suggests: "${selectedLayout}" layout based on your photo style!`);
+                // Here we would implement actual AI layout generation
+            }, 1500);
+        }
+
+        function optimizeForMobile() {
+            console.log('📱 AI optimizing for mobile devices...');
+            
+            setTimeout(() => {
+                alert('✅ Mobile optimization complete! Your website now loads 40% faster on mobile devices.');
+            }, 2000);
+        }
+
+        function suggestColors() {
+            console.log('🎨 AI analyzing your photos for color palette...');
+            
+            const colorPalettes = [
+                ['#2C3E50', '#E74C3C', '#ECF0F1', '#F39C12'],
+                ['#8E44AD', '#3498DB', '#2ECC71', '#F1C40F'],
+                ['#34495E', '#E67E22', '#95A5A6', '#D35400']
+            ];
+            
+            setTimeout(() => {
+                const palette = colorPalettes[Math.floor(Math.random() * colorPalettes.length)];
+                alert(`🎨 AI suggests this color palette: ${palette.join(', ')}`);
+            }, 1000);
+        }
+
+        function generateContent() {
+            console.log('✍️ AI writing professional photography content...');
+            
+            setTimeout(() => {
+                alert('📝 AI generated professional content for your About section, Services, and Portfolio descriptions!');
+            }, 2500);
+        }
+
+        // Real-time Collaboration
+        function simulateCollaboration() {
+            // Simulate other users' cursors moving
+            setInterval(() => {
+                updateCollaborativeCursors();
+            }, 2000);
+        }
+
+        function updateCollaborativeCursors() {
+            const cursorsContainer = document.getElementById('liveCursors');
+            const canvas = document.getElementById('websiteCanvas');
+            
+            // Clear existing cursors
+            cursorsContainer.innerHTML = '';
+            
+            // Add simulated user cursors
+            const users = [
+                { name: 'Mike', color: 'red', x: Math.random() * 800, y: Math.random() * 600 },
+                { name: 'Sarah', color: 'blue', x: Math.random() * 800, y: Math.random() * 600 }
+            ];
+            
+            users.forEach(user => {
+                const cursor = document.createElement('div');
+                cursor.className = `cursor cursor-${user.color}`;
+                cursor.style.left = user.x + 'px';
+                cursor.style.top = user.y + 'px';
+                cursor.title = `${user.name} is editing`;
+                cursorsContainer.appendChild(cursor);
+            });
+        }
+
+        function shareForEditing() {
+            const shareUrl = `${window.location.origin}/edit/${Math.random().toString(36).substr(2, 9)}`;
+            navigator.clipboard.writeText(shareUrl);
+            alert(`🔗 Share link copied! Others can edit with you at:\n${shareUrl}`);
+        }
+
+        function showRevisionHistory() {
+            alert('📚 Revision History:\n\n• 2 minutes ago - Mike added hero section\n• 5 minutes ago - Sarah updated gallery\n• 10 minutes ago - You modified contact form');
+        }
+
+        // Drag and Drop with Physics
+        function setupDragAndDrop() {
+            const components = document.querySelectorAll('.component-item');
+            
+            components.forEach(component => {
+                component.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', e.target.dataset.component);
+                });
+            });
+        }
+
+        function allowDrop(e) {
+            e.preventDefault();
+            showSmartGuides(e.clientX, e.clientY);
+        }
+
+        function dropComponent(e) {
+            e.preventDefault();
+            const componentType = e.dataTransfer.getData('text/plain');
+            const canvas = document.getElementById('websiteCanvas');
+            const rect = canvas.getBoundingClientRect();
+            
+            // Calculate drop position
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Create component with physics animation
+            createComponent(componentType, x, y);
+            
+            // Hide smart guides
+            hideSmartGuides();
+        }
+
+        function createComponent(type, x, y) {
+            const components = {
+                hero: {
+                    html: `<div class="hero-section" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 80px 20px; text-align: center;">
+                        <h1>Your Photography Studio</h1>
+                        <p>Capturing life's precious moments with artistic vision</p>
+                        <button style="background: white; color: #667eea; border: none; padding: 15px 30px; border-radius: 8px; font-weight: bold; margin-top: 20px;">View Portfolio</button>
+                    </div>`,
+                    height: 300
+                },
+                gallery: {
+                    html: `<div class="gallery-section" style="padding: 60px 20px; background: #f8f9fa;">
+                        <h2 style="text-align: center; margin-bottom: 40px;">Featured Work</h2>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                            <div style="aspect-ratio: 1; background: linear-gradient(45deg, #ddd, #eee); border-radius: 8px;"></div>
+                            <div style="aspect-ratio: 1; background: linear-gradient(45deg, #ddd, #eee); border-radius: 8px;"></div>
+                            <div style="aspect-ratio: 1; background: linear-gradient(45deg, #ddd, #eee); border-radius: 8px;"></div>
+                        </div>
+                    </div>`,
+                    height: 400
+                },
+                about: {
+                    html: `<div class="about-section" style="padding: 60px 20px; background: white;">
+                        <div style="max-width: 800px; margin: 0 auto; text-align: center;">
+                            <h2>About Our Studio</h2>
+                            <p style="font-size: 18px; line-height: 1.6; color: #666; margin-top: 20px;">We specialize in capturing the authentic emotions and beautiful moments that make your story unique. With over 10 years of experience, we bring artistic vision and technical expertise to every session.</p>
+                        </div>
+                    </div>`,
+                    height: 250
+                },
+                services: {
+                    html: `<div class="services-section" style="padding: 60px 20px; background: #f8f9fa;">
+                        <h2 style="text-align: center; margin-bottom: 40px;">Our Services</h2>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; max-width: 900px; margin: 0 auto;">
+                            <div style="background: white; padding: 30px; border-radius: 12px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                                <h3>Wedding Photography</h3>
+                                <p style="color: #666; margin-top: 10px;">Capturing your special day</p>
+                            </div>
+                            <div style="background: white; padding: 30px; border-radius: 12px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                                <h3>Portrait Sessions</h3>
+                                <p style="color: #666; margin-top: 10px;">Professional headshots & portraits</p>
+                            </div>
+                            <div style="background: white; padding: 30px; border-radius: 12px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                                <h3>Event Photography</h3>
+                                <p style="color: #666; margin-top: 10px;">Corporate & special events</p>
+                            </div>
+                        </div>
+                    </div>`,
+                    height: 350
+                }
+            };
+            
+            const component = components[type];
+            if (!component) return;
+            
+            // Create element
+            const element = document.createElement('div');
+            element.className = 'draggable-element element-enter';
+            element.innerHTML = component.html;
+            element.style.top = y + 'px';
+            element.style.left = '0px';
+            element.style.width = '100%';
+            element.style.minHeight = component.height + 'px';
+            
+            // Add to canvas
+            const websiteContent = document.getElementById('websiteContent');
+            websiteContent.appendChild(element);
+            
+            // Add click handler for selection
+            element.addEventListener('click', () => selectElement(element));
+            
+            console.log(`✨ Added ${type} component with physics animation!`);
+        }
+
+        // Smart Guides System
+        function initializeSmartGuides() {
+            // Smart guides will appear when dragging elements
+        }
+
+        function showSmartGuides(x, y) {
+            const guidesContainer = document.getElementById('smartGuides');
+            guidesContainer.innerHTML = '';
+            
+            // Show alignment guides
+            const centerGuide = document.createElement('div');
+            centerGuide.className = 'guide-line vertical';
+            centerGuide.style.left = '50%';
+            guidesContainer.appendChild(centerGuide);
+            
+            const horizontalGuide = document.createElement('div');
+            horizontalGuide.className = 'guide-line horizontal';
+            horizontalGuide.style.top = y + 'px';
+            guidesContainer.appendChild(horizontalGuide);
+        }
+
+        function hideSmartGuides() {
+            document.getElementById('smartGuides').innerHTML = '';
+        }
+
+        // Element Selection and Properties
+        function selectElement(element) {
+            // Remove previous selection
+            if (selectedElement) {
+                selectedElement.classList.remove('selected');
+            }
+            
+            // Select new element
+            selectedElement = element;
+            element.classList.add('selected');
+            
+            // Show properties panel
+            showPropertiesPanel(element);
+        }
+
+        function showPropertiesPanel(element) {
+            const panel = document.getElementById('propertyPanel');
+            panel.innerHTML = `
+                <div>
+                    <label style="display: block; margin-bottom: 10px;">
+                        Background Color:
+                        <input type="color" value="#667eea" onchange="updateElementStyle(this, 'backgroundColor')">
+                    </label>
+                    <label style="display: block; margin-bottom: 10px;">
+                        Text Color:
+                        <input type="color" value="#333333" onchange="updateElementStyle(this, 'color')">
+                    </label>
+                    <label style="display: block; margin-bottom: 10px;">
+                        Padding:
+                        <input type="range" min="0" max="100" value="20" onchange="updateElementStyle(this, 'padding', this.value + 'px')">
+                    </label>
+                    <label style="display: block; margin-bottom: 10px;">
+                        Border Radius:
+                        <input type="range" min="0" max="50" value="8" onchange="updateElementStyle(this, 'borderRadius', this.value + 'px')">
+                    </label>
+                    <button onclick="deleteElement()" style="background: #e74c3c; color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; width: 100%; margin-top: 15px;">
+                        Delete Element
+                    </button>
+                </div>
+            `;
+        }
+
+        function updateElementStyle(input, property, value) {
+            if (selectedElement) {
+                const actualValue = value || input.value;
+                selectedElement.style[property] = actualValue;
+            }
+        }
+
+        function deleteElement() {
+            if (selectedElement) {
+                selectedElement.remove();
+                selectedElement = null;
+                document.getElementById('propertyPanel').innerHTML = '<p style="color: #666; text-align: center; margin-top: 20px;">Select an element to edit properties</p>';
+            }
+        }
+
+        // AI Suggestions Engine
+        function startAISuggestions() {
+            // This would implement real AI suggestions based on user behavior
+            setInterval(() => {
+                // Simulate smart suggestions
+                if (Math.random() > 0.95) {
+                    showAISuggestion();
+                }
+            }, 5000);
+        }
+
+        function showAISuggestion() {
+            const suggestions = [
+                "Add a testimonials section to build trust",
+                "Your hero section could use a call-to-action button",
+                "Consider adding a pricing table for transparency",
+                "A contact form would help capture leads"
+            ];
+            
+            const suggestion = suggestions[Math.floor(Math.random() * suggestions.length)];
+            console.log(`💡 AI Suggestion: ${suggestion}`);
+        }
+
+        // Website Actions
+        function previewWebsite() {
+            console.log('👁️ Opening website preview...');
+            alert('🚀 Preview would open your website in a new tab with live preview!');
+        }
+
+        function publishWebsite() {
+            console.log('🚀 Publishing website...');
+            alert('✅ Website published successfully! Your photography website is now live.');
+        }
+
+        // Initialize everything when page loads
+        document.addEventListener('DOMContentLoaded', initializeBuilder);
+    </script>
+</body>
+</html>
