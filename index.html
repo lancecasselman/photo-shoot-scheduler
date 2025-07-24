@@ -2998,10 +2998,10 @@
             
             console.log(`📊 Upload analysis: ${files.length} files, ${totalSizeMB.toFixed(2)}MB total`);
             
-            // Use batch processing for very large uploads only
+            // Use batch processing for mobile or large uploads
             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-            if (files.length > 50 || totalSizeMB > 1000) {
-                console.log(`📦 Very large upload detected - using batch upload method`);
+            if (isMobile || files.length > 10 || totalSizeMB > 50) {
+                console.log(`📦 Mobile or large upload detected - using batch upload method`);
                 return uploadFilesInBatches(files);
             }
 
@@ -3112,8 +3112,8 @@
                         reject(new Error('Upload timeout'));
                     });
 
-                    // Set 4-hour timeout for very large mobile uploads
-                    xhr.timeout = 4 * 60 * 60 * 1000;
+                    // Set reasonable timeout for mobile uploads
+                    xhr.timeout = 10 * 60 * 1000; // 10 minutes
                     
                     console.log(`📤 Opening connection to /api/sessions/${currentUploadSessionId}/upload-photos`);
                     xhr.open('POST', `/api/sessions/${currentUploadSessionId}/upload-photos`, true);
@@ -3133,15 +3133,15 @@
 
         // Upload files in high-capacity batches for maximum performance
         async function uploadFilesInBatches(files) {
-            // Use large batches for maximum mobile upload performance
+            // Use small batches for mobile reliability  
             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-            const batchSize = isMobile ? 25 : 50; // 25 files for mobile, 50 for desktop
+            const batchSize = isMobile ? 1 : 5; // 1 file for mobile, 5 for desktop
             const totalBatches = Math.ceil(files.length / batchSize);
             let uploadedCount = 0;
             
-            console.log(`🚀 High-capacity mode: ${batchSize} files per batch (${isMobile ? 'mobile' : 'desktop'} mode)`);
+            console.log(`🚀 Reliable upload mode: ${batchSize} files per batch (${isMobile ? 'mobile' : 'desktop'} mode)`);
             
-            showMessage(`Uploading ${files.length} files in ${totalBatches} high-capacity batches...`, 'info');
+            showMessage(`Uploading ${files.length} files in ${totalBatches} reliable batches...`, 'info');
             showUploadProgress(true);
             
             // Process batches sequentially for reliability

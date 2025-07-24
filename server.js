@@ -632,8 +632,9 @@ app.post('/api/sessions/:id/upload-photos', isAuthenticated, (req, res) => {
     
     console.log(`🔍 Starting upload for session ${sessionId}...`);
     
-    // Set very high timeout for mobile uploads (6 hours)
-    req.setTimeout(6 * 60 * 60 * 1000); // 6 hour timeout for mobile
+    // Disable all timeouts for upload requests
+    req.setTimeout(0); // Infinite timeout
+    res.setTimeout(0); // Infinite timeout
     
     console.log(`📊 Request started - method: ${req.method}, content-length: ${req.headers['content-length']}`);
     console.log(`📊 Headers:`, req.headers);
@@ -648,20 +649,28 @@ app.post('/api/sessions/:id/upload-photos', isAuthenticated, (req, res) => {
             console.error('❌ Error stack:', uploadError.stack);
             console.error('❌ Error code:', uploadError.code);
             console.error('❌ Error field:', uploadError.field);
-            return res.status(400).json({ 
-                error: 'Upload failed', 
-                details: uploadError.message,
-                code: uploadError.code,
-                field: uploadError.field
-            });
+            
+            // Send immediate error response
+            if (!res.headersSent) {
+                return res.status(400).json({ 
+                    error: 'Upload failed', 
+                    details: uploadError.message,
+                    code: uploadError.code,
+                    field: uploadError.field
+                });
+            }
+            return;
         }
         
-        console.log(`📊 Multer success - starting async processing...`);
+        console.log(`📊 Multer success - starting processing...`);
         console.log(`📊 Files received: ${req.files ? req.files.length : 0}`);
         
         if (!req.files || req.files.length === 0) {
             console.log('❌ No files received in request');
-            return res.status(400).json({ error: 'No files uploaded' });
+            if (!res.headersSent) {
+                return res.status(400).json({ error: 'No files uploaded' });
+            }
+            return;
         }
 
         const uploadedPhotos = [];
@@ -691,33 +700,31 @@ app.post('/api/sessions/:id/upload-photos', isAuthenticated, (req, res) => {
 
         console.log(`📊 Attempting to update session ${sessionId} with ${uploadedPhotos.length} photos`);
 
-        // Update database synchronously for mobile compatibility  
+        // Send immediate response to prevent connection timeout
+        if (!res.headersSent) {
+            res.json({
+                message: 'Photos uploaded successfully',
+                uploaded: uploadedPhotos.length,
+                photos: uploadedPhotos,
+                databaseUpdated: false // Will update in background
+            });
+        }
+        
+        // Update database asynchronously in background
         try {
+            console.log(`📊 Background database update starting...`);
             const session = await getSessionById(sessionId);
             if (session) {
                 const existingPhotos = session.photos || [];
                 const updatedPhotos = [...existingPhotos, ...uploadedPhotos];
                 await updateSession(sessionId, { photos: updatedPhotos });
-                console.log(`✅ Database updated with ${uploadedPhotos.length} new photos`);
-                
-                // Send response after database update completes
-                res.json({
-                    message: 'Photos uploaded successfully',
-                    uploaded: uploadedPhotos.length,
-                    photos: uploadedPhotos,
-                    databaseUpdated: true
-                });
+                console.log(`✅ Background database update completed: ${uploadedPhotos.length} new photos`);
             } else {
-                console.error(`❌ Session ${sessionId} not found for database update`);
-                res.status(404).json({ error: 'Session not found' });
+                console.error(`❌ Session ${sessionId} not found for background database update`);
             }
         } catch (dbError) {
-            console.error(`❌ Database update error:`, dbError);
-            res.status(500).json({ 
-                error: 'Upload completed but database update failed',
-                uploaded: uploadedPhotos.length,
-                dbError: dbError.message
-            });
+            console.error(`❌ Background database update error:`, dbError);
+            // Don't send response here as we already sent one above
         }
 
         return; // Exit early to prevent double response
@@ -2396,10 +2403,11 @@ async function startServer() {
         }
     });
     
-    // Set INFINITE timeouts for large uploads
+    // Set INFINITE timeouts for large uploads - MAXIMUM settings
     server.timeout = 0; // 0 = infinite
     server.keepAliveTimeout = 0; // 0 = infinite  
     server.headersTimeout = 0; // 0 = infinite
+    server.requestTimeout = 0; // 0 = infinite
     server.maxHeadersCount = 0; // Remove header count limit
     console.log('📁 Server configured with INFINITE timeouts - no upload limits!');
 }
