@@ -399,6 +399,16 @@ This is a complete client management area web application for photography busine
 Preferred communication style: Simple, everyday language.
 Business email: lance@thelegacyphotography.com
 Business name: The Legacy Photography
+Phone: 843-485-1315
+
+## Desktop Photo Editor Project Context (July 24, 2025)
+**Separate Product Strategy**: Building "PhotoEdit Pro" as standalone desktop application to complement web-based client management platform
+**Technology Decision**: Electron framework chosen over web-based approach for handling large RAW files (50-100MB each)
+**Integration Plan**: Desktop app will sync edited photos to web platform client galleries via API
+**Revenue Model**: Dual products - PhotoEdit Pro ($50-75/month) + Client Management ($25-35/month) with bundle pricing
+**Revolutionary Features Roadmap**: Comprehensive 15+ game-changing features documented in revolutionary-features-roadmap.md
+**Technical Stack**: Electron + React + LibRaw C++ library + OpenGL/Metal GPU acceleration
+**Market Advantage**: First photography-focused desktop editor with integrated client delivery workflow
 
 ## Revolutionary Features Roadmap (July 24, 2025)
 
