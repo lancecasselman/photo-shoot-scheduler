@@ -2582,19 +2582,13 @@
         let currentUploadSessionId = null;
         let currentPaymentPlanSessionId = null;
 
-        // Set minimum date to today for datetime input
+        // Allow both past and future dates for historical session entries
         function setMinDateTime() {
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            
-            const minDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+            // Remove any date restrictions to allow past dates for historical entries
             const dateTimeInput = document.getElementById('dateTime');
             if (dateTimeInput) {
-                dateTimeInput.min = minDateTime;
+                dateTimeInput.removeAttribute('min');
+                dateTimeInput.removeAttribute('max');
             }
         }
 
@@ -2602,7 +2596,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadSessions();
             setupEventListeners();
-            setMinDateTime(); // Set date restrictions
+            setMinDateTime(); // Allow all dates for historical entries
         });
 
         function setupEventListeners() {
@@ -2621,7 +2615,7 @@
             if (resetBtn) {
                 resetBtn.addEventListener('click', function() {
                     setTimeout(() => {
-                        setMinDateTime(); // Restore date restrictions after reset
+                        setMinDateTime(); // Keep dates unrestricted for historical entries
                         editingSessionId = null;
                         const submitBtn = document.querySelector('button[type="submit"]');
                         if (submitBtn) submitBtn.textContent = 'Add Session';
@@ -2706,7 +2700,7 @@
             const submitBtn = form.querySelector('button[type="submit"]');
             submitBtn.textContent = 'Add Session';
             
-            // Restore minimum date restriction for new sessions
+            // Keep date unrestricted to allow historical entries
             setMinDateTime();
         }
 
@@ -3040,7 +3034,7 @@
             const submitBtn = form.querySelector('button[type="submit"]');
             submitBtn.textContent = 'Update Session';
             
-            // Reset minimum date restriction for editing (allow past dates)
+            // Allow all dates for editing historical sessions (past dates enabled)
             document.getElementById('dateTime').removeAttribute('min');
             
             // Scroll to form
