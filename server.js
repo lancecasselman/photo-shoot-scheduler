@@ -1551,9 +1551,9 @@ app.post('/api/create-invoice', isAuthenticated, async (req, res) => {
             await stripe.invoiceItems.create({
                 customer: customer.id,
                 invoice: invoice.id,
-                amount: 500, // Default $5.00 tip (in cents) - client can adjust
+                amount: 0, // $0 default - client can add custom tip amount
                 currency: 'usd',
-                description: '💰 Optional Gratuity (Thank you!)',
+                description: '💰 Optional Gratuity (Add Custom Amount)',
                 metadata: {
                     sessionId: sessionId,
                     tipItem: 'true',
