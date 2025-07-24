@@ -1,8 +1,8 @@
-# The Client Management Area
+# Photography Management System
 
 ## Overview
 
-This is a complete client management area web application for photography business with session scheduling and photo upload capabilities. Built from scratch with a clean, simple architecture using vanilla JavaScript, HTML/CSS, and Express.js backend. Features drag-and-drop photo uploads, session management, and responsive design optimized for mobile devices.
+This is a comprehensive photography business management platform featuring session scheduling, PostgreSQL database, photo galleries, email/SMS notifications, iPhone Calendar integration, Stripe invoicing, e-signature contracts, and revolutionary AI-powered website builder. Built with vanilla JavaScript, HTML/CSS, and Express.js backend. Features drag-and-drop photo uploads, session management, and responsive design optimized for mobile devices.
 
 ## Recent Changes
 
@@ -419,7 +419,7 @@ This is a complete client management area web application for photography busine
 
 Preferred communication style: Simple, everyday language.
 Business email: lance@thelegacyphotography.com
-Business name: The Legacy Photography
+Business name: Photography Management System (general platform for all photographers)
 Phone: 843-485-1315
 
 ## Desktop Photo Editor Project Context (July 24, 2025)
