@@ -2998,10 +2998,10 @@
             
             console.log(`📊 Upload analysis: ${files.length} files, ${totalSizeMB.toFixed(2)}MB total`);
             
-            // Use batch processing for mobile devices or uploads > 100MB or 5+ files
+            // Use batch processing for very large uploads only
             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-            if (isMobile || files.length > 5 || totalSizeMB > 100) {
-                console.log(`📦 ${isMobile ? 'Mobile device' : 'Large upload'} detected - using batch upload method`);
+            if (files.length > 50 || totalSizeMB > 1000) {
+                console.log(`📦 Very large upload detected - using batch upload method`);
                 return uploadFilesInBatches(files);
             }
 
@@ -3112,8 +3112,8 @@
                         reject(new Error('Upload timeout'));
                     });
 
-                    // Set 2-hour timeout to match server
-                    xhr.timeout = 2 * 60 * 60 * 1000;
+                    // Set 4-hour timeout for very large mobile uploads
+                    xhr.timeout = 4 * 60 * 60 * 1000;
                     
                     console.log(`📤 Opening connection to /api/sessions/${currentUploadSessionId}/upload-photos`);
                     xhr.open('POST', `/api/sessions/${currentUploadSessionId}/upload-photos`, true);
@@ -3131,24 +3131,33 @@
             });
         }
 
-        // Upload files in mobile-optimized batches for better reliability
+        // Upload files in high-capacity batches for maximum performance
         async function uploadFilesInBatches(files) {
-            // Use smaller batches for mobile devices to prevent network timeouts
+            // Use large batches for maximum mobile upload performance
             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-            const batchSize = isMobile ? 2 : 10; // 2 files for mobile, 10 for desktop
+            const batchSize = isMobile ? 25 : 50; // 25 files for mobile, 50 for desktop
             const totalBatches = Math.ceil(files.length / batchSize);
             let uploadedCount = 0;
             
-            console.log(`📱 Using ${batchSize} files per batch (${isMobile ? 'mobile' : 'desktop'} mode)`);
+            console.log(`🚀 High-capacity mode: ${batchSize} files per batch (${isMobile ? 'mobile' : 'desktop'} mode)`);
             
-            showMessage(`Uploading ${files.length} files in ${totalBatches} batches...`, 'info');
+            showMessage(`Uploading ${files.length} files in ${totalBatches} high-capacity batches...`, 'info');
+            showUploadProgress(true);
             
-            for (let i = 0; i < totalBatches; i++) {
-                const start = i * batchSize;
+            // Process batches with parallel upload capability for mobile
+            const maxParallelBatches = isMobile ? 2 : 3; // Allow 2 parallel uploads on mobile
+            let batchIndex = 0;
+            
+            const processBatch = async () => {
+                if (batchIndex >= totalBatches) return;
+                
+                const currentBatch = batchIndex++;
+                const start = currentBatch * batchSize;
                 const end = Math.min(start + batchSize, files.length);
                 const batch = files.slice(start, end);
                 
-                console.log(`Uploading batch ${i + 1}/${totalBatches}: files ${start + 1}-${end}`);
+                console.log(`🚀 Uploading batch ${currentBatch + 1}/${totalBatches}: files ${start + 1}-${end}`);
+                updateProgress((currentBatch / totalBatches) * 80, `Uploading batch ${currentBatch + 1}/${totalBatches}`, `${uploadedCount}/${files.length} photos uploaded`);
                 
                 try {
                     const formData = new FormData();
@@ -3159,14 +3168,15 @@
                     const response = await fetch(`/api/sessions/${currentUploadSessionId}/upload-photos`, {
                         method: 'POST',
                         body: formData,
-                        credentials: 'include' // Include authentication cookies
+                        credentials: 'include'
                     });
 
                     const result = await response.json();
 
                     if (response.ok) {
                         uploadedCount += result.uploaded;
-                        showMessage(`Batch ${i + 1}/${totalBatches} complete: ${uploadedCount}/${files.length} photos uploaded`, 'success');
+                        console.log(`✅ Batch ${currentBatch + 1} complete: ${result.uploaded} photos uploaded`);
+                        updateProgress(((currentBatch + 1) / totalBatches) * 80, `Batch ${currentBatch + 1}/${totalBatches} complete`, `${uploadedCount}/${files.length} photos uploaded`);
                     } else if (response.status === 401) {
                         showMessage('Authentication required. Please log in to upload photos.', 'error');
                         setTimeout(() => {
@@ -3177,10 +3187,25 @@
                         throw new Error(result.error || 'Batch upload failed');
                     }
                 } catch (error) {
-                    console.error(`Batch ${i + 1} upload error:`, error);
-                    showMessage(`Batch ${i + 1} failed: ${error.message}`, 'error');
-                    return; // Stop on first batch failure
+                    console.error(`❌ Batch ${currentBatch + 1} upload error:`, error);
+                    showMessage(`Batch ${currentBatch + 1} failed: ${error.message}`, 'error');
+                    throw error;
                 }
+            };
+            
+            try {
+                // Sequential processing with high-capacity batches for reliability
+                for (let i = 0; i < totalBatches; i++) {
+                    await processBatch();
+                }
+                
+                updateProgress(100, 'Upload complete!', `${uploadedCount} photos uploaded successfully`);
+                
+            } catch (error) {
+                console.error('❌ Batch upload failed:', error);
+                showMessage('Upload failed: ' + error.message, 'error');
+                showUploadProgress(false);
+                return;
             }
             
             showMessage(`All ${uploadedCount} photos uploaded successfully!`, 'success');

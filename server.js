@@ -511,13 +511,13 @@ const storage = multer.diskStorage({
 const upload = multer({ 
     storage: storage,
     limits: { 
-        fileSize: 50 * 1024 * 1024 * 1024, // 50GB per file (MAXIMUM)
-        files: 10000,                      // 10000 files max per batch
-        parts: 100000,                     // 100000 parts max
-        fieldSize: 10 * 1024 * 1024 * 1024, // 10GB field size
-        headerPairs: 100000,               // 100000 header pairs
-        fieldNameSize: 1024 * 1024,        // 1MB field name size
-        fieldValue: 10 * 1024 * 1024 * 1024 // 10GB field value
+        fileSize: 100 * 1024 * 1024 * 1024, // 100GB per file (MAXIMUM for mobile)
+        files: 50000,                       // 50000 files max per batch
+        parts: 500000,                      // 500000 parts max
+        fieldSize: 50 * 1024 * 1024 * 1024, // 50GB field size
+        headerPairs: 500000,                // 500000 header pairs
+        fieldNameSize: 10 * 1024 * 1024,    // 10MB field name size
+        fieldValue: 50 * 1024 * 1024 * 1024 // 50GB field value
     },
     fileFilter: (req, file, cb) => {
         console.log(`🔍 File filter check: ${file.originalname} (${file.mimetype})`);
@@ -529,9 +529,9 @@ const upload = multer({
     }
 });
 
-// Middleware - MAXIMUM payload limits for professional photography uploads
-app.use(express.json({ limit: '50gb' }));
-app.use(express.urlencoded({ limit: '50gb', extended: true, parameterLimit: 10000000 }));
+// Middleware - ULTRA-HIGH payload limits for mobile photography uploads
+app.use(express.json({ limit: '100gb' }));
+app.use(express.urlencoded({ limit: '100gb', extended: true, parameterLimit: 50000000 }));
 // Move static file serving after route definitions to ensure authentication checks run first
 // Static files will be served at the bottom of the file
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -632,8 +632,8 @@ app.post('/api/sessions/:id/upload-photos', isAuthenticated, (req, res) => {
     
     console.log(`🔍 Starting upload for session ${sessionId}...`);
     
-    // Disable request timeout to prevent connection drops
-    req.setTimeout(0); // 0 = infinite timeout
+    // Set very high timeout for mobile uploads (6 hours)
+    req.setTimeout(6 * 60 * 60 * 1000); // 6 hour timeout for mobile
     
     console.log(`📊 Request started - method: ${req.method}, content-length: ${req.headers['content-length']}`);
     console.log(`📊 Headers:`, req.headers);
