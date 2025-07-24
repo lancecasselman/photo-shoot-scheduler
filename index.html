@@ -3054,7 +3054,15 @@
                                 setTimeout(() => {
                                     showMessage(`Successfully uploaded ${result.uploaded} photos!`, 'success');
                                     closeUploadModal();
-                                    loadSessions(); // Refresh to show new photos
+                                    // Force page reload on mobile to ensure photos show up
+                                    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+                                        console.log('Mobile device detected - reloading page to show uploaded photos');
+                                        setTimeout(() => {
+                                            window.location.reload();
+                                        }, 1500);
+                                    } else {
+                                        loadSessions(); // Desktop refresh
+                                    }
                                     celebrateMilestone('photos_uploaded');
                                     resolve(result);
                                 }, 1000);
@@ -3171,7 +3179,15 @@
             
             showMessage(`All ${uploadedCount} photos uploaded successfully!`, 'success');
             closeUploadModal();
-            loadSessions();
+            // Force page reload on mobile to ensure photos show up  
+            if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+                console.log('Mobile device detected - reloading page to show uploaded photos');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                loadSessions(); // Desktop refresh
+            }
             celebrateMilestone('photos_uploaded');
         }
 

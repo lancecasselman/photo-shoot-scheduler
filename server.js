@@ -691,27 +691,34 @@ app.post('/api/sessions/:id/upload-photos', isAuthenticated, (req, res) => {
 
         console.log(`📊 Attempting to update session ${sessionId} with ${uploadedPhotos.length} photos`);
 
-        // Quick response to prevent timeout - update database after response
-        res.json({
-            message: 'Photos uploaded successfully',
-            uploaded: uploadedPhotos.length,
-            photos: uploadedPhotos
-        });
-
-        // Update database asynchronously after sending response
-        setImmediate(async () => {
-            try {
-                const session = await getSessionById(sessionId);
-                if (session) {
-                    const existingPhotos = session.photos || [];
-                    const updatedPhotos = [...existingPhotos, ...uploadedPhotos];
-                    await updateSession(sessionId, { photos: updatedPhotos });
-                    console.log(`✅ Database updated with ${uploadedPhotos.length} new photos`);
-                }
-            } catch (dbError) {
-                console.error(`❌ Database update error (async):`, dbError);
+        // Update database synchronously for mobile compatibility  
+        try {
+            const session = await getSessionById(sessionId);
+            if (session) {
+                const existingPhotos = session.photos || [];
+                const updatedPhotos = [...existingPhotos, ...uploadedPhotos];
+                await updateSession(sessionId, { photos: updatedPhotos });
+                console.log(`✅ Database updated with ${uploadedPhotos.length} new photos`);
+                
+                // Send response after database update completes
+                res.json({
+                    message: 'Photos uploaded successfully',
+                    uploaded: uploadedPhotos.length,
+                    photos: uploadedPhotos,
+                    databaseUpdated: true
+                });
+            } else {
+                console.error(`❌ Session ${sessionId} not found for database update`);
+                res.status(404).json({ error: 'Session not found' });
             }
-        });
+        } catch (dbError) {
+            console.error(`❌ Database update error:`, dbError);
+            res.status(500).json({ 
+                error: 'Upload completed but database update failed',
+                uploaded: uploadedPhotos.length,
+                dbError: dbError.message
+            });
+        }
 
         return; // Exit early to prevent double response
     });
