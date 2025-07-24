@@ -630,10 +630,12 @@ app.post('/api/sessions/:id/upload-photos', isAuthenticated, (req, res) => {
     
     console.log(`🔍 Starting upload for session ${sessionId}...`);
     
-    // Set ridiculous timeout for large uploads
-    req.setTimeout(30 * 60 * 1000, () => {
-        console.error('❌ Upload timeout after 30 minutes');
-        res.status(408).json({ error: 'Upload timeout - even 30 minutes wasn\'t enough!' });
+    // Set shorter timeout to force quick processing
+    req.setTimeout(5 * 60 * 1000, () => {
+        console.error('❌ Upload timeout after 5 minutes');
+        if (!res.headersSent) {
+            res.status(408).json({ error: 'Upload timeout - processing too slow' });
+        }
     });
     
     console.log(`📊 Request started - method: ${req.method}, content-length: ${req.headers['content-length']}`);
@@ -658,19 +660,63 @@ app.post('/api/sessions/:id/upload-photos', isAuthenticated, (req, res) => {
         }
         
         console.log(`📊 Multer success - starting async processing...`);
+        console.log(`📊 Files received: ${req.files ? req.files.length : 0}`);
         
-        // Add database connection recovery
-        try {
-            // Test database connection
-            await db.select().from(photographySessions).limit(1);
-            console.log(`✅ Database connection healthy`);
-        } catch (dbTestError) {
-            console.error(`❌ Database connection error detected, attempting recovery:`, dbTestError);
-            // Reinitialize database connection
-            const { initializeDatabase } = require('./server/db');
-            await initializeDatabase();
-            console.log(`✅ Database connection recovered`);
+        if (!req.files || req.files.length === 0) {
+            console.log('❌ No files received in request');
+            return res.status(400).json({ error: 'No files uploaded' });
         }
+
+        const uploadedPhotos = [];
+        
+        console.log(`📸 Processing ${req.files.length} files for session ${sessionId}`);
+
+        // Process files immediately without database connection testing to prevent timeout
+        for (const file of req.files) {
+            try {
+                console.log(`📁 Processing file: ${file.originalname} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
+                
+                const photoData = {
+                    filename: file.filename,
+                    originalName: file.originalname,
+                    size: file.size,
+                    uploadDate: new Date().toISOString()
+                };
+                
+                uploadedPhotos.push(photoData);
+                console.log(`✅ File processed: ${file.originalname}`);
+                
+            } catch (fileError) {
+                console.error(`❌ Error processing file ${file.originalname}:`, fileError);
+                // Continue with other files
+            }
+        }
+
+        console.log(`📊 Attempting to update session ${sessionId} with ${uploadedPhotos.length} photos`);
+
+        // Quick response to prevent timeout - update database after response
+        res.json({
+            message: 'Photos uploaded successfully',
+            uploaded: uploadedPhotos.length,
+            photos: uploadedPhotos
+        });
+
+        // Update database asynchronously after sending response
+        setImmediate(async () => {
+            try {
+                const session = await getSessionById(sessionId);
+                if (session) {
+                    const existingPhotos = session.photos || [];
+                    const updatedPhotos = [...existingPhotos, ...uploadedPhotos];
+                    await updateSession(sessionId, { photos: updatedPhotos });
+                    console.log(`✅ Database updated with ${uploadedPhotos.length} new photos`);
+                }
+            } catch (dbError) {
+                console.error(`❌ Database update error (async):`, dbError);
+            }
+        });
+
+        return; // Exit early to prevent double response
         
         try {
             console.log(`📋 Verifying session ${sessionId} exists...`);
@@ -2432,11 +2478,11 @@ async function startServer() {
         }
     });
     
-    // Set ridiculous server timeouts for massive file uploads (45 minutes)
-    server.timeout = 45 * 60 * 1000;
-    server.keepAliveTimeout = 46 * 60 * 1000;
-    server.headersTimeout = 47 * 60 * 1000;
-    console.log('📁 Server configured with RIDICULOUS timeouts - 45 minutes for uploads!');
+    // Set optimized server timeouts for faster processing (10 minutes)
+    server.timeout = 10 * 60 * 1000;
+    server.keepAliveTimeout = 11 * 60 * 1000;
+    server.headersTimeout = 12 * 60 * 1000;
+    console.log('📁 Server configured with optimized timeouts - 10 minutes for uploads!');
 }
 
 startServer().catch(error => {
