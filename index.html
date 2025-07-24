@@ -110,7 +110,7 @@
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.6;
             color: #2c3e50;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #667eea 100%);
+            background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
             min-height: 100vh;
             font-weight: 400;
             letter-spacing: 0.01em;
@@ -227,8 +227,8 @@
         
         input:focus, textarea:focus, select:focus {
             outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            border-color: #4a5568;
+            box-shadow: 0 0 0 3px rgba(74, 85, 104, 0.1);
             background: rgba(255, 255, 255, 0.95);
         }
         
@@ -246,14 +246,14 @@
         }
         
         .btn-primary {
-            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+            background: #4a5568;
             color: white;
         }
         
         .btn-primary:hover {
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            background: #2d3748;
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 8px 25px rgba(45, 55, 72, 0.3);
         }
         
         .btn-secondary {
@@ -373,7 +373,7 @@
         }
         
         .session-type {
-            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+            background: #4a5568;
             color: white;
             padding: 6px 16px;
             border-radius: 25px;
@@ -809,16 +809,16 @@
         }
 
         .nav-tab:hover {
-            background: rgba(59, 130, 246, 0.08);
+            background: rgba(74, 85, 104, 0.08);
             color: #334155;
             transform: translateY(-1px);
         }
 
         .nav-tab.active {
-            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+            background: #4a5568;
             color: white;
             transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 8px 25px rgba(74, 85, 104, 0.3);
         }
 
         /* Tab Content Areas */
@@ -2379,7 +2379,7 @@
     <div class="container">
         <div class="header">
             <div>
-                <h1>📸 Photography Management System</h1>
+                <h1>Photography Management System</h1>
                 <p>Complete business management platform for professional photographers</p>
             </div>
             <div id="userInfo" class="user-info" style="display: none;">
@@ -2392,10 +2392,10 @@
         <!-- Navigation Tabs -->
         <div class="nav-tabs">
             <button class="nav-tab active" onclick="switchTab('clients')">
-                📅 Client Management
+                Client Management
             </button>
             <button class="nav-tab" onclick="switchTab('websites')">
-                🌐 Website Builder
+                Website Builder
             </button>
         </div>
 
@@ -2446,27 +2446,27 @@
                     <div class="checkbox-grid">
                         <div class="checkbox-group">
                             <input type="checkbox" id="contractSigned" name="contractSigned">
-                            <label for="contractSigned">📝 Contract Signed</label>
+                            <label for="contractSigned">Contract Signed</label>
                         </div>
                         <div class="checkbox-group">
                             <input type="checkbox" id="paid" name="paid">
-                            <label for="paid">💵 Paid</label>
+                            <label for="paid">Paid</label>
                         </div>
                         <div class="checkbox-group">
                             <input type="checkbox" id="edited" name="edited">
-                            <label for="edited">✂️ Edited</label>
+                            <label for="edited">Edited</label>
                         </div>
                         <div class="checkbox-group">
                             <input type="checkbox" id="delivered" name="delivered">
-                            <label for="delivered">📦 Delivered</label>
+                            <label for="delivered">Delivered</label>
                         </div>
                         <div class="checkbox-group">
                             <input type="checkbox" id="sendReminder" name="sendReminder">
-                            <label for="sendReminder">🔔 Send session reminder 24 hours before</label>
+                            <label for="sendReminder">Send session reminder 24 hours before</label>
                         </div>
                         <div class="checkbox-group">
                             <input type="checkbox" id="notifyGalleryReady" name="notifyGalleryReady">
-                            <label for="notifyGalleryReady">🖼️ Notify when gallery is ready</label>
+                            <label for="notifyGalleryReady">Notify when gallery is ready</label>
                         </div>
                     </div>
                 </div>
@@ -2501,7 +2501,7 @@
             </div>
             
             <div class="upload-area" id="uploadArea">
-                <p>📸 Click here or drag photos to upload</p>
+                <p>Click here or drag photos to upload</p>
                 <p style="font-size: 0.9em; color: #718096; margin-top: 10px;">Supports unlimited photos of any size - JPG, PNG, RAW files welcome!</p>
             </div>
             <input type="file" id="fileInput" multiple accept="image/*" style="display: none;">
@@ -2528,7 +2528,7 @@
     <!-- Payment Plan Modal -->
     <div id="paymentPlanModal" class="payment-plan-modal">
         <div class="payment-plan-content">
-            <h3>💳 Create Payment Plan</h3>
+            <h3>Create Payment Plan</h3>
             
             <div class="payment-plan-form">
                 <div class="payment-plan-grid">
@@ -2582,7 +2582,7 @@
     <!-- Payment Plan View Modal -->
     <div id="paymentPlanViewModal" class="payment-plan-modal">
         <div class="payment-plan-content">
-            <h3 id="paymentPlanViewTitle">💳 Payment Plan Details</h3>
+            <h3 id="paymentPlanViewTitle">Payment Plan Details</h3>
             
             <div id="paymentPlanViewContent">
                 <!-- Payment plan details will be loaded here -->
@@ -2754,46 +2754,46 @@
 
                     <div class="session-actions">
                         <button class="btn btn-edit" onclick="editSession('${session.id}')">
-                            ✏️ Edit
+                            Edit
                         </button>
                         <button class="btn btn-secondary" onclick="openUploadModal('${session.id}')">
-                            📸 Upload Photos${session.photos && session.photos.length ? ` (${session.photos.length})` : ''}
+                            Upload Photos${session.photos && session.photos.length ? ` (${session.photos.length})` : ''}
                         </button>
                         <button class="btn btn-calendar" onclick="addToCalendar('${session.id}')">
-                            📅 Add to Calendar
+                            Add to Calendar
                         </button>
                         <button class="btn btn-primary" onclick="openEmailClient('${session.id}')">
-                            📧 Email Client
+                            Email Client
                         </button>
                         <button class="btn btn-warning" onclick="copyGalleryUrl('${session.id}')">
-                            📸 Copy Gallery URL
+                            Copy Gallery URL
                         </button>
                         <button class="btn btn-contract" onclick="openContractModal('${session.id}')">
-                            📝 Send Contract
+                            Send Contract
                         </button>
                         ${session.hasPaymentPlan ? `
                             <button class="btn btn-success" onclick="viewPaymentPlan('${session.id}')">
-                                💳 View Payment Plan
+                                View Payment Plan
                             </button>
                         ` : `
                             <button class="btn btn-invoice" onclick="sendInvoice('${session.id}')">
-                                💰 Send Invoice
+                                Send Invoice
                             </button>
                             <button class="btn" style="background: #fd7e14; color: white;" onclick="sendDepositInvoice('${session.id}')">
-                                💳 Send Deposit
+                                Send Deposit
                             </button>
                             <button class="btn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;" onclick="openPaymentPlanModal('${session.id}')">
-                                💳 Create Payment Plan
+                                Create Payment Plan
                             </button>
                         `}
                         <button class="btn btn-call" onclick="callClient('${session.phoneNumber}')">
-                            📞 Call Client
+                            Call Client
                         </button>
                         <button class="btn btn-text" onclick="textClient('${session.phoneNumber}', '${session.clientName}', '${session.id}')">
-                            💬 Text Client
+                            Text Client
                         </button>
                         <button class="btn btn-danger" onclick="deleteSession('${session.id}')">
-                            🗑️ Delete
+                            Delete
                         </button>
                     </div>
                 </div>
@@ -3035,11 +3035,11 @@
 I hope this email finds you well! I'm writing regarding your upcoming ${session.sessionType} photography session.
 
 Session Details:
-📅 Date: ${new Date(session.dateTime).toLocaleDateString()}
-🕐 Time: ${new Date(session.dateTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-📍 Location: ${session.location}
-💰 Investment: $${session.price}
-📞 Contact: ${session.phoneNumber}
+Date: ${new Date(session.dateTime).toLocaleDateString()}
+Time: ${new Date(session.dateTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+Location: ${session.location}
+Investment: $${session.price}
+Contact: ${session.phoneNumber}
 
 I'm excited to capture these special moments for you! If you have any questions or need to make any changes, please don't hesitate to reach out.
 
@@ -3152,7 +3152,7 @@ lance@thelegacyphotography.com`;
                 if (copySuccess) {
                     showMessage(`Gallery URL copied successfully! (${method})`, 'success');
                     // Show confirmation with the URL
-                    alert(`✅ Gallery URL copied for ${session.clientName}!\n\nURL: ${data.galleryUrl}\n\nYou can now paste this into your email or text message.`);
+                    alert(`Gallery URL copied for ${session.clientName}!\n\nURL: ${data.galleryUrl}\n\nYou can now paste this into your email or text message.`);
                 } else {
                     showMessage('Copy the URL from the dialog below', 'info');
                     // Show URL in a prompt for manual copying
@@ -3311,7 +3311,7 @@ END:VCALENDAR`;
             const session = sessions.find(s => s.id === sessionId);
             if (session && session.galleryAccessToken) {
                 const galleryUrl = `${window.location.origin}/gallery/${sessionId}?access=${session.galleryAccessToken}`;
-                const message = `📸 ${clientName}, your ${session.sessionType} photos are ready! View gallery: ${galleryUrl}`;
+                const message = `${clientName}, your ${session.sessionType} photos are ready! View gallery: ${galleryUrl}`;
                 window.location.href = `sms:${phoneNumber}?body=${encodeURIComponent(message)}`;
             } else {
                 const message = `Hi ${clientName}, your photos will be ready soon! We'll send you the gallery link when they're available.`;
@@ -3413,42 +3413,42 @@ END:VCALENDAR`;
             const celebrations = {
                 'session_created': {
                     message: `New Session Created: ${sessionName}`,
-                    emoji: '📅',
+                    emoji: '',
                     confetti: 30
                 },
                 'contract_signed': {
                     message: 'Contract Signed!',
-                    emoji: '📝',
+                    emoji: '',
                     confetti: 25
                 },
                 'payment_received': {
                     message: 'Payment Received!',
-                    emoji: '💰',
+                    emoji: '',
                     confetti: 40
                 },
                 'photos_uploaded': {
                     message: 'Photos Uploaded Successfully!',
-                    emoji: '📸',
+                    emoji: '',
                     confetti: 35
                 },
                 'session_delivered': {
                     message: 'Session Delivered!',
-                    emoji: '📦',
+                    emoji: '',
                     confetti: 45
                 },
                 'gallery_shared': {
                     message: 'Gallery Shared with Client!',
-                    emoji: '🖼️',
+                    emoji: '',
                     confetti: 30
                 },
                 'invoice_sent': {
                     message: 'Invoice Sent Successfully!',
-                    emoji: '💳',
+                    emoji: '',
                     confetti: 25
                 },
                 'payment_plan_created': {
                     message: 'Payment Plan Created!',
-                    emoji: '💳',
+                    emoji: '',
                     confetti: 30
                 }
             };
@@ -3610,7 +3610,7 @@ END:VCALENDAR`;
                 const session = sessions.find(s => s.id === sessionId);
                 
                 // Update modal title
-                document.getElementById('paymentPlanViewTitle').textContent = `💳 Payment Plan - ${session?.clientName || 'Client'}`;
+                document.getElementById('paymentPlanViewTitle').textContent = `Payment Plan - ${session?.clientName || 'Client'}`;
                 
                 // Generate payment plan view
                 let contentHTML = `
@@ -3625,7 +3625,7 @@ END:VCALENDAR`;
                     </div>
                     
                     <div class="payment-schedule">
-                        <h4>📅 Payment Schedule</h4>
+                        <h4>Payment Schedule</h4>
                 `;
                 
                 for (const payment of paymentPlan.payments) {
@@ -3788,12 +3788,12 @@ END:VCALENDAR`;
                                 <div class="contract-item-actions">
                                     ${contract.status === 'pending' ? `
                                         <button class="btn btn-primary btn-sm" onclick="sendContract('${contract.id}')">
-                                            📧 Send Contract
+                                            Send Contract
                                         </button>
                                     ` : contract.status === 'sent' ? `
-                                        <span class="contract-status-badge sent">📤 Sent</span>
+                                        <span class="contract-status-badge sent">Sent</span>
                                     ` : contract.status === 'signed' ? `
-                                        <span class="contract-status-badge signed">✅ Signed</span>
+                                        <span class="contract-status-badge signed">Signed</span>
                                     ` : ''}
                                 </div>
                             </div>
@@ -4615,7 +4615,7 @@ ${name}`;
             generateTemplate(templateType);
             
             // Show success message (confetti function may not be available in builder context)
-            console.log('✅ Template loaded successfully! Ready for customization.');
+            console.log('Template loaded successfully! Ready for customization.');
         }
 
         function generateTemplate(templateType) {
@@ -4862,7 +4862,7 @@ ${name}`;
                         </div>
                         <div style="aspect-ratio: 4/5; background: linear-gradient(135deg, #8b7355 0%, #d4af37 50%, #f4e4bc 100%); border-radius: 12px; border: 3px solid #d4af37; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; color: #1a1a1a; font-size: 1.2em; text-align: center; font-family: 'Playfair Display', serif; cursor: pointer; transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);" onclick="window.open('sms:8434851315?&body=Hi Lance! I absolutely love your photography style and would like to book a session. When are you available?', '_self')" onmouseover="this.style.transform='scale(1.1) rotate(3deg)'; this.style.boxShadow='0 20px 40px rgba(212,175,55,0.4)'" onmouseout="this.style.transform='scale(1) rotate(0deg)'; this.style.boxShadow='none'">
                             <div style="background: rgba(255,255,255,0.95); padding: 25px; border-radius: 12px; backdrop-filter: blur(15px); box-shadow: 0 8px 32px rgba(0,0,0,0.1); animation: pulse-invite 3s ease-in-out infinite;">
-                                <div style="font-size: 2.5em; margin-bottom: 15px; animation: bounce 2s ease-in-out infinite;">📸</div>
+                                <div style="font-size: 2.5em; margin-bottom: 15px; animation: bounce 2s ease-in-out infinite; color: #d4af37;">●</div>
                                 <div style="font-weight: bold; margin-bottom: 10px; font-size: 1.1em;">Book Your Session</div>
                                 <div style="font-size: 0.9em; opacity: 0.8; color: #8b7355;">Tap to Get Started</div>
                             </div>
@@ -4900,12 +4900,12 @@ ${name}`;
                             <input id="contactEmail" type="email" placeholder="Your Email" style="padding: 20px; border: 2px solid #8b7355; border-radius: 8px; font-size: 16px; background: rgba(255,255,255,0.95); transition: all 0.3s ease;" onfocus="this.style.borderColor='#d4af37'; this.style.boxShadow='0 0 10px rgba(212,175,55,0.3)'" onblur="this.style.borderColor='#8b7355'; this.style.boxShadow='none'">
                             <input id="contactPhone" type="tel" placeholder="Your Phone Number (optional)" style="padding: 20px; border: 2px solid #8b7355; border-radius: 8px; font-size: 16px; background: rgba(255,255,255,0.95); transition: all 0.3s ease;" onfocus="this.style.borderColor='#d4af37'; this.style.boxShadow='0 0 10px rgba(212,175,55,0.3)'" onblur="this.style.borderColor='#8b7355'; this.style.boxShadow='none'">
                             <textarea id="contactMessage" placeholder="Tell me about your photography vision..." rows="6" style="padding: 20px; border: 2px solid #8b7355; border-radius: 8px; font-size: 16px; resize: vertical; background: rgba(255,255,255,0.95); transition: all 0.3s ease;" onfocus="this.style.borderColor='#d4af37'; this.style.boxShadow='0 0 10px rgba(212,175,55,0.3)'" onblur="this.style.borderColor='#8b7355'; this.style.boxShadow='none'"></textarea>
-                            <button onclick="sendContactEmail()" style="background: linear-gradient(135deg, #d4af37 0%, #f4e4bc 100%); color: #1a1a1a; border: none; padding: 20px 35px; border-radius: 8px; font-weight: bold; font-size: 18px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(212,175,55,0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(212,175,55,0.4)'" onmouseout="this.style.transform='translateY(0px)'; this.style.boxShadow='0 4px 15px rgba(212,175,55,0.3)'">📧 Send Email</button>
+                            <button onclick="sendContactEmail()" style="background: linear-gradient(135deg, #d4af37 0%, #f4e4bc 100%); color: #1a1a1a; border: none; padding: 20px 35px; border-radius: 8px; font-weight: bold; font-size: 18px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(212,175,55,0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 25px rgba(212,175,55,0.4)'" onmouseout="this.style.transform='translateY(0px)'; this.style.boxShadow='0 4px 15px rgba(212,175,55,0.3)'">Send Email</button>
                         </div>
                         <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-top: 30px;">
-                            <a href="sms:8434851315?&body=Hi Lance! I'm interested in booking a photo session with The Legacy Photography. I found your website and love your style! When are you available?" style="background: rgba(26, 26, 26, 0.8); color: #d4af37; border: 2px solid #d4af37; padding: 15px 30px; border-radius: 8px; font-weight: bold; text-decoration: none; display: inline-block; backdrop-filter: blur(10px); transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.3);" onmouseover="this.style.background='#d4af37'; this.style.color='#1a1a1a'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(26, 26, 26, 0.8)'; this.style.color='#d4af37'; this.style.transform='translateY(0px)'">📱 Text Message</a>
-                            <a href="tel:8434851315" style="background: rgba(26, 26, 26, 0.8); color: #d4af37; border: 2px solid #d4af37; padding: 15px 30px; border-radius: 8px; font-weight: bold; text-decoration: none; display: inline-block; backdrop-filter: blur(10px); transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.3);" onmouseover="this.style.background='#d4af37'; this.style.color='#1a1a1a'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(26, 26, 26, 0.8)'; this.style.color='#d4af37'; this.style.transform='translateY(0px)'">📞 Call Direct</a>
-                            <button onclick="sendQuickText()" style="background: rgba(26, 26, 26, 0.8); color: #d4af37; border: 2px solid #d4af37; padding: 15px 30px; border-radius: 8px; font-weight: bold; cursor: pointer; backdrop-filter: blur(10px); transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.3);" onmouseover="this.style.background='#d4af37'; this.style.color='#1a1a1a'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(26, 26, 26, 0.8)'; this.style.color='#d4af37'; this.style.transform='translateY(0px)'">⚡ Quick Booking</button>
+                            <a href="sms:8434851315?&body=Hi Lance! I'm interested in booking a photo session with The Legacy Photography. I found your website and love your style! When are you available?" style="background: rgba(26, 26, 26, 0.8); color: #d4af37; border: 2px solid #d4af37; padding: 15px 30px; border-radius: 8px; font-weight: bold; text-decoration: none; display: inline-block; backdrop-filter: blur(10px); transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.3);" onmouseover="this.style.background='#d4af37'; this.style.color='#1a1a1a'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(26, 26, 26, 0.8)'; this.style.color='#d4af37'; this.style.transform='translateY(0px)'">Text Message</a>
+                            <a href="tel:8434851315" style="background: rgba(26, 26, 26, 0.8); color: #d4af37; border: 2px solid #d4af37; padding: 15px 30px; border-radius: 8px; font-weight: bold; text-decoration: none; display: inline-block; backdrop-filter: blur(10px); transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.3);" onmouseover="this.style.background='#d4af37'; this.style.color='#1a1a1a'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(26, 26, 26, 0.8)'; this.style.color='#d4af37'; this.style.transform='translateY(0px)'">Call Direct</a>
+                            <button onclick="sendQuickText()" style="background: rgba(26, 26, 26, 0.8); color: #d4af37; border: 2px solid #d4af37; padding: 15px 30px; border-radius: 8px; font-weight: bold; cursor: pointer; backdrop-filter: blur(10px); transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.3);" onmouseover="this.style.background='#d4af37'; this.style.color='#1a1a1a'; this.style.transform='translateY(-2px)'" onmouseout="this.style.background='rgba(26, 26, 26, 0.8)'; this.style.color='#d4af37'; this.style.transform='translateY(0px)'">Quick Booking</button>
                         </div>
                     </div>
                 </div>`,
@@ -5002,7 +5002,7 @@ ${name}`;
                     // Update all logo instances on the website
                     updateLogosOnWebsite();
                     
-                    console.log('✅ Logo uploaded and applied to website');
+                    console.log('Logo uploaded and applied to website');
                 };
                 reader.readAsDataURL(file);
             }
@@ -5018,7 +5018,7 @@ ${name}`;
                 el.textContent = name;
             });
             
-            console.log(`📝 Business name updated to: ${name}`);
+            console.log(`Business name updated to: ${name}`);
         }
 
         function changePrimaryFont(fontFamily) {
@@ -5219,7 +5219,7 @@ ${name}`;
             const componentType = e.dataTransfer.getData('text/plain');
             if (componentType) {
                 createTemplateComponent(componentType, 0, '');
-                console.log(`✅ ${componentType} component added successfully!`);
+                console.log(`${componentType} component added successfully!`);
             }
         }
 
@@ -5274,7 +5274,7 @@ ${name}`;
                 selectedElement.remove();
                 selectedElement = null;
                 document.getElementById('propertyPanel').innerHTML = '<div class="no-selection"><p>Select an element to edit properties</p></div>';
-                console.log('✅ Element deleted successfully!');
+                console.log('Element deleted successfully!');
             }
         }
 
@@ -5318,11 +5318,11 @@ ${name}`;
             `);
             
             previewWindow.document.close();
-            console.log('✅ Website preview opened in new window');
+            console.log('Website preview opened in new window');
         }
 
         function publishWebsite() {
-            console.log('🚀 Publishing website...');
+            console.log('Publishing website...');
             
             const websiteContent = document.getElementById('websiteContent');
             if (!websiteContent || websiteContent.children.length === 0) {
@@ -5331,8 +5331,8 @@ ${name}`;
             }
             
             // In a real implementation, this would save to a server
-            alert('🚀 Website published successfully! Your site would now be live at your custom domain.');
-            console.log('✅ Website published successfully');
+            alert('Website published successfully! Your site would now be live at your custom domain.');
+            console.log('Website published successfully');
         }
 
         // Setup drag and drop for components
@@ -5393,19 +5393,19 @@ ${name}`;
                 <!-- Builder Mode Header -->
                 <div class="builder-mode-header">
                     <div class="builder-mode-switch">
-                        <button class="mode-btn active" onclick="switchBuilderMode('template')" id="templateModeBtn">⚡ Quick Templates</button>
-                        <button class="mode-btn" onclick="switchBuilderMode('custom')" id="customModeBtn">🎨 Custom Builder</button>
+                        <button class="mode-btn active" onclick="switchBuilderMode('template')" id="templateModeBtn">Quick Templates</button>
+                        <button class="mode-btn" onclick="switchBuilderMode('custom')" id="customModeBtn">Custom Builder</button>
                     </div>
                     <div class="builder-actions">
-                        <button class="action-btn" onclick="previewWebsite()">👁️ Preview</button>
-                        <button class="action-btn primary" onclick="publishWebsite()">🚀 Publish</button>
+                        <button class="action-btn" onclick="previewWebsite()">Preview</button>
+                        <button class="action-btn primary" onclick="publishWebsite()">Publish</button>
                     </div>
                 </div>
 
                 <!-- Template Gallery Mode -->
                 <div id="templateGalleryMode" class="template-gallery-mode active">
                     <div class="template-hero">
-                        <h2>⚡ Quick Start Templates</h2>
+                        <h2>Quick Start Templates</h2>
                         <p>Professional photography websites ready in 30 seconds</p>
                     </div>
                     
@@ -5495,11 +5495,11 @@ ${name}`;
                                 <p>Luxurious dark theme with gold accents, designed specifically for The Legacy Photography's sophisticated brand</p>
                                 <div class="template-features">
                                     <span class="feature-tag">🌟 Premium Dark Design</span>
-                                    <span class="feature-tag">✨ Gold Luxury Accents</span>
-                                    <span class="feature-tag">📸 Your Actual Photos</span>
-                                    <span class="feature-tag">🎯 Brand-Matched</span>
+                                    <span class="feature-tag">Gold Luxury Accents</span>
+                                    <span class="feature-tag">Your Actual Photos</span>
+                                    <span class="feature-tag">Brand-Matched</span>
                                 </div>
-                                <button class="use-template-btn legacy-elite-btn">🚀 Use My Custom Template</button>
+                                <button class="use-template-btn legacy-elite-btn">Use My Custom Template</button>
                             </div>
                         </div>
                     </div>
@@ -5582,13 +5582,13 @@ ${name}`;
                                         🖼️ Photo Gallery
                                     </div>
                                     <div class="component-item" draggable="true" data-component="about">
-                                        👤 About Section
+                                        About Section
                                     </div>
                                     <div class="component-item" draggable="true" data-component="services">
-                                        ⚡ Services
+                                        Services
                                     </div>
                                     <div class="component-item" draggable="true" data-component="testimonials">
-                                        💬 Testimonials
+                                        Testimonials
                                     </div>
                                     <div class="component-item" draggable="true" data-component="contact">
                                         📞 Contact Form
@@ -5726,7 +5726,7 @@ ${name}`;
                         <div class="customization-actions">
                             <button class="btn btn-secondary" onclick="saveWebsite()">💾 Save</button>
                             <button class="btn btn-primary" onclick="previewWebsite()">👁️ Preview</button>
-                            <button class="btn btn-success" onclick="publishWebsite()">🚀 Publish</button>
+                            <button class="btn btn-success" onclick="publishWebsite()">Publish</button>
                         </div>
                     </div>
 
