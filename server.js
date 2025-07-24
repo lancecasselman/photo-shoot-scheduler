@@ -1982,3 +1982,82 @@ app.use((error, req, res, next) => {
     console.error('Server error:', error);
     res.status(500).json({ error: 'Internal server error during upload. Please try uploading fewer files at once.' });
 });
+// Create tip link for client
+app.post("/api/sessions/:id/tip-link", isAuthenticated, async (req, res) => {
+    try {
+        const sessionId = req.params.id;
+        const { amounts, clientName, clientEmail } = req.body;
+        
+        if (!amounts || !Array.isArray(amounts) || amounts.length === 0) {
+            return res.status(400).json({ error: "Valid tip amounts are required" });
+        }
+        
+        // Check if Stripe is properly configured
+        if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY.length < 50) {
+            console.log("Stripe key too short, simulating tip link creation");
+            
+            return res.json({ 
+                success: true,
+                message: "Tip link simulation completed (Stripe not configured)",
+                fallbackMode: true,
+                tip_url: `https://tip-demo.stripe.com/demo-${sessionId}-${Date.now()}`,
+                details: "To create real tip links, provide your complete Stripe secret key from your Stripe Dashboard",
+                clientName: clientName,
+                amounts: amounts
+            });
+        }
+        
+        // Create payment link for tips using Stripe Payment Links
+        const paymentLink = await stripe.paymentLinks.create({
+            line_items: [{
+                price_data: {
+                    currency: "usd",
+                    product_data: {
+                        name: `💰 Tip for Lance - The Legacy Photography`,
+                        description: `Thank you ${clientName} for your generosity! Your tip helps support our photography business.`,
+                    },
+                    unit_amount: Math.round(amounts[0] * 100), // Use first amount as default, user can adjust
+                },
+                quantity: 1,
+                adjustable_quantity: {
+                    enabled: true,
+                    minimum: 1,
+                    maximum: 10
+                }
+            }],
+            metadata: {
+                sessionId: sessionId,
+                tipLink: "true",
+                clientName: clientName,
+                businessName: "Lance - The Legacy Photography"
+            },
+            after_completion: {
+                type: "hosted_confirmation",
+                hosted_confirmation: {
+                    custom_message: `Thank you ${clientName}! Your generous tip is greatly appreciated by Lance - The Legacy Photography. 🙏✨`
+                }
+            },
+            allow_promotion_codes: false,
+            billing_address_collection: "auto"
+        });
+        
+        console.log(`Tip link created for ${clientName} with suggested amounts: $${amounts.join(", $")}`);
+        console.log(`Tip URL: ${paymentLink.url}`);
+        
+        res.json({
+            success: true,
+            message: `Tip link created for ${clientName}`,
+            tip_url: paymentLink.url,
+            payment_link_id: paymentLink.id,
+            amounts: amounts,
+            clientName: clientName
+        });
+        
+    } catch (error) {
+        console.error("Error creating tip link:", error);
+        res.status(500).json({ 
+            error: "Failed to create tip link",
+            details: error.message 
+        });
+    }
+});
