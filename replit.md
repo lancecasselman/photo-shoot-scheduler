@@ -554,6 +554,22 @@ Business email: lance@thelegacyphotography.com
 Business name: Photography Management System (general platform for all photographers)
 Phone: 843-485-1315
 
+## Strategic Direction (July 25, 2025) - APP STORE & GOOGLE PLAY FOCUS
+
+### "All-in-One Photography Business App" Strategy
+- **Primary Goal**: Native mobile apps for iOS App Store and Google Play distribution
+- **Business Model**: Tiered SaaS subscriptions with in-app purchases
+  - Basic Plan: $9.99/month (session scheduling, basic galleries, 50 photos/month)
+  - Pro Plan: $24.99/month (unlimited photos, client portals, payment processing, contracts)
+  - Studio Plan: $49.99/month (multi-photographer, advanced analytics, white-label client apps)
+- **Cross-Platform Strategy**: 
+  - Mobile apps (Capacitor for iOS/Android)
+  - Desktop apps (Electron for Mac/PC)
+  - Centralized cloud backend (user managed infrastructure)
+- **Competitive Position**: "Shopify for photographers" - complete business management in one app download
+- **Technical Requirements**: Mac computer needed for App Store submission ($99/year Apple Developer account)
+- **User Experience**: No technical setup required - download, sign up, start managing photography business immediately
+
 ## Desktop Photo Editor Project Context (July 24, 2025)
 **Separate Product Strategy**: Building "PhotoEdit Pro" as standalone desktop application to complement web-based client management platform
 **Technology Decision**: Electron framework chosen over web-based approach for handling large RAW files (50-100MB each)
