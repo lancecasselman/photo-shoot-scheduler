@@ -677,8 +677,9 @@ app.post('/api/sessions/:id/upload-photos', isAuthenticated, (req, res) => {
         
         console.log(`📸 Processing ${req.files.length} files for session ${sessionId}`);
 
-        // Process files immediately without database connection testing to prevent timeout
-        for (const file of req.files) {
+        // Process files with detailed logging
+        for (let i = 0; i < req.files.length; i++) {
+            const file = req.files[i];
             try {
                 console.log(`📁 Processing file: ${file.originalname} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
                 

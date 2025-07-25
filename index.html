@@ -3160,29 +3160,53 @@
                             formData.append('photos', file);
                         });
 
-                        const response = await fetch(`/api/sessions/${currentUploadSessionId}/upload-photos`, {
-                            method: 'POST',
-                            body: formData,
-                            credentials: 'include'
+                        // Use XMLHttpRequest for better mobile compatibility
+                        const result = await new Promise((resolve, reject) => {
+                            const xhr = new XMLHttpRequest();
+                            
+                            xhr.addEventListener('load', () => {
+                                if (xhr.status === 200) {
+                                    try {
+                                        const result = JSON.parse(xhr.responseText);
+                                        resolve(result);
+                                    } catch (parseError) {
+                                        reject(new Error('Invalid server response'));
+                                    }
+                                } else if (xhr.status === 401) {
+                                    reject(new Error('Authentication required'));
+                                } else {
+                                    reject(new Error(xhr.responseText || 'Upload failed'));
+                                }
+                            });
+                            
+                            xhr.addEventListener('error', () => {
+                                reject(new Error('Network error'));
+                            });
+                            
+                            xhr.addEventListener('timeout', () => {
+                                reject(new Error('Upload timeout'));
+                            });
+                            
+                            xhr.timeout = 5 * 60 * 1000; // 5 minute timeout for batch uploads
+                            xhr.open('POST', `/api/sessions/${currentUploadSessionId}/upload-photos`, true);
+                            xhr.withCredentials = true;
+                            xhr.send(formData);
                         });
 
-                        const result = await response.json();
+                        const response = { ok: true, status: 200 };
 
-                        if (response.ok) {
-                            uploadedCount += result.uploaded;
-                            console.log(`✅ Batch ${i + 1} complete: ${result.uploaded} photos uploaded`);
-                            updateProgress(((i + 1) / totalBatches) * 80, `Batch ${i + 1}/${totalBatches} complete`, `${uploadedCount}/${files.length} photos uploaded`);
-                        } else if (response.status === 401) {
+                        uploadedCount += result.uploaded;
+                        console.log(`✅ Batch ${i + 1} complete: ${result.uploaded} photos uploaded`);
+                        updateProgress(((i + 1) / totalBatches) * 80, `Batch ${i + 1}/${totalBatches} complete`, `${uploadedCount}/${files.length} photos uploaded`);
+                    } catch (error) {
+                        console.error(`❌ Batch ${i + 1} upload error:`, error);
+                        if (error.message === 'Authentication required') {
                             showMessage('Authentication required. Please log in to upload photos.', 'error');
                             setTimeout(() => {
                                 window.location.href = '/api/login';
                             }, 2000);
                             return;
-                        } else {
-                            throw new Error(result.error || 'Batch upload failed');
                         }
-                    } catch (error) {
-                        console.error(`❌ Batch ${i + 1} upload error:`, error);
                         showMessage(`Batch ${i + 1} failed: ${error.message}`, 'error');
                         showUploadProgress(false);
                         return;
