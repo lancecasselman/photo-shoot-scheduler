@@ -2980,8 +2980,27 @@
             
             progressBar.style.width = `${percent}%`;
             progressBar.textContent = `${Math.round(percent)}%`;
+            
+            // Enhanced styling for better visibility
+            progressBar.style.fontSize = '14px';
+            progressBar.style.fontWeight = 'bold';
+            progressBar.style.color = percent > 50 ? 'white' : '#333';
+            progressBar.style.textAlign = 'center';
+            progressBar.style.lineHeight = '20px';
+            progressBar.style.textShadow = '0 1px 2px rgba(0,0,0,0.5)';
+            progressBar.style.display = 'flex';
+            progressBar.style.alignItems = 'center';
+            progressBar.style.justifyContent = 'center';
+            
             progressText.textContent = text;
             progressDetails.textContent = details;
+            
+            // Update browser tab title with progress percentage
+            if (percent < 100) {
+                document.title = `(${Math.round(percent)}%) Upload Progress - Photography Scheduler`;
+            } else {
+                document.title = 'Photography Scheduler';
+            }
         }
 
         async function uploadFiles(files) {
@@ -3163,6 +3182,27 @@
             return new Promise((resolve, reject) => {
                 const xhr = new XMLHttpRequest();
                 
+                // Add upload progress tracking
+                xhr.upload.addEventListener('progress', (e) => {
+                    if (e.lengthComputable) {
+                        const filePercent = Math.round((e.loaded / e.total) * 100);
+                        const batchProgress = ((batchNumber - 1) / totalBatches) * 100;
+                        const currentBatchProgress = (filePercent / totalBatches);
+                        const overallPercent = Math.round(batchProgress + currentBatchProgress);
+                        
+                        const loadedMB = (e.loaded / (1024 * 1024)).toFixed(2);
+                        const totalMB = (e.total / (1024 * 1024)).toFixed(2);
+                        
+                        updateProgress(
+                            overallPercent, 
+                            `Uploading batch ${batchNumber}/${totalBatches} (${filePercent}%)`,
+                            `${loadedMB}MB / ${totalMB}MB transferred`
+                        );
+                        
+                        console.log(`📊 Upload Progress: Batch ${batchNumber}/${totalBatches} - ${filePercent}% (${loadedMB}MB / ${totalMB}MB) - Overall: ${overallPercent}%`);
+                    }
+                });
+
                 xhr.addEventListener('load', () => {
                     if (xhr.status === 200) {
                         try {
@@ -3172,6 +3212,11 @@
                         } catch (parseError) {
                             if (retryCount < maxRetries) {
                                 console.log(`⚠️ Parse error, retrying batch ${batchNumber} (attempt ${retryCount + 2})`);
+                                updateProgress(
+                                    ((batchNumber - 1) / totalBatches) * 100,
+                                    `Retrying batch ${batchNumber} (attempt ${retryCount + 2})`,
+                                    'Parse error - retrying upload'
+                                );
                                 setTimeout(() => {
                                     uploadWithRetry(formData, batchNumber, totalBatches, retryCount + 1)
                                         .then(resolve).catch(reject);
@@ -3185,6 +3230,11 @@
                     } else {
                         if (retryCount < maxRetries) {
                             console.log(`⚠️ HTTP ${xhr.status} error, retrying batch ${batchNumber} (attempt ${retryCount + 2})`);
+                            updateProgress(
+                                ((batchNumber - 1) / totalBatches) * 100,
+                                `Retrying batch ${batchNumber} (attempt ${retryCount + 2})`,
+                                `HTTP ${xhr.status} error - retrying upload`
+                            );
                             setTimeout(() => {
                                 uploadWithRetry(formData, batchNumber, totalBatches, retryCount + 1)
                                     .then(resolve).catch(reject);
@@ -3198,6 +3248,11 @@
                 xhr.addEventListener('error', () => {
                     if (retryCount < maxRetries) {
                         console.log(`⚠️ Network error, retrying batch ${batchNumber} (attempt ${retryCount + 2})`);
+                        updateProgress(
+                            ((batchNumber - 1) / totalBatches) * 100,
+                            `Retrying batch ${batchNumber} (attempt ${retryCount + 2})`,
+                            'Network error - retrying upload'
+                        );
                         setTimeout(() => {
                             uploadWithRetry(formData, batchNumber, totalBatches, retryCount + 1)
                                 .then(resolve).catch(reject);
@@ -3210,6 +3265,11 @@
                 xhr.addEventListener('timeout', () => {
                     if (retryCount < maxRetries) {
                         console.log(`⚠️ Timeout, retrying batch ${batchNumber} (attempt ${retryCount + 2})`);
+                        updateProgress(
+                            ((batchNumber - 1) / totalBatches) * 100,
+                            `Retrying batch ${batchNumber} (attempt ${retryCount + 2})`,
+                            'Upload timeout - retrying'
+                        );
                         setTimeout(() => {
                             uploadWithRetry(formData, batchNumber, totalBatches, retryCount + 1)
                                 .then(resolve).catch(reject);
@@ -3262,7 +3322,8 @@
 
                         uploadedCount += result.uploaded;
                         console.log(`✅ Batch ${i + 1} complete: ${result.uploaded} photos uploaded`);
-                        updateProgress(((i + 1) / totalBatches) * 80, `Batch ${i + 1}/${totalBatches} complete`, `${uploadedCount}/${files.length} photos uploaded`);
+                        const batchCompletePercent = Math.round(((i + 1) / totalBatches) * 100);
+                        updateProgress(batchCompletePercent, `Batch ${i + 1}/${totalBatches} complete`, `${uploadedCount}/${files.length} photos uploaded successfully`);
                     } catch (error) {
                         console.error(`❌ Batch ${i + 1} upload error:`, error);
                         if (error.message === 'Authentication required') {
@@ -3278,7 +3339,7 @@
                     }
                 }
                 
-                updateProgress(100, 'Upload complete!', `${uploadedCount} photos uploaded successfully`);
+                updateProgress(100, 'Upload complete!', `All ${uploadedCount} photos uploaded successfully`);
                 
             } catch (error) {
                 console.error('❌ Batch upload failed:', error);
