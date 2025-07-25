@@ -7066,7 +7066,10 @@ ${name}`;
         function resetSunriseCalendar() {
             // Clear input fields
             document.getElementById('locationInput').value = '';
-            document.getElementById('dateInput').value = '';
+            document.getElementById('sunriseDate').value = '';
+            
+            // Reset selected location
+            selectedLocation = null;
             
             // Hide results and error sections
             document.getElementById('sunriseResults').style.display = 'none';
@@ -7160,6 +7163,9 @@ ${name}`;
             selectedLocation = { displayName, lat, lng };
             document.getElementById('locationInput').value = displayName.split(',')[0];
             hideSearchResults();
+            
+            // Show success message for location selection
+            showMessage(`Location selected: ${displayName.split(',')[0]}`, 'success');
         }
 
         function showSearchResults() {
@@ -7173,12 +7179,15 @@ ${name}`;
             document.getElementById('locationResults').style.display = 'none';
         }
 
-        // Close search results when clicking outside
-        document.addEventListener('click', function(event) {
-            if (!event.target.closest('.location-search-container')) {
-                hideSearchResults();
-            }
-        });
+        // Close search results when clicking outside (only if not already bound)
+        if (!window.sunriseLocationClickHandlerBound) {
+            document.addEventListener('click', function(event) {
+                if (!event.target.closest('.location-search-container')) {
+                    hideSearchResults();
+                }
+            });
+            window.sunriseLocationClickHandlerBound = true;
+        }
 
     </script>
 
