@@ -6562,65 +6562,55 @@ ${name}`;
             try {
                 let lat, lng;
                 
-                // Check if input is coordinates (lat, lng format)
-                if (locationInput.includes(',')) {
-                    const coords = locationInput.split(',');
-                    if (coords.length === 2) {
-                        lat = parseFloat(coords[0].trim());
-                        lng = parseFloat(coords[1].trim());
-                        
-                        if (isNaN(lat) || isNaN(lng)) {
-                            throw new Error('Invalid coordinates format');
-                        }
+                // Simple coordinate parsing - only accept lat,lng format
+                const coordMatch = locationInput.match(/^(-?\d+\.?\d*),\s*(-?\d+\.?\d*)$/);
+                if (coordMatch) {
+                    lat = parseFloat(coordMatch[1]);
+                    lng = parseFloat(coordMatch[2]);
+                } else {
+                    // Simple city lookup - just a few hardcoded locations
+                    const location = locationInput.toLowerCase().trim();
+                    if (location.includes('charleston')) {
+                        lat = 32.7765;
+                        lng = -79.9311;
+                    } else if (location.includes('myrtle beach')) {
+                        lat = 33.6891;
+                        lng = -78.8867;
+                    } else if (location.includes('new york')) {
+                        lat = 40.7128;
+                        lng = -74.0060;
+                    } else {
+                        throw new Error('Location not recognized. Please use coordinates like "32.7765, -79.9311" or try: Charleston, Myrtle Beach, New York');
                     }
                 }
                 
-                // If not coordinates, try to get coordinates from common city names
-                if (!lat || !lng) {
-                    const cityCoordinates = getCityCoordinates(locationInput);
-                    if (cityCoordinates) {
-                        lat = cityCoordinates.lat;
-                        lng = cityCoordinates.lng;
-                    } else {
-                        throw new Error(`Location "${locationInput}" not found. Please use coordinates (lat, lng) or try: Charleston SC, Myrtle Beach SC, New York, Chicago, Miami, Los Angeles`);
-                    }
+                // Validate coordinates
+                if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+                    throw new Error('Invalid coordinates. Latitude: -90 to 90, Longitude: -180 to 180');
                 }
                 
                 // Fetch sunrise/sunset data
                 const apiUrl = `https://api.sunrisesunset.io/json?lat=${lat}&lng=${lng}&date=${dateInput}`;
-                console.log('Fetching sunrise data from:', apiUrl);
+                console.log('API URL:', apiUrl);
                 
                 const response = await fetch(apiUrl);
-                
                 if (!response.ok) {
-                    console.error('API Response not OK:', response.status, response.statusText);
-                    throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+                    throw new Error('Failed to fetch sunrise data');
                 }
                 
                 const data = await response.json();
-                console.log('API Response data:', data);
+                console.log('API Response:', data);
                 
                 if (data.status !== 'OK') {
-                    console.error('API returned error status:', data);
-                    throw new Error(`API error: ${data.status || 'Unknown error'}`);
+                    throw new Error('Invalid response from sunrise API');
                 }
                 
                 displaySunriseData(data.results, locationInput, dateInput);
+                celebrateMilestone('sunrise_data', 'Sunrise Data Loaded');
                 
             } catch (error) {
-                console.error('Sunrise API Error:', error);
-                // Provide more specific error messages
-                let errorMessage = 'Unable to fetch sunrise/sunset data';
-                if (error.message.includes('API request failed')) {
-                    errorMessage = 'Sunrise API service temporarily unavailable. Please try again later.';
-                } else if (error.message.includes('Location')) {
-                    errorMessage = error.message;
-                } else if (error.message.includes('coordinates')) {
-                    errorMessage = 'Invalid location format. Please use "City, State" or "latitude, longitude"';
-                } else {
-                    errorMessage = `Error: ${error.message}`;
-                }
-                showSunriseError(errorMessage);
+                console.error('Sunrise Error:', error);
+                showSunriseError(error.message);
             }
         }
 
@@ -6841,10 +6831,10 @@ ${name}`;
                     
                     <div class="form-group">
                         <label for="locationInput">📍 Location (City, State or Lat, Lng)</label>
-                        <input type="text" id="locationInput" name="locationInput" placeholder="Charleston, SC or 32.7765, -79.9311" 
+                        <input type="text" id="locationInput" name="locationInput" placeholder="Charleston or 32.7765, -79.9311" 
                                style="padding: 12px; border-radius: 8px; border: 2px solid #d4af37; background: #2a2a2a; color: #f5f5f5; font-size: 16px; width: 300px;">
                         <p style="font-size: 0.85em; color: #999; margin-top: 5px;">
-                            Try: Charleston SC, Myrtle Beach SC, New York, Chicago, Miami, Los Angeles, London, Paris, Tokyo
+                            Try: Charleston, Myrtle Beach, New York or coordinates like "32.7765, -79.9311"
                         </p>
                     </div>
                     
