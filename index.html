@@ -114,12 +114,14 @@
             min-height: 100vh;
             font-weight: 400;
             letter-spacing: 0.01em;
+            overflow-x: visible !important;
         }
         
         .container {
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
+            overflow: visible !important;
         }
         
         .header {
@@ -341,7 +343,8 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
             gap: 20px;
-            overflow: visible;
+            overflow: visible !important;
+            z-index: auto;
         }
         
         .session-card {
@@ -354,7 +357,7 @@
             border: 1px solid rgba(212, 175, 55, 0.2);
             position: relative;
             z-index: 1;
-            overflow: visible;
+            overflow: visible !important;
         }
         
         .session-card:hover {
@@ -2542,15 +2545,16 @@
 
         .dropdown-menu {
             position: fixed !important;
-            background: #2a2a2a;
-            border: 2px solid #d4af37;
-            border-radius: 8px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            background: #2a2a2a !important;
+            border: 2px solid #d4af37 !important;
+            border-radius: 8px !important;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3) !important;
             z-index: 2147483647 !important;
             display: none;
-            margin-top: 5px;
-            overflow: visible;
-            min-width: 200px;
+            margin-top: 5px !important;
+            overflow: visible !important;
+            min-width: 200px !important;
+            transform: translateZ(1000px) !important;
         }
 
         .dropdown-menu.show {
@@ -3243,7 +3247,7 @@
                             <button class="dropdown-toggle" onclick="toggleDropdown('${session.id}')">
                                 ⚙️ Session Actions <span style="margin-left: auto;">▼</span>
                             </button>
-                            <div class="dropdown-menu" id="dropdown-${session.id}" style="z-index: 2147483647 !important; position: fixed !important;">
+                            <div class="dropdown-menu" id="dropdown-${session.id}" style="z-index: 2147483647 !important; position: fixed !important; transform: translateZ(1000px) !important; overflow: visible !important;">
                                 <button class="dropdown-item" onclick="editSession('${session.id}'); closeDropdown('${session.id}')">
                                     ✏️ Edit Session
                                 </button>
@@ -6824,6 +6828,10 @@ ${name}`;
                 dropdown.style.left = rect.left + 'px';
                 dropdown.style.right = 'auto';
                 dropdown.style.width = rect.width + 'px';
+                dropdown.style.zIndex = '2147483647';
+                dropdown.style.transform = 'translateZ(1000px)';
+                dropdown.style.overflow = 'visible';
+                dropdown.style.display = 'block';
             }
         }
 
