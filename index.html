@@ -347,18 +347,183 @@
             z-index: auto;
         }
         
-        .session-card {
+        /* Simplified List View Styles */
+        .session-list-item {
             background: rgba(0, 0, 0, 0.85);
             backdrop-filter: blur(20px);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.1);
-            transition: all 0.3s ease;
+            border-radius: 15px;
+            margin-bottom: 15px;
             border: 1px solid rgba(212, 175, 55, 0.2);
-            position: relative;
-            z-index: auto;
-            overflow: visible !important;
-            contain: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .session-list-item:hover {
+            border-color: #d4af37;
+            box-shadow: 0 5px 20px rgba(212, 175, 55, 0.2);
+        }
+
+        .session-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 25px;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+        }
+
+        .session-info {
+            flex: 1;
+        }
+
+        .client-name {
+            font-size: 1.4em;
+            color: #d4af37;
+            margin: 0 0 8px 0;
+            font-weight: bold;
+        }
+
+        .session-meta {
+            display: flex;
+            gap: 20px;
+            font-size: 0.9em;
+            color: #ccc;
+            flex-wrap: wrap;
+        }
+
+        .session-meta span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .session-date {
+            font-weight: 600;
+        }
+
+        .session-location {
+            color: #bbb;
+        }
+
+        .session-price {
+            color: #d4af37;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .expand-icon {
+            font-size: 1.2em;
+            color: #d4af37;
+            transition: transform 0.3s ease;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .session-details {
+            padding: 25px;
+            border-top: 1px solid rgba(212, 175, 55, 0.1);
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .detail-section h4 {
+            color: #d4af37;
+            margin: 0 0 15px 0;
+            font-size: 1.1em;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+            padding-bottom: 5px;
+        }
+
+        .detail-item {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        .detail-item strong {
+            color: #fff;
+            margin-right: 8px;
+        }
+
+        .quick-action-btn {
+            background: #d4af37;
+            color: #000;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 20px;
+            margin-left: 10px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s ease;
+        }
+
+        .quick-action-btn:hover {
+            background: #f4d03f;
+            transform: scale(1.05);
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .action-btn {
+            background: linear-gradient(135deg, #d4af37, #f4d03f);
+            color: #000;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9em;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+        }
+
+        .action-btn.delete-btn {
+            background: linear-gradient(135deg, #dc3545, #ff6b7a);
+            color: white;
+        }
+
+        .action-btn.delete-btn:hover {
+            background: linear-gradient(135deg, #c82333, #ff5161);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .detail-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .session-meta {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .session-list-header {
+                padding: 15px 20px;
+            }
+
+            .session-details {
+                padding: 20px;
+            }
         }
         
         .session-card:hover {
@@ -3181,130 +3346,130 @@
             }
 
             container.innerHTML = sessions.map(session => `
-                <div class="session-card">
-                    <div class="session-header">
-                        <div class="session-title">${session.clientName}</div>
-                        <div class="session-type">${session.sessionType}</div>
+                <div class="session-list-item" data-session-id="${session.id}" onclick="toggleSessionDetails('${session.id}')">
+                    <div class="session-list-header">
+                        <div class="session-info">
+                            <h3 class="client-name">${session.clientName}</h3>
+                            <div class="session-meta">
+                                <span class="session-date">${formatDateTime(session.dateTime).split(' ')[0]}</span>
+                                <span class="session-location">📍 ${session.location}</span>
+                                <span class="session-price">💰 $${session.price}</span>
+                            </div>
+                        </div>
+                        <div class="expand-icon" id="expand-${session.id}">▼</div>
                     </div>
                     
-                    <div class="session-details">
-                        <div class="detail-row">
-                            <span class="detail-label">Date:</span>
-                            <span class="detail-value">${formatDateTime(session.dateTime)}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Location:</span>
-                            <span class="detail-value">${session.location}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Phone:</span>
-                            <span class="detail-value">${session.phoneNumber}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Price:</span>
-                            <span class="detail-value">$${session.price}</span>
-                        </div>
-                        ${session.hasPaymentPlan ? `
-                            <div class="detail-row">
-                                <span class="detail-label">Payment Plan:</span>
-                                <span class="detail-value">$${session.monthlyPayment}/month (${session.paymentsRemaining || 0} remaining)</span>
+                    <div class="session-details" id="details-${session.id}" style="display: none;">
+                        <div class="detail-grid">
+                            <div class="detail-section">
+                                <h4>📞 Contact Info</h4>
+                                <div class="detail-item">
+                                    <strong>Email:</strong> <a href="mailto:${session.email}" style="color: #d4af37;">${session.email}</a>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Phone:</strong> <span style="color: #d4af37;">${session.phoneNumber}</span>
+                                    <button onclick="callClient('${session.phoneNumber}'); event.stopPropagation();" class="quick-action-btn call-btn">📞</button>
+                                    <button onclick="textClient('${session.phoneNumber}', '${session.clientName}', '${session.id}'); event.stopPropagation();" class="quick-action-btn text-btn">💬</button>
+                                </div>
                             </div>
-                        ` : ''}
-                    </div>
-
-                    <!-- Workflow Status Checkboxes -->
-                    <div class="workflow-status">
-                        <h4>📋 Workflow Status</h4>
-                        <div class="status-checkboxes">
-                            <div class="status-item">
-                                <input type="checkbox" id="contractSigned_${session.id}" ${session.contractSigned ? 'checked' : ''} 
-                                       onchange="toggleWorkflowStatus('${session.id}', 'contractSigned', this.checked)">
-                                <label for="contractSigned_${session.id}">📝 Contract Signed</label>
-                            </div>
-                            <div class="status-item">
-                                <input type="checkbox" id="paid_${session.id}" ${session.paid ? 'checked' : ''} 
-                                       onchange="toggleWorkflowStatus('${session.id}', 'paid', this.checked)">
-                                <label for="paid_${session.id}">💰 Paid</label>
-                            </div>
-                            <div class="status-item">
-                                <input type="checkbox" id="edited_${session.id}" ${session.edited ? 'checked' : ''} 
-                                       onchange="toggleWorkflowStatus('${session.id}', 'edited', this.checked)">
-                                <label for="edited_${session.id}">✏️ Edited</label>
-                            </div>
-                            <div class="status-item">
-                                <input type="checkbox" id="delivered_${session.id}" ${session.delivered ? 'checked' : ''} 
-                                       onchange="toggleWorkflowStatus('${session.id}', 'delivered', this.checked)">
-                                <label for="delivered_${session.id}">📦 Delivered</label>
-                            </div>
-                            <div class="status-item">
-                                <input type="checkbox" id="sendReminder_${session.id}" ${session.sendReminder ? 'checked' : ''} 
-                                       onchange="toggleWorkflowStatus('${session.id}', 'sendReminder', this.checked)">
-                                <label for="sendReminder_${session.id}">⏰ Send Reminder</label>
-                            </div>
-                            <div class="status-item">
-                                <input type="checkbox" id="notifyGalleryReady_${session.id}" ${session.notifyGalleryReady ? 'checked' : ''} 
-                                       onchange="toggleWorkflowStatus('${session.id}', 'notifyGalleryReady', this.checked)">
-                                <label for="notifyGalleryReady_${session.id}">🖼️ Notify Gallery Ready</label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="session-actions">
-                        <div class="actions-dropdown">
-                            <button class="dropdown-toggle" onclick="toggleDropdown('${session.id}')">
-                                ⚙️ Session Actions <span style="margin-left: auto;">▼</span>
-                            </button>
-                            <div class="dropdown-menu" id="dropdown-${session.id}" style="z-index: 2147483647 !important; position: absolute !important; overflow: visible !important;">
-                                <button class="dropdown-item" onclick="editSession('${session.id}'); closeDropdown('${session.id}')">
-                                    ✏️ Edit Session
-                                </button>
-                                <button class="dropdown-item" onclick="openUploadModal('${session.id}'); closeDropdown('${session.id}')">
-                                    📸 Upload Photos${session.photos && session.photos.length ? ` (${session.photos.length})` : ''}
-                                </button>
-                                <button class="dropdown-item" onclick="viewSessionGallery('${session.id}'); closeDropdown('${session.id}')">
-                                    🖼️ View Gallery${session.photos && session.photos.length ? ` (${session.photos.length})` : ''}
-                                </button>
-                                <button class="dropdown-item" onclick="copyGalleryUrl('${session.id}'); closeDropdown('${session.id}')">
-                                    🔗 Copy Gallery URL
-                                </button>
-                                <button class="dropdown-item" onclick="addToCalendar('${session.id}'); closeDropdown('${session.id}')">
-                                    📅 Add to Calendar
-                                </button>
-                                <button class="dropdown-item" onclick="openEmailClient('${session.id}'); closeDropdown('${session.id}')">
-                                    📧 Email Client
-                                </button>
-                                <button class="dropdown-item" onclick="openContractModal('${session.id}'); closeDropdown('${session.id}')">
-                                    📝 Send Contract
-                                </button>
+                            
+                            <div class="detail-section">
+                                <h4>📅 Session Details</h4>
+                                <div class="detail-item">
+                                    <strong>Date & Time:</strong> ${formatDateTime(session.dateTime)}
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Type:</strong> ${session.sessionType}
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Duration:</strong> ${session.duration} hours
+                                </div>
+                                ${session.notes ? `
+                                    <div class="detail-item">
+                                        <strong>Notes:</strong> ${session.notes}
+                                    </div>
+                                ` : ''}
                                 ${session.hasPaymentPlan ? `
-                                    <button class="dropdown-item" onclick="viewPaymentPlan('${session.id}'); closeDropdown('${session.id}')">
-                                        💳 View Payment Plan
-                                    </button>
+                                    <div class="detail-item">
+                                        <strong>Payment Plan:</strong> $${session.monthlyPayment}/month (${session.paymentsRemaining || 0} remaining)
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        <div class="workflow-status">
+                            <h4>📋 Workflow Status</h4>
+                            <div class="status-grid">
+                                <div class="status-item">
+                                    <input type="checkbox" id="contractSigned_${session.id}" ${session.contractSigned ? 'checked' : ''} 
+                                           onchange="toggleWorkflowStatus('${session.id}', 'contractSigned', this.checked); event.stopPropagation();">
+                                    <label for="contractSigned_${session.id}">📝 Contract Signed</label>
+                                </div>
+                                <div class="status-item">
+                                    <input type="checkbox" id="paid_${session.id}" ${session.paid ? 'checked' : ''} 
+                                           onchange="toggleWorkflowStatus('${session.id}', 'paid', this.checked); event.stopPropagation();">
+                                    <label for="paid_${session.id}">💰 Paid</label>
+                                </div>
+                                <div class="status-item">
+                                    <input type="checkbox" id="edited_${session.id}" ${session.edited ? 'checked' : ''} 
+                                           onchange="toggleWorkflowStatus('${session.id}', 'edited', this.checked); event.stopPropagation();">
+                                    <label for="edited_${session.id}">✏️ Edited</label>
+                                </div>
+                                <div class="status-item">
+                                    <input type="checkbox" id="delivered_${session.id}" ${session.delivered ? 'checked' : ''} 
+                                           onchange="toggleWorkflowStatus('${session.id}', 'delivered', this.checked); event.stopPropagation();">
+                                    <label for="delivered_${session.id}">📦 Delivered</label>
+                                </div>
+                                <div class="status-item">
+                                    <input type="checkbox" id="sendReminder_${session.id}" ${session.sendReminder ? 'checked' : ''} 
+                                           onchange="toggleWorkflowStatus('${session.id}', 'sendReminder', this.checked); event.stopPropagation();">
+                                    <label for="sendReminder_${session.id}">⏰ Send Reminder</label>
+                                </div>
+                                <div class="status-item">
+                                    <input type="checkbox" id="notifyGalleryReady_${session.id}" ${session.notifyGalleryReady ? 'checked' : ''} 
+                                           onchange="toggleWorkflowStatus('${session.id}', 'notifyGalleryReady', this.checked); event.stopPropagation();">
+                                    <label for="notifyGalleryReady_${session.id}">🖼️ Notify Gallery Ready</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="session-actions">
+                            <div class="action-buttons">
+                                <button onclick="editSession('${session.id}'); event.stopPropagation();" class="action-btn edit-btn">✏️ Edit</button>
+                                <button onclick="openUploadModal('${session.id}'); event.stopPropagation();" class="action-btn upload-btn">📸 Upload${session.photos && session.photos.length ? ` (${session.photos.length})` : ''}</button>
+                                <button onclick="viewSessionGallery('${session.id}'); event.stopPropagation();" class="action-btn gallery-btn">🖼️ Gallery</button>
+                                <button onclick="copyGalleryUrl('${session.id}'); event.stopPropagation();" class="action-btn copy-btn">🔗 Copy URL</button>
+                                <button onclick="addToCalendar('${session.id}'); event.stopPropagation();" class="action-btn calendar-btn">📅 Calendar</button>
+                                <button onclick="openEmailClient('${session.id}'); event.stopPropagation();" class="action-btn email-btn">📧 Email</button>
+                                <button onclick="openContractModal('${session.id}'); event.stopPropagation();" class="action-btn contract-btn">📝 Contract</button>
+                                ${session.hasPaymentPlan ? `
+                                    <button onclick="viewPaymentPlan('${session.id}'); event.stopPropagation();" class="action-btn payment-btn">💳 Payment Plan</button>
                                 ` : `
-                                    <button class="dropdown-item" onclick="sendInvoice('${session.id}'); closeDropdown('${session.id}')">
-                                        💳 Send Invoice
-                                    </button>
-                                    <button class="dropdown-item" onclick="sendDepositInvoice('${session.id}'); closeDropdown('${session.id}')">
-                                        💰 Send Deposit
-                                    </button>
-                                    <button class="dropdown-item" onclick="openPaymentPlanModal('${session.id}'); closeDropdown('${session.id}')">
-                                        📊 Create Payment Plan
-                                    </button>
+                                    <button onclick="sendInvoice('${session.id}'); event.stopPropagation();" class="action-btn invoice-btn">💳 Invoice</button>
+                                    <button onclick="sendDepositInvoice('${session.id}'); event.stopPropagation();" class="action-btn deposit-btn">💰 Deposit</button>
+                                    <button onclick="openPaymentPlanModal('${session.id}'); event.stopPropagation();" class="action-btn plan-btn">📊 Payment Plan</button>
                                 `}
-                                <button class="dropdown-item" onclick="callClient('${session.phoneNumber}'); closeDropdown('${session.id}')">
-                                    📞 Call Client
-                                </button>
-                                <button class="dropdown-item" onclick="textClient('${session.phoneNumber}', '${session.clientName}', '${session.id}'); closeDropdown('${session.id}')">
-                                    💬 Text Client
-                                </button>
-                                <button class="dropdown-item danger" onclick="deleteSession('${session.id}'); closeDropdown('${session.id}')">
-                                    🗑️ Delete Session
-                                </button>
+                                <button onclick="deleteSession('${session.id}'); event.stopPropagation();" class="action-btn delete-btn">🗑️ Delete</button>
                             </div>
                         </div>
                     </div>
                 </div>
             `).join('');
+        }
+
+        function toggleSessionDetails(sessionId) {
+            const details = document.getElementById(`details-${sessionId}`);
+            const expandIcon = document.getElementById(`expand-${sessionId}`);
+            
+            if (details.style.display === 'none') {
+                details.style.display = 'block';
+                expandIcon.textContent = '▲';
+                expandIcon.style.transform = 'rotate(180deg)';
+            } else {
+                details.style.display = 'none';
+                expandIcon.textContent = '▼';
+                expandIcon.style.transform = 'rotate(0deg)';
+            }
         }
 
         function openUploadModal(sessionId) {
