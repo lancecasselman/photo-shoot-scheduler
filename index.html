@@ -2514,7 +2514,7 @@
         .actions-dropdown {
             position: relative;
             display: inline-block;
-            z-index: 2147483646;
+            z-index: 2147483646 !important;
         }
 
         .dropdown-toggle {
@@ -3243,7 +3243,7 @@
                             <button class="dropdown-toggle" onclick="toggleDropdown('${session.id}')">
                                 ⚙️ Session Actions <span style="margin-left: auto;">▼</span>
                             </button>
-                            <div class="dropdown-menu" id="dropdown-${session.id}">
+                            <div class="dropdown-menu" id="dropdown-${session.id}" style="z-index: 2147483647 !important; position: fixed !important;">
                                 <button class="dropdown-item" onclick="editSession('${session.id}'); closeDropdown('${session.id}')">
                                     ✏️ Edit Session
                                 </button>
