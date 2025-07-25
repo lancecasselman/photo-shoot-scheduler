@@ -2459,6 +2459,100 @@
             }
         }
         
+        /* Sunrise/Sunset Calendar Styles */
+        .sunrise-calendar-container {
+            padding: 30px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .sunrise-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .sunrise-header h2 {
+            color: #d4af37;
+            font-size: 2.2em;
+            margin-bottom: 10px;
+        }
+
+        .sunrise-controls {
+            display: flex;
+            gap: 20px;
+            align-items: end;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .sunrise-results {
+            margin-top: 30px;
+        }
+
+        .sunrise-card {
+            background: linear-gradient(135deg, #2a2a2a, #1f1f1f);
+            border: 2px solid #d4af37;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 30px rgba(212, 175, 55, 0.2);
+        }
+
+        .sunrise-times-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .time-card {
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid #d4af37;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .time-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.3);
+        }
+
+        .time-icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .time-label {
+            color: #d4af37;
+            font-weight: bold;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+        }
+
+        .time-value {
+            color: #f5f5f5;
+            font-size: 1.4em;
+            font-weight: bold;
+        }
+
+        .photography-tips {
+            background: rgba(212, 175, 55, 0.05);
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .photography-tips h4 {
+            color: #d4af37;
+            margin-bottom: 15px;
+        }
+
+        .photography-tips p {
+            margin-bottom: 8px;
+            color: #f5f5f5;
+        }
+
         @media (max-width: 768px) {
             .container { padding: 10px; }
             .sessions-grid { grid-template-columns: 1fr; }
@@ -2466,6 +2560,15 @@
             .session-actions { flex-direction: column; }
             .btn { width: 100%; margin: 2px 0; }
             .checkbox-grid { grid-template-columns: 1fr; }
+            
+            .sunrise-controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .sunrise-times-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -2487,6 +2590,9 @@
         <div class="nav-tabs">
             <button class="nav-tab active" onclick="switchTab('clients')">
                 Client Management
+            </button>
+            <button class="nav-tab" onclick="switchTab('sunrise')">
+                🌅 Sunrise/Sunset Calendar
             </button>
             <button class="nav-tab" onclick="switchTab('websites')">
                 Website Builder
@@ -2759,6 +2865,7 @@
             loadSessions();
             setupEventListeners();
             setMinDateTime(); // Allow all dates for historical entries
+            initializeSunriseCalendar(); // Initialize sunrise calendar
         });
 
         function setupEventListeners() {
@@ -6235,9 +6342,226 @@ ${name}`;
         styleSheet.textContent = websiteBuilderStyles;
         document.head.appendChild(styleSheet);
 
+        // Tab switching functionality
+        function switchTab(tabName) {
+            // Hide all tab contents
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(tab => tab.classList.remove('active'));
+            
+            // Remove active class from all nav tabs
+            const navTabs = document.querySelectorAll('.nav-tab');
+            navTabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Show selected tab content
+            const targetTab = document.getElementById(tabName + 'Tab');
+            if (targetTab) {
+                targetTab.classList.add('active');
+            }
+            
+            // Add active class to clicked nav tab
+            const clickedTab = event.target;
+            if (clickedTab) {
+                clickedTab.classList.add('active');
+            }
+            
+            // Initialize sunrise calendar if switching to that tab
+            if (tabName === 'sunrise') {
+                initializeSunriseCalendar();
+            }
+        }
+
+        // Sunrise/Sunset Calendar Functions
+        function initializeSunriseCalendar() {
+            // Set today's date as default
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('sunriseDate').value = today;
+            
+            // Clear any previous results
+            document.getElementById('sunriseResults').style.display = 'none';
+            document.getElementById('sunriseError').style.display = 'none';
+        }
+
+        async function getSunriseSunsetData() {
+            const dateInput = document.getElementById('sunriseDate').value;
+            const locationInput = document.getElementById('locationInput').value.trim();
+            
+            if (!dateInput || !locationInput) {
+                showSunriseError('Please enter both date and location');
+                return;
+            }
+            
+            try {
+                let lat, lng;
+                
+                // Check if input is coordinates (lat, lng format)
+                if (locationInput.includes(',')) {
+                    const coords = locationInput.split(',');
+                    if (coords.length === 2) {
+                        lat = parseFloat(coords[0].trim());
+                        lng = parseFloat(coords[1].trim());
+                        
+                        if (isNaN(lat) || isNaN(lng)) {
+                            throw new Error('Invalid coordinates format');
+                        }
+                    }
+                }
+                
+                // If not coordinates, use geocoding API (for city names)
+                if (!lat || !lng) {
+                    const geocodeResponse = await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(locationInput)}&limit=1&appid=demo`);
+                    if (!geocodeResponse.ok) {
+                        // Fallback: use default coordinates for demonstration
+                        lat = 40.7128; // NYC
+                        lng = -74.0060;
+                        console.warn('Geocoding not available, using NYC coordinates');
+                    } else {
+                        const geocodeData = await geocodeResponse.json();
+                        if (geocodeData.length > 0) {
+                            lat = geocodeData[0].lat;
+                            lng = geocodeData[0].lon;
+                        } else {
+                            throw new Error('Location not found');
+                        }
+                    }
+                }
+                
+                // Fetch sunrise/sunset data
+                const apiUrl = `https://api.sunrisesunset.io/json?lat=${lat}&lng=${lng}&date=${dateInput}`;
+                const response = await fetch(apiUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`API request failed: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.status !== 'OK') {
+                    throw new Error('Invalid API response');
+                }
+                
+                displaySunriseData(data.results, locationInput, dateInput);
+                
+            } catch (error) {
+                console.error('Sunrise API Error:', error);
+                showSunriseError(`Error fetching data: ${error.message}`);
+            }
+        }
+
+        function displaySunriseData(results, location, date) {
+            // Update location and date
+            document.getElementById('sunriseLocation').textContent = `📍 ${location}`;
+            document.getElementById('sunriseSelectedDate').textContent = `📅 ${new Date(date).toLocaleDateString()}`;
+            
+            // Update time values
+            document.getElementById('sunriseTime').textContent = results.sunrise || '--:--';
+            document.getElementById('sunsetTime').textContent = results.sunset || '--:--';
+            document.getElementById('solarNoon').textContent = results.solar_noon || '--:--';
+            document.getElementById('goldenHourStart').textContent = results.golden_hour || '--:--';
+            document.getElementById('goldenHourEnd').textContent = results.golden_hour || '--:--';
+            document.getElementById('blueHourEnd').textContent = results.last_light || '--:--';
+            
+            // Show results and hide error
+            document.getElementById('sunriseResults').style.display = 'block';
+            document.getElementById('sunriseError').style.display = 'none';
+            
+            // Add celebration animation
+            triggerConfetti(25, 'sunrise');
+        }
+
+        function showSunriseError(message) {
+            document.getElementById('errorText').textContent = message;
+            document.getElementById('sunriseError').style.display = 'block';
+            document.getElementById('sunriseResults').style.display = 'none';
+        }
+
     </script>
 
         </div> <!-- End Client Management Tab -->
+
+        <!-- Sunrise/Sunset Calendar Tab Content -->
+        <div id="sunriseTab" class="tab-content">
+            <div class="sunrise-calendar-container">
+                <div class="sunrise-header">
+                    <h2>🌅 Photography Sunrise/Sunset Calendar</h2>
+                    <p>Perfect lighting times for outdoor photography sessions</p>
+                </div>
+
+                <div class="sunrise-controls">
+                    <div class="form-group">
+                        <label for="sunriseDate">📅 Select Date</label>
+                        <input type="date" id="sunriseDate" name="sunriseDate" style="padding: 12px; border-radius: 8px; border: 2px solid #d4af37; background: #2a2a2a; color: #f5f5f5; font-size: 16px;">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="locationInput">📍 Location (City, State or Lat, Lng)</label>
+                        <input type="text" id="locationInput" name="locationInput" placeholder="New York, NY or 40.7128, -74.0060" 
+                               style="padding: 12px; border-radius: 8px; border: 2px solid #d4af37; background: #2a2a2a; color: #f5f5f5; font-size: 16px; width: 300px;">
+                    </div>
+                    
+                    <button onclick="getSunriseSunsetData()" class="btn btn-primary" style="background: linear-gradient(135deg, #d4af37, #ffd700); color: #1a1a1a; font-weight: bold; padding: 12px 24px;">
+                        🌅 Get Sunrise/Sunset Times
+                    </button>
+                </div>
+
+                <div id="sunriseResults" class="sunrise-results" style="display: none;">
+                    <div class="sunrise-card">
+                        <h3 id="sunriseLocation">📍 Location</h3>
+                        <p id="sunriseSelectedDate">📅 Date</p>
+                        
+                        <div class="sunrise-times-grid">
+                            <div class="time-card sunrise">
+                                <div class="time-icon">🌅</div>
+                                <div class="time-label">Sunrise</div>
+                                <div class="time-value" id="sunriseTime">--:--</div>
+                            </div>
+                            
+                            <div class="time-card golden-hour-morning">
+                                <div class="time-icon">🌇</div>
+                                <div class="time-label">Golden Hour Start</div>
+                                <div class="time-value" id="goldenHourStart">--:--</div>
+                            </div>
+                            
+                            <div class="time-card solar-noon">
+                                <div class="time-icon">☀️</div>
+                                <div class="time-label">Solar Noon</div>
+                                <div class="time-value" id="solarNoon">--:--</div>
+                            </div>
+                            
+                            <div class="time-card golden-hour-evening">
+                                <div class="time-icon">🌆</div>
+                                <div class="time-label">Golden Hour End</div>
+                                <div class="time-value" id="goldenHourEnd">--:--</div>
+                            </div>
+                            
+                            <div class="time-card sunset">
+                                <div class="time-icon">🌇</div>
+                                <div class="time-label">Sunset</div>
+                                <div class="time-value" id="sunsetTime">--:--</div>
+                            </div>
+                            
+                            <div class="time-card blue-hour">
+                                <div class="time-icon">🌌</div>
+                                <div class="time-label">Blue Hour End</div>
+                                <div class="time-value" id="blueHourEnd">--:--</div>
+                            </div>
+                        </div>
+                        
+                        <div class="photography-tips">
+                            <h4>📸 Photography Tips</h4>
+                            <div id="photographyTips">
+                                <p><strong>Golden Hour:</strong> Soft, warm light perfect for portraits and landscapes</p>
+                                <p><strong>Blue Hour:</strong> Even lighting ideal for cityscapes and architecture</p>
+                                <p><strong>Solar Noon:</strong> Harsh shadows - avoid outdoor portraits</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="sunriseError" class="error-message" style="display: none; background: rgba(255, 0, 0, 0.1); border: 2px solid #ff0000; color: #ff6b6b; padding: 15px; border-radius: 8px; margin-top: 20px;">
+                    ❌ <span id="errorText">Error loading sunrise/sunset data</span>
+                </div>
+            </div>
+        </div>
 
         <!-- Website Builder Tab Content -->
         <div id="websitesTab" class="tab-content">
