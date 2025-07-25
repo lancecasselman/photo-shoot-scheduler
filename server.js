@@ -734,6 +734,63 @@ app.post('/api/sessions/:id/upload-photos', isAuthenticated, (req, res) => {
 
 // DEAD CODE BLOCK REMOVED - was unreachable after return statement
 
+// Delete photo from session
+app.delete('/api/sessions/:sessionId/photos/:filename', isAuthenticated, async (req, res) => {
+    const { sessionId, filename } = req.params;
+    
+    try {
+        // Get session to check if photo exists
+        const session = await getSessionById(sessionId);
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+        
+        // Check if photo exists in session
+        const photoIndex = session.photos ? session.photos.findIndex(p => p.filename === filename) : -1;
+        if (photoIndex === -1) {
+            return res.status(404).json({ error: 'Photo not found in session' });
+        }
+        
+        // Delete physical file
+        const filePath = path.join(uploadsDir, filename);
+        try {
+            if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+                console.log(`🗑️ Deleted file: ${filePath}`);
+            }
+        } catch (fileError) {
+            console.error('Error deleting file:', fileError);
+            // Continue with database cleanup even if file deletion fails
+        }
+        
+        // Remove photo from session's photos array
+        const updatedPhotos = session.photos.filter(p => p.filename !== filename);
+        
+        // Update session in database
+        const query = `
+            UPDATE photography_sessions 
+            SET photos = $1::jsonb 
+            WHERE id = $2 
+            RETURNING *
+        `;
+        const result = await pool.query(query, [JSON.stringify(updatedPhotos), sessionId]);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Failed to update session' });
+        }
+        
+        console.log(`🗑️ Photo deleted from session ${sessionId}: ${filename}`);
+        res.json({ 
+            message: 'Photo deleted successfully',
+            remainingPhotos: updatedPhotos.length
+        });
+        
+    } catch (error) {
+        console.error('Error deleting photo:', error);
+        res.status(500).json({ error: 'Failed to delete photo' });
+    }
+});
+
 // Delete session
 app.delete('/api/sessions/:id', isAuthenticated, async (req, res) => {
     const sessionId = req.params.id;
