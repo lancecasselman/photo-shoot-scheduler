@@ -2459,6 +2459,53 @@
             }
         }
         
+        /* Workflow Status Styles */
+        .workflow-status {
+            background: rgba(212, 175, 55, 0.05);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .workflow-status h4 {
+            color: #d4af37;
+            font-size: 1em;
+            margin-bottom: 12px;
+            font-weight: bold;
+        }
+
+        .status-checkboxes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: #d4af37;
+            cursor: pointer;
+        }
+
+        .status-item label {
+            color: #f5f5f5;
+            font-size: 0.9em;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .status-item input[type="checkbox"]:checked + label {
+            color: #d4af37;
+            font-weight: bold;
+        }
+
         /* Sunrise/Sunset Calendar Styles */
         .sunrise-calendar-container {
             padding: 30px;
@@ -2567,6 +2614,10 @@
             }
             
             .sunrise-times-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .status-checkboxes {
                 grid-template-columns: 1fr;
             }
         }
@@ -3028,6 +3079,43 @@
                                 <span class="detail-value">$${session.monthlyPayment}/month (${session.paymentsRemaining || 0} remaining)</span>
                             </div>
                         ` : ''}
+                    </div>
+
+                    <!-- Workflow Status Checkboxes -->
+                    <div class="workflow-status">
+                        <h4>📋 Workflow Status</h4>
+                        <div class="status-checkboxes">
+                            <div class="status-item">
+                                <input type="checkbox" id="contractSigned_${session.id}" ${session.contractSigned ? 'checked' : ''} 
+                                       onchange="toggleWorkflowStatus('${session.id}', 'contractSigned', this.checked)">
+                                <label for="contractSigned_${session.id}">📝 Contract Signed</label>
+                            </div>
+                            <div class="status-item">
+                                <input type="checkbox" id="paid_${session.id}" ${session.paid ? 'checked' : ''} 
+                                       onchange="toggleWorkflowStatus('${session.id}', 'paid', this.checked)">
+                                <label for="paid_${session.id}">💰 Paid</label>
+                            </div>
+                            <div class="status-item">
+                                <input type="checkbox" id="edited_${session.id}" ${session.edited ? 'checked' : ''} 
+                                       onchange="toggleWorkflowStatus('${session.id}', 'edited', this.checked)">
+                                <label for="edited_${session.id}">✏️ Edited</label>
+                            </div>
+                            <div class="status-item">
+                                <input type="checkbox" id="delivered_${session.id}" ${session.delivered ? 'checked' : ''} 
+                                       onchange="toggleWorkflowStatus('${session.id}', 'delivered', this.checked)">
+                                <label for="delivered_${session.id}">📦 Delivered</label>
+                            </div>
+                            <div class="status-item">
+                                <input type="checkbox" id="sendReminder_${session.id}" ${session.sendReminder ? 'checked' : ''} 
+                                       onchange="toggleWorkflowStatus('${session.id}', 'sendReminder', this.checked)">
+                                <label for="sendReminder_${session.id}">⏰ Send Reminder</label>
+                            </div>
+                            <div class="status-item">
+                                <input type="checkbox" id="notifyGalleryReady_${session.id}" ${session.notifyGalleryReady ? 'checked' : ''} 
+                                       onchange="toggleWorkflowStatus('${session.id}', 'notifyGalleryReady', this.checked)">
+                                <label for="notifyGalleryReady_${session.id}">🖼️ Notify Gallery Ready</label>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="session-actions">
@@ -6529,6 +6617,80 @@ ${name}`;
             document.getElementById('errorText').textContent = message;
             document.getElementById('sunriseError').style.display = 'block';
             document.getElementById('sunriseResults').style.display = 'none';
+        }
+
+        // Workflow Status Management
+        async function toggleWorkflowStatus(sessionId, field, checked) {
+            try {
+                // Find the session in our local array
+                const sessionIndex = sessions.findIndex(s => s.id === sessionId);
+                if (sessionIndex === -1) {
+                    showMessage('Session not found', 'error');
+                    return;
+                }
+
+                // Update the local session object
+                sessions[sessionIndex][field] = checked;
+
+                // Send update to server
+                const response = await fetch(`/api/sessions/${sessionId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ...sessions[sessionIndex],
+                        [field]: checked
+                    })
+                });
+
+                if (response.ok) {
+                    const updatedSession = await response.json();
+                    sessions[sessionIndex] = updatedSession;
+                    
+                    // Show success message with celebration
+                    const fieldLabels = {
+                        contractSigned: 'Contract Signed',
+                        paid: 'Payment Received', 
+                        edited: 'Photos Edited',
+                        delivered: 'Session Delivered',
+                        sendReminder: 'Reminder Set',
+                        notifyGalleryReady: 'Gallery Notification'
+                    };
+                    
+                    const actionText = checked ? 'marked as complete' : 'unmarked';
+                    showMessage(`${fieldLabels[field]} ${actionText} for ${sessions[sessionIndex].clientName}`, 'success');
+                    
+                    // Trigger celebration for major milestones
+                    if (checked) {
+                        if (field === 'contractSigned') {
+                            celebrateMilestone('contract_signed', sessions[sessionIndex].clientName);
+                        } else if (field === 'paid') {
+                            celebrateMilestone('payment_received', sessions[sessionIndex].clientName);
+                        } else if (field === 'delivered') {
+                            celebrateMilestone('session_delivered', sessions[sessionIndex].clientName);
+                        }
+                    }
+                } else {
+                    // Revert the checkbox if server update failed
+                    const checkbox = document.getElementById(`${field}_${sessionId}`);
+                    if (checkbox) {
+                        checkbox.checked = !checked;
+                    }
+                    sessions[sessionIndex][field] = !checked;
+                    showMessage('Failed to update workflow status', 'error');
+                }
+            } catch (error) {
+                console.error('Error updating workflow status:', error);
+                showMessage('Error updating workflow status', 'error');
+                
+                // Revert the checkbox on error
+                const checkbox = document.getElementById(`${field}_${sessionId}`);
+                if (checkbox) {
+                    checkbox.checked = !checked;
+                }
+                if (sessionIndex !== -1) {
+                    sessions[sessionIndex][field] = !checked;
+                }
+            }
         }
 
     </script>
