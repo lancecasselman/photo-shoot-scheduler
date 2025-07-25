@@ -356,8 +356,9 @@
             transition: all 0.3s ease;
             border: 1px solid rgba(212, 175, 55, 0.2);
             position: relative;
-            z-index: 1;
+            z-index: auto;
             overflow: visible !important;
+            contain: none;
         }
         
         .session-card:hover {
@@ -2518,6 +2519,7 @@
             position: relative;
             display: inline-block;
             z-index: 2147483646 !important;
+            isolation: isolate;
         }
 
         .dropdown-toggle {
@@ -2560,7 +2562,9 @@
         }
 
         .dropdown-menu.show {
-            display: block;
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
         }
 
         .dropdown-item {
@@ -6824,6 +6828,10 @@ ${name}`;
                 dropdown.style.zIndex = '2147483647';
                 dropdown.style.position = 'absolute';
                 dropdown.style.overflow = 'visible';
+                dropdown.style.display = 'block';
+                dropdown.style.visibility = 'visible';
+                dropdown.style.opacity = '1';
+                console.log('Dropdown shown:', sessionId, dropdown);
             }
         }
 
