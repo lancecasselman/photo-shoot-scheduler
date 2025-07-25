@@ -2506,6 +2506,82 @@
             font-weight: bold;
         }
 
+        /* Dropdown Menu Styles */
+        .actions-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-toggle {
+            background: linear-gradient(135deg, #d4af37, #ffd700);
+            color: #1a1a1a;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .dropdown-toggle:hover {
+            background: linear-gradient(135deg, #ffd700, #d4af37);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #2a2a2a;
+            border: 2px solid #d4af37;
+            border-radius: 8px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            display: none;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            display: block;
+            width: 100%;
+            padding: 10px 15px;
+            background: transparent;
+            border: none;
+            color: #f5f5f5;
+            text-align: left;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+        }
+
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(212, 175, 55, 0.2);
+            color: #d4af37;
+        }
+
+        .dropdown-item.danger:hover {
+            background: rgba(255, 107, 107, 0.2);
+            color: #ff6b6b;
+        }
+
         /* Sunrise/Sunset Calendar Styles */
         .sunrise-calendar-container {
             padding: 30px;
@@ -3119,53 +3195,58 @@
                     </div>
 
                     <div class="session-actions">
-                        <button class="btn btn-edit" onclick="editSession('${session.id}')">
-                            Edit
-                        </button>
-                        <button class="btn btn-secondary" onclick="openUploadModal('${session.id}')">
-                            Upload Photos${session.photos && session.photos.length ? ` (${session.photos.length})` : ''}
-                        </button>
-                        <button class="btn btn-calendar" onclick="addToCalendar('${session.id}')">
-                            Add to Calendar
-                        </button>
-                        <button class="btn btn-primary" onclick="openEmailClient('${session.id}')">
-                            Email Client
-                        </button>
-                        <button class="btn btn-gallery" onclick="viewSessionGallery('${session.id}')">
-                            View Gallery${session.photos && session.photos.length ? ` (${session.photos.length})` : ''}
-                        </button>
-                        <button class="btn btn-warning" onclick="copyGalleryUrl('${session.id}')">
-                            Copy Gallery URL
-                        </button>
-                        <button class="btn btn-contract" onclick="openContractModal('${session.id}')">
-                            Send Contract
-                        </button>
-                        ${session.hasPaymentPlan ? `
-                            <button class="btn btn-success" onclick="viewPaymentPlan('${session.id}')">
-                                View Payment Plan
+                        <div class="actions-dropdown">
+                            <button class="dropdown-toggle" onclick="toggleDropdown('${session.id}')">
+                                ⚙️ Session Actions <span style="margin-left: auto;">▼</span>
                             </button>
-                        ` : `
-                            <button class="btn btn-invoice" onclick="sendInvoice('${session.id}')">
-                                Send Invoice
-                            </button>
-
-                            <button class="btn btn-invoice" onclick="sendDepositInvoice('${session.id}')">
-                                Send Deposit
-                            </button>
-
-                            <button class="btn btn-success" onclick="openPaymentPlanModal('${session.id}')">
-                                Create Payment Plan
-                            </button>
-                        `}
-                        <button class="btn btn-call" onclick="callClient('${session.phoneNumber}')">
-                            Call Client
-                        </button>
-                        <button class="btn btn-text" onclick="textClient('${session.phoneNumber}', '${session.clientName}', '${session.id}')">
-                            Text Client
-                        </button>
-                        <button class="btn btn-danger" onclick="deleteSession('${session.id}')">
-                            Delete
-                        </button>
+                            <div class="dropdown-menu" id="dropdown-${session.id}">
+                                <button class="dropdown-item" onclick="editSession('${session.id}'); closeDropdown('${session.id}')">
+                                    ✏️ Edit Session
+                                </button>
+                                <button class="dropdown-item" onclick="openUploadModal('${session.id}'); closeDropdown('${session.id}')">
+                                    📸 Upload Photos${session.photos && session.photos.length ? ` (${session.photos.length})` : ''}
+                                </button>
+                                <button class="dropdown-item" onclick="viewSessionGallery('${session.id}'); closeDropdown('${session.id}')">
+                                    🖼️ View Gallery${session.photos && session.photos.length ? ` (${session.photos.length})` : ''}
+                                </button>
+                                <button class="dropdown-item" onclick="copyGalleryUrl('${session.id}'); closeDropdown('${session.id}')">
+                                    🔗 Copy Gallery URL
+                                </button>
+                                <button class="dropdown-item" onclick="addToCalendar('${session.id}'); closeDropdown('${session.id}')">
+                                    📅 Add to Calendar
+                                </button>
+                                <button class="dropdown-item" onclick="openEmailClient('${session.id}'); closeDropdown('${session.id}')">
+                                    📧 Email Client
+                                </button>
+                                <button class="dropdown-item" onclick="openContractModal('${session.id}'); closeDropdown('${session.id}')">
+                                    📝 Send Contract
+                                </button>
+                                ${session.hasPaymentPlan ? `
+                                    <button class="dropdown-item" onclick="viewPaymentPlan('${session.id}'); closeDropdown('${session.id}')">
+                                        💳 View Payment Plan
+                                    </button>
+                                ` : `
+                                    <button class="dropdown-item" onclick="sendInvoice('${session.id}'); closeDropdown('${session.id}')">
+                                        💳 Send Invoice
+                                    </button>
+                                    <button class="dropdown-item" onclick="sendDepositInvoice('${session.id}'); closeDropdown('${session.id}')">
+                                        💰 Send Deposit
+                                    </button>
+                                    <button class="dropdown-item" onclick="openPaymentPlanModal('${session.id}'); closeDropdown('${session.id}')">
+                                        📊 Create Payment Plan
+                                    </button>
+                                `}
+                                <button class="dropdown-item" onclick="callClient('${session.phoneNumber}'); closeDropdown('${session.id}')">
+                                    📞 Call Client
+                                </button>
+                                <button class="dropdown-item" onclick="textClient('${session.phoneNumber}', '${session.clientName}', '${session.id}'); closeDropdown('${session.id}')">
+                                    💬 Text Client
+                                </button>
+                                <button class="dropdown-item danger" onclick="deleteSession('${session.id}'); closeDropdown('${session.id}')">
+                                    🗑️ Delete Session
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             `).join('');
@@ -6692,6 +6773,36 @@ ${name}`;
                 }
             }
         }
+
+        // Dropdown Menu Functions
+        function toggleDropdown(sessionId) {
+            const dropdown = document.getElementById(`dropdown-${sessionId}`);
+            const isVisible = dropdown.classList.contains('show');
+            
+            // Close all other dropdowns
+            document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+                menu.classList.remove('show');
+            });
+            
+            // Toggle current dropdown
+            if (!isVisible) {
+                dropdown.classList.add('show');
+            }
+        }
+
+        function closeDropdown(sessionId) {
+            const dropdown = document.getElementById(`dropdown-${sessionId}`);
+            dropdown.classList.remove('show');
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.actions-dropdown')) {
+                document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+                    menu.classList.remove('show');
+                });
+            }
+        });
 
     </script>
 
