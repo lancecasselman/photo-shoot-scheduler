@@ -341,6 +341,7 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
             gap: 20px;
+            overflow: visible;
         }
         
         .session-card {
@@ -353,6 +354,7 @@
             border: 1px solid rgba(212, 175, 55, 0.2);
             position: relative;
             z-index: 1;
+            overflow: visible;
         }
         
         .session-card:hover {
@@ -2539,18 +2541,16 @@
         }
 
         .dropdown-menu {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
+            position: fixed !important;
             background: #2a2a2a;
             border: 2px solid #d4af37;
             border-radius: 8px;
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-            z-index: 99999;
+            z-index: 999999 !important;
             display: none;
             margin-top: 5px;
-            overflow: hidden;
+            overflow: visible;
+            min-width: 200px;
         }
 
         .dropdown-menu.show {
@@ -6804,16 +6804,26 @@ ${name}`;
         // Dropdown Menu Functions
         function toggleDropdown(sessionId) {
             const dropdown = document.getElementById(`dropdown-${sessionId}`);
+            const toggle = dropdown.previousElementSibling;
             const isVisible = dropdown.classList.contains('show');
             
             // Close all other dropdowns
             document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
                 menu.classList.remove('show');
+                menu.style.position = 'absolute';
             });
             
             // Toggle current dropdown
             if (!isVisible) {
                 dropdown.classList.add('show');
+                
+                // Position dropdown relative to button using fixed positioning
+                const rect = toggle.getBoundingClientRect();
+                dropdown.style.position = 'fixed';
+                dropdown.style.top = (rect.bottom + 5) + 'px';
+                dropdown.style.left = rect.left + 'px';
+                dropdown.style.right = 'auto';
+                dropdown.style.width = rect.width + 'px';
             }
         }
 
