@@ -2518,25 +2518,32 @@
             <input type="file" id="fileInput" multiple accept="image/*" style="display: none;">
             <div id="uploadProgress" style="margin: 20px 0;">
                 <div id="filePreview" style="margin-bottom: 15px;"></div>
-                <div id="uploadStatus" style="display: none;">
-                    <div class="upload-status-header">
-                        <span id="uploadStatusText">Preparing upload...</span>
-                        <span id="uploadCounter">0/0</span>
-                    </div>
-                    <div class="progress-bar-container">
-                        <div class="progress-bar" id="overallProgress"></div>
-                    </div>
-                    <div id="fileProgressList" style="margin-top: 15px;"></div>
+                
+                <!-- Enhanced Upload Progress Bar with Percentage Display -->
+                <div id="uploadProgressContainer" style="display: none; margin-top: 20px; padding: 20px; background: rgba(212, 175, 55, 0.1); border-radius: 12px; border: 2px solid #d4af37; box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2);">
+                    <div style="margin-bottom: 15px; color: #d4af37; font-weight: bold; text-align: center; font-size: 16px;" id="progressText">Starting Upload...</div>
                     
-                    <!-- Upload Progress Bar -->
-                    <div id="uploadProgress" style="display: none; margin-top: 20px; padding: 15px; background: rgba(212, 175, 55, 0.1); border-radius: 8px; border: 1px solid #d4af37;">
-                        <div style="margin-bottom: 10px; color: #d4af37; font-weight: bold; text-align: center;" id="progressTitle">Uploading Photos...</div>
-                        <div style="background: #333; border-radius: 8px; padding: 3px; margin-bottom: 10px;">
-                            <div id="progressBar" style="background: linear-gradient(135deg, #d4af37, #ffd700); height: 24px; border-radius: 6px; width: 0%; transition: width 0.3s ease; display: flex; align-items: center; justify-content: center; color: black; font-weight: bold; font-size: 12px;"></div>
-                        </div>
-                        <div id="progressText" style="color: #d4af37; font-size: 14px; text-align: center;">Preparing upload...</div>
-                        <div id="progressDetails" style="color: #999; font-size: 12px; text-align: center; margin-top: 5px;"></div>
+                    <!-- Progress Bar with Percentage -->
+                    <div style="background: #2d2d2d; border-radius: 12px; padding: 4px; margin-bottom: 15px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.3);">
+                        <div id="progressBar" style="
+                            background: linear-gradient(135deg, #d4af37 0%, #ffd700 50%, #d4af37 100%); 
+                            height: 32px; 
+                            border-radius: 8px; 
+                            width: 0%; 
+                            transition: width 0.3s ease; 
+                            display: flex; 
+                            align-items: center; 
+                            justify-content: center; 
+                            color: #1a1a1a; 
+                            font-weight: bold; 
+                            font-size: 16px;
+                            text-shadow: 0 1px 2px rgba(255,255,255,0.3);
+                            box-shadow: 0 2px 8px rgba(212, 175, 55, 0.4);
+                        ">0%</div>
                     </div>
+                    
+                    <div id="progressDetails" style="color: #d4af37; font-size: 14px; text-align: center; margin-bottom: 5px;">Preparing files...</div>
+                    <div style="color: #999; font-size: 12px; text-align: center;" id="progressSubDetails">Please wait while we process your upload</div>
                 </div>
             </div>
             <div style="text-align: center; margin-top: 20px;">
@@ -2961,14 +2968,14 @@
         }
 
         function showUploadProgress(show = true) {
-            const progressDiv = document.getElementById('uploadProgress');
+            const progressContainer = document.getElementById('uploadProgressContainer');
             const uploadBtn = document.getElementById('uploadBtn');
             
             if (show) {
-                progressDiv.style.display = 'block';
+                progressContainer.style.display = 'block';
                 uploadBtn.style.display = 'none';
             } else {
-                progressDiv.style.display = 'none';
+                progressContainer.style.display = 'none';
                 uploadBtn.style.display = 'block';
             }
         }
@@ -2977,29 +2984,53 @@
             const progressBar = document.getElementById('progressBar');
             const progressText = document.getElementById('progressText');
             const progressDetails = document.getElementById('progressDetails');
+            const progressSubDetails = document.getElementById('progressSubDetails');
             
+            const roundedPercent = Math.round(percent);
+            
+            // Update progress bar width and text
             progressBar.style.width = `${percent}%`;
-            progressBar.textContent = `${Math.round(percent)}%`;
+            progressBar.textContent = `${roundedPercent}%`;
             
-            // Enhanced styling for better visibility
-            progressBar.style.fontSize = '14px';
-            progressBar.style.fontWeight = 'bold';
-            progressBar.style.color = percent > 50 ? 'white' : '#333';
-            progressBar.style.textAlign = 'center';
-            progressBar.style.lineHeight = '20px';
-            progressBar.style.textShadow = '0 1px 2px rgba(0,0,0,0.5)';
-            progressBar.style.display = 'flex';
-            progressBar.style.alignItems = 'center';
-            progressBar.style.justifyContent = 'center';
+            // Enhanced color coding based on progress
+            if (percent < 25) {
+                progressBar.style.background = 'linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%)'; // Red for starting
+            } else if (percent < 50) {
+                progressBar.style.background = 'linear-gradient(135deg, #ffa726 0%, #ffcc02 100%)'; // Orange for quarter
+            } else if (percent < 75) {
+                progressBar.style.background = 'linear-gradient(135deg, #ffcc02 0%, #d4af37 100%)'; // Yellow for half
+            } else if (percent < 100) {
+                progressBar.style.background = 'linear-gradient(135deg, #d4af37 0%, #4caf50 100%)'; // Gold to green for almost done
+            } else {
+                progressBar.style.background = 'linear-gradient(135deg, #4caf50 0%, #81c784 100%)'; // Green for complete
+            }
             
+            // Update text content
             progressText.textContent = text;
             progressDetails.textContent = details;
             
+            // Add sub-details for extra information
+            if (progressSubDetails) {
+                if (percent === 100) {
+                    progressSubDetails.textContent = '🎉 Upload completed successfully!';
+                    progressSubDetails.style.color = '#4caf50';
+                } else if (percent > 0) {
+                    progressSubDetails.textContent = `${roundedPercent}% complete - Upload in progress...`;
+                    progressSubDetails.style.color = '#d4af37';
+                } else {
+                    progressSubDetails.textContent = 'Initializing upload process...';
+                    progressSubDetails.style.color = '#999';
+                }
+            }
+            
             // Update browser tab title with progress percentage
             if (percent < 100) {
-                document.title = `(${Math.round(percent)}%) Upload Progress - Photography Scheduler`;
+                document.title = `(${roundedPercent}%) Upload Progress - Photography Scheduler`;
             } else {
-                document.title = 'Photography Scheduler';
+                document.title = '✅ Upload Complete - Photography Scheduler';
+                setTimeout(() => {
+                    document.title = 'Photography Scheduler';
+                }, 3000);
             }
         }
 
