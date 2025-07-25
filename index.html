@@ -6406,22 +6406,14 @@ ${name}`;
                     }
                 }
                 
-                // If not coordinates, use geocoding API (for city names)
+                // If not coordinates, try to get coordinates from common city names
                 if (!lat || !lng) {
-                    const geocodeResponse = await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(locationInput)}&limit=1&appid=demo`);
-                    if (!geocodeResponse.ok) {
-                        // Fallback: use default coordinates for demonstration
-                        lat = 40.7128; // NYC
-                        lng = -74.0060;
-                        console.warn('Geocoding not available, using NYC coordinates');
+                    const cityCoordinates = getCityCoordinates(locationInput);
+                    if (cityCoordinates) {
+                        lat = cityCoordinates.lat;
+                        lng = cityCoordinates.lng;
                     } else {
-                        const geocodeData = await geocodeResponse.json();
-                        if (geocodeData.length > 0) {
-                            lat = geocodeData[0].lat;
-                            lng = geocodeData[0].lon;
-                        } else {
-                            throw new Error('Location not found');
-                        }
+                        throw new Error('Location not found. Please use coordinates (lat, lng) or try a major city name like "New York, NY" or "Los Angeles, CA"');
                     }
                 }
                 
@@ -6468,6 +6460,47 @@ ${name}`;
             triggerConfetti(25, 'sunrise');
         }
 
+        function getCityCoordinates(location) {
+            const cities = {
+                // US Major Cities
+                'new york, ny': { lat: 40.7128, lng: -74.0060 },
+                'new york': { lat: 40.7128, lng: -74.0060 },
+                'los angeles, ca': { lat: 34.0522, lng: -118.2437 },
+                'los angeles': { lat: 34.0522, lng: -118.2437 },
+                'chicago, il': { lat: 41.8781, lng: -87.6298 },
+                'chicago': { lat: 41.8781, lng: -87.6298 },
+                'miami, fl': { lat: 25.7617, lng: -80.1918 },
+                'miami': { lat: 25.7617, lng: -80.1918 },
+                'charleston, sc': { lat: 32.7765, lng: -79.9311 },
+                'charleston': { lat: 32.7765, lng: -79.9311 },
+                'denver, co': { lat: 39.7392, lng: -104.9903 },
+                'denver': { lat: 39.7392, lng: -104.9903 },
+                'seattle, wa': { lat: 47.6062, lng: -122.3321 },
+                'seattle': { lat: 47.6062, lng: -122.3321 },
+                'san francisco, ca': { lat: 37.7749, lng: -122.4194 },
+                'san francisco': { lat: 37.7749, lng: -122.4194 },
+                'austin, tx': { lat: 30.2672, lng: -97.7431 },
+                'austin': { lat: 30.2672, lng: -97.7431 },
+                'atlanta, ga': { lat: 33.7490, lng: -84.3880 },
+                'atlanta': { lat: 33.7490, lng: -84.3880 },
+                
+                // International Cities
+                'london, uk': { lat: 51.5074, lng: -0.1278 },
+                'london': { lat: 51.5074, lng: -0.1278 },
+                'paris, france': { lat: 48.8566, lng: 2.3522 },
+                'paris': { lat: 48.8566, lng: 2.3522 },
+                'tokyo, japan': { lat: 35.6762, lng: 139.6503 },
+                'tokyo': { lat: 35.6762, lng: 139.6503 },
+                'sydney, australia': { lat: -33.8688, lng: 151.2093 },
+                'sydney': { lat: -33.8688, lng: 151.2093 },
+                'toronto, canada': { lat: 43.6532, lng: -79.3832 },
+                'toronto': { lat: 43.6532, lng: -79.3832 }
+            };
+            
+            const normalizedLocation = location.toLowerCase().trim();
+            return cities[normalizedLocation] || null;
+        }
+
         function showSunriseError(message) {
             document.getElementById('errorText').textContent = message;
             document.getElementById('sunriseError').style.display = 'block';
@@ -6494,8 +6527,11 @@ ${name}`;
                     
                     <div class="form-group">
                         <label for="locationInput">📍 Location (City, State or Lat, Lng)</label>
-                        <input type="text" id="locationInput" name="locationInput" placeholder="New York, NY or 40.7128, -74.0060" 
+                        <input type="text" id="locationInput" name="locationInput" placeholder="Charleston, SC or 32.7765, -79.9311" 
                                style="padding: 12px; border-radius: 8px; border: 2px solid #d4af37; background: #2a2a2a; color: #f5f5f5; font-size: 16px; width: 300px;">
+                        <p style="font-size: 0.85em; color: #999; margin-top: 5px;">
+                            Try: New York, Chicago, Miami, Los Angeles, Charleston, London, Paris, Tokyo
+                        </p>
                     </div>
                     
                     <button onclick="getSunriseSunsetData()" class="btn btn-primary" style="background: linear-gradient(135deg, #d4af37, #ffd700); color: #1a1a1a; font-weight: bold; padding: 12px 24px;">
