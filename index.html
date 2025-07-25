@@ -2547,18 +2547,19 @@
 
         .dropdown-menu {
             position: absolute !important;
-            top: 100% !important;
+            top: calc(100% + 5px) !important;
             left: 0 !important;
-            right: 0 !important;
+            right: auto !important;
             background: #2a2a2a !important;
             border: 2px solid #d4af37 !important;
             border-radius: 8px !important;
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3) !important;
             z-index: 2147483647 !important;
-            display: none;
-            margin-top: 5px !important;
+            display: none !important;
             overflow: visible !important;
             min-width: 200px !important;
+            min-height: 50px !important;
+            width: auto !important;
         }
 
         .dropdown-menu.show {
@@ -6831,7 +6832,14 @@ ${name}`;
                 dropdown.style.display = 'block';
                 dropdown.style.visibility = 'visible';
                 dropdown.style.opacity = '1';
+                dropdown.style.background = '#2a2a2a';
+                dropdown.style.border = '2px solid #d4af37';
+                dropdown.style.borderRadius = '8px';
+                dropdown.style.minHeight = '100px';
+                dropdown.style.width = 'auto';
                 console.log('Dropdown shown:', sessionId, dropdown);
+                console.log('Dropdown HTML:', dropdown.innerHTML);
+                console.log('Dropdown computed style:', window.getComputedStyle(dropdown));
             }
         }
 
