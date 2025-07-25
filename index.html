@@ -458,6 +458,7 @@
             max-height: 60vh;
             overflow-y: auto;
             border-radius: 8px;
+            width: 100%;
         }
 
         .gallery-photo-item {
@@ -468,6 +469,8 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
             transition: all 0.3s ease;
             background: #f5f5f5;
+            width: 100%;
+            height: auto;
         }
 
         .gallery-photo-item:hover {
@@ -480,6 +483,9 @@
             height: 100%;
             object-fit: cover;
             cursor: pointer;
+            display: block;
+            position: relative;
+            z-index: 1;
         }
 
         .photo-delete-btn {
@@ -2655,7 +2661,7 @@
         <div class="upload-content" style="max-width: 1200px;">
             <h3 id="galleryTitle">📷 Session Gallery</h3>
             
-            <div class="gallery-content">
+            <div class="gallery-content" style="width: 100%; overflow: hidden;">
                 <div id="galleryGrid" class="photo-gallery-grid"></div>
                 <div id="galleryEmpty" class="empty-gallery" style="display: none; text-align: center; padding: 40px; color: #666;">
                     <h4>No Photos Yet</h4>
