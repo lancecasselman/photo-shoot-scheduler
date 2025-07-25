@@ -6818,7 +6818,7 @@ ${name}`;
                     throw new Error('Invalid response from sunrise API');
                 }
                 
-                displaySunriseData(data.results, locationInput, dateInput);
+                displaySunriseData(data.results, selectedLocation ? selectedLocation.displayName : locationInput, dateInput);
                 celebrateMilestone('sunrise_data', 'Sunrise Data Loaded');
                 
             } catch (error) {
@@ -6828,24 +6828,48 @@ ${name}`;
         }
 
         function displaySunriseData(results, location, date) {
-            // Update location and date
-            document.getElementById('sunriseLocation').textContent = `📍 ${location}`;
-            document.getElementById('sunriseSelectedDate').textContent = `📅 ${new Date(date).toLocaleDateString()}`;
-            
-            // Update time values
-            document.getElementById('sunriseTime').textContent = results.sunrise || '--:--';
-            document.getElementById('sunsetTime').textContent = results.sunset || '--:--';
-            document.getElementById('solarNoon').textContent = results.solar_noon || '--:--';
-            document.getElementById('goldenHourStart').textContent = results.golden_hour || '--:--';
-            document.getElementById('goldenHourEnd').textContent = results.golden_hour || '--:--';
-            document.getElementById('blueHourEnd').textContent = results.last_light || '--:--';
-            
-            // Show results and hide error
-            document.getElementById('sunriseResults').style.display = 'block';
-            document.getElementById('sunriseError').style.display = 'none';
-            
-            // Add celebration animation
-            triggerConfetti(25, 'sunrise');
+            try {
+                // Update location and date
+                const locationEl = document.getElementById('sunriseLocation');
+                const dateEl = document.getElementById('sunriseSelectedDate');
+                
+                if (locationEl) locationEl.textContent = `📍 ${location}`;
+                if (dateEl) dateEl.textContent = `📅 ${new Date(date).toLocaleDateString()}`;
+                
+                // Update time values based on actual API response structure
+                const timeElements = {
+                    'sunriseTime': results.sunrise,
+                    'sunsetTime': results.sunset,
+                    'solarNoon': results.solar_noon,
+                    'goldenHourStart': results.golden_hour,
+                    'goldenHourEnd': results.dusk,
+                    'blueHourEnd': results.last_light
+                };
+                
+                Object.entries(timeElements).forEach(([elementId, value]) => {
+                    const element = document.getElementById(elementId);
+                    if (element) {
+                        element.textContent = value || '--:--';
+                    }
+                });
+                
+                // Show results and hide error
+                const resultsEl = document.getElementById('sunriseResults');
+                const errorEl = document.getElementById('sunriseError');
+                
+                if (resultsEl) resultsEl.style.display = 'block';
+                if (errorEl) errorEl.style.display = 'none';
+                
+                // Add celebration animation
+                triggerConfetti(25, 'sunrise');
+                
+                // Show success message
+                showMessage('Sunrise/sunset data loaded successfully!', 'success');
+                
+            } catch (error) {
+                console.error('Display error:', error);
+                showSunriseError('Error displaying sunrise data');
+            }
         }
 
         function getCityCoordinates(location) {
