@@ -2544,7 +2544,10 @@
         }
 
         .dropdown-menu {
-            position: fixed !important;
+            position: absolute !important;
+            top: 100% !important;
+            left: 0 !important;
+            right: 0 !important;
             background: #2a2a2a !important;
             border: 2px solid #d4af37 !important;
             border-radius: 8px !important;
@@ -2554,7 +2557,6 @@
             margin-top: 5px !important;
             overflow: visible !important;
             min-width: 200px !important;
-            transform: translateZ(1000px) !important;
         }
 
         .dropdown-menu.show {
@@ -3247,7 +3249,7 @@
                             <button class="dropdown-toggle" onclick="toggleDropdown('${session.id}')">
                                 ⚙️ Session Actions <span style="margin-left: auto;">▼</span>
                             </button>
-                            <div class="dropdown-menu" id="dropdown-${session.id}" style="z-index: 2147483647 !important; position: fixed !important; transform: translateZ(1000px) !important; overflow: visible !important;">
+                            <div class="dropdown-menu" id="dropdown-${session.id}" style="z-index: 2147483647 !important; position: absolute !important; overflow: visible !important;">
                                 <button class="dropdown-item" onclick="editSession('${session.id}'); closeDropdown('${session.id}')">
                                     ✏️ Edit Session
                                 </button>
@@ -6814,24 +6816,14 @@ ${name}`;
             // Close all other dropdowns
             document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
                 menu.classList.remove('show');
-                menu.style.position = 'absolute';
             });
             
             // Toggle current dropdown
             if (!isVisible) {
                 dropdown.classList.add('show');
-                
-                // Position dropdown relative to button using fixed positioning
-                const rect = toggle.getBoundingClientRect();
-                dropdown.style.position = 'fixed';
-                dropdown.style.top = (rect.bottom + 5) + 'px';
-                dropdown.style.left = rect.left + 'px';
-                dropdown.style.right = 'auto';
-                dropdown.style.width = rect.width + 'px';
                 dropdown.style.zIndex = '2147483647';
-                dropdown.style.transform = 'translateZ(1000px)';
+                dropdown.style.position = 'absolute';
                 dropdown.style.overflow = 'visible';
-                dropdown.style.display = 'block';
             }
         }
 
