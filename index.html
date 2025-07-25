@@ -2998,11 +2998,36 @@
             
             console.log(`📊 Upload analysis: ${files.length} files, ${totalSizeMB.toFixed(2)}MB total`);
             
-            // Use batch processing for mobile or large uploads
+            // Filter out overly large files for mobile to improve connectivity
             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-            if (isMobile || files.length > 10 || totalSizeMB > 50) {
-                console.log(`📦 Mobile or large upload detected - using batch upload method`);
-                return uploadFilesInBatches(files);
+            const maxFileSizeMB = isMobile ? 50 : 100; // Smaller limit for mobile
+            
+            const filteredFiles = [];
+            const oversizedFiles = [];
+            
+            files.forEach(file => {
+                const fileSizeMB = file.size / (1024 * 1024);
+                if (fileSizeMB > maxFileSizeMB) {
+                    oversizedFiles.push({ name: file.name, size: fileSizeMB.toFixed(2) });
+                } else {
+                    filteredFiles.push(file);
+                }
+            });
+            
+            if (oversizedFiles.length > 0) {
+                const oversizedList = oversizedFiles.map(f => `${f.name} (${f.size}MB)`).join(', ');
+                showMessage(`Skipping ${oversizedFiles.length} oversized files: ${oversizedList}. Max size: ${maxFileSizeMB}MB per file.`, 'warning');
+            }
+            
+            if (filteredFiles.length === 0) {
+                showMessage('No files small enough to upload. Please reduce file sizes and try again.', 'error');
+                return;
+            }
+            
+            // Always use batch processing for mobile, or for any multi-file upload
+            if (isMobile || filteredFiles.length > 1 || totalSizeMB > 10) {
+                console.log(`📦 Mobile or multi-file upload detected - using reliable batch upload method`);
+                return uploadFilesInBatches(filteredFiles);
             }
 
             // Show progress and start upload
@@ -3131,7 +3156,77 @@
             });
         }
 
-        // Upload files in high-capacity batches for maximum performance
+        // Upload with retry logic for better connectivity
+        async function uploadWithRetry(formData, batchNumber, totalBatches, retryCount = 0) {
+            const maxRetries = 3;
+            
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                
+                xhr.addEventListener('load', () => {
+                    if (xhr.status === 200) {
+                        try {
+                            const result = JSON.parse(xhr.responseText);
+                            console.log(`✅ Batch ${batchNumber} uploaded successfully (attempt ${retryCount + 1})`);
+                            resolve(result);
+                        } catch (parseError) {
+                            if (retryCount < maxRetries) {
+                                console.log(`⚠️ Parse error, retrying batch ${batchNumber} (attempt ${retryCount + 2})`);
+                                setTimeout(() => {
+                                    uploadWithRetry(formData, batchNumber, totalBatches, retryCount + 1)
+                                        .then(resolve).catch(reject);
+                                }, 1000 * (retryCount + 1)); // Exponential backoff
+                            } else {
+                                reject(new Error('Invalid server response'));
+                            }
+                        }
+                    } else if (xhr.status === 401) {
+                        reject(new Error('Authentication required'));
+                    } else {
+                        if (retryCount < maxRetries) {
+                            console.log(`⚠️ HTTP ${xhr.status} error, retrying batch ${batchNumber} (attempt ${retryCount + 2})`);
+                            setTimeout(() => {
+                                uploadWithRetry(formData, batchNumber, totalBatches, retryCount + 1)
+                                    .then(resolve).catch(reject);
+                            }, 1000 * (retryCount + 1));
+                        } else {
+                            reject(new Error(xhr.responseText || `Upload failed with status ${xhr.status}`));
+                        }
+                    }
+                });
+                
+                xhr.addEventListener('error', () => {
+                    if (retryCount < maxRetries) {
+                        console.log(`⚠️ Network error, retrying batch ${batchNumber} (attempt ${retryCount + 2})`);
+                        setTimeout(() => {
+                            uploadWithRetry(formData, batchNumber, totalBatches, retryCount + 1)
+                                .then(resolve).catch(reject);
+                        }, 1000 * (retryCount + 1));
+                    } else {
+                        reject(new Error('Network error - all retries failed'));
+                    }
+                });
+                
+                xhr.addEventListener('timeout', () => {
+                    if (retryCount < maxRetries) {
+                        console.log(`⚠️ Timeout, retrying batch ${batchNumber} (attempt ${retryCount + 2})`);
+                        setTimeout(() => {
+                            uploadWithRetry(formData, batchNumber, totalBatches, retryCount + 1)
+                                .then(resolve).catch(reject);
+                        }, 1000 * (retryCount + 1));
+                    } else {
+                        reject(new Error('Upload timeout - all retries failed'));
+                    }
+                });
+                
+                xhr.timeout = 2 * 60 * 1000; // 2 minute timeout
+                xhr.open('POST', `/api/sessions/${currentUploadSessionId}/upload-photos`, true);
+                xhr.withCredentials = true;
+                xhr.send(formData);
+            });
+        }
+
+        // Upload files in reliable batches with retry logic
         async function uploadFilesInBatches(files) {
             // Use small batches for mobile reliability  
             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -3160,40 +3255,10 @@
                             formData.append('photos', file);
                         });
 
-                        // Use XMLHttpRequest for better mobile compatibility
-                        const result = await new Promise((resolve, reject) => {
-                            const xhr = new XMLHttpRequest();
-                            
-                            xhr.addEventListener('load', () => {
-                                if (xhr.status === 200) {
-                                    try {
-                                        const result = JSON.parse(xhr.responseText);
-                                        resolve(result);
-                                    } catch (parseError) {
-                                        reject(new Error('Invalid server response'));
-                                    }
-                                } else if (xhr.status === 401) {
-                                    reject(new Error('Authentication required'));
-                                } else {
-                                    reject(new Error(xhr.responseText || 'Upload failed'));
-                                }
-                            });
-                            
-                            xhr.addEventListener('error', () => {
-                                reject(new Error('Network error'));
-                            });
-                            
-                            xhr.addEventListener('timeout', () => {
-                                reject(new Error('Upload timeout'));
-                            });
-                            
-                            xhr.timeout = 5 * 60 * 1000; // 5 minute timeout for batch uploads
-                            xhr.open('POST', `/api/sessions/${currentUploadSessionId}/upload-photos`, true);
-                            xhr.withCredentials = true;
-                            xhr.send(formData);
-                        });
+                        // Use XMLHttpRequest with retry logic for better reliability
+                        const result = await uploadWithRetry(formData, i + 1, totalBatches);
 
-                        const response = { ok: true, status: 200 };
+
 
                         uploadedCount += result.uploaded;
                         console.log(`✅ Batch ${i + 1} complete: ${result.uploaded} photos uploaded`);
