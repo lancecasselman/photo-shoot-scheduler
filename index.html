@@ -2582,6 +2582,39 @@
             color: #ff6b6b;
         }
 
+        /* Location Search Styles */
+        .location-results {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .location-result-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+            color: #f5f5f5;
+            font-size: 14px;
+            transition: background 0.2s ease;
+        }
+
+        .location-result-item:last-child {
+            border-bottom: none;
+        }
+
+        .location-result-item:hover {
+            background: rgba(212, 175, 55, 0.2);
+            color: #d4af37;
+        }
+
+        .location-result-item .location-name {
+            font-weight: bold;
+        }
+
+        .location-result-item .location-details {
+            font-size: 12px;
+            color: #999;
+            margin-top: 2px;
+        }
+
         /* Sunrise/Sunset Calendar Styles */
         .sunrise-calendar-container {
             padding: 30px;
@@ -6562,25 +6595,18 @@ ${name}`;
             try {
                 let lat, lng;
                 
-                // Simple coordinate parsing - only accept lat,lng format
-                const coordMatch = locationInput.match(/^(-?\d+\.?\d*),\s*(-?\d+\.?\d*)$/);
-                if (coordMatch) {
-                    lat = parseFloat(coordMatch[1]);
-                    lng = parseFloat(coordMatch[2]);
+                // Use selected location from search results if available
+                if (selectedLocation) {
+                    lat = selectedLocation.lat;
+                    lng = selectedLocation.lng;
                 } else {
-                    // Simple city lookup - just a few hardcoded locations
-                    const location = locationInput.toLowerCase().trim();
-                    if (location.includes('charleston')) {
-                        lat = 32.7765;
-                        lng = -79.9311;
-                    } else if (location.includes('myrtle beach')) {
-                        lat = 33.6891;
-                        lng = -78.8867;
-                    } else if (location.includes('new york')) {
-                        lat = 40.7128;
-                        lng = -74.0060;
+                    // Try coordinate parsing as fallback
+                    const coordMatch = locationInput.match(/^(-?\d+\.?\d*),\s*(-?\d+\.?\d*)$/);
+                    if (coordMatch) {
+                        lat = parseFloat(coordMatch[1]);
+                        lng = parseFloat(coordMatch[2]);
                     } else {
-                        throw new Error('Location not recognized. Please use coordinates like "32.7765, -79.9311" or try: Charleston, Myrtle Beach, New York');
+                        throw new Error('Please select a location from the search results or use coordinates like "32.7765, -79.9311"');
                     }
                 }
                 
@@ -6803,6 +6829,7 @@ ${name}`;
             // Hide results and error sections
             document.getElementById('sunriseResults').style.display = 'none';
             document.getElementById('sunriseError').style.display = 'none';
+            document.getElementById('locationResults').style.display = 'none';
             
             // Show success message
             showMessage('Sunrise/Sunset calendar reset successfully!', 'success');
@@ -6810,6 +6837,106 @@ ${name}`;
             // Optional: Trigger confetti for reset action
             celebrateMilestone('reset', 'Calendar Reset');
         }
+
+        // Location Search Variables
+        let searchTimeout;
+        let selectedLocation = null;
+
+        // Search for locations as user types
+        async function searchLocations(query) {
+            clearTimeout(searchTimeout);
+            
+            if (query.length < 2) {
+                hideSearchResults();
+                return;
+            }
+            
+            searchTimeout = setTimeout(async () => {
+                try {
+                    // Use a free geocoding API (Nominatim from OpenStreetMap)
+                    const apiUrl = `https://nominatim.openstreetmap.org/search?format=json&limit=5&q=${encodeURIComponent(query)}`;
+                    
+                    const response = await fetch(apiUrl);
+                    if (!response.ok) {
+                        throw new Error('Search failed');
+                    }
+                    
+                    const results = await response.json();
+                    displayLocationResults(results);
+                    
+                } catch (error) {
+                    console.error('Location search error:', error);
+                    // Show basic fallback options
+                    showFallbackLocations(query);
+                }
+            }, 300); // Debounce for 300ms
+        }
+
+        function displayLocationResults(results) {
+            const resultsContainer = document.getElementById('locationResults');
+            
+            if (results.length === 0) {
+                hideSearchResults();
+                return;
+            }
+            
+            resultsContainer.innerHTML = results.map(location => `
+                <div class="location-result-item" onclick="selectLocation('${location.display_name}', ${location.lat}, ${location.lon})">
+                    <div class="location-name">${location.display_name.split(',')[0]}</div>
+                    <div class="location-details">${location.display_name}</div>
+                </div>
+            `).join('');
+            
+            resultsContainer.style.display = 'block';
+        }
+
+        function showFallbackLocations(query) {
+            const fallbackLocations = [
+                { name: 'Charleston, SC', lat: 32.7765, lng: -79.9311, display: 'Charleston, South Carolina, USA' },
+                { name: 'Myrtle Beach, SC', lat: 33.6891, lng: -78.8867, display: 'Myrtle Beach, South Carolina, USA' },
+                { name: 'New York, NY', lat: 40.7128, lng: -74.0060, display: 'New York, New York, USA' }
+            ];
+            
+            const filtered = fallbackLocations.filter(loc => 
+                loc.name.toLowerCase().includes(query.toLowerCase())
+            );
+            
+            if (filtered.length > 0) {
+                const resultsContainer = document.getElementById('locationResults');
+                resultsContainer.innerHTML = filtered.map(location => `
+                    <div class="location-result-item" onclick="selectLocation('${location.display}', ${location.lat}, ${location.lng})">
+                        <div class="location-name">${location.name}</div>
+                        <div class="location-details">${location.display}</div>
+                    </div>
+                `).join('');
+                
+                resultsContainer.style.display = 'block';
+            }
+        }
+
+        function selectLocation(displayName, lat, lng) {
+            selectedLocation = { displayName, lat, lng };
+            document.getElementById('locationInput').value = displayName.split(',')[0];
+            hideSearchResults();
+        }
+
+        function showSearchResults() {
+            const input = document.getElementById('locationInput');
+            if (input.value.length >= 2) {
+                document.getElementById('locationResults').style.display = 'block';
+            }
+        }
+
+        function hideSearchResults() {
+            document.getElementById('locationResults').style.display = 'none';
+        }
+
+        // Close search results when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.location-search-container')) {
+                hideSearchResults();
+            }
+        });
 
     </script>
 
@@ -6830,11 +6957,18 @@ ${name}`;
                     </div>
                     
                     <div class="form-group">
-                        <label for="locationInput">📍 Location (City, State or Lat, Lng)</label>
-                        <input type="text" id="locationInput" name="locationInput" placeholder="Charleston or 32.7765, -79.9311" 
-                               style="padding: 12px; border-radius: 8px; border: 2px solid #d4af37; background: #2a2a2a; color: #f5f5f5; font-size: 16px; width: 300px;">
+                        <label for="locationInput">📍 Location</label>
+                        <div class="location-search-container" style="position: relative; width: 300px;">
+                            <input type="text" id="locationInput" name="locationInput" placeholder="Start typing city name..." 
+                                   autocomplete="off"
+                                   oninput="searchLocations(this.value)"
+                                   onfocus="showSearchResults()"
+                                   style="padding: 12px; border-radius: 8px; border: 2px solid #d4af37; background: #2a2a2a; color: #f5f5f5; font-size: 16px; width: 100%;">
+                            <div id="locationResults" class="location-results" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #2a2a2a; border: 2px solid #d4af37; border-top: none; border-radius: 0 0 8px 8px; max-height: 200px; overflow-y: auto; z-index: 1000;">
+                            </div>
+                        </div>
                         <p style="font-size: 0.85em; color: #999; margin-top: 5px;">
-                            Try: Charleston, Myrtle Beach, New York or coordinates like "32.7765, -79.9311"
+                            Type any city or address and select from suggestions
                         </p>
                     </div>
                     
