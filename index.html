@@ -6419,23 +6419,39 @@ ${name}`;
                 
                 // Fetch sunrise/sunset data
                 const apiUrl = `https://api.sunrisesunset.io/json?lat=${lat}&lng=${lng}&date=${dateInput}`;
+                console.log('Fetching sunrise data from:', apiUrl);
+                
                 const response = await fetch(apiUrl);
                 
                 if (!response.ok) {
-                    throw new Error(`API request failed: ${response.status}`);
+                    console.error('API Response not OK:', response.status, response.statusText);
+                    throw new Error(`API request failed: ${response.status} ${response.statusText}`);
                 }
                 
                 const data = await response.json();
+                console.log('API Response data:', data);
                 
                 if (data.status !== 'OK') {
-                    throw new Error('Invalid API response');
+                    console.error('API returned error status:', data);
+                    throw new Error(`API error: ${data.status || 'Unknown error'}`);
                 }
                 
                 displaySunriseData(data.results, locationInput, dateInput);
                 
             } catch (error) {
                 console.error('Sunrise API Error:', error);
-                showSunriseError(`Error fetching data: ${error.message}`);
+                // Provide more specific error messages
+                let errorMessage = 'Unable to fetch sunrise/sunset data';
+                if (error.message.includes('API request failed')) {
+                    errorMessage = 'Sunrise API service temporarily unavailable. Please try again later.';
+                } else if (error.message.includes('Location')) {
+                    errorMessage = error.message;
+                } else if (error.message.includes('coordinates')) {
+                    errorMessage = 'Invalid location format. Please use "City, State" or "latitude, longitude"';
+                } else {
+                    errorMessage = `Error: ${error.message}`;
+                }
+                showSunriseError(errorMessage);
             }
         }
 
