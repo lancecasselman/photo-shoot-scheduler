@@ -6821,6 +6821,16 @@ ${name}`;
             // Close all other dropdowns
             document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
                 menu.classList.remove('show');
+                menu.style.display = 'none';
+                
+                // Move back to original container if it was moved to body
+                if (menu.parentNode === document.body) {
+                    const menuSessionId = menu.id.replace('dropdown-', '');
+                    const originalContainer = document.querySelector(`[onclick*="${menuSessionId}"]`).closest('.actions-dropdown');
+                    if (originalContainer) {
+                        originalContainer.appendChild(menu);
+                    }
+                }
             });
             
             // Toggle current dropdown
@@ -6832,7 +6842,9 @@ ${name}`;
                 dropdown.style.position = 'fixed';
                 dropdown.style.top = (rect.bottom + 5) + 'px';
                 dropdown.style.left = rect.left + 'px';
-                dropdown.style.width = rect.width + 'px';
+                dropdown.style.width = Math.max(rect.width, 200) + 'px';
+                dropdown.style.right = 'auto';
+                dropdown.style.bottom = 'auto';
                 dropdown.style.zIndex = '2147483647';
                 dropdown.style.display = 'block';
                 dropdown.style.visibility = 'visible';
@@ -6849,6 +6861,8 @@ ${name}`;
                 document.body.appendChild(dropdown);
                 
                 console.log('Dropdown repositioned to body:', sessionId, dropdown);
+                console.log('Button rect:', rect);
+                console.log('Dropdown position:', dropdown.style.top, dropdown.style.left);
             }
         }
 
