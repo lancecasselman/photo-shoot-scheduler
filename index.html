@@ -6828,15 +6828,10 @@ ${name}`;
         }
 
         function displaySunriseData(results, location, date) {
-            console.log('Displaying sunrise data:', results, location, date);
-            
             try {
                 // Update location and date
                 const locationEl = document.getElementById('sunriseLocation');
                 const dateEl = document.getElementById('sunriseSelectedDate');
-                
-                console.log('Location element:', locationEl);
-                console.log('Date element:', dateEl);
                 
                 if (locationEl) locationEl.textContent = `📍 ${location}`;
                 if (dateEl) dateEl.textContent = `📅 ${new Date(date).toLocaleDateString()}`;
@@ -6851,15 +6846,10 @@ ${name}`;
                     'blueHourEnd': results.last_light
                 };
                 
-                console.log('Time elements to update:', timeElements);
-                
                 Object.entries(timeElements).forEach(([elementId, value]) => {
                     const element = document.getElementById(elementId);
-                    console.log(`Element ${elementId}:`, element, 'Value:', value);
                     if (element) {
                         element.textContent = value || '--:--';
-                    } else {
-                        console.warn(`Element with ID ${elementId} not found`);
                     }
                 });
                 
@@ -6867,33 +6857,21 @@ ${name}`;
                 const resultsEl = document.getElementById('sunriseResults');
                 const errorEl = document.getElementById('sunriseError');
                 
-                console.log('Results element:', resultsEl);
-                console.log('Error element:', errorEl);
-                
                 if (resultsEl) resultsEl.style.display = 'block';
                 if (errorEl) errorEl.style.display = 'none';
                 
-                console.log('About to trigger confetti and show message');
-                
-                // Add celebration animation - check if function exists
-                if (typeof triggerConfetti === 'function') {
-                    triggerConfetti(25, 'sunrise');
-                } else {
-                    console.warn('triggerConfetti function not found');
+                // Add celebration animation using the correct function name
+                if (typeof celebrateMilestone === 'function') {
+                    celebrateMilestone('sunrise_success', 'Sunrise/Sunset Data Loaded Successfully');
                 }
                 
                 // Show success message - check if function exists
                 if (typeof showMessage === 'function') {
                     showMessage('Sunrise/sunset data loaded successfully!', 'success');
-                } else {
-                    console.warn('showMessage function not found');
                 }
                 
-                console.log('Display function completed successfully');
-                
             } catch (error) {
-                console.error('Display error details:', error);
-                console.error('Error stack:', error.stack);
+                console.error('Display error:', error);
                 showSunriseError('Error displaying sunrise data: ' + error.message);
             }
         }
