@@ -1,0 +1,239 @@
+# Create wizard files
+touch onboarding.html onboarding.css onboarding.js
+
+# HTML (wizard UI + Firebase setup)
+echo '<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Onboarding Wizard</title>
+  <link rel="stylesheet" href="onboarding.css"/>
+</head>
+<body>
+  <div class="wizard-container">
+    <div id="wizard-progress">Step <span id="stepNum">1</span> of 6</div>
+    <div id="wizard-form"></div>
+    <div class="wizard-nav">
+      <button id="prevBtn">⬅ Back</button>
+      <button id="nextBtn">Next ➡</button>
+    </div>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore-compat.js"></script>
+  <script src="onboarding.js"></script>
+</body>
+</html>' > onboarding.html
+
+# CSS (clean wizard style)
+echo 'body {
+  font-family: sans-serif;
+  background: #f4f4f4;
+  margin: 0;
+  padding: 0;
+}
+.wizard-container {
+  max-width: 500px;
+  margin: auto;
+  padding: 2rem;
+  background: #fff;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  margin-top: 3rem;
+  border-radius: 8px;
+}
+#wizard-progress {
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+.wizard-nav {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2rem;
+}
+input, select, textarea {
+  width: 100%;
+  margin-top: 10px;
+  padding: 8px;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}' > onboarding.css
+
+# JS (multi-step wizard, Firebase auth + Firestore auto-save)
+echo 'const steps = [
+  "businessInfo",
+  "branding",
+  "stripe",
+  "communication",
+  "sessionTypes",
+  "previewLaunch"
+];
+let currentStep = 0;
+
+const formContainer = document.getElementById("wizard-form");
+const stepNum = document.getElementById("stepNum");
+const nextBtn = document.getElementById("nextBtn");
+const prevBtn = document.getElementById("prevBtn");
+
+// TODO: Replace with your real Firebase config
+const firebaseConfig = {
+  apiKey: "YOUR_FIREBASE_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+auth.onAuthStateChanged((user) => {
+  if (user) {
+    console.log("👤 Logged in:", user.email || "anon");
+    loadWizardState(user.uid);
+  } else {
+    auth.signInAnonymously().catch(console.error);
+  }
+});
+
+function renderStep() {
+  stepNum.textContent = currentStep + 1;
+  const step = steps[currentStep];
+  formContainer.innerHTML = getStepHTML(step);
+  preloadStepData(auth.currentUser?.uid);
+}
+
+function getStepHTML(step) {
+  switch (step) {
+    case "businessInfo":
+      return \`
+        <h2>Business Info</h2>
+        <input type="text" id="bizName" placeholder="Business Name" />
+        <input type="text" id="bizLocation" placeholder="Location" />
+        <input type="text" id="bizPhone" placeholder="Phone" />
+        <input type="email" id="bizEmail" placeholder="Email" />
+        <input type="text" id="bizWebsite" placeholder="Website (optional)" />
+      \`;
+    case "branding":
+      return \`
+        <h2>Branding</h2>
+        <input type="file" id="logoUpload" />
+        <input type="color" id="themeColor" />
+        <input type="text" id="tagline" placeholder="Business Tagline" />
+      \`;
+    case "stripe":
+      return \`
+        <h2>Stripe Setup</h2>
+        <button onclick="connectStripe()">Connect to Stripe</button>
+        <label>Default Currency</label>
+        <select>
+          <option value="USD">USD</option>
+          <option value="EUR">EUR</option>
+        </select>
+      \`;
+    case "communication":
+      return \`
+        <h2>Communication Preferences</h2>
+        <label><input type="checkbox" id="enableEmail" /> Enable Email Reminders</label><br/>
+        <label><input type="checkbox" id="enableSMS" /> Enable SMS Notifications</label><br/>
+        <textarea placeholder="Default Welcome Email Text"></textarea>
+      \`;
+    case "sessionTypes":
+      return \`
+        <h2>First Session Type</h2>
+        <input type="text" placeholder="Session Name (e.g. Family Shoot)" />
+        <input type="number" placeholder="Price" />
+        <input type="number" placeholder="Duration (minutes)" />
+        <input type="text" placeholder="Deliverables (e.g. 15 digitals)" />
+      \`;
+    case "previewLaunch":
+      return \`
+        <h2>Ready to Launch?</h2>
+        <p>Review your details and hit the big button below to launch your client portal!</p>
+        <button onclick="launchPortal()">🚀 Launch My Portal</button>
+      \`;
+    default:
+      return "<p>Error loading step.</p>";
+  }
+}
+
+function saveWizardState(uid) {
+  const step = steps[currentStep];
+  const inputs = document.querySelectorAll("input, select, textarea");
+  let data = {};
+  inputs.forEach(input => {
+    if (input.type === "file") return;
+    data[input.id || input.placeholder] = input.type === "checkbox" ? input.checked : input.value || "";
+  });
+
+  db.collection("onboarding")
+    .doc(uid)
+    .set({
+      currentStep,
+      [step]: data
+    }, { merge: true });
+}
+
+function loadWizardState(uid) {
+  db.collection("onboarding")
+    .doc(uid)
+    .get()
+    .then((doc) => {
+      if (doc.exists) {
+        const data = doc.data();
+        currentStep = data.currentStep || 0;
+        renderStep();
+      } else {
+        renderStep();
+      }
+    });
+}
+
+function preloadStepData(uid) {
+  db.collection("onboarding")
+    .doc(uid)
+    .get()
+    .then((doc) => {
+      const data = doc.data()?.[steps[currentStep]];
+      if (data) {
+        for (let key in data) {
+          let el = document.getElementById(key) || document.querySelector(\`[placeholder="\${key}"]\`);
+          if (el) {
+            if (el.type === "checkbox") el.checked = data[key];
+            else el.value = data[key];
+          }
+        }
+      }
+    });
+}
+
+nextBtn.addEventListener("click", () => {
+  const user = auth.currentUser;
+  if (user) saveWizardState(user.uid);
+  if (currentStep < steps.length - 1) currentStep++;
+  renderStep();
+});
+
+prevBtn.addEventListener("click", () => {
+  const user = auth.currentUser;
+  if (user) saveWizardState(user.uid);
+  if (currentStep > 0) currentStep--;
+  renderStep();
+});
+
+function connectStripe() {
+  window.open("https://connect.stripe.com/oauth/authorize?response_type=code&client_id=YOUR_CLIENT_ID&scope=read_write");
+}
+
+function launchPortal() {
+  const user = auth.currentUser;
+  if (user) saveWizardState(user.uid);
+  alert("🎉 Your portal is launched! (Mocked for now.)");
+}
+
+renderStep();' > onboarding.js
