@@ -2400,6 +2400,150 @@ app.post('/api/contracts/:id/sign', async (req, res) => {
     }
 });
 
+// Setup wizard endpoint - save onboarding data
+app.post('/api/setup-wizard', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.user.claims.sub;
+        const wizardData = req.body;
+        
+        console.log('📋 Processing onboarding wizard data for user:', userId);
+        
+        // Create business_settings table if it doesn't exist
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS business_settings (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                user_id TEXT NOT NULL UNIQUE,
+                business_name TEXT,
+                location TEXT,
+                phone TEXT,
+                email TEXT,
+                website TEXT,
+                logo_filename TEXT,
+                theme_color TEXT DEFAULT '#d4af37',
+                tagline TEXT,
+                photography_style TEXT,
+                currency TEXT DEFAULT 'USD',
+                tax_rate DECIMAL,
+                enable_email BOOLEAN DEFAULT true,
+                enable_sms BOOLEAN DEFAULT false,
+                auto_reminders BOOLEAN DEFAULT true,
+                welcome_email_template TEXT,
+                onboarding_completed BOOLEAN DEFAULT true,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        
+        // Create session_types table if it doesn't exist
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS session_types (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                user_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                price DECIMAL NOT NULL,
+                duration INTEGER NOT NULL,
+                deliverables TEXT,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        
+        // Save business settings
+        const businessInfo = wizardData.businessInfo || {};
+        const branding = wizardData.branding || {};
+        const stripe = wizardData.stripe || {};
+        const communication = wizardData.communication || {};
+        
+        await pool.query(`
+            INSERT INTO business_settings (
+                user_id, business_name, location, phone, email, website,
+                theme_color, tagline, photography_style, currency, tax_rate,
+                enable_email, enable_sms, auto_reminders, welcome_email_template, onboarding_completed
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+            ON CONFLICT (user_id) DO UPDATE SET
+                business_name = EXCLUDED.business_name,
+                location = EXCLUDED.location,
+                phone = EXCLUDED.phone,
+                email = EXCLUDED.email,
+                website = EXCLUDED.website,
+                theme_color = EXCLUDED.theme_color,
+                tagline = EXCLUDED.tagline,
+                photography_style = EXCLUDED.photography_style,
+                currency = EXCLUDED.currency,
+                tax_rate = EXCLUDED.tax_rate,
+                enable_email = EXCLUDED.enable_email,
+                enable_sms = EXCLUDED.enable_sms,
+                auto_reminders = EXCLUDED.auto_reminders,
+                welcome_email_template = EXCLUDED.welcome_email_template,
+                onboarding_completed = EXCLUDED.onboarding_completed,
+                updated_at = CURRENT_TIMESTAMP
+        `, [
+            userId,
+            businessInfo.bizName || '',
+            businessInfo.bizLocation || '',
+            businessInfo.bizPhone || '',
+            businessInfo.bizEmail || '',
+            businessInfo.bizWebsite || '',
+            branding.themeColor || '#d4af37',
+            branding.tagline || '',
+            branding.style || 'mixed',
+            stripe.currency || 'USD',
+            stripe.taxRate ? parseFloat(stripe.taxRate) : null,
+            communication.enableEmail !== false,
+            communication.enableSMS === true,
+            communication.autoReminders !== false,
+            communication.welcomeEmail || '',
+            true
+        ]);
+        
+        // Save first session type
+        const sessionTypes = wizardData.sessionTypes || {};
+        if (sessionTypes.sessionName && sessionTypes.sessionPrice && sessionTypes.sessionDuration) {
+            await pool.query(`
+                INSERT INTO session_types (user_id, name, price, duration, deliverables)
+                VALUES ($1, $2, $3, $4, $5)
+            `, [
+                userId,
+                sessionTypes.sessionName,
+                parseFloat(sessionTypes.sessionPrice),
+                parseInt(sessionTypes.sessionDuration),
+                sessionTypes.deliverables || ''
+            ]);
+        }
+        
+        console.log('✅ Onboarding wizard data saved successfully for user:', userId);
+        res.json({ success: true, message: 'Setup completed successfully' });
+        
+    } catch (error) {
+        console.error('❌ Error saving wizard data:', error);
+        res.status(500).json({ error: 'Failed to save setup data' });
+    }
+});
+
+// Check onboarding status
+app.get('/api/onboarding-status', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.user.claims.sub;
+        const result = await pool.query(
+            'SELECT onboarding_completed FROM business_settings WHERE user_id = $1',
+            [userId]
+        );
+        
+        const completed = result.rows.length > 0 ? result.rows[0].onboarding_completed : false;
+        res.json({ completed });
+    } catch (error) {
+        console.error('Error checking onboarding status:', error);
+        res.json({ completed: false });
+    }
+});
+
+// Serve onboarding wizard
+app.get('/onboarding', (req, res) => {
+    if (!req.isAuthenticated()) {
+        return res.redirect('/auth.html?return=/onboarding');
+    }
+    res.sendFile(path.join(__dirname, 'onboarding.html'));
+});
+
 // Serve admin dashboard with authentication requirement  
 app.get('/admin', (req, res) => {
     if (!req.isAuthenticated()) {

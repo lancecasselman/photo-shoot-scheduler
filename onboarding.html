@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Photography Business Setup Wizard</title>
+  <link rel="stylesheet" href="onboarding.css"/>
+</head>
+<body>
+  <div class="wizard-container">
+    <div class="wizard-header">
+      <h1>📸 Photography Business Setup</h1>
+      <p>Let's get your photography management system ready!</p>
+    </div>
+    
+    <div id="wizard-progress">
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="step-indicator">Step <span id="stepNum">1</span> of 6</div>
+    </div>
+    
+    <div id="wizard-form"></div>
+    
+    <div class="wizard-nav">
+      <button id="prevBtn" class="nav-btn secondary">⬅ Back</button>
+      <button id="nextBtn" class="nav-btn primary">Next ➡</button>
+    </div>
+  </div>
+
+  <script src="onboarding.js"></script>
+</body>
+</html>
