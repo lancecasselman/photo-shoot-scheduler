@@ -2917,6 +2917,70 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* Dropdown Menu Styles */
+        .tools-dropdown {
+            position: relative;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        #toolsToggle {
+            background: linear-gradient(135deg, #d4af37, #f4d03f);
+            color: #000;
+            padding: 12px 20px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+            font-size: 1em;
+            transition: all 0.2s ease;
+        }
+
+        #toolsToggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+        }
+
+        #toolsMenu {
+            position: absolute;
+            background-color: #2a2a2a;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 8px;
+            top: 50px;
+            width: 100%;
+            left: 0;
+            z-index: 99;
+            border: 1px solid #444;
+        }
+
+        #toolsMenu a {
+            display: block;
+            padding: 12px 15px;
+            color: #f5f5f5;
+            text-decoration: none;
+            border-bottom: 1px solid #444;
+            transition: all 0.2s ease;
+            border-radius: 4px;
+            margin-bottom: 5px;
+        }
+
+        #toolsMenu a:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        #toolsMenu a:hover {
+            background-color: #444;
+            color: #d4af37;
+            transform: translateX(5px);
+        }
+
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -2933,21 +2997,17 @@
             </div>
         </div>
 
-        <!-- Navigation Tabs -->
-        <div class="nav-tabs">
-            <button class="nav-tab active" onclick="switchTab('clients')">
-                Client Management
-            </button>
-            <button class="nav-tab" onclick="switchTab('sunrise')">
-                🌅 Sunrise/Sunset Calendar
-            </button>
-            <button class="nav-tab" onclick="switchTab('websites')">
-                Website Builder
-            </button>
-            <button class="nav-tab" onclick="window.location.href='/onboarding'">
-                Start Onboarding Wizard
-            </button>
+        <!-- 🔽 DROPDOWN MENU START -->
+        <div class="tools-dropdown">
+            <button id="toolsToggle">📂 Tools Menu ▼</button>
+            <div id="toolsMenu" class="hidden">
+                <a href="#" onclick="switchTab('clients')">👥 Client Management</a>
+                <a href="#" onclick="switchTab('sunrise')">🌅 Sunrise/Sunset Calendar</a>
+                <a href="#" onclick="switchTab('websites')">🌐 Website Builder</a>
+                <a href="/onboarding">🚀 Onboarding Wizard</a>
+            </div>
         </div>
+        <!-- 🔽 DROPDOWN MENU END -->
 
         <!-- Client Management Tab Content -->
         <div id="clientsTab" class="tab-content active">
@@ -7219,6 +7279,24 @@ ${name}`;
             });
             window.sunriseLocationClickHandlerBound = true;
         }
+
+        // Dropdown Menu Functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggleBtn = document.getElementById("toolsToggle");
+            const menu = document.getElementById("toolsMenu");
+
+            if (toggleBtn && menu) {
+                toggleBtn.addEventListener("click", () => {
+                    menu.classList.toggle("hidden");
+                });
+
+                window.addEventListener("click", function (e) {
+                    if (!toggleBtn.contains(e.target) && !menu.contains(e.target)) {
+                        menu.classList.add("hidden");
+                    }
+                });
+            }
+        });
 
     </script>
 
