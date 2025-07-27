@@ -427,10 +427,13 @@
                         .catch((error) => {
                             console.error('Google sign-in popup error:', error);
                             
-                            // If popup was blocked, use redirect method
+                            // Handle specific error cases
                             if (error.code === 'auth/popup-blocked') {
                                 console.log('Popup blocked, using redirect method');
                                 auth.signInWithRedirect(googleProvider);
+                            } else if (error.code === 'auth/unauthorized-domain') {
+                                alert("Domain authorization error: This domain needs to be added to Firebase console. Please contact support or try the email/password sign-in method.");
+                                document.getElementById('loadingIndicator').style.display = 'none';
                             } else {
                                 alert("Google sign-in failed: " + error.message);
                                 document.getElementById('loadingIndicator').style.display = 'none';
