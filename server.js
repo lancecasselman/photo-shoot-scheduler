@@ -295,6 +295,17 @@ app.get('/api/auth/user', (req, res) => {
     }
 });
 
+// Status endpoint for health checks and authentication status
+app.get('/api/status', (req, res) => {
+    res.json({
+        status: 'running',
+        authenticationEnabled: true,
+        firebaseInitialized: admin.apps.length > 0,
+        databaseConnected: !!pool,
+        timestamp: new Date().toISOString()
+    });
+});
+
 app.post('/api/auth/logout', (req, res) => {
     req.session.destroy((err) => {
         if (err) {
@@ -614,25 +625,11 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // API Routes
 
 // Get all sessions
-// Add authentication endpoint
-app.get('/api/auth/user', (req, res) => {
-    if (req.isAuthenticated()) {
-        const user = req.user.claims;
-        res.json({
-            id: user.sub,
-            email: user.email,
-            firstName: user.first_name,
-            lastName: user.last_name,
-            profileImageUrl: user.profile_image_url
-        });
-    } else {
-        res.status(401).json({ message: 'Not authenticated' });
-    }
-});
+// This endpoint is defined earlier in the file - removing duplicate
 
 app.get('/api/sessions', isAuthenticated, async (req, res) => {
     try {
-        const userId = req.user.claims.sub;
+        const userId = req.user.uid;
         const sessions = await getAllSessions(userId);
         console.log(`Returning ${sessions.length} sessions from database for user: ${userId}`);
         res.json(sessions);
@@ -672,7 +669,7 @@ app.post('/api/sessions', isAuthenticated, async (req, res) => {
             galleryReadyNotified: false
         };
         
-        const userId = req.user.claims.sub;
+        const userId = req.user.uid;
         const savedSession = await createSession(newSession, userId);
         console.log(`Created session in database: ${savedSession.clientName} (${savedSession.id}) for user: ${userId}`);
         res.status(201).json(savedSession);
@@ -2478,7 +2475,7 @@ app.post('/api/contracts/:id/sign', async (req, res) => {
 // Setup wizard endpoint - save onboarding data
 app.post('/api/setup-wizard', isAuthenticated, async (req, res) => {
     try {
-        const userId = req.user.claims.sub;
+        const userId = req.user.uid;
         const wizardData = req.body;
         
         console.log('📋 Processing onboarding wizard data for user:', userId);
@@ -2597,7 +2594,7 @@ app.post('/api/setup-wizard', isAuthenticated, async (req, res) => {
 // Check onboarding status
 app.get('/api/onboarding-status', isAuthenticated, async (req, res) => {
     try {
-        const userId = req.user.claims.sub;
+        const userId = req.user.uid;
         const result = await pool.query(
             'SELECT onboarding_completed FROM business_settings WHERE user_id = $1',
             [userId]

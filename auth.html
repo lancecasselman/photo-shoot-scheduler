@@ -479,7 +479,10 @@
                 }
             } catch (error) {
                 console.error('Authentication error:', error);
-                alert('Authentication failed: ' + error.message);
+                // Only show alert if there's an actual error message
+                if (error.message) {
+                    alert('Authentication failed: ' + error.message);
+                }
                 document.getElementById('loadingIndicator').style.display = 'none';
             }
         }
