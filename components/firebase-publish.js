@@ -157,5 +157,3 @@ if (typeof window !== 'undefined') {
         return await window.FirebasePublisher.hybridPublish(config);
     };
 }
-
-export default FirebasePublisher;
