@@ -412,22 +412,44 @@
 
         // Attach login behavior after DOM is ready
         document.addEventListener("DOMContentLoaded", function () {
-            // Google Sign-in
+            // Google Sign-in with redirect fallback
             const googleLoginBtn = document.getElementById("google-login");
             if (googleLoginBtn) {
                 googleLoginBtn.addEventListener("click", function () {
                     document.getElementById('loadingIndicator').style.display = 'block';
+                    
+                    // Try popup first, fall back to redirect if blocked
                     auth.signInWithPopup(googleProvider)
                         .then((result) => {
                             handleSuccessfulAuth(result.user);
                         })
                         .catch((error) => {
-                            console.error('Google sign-in error:', error);
-                            alert("Google sign-in failed: " + error.message);
-                            document.getElementById('loadingIndicator').style.display = 'none';
+                            console.error('Google sign-in popup error:', error);
+                            
+                            // If popup was blocked, use redirect method
+                            if (error.code === 'auth/popup-blocked') {
+                                console.log('Popup blocked, using redirect method');
+                                auth.signInWithRedirect(googleProvider);
+                            } else {
+                                alert("Google sign-in failed: " + error.message);
+                                document.getElementById('loadingIndicator').style.display = 'none';
+                            }
                         });
                 });
             }
+
+            // Handle redirect result for Google sign-in
+            auth.getRedirectResult()
+                .then((result) => {
+                    if (result.user) {
+                        handleSuccessfulAuth(result.user);
+                    }
+                })
+                .catch((error) => {
+                    console.error('Google redirect sign-in error:', error);
+                    alert("Google sign-in failed: " + error.message);
+                    document.getElementById('loadingIndicator').style.display = 'none';
+                });
 
             // Email Sign-in
             const emailSignInBtn = document.getElementById("emailSignIn");
