@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign In - Photography Scheduler</title>
+    <title>Welcome Back - Photography Management System</title>
+    <meta name="description" content="Sign in to manage your photography sessions, client galleries, and business workflow.">
     <style>
         * {
             margin: 0;
@@ -12,88 +13,114 @@
         }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #2c1810 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
+            color: #f5f5f5;
         }
         
         .auth-container {
-            background: white;
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            backdrop-filter: blur(10px);
             padding: 3rem;
             border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
             text-align: center;
-            max-width: 400px;
+            max-width: 450px;
             width: 90%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(135deg, #d4af37 0%, #f4e4bc 100%);
         }
         
         .logo {
-            font-size: 2.5rem;
-            color: #667eea;
+            font-size: 3rem;
             margin-bottom: 1rem;
+            background: linear-gradient(135deg, #d4af37 0%, #f4e4bc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .app-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #d4af37 0%, #f4e4bc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
         h1 {
-            color: #333;
-            margin-bottom: 1rem;
-            font-size: 1.8rem;
+            color: #f5f5f5;
+            margin-bottom: 0.8rem;
+            font-size: 2rem;
+            font-weight: 600;
         }
         
         .subtitle {
-            color: #666;
+            color: #b0b0b0;
             margin-bottom: 2.5rem;
-            line-height: 1.4;
+            line-height: 1.5;
+            font-size: 1.1rem;
         }
         
         .login-button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 1rem 2rem;
+            background: linear-gradient(135deg, #d4af37 0%, #f4e4bc 100%);
+            color: #1a1a1a;
+            padding: 1.2rem 2.5rem;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             font-size: 1.1rem;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: all 0.3s ease;
             text-decoration: none;
             display: inline-block;
             width: 100%;
+            border: 1px solid rgba(212, 175, 55, 0.4);
         }
         
         .login-button:hover {
+            background: linear-gradient(135deg, #f4e4bc 0%, #d4af37 100%);
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 10px 25px rgba(212, 175, 55, 0.3);
         }
         
         .signup-info {
             margin-top: 2rem;
-            background: #f8f9fa;
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid rgba(212, 175, 55, 0.2);
             padding: 1.5rem;
-            border-radius: 10px;
+            border-radius: 12px;
             text-align: left;
         }
         
         .signup-info h3 {
-            color: #667eea;
+            color: #d4af37;
             margin-bottom: 1rem;
             font-size: 1.2rem;
+            font-weight: 600;
         }
         
         .signup-info p {
-            color: #666;
+            color: #b0b0b0;
             margin-bottom: 1rem;
-        }
-        
-        .signup-info ul {
-            color: #666;
-            padding-left: 20px;
-        }
-        
-        .signup-info li {
-            margin-bottom: 0.5rem;
+            line-height: 1.5;
         }
         
         .features {
@@ -104,73 +131,157 @@
         .feature-item {
             display: flex;
             align-items: center;
-            margin-bottom: 0.8rem;
-            color: #666;
+            margin-bottom: 1rem;
+            color: #b0b0b0;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+        }
+
+        .feature-item:last-child {
+            border-bottom: none;
         }
         
         .feature-icon {
-            color: #667eea;
-            margin-right: 10px;
+            color: #d4af37;
+            margin-right: 12px;
             font-size: 1.2rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        .back-link {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #d4af37;
+            text-decoration: none;
+            font-size: 0.9rem;
+            opacity: 0.8;
+            transition: opacity 0.3s ease;
+        }
+
+        .back-link:hover {
+            opacity: 1;
         }
         
         @media (max-width: 480px) {
             .auth-container {
                 padding: 2rem;
+                margin: 20px;
             }
             
             h1 {
-                font-size: 1.5rem;
+                font-size: 1.7rem;
+            }
+
+            .app-name {
+                font-size: 1.3rem;
+            }
+
+            .subtitle {
+                font-size: 1rem;
+            }
+        }
+
+        /* Loading animation */
+        .loading {
+            display: none;
+            margin-top: 1rem;
+        }
+
+        .loading-spinner {
+            border: 2px solid rgba(212, 175, 55, 0.3);
+            border-radius: 50%;
+            border-top: 2px solid #d4af37;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Animation for container */
+        .auth-container {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
         }
     </style>
 </head>
 <body>
     <div class="auth-container">
+        <a href="/landing.html" class="back-link">← Back to Home</a>
+        
         <div class="logo">📸</div>
-        <h1>Photography Business Manager</h1>
+        <div class="app-name">Photography Management</div>
+        <h1>Welcome Back</h1>
         <p class="subtitle">
-            Professional session scheduling, client communication, and photo gallery delivery for photographers.
+            Sign in to manage your sessions
         </p>
         
         <div class="auth-buttons">
-            <a href="/api/login" class="login-button primary">
-                🔑 Sign In / Sign Up
+            <a href="/api/login" class="login-button" id="loginBtn">
+                🔑 Sign In with Replit
             </a>
             
+            <div class="loading" id="loadingIndicator">
+                <div class="loading-spinner"></div>
+                <p style="margin-top: 10px; color: #b0b0b0; font-size: 0.9rem;">Authenticating...</p>
+            </div>
+            
             <div class="signup-info">
-                <h3>New to the platform?</h3>
-                <p>Click "Sign In / Sign Up" above to create your photographer account using secure authentication.</p>
-                <p>Once logged in, you'll have access to all professional features listed below.</p>
+                <h3>Don't have an account?</h3>
+                <p>No worries! Clicking "Sign In" above will automatically create your photographer account using secure Replit authentication.</p>
             </div>
         </div>
         
         <div class="features">
             <div class="feature-item">
-                <span class="feature-icon">✨</span>
-                <span>Session Management</span>
+                <span class="feature-icon">📅</span>
+                <span>Session Management & Workflow Tracking</span>
             </div>
             <div class="feature-item">
                 <span class="feature-icon">🖼️</span>
-                <span>Photo Gallery System</span>
+                <span>Client Gallery Delivery System</span>
             </div>
             <div class="feature-item">
-                <span class="feature-icon">💰</span>
-                <span>Stripe Invoice Integration</span>
+                <span class="feature-icon">💳</span>
+                <span>Stripe Invoicing & Payment Plans</span>
             </div>
             <div class="feature-item">
                 <span class="feature-icon">📱</span>
-                <span>Mobile-Friendly Design</span>
+                <span>Mobile-Responsive Design</span>
             </div>
         </div>
     </div>
 
     <script>
+        // Handle login button interaction
+        document.getElementById('loginBtn').addEventListener('click', function(e) {
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            loadingIndicator.style.display = 'block';
+            this.style.opacity = '0.7';
+            this.style.pointerEvents = 'none';
+        });
+
         // Check if user is already authenticated
         fetch('/api/auth/user')
             .then(response => {
                 if (response.ok) {
-                    // User is authenticated, check for return parameter
+                    // User is authenticated, redirect appropriately
                     const urlParams = new URLSearchParams(window.location.search);
                     const returnTo = urlParams.get('return');
                     if (returnTo) {
@@ -187,9 +298,33 @@
                 // Show different message if coming from admin
                 const urlParams = new URLSearchParams(window.location.search);
                 if (urlParams.get('return') === '/admin') {
-                    document.querySelector('.signup-info p').textContent = 'Admin access requires authentication. Sign in to access the admin dashboard.';
+                    document.querySelector('.signup-info h3').textContent = 'Admin Access Required';
+                    document.querySelector('.signup-info p').textContent = 'Admin dashboard access requires authentication. Sign in with your authorized account to continue.';
                 }
             });
+
+        // Handle page visibility change (user returns from auth)
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                // Page became visible again, check auth status
+                setTimeout(() => {
+                    fetch('/api/auth/user')
+                        .then(response => {
+                            if (response.ok) {
+                                window.location.href = '/';
+                            }
+                        })
+                        .catch(() => {
+                            // Reset button state if auth failed
+                            const loginBtn = document.getElementById('loginBtn');
+                            const loadingIndicator = document.getElementById('loadingIndicator');
+                            loginBtn.style.opacity = '1';
+                            loginBtn.style.pointerEvents = 'auto';
+                            loadingIndicator.style.display = 'none';
+                        });
+                }, 1000);
+            }
+        });
     </script>
 </body>
 </html>
