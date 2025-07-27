@@ -1,25 +1,9 @@
 // Premium Website Builder - Main Component
-import React, { useState, useEffect } from 'react';
-import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import BlockLibrary from './BlockLibrary.js';
-import LivePreview from './LivePreview.jsx';
-import './SiteBuilder.css';
+const { useState, useEffect } = React;
 
-// Firebase configuration (matches your existing config)
-const firebaseConfig = {
-    apiKey: "AIzaSyDbtboh1bW6xu9Tz9FILkx_0lzGwXQHjyM",
-    authDomain: "photoshcheduleapp.firebaseapp.com",
-    projectId: "photoshcheduleapp",
-    storageBucket: "photoshcheduleapp.appspot.com",
-    messagingSenderId: "1080892259604",
-    appId: "1:1080892259604:web:9c8f4e5d6a7b8c9d0e1f2g"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+// Use Firebase from global scope (initialized in HTML)
+const auth = window.firebaseAuth;
+const db = window.firebaseFirestore;
 
 const SiteBuilder = () => {
     const [user, setUser] = useState(null);
@@ -37,7 +21,7 @@ const SiteBuilder = () => {
 
     // Authentication listener
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        const unsubscribe = window.onAuthStateChanged(auth, async (user) => {
             if (user) {
                 setUser(user);
                 await loadSiteConfig(user.uid);
@@ -105,6 +89,8 @@ const SiteBuilder = () => {
     // Load site configuration from Firestore
     const loadSiteConfig = async (userId) => {
         try {
+            // Use Firebase v9 functions from global scope
+            const { doc, getDoc } = window.firebaseFirestore;
             const docRef = doc(db, 'websites', userId);
             const docSnap = await getDoc(docRef);
             
@@ -128,6 +114,8 @@ const SiteBuilder = () => {
 
         setIsLoading(true);
         try {
+            // Use Firebase v9 functions from global scope
+            const { doc, setDoc } = window.firebaseFirestore;
             const docRef = doc(db, 'websites', user.uid);
             await setDoc(docRef, {
                 siteConfig,

@@ -1,5 +1,4 @@
 // Block Library - Sidebar Component for Website Builder
-import React from 'react';
 
 const BlockLibrary = ({ 
     onAddBlock, 

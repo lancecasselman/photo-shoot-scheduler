@@ -377,6 +377,8 @@ async function initializeDatabase() {
         `);
 
         console.log('Database tables initialized successfully');
+
+        console.log('Database tables initialized successfully');
     } catch (error) {
         console.error('Database initialization error:', error);
     }
@@ -2701,13 +2703,13 @@ app.get('/site/:username', async (req, res) => {
     try {
         const username = req.params.username;
         
-        // Get website data from Firestore
-        const websiteDoc = await admin.firestore()
-            .collection('published_websites')
-            .doc(username)
-            .get();
-            
-        if (!websiteDoc.exists) {
+        // Get website data from PostgreSQL database
+        const result = await pool.query(
+            'SELECT * FROM websites WHERE username = $1 AND published = TRUE',
+            [username]
+        );
+        
+        if (result.rows.length === 0) {
             return res.status(404).send(`
                 <!DOCTYPE html>
                 <html lang="en">
@@ -2735,11 +2737,11 @@ app.get('/site/:username', async (req, res) => {
             `);
         }
         
-        const websiteData = websiteDoc.data();
+        const websiteData = result.rows[0];
+        const blocks = websiteData.site_config.blocks || [];
         
         // Generate dynamic website based on theme and content
-        const themeStyles = getThemeStyles(websiteData.theme);
-        const websiteHTML = generatePublicWebsite(websiteData);
+        const websiteHTML = generateWebsiteFromBlocks(blocks, websiteData.theme, username);
         
         res.send(websiteHTML);
         
@@ -2776,7 +2778,87 @@ function getThemeStyles(theme) {
     return themes[theme] || themes['clean'];
 }
 
-// Helper function to generate public website HTML
+// Helper function to generate website from blocks
+function generateWebsiteFromBlocks(blocks, theme, username) {
+    const themeStyles = getThemeStyles(theme);
+    
+    const blocksHTML = blocks.map(block => {
+        switch (block.type) {
+            case 'heading':
+                return `<h1 style="${convertStylesToCSS(block.styles)}">${block.content}</h1>`;
+            case 'paragraph':
+                return `<p style="${convertStylesToCSS(block.styles)}">${block.content}</p>`;
+            case 'button':
+                return `<button style="${convertStylesToCSS(block.styles)}; background: #D4AF37; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">${block.content}</button>`;
+            default:
+                return `<div>${block.content}</div>`;
+        }
+    }).join('\n        ');
+    
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${username} - Photography Portfolio</title>
+    <meta name="description" content="Professional photography portfolio by ${username}">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            line-height: 1.6; 
+            background: ${themeStyles.background};
+            color: ${themeStyles.textColor};
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            background: rgba(255, 255, 255, 0.9);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        .website-content > * {
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 2px solid ${themeStyles.accentColor};
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="website-content">
+            ${blocksHTML}
+        </div>
+        <div class="footer">
+            <p>Created with Photography Management System</p>
+            <p><a href="mailto:lance@thelegacyphotography.com" style="color: ${themeStyles.accentColor};">Contact: lance@thelegacyphotography.com</a> | <a href="tel:843-485-1315" style="color: ${themeStyles.accentColor};">Call: 843-485-1315</a></p>
+        </div>
+    </div>
+</body>
+</html>`;
+}
+
+// Helper function to convert styles object to CSS string
+function convertStylesToCSS(styles) {
+    return Object.entries(styles || {})
+        .map(([key, value]) => {
+            // Convert camelCase to kebab-case
+            const cssKey = key.replace(/([A-Z])/g, '-$1').toLowerCase();
+            return `${cssKey}: ${value}`;
+        })
+        .join('; ');
+}
+
+// Helper function to generate public website HTML (legacy)
 function generatePublicWebsite(websiteData) {
     const theme = getThemeStyles(websiteData.theme);
     
@@ -3206,6 +3288,39 @@ app.get('/info', (req, res) => {
 });
 
 // Premium static site publishing endpoint
+// Simple publish endpoint for website builder
+app.post('/api/publish-site', isAuthenticated, async (req, res) => {
+    try {
+        const { username, blocks, theme, userEmail } = req.body;
+        
+        if (!username || !blocks || !userEmail) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+        
+        // Save to database
+        await pool.query(`
+            INSERT INTO websites (user_email, username, site_config, theme, published_at)
+            VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)
+            ON CONFLICT (username) 
+            DO UPDATE SET 
+                site_config = $3,
+                theme = $4,
+                published_at = CURRENT_TIMESTAMP,
+                updated_at = CURRENT_TIMESTAMP
+        `, [userEmail, username, JSON.stringify({ blocks }), theme]);
+        
+        res.json({ 
+            success: true, 
+            url: `/site/${username}`,
+            message: 'Website published successfully'
+        });
+        
+    } catch (error) {
+        console.error('Error publishing site:', error);
+        res.status(500).json({ error: 'Failed to publish website' });
+    }
+});
+
 app.post('/api/publish-static-site', isAuthenticated, requirePremium, async (req, res) => {
     try {
         const { siteConfig, theme, username } = req.body;

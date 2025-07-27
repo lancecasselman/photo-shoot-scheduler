@@ -1,5 +1,5 @@
 // Live Preview Component - Real-time Website Editor
-import React, { useState } from 'react';
+const { useState } = React;
 
 const LivePreview = ({ 
     siteConfig, 
