@@ -2981,6 +2981,142 @@
         .hidden {
             display: none;
         }
+
+        /* Website Builder Styles */
+        .website-builder-container {
+            padding: 20px;
+            background: #1a1a1a;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .builder-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .builder-header h2 {
+            color: #d4af37;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .builder-header p {
+            color: #f5f5f5;
+            font-size: 1.1em;
+        }
+
+        .builder-main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+
+        .builder-settings-panel {
+            background: #2a2a2a;
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid #444;
+        }
+
+        .builder-settings-panel h3 {
+            color: #d4af37;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+        }
+
+        .builder-preview-panel {
+            background: #2a2a2a;
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid #444;
+            position: sticky;
+            top: 20px;
+        }
+
+        .builder-preview-panel h3 {
+            color: #d4af37;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+        }
+
+        .preview-container {
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .website-preview {
+            width: 100%;
+            min-height: 400px;
+            position: relative;
+        }
+
+        .preview-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 400px;
+            color: #666;
+            text-align: center;
+            font-style: italic;
+        }
+
+        .builder-actions {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-top: 30px;
+        }
+
+        .action-btn.secondary {
+            background: linear-gradient(135deg, #666, #888);
+            color: white;
+        }
+
+        .action-btn.primary {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .image-preview-container {
+            text-align: center;
+        }
+
+        /* Theme Previews */
+        .theme-clean {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            color: #343a40;
+        }
+
+        .theme-gallery {
+            background: linear-gradient(135deg, #212529, #343a40);
+            color: #f8f9fa;
+        }
+
+        .theme-banner {
+            background: linear-gradient(135deg, #6c757d, #495057);
+            color: #f8f9fa;
+        }
+
+        .theme-legacy {
+            background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+            color: #f4e4bc;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .builder-main-layout {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .builder-preview-panel {
+                position: static;
+            }
+        }
     </style>
 </head>
 <body>
@@ -7404,473 +7540,291 @@ ${name}`;
 
         <!-- Website Builder Tab Content -->
         <div id="websitesTab" class="tab-content">
-            <div class="revolutionary-website-builder">
-                <!-- Builder Mode Header -->
-                <div class="builder-mode-header">
-                    <div class="builder-mode-switch">
-                        <button class="mode-btn active" onclick="switchBuilderMode('template')" id="templateModeBtn">Quick Templates</button>
-                        <button class="mode-btn" onclick="switchBuilderMode('custom')" id="customModeBtn">Custom Builder</button>
-                    </div>
-                    <div class="builder-actions">
-                        <button class="action-btn" onclick="previewWebsite()">Preview</button>
-                        <button class="action-btn primary" onclick="publishWebsite()">Publish</button>
-                    </div>
+            <div class="website-builder-container">
+                <!-- Website Builder Header -->
+                <div class="builder-header">
+                    <h2>🌐 Website Builder</h2>
+                    <p>Create your professional photography website in minutes</p>
                 </div>
 
-                <!-- Template Gallery Mode -->
-                <div id="templateGalleryMode" class="template-gallery-mode active">
-                    <div class="template-hero">
-                        <h2>Quick Start Templates</h2>
-                        <p>Professional photography websites ready in 30 seconds</p>
-                    </div>
-                    
-                    <div class="template-grid">
-                        <div class="template-card" onclick="useTemplate('legacy')">
-                            <div class="template-preview legacy-preview">
-                                <div class="preview-header">The Legacy Photography</div>
-                                <div class="preview-hero">Capturing Timeless Moments</div>
-                                <div class="preview-gallery">
-                                    <div class="preview-photo"></div>
-                                    <div class="preview-photo"></div>
-                                    <div class="preview-photo"></div>
-                                </div>
-                            </div>
-                            <div class="template-info">
-                                <h3>Legacy Style</h3>
-                                <p>Dark elegant theme with gold accents, perfect for luxury photography brands</p>
-                                <div class="template-features">
-                                    <span class="feature-tag">Hero Section</span>
-                                    <span class="feature-tag">Portfolio Grid</span>
-                                    <span class="feature-tag">Contact Form</span>
-                                    <span class="feature-tag">About Page</span>
-                                </div>
-                                <button class="use-template-btn">Use This Template</button>
+                <!-- Main Builder Layout -->
+                <div class="builder-main-layout">
+                    <!-- Left Side - Settings Form -->
+                    <div class="builder-settings-panel">
+                        <h3>Website Settings</h3>
+                        
+                        <div class="form-group">
+                            <label for="businessName">Business Name</label>
+                            <input type="text" id="businessName" name="businessName" placeholder="Your Photography Business" oninput="updateLivePreview()">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="welcomeMessage">Welcome Message</label>
+                            <textarea id="welcomeMessage" name="welcomeMessage" rows="3" placeholder="Welcome to our photography studio..." oninput="updateLivePreview()"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="themeSelector">Theme</label>
+                            <select id="themeSelector" name="themeSelector" onchange="updateLivePreview()">
+                                <option value="clean">Clean</option>
+                                <option value="gallery">Gallery</option>
+                                <option value="banner">Banner Focused</option>
+                                <option value="legacy">Legacy Style</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="brandColor">Brand Color</label>
+                            <input type="color" id="brandColor" name="brandColor" value="#d4af37" oninput="updateLivePreview()">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="profileImage">Profile Image</label>
+                            <input type="file" id="profileImage" name="profileImage" accept="image/*" onchange="handleImageUpload(event)">
+                            <div id="imagePreview" class="image-preview-container" style="display: none;">
+                                <img id="previewImg" src="" alt="Preview" style="max-width: 150px; height: auto; border-radius: 8px; margin-top: 10px;">
                             </div>
                         </div>
 
-                        <div class="template-card" onclick="useTemplate('modern')">
-                            <div class="template-preview modern-preview">
-                                <div class="preview-header">Modern Photography</div>
-                                <div class="preview-hero">Creative Visual Stories</div>
-                                <div class="preview-gallery">
-                                    <div class="preview-photo"></div>
-                                    <div class="preview-photo"></div>
-                                    <div class="preview-photo"></div>
-                                </div>
-                            </div>
-                            <div class="template-info">
-                                <h3>Modern Portfolio</h3>
-                                <p>Clean contemporary design with gradient overlays and responsive grids</p>
-                                <div class="template-features">
-                                    <span class="feature-tag">Animated Hero</span>
-                                    <span class="feature-tag">Gallery Lightbox</span>
-                                    <span class="feature-tag">Testimonials</span>
-                                    <span class="feature-tag">Pricing Table</span>
-                                </div>
-                                <button class="use-template-btn">Use This Template</button>
-                            </div>
-                        </div>
-
-                        <div class="template-card" onclick="useTemplate('elegant')">
-                            <div class="template-preview elegant-preview">
-                                <div class="preview-header">Elegant Gallery</div>
-                                <div class="preview-hero">Sophisticated Photography</div>
-                                <div class="preview-gallery">
-                                    <div class="preview-photo"></div>
-                                    <div class="preview-photo"></div>
-                                    <div class="preview-photo"></div>
-                                </div>
-                            </div>
-                            <div class="template-info">
-                                <h3>Elegant Gallery</h3>
-                                <p>Sophisticated serif typography with rich brown and cream color palette</p>
-                                <div class="template-features">
-                                    <span class="feature-tag">Full-Screen Gallery</span>
-                                    <span class="feature-tag">Elegant Typography</span>
-                                    <span class="feature-tag">Service Cards</span>
-                                    <span class="feature-tag">Social Links</span>
-                                </div>
-                                <button class="use-template-btn">Use This Template</button>
-                            </div>
-                        </div>
-
-                        <div class="template-card" onclick="useTemplate('legacy-elite')">
-                            <div class="template-preview legacy-elite-preview">
-                                <div class="preview-header">The Legacy Photography</div>
-                                <div class="preview-hero">Lance Casselman</div>
-                                <div class="preview-tagline">Timeless Elegance • Authentic Moments</div>
-                                <div class="preview-gallery">
-                                    <div class="preview-photo legacy-photo-1"></div>
-                                    <div class="preview-photo legacy-photo-2"></div>
-                                    <div class="preview-photo legacy-photo-3"></div>
-                                </div>
-                            </div>
-                            <div class="template-info">
-                                <h3>🔥 Legacy Elite (Custom For You)</h3>
-                                <p>Luxurious dark theme with gold accents, designed specifically for The Legacy Photography's sophisticated brand</p>
-                                <div class="template-features">
-                                    <span class="feature-tag">🌟 Premium Dark Design</span>
-                                    <span class="feature-tag">Gold Luxury Accents</span>
-                                    <span class="feature-tag">Your Actual Photos</span>
-                                    <span class="feature-tag">Brand-Matched</span>
-                                </div>
-                                <button class="use-template-btn legacy-elite-btn">Use My Custom Template</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Custom Builder Mode -->
-                <div id="customBuilderMode" class="custom-builder-mode">
-                    <div class="builder-interface">
-                        <!-- Left Sidebar - Components & Branding -->
-                        <div class="builder-sidebar">
-                            <!-- AI-Powered Features -->
-                            <div class="ai-section">
-                                <h3>🤖 AI Assistant</h3>
-                                <button class="ai-btn" onclick="generateAILayout()">Generate Smart Layout</button>
-                                <button class="ai-btn" onclick="optimizeForMobile()">Auto Mobile Optimize</button>
-                                <button class="ai-btn" onclick="suggestColors()">Smart Color Palette</button>
-                                <button class="ai-btn" onclick="generateContent()">AI Content Writer</button>
-                            </div>
-
-                            <!-- Branding Controls -->
-                            <div class="branding-section">
-                                <h3>🎨 Branding</h3>
-                                <div class="branding-control">
-                                    <label>Logo Upload:</label>
-                                    <input type="file" accept="image/*" onchange="uploadLogo(this)" class="logo-upload">
-                                    <div id="logoPreview" class="logo-preview"></div>
-                                </div>
-                                
-                                <div class="branding-control">
-                                    <label>Business Name:</label>
-                                    <input type="text" id="businessName" placeholder="Your Photography Studio" onchange="updateBusinessName()" class="brand-input">
-                                </div>
-                                
-                                <div class="branding-control">
-                                    <label>Primary Font:</label>
-                                    <select onchange="changePrimaryFont(this.value)" class="font-select">
-                                        <option value="system">System Default</option>
-                                        <option value="serif">Elegant Serif</option>
-                                        <option value="playfair">Playfair Display</option>
-                                        <option value="lora">Lora</option>
-                                        <option value="crimson">Crimson Text</option>
-                                        <option value="modern">Modern Sans</option>
-                                        <option value="montserrat">Montserrat</option>
-                                        <option value="opensans">Open Sans</option>
-                                        <option value="roboto">Roboto</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="branding-control">
-                                    <label>Brand Colors:</label>
-                                    <div class="color-grid">
-                                        <div class="color-input-group">
-                                            <label>Primary</label>
-                                            <input type="color" value="#667eea" onchange="updateBrandColor('primary', this.value)" class="color-input">
-                                        </div>
-                                        <div class="color-input-group">
-                                            <label>Secondary</label>
-                                            <input type="color" value="#764ba2" onchange="updateBrandColor('secondary', this.value)" class="color-input">
-                                        </div>
-                                        <div class="color-input-group">
-                                            <label>Accent</label>
-                                            <input type="color" value="#f39c12" onchange="updateBrandColor('accent', this.value)" class="color-input">
-                                        </div>
-                                        <div class="color-input-group">
-                                            <label>Text</label>
-                                            <input type="color" value="#333333" onchange="updateBrandColor('text', this.value)" class="color-input">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Component Library -->
-                            <div class="component-section">
-                                <h3>🧩 Components</h3>
-                                <div class="component-grid">
-                                    <div class="component-item" draggable="true" data-component="hero">
-                                        🏠 Hero Section
-                                    </div>
-                                    <div class="component-item" draggable="true" data-component="gallery">
-                                        🖼️ Photo Gallery
-                                    </div>
-                                    <div class="component-item" draggable="true" data-component="about">
-                                        About Section
-                                    </div>
-                                    <div class="component-item" draggable="true" data-component="services">
-                                        Services
-                                    </div>
-                                    <div class="component-item" draggable="true" data-component="testimonials">
-                                        Testimonials
-                                    </div>
-                                    <div class="component-item" draggable="true" data-component="contact">
-                                        📞 Contact Form
-                                    </div>
-                                    <div class="component-item" draggable="true" data-component="pricing">
-                                        💰 Pricing Table
-                                    </div>
-                                    <div class="component-item" draggable="true" data-component="footer">
-                                        📋 Footer
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Main Canvas -->
-                        <div class="builder-canvas">
-                            <!-- Device Preview Controls -->
-                            <div class="canvas-controls">
-                                <div class="device-controls">
-                                    <button class="device-btn active" onclick="setDevicePreview('desktop')">💻 Desktop</button>
-                                    <button class="device-btn" onclick="setDevicePreview('tablet')">📱 Tablet</button>
-                                    <button class="device-btn" onclick="setDevicePreview('mobile')">📱 Mobile</button>
-                                </div>
-                            </div>
-
-                            <!-- Website Canvas -->
-                            <div class="website-canvas" id="websiteCanvas" ondrop="dropComponent(event)" ondragover="allowDrop(event)">
-                                <!-- Smart Guides -->
-                                <div class="smart-guides" id="smartGuides"></div>
-                                
-                                <!-- Website Content -->
-                                <div id="websiteContent" class="website-content">
-                                    <div class="canvas-placeholder">
-                                        <h2>🎨 Revolutionary Website Builder</h2>
-                                        <p>Drag components from the sidebar or start with a template</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Right Sidebar - Properties -->
-                        <div class="builder-properties">
-                            <h3>⚙️ Properties</h3>
-                            <div id="propertyPanel" class="property-panel">
-                                <div class="no-selection">
-                                    <p>Select an element to edit properties</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                        <div class="template-card" data-template="legacy">
-                            <div class="template-preview">
-                                <div class="template-mockup legacy-mockup">
-                                    <div class="mockup-header">The Legacy Photography</div>
-                                    <div class="mockup-hero">Capturing Timeless Moments</div>
-                                    <div class="mockup-gallery">
-                                        <div class="mockup-photo"></div>
-                                        <div class="mockup-photo"></div>
-                                        <div class="mockup-photo"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <h4>Legacy Style</h4>
-                            <p>Dark elegance with gold accents - perfect for luxury photography</p>
-                            <button class="btn btn-primary" onclick="selectTemplate('legacy')">
-                                Choose Template
-                            </button>
-                        </div>
-
-                        <div class="template-card" data-template="modern">
-                            <div class="template-preview">
-                                <div class="template-mockup modern-mockup">
-                                    <div class="mockup-header">Studio Photography</div>
-                                    <div class="mockup-hero">Modern. Clean. Beautiful.</div>
-                                    <div class="mockup-gallery">
-                                        <div class="mockup-photo"></div>
-                                        <div class="mockup-photo"></div>
-                                        <div class="mockup-photo"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <h4>Modern Portfolio</h4>
-                            <p>Clean contemporary design with bold typography</p>
-                            <button class="btn btn-primary" onclick="selectTemplate('modern')">
-                                Choose Template
-                            </button>
-                        </div>
-
-                        <div class="template-card" data-template="romantic">
-                            <div class="template-preview">
-                                <div class="template-mockup romantic-mockup">
-                                    <div class="mockup-header">Romantic Photography</div>
-                                    <div class="mockup-hero">Love Stories Captured</div>
-                                    <div class="mockup-gallery">
-                                        <div class="mockup-photo"></div>
-                                        <div class="mockup-photo"></div>
-                                        <div class="mockup-photo"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <h4>Romantic Style</h4>
-                            <p>Warm tones and elegant serif fonts for wedding photography</p>
-                            <button class="btn btn-primary" onclick="selectTemplate('romantic')">
-                                Choose Template
-                            </button>
-                        </div>
-
-                        <div class="template-card" data-template="bold">
-                            <div class="template-preview">
-                                <div class="template-mockup bold-mockup">
-                                    <div class="mockup-header">BOLD PHOTOGRAPHY</div>
-                                    <div class="mockup-hero">DRAMATIC. POWERFUL.</div>
-                                    <div class="mockup-gallery">
-                                        <div class="mockup-photo"></div>
-                                        <div class="mockup-photo"></div>
-                                        <div class="mockup-photo"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <h4>Bold & Dramatic</h4>
-                            <p>High contrast design for fashion and artistic photography</p>
-                            <button class="btn btn-primary" onclick="selectTemplate('bold')">
-                                Choose Template
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Website Customization -->
-                <div id="websiteCustomization" class="website-customization" style="display: none;">
-                    <div class="customization-header">
-                        <button class="btn btn-secondary" onclick="backToTemplates()">← Back to Templates</button>
-                        <h3 id="selectedTemplateName">Customizing Template</h3>
-                        <div class="customization-actions">
-                            <button class="btn btn-secondary" onclick="saveWebsite()">💾 Save</button>
-                            <button class="btn btn-primary" onclick="previewWebsite()">👁️ Preview</button>
-                            <button class="btn btn-success" onclick="publishWebsite()">Publish</button>
+                        <!-- Action Buttons -->
+                        <div class="builder-actions">
+                            <button class="action-btn secondary" onclick="saveWebsiteSettings()">💾 Save Settings</button>
+                            <button class="action-btn" onclick="previewWebsite()">👁️ Preview Website</button>
+                            <button class="action-btn primary" onclick="publishWebsite()">🚀 Publish Website</button>
                         </div>
                     </div>
 
-                    <div class="customization-layout">
-                        <!-- Customization Tabs -->
-                        <div class="customization-sidebar">
-                            <div class="customization-tabs">
-                                <button class="customization-tab active" onclick="showCustomizationSection('content')">
-                                    📝 Content
-                                </button>
-                                <button class="customization-tab" onclick="showCustomizationSection('design')">
-                                    🎨 Design
-                                </button>
-                                <button class="customization-tab" onclick="showCustomizationSection('photos')">
-                                    📸 Photos
-                                </button>
-                                <button class="customization-tab" onclick="showCustomizationSection('settings')">
-                                    ⚙️ Settings
-                                </button>
-                            </div>
-
-                            <!-- Content Customization -->
-                            <div id="contentCustomization" class="customization-section active">
-                                <h4>Business Information</h4>
-                                <div class="form-group">
-                                    <label>Business Name</label>
-                                    <input type="text" id="businessName" placeholder="Your Photography Business" onchange="updateWebsiteContent()">
-                                </div>
-                                <div class="form-group">
-                                    <label>Tagline</label>
-                                    <input type="text" id="tagline" placeholder="Your Professional Tagline" onchange="updateWebsiteContent()">
-                                </div>
-                                <div class="form-group">
-                                    <label>About Text</label>
-                                    <textarea id="aboutText" rows="4" placeholder="Tell clients about your photography services..." onchange="updateWebsiteContent()"></textarea>
-                                </div>
-                                <div class="form-group">
-                                    <label>Phone Number</label>
-                                    <input type="tel" id="contactPhone" placeholder="(555) 123-4567" onchange="updateWebsiteContent()">
-                                </div>
-                                <div class="form-group">
-                                    <label>Email Address</label>
-                                    <input type="email" id="contactEmail" placeholder="your@email.com" onchange="updateWebsiteContent()">
-                                </div>
-                            </div>
-
-                            <!-- Design Customization -->
-                            <div id="designCustomization" class="customization-section">
-                                <h4>Colors & Fonts</h4>
-                                <div class="form-group">
-                                    <label>Primary Color</label>
-                                    <input type="color" id="primaryColor" onchange="updateWebsiteDesign()">
-                                </div>
-                                <div class="form-group">
-                                    <label>Background Color</label>
-                                    <input type="color" id="backgroundColor" onchange="updateWebsiteDesign()">
-                                </div>
-                                <div class="form-group">
-                                    <label>Text Color</label>
-                                    <input type="color" id="textColor" onchange="updateWebsiteDesign()">
-                                </div>
-                                <div class="form-group">
-                                    <label>Font Style</label>
-                                    <select id="fontStyle" onchange="updateWebsiteDesign()">
-                                        <option value="serif">Serif (Elegant)</option>
-                                        <option value="sans-serif">Sans-serif (Modern)</option>
-                                        <option value="script">Script (Decorative)</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <!-- Photos Customization -->
-                            <div id="photosCustomization" class="customization-section">
-                                <h4>Portfolio Photos</h4>
-                                <div class="form-group">
-                                    <label>Upload Photos</label>
-                                    <input type="file" id="portfolioPhotos" multiple accept="image/*" onchange="handlePhotoUpload()">
-                                    <p class="form-help">Upload your best portfolio photos (recommended: 6-12 images)</p>
-                                </div>
-                                <div id="photoPreview" class="photo-preview-grid"></div>
-                                <div class="form-group">
-                                    <label>Gallery Layout</label>
-                                    <select id="galleryLayout" onchange="updateGallerySettings()">
-                                        <option value="grid">Grid Layout</option>
-                                        <option value="masonry">Masonry Layout</option>
-                                        <option value="carousel">Carousel Slider</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <!-- Settings Customization -->
-                            <div id="settingsCustomization" class="customization-section">
-                                <h4>Website Settings</h4>
-                                <div class="form-group">
-                                    <label>Website URL</label>
-                                    <input type="text" id="websiteUrl" placeholder="your-website-name" onchange="updateWebsiteSettings()">
-                                    <p class="form-help">Will be: your-website-name.replit.app</p>
-                                </div>
-                                <div class="form-group">
-                                    <label>SEO Title</label>
-                                    <input type="text" id="seoTitle" placeholder="Professional Photography Services" onchange="updateWebsiteSettings()">
-                                </div>
-                                <div class="form-group">
-                                    <label>SEO Description</label>
-                                    <textarea id="seoDescription" rows="3" placeholder="Professional photography services for weddings, portraits, and events..." onchange="updateWebsiteSettings()"></textarea>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Website Preview -->
-                        <div class="website-preview-area">
-                            <div class="preview-controls">
-                                <button class="preview-control active" onclick="setPreviewDevice('desktop')">💻 Desktop</button>
-                                <button class="preview-control" onclick="setPreviewDevice('tablet')">📱 Tablet</button>
-                                <button class="preview-control" onclick="setPreviewDevice('mobile')">📱 Mobile</button>
-                            </div>
-                            <div id="websitePreview" class="website-preview-frame desktop">
+                    <!-- Right Side - Live Preview -->
+                    <div class="builder-preview-panel">
+                        <h3>Live Preview</h3>
+                        <div class="preview-container">
+                            <div id="websitePreview" class="website-preview">
+                                <!-- Live preview will be generated here -->
                                 <div class="preview-placeholder">
-                                    <h3>Select a template to start building your website</h3>
-                                    <p>Your website preview will appear here</p>
+                                    <p>Your website preview will appear here as you customize</p>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </div> <!-- End Website Builder Tab -->
 
-    </div>
+    </div> <!-- End container -->
+
+    <script>
+        // Website Builder JavaScript Functionality
+        let websiteSettings = {
+            businessName: '',
+            welcomeMessage: '',
+            theme: 'clean',
+            brandColor: '#d4af37',
+            profileImage: null
+        };
+
+        // Handle image upload and preview
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    websiteSettings.profileImage = e.target.result;
+                    
+                    // Show image preview
+                    const previewContainer = document.getElementById('imagePreview');
+                    const previewImg = document.getElementById('previewImg');
+                    previewImg.src = e.target.result;
+                    previewContainer.style.display = 'block';
+                    
+                    updateLivePreview();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Update live preview as user types
+        function updateLivePreview() {
+            // Get current form values
+            websiteSettings.businessName = document.getElementById('businessName').value || 'Your Photography Business';
+            websiteSettings.welcomeMessage = document.getElementById('welcomeMessage').value || 'Welcome to our photography studio...';
+            websiteSettings.theme = document.getElementById('themeSelector').value;
+            websiteSettings.brandColor = document.getElementById('brandColor').value;
+
+            const previewContainer = document.getElementById('websitePreview');
+            
+            // Generate preview based on theme
+            let previewHTML = '';
+            
+            switch (websiteSettings.theme) {
+                case 'clean':
+                    previewHTML = generateCleanTheme();
+                    break;
+                case 'gallery':
+                    previewHTML = generateGalleryTheme();
+                    break;
+                case 'banner':
+                    previewHTML = generateBannerTheme();
+                    break;
+                case 'legacy':
+                    previewHTML = generateLegacyTheme();
+                    break;
+                default:
+                    previewHTML = generateCleanTheme();
+            }
+            
+            previewContainer.innerHTML = previewHTML;
+            previewContainer.className = `website-preview theme-${websiteSettings.theme}`;
+        }
+
+        function generateCleanTheme() {
+            return `
+                <div style="background: linear-gradient(135deg, #f8f9fa, #e9ecef); color: #343a40; padding: 20px; min-height: 400px;">
+                    <header style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid ${websiteSettings.brandColor};">
+                        ${websiteSettings.profileImage ? `<img src="${websiteSettings.profileImage}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-bottom: 15px;">` : ''}
+                        <h1 style="margin: 0; color: ${websiteSettings.brandColor}; font-size: 1.8em;">${websiteSettings.businessName}</h1>
+                    </header>
+                    <main style="text-align: center;">
+                        <p style="font-size: 1.1em; line-height: 1.6; max-width: 300px; margin: 0 auto;">${websiteSettings.welcomeMessage}</p>
+                        <button style="background: ${websiteSettings.brandColor}; color: white; border: none; padding: 12px 24px; border-radius: 6px; margin-top: 20px; cursor: pointer;">Contact Us</button>
+                    </main>
+                </div>
+            `;
+        }
+
+        function generateGalleryTheme() {
+            return `
+                <div style="background: linear-gradient(135deg, #212529, #343a40); color: #f8f9fa; padding: 20px; min-height: 400px;">
+                    <header style="text-align: center; margin-bottom: 30px;">
+                        ${websiteSettings.profileImage ? `<img src="${websiteSettings.profileImage}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-bottom: 15px; border: 3px solid ${websiteSettings.brandColor};">` : ''}
+                        <h1 style="margin: 0; color: ${websiteSettings.brandColor}; font-size: 1.8em;">${websiteSettings.businessName}</h1>
+                    </header>
+                    <main>
+                        <p style="text-align: center; font-size: 1.1em; line-height: 1.6; margin-bottom: 25px;">${websiteSettings.welcomeMessage}</p>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                            <div style="aspect-ratio: 1; background: ${websiteSettings.brandColor}; border-radius: 4px;"></div>
+                            <div style="aspect-ratio: 1; background: ${websiteSettings.brandColor}; border-radius: 4px; opacity: 0.8;"></div>
+                            <div style="aspect-ratio: 1; background: ${websiteSettings.brandColor}; border-radius: 4px; opacity: 0.6;"></div>
+                        </div>
+                    </main>
+                </div>
+            `;
+        }
+
+        function generateBannerTheme() {
+            return `
+                <div style="background: linear-gradient(135deg, #6c757d, #495057); color: #f8f9fa; padding: 0; min-height: 400px; position: relative;">
+                    <div style="background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.4)), ${websiteSettings.profileImage ? `url(${websiteSettings.profileImage})` : `${websiteSettings.brandColor}`}; background-size: cover; background-position: center; padding: 60px 20px; text-align: center;">
+                        <h1 style="margin: 0; color: white; font-size: 2.2em; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">${websiteSettings.businessName}</h1>
+                        <p style="font-size: 1.2em; margin: 20px auto; max-width: 300px; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">${websiteSettings.welcomeMessage}</p>
+                        <button style="background: ${websiteSettings.brandColor}; color: white; border: none; padding: 15px 30px; border-radius: 6px; font-size: 1.1em; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">Book Session</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateLegacyTheme() {
+            return `
+                <div style="background: linear-gradient(135deg, #1a1a1a, #2a2a2a); color: #f4e4bc; padding: 20px; min-height: 400px;">
+                    <header style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid ${websiteSettings.brandColor};">
+                        ${websiteSettings.profileImage ? `<img src="${websiteSettings.profileImage}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-bottom: 15px; border: 3px solid ${websiteSettings.brandColor};">` : ''}
+                        <h1 style="margin: 0; color: ${websiteSettings.brandColor}; font-size: 1.8em; font-family: serif;">${websiteSettings.businessName}</h1>
+                    </header>
+                    <main style="text-align: center;">
+                        <p style="font-size: 1.1em; line-height: 1.6; max-width: 300px; margin: 0 auto 25px; font-style: italic;">${websiteSettings.welcomeMessage}</p>
+                        <div style="display: flex; justify-content: center; gap: 10px;">
+                            <button style="background: linear-gradient(135deg, ${websiteSettings.brandColor}, #f4e4bc); color: #1a1a1a; border: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; cursor: pointer;">Portfolio</button>
+                            <button style="background: transparent; color: ${websiteSettings.brandColor}; border: 2px solid ${websiteSettings.brandColor}; padding: 10px 22px; border-radius: 6px; cursor: pointer;">Contact</button>
+                        </div>
+                    </main>
+                </div>
+            `;
+        }
+
+        // Save website settings to Firestore (placeholder - requires Firebase setup)
+        async function saveWebsiteSettings() {
+            try {
+                // For now, save to localStorage as Firestore would require additional setup
+                localStorage.setItem('website_settings', JSON.stringify(websiteSettings));
+                showMessage('Website settings saved successfully!', 'success');
+                celebrateMilestone('website_saved', websiteSettings.businessName || 'Website');
+            } catch (error) {
+                console.error('Error saving website settings:', error);
+                showMessage('Error saving website settings', 'error');
+            }
+        }
+
+        // Load saved settings on page load
+        function loadSavedSettings() {
+            try {
+                const saved = localStorage.getItem('website_settings');
+                if (saved) {
+                    const settings = JSON.parse(saved);
+                    
+                    // Populate form fields
+                    document.getElementById('businessName').value = settings.businessName || '';
+                    document.getElementById('welcomeMessage').value = settings.welcomeMessage || '';
+                    document.getElementById('themeSelector').value = settings.theme || 'clean';
+                    document.getElementById('brandColor').value = settings.brandColor || '#d4af37';
+                    
+                    if (settings.profileImage) {
+                        websiteSettings.profileImage = settings.profileImage;
+                        document.getElementById('previewImg').src = settings.profileImage;
+                        document.getElementById('imagePreview').style.display = 'block';
+                    }
+                    
+                    updateLivePreview();
+                }
+            } catch (error) {
+                console.error('Error loading saved settings:', error);
+            }
+        }
+
+        // Preview website in new tab
+        function previewWebsite() {
+            updateLivePreview();
+            const previewContent = document.getElementById('websitePreview').innerHTML;
+            const newWindow = window.open('', '_blank');
+            newWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>${websiteSettings.businessName} - Preview</title>
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                </head>
+                <body style="margin: 0; font-family: Arial, sans-serif;">
+                    ${previewContent}
+                </body>
+                </html>
+            `);
+            newWindow.document.close();
+            showMessage('Website preview opened in new tab!', 'success');
+        }
+
+        // Publish website
+        function publishWebsite() {
+            if (!websiteSettings.businessName.trim()) {
+                showMessage('Please enter a business name before publishing', 'error');
+                return;
+            }
+            
+            saveWebsiteSettings();
+            
+            // Generate a simple URL-friendly name
+            const urlName = websiteSettings.businessName.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 20);
+            
+            setTimeout(() => {
+                alert(`🎉 Your site is now live at: photographyschedule.com/${urlName}`);
+                celebrateMilestone('website_published', websiteSettings.businessName);
+            }, 1000);
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSavedSettings();
+            updateLivePreview();
+        });
+
+    </script>
 
 </body>
 </html>
