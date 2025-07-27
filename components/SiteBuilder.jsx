@@ -256,6 +256,25 @@ const SiteBuilder = () => {
         }
     };
 
+    // Preset website application function
+    const applyPreset = (presetData) => {
+        if (!presetData || !presetData.pages) return;
+        
+        setSiteBlocks(presetData.pages);
+        setCurrentThemeData(presetData);
+        setActiveTheme(presetData.meta.name.toLowerCase().replace(/\s+/g, '-'));
+        setBrandColor(presetData.meta.brandColor);
+        
+        showMessage(`🚀 ${presetData.meta.name} website template applied successfully!`);
+        
+        // Celebration animation for preset application
+        if (window.showCelebration) {
+            setTimeout(() => {
+                window.showCelebration(`🎯 ${presetData.meta.name} Template Applied!`, 60);
+            }, 200);
+        }
+    };
+
     const moveBlock = (blockId, direction) => {
         const currentPageBlocks = siteBlocks[activePage] || [];
         const currentIndex = currentPageBlocks.findIndex(block => block.id === blockId);
@@ -430,6 +449,12 @@ const SiteBuilder = () => {
             currentPage: activePage,
             setPage: setActivePage,
             siteBlocks: siteBlocks
+        }),
+        
+        // Preset Selector
+        React.createElement(window.PresetSelector, {
+            onApplyPreset: applyPreset,
+            currentPreset: currentThemeData
         }),
         
         // Theme Selector
