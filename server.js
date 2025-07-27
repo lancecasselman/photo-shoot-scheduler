@@ -2640,7 +2640,7 @@ app.get('/onboarding', (req, res) => {
 app.get('/admin', (req, res) => {
     if (!req.session || !req.session.user) {
         // Redirect to new login page to bypass cache issues
-        return res.redirect('/login.html?return=/admin');
+        return res.redirect('/auth.html?return=/admin');
     }
     res.sendFile(path.join(__dirname, 'admin.html'));
 });
@@ -2665,7 +2665,7 @@ app.get('/', (req, res) => {
 app.get('/app', (req, res) => {
     if (!req.session || !req.session.user) {
         // Redirect to new login page to bypass cache issues
-        return res.redirect('/login.html?return=/app');
+        return res.redirect('/auth.html?return=/app');
     }
     res.sendFile(path.join(__dirname, 'index.html'));
 });
