@@ -5,6 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Photography Management System - Firebase Auth - v3.1</title>
     
+    <script>
+        // 🔄 TOGGLEABLE AUTH GUARD SYSTEM
+        const DEV_MODE = true; // 👉 Set to false to re-enable login protection
+        
+        // Optional: Add visual flag to your header/footer
+        document.addEventListener('DOMContentLoaded', function() {
+            if (DEV_MODE) {
+                const banner = document.createElement("div");
+                banner.textContent = "⚠️ DEV MODE ENABLED - NO AUTH CHECK";
+                banner.style = "position:fixed;top:0;width:100%;background:#ffc;padding:5px;text-align:center;z-index:10000;font-weight:bold;color:#333;";
+                document.body.appendChild(banner);
+                
+                // Add margin to body to prevent overlap
+                document.body.style.marginTop = "30px";
+            }
+        });
+    </script>
+    
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     

@@ -303,6 +303,9 @@
     </div>
 
     <script>
+        // 🔄 TOGGLEABLE AUTH GUARD SYSTEM
+        const DEV_MODE = true; // 👉 Set to false to re-enable login protection
+        
         // Initialize Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDbtboh1bW6xu9Tz9FILkx_0lzGwXQHjyM",
@@ -480,6 +483,16 @@
                     alert("Domain authorization error: This domain needs to be added to Firebase console. Please contact support.");
                 }
             });
+
+            // Authentication guard based on DEV_MODE
+            if (!DEV_MODE) {
+                firebase.auth().onAuthStateChanged((user) => {
+                    if (!user) {
+                        console.log('Authentication required - no user signed in');
+                        // User will see login form
+                    }
+                });
+            }
 
             // Check if user is already signed in
             auth.onAuthStateChanged(async (user) => {

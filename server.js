@@ -1,3 +1,6 @@
+// 🔄 TOGGLEABLE AUTH GUARD SYSTEM
+const DEV_MODE = true; // 👉 Set to false to re-enable login protection
+
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
@@ -51,6 +54,16 @@ try {
 
 // Firebase Authentication middleware
 const isAuthenticated = async (req, res, next) => {
+    // DEV_MODE bypass for development
+    if (DEV_MODE) {
+        req.user = {
+            uid: 'dev-user-123',
+            email: 'dev@example.com',
+            displayName: 'Development User'
+        };
+        return next();
+    }
+    
     // Check if Firebase is available
     if (!admin.apps.length) {
         // Development testing bypass - set TEST_MODE=true to enable testing without auth
@@ -2638,9 +2651,11 @@ app.get('/onboarding', (req, res) => {
 
 // Serve admin dashboard with authentication requirement  
 app.get('/admin', (req, res) => {
-    if (!req.session || !req.session.user) {
-        // Redirect to new login page to bypass cache issues
-        return res.redirect('/auth.html?return=/admin');
+    if (!DEV_MODE) {
+        // Check authentication in production mode
+        if (!req.session || !req.session.user) {
+            return res.redirect('/auth.html?return=/admin');
+        }
     }
     res.sendFile(path.join(__dirname, 'admin.html'));
 });
@@ -2860,17 +2875,22 @@ app.get('/', (req, res) => {
 
 // Serve main app with authentication requirement
 app.get('/app', (req, res) => {
-    if (!req.session || !req.session.user) {
-        // Redirect to new login page to bypass cache issues
-        return res.redirect('/auth.html?return=/app');
+    if (!DEV_MODE) {
+        // Check authentication in production mode
+        if (!req.session || !req.session.user) {
+            return res.redirect('/auth.html?return=/app');
+        }
     }
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // Alternative dashboard route
 app.get('/dashboard', (req, res) => {
-    if (!req.session || !req.session.user) {
-        return res.redirect('/auth.html?return=/dashboard');
+    if (!DEV_MODE) {
+        // Check authentication in production mode
+        if (!req.session || !req.session.user) {
+            return res.redirect('/auth.html?return=/dashboard');
+        }
     }
     res.sendFile(path.join(__dirname, 'index.html'));
 });
