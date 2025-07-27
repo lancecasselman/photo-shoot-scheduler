@@ -510,6 +510,25 @@
             box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
         }
 
+        .action-btn.premium {
+            background: linear-gradient(135deg, #d4af37, #f4e4bc);
+            color: #1a1a1a;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+            border: 2px solid #d4af37;
+        }
+
+        .action-btn.premium:hover {
+            background: linear-gradient(135deg, #f4e4bc, #d4af37);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+        }
+
+        .action-btn.premium:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .action-btn.delete-btn {
             background: linear-gradient(135deg, #dc3545, #ff6b7a);
             color: white;
@@ -8382,9 +8401,16 @@ ${name}`;
                             <button class="action-btn secondary" onclick="saveWebsiteToFirebase()">💾 Save Website</button>
                             <button class="action-btn" onclick="previewWebsite()">👁️ Preview Website</button>
                             <button class="action-btn primary" onclick="publishWebsiteToFirebase()">🚀 Publish Site</button>
+                            <button class="action-btn premium" onclick="publishStaticSite()" id="premiumStaticBtn">⭐ Premium Static Site</button>
                             <button class="action-btn" onclick="loadWebsiteFromFirebase()">📂 Load Saved</button>
                         </div>
                         
+                        <!-- Premium Status Display -->
+                        <div id="premiumStatus" class="premium-status" style="display: none; margin-top: 15px; padding: 12px; background: linear-gradient(135deg, #d4af37, #f4e4bc); color: #1a1a1a; border-radius: 8px; text-align: center;">
+                            <span class="premium-badge" style="font-weight: bold;">⭐ Premium Active</span>
+                            <span class="premium-plan" id="premiumPlanDisplay" style="margin-left: 10px; font-size: 0.9em;"></span>
+                        </div>
+
                         <!-- Published Site Info -->
                         <div id="publishedSiteInfo" style="display: none; margin-top: 20px; padding: 15px; background: rgba(212, 175, 55, 0.1); border: 1px solid #d4af37; border-radius: 8px;">
                             <h4 style="color: #d4af37; margin-bottom: 10px;">🎉 Site Published!</h4>
@@ -8818,6 +8844,154 @@ ${name}`;
             } catch (err) {
                 console.error('Failed to copy URL:', err);
                 showMessage('Failed to copy URL', 'error');
+            }
+        }
+
+        // ✅ PREMIUM STATIC SITE PUBLISHING
+        async function publishStaticSite() {
+            if (!websiteAuth || !websiteAuth.currentUser) {
+                showMessage('Please sign in to publish your website', 'error');
+                return;
+            }
+
+            try {
+                // Show loading state
+                const btn = document.getElementById('premiumStaticBtn');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '⏳ Publishing...';
+                btn.disabled = true;
+
+                // Get Firebase auth token
+                const idToken = await websiteAuth.currentUser.getIdToken();
+                
+                // Update settings from form first
+                updateWebsiteSettingsFromForm();
+
+                const response = await fetch('/api/publishStaticSite', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${idToken}`
+                    }
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // Success - show both URLs
+                    showMessage('✅ Premium static site published successfully!', 'success');
+                    
+                    // Update published site info with both URLs
+                    document.getElementById('publishedSiteUrl').value = 
+                        `${window.location.origin}${result.staticUrl}`;
+                    document.getElementById('publishedSiteInfo').style.display = 'block';
+                    
+                    // Trigger confetti celebration
+                    celebrateMilestone('premium_site_published', websiteSettings.businessName || 'Static Site');
+                    
+                    console.log('✅ Premium static site URLs:', result);
+                } else if (response.status === 403) {
+                    // Premium required
+                    showMessage('⭐ Premium subscription required for static site publishing', 'warning');
+                    showPremiumUpgradeDialog();
+                } else {
+                    throw new Error(result.message || 'Publishing failed');
+                }
+
+            } catch (error) {
+                console.error('Static site publishing error:', error);
+                showMessage('Failed to publish static site: ' + error.message, 'error');
+            } finally {
+                // Reset button
+                const btn = document.getElementById('premiumStaticBtn');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // Check premium status and update UI
+        async function checkPremiumStatus() {
+            if (!websiteAuth || !websiteAuth.currentUser) {
+                return;
+            }
+
+            try {
+                const idToken = await websiteAuth.currentUser.getIdToken();
+                const response = await fetch('/api/premium-status', {
+                    headers: {
+                        'Authorization': `Bearer ${idToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const status = await response.json();
+                    updatePremiumUI(status);
+                }
+            } catch (error) {
+                console.error('Premium status check error:', error);
+            }
+        }
+
+        // Update premium UI based on status
+        function updatePremiumUI(status) {
+            const premiumStatusDiv = document.getElementById('premiumStatus');
+            const premiumPlanDisplay = document.getElementById('premiumPlanDisplay');
+            const premiumBtn = document.getElementById('premiumStaticBtn');
+
+            if (status.isPremium) {
+                premiumStatusDiv.style.display = 'block';
+                premiumPlanDisplay.textContent = `(${status.plan || 'Premium'} Plan)`;
+                premiumBtn.style.opacity = '1';
+                premiumBtn.style.cursor = 'pointer';
+            } else {
+                premiumStatusDiv.style.display = 'none';
+                premiumBtn.style.opacity = '0.6';
+                premiumBtn.style.cursor = 'not-allowed';
+            }
+        }
+
+        // Show premium upgrade dialog
+        function showPremiumUpgradeDialog() {
+            if (confirm('⭐ Upgrade to Premium for static site publishing, advanced themes, and analytics!\n\nWould you like to upgrade now?')) {
+                // In development mode, auto-upgrade
+                if (window.location.hostname.includes('replit') || window.location.hostname === 'localhost') {
+                    upgradeToPremium('development');
+                } else {
+                    window.open('/premium', '_blank');
+                }
+            }
+        }
+
+        // Premium upgrade function (development mode)
+        async function upgradeToPremium(plan) {
+            if (!websiteAuth || !websiteAuth.currentUser) {
+                showMessage('Please sign in first', 'error');
+                return;
+            }
+
+            try {
+                const idToken = await websiteAuth.currentUser.getIdToken();
+                const response = await fetch('/api/upgrade-premium', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${idToken}`
+                    },
+                    body: JSON.stringify({ plan })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showMessage('🎉 Premium activated! You now have access to all premium features.', 'success');
+                    celebrateMilestone('premium_upgraded', 'Premium Plan');
+                    checkPremiumStatus(); // Refresh UI
+                } else {
+                    showMessage('Upgrade failed: ' + result.message, 'error');
+                }
+            } catch (error) {
+                console.error('Premium upgrade error:', error);
+                showMessage('Upgrade failed: ' + error.message, 'error');
             }
         }
 

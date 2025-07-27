@@ -1,0 +1,87 @@
+// ✅ PREMIUM MODE IMPLEMENTATION (No AI captions, YES Static Site Publishing)
+
+import express from "express";
+import { getAuth } from "firebase-admin/auth";
+import { getDatabase } from "firebase-admin/database";
+import { initializeApp, cert } from "firebase-admin/app";
+import fs from "fs";
+import path from "path";
+
+// 1. Firebase Admin SDK Init (ensure your Firebase admin credentials are loaded)
+initializeApp({
+  credential: cert(JSON.parse(process.env.FIREBASE_ADMIN)),
+  databaseURL: "https://photoshcheduleapp.firebaseio.com"
+});
+
+const app = express();
+app.use(express.json());
+
+// 2. Middleware to validate Firebase user and check Premium access
+async function requirePremium(req, res, next) {
+  try {
+    const idToken = req.headers.authorization?.split("Bearer ")[1];
+    if (!idToken) return res.status(401).send("No token");
+
+    const decoded = await getAuth().verifyIdToken(idToken);
+    req.uid = decoded.uid;
+
+    // Optional: check for premium in DB
+    const db = getDatabase();
+    const snapshot = await db.ref(`users/${decoded.uid}/premium`).once("value");
+    const isPremium = snapshot.val();
+
+    if (!isPremium) return res.status(403).send("Upgrade to Premium to access this feature.");
+
+    next();
+  } catch (err) {
+    console.error(err);
+    res.status(401).send("Auth error");
+  }
+}
+
+// 3. Endpoint to PUBLISH Static Site
+app.post("/api/publishSite", requirePremium, async (req, res) => {
+  const db = getDatabase();
+  const configRef = db.ref(`siteConfigs/${req.uid}`);
+  const snapshot = await configRef.once("value");
+
+  if (!snapshot.exists()) return res.status(400).send("No site config found.");
+
+  const config = snapshot.val();
+
+  // HTML GENERATOR 🔥
+  const html = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <title>${config.siteTitle || "My Portfolio"}</title>
+      <style>
+        body { font-family: sans-serif; padding: 2rem; max-width: 800px; margin: auto; }
+        img { width: 100%; margin: 1rem 0; }
+      </style>
+    </head>
+    <body>
+      <h1>${config.siteTitle || "Untitled Site"}</h1>
+      <p>${config.bio || "Photographer based in South Carolina"}</p>
+      ${config.images?.map(url => `<img src="${url}" />`).join("")}
+      <footer><p>© ${new Date().getFullYear()} Created with PhotographySchedule.com</p></footer>
+    </body>
+    </html>
+  `;
+
+  const outputPath = path.join("static-sites", `${req.uid}.html`);
+  fs.writeFileSync(outputPath, html);
+
+  return res.status(200).send({ success: true, url: `/site/${req.uid}` });
+});
+
+// 4. Serve static sites
+app.use("/site", express.static("static-sites"));
+
+// 5. Fallback route
+app.get("/", (req, res) => {
+  res.send("API running");
+});
+
+app.listen(3000, () => console.log("🚀 Server running on port 3000"));

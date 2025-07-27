@@ -1,6 +1,14 @@
 // 🔄 TOGGLEABLE AUTH GUARD SYSTEM
 const DEV_MODE = true; // 👉 Set to false to re-enable login protection
 
+// ✅ PREMIUM MODE IMPLEMENTATION
+const PREMIUM_FEATURES = {
+    STATIC_SITE_PUBLISHING: true,
+    ADVANCED_THEMES: true,
+    CUSTOM_DOMAINS: true,
+    ANALYTICS: true
+};
+
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
@@ -2895,13 +2903,330 @@ app.get('/dashboard', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// ✅ PREMIUM ENDPOINT: Publish Static Site
+app.post('/api/publishStaticSite', isAuthenticated, requirePremium, async (req, res) => {
+    try {
+        const userId = req.user.uid;
+        
+        // Get website data from Firebase
+        if (!admin.apps.length) {
+            return res.status(500).json({ message: 'Firebase not configured' });
+        }
+
+        const websiteDoc = await admin.firestore()
+            .collection('websites')
+            .doc(userId)
+            .get();
+
+        if (!websiteDoc.exists) {
+            return res.status(400).json({ message: 'No website found. Please create a website first.' });
+        }
+
+        const websiteData = websiteDoc.data();
+        const username = websiteData.customUsername || userId;
+
+        // Enhanced HTML generator with advanced themes and features
+        const html = generatePremiumStaticSite(websiteData, username);
+
+        // Save static site
+        const outputPath = path.join(__dirname, 'static-sites', `${username}.html`);
+        fs.writeFileSync(outputPath, html);
+
+        // Update published_websites collection for public access
+        await admin.firestore()
+            .collection('published_websites')
+            .doc(username)
+            .set({
+                ...websiteData,
+                publishedAt: admin.firestore.FieldValue.serverTimestamp(),
+                staticSiteGenerated: true,
+                publishedBy: userId
+            });
+
+        console.log(`✅ Premium static site published for user ${userId} as ${username}`);
+
+        res.json({ 
+            success: true, 
+            url: `/site/${username}`,
+            staticUrl: `/static-site/${username}`,
+            message: 'Premium static site published successfully!'
+        });
+
+    } catch (error) {
+        console.error('Static site publishing error:', error);
+        res.status(500).json({ message: 'Failed to publish static site' });
+    }
+});
+
+// Generate premium static site HTML with advanced features
+function generatePremiumStaticSite(config, username) {
+    const themeStyles = getPremiumThemeStyles(config.theme || 'classic');
+    
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${config.title || config.businessName || "Professional Photography"}</title>
+    <meta name="description" content="${config.welcomeMessage || 'Professional photography services'}">
+    <meta name="keywords" content="photography, professional photographer, ${config.businessName || ''}">
+    
+    <!-- Premium SEO Meta Tags -->
+    <meta property="og:title" content="${config.title || config.businessName}">
+    <meta property="og:description" content="${config.welcomeMessage}">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://photomanagementsystem.com/site/${username}">
+    
+    <!-- Premium Theme Styles -->
+    <style>
+        ${themeStyles}
+        
+        /* Premium Analytics Tracking */
+        .analytics-pixel { display: none; }
+        
+        /* Premium Mobile Optimizations */
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .header h1 { font-size: 2rem; }
+            .contact-btn { padding: 12px 20px; margin: 5px 0; display: block; }
+        }
+    </style>
+    
+    <!-- Premium Analytics (Development Mode) -->
+    ${DEV_MODE ? '<!-- Analytics disabled in DEV_MODE -->' : '<!-- Premium Analytics Code Here -->'}
+</head>
+<body class="theme-${config.theme || 'classic'}">
+    <div class="container">
+        <header class="header">
+            <h1>${config.title || config.businessName || "Photography Studio"}</h1>
+            ${config.profileImage ? `<img src="${config.profileImage}" alt="${config.title}" class="profile-image">` : ''}
+            <p class="welcome-message">${config.welcomeMessage || "Welcome to our photography studio"}</p>
+        </header>
+        
+        <main class="content-section">
+            <div class="contact-info">
+                <h2>Get In Touch</h2>
+                <p>Ready to capture your special moments? Let's create something beautiful together.</p>
+                <div class="contact-buttons">
+                    <a href="mailto:lance@thelegacyphotography.com" class="contact-btn email">📧 Send Email</a>
+                    <a href="tel:8434851315" class="contact-btn phone">📞 Call Now</a>
+                    <a href="sms:8434851315" class="contact-btn sms">💬 Text Message</a>
+                </div>
+            </div>
+        </main>
+        
+        <footer class="footer">
+            <p>© ${new Date().getFullYear()} ${config.title || config.businessName} | Professional Photography Services</p>
+            <p class="powered-by">Powered by <a href="https://photomanagementsystem.com" target="_blank">Photography Management System</a></p>
+            <div class="analytics-pixel" data-site="${username}"></div>
+        </footer>
+    </div>
+    
+    <!-- Premium Features Script -->
+    <script>
+        // Premium contact form analytics
+        document.querySelectorAll('.contact-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                console.log('Contact interaction:', this.className);
+                // Premium analytics tracking would go here
+            });
+        });
+        
+        // Premium mobile optimizations
+        if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            document.body.classList.add('mobile-device');
+        }
+    </script>
+</body>
+</html>`;
+}
+
+// Premium theme styles generator
+function getPremiumThemeStyles(theme) {
+    const baseStyles = `
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .header { text-align: center; margin-bottom: 3rem; }
+        .profile-image { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; margin: 1rem 0; }
+        .content-section { margin: 2rem 0; }
+        .contact-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 2rem; }
+        .contact-btn { padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; transition: all 0.3s ease; }
+        .footer { text-align: center; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #eee; }
+        .powered-by { margin-top: 1rem; font-size: 0.9em; opacity: 0.7; }
+        .powered-by a { color: #d4af37; text-decoration: none; }
+    `;
+
+    const themeStyles = {
+        classic: `
+            ${baseStyles}
+            body { background: #f8f9fa; color: #333; }
+            .header h1 { color: #2c3e50; font-size: 3rem; margin-bottom: 1rem; }
+            .welcome-message { color: #666; font-size: 1.2rem; }
+            .contact-btn { background: #d4af37; color: white; }
+            .contact-btn:hover { background: #b8941f; transform: translateY(-2px); }
+        `,
+        modern: `
+            ${baseStyles}
+            body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; min-height: 100vh; }
+            .header h1 { color: white; font-size: 3.5rem; font-weight: 300; }
+            .welcome-message { color: rgba(255,255,255,0.9); font-size: 1.3rem; }
+            .contact-btn { background: rgba(255,255,255,0.2); color: white; border: 2px solid white; }
+            .contact-btn:hover { background: white; color: #667eea; }
+        `,
+        dark: `
+            ${baseStyles}
+            body { background: #1a1a1a; color: #f5f5f5; }
+            .header h1 { color: #d4af37; font-size: 3rem; }
+            .welcome-message { color: #ccc; font-size: 1.2rem; }
+            .contact-btn { background: #d4af37; color: #1a1a1a; }
+            .contact-btn:hover { background: #f4e4bc; }
+            .footer { border-top-color: #333; }
+        `,
+        bold: `
+            ${baseStyles}
+            body { background: #ff6b6b; color: white; }
+            .header h1 { color: white; font-size: 4rem; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; }
+            .welcome-message { color: rgba(255,255,255,0.9); font-size: 1.4rem; font-weight: bold; }
+            .contact-btn { background: white; color: #ff6b6b; font-weight: bold; text-transform: uppercase; }
+            .contact-btn:hover { background: #f8f8f8; transform: scale(1.05); }
+        `
+    };
+
+    return themeStyles[theme] || themeStyles.classic;
+}
+
+// Serve premium static sites
+app.use('/static-site', express.static(path.join(__dirname, 'static-sites')));
+
+// Premium subscription management endpoint
+app.post('/api/upgrade-premium', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.user.uid;
+        const { plan } = req.body; // 'monthly' or 'yearly'
+        
+        // In development mode, auto-grant premium
+        if (DEV_MODE) {
+            await pool.query(
+                `UPDATE users SET 
+                    premium_plan = $1, 
+                    premium_expires = $2,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE firebase_uid = $3`,
+                [plan, new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), userId] // 1 year from now
+            );
+            
+            return res.json({ 
+                success: true, 
+                message: 'Premium activated! (Development Mode)',
+                plan: plan,
+                expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+            });
+        }
+        
+        // In production, integrate with Stripe for payment processing
+        res.json({ 
+            message: 'Premium upgrade integration would handle Stripe payment here',
+            redirectUrl: '/premium-checkout'
+        });
+        
+    } catch (error) {
+        console.error('Premium upgrade error:', error);
+        res.status(500).json({ message: 'Failed to process premium upgrade' });
+    }
+});
+
+// Check premium status endpoint
+app.get('/api/premium-status', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.user.uid;
+        
+        if (DEV_MODE) {
+            return res.json({ 
+                isPremium: true, 
+                plan: 'development',
+                message: 'Premium features enabled in development mode'
+            });
+        }
+        
+        const result = await pool.query(
+            'SELECT premium_plan, premium_expires FROM users WHERE firebase_uid = $1',
+            [userId]
+        );
+        
+        const isPremium = result.rows.length > 0 && 
+            result.rows[0].premium_plan && 
+            (!result.rows[0].premium_expires || new Date(result.rows[0].premium_expires) > new Date());
+            
+        res.json({ 
+            isPremium,
+            plan: result.rows[0]?.premium_plan || null,
+            expiresAt: result.rows[0]?.premium_expires || null
+        });
+        
+    } catch (error) {
+        console.error('Premium status check error:', error);
+        res.status(500).json({ message: 'Failed to check premium status' });
+    }
+});
+
 // Serve static files last to ensure routes run first
 app.use(express.static(__dirname));
 
 // Start server
+// Premium subscription middleware
+async function requirePremium(req, res, next) {
+    try {
+        if (DEV_MODE) {
+            // Development mode - auto-grant premium access
+            req.isPremium = true;
+            return next();
+        }
+
+        // Check user's premium status from database
+        const userId = req.user?.uid;
+        if (!userId) {
+            return res.status(401).json({ message: 'Authentication required' });
+        }
+
+        // Check premium status from database
+        const result = await pool.query(
+            'SELECT premium_plan, premium_expires FROM users WHERE firebase_uid = $1',
+            [userId]
+        );
+
+        const isPremium = result.rows.length > 0 && 
+            result.rows[0].premium_plan && 
+            (!result.rows[0].premium_expires || new Date(result.rows[0].premium_expires) > new Date());
+
+        if (!isPremium) {
+            return res.status(403).json({ 
+                message: 'Upgrade to Premium to access this feature.',
+                upgradeUrl: '/premium'
+            });
+        }
+
+        req.isPremium = true;
+        next();
+    } catch (error) {
+        console.error('Premium check error:', error);
+        res.status(500).json({ message: 'Premium verification failed' });
+    }
+}
+
+// Create static-sites directory if it doesn't exist
+function ensureStaticSitesDirectory() {
+    const staticSitesDir = path.join(__dirname, 'static-sites');
+    if (!fs.existsSync(staticSitesDir)) {
+        fs.mkdirSync(staticSitesDir, { recursive: true });
+        console.log('📁 Created static-sites directory');
+    }
+}
+
 // Initialize database and start server
 async function startServer() {
     await initializeDatabase();
+    ensureStaticSitesDirectory();
     
     // Initialize notification services
     initializeNotificationServices();
