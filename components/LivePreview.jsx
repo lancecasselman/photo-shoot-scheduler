@@ -6,7 +6,8 @@ const LivePreview = ({
     onDeleteBlock, 
     onMoveBlock,
     theme,
-    brandColor 
+    brandColor,
+    activePage
 }) => {
     const renderBlock = (block) => {
         const isSelected = selectedBlock === block.id;
@@ -14,7 +15,8 @@ const LivePreview = ({
             ...block.styles,
             position: 'relative',
             outline: isSelected ? `2px solid ${brandColor}` : 'none',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            animation: block.animations?.type ? `${block.animations.type} 1s ease ${block.animations.delay || '0s'}` : undefined
         };
 
         const controlsStyle = {

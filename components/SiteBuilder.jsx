@@ -1,16 +1,33 @@
 const { useState, useEffect } = React;
 
 const SiteBuilder = () => {
+    // Multi-page website builder state
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [blocks, setBlocks] = useState([]);
+    const [activePage, setActivePage] = useState('home');
+    const [siteBlocks, setSiteBlocks] = useState({
+        home: [],
+        about: [],
+        gallery: [],
+        contact: []
+    });
     const [selectedBlock, setSelectedBlock] = useState(null);
     const [activeTheme, setActiveTheme] = useState('classic');
+    const [currentThemeData, setCurrentThemeData] = useState(null);
     const [message, setMessage] = useState('');
     const [username, setUsername] = useState('');
     const [brandColor, setBrandColor] = useState('#D4AF37');
     const [saving, setSaving] = useState(false);
     const [publishing, setPublishing] = useState(false);
+
+    // Helper to get current page blocks
+    const getCurrentPageBlocks = () => siteBlocks[activePage] || [];
+    const setCurrentPageBlocks = (blocks) => {
+        setSiteBlocks(prev => ({
+            ...prev,
+            [activePage]: blocks
+        }));
+    };
 
     // Initialize Firebase authentication
     useEffect(() => {
@@ -28,8 +45,10 @@ const SiteBuilder = () => {
                         await loadSiteConfig(user.uid);
                         
                         // Add default blocks if none exist
-                        if (blocks.length === 0) {
-                            setBlocks([
+                        if (siteBlocks.home.length === 0) {
+                            setSiteBlocks(prev => ({
+                                ...prev,
+                                home: [
                                 {
                                     id: `block-${Date.now()}`,
                                     type: 'heading',
@@ -73,7 +92,8 @@ const SiteBuilder = () => {
                                         display: 'block'
                                     }
                                 }
-                            ]);
+                                ]
+                            }));
                         }
                     } else {
                         // Demo data for non-authenticated users
@@ -124,12 +144,16 @@ const SiteBuilder = () => {
             id: `block-${Date.now()}`,
             type,
             content: getDefaultContent(type),
-            styles: getDefaultStyles(type)
+            styles: getDefaultStyles(type),
+            animations: { type: 'fadeInUp', delay: '0.3s' }
         };
         
-        setBlocks([...blocks, newBlock]);
+        setSiteBlocks(prev => ({
+            ...prev,
+            [activePage]: [...(prev[activePage] || []), newBlock]
+        }));
         setSelectedBlock(newBlock.id);
-        showMessage(`✨ ${type.charAt(0).toUpperCase() + type.slice(1)} block added!`);
+        showMessage(`✨ ${type.charAt(0).toUpperCase() + type.slice(1)} added to ${activePage.charAt(0).toUpperCase() + activePage.slice(1)} page!`);
         
         // Trigger small celebration for block addition
         if (window.showCelebration) {
@@ -202,21 +226,48 @@ const SiteBuilder = () => {
     };
 
     const deleteBlock = (blockId) => {
-        setBlocks(blocks.filter(block => block.id !== blockId));
+        setSiteBlocks(prev => ({
+            ...prev,
+            [activePage]: (prev[activePage] || []).filter(b => b.id !== blockId)
+        }));
         setSelectedBlock(null);
         showMessage('Block deleted');
     };
 
+    // Theme application function
+    const applyTheme = (themeData) => {
+        if (!themeData || !themeData.blocks) return;
+        
+        setSiteBlocks(themeData.blocks);
+        setCurrentThemeData(themeData);
+        setActiveTheme(themeData.meta.name.toLowerCase().replace(/\s+/g, '-'));
+        setBrandColor(themeData.meta.primaryColor);
+        
+        showMessage(`🎨 ${themeData.meta.name} theme applied successfully!`);
+        
+        // Celebration animation for theme application
+        if (window.showCelebration) {
+            setTimeout(() => {
+                window.showCelebration(`✨ ${themeData.meta.name} Theme Applied!`, 50);
+            }, 200);
+        }
+    };
+
     const moveBlock = (blockId, direction) => {
-        const currentIndex = blocks.findIndex(block => block.id === blockId);
+        const currentPageBlocks = siteBlocks[activePage] || [];
+        const currentIndex = currentPageBlocks.findIndex(block => block.id === blockId);
         if (currentIndex === -1) return;
 
         const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
-        if (newIndex < 0 || newIndex >= blocks.length) return;
+        if (newIndex < 0 || newIndex >= currentPageBlocks.length) return;
 
-        const newBlocks = [...blocks];
+        const currentPageBlocks = siteBlocks[activePage] || [];
+        const newBlocks = [...currentPageBlocks];
         [newBlocks[currentIndex], newBlocks[newIndex]] = [newBlocks[newIndex], newBlocks[currentIndex]];
-        setBlocks(newBlocks);
+        setSiteBlocks(prev => ({
+            ...prev,
+            [activePage]: newBlocks
+        }));
     };
 
     const saveWebsite = async () => {
@@ -228,10 +279,11 @@ const SiteBuilder = () => {
         setSaving(true);
         try {
             const config = {
-                blocks,
+                siteBlocks,
                 username,
                 brandColor,
                 theme: activeTheme,
+                themeData: currentThemeData,
                 userEmail: user.email,
                 seoTitle: `${user.displayName || username} Photography`,
                 seoDescription: 'Professional photography portfolio and services'
@@ -259,7 +311,8 @@ const SiteBuilder = () => {
             return;
         }
 
-        if (blocks.length === 0) {
+        const totalBlocks = Object.values(siteBlocks).reduce((total, pageBlocks) => total + pageBlocks.length, 0);
+        if (totalBlocks === 0) {
             showMessage('Please add some content blocks before publishing');
             return;
         }
@@ -272,8 +325,9 @@ const SiteBuilder = () => {
             // Enhanced publishing configuration
             const config = {
                 username,
-                blocks,
+                siteBlocks,
                 theme: activeTheme,
+                themeData: currentThemeData,
                 brandColor,
                 userEmail: user.email,
                 settings: {
@@ -369,22 +423,36 @@ const SiteBuilder = () => {
         { className: 'builder-container' },
         message && React.createElement('div', { className: 'message' }, message),
         
+        // Page Navigator
+        React.createElement(window.PageNavigator, {
+            currentPage: activePage,
+            setPage: setActivePage,
+            siteBlocks: siteBlocks
+        }),
+        
+        // Theme Selector
+        React.createElement(window.ThemeSelector, {
+            onApplyTheme: applyTheme,
+            currentTheme: currentThemeData
+        }),
+        
         // Render BlockLibrary
         React.createElement(window.BlockLibrary, {
             onAddBlock: addBlock,
             brandColor
         }),
         
-        // Render LivePreview
+        // Render LivePreview with current page blocks
         React.createElement(window.LivePreview, {
-            blocks,
+            blocks: getCurrentPageBlocks(),
             selectedBlock,
             onSelectBlock: setSelectedBlock,
             onUpdateBlock: updateBlock,
             onDeleteBlock: deleteBlock,
             onMoveBlock: moveBlock,
             theme: activeTheme,
-            brandColor
+            brandColor,
+            activePage: activePage
         }),
 
         // Properties Panel
