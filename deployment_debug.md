@@ -1,54 +1,120 @@
-# Deployment Debug Report
+# Custom Domain Deployment Guide: photomanagementsystem.com
 
-## Application Status: ✅ WORKING CORRECTLY
+## Current Status
+✅ **Working perfectly**: https://photo-shoot-scheduler-lancecasselman.replit.app
+🔄 **Need to configure**: https://photomanagementsystem.com
 
-### Tests Completed
-1. **Python Compilation**: ✅ All Python files compile without errors
-2. **Server Binding**: ✅ Server can bind to required ports
-3. **File Serving**: ✅ All static files (HTML, CSS, JS) serve correctly
-4. **HTTP Responses**: ✅ All endpoints return HTTP 200 OK
-5. **JavaScript Syntax**: ✅ No syntax errors in frontend code
-6. **HTML Structure**: ✅ All DOM elements properly referenced
+## Step 1: Firebase Console Configuration
 
-### Working Components
-- **app.py**: Primary server - works perfectly
-- **main.py**: Fixed syntax errors - now working
-- **wsgi.py**: WSGI-compatible server - works as alternative
-- **start.sh**: Startup script - executable and functional
-- **Procfile**: Process file for deployment platforms
+### Add Authorized Domain
+1. Go to [Firebase Console](https://console.firebase.google.com/)
+2. Select project: **photoshcheduleapp**
+3. Navigate to **Authentication** → **Settings** → **Authorized domains**
+4. Click **"Add domain"**
+5. Enter: `photomanagementsystem.com`
+6. Click **"Add"**
 
-### Server Options Available
-1. `python app.py` - Current working solution
-2. `python main.py` - Fixed and functional
-3. `python wsgi.py` - WSGI-compatible alternative
-4. `./start.sh` - Bash startup script
+**Note**: If you don't see "Authorized domains" under Settings, check under **Authentication** → **Sign-in method** tab and scroll down.
 
-### Environment Status
-- Python 3.11.10 installed and working
-- All required modules available (no external dependencies)
-- Port 5000 configured and accessible
-- Static files properly served with correct MIME types
-- CORS headers configured for cross-origin requests
+### Current Firebase Configuration
+- Project ID: `photoshcheduleapp`
+- API Key: `AIzaSyDbtboh1bW6xu9Tz9FILkx_0lzGwXQHjyM`
+- Auth Domain: `photoshcheduleapp.firebaseapp.com`
 
-## Deployment Issue Analysis
+## Step 2: Update OAuth Configuration (For Google Sign-in)
 
-The application works perfectly in development. The deployment failure is likely due to:
+### Google Cloud Console
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Select project: **photoshcheduleapp**
+3. Navigate to **APIs & Services** → **Credentials**
+4. Find your **OAuth 2.0 Client ID**
+5. Edit and add to **Authorized JavaScript origins**:
+   - `https://photomanagementsystem.com`
+6. Add to **Authorized redirect URIs**:
+   - `https://photomanagementsystem.com/__/auth/handler`
 
-1. **Deployment Platform Configuration**: The deployment system may be looking for specific entry points or configurations
-2. **Environment Variables**: The deployment environment might require specific PORT configuration
-3. **Process Management**: The deployment platform might need a specific process management setup
+## Step 3: Server Configuration
 
-## Recommendations
+The current server is configured to work with any domain. Key files are ready:
 
-1. **Use app.py as primary entry point** - It's the most robust implementation
-2. **Ensure PORT environment variable is set** during deployment
-3. **Consider using Procfile** for process management
-4. **Verify deployment platform requirements** for Python applications
+### Essential Files for Deployment
+- `server.js` - Complete Express.js backend
+- `auth.html` - Authentication page (fixed redirect)
+- `index.html` - Main application dashboard
+- `landing.html` - Landing page
+- `firebase-config.js` - Client-side Firebase config
+- `.env` - Environment variables (needs custom domain setup)
 
-## Files Ready for Deployment
-- ✅ app.py (primary server)
-- ✅ main.py (backup server)
-- ✅ wsgi.py (WSGI alternative)
-- ✅ Procfile (process configuration)
-- ✅ start.sh (startup script)
-- ✅ index.html, style.css, script.js (static files)
+### CORS Configuration
+The server already includes CORS headers that work with any domain:
+```javascript
+app.use(cors({
+    origin: true,
+    credentials: true
+}));
+```
+
+## Step 4: Deploy to Custom Domain
+
+### Option A: Use Replit Custom Domain
+1. In Replit project settings
+2. Add custom domain: `photomanagementsystem.com`
+3. Follow DNS configuration instructions
+4. Replit handles SSL automatically
+
+### Option B: External Hosting
+1. Upload all project files to your hosting provider
+2. Configure environment variables:
+   - `DATABASE_URL` (PostgreSQL connection)
+   - `GOOGLE_APPLICATION_CREDENTIALS_JSON` (Firebase Admin SDK)
+   - `STRIPE_SECRET_KEY` (if using Stripe)
+   - `SENDGRID_API_KEY` (if using email)
+3. Ensure Node.js runtime is available
+4. Run: `node server.js`
+
+## Step 5: DNS Configuration
+
+Point your domain to the hosting:
+```
+Type: A
+Host: @
+Value: [Your hosting IP]
+
+Type: CNAME  
+Host: www
+Value: photomanagementsystem.com
+```
+
+## Step 6: SSL Certificate
+
+Ensure HTTPS is enabled (required for Firebase Auth):
+- Replit: Automatic SSL
+- Other hosts: Configure SSL certificate
+
+## Step 7: Test Authentication Flow
+
+After deployment:
+1. Visit `https://photomanagementsystem.com`
+2. Click "Launch App"
+3. Sign in with Google or Email/Password
+4. Should redirect to main application
+
+## Current Firebase Project Setup
+
+Your Firebase project is already configured with:
+- ✅ Authentication enabled
+- ✅ Google Sign-in provider
+- ✅ Email/Password provider
+- ✅ Database rules configured
+- ✅ Storage bucket configured
+
+Just need to add the custom domain to authorized domains list.
+
+## Next Steps
+
+1. **Add photomanagementsystem.com to Firebase authorized domains**
+2. **Update Google OAuth settings**
+3. **Deploy to custom domain**
+4. **Test authentication flow**
+
+The system is ready - just needs the domain configuration!
