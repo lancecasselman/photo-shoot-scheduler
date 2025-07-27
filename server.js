@@ -2656,6 +2656,201 @@ app.get('/auth.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'auth.html'));
 });
 
+// Serve public website pages - /site/:username
+app.get('/site/:username', async (req, res) => {
+    try {
+        const username = req.params.username;
+        
+        // Get website data from Firestore
+        const websiteDoc = await admin.firestore()
+            .collection('published_websites')
+            .doc(username)
+            .get();
+            
+        if (!websiteDoc.exists) {
+            return res.status(404).send(`
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Site Not Found</title>
+                    <style>
+                        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+                               text-align: center; padding: 50px; background: #f5f5f5; }
+                        .error { background: white; max-width: 500px; margin: 0 auto; padding: 40px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+                        h1 { color: #333; margin-bottom: 20px; }
+                        p { color: #666; margin-bottom: 30px; }
+                        a { color: #d4af37; text-decoration: none; font-weight: bold; }
+                    </style>
+                </head>
+                <body>
+                    <div class="error">
+                        <h1>📸 Site Not Found</h1>
+                        <p>The photography website "${username}" doesn't exist or hasn't been published yet.</p>
+                        <a href="/">← Back to Photography Management System</a>
+                    </div>
+                </body>
+                </html>
+            `);
+        }
+        
+        const websiteData = websiteDoc.data();
+        
+        // Generate dynamic website based on theme and content
+        const themeStyles = getThemeStyles(websiteData.theme);
+        const websiteHTML = generatePublicWebsite(websiteData);
+        
+        res.send(websiteHTML);
+        
+    } catch (error) {
+        console.error('Error serving public website:', error);
+        res.status(500).send('Error loading website');
+    }
+});
+
+// Helper function to get theme styles
+function getThemeStyles(theme) {
+    const themes = {
+        'clean': {
+            background: 'linear-gradient(135deg, #f8f9fa, #e9ecef)',
+            textColor: '#343a40',
+            accentColor: '#d4af37'
+        },
+        'gallery': {
+            background: 'linear-gradient(135deg, #212529, #343a40)',
+            textColor: '#f8f9fa',
+            accentColor: '#d4af37'
+        },
+        'banner': {
+            background: 'linear-gradient(135deg, #1a1a1a, #2a2a2a)',
+            textColor: '#f8f9fa',
+            accentColor: '#d4af37'
+        },
+        'legacy': {
+            background: 'linear-gradient(135deg, #1a1a1a, #2c1810)',
+            textColor: '#f4e4bc',
+            accentColor: '#d4af37'
+        }
+    };
+    return themes[theme] || themes['clean'];
+}
+
+// Helper function to generate public website HTML
+function generatePublicWebsite(websiteData) {
+    const theme = getThemeStyles(websiteData.theme);
+    
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${websiteData.title}</title>
+    <meta name="description" content="${websiteData.welcomeMessage}">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            line-height: 1.6; 
+            background: ${theme.background};
+            color: ${theme.textColor};
+            min-height: 100vh;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; padding: 60px 20px; }
+        .header h1 { 
+            font-size: 3em; 
+            margin-bottom: 20px; 
+            color: ${theme.accentColor}; 
+            font-weight: 700;
+        }
+        .header p { 
+            font-size: 1.3em; 
+            max-width: 600px; 
+            margin: 0 auto; 
+            opacity: 0.9;
+        }
+        .profile-image { 
+            width: 200px; 
+            height: 200px; 
+            border-radius: 50%; 
+            margin: 30px auto; 
+            display: block;
+            border: 4px solid ${theme.accentColor};
+        }
+        .content-section { 
+            padding: 40px 20px; 
+            text-align: center; 
+        }
+        .contact-info {
+            background: rgba(212, 175, 55, 0.1);
+            padding: 40px;
+            border-radius: 12px;
+            margin: 40px 0;
+            border: 2px solid ${theme.accentColor};
+        }
+        .contact-info h2 { color: ${theme.accentColor}; margin-bottom: 20px; }
+        .contact-btn {
+            display: inline-block;
+            padding: 15px 30px;
+            margin: 10px;
+            background: ${theme.accentColor};
+            color: #1a1a1a;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: transform 0.3s ease;
+        }
+        .contact-btn:hover { transform: translateY(-2px); }
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            border-top: 1px solid rgba(212, 175, 55, 0.3);
+            margin-top: 60px;
+        }
+        .theme-${websiteData.theme} { 
+            background: ${theme.background};
+            color: ${theme.textColor};
+        }
+        @media (max-width: 768px) {
+            .header h1 { font-size: 2em; }
+            .header p { font-size: 1.1em; }
+            .profile-image { width: 150px; height: 150px; }
+        }
+    </style>
+</head>
+<body class="theme-${websiteData.theme}">
+    <div class="container">
+        <header class="header">
+            <h1>${websiteData.title}</h1>
+            ${websiteData.profileImage ? `<img src="${websiteData.profileImage}" alt="${websiteData.title}" class="profile-image">` : ''}
+            <p>${websiteData.welcomeMessage}</p>
+        </header>
+        
+        <main class="content-section">
+            <div class="contact-info">
+                <h2>Get In Touch</h2>
+                <p>Ready to capture your special moments? Let's create something beautiful together.</p>
+                <br>
+                <a href="mailto:lance@thelegacyphotography.com" class="contact-btn">📧 Send Email</a>
+                <a href="tel:8434851315" class="contact-btn">📞 Call Now</a>
+                <a href="sms:8434851315" class="contact-btn">💬 Text Message</a>
+            </div>
+        </main>
+        
+        <footer class="footer">
+            <p>© 2025 ${websiteData.title} | Built with Photography Management System</p>
+            <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.7;">
+                Published: ${websiteData.publishedAt ? new Date(websiteData.publishedAt.toDate()).toLocaleDateString() : 'Recently'}
+            </p>
+        </footer>
+    </div>
+</body>
+</html>
+`;
+}
+
 // Serve landing page (no authentication required)
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'landing.html'));

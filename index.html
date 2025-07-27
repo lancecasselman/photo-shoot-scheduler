@@ -8333,11 +8333,17 @@ ${name}`;
                         <div class="form-group">
                             <label for="themeSelector">Theme</label>
                             <select id="themeSelector" name="themeSelector" onchange="updateLivePreview()">
-                                <option value="clean">Clean</option>
-                                <option value="gallery">Gallery</option>
-                                <option value="banner">Banner Focused</option>
-                                <option value="legacy">Legacy Style</option>
+                                <option value="clean">Classic</option>
+                                <option value="gallery">Modern</option>
+                                <option value="banner">Dark Mode</option>
+                                <option value="legacy">Bold Headlines</option>
                             </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="customUsername">Custom Username</label>
+                            <input type="text" id="customUsername" name="customUsername" placeholder="your-username" oninput="updateLivePreview()">
+                            <small style="color: #888; font-size: 0.8em;">Your site will be available at: /site/your-username</small>
                         </div>
 
                         <div class="form-group">
@@ -8355,9 +8361,20 @@ ${name}`;
 
                         <!-- Action Buttons -->
                         <div class="builder-actions">
-                            <button class="action-btn secondary" onclick="saveWebsiteSettings()">💾 Save Settings</button>
+                            <button class="action-btn secondary" onclick="saveWebsiteToFirebase()">💾 Save Website</button>
                             <button class="action-btn" onclick="previewWebsite()">👁️ Preview Website</button>
-                            <button class="action-btn primary" onclick="publishWebsite()">🚀 Publish Website</button>
+                            <button class="action-btn primary" onclick="publishWebsiteToFirebase()">🚀 Publish Site</button>
+                            <button class="action-btn" onclick="loadWebsiteFromFirebase()">📂 Load Saved</button>
+                        </div>
+                        
+                        <!-- Published Site Info -->
+                        <div id="publishedSiteInfo" style="display: none; margin-top: 20px; padding: 15px; background: rgba(212, 175, 55, 0.1); border: 1px solid #d4af37; border-radius: 8px;">
+                            <h4 style="color: #d4af37; margin-bottom: 10px;">🎉 Site Published!</h4>
+                            <p style="color: #f5f5f5; margin-bottom: 10px;">Your site is live at:</p>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="text" id="publishedSiteUrl" readonly style="flex: 1; padding: 8px; border: 1px solid #555; border-radius: 4px; background: #2a2a2a; color: #f5f5f5;">
+                                <button onclick="copyPublishedUrl()" style="padding: 8px 15px; background: #d4af37; color: #1a1a1a; border: none; border-radius: 4px; cursor: pointer;">Copy</button>
+                            </div>
                         </div>
                     </div>
 
@@ -8380,14 +8397,40 @@ ${name}`;
     </div> <!-- End container -->
 
     <script>
-        // Website Builder JavaScript Functionality
+        // Firebase Website Builder JavaScript Functionality
         let websiteSettings = {
             businessName: '',
             welcomeMessage: '',
             theme: 'clean',
             brandColor: '#d4af37',
-            profileImage: null
+            profileImage: null,
+            customUsername: '',
+            sections: [],
+            updatedAt: null
         };
+
+        // Initialize Firebase (reusing existing config)
+        let websiteDb = null;
+        let websiteAuth = null;
+        
+        // Initialize Firebase for website builder
+        function initializeWebsiteFirebase() {
+            if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
+                websiteDb = firebase.firestore();
+                websiteAuth = firebase.auth();
+                console.log('Firebase initialized for website builder');
+                
+                // Check if user has saved website data
+                websiteAuth.onAuthStateChanged((user) => {
+                    if (user) {
+                        loadWebsiteFromFirebase();
+                        prefillUserDefaults(user);
+                    }
+                });
+            } else {
+                console.log('Firebase not available - website builder will work in local mode');
+            }
+        }
 
         // Handle image upload and preview
         function handleImageUpload(event) {
@@ -8567,28 +8610,221 @@ ${name}`;
             showMessage('Website preview opened in new tab!', 'success');
         }
 
-        // Publish website
-        function publishWebsite() {
+        // Firebase Website Functions
+        
+        // Save website to Firebase
+        async function saveWebsiteToFirebase() {
+            if (!websiteAuth || !websiteAuth.currentUser) {
+                showMessage('Please sign in to save your website', 'error');
+                return;
+            }
+
+            try {
+                // Update settings from form
+                updateWebsiteSettingsFromForm();
+                
+                // Prepare data for Firebase
+                const websiteData = {
+                    title: websiteSettings.businessName,
+                    sections: websiteSettings.sections || [],
+                    theme: websiteSettings.theme,
+                    customUsername: websiteSettings.customUsername,
+                    brandColor: websiteSettings.brandColor,
+                    welcomeMessage: websiteSettings.welcomeMessage,
+                    profileImage: websiteSettings.profileImage,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                await websiteDb.collection('websites').doc(websiteAuth.currentUser.uid).set(websiteData);
+                
+                showMessage('Website saved successfully!', 'success');
+                console.log('Website saved to Firebase:', websiteData);
+                
+            } catch (error) {
+                console.error('Error saving website:', error);
+                showMessage('Failed to save website: ' + error.message, 'error');
+            }
+        }
+
+        // Load website from Firebase
+        async function loadWebsiteFromFirebase() {
+            if (!websiteAuth || !websiteAuth.currentUser) {
+                console.log('No user signed in, loading local defaults');
+                return;
+            }
+
+            try {
+                const doc = await websiteDb.collection('websites').doc(websiteAuth.currentUser.uid).get();
+                
+                if (doc.exists) {
+                    const data = doc.data();
+                    
+                    // Update settings
+                    websiteSettings = {
+                        businessName: data.title || '',
+                        welcomeMessage: data.welcomeMessage || '',
+                        theme: data.theme || 'clean',
+                        brandColor: data.brandColor || '#d4af37',
+                        profileImage: data.profileImage || null,
+                        customUsername: data.customUsername || '',
+                        sections: data.sections || [],
+                        updatedAt: data.updatedAt
+                    };
+                    
+                    // Populate form fields
+                    document.getElementById('businessName').value = websiteSettings.businessName;
+                    document.getElementById('welcomeMessage').value = websiteSettings.welcomeMessage;
+                    document.getElementById('themeSelector').value = websiteSettings.theme;
+                    document.getElementById('brandColor').value = websiteSettings.brandColor;
+                    document.getElementById('customUsername').value = websiteSettings.customUsername;
+                    
+                    if (websiteSettings.profileImage) {
+                        document.getElementById('previewImg').src = websiteSettings.profileImage;
+                        document.getElementById('imagePreview').style.display = 'block';
+                    }
+                    
+                    updateLivePreview();
+                    showMessage('Website loaded from cloud!', 'success');
+                    
+                } else {
+                    console.log('No saved website found, using defaults');
+                }
+                
+            } catch (error) {
+                console.error('Error loading website:', error);
+                showMessage('Failed to load saved website', 'error');
+            }
+        }
+
+        // Publish website to Firebase and make it publicly accessible
+        async function publishWebsiteToFirebase() {
+            if (!websiteAuth || !websiteAuth.currentUser) {
+                showMessage('Please sign in to publish your website', 'error');
+                return;
+            }
+
             if (!websiteSettings.businessName.trim()) {
                 showMessage('Please enter a business name before publishing', 'error');
                 return;
             }
-            
-            saveWebsiteSettings();
-            
-            // Generate a simple URL-friendly name
-            const urlName = websiteSettings.businessName.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 20);
-            
-            setTimeout(() => {
-                alert(`🎉 Your site is now live at: photographyschedule.com/${urlName}`);
+
+            if (!websiteSettings.customUsername.trim()) {
+                showMessage('Please enter a custom username for your site URL', 'error');
+                return;
+            }
+
+            try {
+                // First save the website
+                await saveWebsiteToFirebase();
+                
+                // Update settings from form
+                updateWebsiteSettingsFromForm();
+                
+                // Create public website data
+                const publicWebsiteData = {
+                    title: websiteSettings.businessName,
+                    sections: websiteSettings.sections || [],
+                    theme: websiteSettings.theme,
+                    customUsername: websiteSettings.customUsername,
+                    brandColor: websiteSettings.brandColor,
+                    welcomeMessage: websiteSettings.welcomeMessage,
+                    profileImage: websiteSettings.profileImage,
+                    published: true,
+                    publishedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    ownerUid: websiteAuth.currentUser.uid,
+                    ownerEmail: websiteAuth.currentUser.email
+                };
+
+                // Save to public websites collection with custom username as document ID
+                await websiteDb.collection('published_websites').doc(websiteSettings.customUsername).set(publicWebsiteData);
+                
+                // Show success message with URL
+                const siteUrl = `${window.location.origin}/site/${websiteSettings.customUsername}`;
+                document.getElementById('publishedSiteUrl').value = siteUrl;
+                document.getElementById('publishedSiteInfo').style.display = 'block';
+                
+                showMessage('Website published successfully!', 'success');
                 celebrateMilestone('website_published', websiteSettings.businessName);
-            }, 1000);
+                
+            } catch (error) {
+                console.error('Error publishing website:', error);
+                showMessage('Failed to publish website: ' + error.message, 'error');
+            }
+        }
+
+        // Smart default filler for first-time users
+        function prefillUserDefaults(user) {
+            const businessNameInput = document.getElementById('businessName');
+            const welcomeMessageInput = document.getElementById('welcomeMessage');
+            const usernameInput = document.getElementById('customUsername');
+            
+            // Only prefill if fields are empty
+            if (!businessNameInput.value && user.displayName) {
+                businessNameInput.value = `Hi, I'm ${user.displayName}`;
+                websiteSettings.businessName = businessNameInput.value;
+            }
+            
+            if (!welcomeMessageInput.value) {
+                welcomeMessageInput.value = "I'm a wedding + family photographer based in South Carolina. Let's create something unforgettable.";
+                websiteSettings.welcomeMessage = welcomeMessageInput.value;
+            }
+            
+            if (!usernameInput.value && user.email) {
+                // Generate username from email
+                const emailUsername = user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+                usernameInput.value = emailUsername;
+                websiteSettings.customUsername = emailUsername;
+            }
+            
+            updateLivePreview();
+        }
+
+        // Update settings from form inputs
+        function updateWebsiteSettingsFromForm() {
+            websiteSettings.businessName = document.getElementById('businessName').value;
+            websiteSettings.welcomeMessage = document.getElementById('welcomeMessage').value;
+            websiteSettings.theme = document.getElementById('themeSelector').value;
+            websiteSettings.brandColor = document.getElementById('brandColor').value;
+            websiteSettings.customUsername = document.getElementById('customUsername').value;
+        }
+
+        // Copy published URL to clipboard
+        function copyPublishedUrl() {
+            const urlInput = document.getElementById('publishedSiteUrl');
+            urlInput.select();
+            urlInput.setSelectionRange(0, 99999); // For mobile devices
+            
+            try {
+                document.execCommand('copy');
+                showMessage('URL copied to clipboard!', 'success');
+            } catch (err) {
+                console.error('Failed to copy URL:', err);
+                showMessage('Failed to copy URL', 'error');
+            }
+        }
+
+        // Legacy publish function (keeping for compatibility)
+        function publishWebsite() {
+            publishWebsiteToFirebase();
         }
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Firebase for website builder
+            initializeWebsiteFirebase();
+            
+            // Load saved settings (local fallback)
             loadSavedSettings();
             updateLivePreview();
+            
+            // Set up autosave (every 30 seconds)
+            setInterval(() => {
+                if (websiteAuth && websiteAuth.currentUser) {
+                    updateWebsiteSettingsFromForm();
+                    console.log('Auto-saving website...');
+                    saveWebsiteToFirebase();
+                }
+            }, 30000);
         });
 
     </script>
