@@ -1,11 +1,11 @@
 // Firebase Configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyC_placeholder_key_replace_with_real",
+    apiKey: "AIzaSyDshohtb0LV0JZ9ptFLx_0L2i0nOKHMyjM",
     authDomain: "photoscheduleapp.firebaseapp.com",
     projectId: "photoscheduleapp",
     storageBucket: "photoscheduleapp.appspot.com",
-    messagingSenderId: "123456789",
-    appId: "1:123456789:web:placeholder_app_id"
+    messagingSenderId: "471775653142",
+    appId: "1:471775653142:web:4c1a9e0e8f9b9c3d4e8f7a"
 };
 
 // Initialize Firebase
