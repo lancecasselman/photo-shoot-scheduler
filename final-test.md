@@ -33,7 +33,11 @@ Try the complete authentication flow:
 3. Sign in with Google or Email/Password
 4. Should access the full photography management system
 
-The domain authorization may take a few minutes to propagate. If you still see the "unauthorized domain" error, wait 2-3 minutes and try again.
+**Google OAuth Update Status:**
+- Firebase domain authorization: ✅ Complete
+- Google Cloud Console propagation: ⏳ In progress (5-15 minutes)
+
+If you see "unauthorized domain" errors, this is normal - Google API changes take time to propagate globally.
 
 ## Success Indicators:
 - No "auth/unauthorized-domain" errors
