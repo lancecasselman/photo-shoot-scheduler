@@ -1,0 +1,15 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Published sites are publicly readable
+    match /sites/{username}/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    // All other files require authentication
+    match /{allPaths=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

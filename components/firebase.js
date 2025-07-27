@@ -10,7 +10,14 @@ class FirebaseManager {
         const checkFirebase = () => {
             if (window.firebaseReady && window.firebaseAuth && window.firebaseFirestore) {
                 this.initialized = true;
-                console.log('Firebase initialized for website builder');
+                
+                // Initialize Cloud Functions if available
+                if (window.firebase && window.firebase.functions) {
+                    window.firebaseFunctions = window.firebase.functions();
+                    console.log('Firebase initialized for website builder with Cloud Functions support');
+                } else {
+                    console.log('Firebase initialized for website builder (Cloud Functions not available)');
+                }
             } else {
                 setTimeout(checkFirebase, 100);
             }
@@ -110,6 +117,33 @@ class FirebaseManager {
                 }
             };
 
+            // Try Firebase Cloud Function first (if available)
+            if (this.initialized && window.firebaseFunctions) {
+                try {
+                    console.log('Publishing via Firebase Cloud Functions...');
+                    const { httpsCallable } = window.firebaseUtils;
+                    const generateStaticSite = httpsCallable(window.firebaseFunctions, 'generateStaticSite');
+                    
+                    const cloudResult = await generateStaticSite(publishConfig);
+                    
+                    if (cloudResult.data.success) {
+                        console.log('Site published successfully via Firebase:', cloudResult.data);
+                        return {
+                            success: true,
+                            url: cloudResult.data.url,
+                            fullUrl: cloudResult.data.url,
+                            storageUrl: cloudResult.data.storageUrl,
+                            publishedAt: cloudResult.data.publishedAt,
+                            method: 'firebase-cloud-function'
+                        };
+                    }
+                } catch (firebaseError) {
+                    console.warn('Firebase Cloud Function failed, falling back to local publishing:', firebaseError);
+                }
+            }
+
+            // Fallback to local publishing
+            console.log('Publishing via local API...');
             const response = await fetch('/api/publish-site', {
                 method: 'POST',
                 headers: {
@@ -132,6 +166,7 @@ class FirebaseManager {
                 url: result.url,
                 fullUrl: `${window.location.origin}${result.url}`,
                 publishedAt: publishConfig.metadata.publishedAt,
+                method: 'local-api',
                 ...result
             };
         } catch (error) {
