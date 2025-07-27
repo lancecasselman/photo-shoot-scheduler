@@ -3150,8 +3150,8 @@ app.get('/api/premium-status', isAuthenticated, async (req, res) => {
         }
         
         const result = await pool.query(
-            'SELECT premium_plan, premium_expires FROM users WHERE firebase_uid = $1',
-            [userId]
+            'SELECT premium_plan, premium_expires FROM users WHERE email = $1',
+            [req.user.email]
         );
         
         const isPremium = result.rows.length > 0 && 
