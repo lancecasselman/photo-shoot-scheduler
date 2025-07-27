@@ -3112,8 +3112,8 @@ app.post('/api/upgrade-premium', isAuthenticated, async (req, res) => {
                     premium_plan = $1, 
                     premium_expires = $2,
                     updated_at = CURRENT_TIMESTAMP
-                WHERE firebase_uid = $3`,
-                [plan, new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), userId] // 1 year from now
+                WHERE email = $3`,
+                [plan, new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), req.user.email] // 1 year from now
             );
             
             return res.json({ 
@@ -3191,8 +3191,8 @@ async function requirePremium(req, res, next) {
 
         // Check premium status from database
         const result = await pool.query(
-            'SELECT premium_plan, premium_expires FROM users WHERE firebase_uid = $1',
-            [userId]
+            'SELECT premium_plan, premium_expires FROM users WHERE email = $1',
+            [req.user.email]
         );
 
         const isPremium = result.rows.length > 0 && 
