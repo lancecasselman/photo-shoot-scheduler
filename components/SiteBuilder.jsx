@@ -220,9 +220,12 @@ const SiteBuilder = () => {
     };
 
     const updateBlock = (blockId, updates) => {
-        setBlocks(blocks.map(block => 
-            block.id === blockId ? { ...block, ...updates } : block
-        ));
+        setSiteBlocks(prev => ({
+            ...prev,
+            [activePage]: (prev[activePage] || []).map(block => 
+                block.id === blockId ? { ...block, ...updates } : block
+            )
+        }));
     };
 
     const deleteBlock = (blockId) => {
@@ -261,7 +264,6 @@ const SiteBuilder = () => {
         const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
         if (newIndex < 0 || newIndex >= currentPageBlocks.length) return;
 
-        const currentPageBlocks = siteBlocks[activePage] || [];
         const newBlocks = [...currentPageBlocks];
         [newBlocks[currentIndex], newBlocks[newIndex]] = [newBlocks[newIndex], newBlocks[currentIndex]];
         setSiteBlocks(prev => ({
