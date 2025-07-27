@@ -405,7 +405,7 @@
                     top: -10px;
                     left: ${Math.random() * 100}vw;
                     pointer-events: none;
-                    animation: fall-celebration ${Math.random() * 3 + 2}s linear forwards;
+                    animation: fallCelebration ${Math.random() * 3 + 2}s linear forwards;
                 `;
                 
                 overlay.appendChild(particle);
@@ -428,7 +428,7 @@
                     font-weight: bold;
                     box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3);
                     z-index: 10001;
-                    animation: celebrate-message 3s ease-in-out forwards;
+                    animation: celebrateMessage 3s ease-in-out forwards;
                 `;
                 document.body.appendChild(messageEl);
 
@@ -450,14 +450,14 @@
         // Add CSS animations
         const style = document.createElement('style');
         style.textContent = `
-            @keyframes fall-celebration {
+            @keyframes fallCelebration {
                 to {
                     transform: translateY(100vh) rotate(360deg);
                     opacity: 0.3;
                 }
             }
             
-            @keyframes celebrate-message {
+            @keyframes celebrateMessage {
                 0% {
                     opacity: 0;
                     transform: translate(-50%, -50%) scale(0.5);
