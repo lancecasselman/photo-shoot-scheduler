@@ -361,6 +361,21 @@ async function initializeDatabase() {
             )
         `);
 
+        // Create websites table for website builder
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS websites (
+                id SERIAL PRIMARY KEY,
+                user_email VARCHAR(255) NOT NULL,
+                username VARCHAR(100) UNIQUE NOT NULL,
+                site_config JSONB NOT NULL DEFAULT '{"blocks": []}',
+                theme VARCHAR(50) DEFAULT 'classic',
+                published BOOLEAN DEFAULT TRUE,
+                published_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
         console.log('Database tables initialized successfully');
     } catch (error) {
         console.error('Database initialization error:', error);
@@ -3189,6 +3204,343 @@ app.get('/public-info', (req, res) => {
 app.get('/info', (req, res) => {
     res.sendFile(path.join(__dirname, 'public-info.html'));
 });
+
+// Premium static site publishing endpoint
+app.post('/api/publish-static-site', isAuthenticated, requirePremium, async (req, res) => {
+    try {
+        const { siteConfig, theme, username } = req.body;
+        
+        if (!siteConfig || !username) {
+            return res.status(400).json({ message: 'Site configuration and username required' });
+        }
+
+        // Sanitize username
+        const cleanUsername = username.toLowerCase().replace(/[^a-z0-9]/g, '');
+        
+        // Generate static HTML
+        const staticHTML = generateStaticHTML(siteConfig, theme, cleanUsername);
+        
+        // Ensure static-sites directory exists
+        const staticSitesDir = path.join(__dirname, 'static-sites');
+        if (!fs.existsSync(staticSitesDir)) {
+            fs.mkdirSync(staticSitesDir, { recursive: true });
+        }
+        
+        // Write static HTML file
+        const siteFilePath = path.join(staticSitesDir, `${cleanUsername}.html`);
+        fs.writeFileSync(siteFilePath, staticHTML);
+        
+        // Save site config to database
+        await pool.query(`
+            INSERT INTO websites (user_email, username, site_config, theme, published_at)
+            VALUES ($1, $2, $3, $4, NOW())
+            ON CONFLICT (username) 
+            DO UPDATE SET 
+                site_config = $3,
+                theme = $4,
+                published_at = NOW(),
+                user_email = $1
+        `, [req.user.email, cleanUsername, JSON.stringify(siteConfig), theme]);
+        
+        const publishedUrl = `${req.protocol}://${req.get('host')}/site/${cleanUsername}`;
+        
+        res.json({
+            success: true,
+            publishedUrl,
+            message: 'Site published successfully!'
+        });
+        
+    } catch (error) {
+        console.error('Error publishing static site:', error);
+        res.status(500).json({ message: 'Failed to publish site' });
+    }
+});
+
+// Serve published static sites
+app.get('/site/:username', async (req, res) => {
+    try {
+        const { username } = req.params;
+        const cleanUsername = username.toLowerCase().replace(/[^a-z0-9]/g, '');
+        
+        // Try to serve from static files first
+        const staticFilePath = path.join(__dirname, 'static-sites', `${cleanUsername}.html`);
+        
+        if (fs.existsSync(staticFilePath)) {
+            return res.sendFile(staticFilePath);
+        }
+        
+        // Fallback: generate from database
+        const result = await pool.query(
+            'SELECT site_config, theme FROM websites WHERE username = $1',
+            [cleanUsername]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).send(`
+                <html>
+                    <head>
+                        <title>Site Not Found</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; text-align: center; padding: 100px; }
+                            h1 { color: #D4AF37; }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>Site Not Found</h1>
+                        <p>The site "${username}" does not exist or has been removed.</p>
+                        <a href="/">← Back to Photography Management System</a>
+                    </body>
+                </html>
+            `);
+        }
+        
+        const siteConfig = result.rows[0].site_config;
+        const theme = result.rows[0].theme || 'classic';
+        
+        const staticHTML = generateStaticHTML(siteConfig, theme, cleanUsername);
+        res.send(staticHTML);
+        
+    } catch (error) {
+        console.error('Error serving published site:', error);
+        res.status(500).send('Error loading site');
+    }
+});
+
+// Generate static HTML function
+function generateStaticHTML(siteConfig, theme, username) {
+    const themeStyles = {
+        classic: {
+            background: 'linear-gradient(135deg, #faf7f0 0%, #f5f1e8 100%)',
+            primaryColor: '#D4AF37',
+            textColor: '#333333',
+            fontFamily: 'Georgia, serif'
+        },
+        modern: {
+            background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+            primaryColor: '#2563EB',
+            textColor: '#1f2937',
+            fontFamily: 'Inter, sans-serif'
+        },
+        dark: {
+            background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)',
+            primaryColor: '#10B981',
+            textColor: '#ffffff',
+            fontFamily: 'Roboto, sans-serif'
+        },
+        bold: {
+            background: 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)',
+            primaryColor: '#DC2626',
+            textColor: '#1f2937',
+            fontFamily: 'Montserrat, sans-serif'
+        }
+    };
+    
+    const selectedTheme = themeStyles[theme] || themeStyles.classic;
+    
+    let blocksHTML = '';
+    
+    if (siteConfig.blocks && siteConfig.blocks.length > 0) {
+        blocksHTML = siteConfig.blocks.map(block => {
+            const styles = { ...block.styles };
+            
+            switch (block.type) {
+                case 'heading':
+                    return `<h1 style="${objectToCSS(styles)}">${escapeHTML(block.content)}</h1>`;
+                
+                case 'paragraph':
+                    return `<p style="${objectToCSS(styles)}">${escapeHTML(block.content)}</p>`;
+                
+                case 'image':
+                    return `<img src="${escapeHTML(block.content)}" alt="Site image" style="${objectToCSS(styles)}" />`;
+                
+                case 'button':
+                    return `<button style="${objectToCSS(styles)}" onclick="window.open('mailto:lance@thelegacyphotography.com')">${escapeHTML(block.content)}</button>`;
+                
+                default:
+                    return '';
+            }
+        }).join('\n        ');
+    }
+    
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="index, follow">
+    <title>${escapeHTML(siteConfig.blocks?.[0]?.content || 'Photography Portfolio')}</title>
+    <meta name="description" content="Professional photography portfolio and services">
+    <meta name="keywords" content="photography, portfolio, professional photographer, wedding photography, portrait photography">
+    
+    <!-- Open Graph tags -->
+    <meta property="og:title" content="${escapeHTML(siteConfig.blocks?.[0]?.content || 'Photography Portfolio')}">
+    <meta property="og:description" content="Professional photography portfolio and services">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://photomanagementsystem.com/site/${username}">
+    
+    <!-- Twitter Card tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="${escapeHTML(siteConfig.blocks?.[0]?.content || 'Photography Portfolio')}">
+    <meta name="twitter:description" content="Professional photography portfolio and services">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: ${selectedTheme.fontFamily};
+            background: ${selectedTheme.background};
+            color: ${selectedTheme.textColor};
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .site-content {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 60px 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: ${selectedTheme.textColor};
+            opacity: 0.8;
+        }
+        
+        .contact-info {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 30px;
+            border-radius: 8px;
+            margin-top: 40px;
+            text-align: center;
+        }
+        
+        .contact-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .contact-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: ${selectedTheme.primaryColor};
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .contact-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 10px;
+            }
+            
+            .site-content {
+                padding: 40px 20px;
+            }
+            
+            .contact-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .contact-btn {
+                width: 100%;
+                max-width: 280px;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="site-content">
+            ${blocksHTML}
+            
+            <div class="contact-info">
+                <h3 style="color: ${selectedTheme.primaryColor}; margin-bottom: 15px;">Get In Touch</h3>
+                <p>Ready to capture your special moments? Let's connect!</p>
+                
+                <div class="contact-buttons">
+                    <a href="mailto:lance@thelegacyphotography.com" class="contact-btn">
+                        📧 Email Me
+                    </a>
+                    <a href="tel:843-485-1315" class="contact-btn">
+                        📞 Call Now
+                    </a>
+                    <a href="sms:843-485-1315" class="contact-btn">
+                        💬 Text Message
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>© ${new Date().getFullYear()} Professional Photography Services</p>
+            <p>Powered by <a href="https://photomanagementsystem.com" style="color: ${selectedTheme.primaryColor};">Photography Management System</a></p>
+        </div>
+    </div>
+    
+    <!-- Analytics placeholder -->
+    <script>
+        // Contact interaction tracking
+        document.querySelectorAll('.contact-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                console.log('Contact interaction:', btn.textContent.trim());
+            });
+        });
+    </script>
+</body>
+</html>`;
+}
+
+// Helper functions
+function objectToCSS(obj) {
+    return Object.entries(obj)
+        .map(([key, value]) => `${camelToKebab(key)}: ${value}`)
+        .join('; ');
+}
+
+function camelToKebab(str) {
+    return str.replace(/([a-z0-9]|(?=[A-Z]))([A-Z])/g, '$1-$2').toLowerCase();
+}
+
+function escapeHTML(text) {
+    if (!text) return '';
+    return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#x27;');
+}
 
 // Serve static files last to ensure routes run first
 app.use(express.static(__dirname));
