@@ -1,10 +1,8 @@
 // PresetSelector.jsx - Website Template Selection Component
 
-const { useState } = React;
-
 function PresetSelector({ onApplyPreset, currentPreset }) {
-    const [isOpen, setIsOpen] = useState(false);
-    const [selectedCategory, setSelectedCategory] = useState('all');
+    const [isOpen, setIsOpen] = React.useState(false);
+    const [selectedCategory, setSelectedCategory] = React.useState('all');
 
     const presets = [
         { id: 'timeless', name: 'Timeless Wedding', preset: window.TimelessWeddingPreset, category: 'wedding' },

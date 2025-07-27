@@ -1,7 +1,5 @@
 // PageNavigator.jsx - Multi-page navigation component
 
-const { useState } = React;
-
 function PageNavigator({ currentPage, setPage, siteBlocks }) {
     const pages = [
         { id: 'home', label: 'Home', icon: '🏠' },

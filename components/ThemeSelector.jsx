@@ -1,10 +1,8 @@
-// ThemeSelector.jsx - Theme selection and preview component
-
-const { useState } = React;
+// ThemeSelector.jsx - Theme selection component
 
 function ThemeSelector({ onApplyTheme, currentTheme }) {
-    const [isOpen, setIsOpen] = useState(false);
-    const [previewTheme, setPreviewTheme] = useState(null);
+    const [isOpen, setIsOpen] = React.useState(false);
+    const [previewTheme, setPreviewTheme] = React.useState(null);
 
     const themes = [
         { 
