@@ -382,6 +382,12 @@
         // Handle successful authentication
         async function handleSuccessfulAuth(user) {
             try {
+                console.log('Sending user info to backend:', {
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: user.displayName || user.email
+                });
+
                 // Send user info to backend
                 const response = await fetch('/api/auth/firebase-login', {
                     method: 'POST',
@@ -396,13 +402,18 @@
                     })
                 });
 
-                if (response.ok) {
+                console.log('Backend response status:', response.status);
+                const responseData = await response.json();
+                console.log('Backend response data:', responseData);
+
+                if (response.ok && responseData.success) {
+                    console.log('Authentication successful, redirecting...');
                     // Check for return URL and redirect
                     const urlParams = new URLSearchParams(window.location.search);
                     const returnTo = urlParams.get('return');
                     window.location.href = returnTo || '/';
                 } else {
-                    throw new Error('Backend authentication failed');
+                    throw new Error(`Backend authentication failed: ${responseData.message || 'Unknown error'}`);
                 }
             } catch (error) {
                 console.error('Authentication error:', error);
