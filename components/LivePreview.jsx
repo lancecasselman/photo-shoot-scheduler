@@ -244,7 +244,7 @@ const LivePreview = ({
                 blocks.map(renderBlock)
         ),
         
-        // Preview Tips
+        // Preview Tips and Stats
         React.createElement(
             'div',
             {
@@ -258,7 +258,9 @@ const LivePreview = ({
                 }
             },
             React.createElement('strong', null, '💡 Tips: '),
-            'Click to select • Double-click to edit • Use controls to move/delete'
+            'Click to select • Double-click to edit • Use controls to move/delete',
+            React.createElement('br'),
+            React.createElement('small', { style: { marginTop: '8px', display: 'block', color: '#6b7280' } }, `📊 ${blocks.length} blocks • Theme: ${theme} • Ready to publish!`)
         )
     );
 };

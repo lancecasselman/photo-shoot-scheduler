@@ -1,5 +1,19 @@
 const BlockEditor = ({ block, onUpdateBlock, brandColor }) => {
-    if (!block) return null;
+    if (!block) {
+        return React.createElement(
+            'div',
+            { 
+                style: { 
+                    padding: '20px', 
+                    textAlign: 'center', 
+                    color: '#6b7280',
+                    fontSize: '14px'
+                } 
+            },
+            React.createElement('p', null, '👆 Select a block to edit its properties'),
+            React.createElement('p', { style: { marginTop: '8px', fontSize: '12px' } }, 'Click any block in the preview to start editing')
+        );
+    }
 
     const updateStyles = (newStyles) => {
         onUpdateBlock(block.id, {

@@ -129,7 +129,14 @@ const SiteBuilder = () => {
         
         setBlocks([...blocks, newBlock]);
         setSelectedBlock(newBlock.id);
-        showMessage('Block added successfully!');
+        showMessage(`✨ ${type.charAt(0).toUpperCase() + type.slice(1)} block added!`);
+        
+        // Trigger small celebration for block addition
+        if (window.showCelebration) {
+            setTimeout(() => {
+                window.showCelebration('', 15); // Small confetti burst
+            }, 100);
+        }
     };
 
     const getDefaultContent = (type) => {
@@ -220,22 +227,27 @@ const SiteBuilder = () => {
 
         setSaving(true);
         try {
-            const { doc, setDoc } = window.firebaseUtils;
-            const docRef = doc(window.firebaseFirestore, 'users', user.uid, 'siteConfig', 'main');
-            
-            await setDoc(docRef, {
+            const config = {
                 blocks,
                 username,
                 brandColor,
                 theme: activeTheme,
-                lastModified: new Date().toISOString(),
-                userEmail: user.email
-            });
+                userEmail: user.email,
+                seoTitle: `${user.displayName || username} Photography`,
+                seoDescription: 'Professional photography portfolio and services'
+            };
 
-            showMessage('Website saved successfully!');
+            const result = await window.FirebaseManager.saveSiteConfig(user.uid, config);
+            
+            if (result.success) {
+                showMessage('✅ Website saved to cloud successfully!');
+                console.log('Saved configuration:', result.data);
+            } else {
+                throw new Error('Save operation failed');
+            }
         } catch (error) {
             console.error('Save error:', error);
-            showMessage('Error saving website');
+            showMessage(`❌ Error saving website: ${error.message}`);
         } finally {
             setSaving(false);
         }
@@ -243,33 +255,53 @@ const SiteBuilder = () => {
 
     const publishWebsite = async () => {
         if (!user || !username) {
-            showMessage('Please set a username first');
+            showMessage('Please set a username and sign in first');
+            return;
+        }
+
+        if (blocks.length === 0) {
+            showMessage('Please add some content blocks before publishing');
             return;
         }
 
         setPublishing(true);
         try {
-            const response = await fetch('/api/publish-site', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    username,
-                    blocks,
-                    theme: activeTheme,
-                    brandColor,
-                    userEmail: user.email
-                })
-            });
+            // First save to cloud
+            await saveWebsite();
+            
+            // Then publish
+            const config = {
+                username,
+                blocks,
+                theme: activeTheme,
+                brandColor,
+                userEmail: user.email,
+                seoTitle: `${user.displayName || username} Photography`,
+                seoDescription: 'Professional photography portfolio and services'
+            };
 
-            if (response.ok) {
-                const result = await response.json();
-                showMessage(`Website published! View at ${result.url}`, 5000);
+            const result = await window.FirebaseManager.publishSite(config);
+            
+            if (result.success) {
+                showMessage(`🚀 Website published successfully! View at: ${result.fullUrl}`, 8000);
+                
+                // Trigger celebration animation
+                if (window.showCelebration) {
+                    window.showCelebration('🌐 Website Published!', 50);
+                }
+                
+                // Optionally open the published site
+                setTimeout(() => {
+                    if (confirm('Would you like to view your published website?')) {
+                        window.open(result.fullUrl, '_blank');
+                    }
+                }, 2000);
             } else {
-                showMessage('Error publishing website');
+                throw new Error('Publish operation failed');
             }
         } catch (error) {
             console.error('Publish error:', error);
-            showMessage('Error publishing website');
+            showMessage(`❌ Error publishing website: ${error.message}`);
         } finally {
             setPublishing(false);
         }

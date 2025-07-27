@@ -67,10 +67,17 @@ const BlockLibrary = ({ onAddBlock, brandColor }) => {
                 {
                     className: 'template-btn',
                     onClick: () => {
-                        onAddBlock('heading');
-                        onAddBlock('paragraph');
-                        onAddBlock('image');
-                        onAddBlock('button');
+                        // Add homepage template with celebration
+                        setTimeout(() => onAddBlock('heading'), 0);
+                        setTimeout(() => onAddBlock('paragraph'), 200);
+                        setTimeout(() => onAddBlock('image'), 400);
+                        setTimeout(() => onAddBlock('button'), 600);
+                        
+                        if (window.showCelebration) {
+                            setTimeout(() => {
+                                window.showCelebration('🏠 Homepage Template Added!', 35);
+                            }, 800);
+                        }
                     }
                 },
                 '🏠 Homepage Layout'
@@ -80,9 +87,16 @@ const BlockLibrary = ({ onAddBlock, brandColor }) => {
                 {
                     className: 'template-btn',
                     onClick: () => {
-                        onAddBlock('heading');
-                        onAddBlock('paragraph');
-                        onAddBlock('paragraph');
+                        // Add about page template
+                        setTimeout(() => onAddBlock('heading'), 0);
+                        setTimeout(() => onAddBlock('paragraph'), 200);
+                        setTimeout(() => onAddBlock('paragraph'), 400);
+                        
+                        if (window.showCelebration) {
+                            setTimeout(() => {
+                                window.showCelebration('📖 About Template Added!', 30);
+                            }, 600);
+                        }
                     }
                 },
                 '📖 About Page'
@@ -92,10 +106,17 @@ const BlockLibrary = ({ onAddBlock, brandColor }) => {
                 {
                     className: 'template-btn',
                     onClick: () => {
-                        onAddBlock('heading');
-                        onAddBlock('image');
-                        onAddBlock('image');
-                        onAddBlock('image');
+                        // Add gallery template
+                        setTimeout(() => onAddBlock('heading'), 0);
+                        setTimeout(() => onAddBlock('image'), 200);
+                        setTimeout(() => onAddBlock('image'), 400);
+                        setTimeout(() => onAddBlock('image'), 600);
+                        
+                        if (window.showCelebration) {
+                            setTimeout(() => {
+                                window.showCelebration('🖼️ Gallery Template Added!', 40);
+                            }, 800);
+                        }
                     }
                 },
                 '🖼️ Gallery Grid'

@@ -41,14 +41,24 @@ class FirebaseManager {
             const { doc, setDoc } = window.firebaseUtils;
             const docRef = doc(window.firebaseFirestore, 'users', userId, 'siteConfig', 'main');
             
-            await setDoc(docRef, {
-                ...config,
+            const configData = {
+                blocks: config.blocks || [],
+                username: config.username || 'photographer',
+                brandColor: config.brandColor || '#D4AF37',
+                theme: config.theme || 'classic',
                 lastModified: new Date().toISOString(),
-                version: '1.0'
-            });
+                version: '2.0',
+                settings: {
+                    seoTitle: config.seoTitle || 'Photography Portfolio',
+                    seoDescription: config.seoDescription || 'Professional photography services',
+                    socialMedia: config.socialMedia || {}
+                }
+            };
+            
+            await setDoc(docRef, configData);
 
-            console.log('Site config saved successfully');
-            return true;
+            console.log('Site config saved successfully with enhanced data');
+            return { success: true, data: configData };
         } catch (error) {
             console.error('Error saving site config:', error);
             throw error;
@@ -80,21 +90,50 @@ class FirebaseManager {
 
     async publishSite(config) {
         try {
+            // Enhanced config with additional metadata
+            const publishConfig = {
+                username: config.username,
+                blocks: config.blocks,
+                theme: config.theme || 'classic',
+                brandColor: config.brandColor || '#D4AF37',
+                userEmail: config.userEmail,
+                settings: {
+                    seoTitle: config.seoTitle || `${config.username} Photography`,
+                    seoDescription: config.seoDescription || 'Professional photography portfolio',
+                    analytics: config.analytics || false,
+                    customDomain: config.customDomain || null
+                },
+                metadata: {
+                    publishedAt: new Date().toISOString(),
+                    version: '2.0',
+                    builderType: 'advanced'
+                }
+            };
+
             const response = await fetch('/api/publish-site', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Cache-Control': 'no-cache'
                 },
-                body: JSON.stringify(config)
+                body: JSON.stringify(publishConfig)
             });
 
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
             }
 
             const result = await response.json();
-            console.log('Site published successfully:', result);
-            return result;
+            console.log('Site published successfully with enhanced features:', result);
+            
+            return {
+                success: true,
+                url: result.url,
+                fullUrl: `${window.location.origin}${result.url}`,
+                publishedAt: publishConfig.metadata.publishedAt,
+                ...result
+            };
         } catch (error) {
             console.error('Error publishing site:', error);
             throw error;

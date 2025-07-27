@@ -347,6 +347,121 @@
     <script src="/components/BlockEditor.jsx"></script>
     <script src="/components/SiteBuilder.jsx"></script>
     
+    <!-- Celebration Animation Script -->
+    <script>
+        // Enhanced celebration system
+        window.showCelebration = (message, particleCount = 30) => {
+            // Create celebration overlay
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                pointer-events: none;
+                z-index: 10000;
+            `;
+            document.body.appendChild(overlay);
+
+            // Create confetti particles
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                const colors = ['#D4AF37', '#FFD700', '#FFA500', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'];
+                const shapes = ['🎉', '🎊', '⭐', '✨', '🌟', '💫'];
+                const isEmoji = Math.random() > 0.5;
+                
+                if (isEmoji) {
+                    particle.textContent = shapes[Math.floor(Math.random() * shapes.length)];
+                    particle.style.fontSize = (Math.random() * 20 + 15) + 'px';
+                } else {
+                    particle.style.width = particle.style.height = (Math.random() * 8 + 4) + 'px';
+                    particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    particle.style.borderRadius = '50%';
+                }
+
+                particle.style.cssText += `
+                    position: absolute;
+                    top: -10px;
+                    left: ${Math.random() * 100}vw;
+                    pointer-events: none;
+                    animation: fall-celebration ${Math.random() * 3 + 2}s linear forwards;
+                `;
+                
+                overlay.appendChild(particle);
+            }
+
+            // Show success message
+            if (message) {
+                const messageEl = document.createElement('div');
+                messageEl.textContent = message;
+                messageEl.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: linear-gradient(135deg, #D4AF37, #FFD700);
+                    color: white;
+                    padding: 20px 40px;
+                    border-radius: 12px;
+                    font-size: 18px;
+                    font-weight: bold;
+                    box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3);
+                    z-index: 10001;
+                    animation: celebrate-message 3s ease-in-out forwards;
+                `;
+                document.body.appendChild(messageEl);
+
+                setTimeout(() => {
+                    if (messageEl.parentNode) {
+                        messageEl.parentNode.removeChild(messageEl);
+                    }
+                }, 3000);
+            }
+
+            // Clean up
+            setTimeout(() => {
+                if (overlay.parentNode) {
+                    overlay.parentNode.removeChild(overlay);
+                }
+            }, 5000);
+        };
+
+        // Add CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fall-celebration {
+                to {
+                    transform: translateY(100vh) rotate(360deg);
+                    opacity: 0.3;
+                }
+            }
+            
+            @keyframes celebrate-message {
+                0% {
+                    opacity: 0;
+                    transform: translate(-50%, -50%) scale(0.5);
+                }
+                10% {
+                    opacity: 1;
+                    transform: translate(-50%, -50%) scale(1.1);
+                }
+                20% {
+                    transform: translate(-50%, -50%) scale(1);
+                }
+                80% {
+                    opacity: 1;
+                    transform: translate(-50%, -50%) scale(1);
+                }
+                100% {
+                    opacity: 0;
+                    transform: translate(-50%, -50%) scale(0.8);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+
     <!-- Initialize App -->
     <script type="text/babel">
         const App = () => {
@@ -358,6 +473,13 @@
             if (window.SiteBuilder && window.BlockLibrary && window.LivePreview && window.BlockEditor) {
                 const root = ReactDOM.createRoot(document.getElementById('root'));
                 root.render(React.createElement(App));
+                
+                // Show builder loaded celebration
+                setTimeout(() => {
+                    if (window.showCelebration) {
+                        window.showCelebration('🎨 Advanced Builder Loaded!', 25);
+                    }
+                }, 500);
             } else {
                 setTimeout(initializeApp, 100);
             }
