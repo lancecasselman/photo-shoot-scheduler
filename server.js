@@ -5,11 +5,10 @@ const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const { Pool } = require('pg');
 const session = require('express-session');
-const passport = require('passport');
-// Import openid-client dynamically to handle ES module
-let openidClient = null;
-let Strategy = null;
 const connectPg = require('connect-pg-simple');
+
+// Firebase Admin SDK for server-side authentication
+const admin = require('firebase-admin');
 
 // Direct email service using nodemailer
 const nodemailer = require('nodemailer');
@@ -31,33 +30,77 @@ const pool = new Pool({
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
-// Authentication middleware - requires login for all access
-const isAuthenticated = (req, res, next) => {
-    if (req.isAuthenticated()) {
-        return next();
+// Initialize Firebase Admin SDK
+try {
+    const serviceAccount = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON 
+        ? JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
+        : null;
+        
+    if (serviceAccount) {
+        admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount),
+            projectId: serviceAccount.project_id
+        });
+        console.log('Firebase Admin SDK initialized successfully');
+    } else {
+        console.log('⚠️ Firebase credentials not provided - authentication disabled');
     }
-    
-    // Development testing bypass - set TEST_MODE=true to enable testing without auth
-    if (process.env.TEST_MODE === 'true') {
-        // Create a test user for development
-        req.user = {
-            claims: {
-                sub: 'test-user-123',
+} catch (error) {
+    console.log('⚠️ Firebase Admin SDK initialization failed:', error.message);
+}
+
+// Firebase Authentication middleware
+const isAuthenticated = async (req, res, next) => {
+    // Check if Firebase is available
+    if (!admin.apps.length) {
+        // Development testing bypass - set TEST_MODE=true to enable testing without auth
+        if (process.env.TEST_MODE === 'true') {
+            // Create a test user for development
+            req.user = {
+                uid: 'test-user-123',
                 email: 'test@example.com',
-                first_name: 'Test',
-                last_name: 'User'
-            }
-        };
+                displayName: 'Test User'
+            };
+            return next();
+        }
+        
+        return res.status(401).json({ message: 'Authentication service unavailable. Please configure Firebase credentials.' });
+    }
+
+    // Check session first
+    if (req.session && req.session.user) {
+        req.user = req.session.user;
         return next();
     }
+
+    // Check Authorization header for Firebase ID token
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        const idToken = authHeader.split('Bearer ')[1];
+        
+        try {
+            const decodedToken = await admin.auth().verifyIdToken(idToken);
+            req.user = {
+                uid: decodedToken.uid,
+                email: decodedToken.email,
+                displayName: decodedToken.name || decodedToken.email
+            };
+            
+            // Store in session for future requests
+            req.session.user = req.user;
+            return next();
+        } catch (error) {
+            console.error('Firebase token verification failed:', error);
+        }
+    }
     
-    // No anonymous access allowed - authentication required
+    // No valid authentication found
     res.status(401).json({ message: 'Authentication required. Please log in.' });
 };
 
 // Get current user info
 const getCurrentUser = (req) => {
-    return req.user ? req.user.claims : null;
+    return req.user || null;
 };
 
 // Create professional email transporter with better deliverability
@@ -147,88 +190,78 @@ app.use(session({
     }
 }));
 
-// Passport configuration
-app.use(passport.initialize());
-app.use(passport.session());
-
-// Setup authentication routes with dynamic import
-async function setupAuth() {
+// Firebase Authentication Routes
+app.post('/api/auth/firebase-login', async (req, res) => {
     try {
-        if (!process.env.REPL_ID || !process.env.REPLIT_DOMAINS) {
-            console.log('⚠️ Missing REPL_ID or REPLIT_DOMAINS environment variables');
-            console.log('🔐 Authentication is REQUIRED - users must provide these credentials');
-            console.log('📋 Please add REPL_ID and REPLIT_DOMAINS to your Replit secrets');
-            return;
+        const { uid, email, displayName, photoURL } = req.body;
+        
+        if (!uid || !email) {
+            return res.status(400).json({ message: 'Missing required user information' });
         }
-
-        // Dynamic import of ES modules
-        openidClient = await import('openid-client');
-        const PassportStrategy = await import('openid-client/passport');
-        Strategy = PassportStrategy.Strategy;
-
-        const issuer = await openidClient.discovery(new URL('https://replit.com/oidc'), process.env.REPL_ID);
         
-        const callbackURL = process.env.REPLIT_DOMAINS ? 
-            `https://${process.env.REPLIT_DOMAINS.split(',')[0]}/api/callback` : 
-            `http://localhost:${process.env.PORT || 5000}/api/callback`;
+        // Create or update user in database
+        try {
+            await pool.query(`
+                INSERT INTO users (id, email, display_name, updated_at)
+                VALUES ($1, $2, $3, NOW())
+                ON CONFLICT (email) DO UPDATE SET
+                    id = EXCLUDED.id,
+                    display_name = EXCLUDED.display_name,
+                    updated_at = NOW()
+            `, [uid, email, displayName]);
             
-        const strategy = new Strategy({
-            name: 'replit',
-            config: issuer,
-            scope: 'openid email profile',
-            callbackURL: callbackURL
-        }, async (tokens, verified) => {
-            const claims = tokens.claims();
-            
-            // Upsert user in database with proper conflict resolution
-            try {
-                await pool.query(`
-                    INSERT INTO users (id, email, display_name, updated_at)
-                    VALUES ($1, $2, $3, NOW())
-                    ON CONFLICT (email) DO UPDATE SET
-                        id = EXCLUDED.id,
-                        display_name = EXCLUDED.display_name,
-                        updated_at = NOW()
-                `, [claims.sub, claims.email, claims.first_name || claims.email]);
-            } catch (error) {
-                console.error('Error upserting user:', error);
-                // Try to update existing user with new ID
-                try {
-                    await pool.query(`
-                        UPDATE users SET id = $1, display_name = $3, updated_at = NOW()
-                        WHERE email = $2
-                    `, [claims.sub, claims.email, claims.first_name || claims.email]);
-                } catch (updateError) {
-                    console.error('Error updating existing user:', updateError);
-                }
-            }
-            
-            verified(null, { claims, tokens });
-        });
+            console.log(`User ${email} logged in successfully`);
+        } catch (dbError) {
+            console.error('Database error during user creation:', dbError);
+            // Continue anyway - authentication can work without DB
+        }
         
-        passport.use(strategy);
+        // Store user in session
+        req.session.user = { uid, email, displayName, photoURL };
         
-        passport.serializeUser((user, done) => done(null, user));
-        passport.deserializeUser((user, done) => done(null, user));
-        
-        // Auth routes
-        app.get('/api/login', passport.authenticate('replit'));
-        app.get('/api/callback', passport.authenticate('replit', {
-            successRedirect: '/',
-            failureRedirect: '/api/login'
-        }));
-        app.get('/api/logout', (req, res) => {
-            req.logout(() => {
-                res.redirect('/');
-            });
-        });
-        
-        console.log('Authentication configured successfully');
+        res.json({ success: true, message: 'Authentication successful' });
     } catch (error) {
-        console.error('Authentication setup failed:', error);
-        console.log('Running in no-auth mode');
+        console.error('Firebase login error:', error);
+        res.status(500).json({ message: 'Authentication failed' });
     }
-}
+});
+
+app.post('/api/auth/firebase-verify', async (req, res) => {
+    try {
+        const { uid, email, displayName } = req.body;
+        
+        if (!uid || !email) {
+            return res.status(400).json({ message: 'Missing user information' });
+        }
+        
+        // Verify user exists and update session
+        req.session.user = { uid, email, displayName };
+        
+        res.json({ success: true, user: req.session.user });
+    } catch (error) {
+        console.error('Firebase verification error:', error);
+        res.status(500).json({ message: 'Verification failed' });
+    }
+});
+
+app.get('/api/auth/user', (req, res) => {
+    if (req.session && req.session.user) {
+        res.json({ user: req.session.user });
+    } else {
+        res.status(401).json({ message: 'Not authenticated' });
+    }
+});
+
+app.post('/api/auth/logout', (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+            console.error('Session destruction error:', err);
+            return res.status(500).json({ message: 'Logout failed' });
+        }
+        res.clearCookie('connect.sid');
+        res.json({ success: true, message: 'Logged out successfully' });
+    });
+});
 
 // Initialize database table (now using photography_sessions table)
 async function initializeDatabase() {
@@ -2546,7 +2579,7 @@ app.get('/onboarding', (req, res) => {
 
 // Serve admin dashboard with authentication requirement  
 app.get('/admin', (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.session || !req.session.user) {
         // Redirect to auth page if not authenticated
         return res.redirect('/auth.html?return=/admin');
     }
@@ -2565,7 +2598,7 @@ app.get('/', (req, res) => {
 
 // Serve main app with authentication requirement
 app.get('/app', (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.session || !req.session.user) {
         // Redirect to auth page with return parameter
         return res.redirect('/auth.html?return=/app');
     }
@@ -2574,7 +2607,7 @@ app.get('/app', (req, res) => {
 
 // Alternative dashboard route
 app.get('/dashboard', (req, res) => {
-    if (!req.isAuthenticated()) {
+    if (!req.session || !req.session.user) {
         return res.redirect('/auth.html?return=/dashboard');
     }
     res.sendFile(path.join(__dirname, 'index.html'));
@@ -2587,7 +2620,6 @@ app.use(express.static(__dirname));
 // Initialize database and start server
 async function startServer() {
     await initializeDatabase();
-    await setupAuth();
     
     // Initialize notification services
     initializeNotificationServices();

@@ -6,12 +6,13 @@ let sessions = [];
 let sessionIdCounter = 1;
 let currentUser = null;
 
-// Authentication functions
+// Firebase Authentication functions
 async function checkAuth() {
     try {
         const response = await fetch('/api/auth/user');
         if (response.ok) {
-            currentUser = await response.json();
+            const data = await response.json();
+            currentUser = data.user;
             updateUserUI();
             return true;
         } else {
@@ -33,9 +34,9 @@ function updateUserUI() {
     const userAvatar = document.getElementById('userAvatar');
     
     if (currentUser) {
-        userName.textContent = currentUser.firstName || currentUser.email;
-        if (currentUser.profileImageUrl) {
-            userAvatar.src = currentUser.profileImageUrl;
+        userName.textContent = currentUser.displayName || currentUser.email;
+        if (currentUser.photoURL) {
+            userAvatar.src = currentUser.photoURL;
             userAvatar.style.display = 'block';
         } else {
             userAvatar.style.display = 'none';
@@ -1443,3 +1444,32 @@ async function deletePhoto(sessionId, photoIndex) {
         showMessage('Delete failed: ' + error.message, 'error');
     }
 }
+
+// Firebase logout function
+async function firebaseLogout() {
+    try {
+        const response = await fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            // Clear user info and redirect to auth page
+            currentUser = null;
+            window.location.href = '/auth.html';
+        } else {
+            showMessage('Error logging out. Please try again.', 'error');
+        }
+    } catch (error) {
+        console.error('Logout error:', error);
+        showMessage('Error logging out. Please try again.', 'error');
+    }
+}
+
+// Initialize when page loads
+window.addEventListener('load', function() {
+    console.log('Page loaded, initializing...');
+    initializePage();
+});

@@ -5,6 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome Back - Photography Management System</title>
     <meta name="description" content="Sign in to manage your photography sessions, client galleries, and business workflow.">
+    
+    <!-- Firebase v9 SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.24.0/firebase-auth.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyALWPGhiznxQI9nR9bDL79EEJkM3YlE1Ms",
+            authDomain: "photoscheduleapp.firebaseapp.com",
+            projectId: "photoscheduleapp",
+            storageBucket: "photoscheduleapp.appspot.com",
+            messagingSenderId: "471775653142",
+            appId: "1:471775653142:web:4c1a9e0e8f9b9c3d4e8f7a"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const googleProvider = new GoogleAuthProvider();
+
+        // Set up authentication handlers
+        window.auth = auth;
+        window.googleProvider = googleProvider;
+        window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+        window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+        window.signInWithPopup = signInWithPopup;
+        window.onAuthStateChanged = onAuthStateChanged;
+    </script>
+    
     <style>
         * {
             margin: 0;
@@ -79,26 +109,106 @@
             font-size: 1.1rem;
         }
         
-        .login-button {
+        /* Firebase Auth Container */
+        #firebaseui-auth-container {
+            margin: 2rem 0;
+        }
+
+        /* Custom Firebase UI Styling */
+        .firebaseui-container {
+            background: transparent !important;
+            box-shadow: none !important;
+            max-width: none !important;
+        }
+
+        .firebaseui-card-content {
+            padding: 0 !important;
+            background: transparent !important;
+        }
+
+        .firebaseui-idp-button {
+            background: linear-gradient(135deg, #d4af37 0%, #f4e4bc 100%) !important;
+            color: #1a1a1a !important;
+            border: 1px solid rgba(212, 175, 55, 0.4) !important;
+            border-radius: 12px !important;
+            font-weight: 700 !important;
+            transition: all 0.3s ease !important;
+            margin-bottom: 1rem !important;
+        }
+
+        .firebaseui-idp-button:hover {
+            background: linear-gradient(135deg, #f4e4bc 0%, #d4af37 100%) !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 10px 25px rgba(212, 175, 55, 0.3) !important;
+        }
+
+        .firebaseui-idp-text {
+            color: #1a1a1a !important;
+            font-weight: 700 !important;
+        }
+
+        .firebaseui-title {
+            color: #d4af37 !important;
+            font-weight: 600 !important;
+        }
+
+        .firebaseui-subtitle {
+            color: #b0b0b0 !important;
+        }
+
+        .firebaseui-textfield {
+            background: rgba(0, 0, 0, 0.6) !important;
+            border: 1px solid rgba(212, 175, 55, 0.3) !important;
+            border-radius: 8px !important;
+            color: #f5f5f5 !important;
+        }
+
+        .firebaseui-textfield:focus {
+            border-color: #d4af37 !important;
+            box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2) !important;
+        }
+
+        .firebaseui-label {
+            color: #b0b0b0 !important;
+        }
+
+        .auth-btn {
             background: linear-gradient(135deg, #d4af37 0%, #f4e4bc 100%);
             color: #1a1a1a;
-            padding: 1.2rem 2.5rem;
             border: none;
+            padding: 14px 28px;
             border-radius: 12px;
-            font-size: 1.1rem;
-            font-weight: 700;
+            font-weight: 600;
+            font-size: 1rem;
             cursor: pointer;
             transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
             width: 100%;
-            border: 1px solid rgba(212, 175, 55, 0.4);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
         }
-        
-        .login-button:hover {
-            background: linear-gradient(135deg, #f4e4bc 0%, #d4af37 100%);
+
+        .auth-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(212, 175, 55, 0.3);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+        }
+
+        .google-btn {
+            background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
+            color: white;
+        }
+
+        .email-btn {
+            background: linear-gradient(135deg, #d4af37 0%, #f4e4bc 100%);
+            color: #1a1a1a;
+        }
+
+        .signup-btn {
+            background: linear-gradient(135deg, #666 0%, #888 100%);
+            color: white;
         }
         
         .signup-info {
@@ -233,18 +343,28 @@
         </p>
         
         <div class="auth-buttons">
-            <a href="/api/login" class="login-button" id="loginBtn">
-                🔑 Sign In with Replit
-            </a>
+            <!-- Google Sign-in Button -->
+            <button id="googleSignIn" class="auth-btn google-btn">
+                <span>🔗</span>
+                Sign in with Google
+            </button>
             
-            <div class="loading" id="loadingIndicator">
+            <!-- Email/Password Form -->
+            <div id="emailForm" style="margin-top: 20px;">
+                <input type="email" id="email" placeholder="Email address" style="width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #d4af37; border-radius: 8px; background: #2a2a2a; color: #f5f5f5;">
+                <input type="password" id="password" placeholder="Password" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #d4af37; border-radius: 8px; background: #2a2a2a; color: #f5f5f5;">
+                <button id="emailSignIn" class="auth-btn email-btn">Sign In</button>
+                <button id="emailSignUp" class="auth-btn signup-btn" style="margin-top: 10px;">Create Account</button>
+            </div>
+            
+            <div class="loading" id="loadingIndicator" style="display: none;">
                 <div class="loading-spinner"></div>
                 <p style="margin-top: 10px; color: #b0b0b0; font-size: 0.9rem;">Authenticating...</p>
             </div>
             
             <div class="signup-info">
-                <h3>Don't have an account?</h3>
-                <p>No worries! Clicking "Sign In" above will automatically create your photographer account using secure Replit authentication.</p>
+                <h3>New to the platform?</h3>
+                <p>Create your photographer account using Google or email. All your session data will be securely stored and accessible across devices.</p>
             </div>
         </div>
         
@@ -269,60 +389,133 @@
     </div>
 
     <script>
-        // Handle login button interaction
-        document.getElementById('loginBtn').addEventListener('click', function(e) {
-            const loadingIndicator = document.getElementById('loadingIndicator');
-            loadingIndicator.style.display = 'block';
-            this.style.opacity = '0.7';
-            this.style.pointerEvents = 'none';
-        });
+        // Firebase authentication functions
+        async function handleGoogleSignIn() {
+            try {
+                document.getElementById('loadingIndicator').style.display = 'block';
+                const result = await window.signInWithPopup(window.auth, window.googleProvider);
+                await handleSuccessfulAuth(result.user);
+            } catch (error) {
+                console.error('Google sign-in error:', error);
+                showError('Google sign-in failed: ' + error.message);
+                document.getElementById('loadingIndicator').style.display = 'none';
+            }
+        }
 
-        // Check if user is already authenticated
-        fetch('/api/auth/user')
-            .then(response => {
+        async function handleEmailSignIn() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if (!email || !password) {
+                showError('Please enter both email and password');
+                return;
+            }
+
+            try {
+                document.getElementById('loadingIndicator').style.display = 'block';
+                const result = await window.signInWithEmailAndPassword(window.auth, email, password);
+                await handleSuccessfulAuth(result.user);
+            } catch (error) {
+                console.error('Email sign-in error:', error);
+                showError('Sign-in failed: ' + error.message);
+                document.getElementById('loadingIndicator').style.display = 'none';
+            }
+        }
+
+        async function handleEmailSignUp() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if (!email || !password) {
+                showError('Please enter both email and password');
+                return;
+            }
+
+            try {
+                document.getElementById('loadingIndicator').style.display = 'block';
+                const result = await window.createUserWithEmailAndPassword(window.auth, email, password);
+                await handleSuccessfulAuth(result.user);
+            } catch (error) {
+                console.error('Email sign-up error:', error);
+                showError('Account creation failed: ' + error.message);
+                document.getElementById('loadingIndicator').style.display = 'none';
+            }
+        }
+
+        async function handleSuccessfulAuth(user) {
+            try {
+                // Send user info to backend
+                const response = await fetch('/api/auth/firebase-login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        uid: user.uid,
+                        email: user.email,
+                        displayName: user.displayName || user.email,
+                        photoURL: user.photoURL
+                    })
+                });
+
                 if (response.ok) {
-                    // User is authenticated, redirect appropriately
+                    // Check for return URL and redirect
                     const urlParams = new URLSearchParams(window.location.search);
                     const returnTo = urlParams.get('return');
-                    if (returnTo) {
-                        window.location.href = returnTo;
-                    } else {
-                        window.location.href = '/';
-                    }
+                    window.location.href = returnTo || '/app';
+                } else {
+                    throw new Error('Backend authentication failed');
                 }
-            })
-            .catch(error => {
-                // User not authenticated, stay on auth page
-                console.log('User authentication required');
-                
-                // Show different message if coming from admin
-                const urlParams = new URLSearchParams(window.location.search);
-                if (urlParams.get('return') === '/admin') {
-                    document.querySelector('.signup-info h3').textContent = 'Admin Access Required';
-                    document.querySelector('.signup-info p').textContent = 'Admin dashboard access requires authentication. Sign in with your authorized account to continue.';
+            } catch (error) {
+                console.error('Authentication error:', error);
+                showError('Authentication failed: ' + error.message);
+                document.getElementById('loadingIndicator').style.display = 'none';
+            }
+        }
+
+        function showError(message) {
+            alert(message); // Simple error display for now
+        }
+
+        // Set up event listeners when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('googleSignIn').addEventListener('click', handleGoogleSignIn);
+            document.getElementById('emailSignIn').addEventListener('click', handleEmailSignIn);
+            document.getElementById('emailSignUp').addEventListener('click', handleEmailSignUp);
+
+            // Check if user is already authenticated
+            window.onAuthStateChanged(window.auth, async (user) => {
+                if (user) {
+                    // User is signed in, verify with backend and redirect
+                    try {
+                        const response = await fetch('/api/auth/firebase-verify', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                uid: user.uid,
+                                email: user.email,
+                                displayName: user.displayName || user.email
+                            })
+                        });
+
+                        if (response.ok) {
+                            const urlParams = new URLSearchParams(window.location.search);
+                            const returnTo = urlParams.get('return');
+                            window.location.href = returnTo || '/app';
+                        }
+                    } catch (error) {
+                        console.log('Backend verification failed, user can proceed with login');
+                    }
                 }
             });
 
-        // Handle page visibility change (user returns from auth)
-        document.addEventListener('visibilitychange', function() {
-            if (!document.hidden) {
-                // Page became visible again, check auth status
-                setTimeout(() => {
-                    fetch('/api/auth/user')
-                        .then(response => {
-                            if (response.ok) {
-                                window.location.href = '/';
-                            }
-                        })
-                        .catch(() => {
-                            // Reset button state if auth failed
-                            const loginBtn = document.getElementById('loginBtn');
-                            const loadingIndicator = document.getElementById('loadingIndicator');
-                            loginBtn.style.opacity = '1';
-                            loginBtn.style.pointerEvents = 'auto';
-                            loadingIndicator.style.display = 'none';
-                        });
-                }, 1000);
+            // Handle admin access messaging
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('return') === '/admin') {
+                document.querySelector('.signup-info h3').textContent = 'Admin Access Required';
+                document.querySelector('.signup-info p').textContent = 'Admin dashboard access requires authentication. Sign in with your authorized account to continue.';
             }
         });
     </script>
