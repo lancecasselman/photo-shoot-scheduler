@@ -2639,14 +2639,20 @@ app.get('/onboarding', (req, res) => {
 // Serve admin dashboard with authentication requirement  
 app.get('/admin', (req, res) => {
     if (!req.session || !req.session.user) {
-        // Redirect to auth page if not authenticated
-        return res.redirect('/auth.html?return=/admin');
+        // Redirect to new login page to bypass cache issues
+        return res.redirect('/login.html?return=/admin');
     }
     res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
 // Serve auth page for non-authenticated users
 app.get('/auth.html', (req, res) => {
+    // Add cache-busting headers to prevent caching of auth.html
+    res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+    });
     res.sendFile(path.join(__dirname, 'auth.html'));
 });
 
@@ -2658,8 +2664,8 @@ app.get('/', (req, res) => {
 // Serve main app with authentication requirement
 app.get('/app', (req, res) => {
     if (!req.session || !req.session.user) {
-        // Redirect to auth page with return parameter
-        return res.redirect('/auth.html?return=/app');
+        // Redirect to new login page to bypass cache issues
+        return res.redirect('/login.html?return=/app');
     }
     res.sendFile(path.join(__dirname, 'index.html'));
 });
