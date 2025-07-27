@@ -6,160 +6,9 @@
     <title>Welcome Back - Photography Management System</title>
     <meta name="description" content="Sign in to manage your photography sessions, client galleries, and business workflow.">
     
-    <!-- Firebase v9 SDK -->
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js';
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.24.0/firebase-auth.js';
-
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyALWPGhiznxQI9nR9bDL79EEJkM3YlE1Ms",
-            authDomain: "photoscheduleapp.firebaseapp.com",
-            projectId: "photoscheduleapp",
-            storageBucket: "photoscheduleapp.appspot.com",
-            messagingSenderId: "471775653142",
-            appId: "1:471775653142:web:4c1a9e0e8f9b9c3d4e8f7a"
-        };
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const googleProvider = new GoogleAuthProvider();
-
-        // Google Sign-in function
-        async function handleGoogleSignIn() {
-            try {
-                document.getElementById('loadingIndicator').style.display = 'block';
-                const result = await signInWithPopup(auth, googleProvider);
-                await handleSuccessfulAuth(result.user);
-            } catch (error) {
-                console.error('Google sign-in error:', error);
-                showError('Google sign-in failed: ' + error.message);
-                document.getElementById('loadingIndicator').style.display = 'none';
-            }
-        }
-
-        // Email Sign-in function
-        async function handleEmailSignIn() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
-            if (!email || !password) {
-                showError('Please enter both email and password');
-                return;
-            }
-
-            try {
-                document.getElementById('loadingIndicator').style.display = 'block';
-                const result = await signInWithEmailAndPassword(auth, email, password);
-                await handleSuccessfulAuth(result.user);
-            } catch (error) {
-                console.error('Email sign-in error:', error);
-                showError('Sign-in failed: ' + error.message);
-                document.getElementById('loadingIndicator').style.display = 'none';
-            }
-        }
-
-        // Email Sign-up function
-        async function handleEmailSignUp() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
-            if (!email || !password) {
-                showError('Please enter both email and password');
-                return;
-            }
-
-            try {
-                document.getElementById('loadingIndicator').style.display = 'block';
-                const result = await createUserWithEmailAndPassword(auth, email, password);
-                await handleSuccessfulAuth(result.user);
-            } catch (error) {
-                console.error('Email sign-up error:', error);
-                showError('Account creation failed: ' + error.message);
-                document.getElementById('loadingIndicator').style.display = 'none';
-            }
-        }
-
-        // Handle successful authentication
-        async function handleSuccessfulAuth(user) {
-            try {
-                // Send user info to backend
-                const response = await fetch('/api/auth/firebase-login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        uid: user.uid,
-                        email: user.email,
-                        displayName: user.displayName || user.email,
-                        photoURL: user.photoURL
-                    })
-                });
-
-                if (response.ok) {
-                    // Check for return URL and redirect
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const returnTo = urlParams.get('return');
-                    window.location.href = returnTo || '/';
-                } else {
-                    throw new Error('Backend authentication failed');
-                }
-            } catch (error) {
-                console.error('Authentication error:', error);
-                showError('Authentication failed: ' + error.message);
-                document.getElementById('loadingIndicator').style.display = 'none';
-            }
-        }
-
-        // Show error message
-        function showError(message) {
-            alert(message); // Simple error display for now
-        }
-
-        // Set up event listeners when DOM is ready
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('googleSignIn').addEventListener('click', handleGoogleSignIn);
-            document.getElementById('emailSignIn').addEventListener('click', handleEmailSignIn);
-            document.getElementById('emailSignUp').addEventListener('click', handleEmailSignUp);
-
-            // Check if user is already authenticated
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    // User is signed in, verify with backend and redirect
-                    try {
-                        const response = await fetch('/api/auth/firebase-verify', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                uid: user.uid,
-                                email: user.email,
-                                displayName: user.displayName || user.email
-                            })
-                        });
-
-                        if (response.ok) {
-                            const urlParams = new URLSearchParams(window.location.search);
-                            const returnTo = urlParams.get('return');
-                            window.location.href = returnTo || '/';
-                        }
-                    } catch (error) {
-                        console.log('Backend verification failed, user can proceed with login');
-                    }
-                }
-            });
-
-            // Handle admin access messaging
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('return') === '/admin') {
-                document.querySelector('.signup-info h3').textContent = 'Admin Access Required';
-                document.querySelector('.signup-info p').textContent = 'Admin dashboard access requires authentication. Sign in with your authorized account to continue.';
-            }
-        });
-    </script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-auth.js"></script>
     
     <style>
         * {
@@ -470,7 +319,7 @@
         
         <div class="auth-buttons">
             <!-- Google Sign-in Button -->
-            <button id="googleSignIn" class="auth-btn google-btn">
+            <button id="google-login" class="auth-btn google-btn">
                 <span>🔗</span>
                 Sign in with Google
             </button>
@@ -514,6 +363,158 @@
         </div>
     </div>
 
+    <script>
+        // Initialize Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyALWPGhiznxQI9nR9bDL79EEJkM3YlE1Ms",
+            authDomain: "photoscheduleapp.firebaseapp.com",
+            projectId: "photoscheduleapp",
+            storageBucket: "photoscheduleapp.appspot.com",
+            messagingSenderId: "471775653142",
+            appId: "1:471775653142:web:4c1a9e0e8f9b9c3d4e8f7a"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const googleProvider = new firebase.auth.GoogleAuthProvider();
+
+        // Handle successful authentication
+        async function handleSuccessfulAuth(user) {
+            try {
+                // Send user info to backend
+                const response = await fetch('/api/auth/firebase-login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        uid: user.uid,
+                        email: user.email,
+                        displayName: user.displayName || user.email,
+                        photoURL: user.photoURL
+                    })
+                });
+
+                if (response.ok) {
+                    // Check for return URL and redirect
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const returnTo = urlParams.get('return');
+                    window.location.href = returnTo || '/';
+                } else {
+                    throw new Error('Backend authentication failed');
+                }
+            } catch (error) {
+                console.error('Authentication error:', error);
+                alert('Authentication failed: ' + error.message);
+                document.getElementById('loadingIndicator').style.display = 'none';
+            }
+        }
+
+        // Attach login behavior after DOM is ready
+        document.addEventListener("DOMContentLoaded", function () {
+            // Google Sign-in
+            const googleLoginBtn = document.getElementById("google-login");
+            if (googleLoginBtn) {
+                googleLoginBtn.addEventListener("click", function () {
+                    document.getElementById('loadingIndicator').style.display = 'block';
+                    auth.signInWithPopup(googleProvider)
+                        .then((result) => {
+                            handleSuccessfulAuth(result.user);
+                        })
+                        .catch((error) => {
+                            console.error('Google sign-in error:', error);
+                            alert("Google sign-in failed: " + error.message);
+                            document.getElementById('loadingIndicator').style.display = 'none';
+                        });
+                });
+            }
+
+            // Email Sign-in
+            const emailSignInBtn = document.getElementById("emailSignIn");
+            if (emailSignInBtn) {
+                emailSignInBtn.addEventListener("click", function () {
+                    const email = document.getElementById('email').value;
+                    const password = document.getElementById('password').value;
+                    
+                    if (!email || !password) {
+                        alert('Please enter both email and password');
+                        return;
+                    }
+
+                    document.getElementById('loadingIndicator').style.display = 'block';
+                    auth.signInWithEmailAndPassword(email, password)
+                        .then((result) => {
+                            handleSuccessfulAuth(result.user);
+                        })
+                        .catch((error) => {
+                            console.error('Email sign-in error:', error);
+                            alert("Sign-in failed: " + error.message);
+                            document.getElementById('loadingIndicator').style.display = 'none';
+                        });
+                });
+            }
+
+            // Email Sign-up
+            const emailSignUpBtn = document.getElementById("emailSignUp");
+            if (emailSignUpBtn) {
+                emailSignUpBtn.addEventListener("click", function () {
+                    const email = document.getElementById('email').value;
+                    const password = document.getElementById('password').value;
+                    
+                    if (!email || !password) {
+                        alert('Please enter both email and password');
+                        return;
+                    }
+
+                    document.getElementById('loadingIndicator').style.display = 'block';
+                    auth.createUserWithEmailAndPassword(email, password)
+                        .then((result) => {
+                            handleSuccessfulAuth(result.user);
+                        })
+                        .catch((error) => {
+                            console.error('Email sign-up error:', error);
+                            alert("Account creation failed: " + error.message);
+                            document.getElementById('loadingIndicator').style.display = 'none';
+                        });
+                });
+            }
+
+            // Check if already logged in and redirect
+            auth.onAuthStateChanged(async (user) => {
+                if (user) {
+                    // User is signed in, verify with backend and redirect
+                    try {
+                        const response = await fetch('/api/auth/firebase-verify', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                uid: user.uid,
+                                email: user.email,
+                                displayName: user.displayName || user.email
+                            })
+                        });
+
+                        if (response.ok) {
+                            const urlParams = new URLSearchParams(window.location.search);
+                            const returnTo = urlParams.get('return');
+                            window.location.href = returnTo || '/';
+                        }
+                    } catch (error) {
+                        console.log('Backend verification failed, user can proceed with login');
+                    }
+                }
+            });
+
+            // Handle admin access messaging
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('return') === '/admin') {
+                document.querySelector('.signup-info h3').textContent = 'Admin Access Required';
+                document.querySelector('.signup-info p').textContent = 'Admin dashboard access requires authentication. Sign in with your authorized account to continue.';
+            }
+        });
+    </script>
 
 </body>
 </html>
