@@ -3170,6 +3170,26 @@ app.get('/api/premium-status', isAuthenticated, async (req, res) => {
     }
 });
 
+// SEO and crawler accessibility routes
+app.get('/robots.txt', (req, res) => {
+    res.type('text/plain');
+    res.sendFile(path.join(__dirname, 'robots.txt'));
+});
+
+app.get('/sitemap.xml', (req, res) => {
+    res.type('application/xml');
+    res.sendFile(path.join(__dirname, 'sitemap.xml'));
+});
+
+// Public information page for AI crawlers (no authentication required)
+app.get('/public-info', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public-info.html'));
+});
+
+app.get('/info', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public-info.html'));
+});
+
 // Serve static files last to ensure routes run first
 app.use(express.static(__dirname));
 

@@ -1,0 +1,32 @@
+User-agent: *
+Allow: /
+
+# Allow AI crawlers and search engines
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+# Sitemap
+Sitemap: https://photomanagementsystem.com/sitemap.xml
+
+# Specific paths
+Allow: /
+Allow: /auth.html
+Allow: /landing.html
+Allow: /public-info
+Allow: /info
+Allow: /site/*
+
+# Disallow sensitive areas
+Disallow: /admin
+Disallow: /api/
+Disallow: /uploads/
+Disallow: /server/
