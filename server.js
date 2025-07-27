@@ -172,6 +172,10 @@ const createEmailTransporter = () => {
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Body parsing middleware (must be before routes)
+app.use(express.json({ limit: '100gb' }));
+app.use(express.urlencoded({ extended: true, limit: '100gb' }));
+
 // Session configuration for authentication
 const pgSession = connectPg(session);
 app.use(session({
@@ -563,8 +567,7 @@ const upload = multer({
 });
 
 // Middleware - ULTRA-HIGH payload limits for mobile photography uploads
-app.use(express.json({ limit: '100gb' }));
-app.use(express.urlencoded({ limit: '100gb', extended: true, parameterLimit: 50000000 }));
+// Body parsing middleware moved to top of file
 // Move static file serving after route definitions to ensure authentication checks run first
 // Static files will be served at the bottom of the file
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
