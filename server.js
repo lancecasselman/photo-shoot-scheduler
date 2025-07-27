@@ -2651,7 +2651,9 @@ app.get('/auth.html', (req, res) => {
     res.set({
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',
-        'Expires': '0'
+        'Expires': '0',
+        'Last-Modified': new Date().toUTCString(),
+        'ETag': `"${Date.now()}"`
     });
     res.sendFile(path.join(__dirname, 'auth.html'));
 });
