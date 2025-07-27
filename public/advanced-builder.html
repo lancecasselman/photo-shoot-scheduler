@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Website Builder - Photography Management System</title>
+    
+    <!-- React CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Firebase v9 -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
+        import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+        import { getFirestore, doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+        
+        // Initialize Firebase
+        const firebaseApp = initializeApp({
+            apiKey: "AIzaSyDbtboh1bW6xu9Tz9FILkx_0lzGwXQHjyM",
+            authDomain: "photoshcheduleapp.firebaseapp.com",
+            projectId: "photoshcheduleapp",
+            storageBucket: "photoshcheduleapp.appspot.com",
+            messagingSenderId: "1080892259604",
+            appId: "1:1080892259604:web:9c8f4e5d6a7b8c9d0e1f2g"
+        });
+        
+        // Make Firebase available globally
+        window.firebaseApp = firebaseApp;
+        window.firebaseAuth = getAuth(firebaseApp);
+        window.firebaseFirestore = getFirestore(firebaseApp);
+        window.firebaseUtils = { doc, setDoc, getDoc };
+        window.GoogleAuthProvider = GoogleAuthProvider;
+        window.signInWithPopup = signInWithPopup;
+        window.onAuthStateChanged = onAuthStateChanged;
+        
+        // Signal that Firebase is ready
+        window.firebaseReady = true;
+        window.dispatchEvent(new Event('firebaseReady'));
+    </script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+        }
+        
+        .premium-notice {
+            background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
+            color: white;
+            padding: 16px 24px;
+            text-align: center;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .loading, .auth-required {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .auth-btn {
+            background: #D4AF37;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.2s ease;
+        }
+        
+        .auth-btn:hover {
+            background: #B8941F;
+        }
+        
+        .builder-container {
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            grid-template-rows: 1fr;
+            height: calc(100vh - 70px);
+            gap: 20px;
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .sidebar, .properties {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            max-height: calc(100vh - 110px);
+        }
+        
+        .canvas {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+        }
+        
+        .block-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            margin: 8px 0;
+            background: #f8fafc;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+        
+        .block-item:hover {
+            background: #e2e8f0;
+            border-color: #D4AF37;
+        }
+        
+        .block-icon {
+            font-size: 20px;
+        }
+        
+        .block-info strong {
+            display: block;
+            color: #1f2937;
+            font-size: 14px;
+        }
+        
+        .block-description {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 2px;
+        }
+        
+        .template-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .template-btn {
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            padding: 10px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            text-align: left;
+            transition: all 0.2s ease;
+        }
+        
+        .template-btn:hover {
+            background: #e5e7eb;
+            border-color: #D4AF37;
+        }
+        
+        .canvas-block {
+            margin: 20px 0;
+            padding: 10px;
+            border: 2px dashed transparent;
+            border-radius: 4px;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .canvas-block:hover {
+            border-color: #D4AF37;
+            background: rgba(212, 175, 55, 0.05);
+        }
+        
+        .btn-primary {
+            background: #D4AF37;
+            color: white;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+            margin: 10px 0;
+            font-size: 14px;
+            transition: background 0.2s ease;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            background: #B8941F;
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .property-group {
+            margin: 15px 0;
+        }
+        
+        .property-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #374151;
+            font-size: 13px;
+        }
+        
+        .property-group input, .property-group select, .property-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .property-group input[type="range"] {
+            margin: 5px 0;
+        }
+        
+        .property-group input[type="color"] {
+            height: 40px;
+            padding: 2px;
+            border-radius: 4px;
+        }
+        
+        h3 {
+            color: #1f2937;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e5e7eb;
+            font-size: 16px;
+        }
+        
+        h4 {
+            color: #374151;
+            margin: 20px 0 10px 0;
+            font-size: 14px;
+        }
+        
+        .message {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            font-size: 14px;
+        }
+        
+        .preset-btn {
+            background: #f9fafb;
+            border: 1px solid #d1d5db;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+        
+        .preset-btn:hover {
+            background: #e5e7eb;
+            border-color: #D4AF37;
+        }
+        
+        .preview-container {
+            min-height: 400px;
+            position: relative;
+        }
+        
+        @media (max-width: 1200px) {
+            .builder-container {
+                grid-template-columns: 250px 1fr 250px;
+            }
+        }
+        
+        @media (max-width: 900px) {
+            .builder-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto 1fr auto;
+                height: auto;
+                gap: 15px;
+            }
+            
+            .sidebar, .properties {
+                max-height: 300px;
+            }
+            
+            .canvas {
+                order: 2;
+            }
+            
+            .properties {
+                order: 3;
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .builder-container {
+                padding: 10px;
+                gap: 10px;
+            }
+            
+            .sidebar, .canvas, .properties {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="premium-notice">
+        <span style="font-size: 20px; margin-right: 8px;">👑</span>
+        Advanced Website Builder - Create stunning photography websites with drag-and-drop blocks
+    </div>
+    
+    <div id="root">
+        <div class="loading">
+            <h2>Loading Advanced Website Builder...</h2>
+            <p>Initializing Firebase and React components</p>
+        </div>
+    </div>
+
+    <!-- Load React Components -->
+    <script src="/components/BlockLibrary.jsx"></script>
+    <script src="/components/LivePreview.jsx"></script>
+    <script src="/components/BlockEditor.jsx"></script>
+    <script src="/components/SiteBuilder.jsx"></script>
+    
+    <!-- Initialize App -->
+    <script type="text/babel">
+        const App = () => {
+            return React.createElement(window.SiteBuilder);
+        };
+
+        // Wait for all components to load
+        const initializeApp = () => {
+            if (window.SiteBuilder && window.BlockLibrary && window.LivePreview && window.BlockEditor) {
+                const root = ReactDOM.createRoot(document.getElementById('root'));
+                root.render(React.createElement(App));
+            } else {
+                setTimeout(initializeApp, 100);
+            }
+        };
+
+        // Start when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeApp);
+        } else {
+            initializeApp();
+        }
+    </script>
+</body>
+</html>
