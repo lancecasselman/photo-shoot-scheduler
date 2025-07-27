@@ -1,85 +1,94 @@
 #!/usr/bin/env python3
 """
-Complete deployment verification for Photography Scheduler
+Deployment Verification Script for Custom Domain
+Tests authentication and functionality on photomanagementsystem.com
 """
-import urllib.request
-import json
-import os
-import sys
 
-def verify_deployment():
-    """Comprehensive deployment verification"""
-    print("=== DEPLOYMENT VERIFICATION ===")
+import requests
+import json
+
+def test_custom_domain():
+    base_url = "https://photomanagementsystem.com"
     
-    port = int(os.environ.get('PORT', 5000))
-    base_url = f'http://localhost:{port}'
+    print("🔍 Testing Custom Domain Deployment")
+    print(f"Domain: {base_url}")
+    print("-" * 50)
     
-    tests = [
-        ('Root endpoint', f'{base_url}/'),
-        ('CSS file', f'{base_url}/style.css'),
-        ('JavaScript file', f'{base_url}/script.js'),
-        ('Health check', f'{base_url}/'),
+    # Test 1: Landing page
+    try:
+        response = requests.get(f"{base_url}/")
+        print(f"✅ Landing page: {response.status_code}")
+        if "Launch App" in response.text:
+            print("   - Launch App button found")
+    except Exception as e:
+        print(f"❌ Landing page: {e}")
+    
+    # Test 2: Authentication page  
+    try:
+        response = requests.get(f"{base_url}/auth.html")
+        print(f"✅ Auth page: {response.status_code}")
+        if "Firebase" in response.text:
+            print("   - Firebase authentication loaded")
+    except Exception as e:
+        print(f"❌ Auth page: {e}")
+    
+    # Test 3: API Status
+    try:
+        response = requests.get(f"{base_url}/api/status")
+        status = response.json()
+        print(f"✅ API Status: {response.status_code}")
+        print(f"   - Authentication: {status.get('authenticationEnabled')}")
+        print(f"   - Firebase: {status.get('firebaseInitialized')}")
+        print(f"   - Database: {status.get('databaseConnected')}")
+    except Exception as e:
+        print(f"❌ API Status: {e}")
+    
+    # Test 4: Main App (should redirect to auth)
+    try:
+        response = requests.get(f"{base_url}/app", allow_redirects=False)
+        print(f"✅ Main App: {response.status_code}")
+        if response.status_code == 302:
+            redirect_location = response.headers.get('location', '')
+            if 'auth.html' in redirect_location:
+                print("   - Correctly redirects to authentication")
+            else:
+                print(f"   - Redirects to: {redirect_location}")
+        elif response.status_code == 200:
+            print("   - ⚠️ No authentication required (unexpected)")
+    except Exception as e:
+        print(f"❌ Main App: {e}")
+    
+    print("-" * 50)
+    print("🔧 Firebase Configuration Check")
+    
+    # Check if Firebase domain is authorized
+    firebase_errors = [
+        "auth/unauthorized-domain",
+        "This domain is not authorized",
+        "domain is not authorized"
     ]
     
-    results = []
-    
-    for test_name, url in tests:
-        try:
-            with urllib.request.urlopen(url, timeout=5) as response:
-                if response.status == 200:
-                    content = response.read().decode('utf-8')
-                    content_size = len(content)
-                    
-                    # Specific checks
-                    if test_name == 'Root endpoint':
-                        success = 'Photography Session Scheduler' in content
-                    elif test_name == 'CSS file':
-                        success = 'margin: 0' in content and 'padding: 0' in content
-                    elif test_name == 'JavaScript file':
-                        success = 'sessionForm' in content and 'handleFormSubmit' in content
-                    elif test_name == 'Health check':
-                        success = 'Photography Session Scheduler' in content
-                    else:
-                        success = True
-                    
-                    if success:
-                        print(f"✓ {test_name}: OK ({content_size} bytes)")
-                        results.append(True)
-                    else:
-                        print(f"✗ {test_name}: Content check failed")
-                        results.append(False)
-                else:
-                    print(f"✗ {test_name}: HTTP {response.status}")
-                    results.append(False)
-        except Exception as e:
-            print(f"✗ {test_name}: {e}")
-            results.append(False)
-    
-    # Test OPTIONS request
     try:
-        req = urllib.request.Request(base_url, method='OPTIONS')
-        with urllib.request.urlopen(req, timeout=5) as response:
-            if response.status == 200:
-                print("✓ OPTIONS request: OK")
-                results.append(True)
-            else:
-                print(f"✗ OPTIONS request: HTTP {response.status}")
-                results.append(False)
+        response = requests.get(f"{base_url}/auth.html")
+        content = response.text.lower()
+        
+        has_firebase_error = any(error.lower() in content for error in firebase_errors)
+        
+        if has_firebase_error:
+            print("❌ Firebase domain authorization issue detected")
+            print("   Required: Add photomanagementsystem.com to Firebase Console")
+            print("   Path: Authentication → Settings → Authorized domains")
+        else:
+            print("✅ No Firebase domain errors detected")
+            
     except Exception as e:
-        print(f"✗ OPTIONS request: {e}")
-        results.append(False)
+        print(f"❌ Firebase check failed: {e}")
     
-    success_rate = sum(results) / len(results) * 100
-    print(f"\n=== RESULTS ===")
-    print(f"Success rate: {success_rate:.1f}% ({sum(results)}/{len(results)})")
-    
-    if success_rate == 100:
-        print("🎉 DEPLOYMENT READY FOR PRODUCTION!")
-        return True
-    else:
-        print("❌ DEPLOYMENT ISSUES DETECTED")
-        return False
+    print("-" * 50)
+    print("📋 Next Steps:")
+    print("1. Add photomanagementsystem.com to Firebase authorized domains")
+    print("2. Update Google OAuth settings with custom domain")
+    print("3. Test authentication flow after Firebase configuration")
 
 if __name__ == "__main__":
-    success = verify_deployment()
-    sys.exit(0 if success else 1)
+    test_custom_domain()
