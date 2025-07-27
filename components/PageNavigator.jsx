@@ -12,38 +12,52 @@ function PageNavigator({ currentPage, setPage, siteBlocks }) {
         return siteBlocks[pageId]?.length || 0;
     };
 
-    return (
-        <div className="page-navigator">
-            <div className="nav-header">
-                <h3>📄 Site Pages</h3>
-                <div className="nav-subtitle">Build your multi-page website</div>
-            </div>
-            
-            <div className="page-tabs">
-                {pages.map((page) => (
-                    <button
-                        key={page.id}
-                        onClick={() => setPage(page.id)}
-                        className={`page-tab ${page.id === currentPage ? 'active' : ''}`}
-                        title={`Edit ${page.label} page`}
-                    >
-                        <span className="page-icon">{page.icon}</span>
-                        <span className="page-label">{page.label}</span>
-                        <span className="block-count">{getPageBlockCount(page.id)}</span>
-                    </button>
-                ))}
-            </div>
+    return React.createElement(
+        'div',
+        { className: 'page-navigator' },
+        React.createElement(
+            'div',
+            { className: 'nav-header' },
+            React.createElement('h3', null, '📄 Site Pages'),
+            React.createElement('div', { className: 'nav-subtitle' }, 'Build your multi-page website')
+        ),
+        
+        React.createElement(
+            'div',
+            { className: 'page-tabs' },
+            pages.map((page) => 
+                React.createElement(
+                    'button',
+                    {
+                        key: page.id,
+                        onClick: () => setPage(page.id),
+                        className: `page-tab ${page.id === currentPage ? 'active' : ''}`,
+                        title: `Edit ${page.label} page`
+                    },
+                    React.createElement('span', { className: 'page-icon' }, page.icon),
+                    React.createElement('span', { className: 'page-label' }, page.label),
+                    React.createElement('span', { className: 'block-count' }, getPageBlockCount(page.id))
+                )
+            )
+        ),
 
-            <div className="current-page-info">
-                <div className="editing-indicator">
-                    ✏️ Editing: <strong>{pages.find(p => p.id === currentPage)?.label}</strong>
-                </div>
-                <div className="page-blocks-count">
-                    {getPageBlockCount(currentPage)} blocks on this page
-                </div>
-            </div>
+        React.createElement(
+            'div',
+            { className: 'current-page-info' },
+            React.createElement(
+                'div',
+                { className: 'editing-indicator' },
+                '✏️ Editing: ',
+                React.createElement('strong', null, pages.find(p => p.id === currentPage)?.label)
+            ),
+            React.createElement(
+                'div',
+                { className: 'page-blocks-count' },
+                `${getPageBlockCount(currentPage)} blocks on this page`
+            )
+        ),
 
-            <style jsx>{`
+        React.createElement('style', { dangerouslySetInnerHTML: { __html: `
                 .page-navigator {
                     background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
                     border-radius: 12px;
@@ -173,7 +187,7 @@ function PageNavigator({ currentPage, setPage, siteBlocks }) {
                         font-size: 9px;
                     }
                 }
-            `}</style>
+            ` } })</style>
         </div>
     );
 }

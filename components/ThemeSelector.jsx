@@ -52,72 +52,96 @@ function ThemeSelector({ onApplyTheme, currentTheme }) {
         return currentTheme.meta.name;
     };
 
-    return (
-        <div className="theme-selector">
-            <button 
-                className="theme-toggle-btn"
-                onClick={() => setIsOpen(!isOpen)}
-                title="Choose a theme for your website"
-            >
-                <span className="theme-icon">🎨</span>
-                <span className="theme-text">
-                    <div className="theme-label">Theme</div>
-                    <div className="current-theme">{getCurrentThemeName()}</div>
-                </span>
-                <span className={`dropdown-arrow ${isOpen ? 'open' : ''}`}>▼</span>
-            </button>
+    return React.createElement(
+        'div',
+        { className: 'theme-selector' },
+        React.createElement(
+            'button',
+            {
+                className: 'theme-toggle-btn',
+                onClick: () => setIsOpen(!isOpen),
+                title: 'Choose a theme for your website'
+            },
+            React.createElement('span', { className: 'theme-icon' }, '🎨'),
+            React.createElement(
+                'span',
+                { className: 'theme-text' },
+                React.createElement('div', { className: 'theme-label' }, 'Theme'),
+                React.createElement('div', { className: 'current-theme' }, getCurrentThemeName())
+            ),
+            React.createElement('span', { className: `dropdown-arrow ${isOpen ? 'open' : ''}` }, '▼')
+        ),
 
-            {isOpen && (
-                <div className="theme-dropdown">
-                    <div className="theme-header">
-                        <h3>🎨 Choose Your Theme</h3>
-                        <p>Professional pre-designed templates</p>
-                    </div>
-                    
-                    <div className="themes-grid">
-                        {themes.map((theme) => (
-                            <div 
-                                key={theme.id}
-                                className={`theme-card ${currentTheme?.meta?.name === theme.name ? 'active' : ''}`}
-                                onClick={() => handleThemeSelect(theme)}
-                                onMouseEnter={() => setPreviewTheme(theme)}
-                                onMouseLeave={() => setPreviewTheme(null)}
-                            >
-                                <div 
-                                    className="theme-preview" 
-                                    style={{ backgroundColor: theme.preview }}
-                                >
-                                    <div className="preview-lines">
-                                        <div className="line long"></div>
-                                        <div className="line short"></div>
-                                        <div className="line medium"></div>
-                                    </div>
-                                </div>
-                                
-                                <div className="theme-info">
-                                    <h4>{theme.name}</h4>
-                                    <p>{theme.description}</p>
-                                </div>
+        isOpen && React.createElement(
+            'div',
+            { className: 'theme-dropdown' },
+            React.createElement(
+                'div',
+                { className: 'theme-header' },
+                React.createElement('h3', null, '🎨 Choose Your Theme'),
+                React.createElement('p', null, 'Professional pre-designed templates')
+            ),
+            
+            React.createElement(
+                'div',
+                { className: 'themes-grid' },
+                themes.map((theme) => 
+                    React.createElement(
+                        'div',
+                        {
+                            key: theme.id,
+                            className: `theme-card ${currentTheme?.meta?.name === theme.name ? 'active' : ''}`,
+                            onClick: () => handleThemeSelect(theme),
+                            onMouseEnter: () => setPreviewTheme(theme),
+                            onMouseLeave: () => setPreviewTheme(null)
+                        },
+                        React.createElement(
+                            'div',
+                            {
+                                className: 'theme-preview',
+                                style: { backgroundColor: theme.preview }
+                            },
+                            React.createElement(
+                                'div',
+                                { className: 'preview-lines' },
+                                React.createElement('div', { className: 'line long' }),
+                                React.createElement('div', { className: 'line short' }),
+                                React.createElement('div', { className: 'line medium' })
+                            ),
+                        
+                        React.createElement(
+                            'div',
+                            { className: 'theme-info' },
+                            React.createElement('h4', null, theme.name),
+                            React.createElement('p', null, theme.description)
+                        ),
 
-                                {currentTheme?.meta?.name === theme.name && (
-                                    <div className="active-indicator">✓</div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
+                        currentTheme?.meta?.name === theme.name && React.createElement(
+                            'div',
+                            { className: 'active-indicator' },
+                            '✓'
+                        )
+                    )
+                )
+            ),
 
-                    <div className="theme-footer">
-                        <button 
-                            className="close-btn"
-                            onClick={() => setIsOpen(false)}
-                        >
-                            Close
-                        </button>
-                    </div>
-                </div>
-            )}
+            React.createElement(
+                'div',
+                { className: 'theme-footer' },
+                React.createElement(
+                    'button',
+                    {
+                        className: 'close-btn',
+                        onClick: () => setIsOpen(false)
+                    },
+                    'Close'
+                )
+            )
+        )
 
-            <style jsx>{`
+        ),
+
+        React.createElement('style', { dangerouslySetInnerHTML: { __html: `
                 .theme-selector {
                     position: relative;
                     z-index: 1000;
@@ -332,8 +356,7 @@ function ThemeSelector({ onApplyTheme, currentTheme }) {
                         grid-template-columns: 1fr;
                     }
                 }
-            `}</style>
-        </div>
+        ` } })
     );
 }
 
