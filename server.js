@@ -630,8 +630,28 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.get('/api/sessions', isAuthenticated, async (req, res) => {
     try {
         const userId = req.user.uid;
+        
+        // Debug logging to see what user is requesting sessions
+        console.log('🔍 Sessions requested by user:', {
+            uid: userId,
+            email: req.user.email,
+            displayName: req.user.displayName
+        });
+        
         const sessions = await getAllSessions(userId);
-        console.log(`Returning ${sessions.length} sessions from database for user: ${userId}`);
+        console.log(`📋 Found ${sessions.length} sessions for user ${userId}`);
+        
+        if (sessions.length === 0) {
+            console.log('⚠️ No sessions found. Checking if user should have access to existing sessions...');
+            
+            // Check if this user should have access to the lancecasselman@icloud.com sessions
+            if (req.user.email === 'lancecasselman@icloud.com' || req.user.email === 'lancecasselman2011@gmail.com') {
+                console.log('🔧 User should have access to sessions. Checking raw database...');
+                const debugResult = await pool.query('SELECT user_id, client_name FROM photography_sessions LIMIT 5');
+                console.log('📋 Sample sessions in database:', debugResult.rows);
+            }
+        }
+        
         res.json(sessions);
     } catch (error) {
         console.error('Error fetching sessions:', error);
