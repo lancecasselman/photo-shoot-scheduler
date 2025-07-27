@@ -1,0 +1,254 @@
+utils.js:249  Cross-Origin-Opener-Policy policy would block the window.close call.
+ii @ utils.js:249
+(anonymous) @ auth.js:821
+(anonymous) @ promise.js:826
+Ce @ promise.js:1166
+Oe @ promise.js:1140
+(anonymous) @ promise.js:1111
+le @ run.js:124
+utils.js:249  Cross-Origin-Opener-Policy policy would block the window.close call.
+ii @ utils.js:249
+(anonymous) @ auth.js:821
+(anonymous) @ promise.js:826
+Ce @ promise.js:1166
+Oe @ promise.js:1140
+(anonymous) @ promise.js:1111
+le @ run.js:124
+[NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
+        Don't show again
+auth.html:386   POST https://photomanagementsystem.com/api/auth/firebase-login 500 (Internal Server Error)
+handleSuccessfulAuth @ auth.html:386
+(anonymous) @ auth.html:425
+(anonymous) @ promise.js:826
+Ce @ promise.js:1166
+Oe @ promise.js:1140
+(anonymous) @ promise.js:1111
+le @ run.js:124
+Promise.then
+(anonymous) @ run.js:55
+ue @ run.js:34
+Ne @ promise.js:1029
+ke @ promise.js:921
+(anonymous) @ promise.js:167
+(anonymous) @ indexeddb.js:442
+IndexedDB
+(anonymous) @ indexeddb.js:546
+(anonymous) @ promise.js:826
+Ce @ promise.js:1166
+Oe @ promise.js:1140
+(anonymous) @ promise.js:1111
+le @ run.js:124
+Promise.then
+(anonymous) @ run.js:55
+ue @ run.js:34
+Ne @ promise.js:1029
+ke @ promise.js:921
+(anonymous) @ promise.js:167
+(anonymous) @ indexeddb.js:442
+IndexedDB
+(anonymous) @ indexeddb.js:479
+(anonymous) @ promise.js:826
+Ce @ promise.js:1166
+Oe @ promise.js:1140
+(anonymous) @ promise.js:1111
+le @ run.js:124
+Promise.then
+(anonymous) @ run.js:55
+ue @ run.js:34
+Ne @ promise.js:1029
+ke @ promise.js:921
+(anonymous) @ promise.js:167
+(anonymous) @ indexeddb.js:442
+IndexedDB
+(anonymous) @ indexeddb.js:468
+(anonymous) @ promise.js:826
+Ce @ promise.js:1166
+Oe @ promise.js:1140
+(anonymous) @ promise.js:1111
+le @ run.js:124
+Promise.then
+(anonymous) @ run.js:55
+ue @ run.js:34
+Ne @ promise.js:1029
+ke @ promise.js:921
+(anonymous) @ promise.js:167
+(anonymous) @ rpchandler.js:933
+(anonymous) @ rpchandler.js:612
+vn @ eventtarget.js:336
+(anonymous) @ eventtarget.js:460
+ba @ xhrio.js:865
+(anonymous) @ xhrio.js:811
+(anonymous) @ xhrio.js:795
+XMLHttpRequest.send
+pa @ xhrio.js:625
+(anonymous) @ rpchandler.js:641
+Za @ rpchandler.js:536
+(anonymous) @ rpchandler.js:921
+fe @ promise.js:163
+es @ rpchandler.js:916
+(anonymous) @ rpchandler.js:876
+(anonymous) @ promise.js:826
+Ce @ promise.js:1166
+Oe @ promise.js:1140
+(anonymous) @ promise.js:1111
+le @ run.js:124
+Promise.then
+(anonymous) @ run.js:55
+ue @ run.js:34
+Ne @ promise.js:1029
+ke @ promise.js:921
+(anonymous) @ promise.js:167
+(anonymous) @ rpchandler.js:933
+(anonymous) @ rpchandler.js:612
+vn @ eventtarget.js:336
+(anonymous) @ eventtarget.js:460
+ba @ xhrio.js:865
+(anonymous) @ xhrio.js:811
+(anonymous) @ xhrio.js:795
+XMLHttpRequest.send
+pa @ xhrio.js:625
+(anonymous) @ rpchandler.js:641
+Za @ rpchandler.js:536
+(anonymous) @ rpchandler.js:921
+fe @ promise.js:163
+es @ rpchandler.js:916
+(anonymous) @ rpchandler.js:876
+(anonymous) @ promise.js:826
+Ce @ promise.js:1166
+Oe @ promise.js:1140
+(anonymous) @ promise.js:1111
+le @ run.js:124
+Promise.then
+(anonymous) @ run.js:55
+ue @ run.js:34
+(anonymous) @ promise.js:697
+t.ic @ auth.js:719
+qc.h @ autheventmanager.js:1162
+(anonymous) @ autheventmanager.js:455
+(anonymous) @ ifchandler.js:1013
+Rm @ cb=gapi.loaded_0?le=scs:194
+(anonymous) @ cb=gapi.loaded_0?le=scs:194
+gl @ cb=gapi.loaded_0?le=scs:173
+pl @ cb=gapi.loaded_0?le=scs:173
+Kk @ cb=gapi.loaded_0?le=scs:174
+(anonymous) @ cb=gapi.loaded_0?le=scs:167
+auth.html:408  Authentication error: 
+handleSuccessfulAuth @ auth.html:408
+await in handleSuccessfulAuth
+(anonymous) @ auth.html:425
+(anonymous) @ promise.js:826
+Ce @ promise.js:1166
+Oe @ promise.js:1140
+(anonymous) @ promise.js:1111
+le @ run.js:124
+Promise.then
+(anonymous) @ run.js:55
+ue @ run.js:34
+Ne @ promise.js:1029
+ke @ promise.js:921
+(anonymous) @ promise.js:167
+(anonymous) @ indexeddb.js:442
+IndexedDB
+(anonymous) @ indexeddb.js:546
+(anonymous) @ promise.js:826
+Ce @ promise.js:1166
+Oe @ promise.js:1140
+(anonymous) @ promise.js:1111
+le @ run.js:124
+Promise.then
+(anonymous) @ run.js:55
+ue @ run.js:34
+Ne @ promise.js:1029
+ke @ promise.js:921
+(anonymous) @ promise.js:167
+(anonymous) @ indexeddb.js:442
+IndexedDB
+(anonymous) @ indexeddb.js:479
+(anonymous) @ promise.js:826
+Ce @ promise.js:1166
+Oe @ promise.js:1140
+(anonymous) @ promise.js:1111
+le @ run.js:124
+Promise.then
+(anonymous) @ run.js:55
+ue @ run.js:34
+Ne @ promise.js:1029
+ke @ promise.js:921
+(anonymous) @ promise.js:167
+(anonymous) @ indexeddb.js:442
+IndexedDB
+(anonymous) @ indexeddb.js:468
+(anonymous) @ promise.js:826
+Ce @ promise.js:1166
+Oe @ promise.js:1140
+(anonymous) @ promise.js:1111
+le @ run.js:124
+Promise.then
+(anonymous) @ run.js:55
+ue @ run.js:34
+Ne @ promise.js:1029
+ke @ promise.js:921
+(anonymous) @ promise.js:167
+(anonymous) @ rpchandler.js:933
+(anonymous) @ rpchandler.js:612
+vn @ eventtarget.js:336
+(anonymous) @ eventtarget.js:460
+ba @ xhrio.js:865
+(anonymous) @ xhrio.js:811
+(anonymous) @ xhrio.js:795
+XMLHttpRequest.send
+pa @ xhrio.js:625
+(anonymous) @ rpchandler.js:641
+Za @ rpchandler.js:536
+(anonymous) @ rpchandler.js:921
+fe @ promise.js:163
+es @ rpchandler.js:916
+(anonymous) @ rpchandler.js:876
+(anonymous) @ promise.js:826
+Ce @ promise.js:1166
+Oe @ promise.js:1140
+(anonymous) @ promise.js:1111
+le @ run.js:124
+Promise.then
+(anonymous) @ run.js:55
+ue @ run.js:34
+Ne @ promise.js:1029
+ke @ promise.js:921
+(anonymous) @ promise.js:167
+(anonymous) @ rpchandler.js:933
+(anonymous) @ rpchandler.js:612
+vn @ eventtarget.js:336
+(anonymous) @ eventtarget.js:460
+ba @ xhrio.js:865
+(anonymous) @ xhrio.js:811
+(anonymous) @ xhrio.js:795
+XMLHttpRequest.send
+pa @ xhrio.js:625
+(anonymous) @ rpchandler.js:641
+Za @ rpchandler.js:536
+(anonymous) @ rpchandler.js:921
+fe @ promise.js:163
+es @ rpchandler.js:916
+(anonymous) @ rpchandler.js:876
+(anonymous) @ promise.js:826
+Ce @ promise.js:1166
+Oe @ promise.js:1140
+(anonymous) @ promise.js:1111
+le @ run.js:124
+Promise.then
+(anonymous) @ run.js:55
+ue @ run.js:34
+(anonymous) @ promise.js:697
+t.ic @ auth.js:719
+qc.h @ autheventmanager.js:1162
+(anonymous) @ autheventmanager.js:455
+(anonymous) @ ifchandler.js:1013
+Rm @ cb=gapi.loaded_0?le=scs:194
+(anonymous) @ cb=gapi.loaded_0?le=scs:194
+gl @ cb=gapi.loaded_0?le=scs:173
+pl @ cb=gapi.loaded_0?le=scs:173
+Kk @ cb=gapi.loaded_0?le=scs:174
+(anonymous) @ cb=gapi.loaded_0?le=scs:167

@@ -189,17 +189,55 @@ app.use(session({
     saveUninitialized: false,
     cookie: {
         httpOnly: true,
-        secure: false, // Set to true in production with HTTPS
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 1 week
+        secure: process.env.NODE_ENV === 'production', // Auto-detect HTTPS in production
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax' // Allow cross-site for production
     }
 }));
+
+// CORS configuration for custom domains
+app.use((req, res, next) => {
+    const allowedOrigins = [
+        'https://photomanagementsystem.com',
+        'https://www.photomanagementsystem.com',
+        /\.replit\.app$/,
+        /\.replit\.dev$/,
+        'http://localhost:5000',
+        'https://localhost:5000'
+    ];
+    
+    const origin = req.headers.origin;
+    if (allowedOrigins.some(allowed => {
+        if (typeof allowed === 'string') return allowed === origin;
+        return allowed.test(origin);
+    })) {
+        res.header('Access-Control-Allow-Origin', origin);
+    }
+    
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    
+    if (req.method === 'OPTIONS') {
+        res.sendStatus(200);
+    } else {
+        next();
+    }
+});
 
 // Firebase Authentication Routes
 app.post('/api/auth/firebase-login', async (req, res) => {
     try {
+        console.log('Firebase login request:', {
+            body: req.body,
+            origin: req.headers.origin,
+            userAgent: req.headers['user-agent']
+        });
+        
         const { uid, email, displayName, photoURL } = req.body;
         
         if (!uid || !email) {
+            console.log('Missing required user info:', { uid: !!uid, email: !!email });
             return res.status(400).json({ message: 'Missing required user information' });
         }
         
@@ -223,10 +261,11 @@ app.post('/api/auth/firebase-login', async (req, res) => {
         // Store user in session
         req.session.user = { uid, email, displayName, photoURL };
         
+        console.log('Authentication successful for:', email);
         res.json({ success: true, message: 'Authentication successful' });
     } catch (error) {
         console.error('Firebase login error:', error);
-        res.status(500).json({ message: 'Authentication failed' });
+        res.status(500).json({ message: 'Authentication failed', error: error.message });
     }
 });
 
