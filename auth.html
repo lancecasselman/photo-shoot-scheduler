@@ -473,7 +473,7 @@
                     // Check for return URL and redirect
                     const urlParams = new URLSearchParams(window.location.search);
                     const returnTo = urlParams.get('return');
-                    window.location.href = returnTo || '/';
+                    window.location.href = returnTo || '/app';
                 } else {
                     throw new Error(`Backend authentication failed: ${responseData.message || 'Unknown error'}`);
                 }
@@ -601,7 +601,7 @@
                         if (response.ok) {
                             const urlParams = new URLSearchParams(window.location.search);
                             const returnTo = urlParams.get('return');
-                            window.location.href = returnTo || '/';
+                            window.location.href = returnTo || '/app';
                         }
                     } catch (error) {
                         console.log('Backend verification failed, user can proceed with login');
