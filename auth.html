@@ -424,9 +424,7 @@
             setTimeout(() => {
                 window.location.href = `https://${replitDomain}/auth.html${window.location.search}`;
             }, 3000);
-            
-            return; // Stop executing the rest of the script
-        }
+        } else {
 
         // Initialize Firebase
         const firebaseConfig = {
@@ -615,6 +613,7 @@
                 document.querySelector('.signup-info p').textContent = 'Admin dashboard access requires authentication. Sign in with your authorized account to continue.';
             }
         });
+        } // Close the else block
     </script>
 
 </body>
