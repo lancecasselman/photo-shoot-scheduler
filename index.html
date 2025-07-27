@@ -3117,6 +3117,217 @@
                 position: static;
             }
         }
+
+        /* Enhanced Client Dashboard Styles */
+        .client-dashboard-controls {
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border: 1px solid #444;
+        }
+
+        .search-and-filters {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .search-section {
+            width: 100%;
+        }
+
+        .filter-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            align-items: end;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .filter-group label {
+            color: #d4af37;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .checkbox-filters {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .checkbox-filters label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #f5f5f5;
+            font-weight: normal;
+            cursor: pointer;
+        }
+
+        .checkbox-filters input[type="checkbox"] {
+            accent-color: #d4af37;
+        }
+
+        .filter-group select,
+        .filter-group input[type="date"] {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #d4af37;
+            background: #2a2a2a;
+            color: #f5f5f5;
+            font-size: 14px;
+        }
+
+        .archive-and-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #444;
+        }
+
+        .archive-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #f5f5f5;
+            cursor: pointer;
+        }
+
+        .archive-toggle input[type="checkbox"] {
+            accent-color: #d4af37;
+        }
+
+        .btn-secondary, .btn-primary {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #666, #888);
+            color: white;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #d4af37, #ffd700);
+            color: #1a1a1a;
+        }
+
+        /* Enhanced Session Card Styles */
+        .session-card.archived {
+            opacity: 0.6;
+            border-left: 4px solid #999;
+        }
+
+        .session-card.hidden-by-filter {
+            display: none !important;
+        }
+
+        .session-notes {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 1px solid #444;
+        }
+
+        .session-notes h4 {
+            color: #d4af37;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        .notes-checklist {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .notes-checklist label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #f5f5f5;
+            font-size: 0.9em;
+            cursor: pointer;
+        }
+
+        .notes-textarea {
+            width: 100%;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #d4af37;
+            background: #1a1a1a;
+            color: #f5f5f5;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .export-btn {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .archive-btn {
+            background: linear-gradient(135deg, #6c757d, #495057);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* Mobile Responsive for Dashboard Controls */
+        @media (max-width: 768px) {
+            .filter-row {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .checkbox-filters {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .archive-and-actions {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+            
+            .archive-and-actions > * {
+                text-align: center;
+            }
+        }
     </style>
 </head>
 <body>
@@ -3147,6 +3358,74 @@
 
         <!-- Client Management Tab Content -->
         <div id="clientsTab" class="tab-content active">
+        
+        <!-- 🔍 ENHANCED CLIENT DASHBOARD CONTROLS -->
+        <div class="client-dashboard-controls">
+            <div class="search-and-filters">
+                <!-- Real-time Search Bar -->
+                <div class="search-section">
+                    <input type="text" id="clientSearch" placeholder="🔍 Search clients by name, location, or email..." 
+                           oninput="filterSessions()" style="width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #d4af37; background: #2a2a2a; color: #f5f5f5; font-size: 16px;">
+                </div>
+                
+                <!-- Filter Controls -->
+                <div class="filter-controls">
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label>Status Filters:</label>
+                            <div class="checkbox-filters">
+                                <label><input type="checkbox" id="filterContractSigned" onchange="filterSessions()"> Contract Signed</label>
+                                <label><input type="checkbox" id="filterPaid" onchange="filterSessions()"> Paid</label>
+                                <label><input type="checkbox" id="filterDelivered" onchange="filterSessions()"> Delivered</label>
+                            </div>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label for="sessionTypeFilter">Session Type:</label>
+                            <select id="sessionTypeFilter" onchange="filterSessions()">
+                                <option value="">All Types</option>
+                                <option value="Wedding">Wedding</option>
+                                <option value="Family">Family</option>
+                                <option value="Senior">Senior</option>
+                                <option value="Portrait">Portrait</option>
+                                <option value="Event">Event</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label>Date Range:</label>
+                            <input type="date" id="dateFromFilter" onchange="filterSessions()" placeholder="From">
+                            <span>to</span>
+                            <input type="date" id="dateToFilter" onchange="filterSessions()" placeholder="To">
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label for="sortOptions">Sort By:</label>
+                            <select id="sortOptions" onchange="sortSessions()">
+                                <option value="date-desc">Date (Newest First)</option>
+                                <option value="date-asc">Date (Oldest First)</option>
+                                <option value="name-asc">Client Name (A-Z)</option>
+                                <option value="name-desc">Client Name (Z-A)</option>
+                                <option value="unpaid-first">Unpaid First</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Archive Toggle & Actions -->
+                <div class="archive-and-actions">
+                    <label class="archive-toggle">
+                        <input type="checkbox" id="showArchivedToggle" onchange="toggleArchivedSessions()">
+                        Show Archived Sessions
+                    </label>
+                    <button onclick="clearAllFilters()" class="btn-secondary">Clear Filters</button>
+                    <button onclick="exportAllSessions()" class="btn-primary">📄 Export All Sessions</button>
+                </div>
+            </div>
+        </div>
+        
         <!-- Session Form -->
         <div class="session-form">
             <h2>Add New Session</h2>
@@ -3300,6 +3579,9 @@
                     <p>Upload photos to this session to see them here.</p>
                 </div>
             </div>
+            
+            <!-- Enhanced Gallery Tip Panel -->
+            <div id="galleryTipPanel" style="display: none;"></div>
             
             <div style="text-align: center; margin-top: 20px;">
                 <button class="btn btn-secondary" onclick="closeGalleryModal()">Close Gallery</button>
@@ -3648,12 +3930,40 @@
                                     <button onclick="sendDepositInvoice('${session.id}'); event.stopPropagation();" class="action-btn deposit-btn">💰 Deposit</button>
                                     <button onclick="openPaymentPlanModal('${session.id}'); event.stopPropagation();" class="action-btn plan-btn">📊 Payment Plan</button>
                                 `}
+                                <button onclick="exportSessionPDF('${session.id}'); event.stopPropagation();" class="export-btn">📄 Export PDF</button>
+                                <button onclick="toggleArchiveSession('${session.id}'); event.stopPropagation();" class="archive-btn">${session.archived ? '📂 Unarchive' : '📁 Archive'}</button>
                                 <button onclick="deleteSession('${session.id}'); event.stopPropagation();" class="action-btn delete-btn">🗑️ Delete</button>
                             </div>
                         </div>
+
+                        <!-- Enhanced Notes & Checklist Section -->
+                        <div class="session-notes">
+                            <h4>📝 Session Notes & Checklist</h4>
+                            <div class="notes-checklist">
+                                <label><input type="checkbox" ${session.printsOrdered ? 'checked' : ''} onchange="updateSessionNotes('${session.id}', 'printsOrdered', this.checked); event.stopPropagation();"> Prints Ordered?</label>
+                                <label><input type="checkbox" ${session.specialEdits ? 'checked' : ''} onchange="updateSessionNotes('${session.id}', 'specialEdits', this.checked); event.stopPropagation();"> Special Edits?</label>
+                                <label><input type="checkbox" ${session.clientFeedback ? 'checked' : ''} onchange="updateSessionNotes('${session.id}', 'clientFeedback', this.checked); event.stopPropagation();"> Client Feedback?</label>
+                                <label><input type="checkbox" ${session.socialMediaApproval ? 'checked' : ''} onchange="updateSessionNotes('${session.id}', 'socialMediaApproval', this.checked); event.stopPropagation();"> Social Media OK?</label>
+                                <label><input type="checkbox" ${session.retouchingNeeded ? 'checked' : ''} onchange="updateSessionNotes('${session.id}', 'retouchingNeeded', this.checked); event.stopPropagation();"> Retouching Needed?</label>
+                                <label><input type="checkbox" ${session.backupCompleted ? 'checked' : ''} onchange="updateSessionNotes('${session.id}', 'backupCompleted', this.checked); event.stopPropagation();"> Backup Completed?</label>
+                            </div>
+                            <textarea class="notes-textarea" placeholder="Add session notes..." 
+                                     onchange="updateSessionNotes('${session.id}', 'sessionNotes', this.value); event.stopPropagation();"
+                                     onclick="event.stopPropagation();">${session.sessionNotes || ''}</textarea>
+                        </div>
+
+                        <!-- Enhanced Tip Panel for Delivered Sessions -->
+                        ${session.delivered ? generateTipPanel(session.id) : ''}
                     </div>
                 </div>
-            `).join('');
+            `).filter(sessionHTML => {
+                // Extract session ID from the HTML to determine visibility
+                const match = sessionHTML.match(/data-session-id="([^"]+)"/);
+                if (!match) return false;
+                const sessionId = match[1];
+                const session = sessions.find(s => s.id === sessionId);
+                return session && isSessionVisible(session);
+            }).join('');
         }
 
         function toggleSessionDetails(sessionId) {
@@ -3763,6 +4073,454 @@
         function removeFile(index) {
             selectedFiles.splice(index, 1);
             showFilePreview(selectedFiles);
+        }
+
+        // 🔍 ENHANCED CLIENT MANAGEMENT FUNCTIONS
+
+        // Filter and Search Functionality
+        function filterSessions() {
+            const searchTerm = document.getElementById('clientSearch').value.toLowerCase();
+            const contractFilter = document.getElementById('filterContractSigned').checked;
+            const paidFilter = document.getElementById('filterPaid').checked;
+            const deliveredFilter = document.getElementById('filterDelivered').checked;
+            const sessionTypeFilter = document.getElementById('sessionTypeFilter').value;
+            const dateFromFilter = document.getElementById('dateFromFilter').value;
+            const dateToFilter = document.getElementById('dateToFilter').value;
+
+            sessions.forEach(session => {
+                const sessionCard = document.querySelector(`[data-session-id="${session.id}"]`);
+                if (!sessionCard) return;
+
+                let isVisible = true;
+
+                // Search filter
+                if (searchTerm) {
+                    const searchableText = `${session.clientName} ${session.location} ${session.email}`.toLowerCase();
+                    if (!searchableText.includes(searchTerm)) {
+                        isVisible = false;
+                    }
+                }
+
+                // Status filters
+                if (contractFilter && !session.contractSigned) isVisible = false;
+                if (paidFilter && !session.paid) isVisible = false;
+                if (deliveredFilter && !session.delivered) isVisible = false;
+
+                // Session type filter
+                if (sessionTypeFilter && session.sessionType !== sessionTypeFilter) isVisible = false;
+
+                // Date range filter
+                if (dateFromFilter) {
+                    const sessionDate = new Date(session.dateTime).toISOString().split('T')[0];
+                    if (sessionDate < dateFromFilter) isVisible = false;
+                }
+                if (dateToFilter) {
+                    const sessionDate = new Date(session.dateTime).toISOString().split('T')[0];
+                    if (sessionDate > dateToFilter) isVisible = false;
+                }
+
+                // Archive filter
+                const showArchived = document.getElementById('showArchivedToggle').checked;
+                if (session.archived && !showArchived) isVisible = false;
+
+                sessionCard.classList.toggle('hidden-by-filter', !isVisible);
+            });
+        }
+
+        function isSessionVisible(session) {
+            const searchTerm = document.getElementById('clientSearch')?.value.toLowerCase() || '';
+            const contractFilter = document.getElementById('filterContractSigned')?.checked || false;
+            const paidFilter = document.getElementById('filterPaid')?.checked || false;
+            const deliveredFilter = document.getElementById('filterDelivered')?.checked || false;
+            const sessionTypeFilter = document.getElementById('sessionTypeFilter')?.value || '';
+            const dateFromFilter = document.getElementById('dateFromFilter')?.value || '';
+            const dateToFilter = document.getElementById('dateToFilter')?.value || '';
+            const showArchived = document.getElementById('showArchivedToggle')?.checked || false;
+
+            // Search filter
+            if (searchTerm) {
+                const searchableText = `${session.clientName} ${session.location} ${session.email}`.toLowerCase();
+                if (!searchableText.includes(searchTerm)) return false;
+            }
+
+            // Status filters
+            if (contractFilter && !session.contractSigned) return false;
+            if (paidFilter && !session.paid) return false;
+            if (deliveredFilter && !session.delivered) return false;
+
+            // Session type filter
+            if (sessionTypeFilter && session.sessionType !== sessionTypeFilter) return false;
+
+            // Date range filter
+            if (dateFromFilter) {
+                const sessionDate = new Date(session.dateTime).toISOString().split('T')[0];
+                if (sessionDate < dateFromFilter) return false;
+            }
+            if (dateToFilter) {
+                const sessionDate = new Date(session.dateTime).toISOString().split('T')[0];
+                if (sessionDate > dateToFilter) return false;
+            }
+
+            // Archive filter
+            if (session.archived && !showArchived) return false;
+
+            return true;
+        }
+
+        // Sort Functionality
+        function sortSessions() {
+            const sortOption = document.getElementById('sortOptions').value;
+            
+            sessions.sort((a, b) => {
+                switch (sortOption) {
+                    case 'date-desc':
+                        return new Date(b.dateTime) - new Date(a.dateTime);
+                    case 'date-asc':
+                        return new Date(a.dateTime) - new Date(b.dateTime);
+                    case 'name-asc':
+                        return a.clientName.localeCompare(b.clientName);
+                    case 'name-desc':
+                        return b.clientName.localeCompare(a.clientName);
+                    case 'unpaid-first':
+                        if (a.paid === b.paid) return 0;
+                        return a.paid ? 1 : -1;
+                    default:
+                        return 0;
+                }
+            });
+            
+            renderSessions();
+        }
+
+        // Archive Functionality
+        async function toggleArchiveSession(sessionId) {
+            try {
+                const session = sessions.find(s => s.id === sessionId);
+                if (!session) return;
+
+                session.archived = !session.archived;
+                
+                const response = await fetch(`/api/sessions/${sessionId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(session)
+                });
+
+                if (response.ok) {
+                    showMessage(session.archived ? 'Session archived successfully' : 'Session unarchived successfully', 'success');
+                    renderSessions();
+                } else {
+                    session.archived = !session.archived; // Revert
+                    showMessage('Error updating archive status', 'error');
+                }
+            } catch (error) {
+                console.error('Error toggling archive:', error);
+                showMessage('Error updating archive status', 'error');
+            }
+        }
+
+        function toggleArchivedSessions() {
+            renderSessions();
+        }
+
+        // Enhanced Notes Functionality
+        async function updateSessionNotes(sessionId, field, value) {
+            try {
+                const session = sessions.find(s => s.id === sessionId);
+                if (!session) return;
+
+                session[field] = value;
+                
+                const response = await fetch(`/api/sessions/${sessionId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(session)
+                });
+
+                if (!response.ok) {
+                    showMessage('Error saving notes', 'error');
+                }
+            } catch (error) {
+                console.error('Error updating session notes:', error);
+                showMessage('Error saving notes', 'error');
+            }
+        }
+
+        // PDF Export Functionality
+        async function exportSessionPDF(sessionId) {
+            const session = sessions.find(s => s.id === sessionId);
+            if (!session) return;
+
+            try {
+                // Create PDF content
+                const pdfContent = `
+                    <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 800px;">
+                        <h1 style="color: #d4af37; border-bottom: 2px solid #d4af37; padding-bottom: 10px;">
+                            Photography Session Summary
+                        </h1>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin: 20px 0;">
+                            <div>
+                                <h2 style="color: #333;">Client Information</h2>
+                                <p><strong>Name:</strong> ${session.clientName}</p>
+                                <p><strong>Email:</strong> ${session.email}</p>
+                                <p><strong>Phone:</strong> ${session.phoneNumber}</p>
+                                <p><strong>Location:</strong> ${session.location}</p>
+                            </div>
+                            <div>
+                                <h2 style="color: #333;">Session Details</h2>
+                                <p><strong>Type:</strong> ${session.sessionType}</p>
+                                <p><strong>Date & Time:</strong> ${formatDateTime(session.dateTime)}</p>
+                                <p><strong>Duration:</strong> ${session.duration} hours</p>
+                                <p><strong>Price:</strong> $${session.price}</p>
+                            </div>
+                        </div>
+                        
+                        <div style="margin: 30px 0;">
+                            <h2 style="color: #333;">Workflow Status</h2>
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                                <p>📝 Contract Signed: ${session.contractSigned ? '✅ Yes' : '❌ No'}</p>
+                                <p>💰 Paid: ${session.paid ? '✅ Yes' : '❌ No'}</p>
+                                <p>✏️ Edited: ${session.edited ? '✅ Yes' : '❌ No'}</p>
+                                <p>📦 Delivered: ${session.delivered ? '✅ Yes' : '❌ No'}</p>
+                                <p>⏰ Send Reminder: ${session.sendReminder ? '✅ Yes' : '❌ No'}</p>
+                                <p>🖼️ Gallery Ready: ${session.notifyGalleryReady ? '✅ Yes' : '❌ No'}</p>
+                            </div>
+                        </div>
+                        
+                        <div style="margin: 30px 0;">
+                            <h2 style="color: #333;">Additional Checklist</h2>
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                                <p>🖨️ Prints Ordered: ${session.printsOrdered ? '✅ Yes' : '❌ No'}</p>
+                                <p>✨ Special Edits: ${session.specialEdits ? '✅ Yes' : '❌ No'}</p>
+                                <p>💬 Client Feedback: ${session.clientFeedback ? '✅ Yes' : '❌ No'}</p>
+                                <p>📱 Social Media OK: ${session.socialMediaApproval ? '✅ Yes' : '❌ No'}</p>
+                                <p>🎨 Retouching Needed: ${session.retouchingNeeded ? '✅ Yes' : '❌ No'}</p>
+                                <p>💾 Backup Completed: ${session.backupCompleted ? '✅ Yes' : '❌ No'}</p>
+                            </div>
+                        </div>
+                        
+                        ${session.sessionNotes ? `
+                            <div style="margin: 30px 0;">
+                                <h2 style="color: #333;">Session Notes</h2>
+                                <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; border-left: 4px solid #d4af37;">
+                                    ${session.sessionNotes.replace(/\n/g, '<br>')}
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        <div style="margin-top: 50px; text-align: center; color: #666; font-size: 12px;">
+                            <p>Generated on ${new Date().toLocaleDateString()} | Photography Management System</p>
+                        </div>
+                    </div>
+                `;
+
+                // Create new window for PDF generation
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Session Summary - ${session.clientName}</title>
+                        <style>
+                            body { margin: 0; font-family: Arial, sans-serif; }
+                            @media print { 
+                                body { margin: 1in; }
+                                .no-print { display: none; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="no-print" style="text-align: center; padding: 20px;">
+                            <button onclick="window.print()" style="background: #d4af37; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 16px;">
+                                📄 Print/Save as PDF
+                            </button>
+                        </div>
+                        ${pdfContent}
+                    </body>
+                    </html>
+                `);
+                printWindow.document.close();
+                
+                showMessage('PDF export opened in new window', 'success');
+                
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                showMessage('Error generating PDF export', 'error');
+            }
+        }
+
+        // Export All Sessions
+        function exportAllSessions() {
+            const visibleSessions = sessions.filter(isSessionVisible);
+            
+            if (visibleSessions.length === 0) {
+                showMessage('No sessions to export', 'error');
+                return;
+            }
+
+            try {
+                const csvContent = generateCSVExport(visibleSessions);
+                downloadCSV(csvContent, `sessions-export-${new Date().toISOString().split('T')[0]}.csv`);
+                showMessage(`Exported ${visibleSessions.length} sessions to CSV`, 'success');
+            } catch (error) {
+                console.error('Error exporting sessions:', error);
+                showMessage('Error exporting sessions', 'error');
+            }
+        }
+
+        function generateCSVExport(sessionsToExport) {
+            const headers = [
+                'Client Name', 'Email', 'Phone', 'Session Type', 'Date & Time', 'Location', 
+                'Duration', 'Price', 'Contract Signed', 'Paid', 'Edited', 'Delivered',
+                'Prints Ordered', 'Special Edits', 'Client Feedback', 'Social Media OK',
+                'Retouching Needed', 'Backup Completed', 'Session Notes', 'Archived'
+            ];
+
+            const csvRows = [headers.join(',')];
+
+            sessionsToExport.forEach(session => {
+                const row = [
+                    `"${session.clientName}"`,
+                    `"${session.email}"`,
+                    `"${session.phoneNumber}"`,
+                    `"${session.sessionType}"`,
+                    `"${formatDateTime(session.dateTime)}"`,
+                    `"${session.location}"`,
+                    session.duration,
+                    session.price,
+                    session.contractSigned ? 'Yes' : 'No',
+                    session.paid ? 'Yes' : 'No',
+                    session.edited ? 'Yes' : 'No',
+                    session.delivered ? 'Yes' : 'No',
+                    session.printsOrdered ? 'Yes' : 'No',
+                    session.specialEdits ? 'Yes' : 'No',
+                    session.clientFeedback ? 'Yes' : 'No',
+                    session.socialMediaApproval ? 'Yes' : 'No',
+                    session.retouchingNeeded ? 'Yes' : 'No',
+                    session.backupCompleted ? 'Yes' : 'No',
+                    `"${(session.sessionNotes || '').replace(/"/g, '""')}"`,
+                    session.archived ? 'Yes' : 'No'
+                ];
+                csvRows.push(row.join(','));
+            });
+
+            return csvRows.join('\n');
+        }
+
+        function downloadCSV(csvContent, filename) {
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', filename);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
+        // Clear All Filters
+        function clearAllFilters() {
+            document.getElementById('clientSearch').value = '';
+            document.getElementById('filterContractSigned').checked = false;
+            document.getElementById('filterPaid').checked = false;
+            document.getElementById('filterDelivered').checked = false;
+            document.getElementById('sessionTypeFilter').value = '';
+            document.getElementById('dateFromFilter').value = '';
+            document.getElementById('dateToFilter').value = '';
+            document.getElementById('sortOptions').value = 'date-desc';
+            
+            filterSessions();
+            sortSessions();
+        }
+
+        // 💛 TIP FUNCTIONALITY FOR DELIVERED SESSIONS
+        function generateTipPanel(sessionId) {
+            const session = sessions.find(s => s.id === sessionId);
+            if (!session || !session.delivered) return '';
+
+            return `
+                <div class="tip-panel" style="background: linear-gradient(135deg, #fff9e6, #f4e4bc); padding: 20px; margin-top: 30px; border-radius: 12px; border: 2px solid #d4af37; text-align: center;">
+                    <h3 style="color: #8b7355; margin-bottom: 15px; font-size: 1.2em;">💛 Love your photos?</h3>
+                    <p style="color: #8b7355; margin-bottom: 20px; font-size: 0.95em;">
+                        If you're thrilled with your photos, you can leave a tip to show your appreciation<br>
+                        <em>(totally optional and not expected!)</em>
+                    </p>
+                    <div class="tip-buttons" style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                        <button onclick="processTip('${sessionId}', 10)" class="tip-btn" style="background: linear-gradient(135deg, #d4af37, #ffd700); color: #1a1a1a; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: bold; min-width: 80px;">$10</button>
+                        <button onclick="processTip('${sessionId}', 25)" class="tip-btn" style="background: linear-gradient(135deg, #d4af37, #ffd700); color: #1a1a1a; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: bold; min-width: 80px;">$25</button>
+                        <button onclick="processTip('${sessionId}', 50)" class="tip-btn" style="background: linear-gradient(135deg, #d4af37, #ffd700); color: #1a1a1a; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: bold; min-width: 80px;">$50</button>
+                        <button onclick="customTipAmount('${sessionId}')" class="tip-btn" style="background: linear-gradient(135deg, #28a745, #20c997); color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: bold; min-width: 80px;">Custom</button>
+                    </div>
+                    ${session.tipReceived ? `
+                        <div style="margin-top: 15px; padding: 10px; background: rgba(40, 167, 69, 0.1); border-radius: 8px; color: #28a745;">
+                            <span style="font-size: 1.1em;">🎉 Thank you for your generous tip of $${session.tipAmount}!</span>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        async function processTip(sessionId, amount) {
+            try {
+                const session = sessions.find(s => s.id === sessionId);
+                if (!session) return;
+
+                // For demo purposes, simulate Stripe checkout success
+                // In production, this would integrate with actual Stripe checkout
+                const confirmTip = confirm(`Process tip of $${amount}?\n\nThis will open Stripe checkout to process the payment.`);
+                
+                if (confirmTip) {
+                    // Simulate successful tip processing
+                    await updateTipStatus(sessionId, amount);
+                    showMessage(`Thank you for your generous $${amount} tip! 🎉`, 'success');
+                    celebrateMilestone('tip_received', `$${amount} tip from ${session.clientName}`);
+                    
+                    // In production, this would be:
+                    // window.location.href = await createStripeCheckoutSession(sessionId, amount);
+                }
+            } catch (error) {
+                console.error('Error processing tip:', error);
+                showMessage('Error processing tip', 'error');
+            }
+        }
+
+        async function customTipAmount(sessionId) {
+            const amount = prompt('Enter custom tip amount (numbers only):');
+            if (amount && !isNaN(amount) && parseFloat(amount) > 0) {
+                await processTip(sessionId, parseFloat(amount));
+            } else if (amount !== null) {
+                showMessage('Please enter a valid amount', 'error');
+            }
+        }
+
+        async function updateTipStatus(sessionId, amount) {
+            try {
+                const session = sessions.find(s => s.id === sessionId);
+                if (!session) return;
+
+                session.tipReceived = true;
+                session.tipAmount = amount;
+                session.tipDate = new Date().toISOString();
+                
+                const response = await fetch(`/api/sessions/${sessionId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(session)
+                });
+
+                if (response.ok) {
+                    renderSessions();
+                } else {
+                    showMessage('Error updating tip status', 'error');
+                }
+            } catch (error) {
+                console.error('Error updating tip status:', error);
+                showMessage('Error updating tip status', 'error');
+            }
         }
 
         function startUpload() {
@@ -4909,6 +5667,15 @@ END:VCALENDAR`;
             
             // Load and display photos
             loadGalleryPhotos(session);
+            
+            // Add tip panel for delivered sessions
+            const tipPanel = document.getElementById('galleryTipPanel');
+            if (session.delivered) {
+                tipPanel.innerHTML = generateTipPanel(sessionId);
+                tipPanel.style.display = 'block';
+            } else {
+                tipPanel.style.display = 'none';
+            }
         }
 
         function loadGalleryPhotos(session) {
