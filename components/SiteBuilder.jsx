@@ -269,39 +269,58 @@ const SiteBuilder = () => {
             // First save to cloud
             await saveWebsite();
             
-            // Then publish
+            // Enhanced publishing configuration
             const config = {
                 username,
                 blocks,
                 theme: activeTheme,
                 brandColor,
                 userEmail: user.email,
-                seoTitle: `${user.displayName || username} Photography`,
-                seoDescription: 'Professional photography portfolio and services'
+                settings: {
+                    seoTitle: `${user.displayName || username} Photography`,
+                    seoDescription: 'Professional photography portfolio and services',
+                    analytics: true, // Enable analytics tracking
+                    customDomain: null
+                }
             };
 
-            const result = await window.FirebaseManager.publishSite(config);
+            // Use enhanced publisher if available, fallback to FirebaseManager
+            let result;
+            if (window.FirebasePublisher) {
+                result = await window.FirebasePublisher.hybridPublish(config);
+            } else {
+                result = await window.FirebaseManager.publishSite(config);
+            }
             
             if (result.success) {
-                showMessage(`🚀 Website published successfully! View at: ${result.fullUrl}`, 8000);
+                const publishUrl = window.FirebasePublisher ? 
+                    window.FirebasePublisher.getPublishingUrl(result) : 
+                    result.fullUrl;
+
+                showMessage(`🚀 Website published via ${result.method}! View at: ${publishUrl}`, 10000);
                 
-                // Trigger celebration animation
+                // Enhanced celebration animation
                 if (window.showCelebration) {
-                    window.showCelebration('🌐 Website Published!', 50);
+                    window.showCelebration(`🌐 ${result.method === 'firebase-cloud-function' ? 'Firebase' : 'Local'} Publishing Complete!`, 60);
+                }
+                
+                // Track publishing analytics
+                if (window.FirebasePublisher) {
+                    window.FirebasePublisher.trackPublishing(result, username);
                 }
                 
                 // Optionally open the published site
                 setTimeout(() => {
-                    if (confirm('Would you like to view your published website?')) {
-                        window.open(result.fullUrl, '_blank');
+                    if (confirm(`Website published successfully! Would you like to view your ${result.method === 'firebase-cloud-function' ? 'Firebase-hosted' : 'locally-hosted'} website?`)) {
+                        window.open(publishUrl, '_blank');
                     }
-                }, 2000);
+                }, 2500);
             } else {
                 throw new Error('Publish operation failed');
             }
         } catch (error) {
             console.error('Publish error:', error);
-            showMessage(`❌ Error publishing website: ${error.message}`);
+            showMessage(`❌ Publishing failed: ${error.message}. Check console for details.`);
         } finally {
             setPublishing(false);
         }

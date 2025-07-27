@@ -96,8 +96,23 @@ class FirebaseManager {
     }
 
     async publishSite(config) {
+        // Use the enhanced FirebasePublisher if available
+        if (window.FirebasePublisher) {
+            try {
+                const result = await window.FirebasePublisher.hybridPublish(config);
+                
+                // Track the publishing event
+                window.FirebasePublisher.trackPublishing(result, config.username);
+                
+                return result;
+            } catch (error) {
+                console.error('Enhanced publishing failed:', error);
+                // Continue with fallback below
+            }
+        }
+
+        // Original fallback implementation
         try {
-            // Enhanced config with additional metadata
             const publishConfig = {
                 username: config.username,
                 blocks: config.blocks,
@@ -113,37 +128,10 @@ class FirebaseManager {
                 metadata: {
                     publishedAt: new Date().toISOString(),
                     version: '2.0',
-                    builderType: 'advanced'
+                    builderType: 'legacy-fallback'
                 }
             };
 
-            // Try Firebase Cloud Function first (if available)
-            if (this.initialized && window.firebaseFunctions) {
-                try {
-                    console.log('Publishing via Firebase Cloud Functions...');
-                    const { httpsCallable } = window.firebaseUtils;
-                    const generateStaticSite = httpsCallable(window.firebaseFunctions, 'generateStaticSite');
-                    
-                    const cloudResult = await generateStaticSite(publishConfig);
-                    
-                    if (cloudResult.data.success) {
-                        console.log('Site published successfully via Firebase:', cloudResult.data);
-                        return {
-                            success: true,
-                            url: cloudResult.data.url,
-                            fullUrl: cloudResult.data.url,
-                            storageUrl: cloudResult.data.storageUrl,
-                            publishedAt: cloudResult.data.publishedAt,
-                            method: 'firebase-cloud-function'
-                        };
-                    }
-                } catch (firebaseError) {
-                    console.warn('Firebase Cloud Function failed, falling back to local publishing:', firebaseError);
-                }
-            }
-
-            // Fallback to local publishing
-            console.log('Publishing via local API...');
             const response = await fetch('/api/publish-site', {
                 method: 'POST',
                 headers: {
@@ -159,14 +147,13 @@ class FirebaseManager {
             }
 
             const result = await response.json();
-            console.log('Site published successfully with enhanced features:', result);
             
             return {
                 success: true,
                 url: result.url,
                 fullUrl: `${window.location.origin}${result.url}`,
                 publishedAt: publishConfig.metadata.publishedAt,
-                method: 'local-api',
+                method: 'legacy-fallback',
                 ...result
             };
         } catch (error) {

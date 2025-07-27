@@ -22,6 +22,13 @@ Select:
 - Hosting (Static hosting)
 - Storage (File storage)
 
+### 1.5. Enhanced Frontend Integration
+The system now includes enhanced Firebase publishing hooks:
+- **firebase-publish.js**: Modern v9+ API integration with hybrid publishing
+- **Hosting rewrites**: Automatic `/site/**` routing to Cloud Functions
+- **CDN caching**: Optimized headers for static site performance
+- **Analytics tracking**: Built-in Google Analytics integration
+
 ### 2. Configure Firebase Project
 ```bash
 firebase use photoshcheduleapp
@@ -124,19 +131,35 @@ The system uses a hybrid approach:
 
 ## Testing
 
-Test the integration:
+Test the enhanced integration:
 ```javascript
-// In browser console
+// Enhanced publisher test (recommended)
 const testPublish = async () => {
-  const result = await window.FirebaseManager.publishSite({
+  const result = await window.publishSite({
     username: 'test-user',
     blocks: [{ type: 'heading', content: 'Test Site' }],
     theme: 'classic',
-    userEmail: 'test@example.com'
+    userEmail: 'test@example.com',
+    settings: {
+      analytics: true,
+      seoTitle: 'Test Photography Site'
+    }
   });
-  console.log('Published:', result);
+  console.log('Published via:', result.method);
+  console.log('URL:', window.FirebasePublisher.getPublishingUrl(result));
 };
 testPublish();
+
+// Or test directly with FirebasePublisher
+const directTest = async () => {
+  const result = await window.FirebasePublisher.hybridPublish({
+    username: 'direct-test',
+    blocks: [{ type: 'paragraph', content: 'Direct publishing test' }],
+    theme: 'modern'
+  });
+  console.log('Direct publish result:', result);
+};
+directTest();
 ```
 
 ## Monitoring
