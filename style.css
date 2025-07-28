@@ -1037,7 +1037,7 @@ header p {
 
 /* Modal Styles */
 .modal {
-    display: none;
+    display: none !important;
     position: fixed;
     z-index: 10000;
     left: 0;
@@ -1049,7 +1049,7 @@ header p {
 }
 
 .modal.active {
-    display: flex;
+    display: flex !important;
     align-items: center;
     justify-content: center;
 }

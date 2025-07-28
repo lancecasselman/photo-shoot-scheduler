@@ -3735,6 +3735,12 @@
             setupEventListeners();
             setMinDateTime(); // Allow all dates for historical entries
             initializeSunriseCalendar(); // Initialize sunrise calendar
+            
+            // Ensure contract modal is hidden on page load
+            const contractModal = document.getElementById('contractModal');
+            if (contractModal) {
+                contractModal.classList.remove('active');
+            }
         });
 
         function setupEventListeners() {
