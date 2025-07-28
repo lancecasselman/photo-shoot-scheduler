@@ -592,7 +592,7 @@ async function deleteSession(sessionId) {
     }
 }
 
-// Export to calendar function - generates .ics file for iPhone Calendar
+// Universal calendar export function - works across all devices and calendar apps
 function exportToCalendar(sessionId) {
     const session = sessions.find(s => s.id === sessionId);
     if (!session) {
@@ -646,57 +646,73 @@ function exportToCalendar(sessionId) {
         'END:VCALENDAR'
     ].join('\r\n');
     
-    // Option 1: Download .ics file directly (better for desktop)
-    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `${session.clientName}_${session.sessionType}_Session.ics`;
+    // Detect device type for optimal calendar integration
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const isMac = /Macintosh|MacIntel|MacPPC|Mac68K/i.test(navigator.userAgent);
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    const isWindows = /Windows|Win32|Win64|WOW64/i.test(navigator.userAgent);
     
-    // Add to page temporarily and click
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    // Clean up
-    URL.revokeObjectURL(link.href);
-    
-    // Better iPhone Calendar integration
-    const serverIcsUrl = `/api/sessions/${sessionId}/calendar.ics`;
-    
-    // Enhanced iPhone Calendar integration
-    if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-        showMessage('📅 Opening iPhone Calendar...', 'success');
+    // Method 1: Direct calendar app integration (mobile devices)
+    if (isIOS || isAndroid) {
+        // Create a data URL for immediate calendar app recognition
+        const dataUrl = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(icsContent);
         
-        // Primary approach: Direct server .ics URL for iPhone Calendar app
-        window.location.href = serverIcsUrl;
+        // For mobile devices, use window.location.href for best calendar app integration
+        showMessage('Opening calendar app...', 'success');
+        window.location.href = dataUrl;
         
-        // Backup: Show instructions after a short delay
+        // Also try server endpoint as fallback
         setTimeout(() => {
-            showMessage(`📅 iPhone: If Calendar doesn't open automatically, tap "Add Event" when prompted`, 'info');
-        }, 2000);
-        
-        // Final fallback: Google Calendar option
-        setTimeout(() => {
-            const startDate = new Date(session.dateTime);
-            const endDate = new Date(startDate.getTime() + session.duration * 60000);
-            const formatDate = (date) => date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-            
-            const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(session.sessionType + ' - ' + session.clientName)}&dates=${formatDate(startDate)}/${formatDate(endDate)}&location=${encodeURIComponent(session.location)}&details=${encodeURIComponent('Photography session with ' + session.clientName + '\nContact: ' + session.phoneNumber + '\nEmail: ' + session.email + '\nPrice: $' + session.price)}`;
-            
-            if (confirm('📅 Alternative: Open Google Calendar instead?')) {
-                window.open(googleCalendarUrl, '_blank');
-            }
-        }, 4000);
+            window.open(`/api/sessions/${sessionId}/calendar.ics`, '_blank');
+        }, 1000);
         
     } else {
-        // For other devices, provide download and server option
-        showMessage(`📅 Calendar event downloaded! iPhone users can visit: ${window.location.origin}${serverIcsUrl}`, 'success');
+        // Method 2: Download .ics file (desktop)
+        const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
         
-        // Also open server URL for desktop browsers
-        setTimeout(() => {
-            window.open(serverIcsUrl, '_blank');
-        }, 1000);
+        // Create download link
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${session.clientName.replace(/[^a-zA-Z0-9]/g, '_')}_${session.sessionType.replace(/[^a-zA-Z0-9]/g, '_')}_Session.ics`;
+        link.style.display = 'none';
+        
+        // Add to page, click, and remove
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Clean up the blob URL
+        setTimeout(() => URL.revokeObjectURL(url), 100);
+        
+        showMessage('Calendar event downloaded - double-click the file to add to your calendar', 'success');
     }
+    
+    // Universal fallback: Google Calendar (works on all devices)
+    setTimeout(() => {
+        const googleStartDate = formatICSDate(startDate);
+        const googleEndDate = formatICSDate(endDate);
+        
+        const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE` +
+            `&text=${encodeURIComponent(session.sessionType + ' Photography Session - ' + session.clientName)}` +
+            `&dates=${googleStartDate}/${googleEndDate}` +
+            `&location=${encodeURIComponent(session.location)}` +
+            `&details=${encodeURIComponent(
+                `Photography session with ${session.clientName}\n\n` +
+                `Contact: ${session.phoneNumber}\n` +
+                `Email: ${session.email}\n` +
+                `Price: $${session.price}\n` +
+                `Duration: ${session.duration} minutes\n\n` +
+                `${session.notes ? 'Notes: ' + session.notes : ''}`
+            )}`;
+        
+        // Show Google Calendar option after 3 seconds
+        setTimeout(() => {
+            if (confirm('Would you like to also add this event to Google Calendar?')) {
+                window.open(googleCalendarUrl, '_blank');
+            }
+        }, 3000);
+    }, 500);
 }
 
 // Open email client with session details
