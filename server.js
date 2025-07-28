@@ -2092,13 +2092,13 @@ app.post('/api/sessions/:id/payment-plan', isAuthenticated, async (req, res) => 
         }
         
         // Verify user owns this session
-        if (session.userId !== user.sub) {
+        if (session.userId !== user.uid) {
             return res.status(403).json({ error: 'Unauthorized access to session' });
         }
         
         const result = await paymentManager.createPaymentPlan(
             sessionId, 
-            user.sub, 
+            user.uid, 
             parseFloat(totalAmount), 
             startDate, 
             endDate, 
@@ -2128,7 +2128,7 @@ app.get('/api/sessions/:id/payment-plan', isAuthenticated, async (req, res) => {
         }
         
         // Verify user owns this session
-        if (session.userId !== user.sub) {
+        if (session.userId !== user.uid) {
             return res.status(403).json({ error: 'Unauthorized access to session' });
         }
         
@@ -2304,7 +2304,7 @@ app.get('/api/contracts/templates', isAuthenticated, async (req, res) => {
 app.post('/api/sessions/:id/contracts', isAuthenticated, async (req, res) => {
     const sessionId = req.params.id;
     const { contractType } = req.body;
-    const user = getCurrentUser(req);
+    const user = req.user;
     
     try {
         const session = await getSessionById(sessionId);
@@ -2313,7 +2313,7 @@ app.post('/api/sessions/:id/contracts', isAuthenticated, async (req, res) => {
         }
         
         // Verify user owns this session
-        if (session.userId !== user.sub) {
+        if (session.userId !== user.uid) {
             return res.status(403).json({ error: 'Unauthorized access to session' });
         }
         
@@ -2337,7 +2337,7 @@ app.post('/api/sessions/:id/contracts', isAuthenticated, async (req, res) => {
             min_photos: '25'
         };
         
-        const contract = await contractManager.createContract(sessionId, user.sub, contractType, contractData);
+        const contract = await contractManager.createContract(sessionId, user.uid, contractType, contractData);
         
         res.json({
             message: 'Contract created successfully',
@@ -2352,7 +2352,7 @@ app.post('/api/sessions/:id/contracts', isAuthenticated, async (req, res) => {
 // Get contracts for session
 app.get('/api/sessions/:id/contracts', isAuthenticated, async (req, res) => {
     const sessionId = req.params.id;
-    const user = getCurrentUser(req);
+    const user = req.user; // Use req.user directly from isAuthenticated middleware
     
     try {
         const session = await getSessionById(sessionId);
@@ -2360,8 +2360,8 @@ app.get('/api/sessions/:id/contracts', isAuthenticated, async (req, res) => {
             return res.status(404).json({ error: 'Session not found' });
         }
         
-        // Verify user owns this session
-        if (session.userId !== user.sub) {
+        // Verify user owns this session (use uid instead of sub for dev mode)
+        if (session.userId !== user.uid) {
             return res.status(403).json({ error: 'Unauthorized access to session' });
         }
         
@@ -2376,7 +2376,7 @@ app.get('/api/sessions/:id/contracts', isAuthenticated, async (req, res) => {
 // Send contract to client
 app.post('/api/contracts/:id/send', isAuthenticated, async (req, res) => {
     const contractId = req.params.id;
-    const user = getCurrentUser(req);
+    const user = req.user;
     
     try {
         const contract = await contractManager.getContract(contractId);
@@ -2385,7 +2385,7 @@ app.post('/api/contracts/:id/send', isAuthenticated, async (req, res) => {
         }
         
         // Verify user owns this contract
-        if (contract.user_id !== user.sub) {
+        if (contract.user_id !== user.uid) {
             return res.status(403).json({ error: 'Unauthorized access to contract' });
         }
         
