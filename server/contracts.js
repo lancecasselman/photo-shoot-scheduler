@@ -378,6 +378,47 @@ class ContractManager {
     };
     return descriptions[type] || 'Photography contract';
   }
+
+  // Get individual contract details
+  async getContract(contractId) {
+    try {
+      const result = await pool.query(`
+        SELECT * FROM contracts 
+        WHERE id = $1
+      `, [contractId]);
+
+      if (result.rows.length === 0) {
+        throw new Error('Contract not found');
+      }
+
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error getting contract:', error);
+      throw error;
+    }
+  }
+
+  // Update contract content
+  async updateContract(contractId, title, content) {
+    try {
+      const result = await pool.query(`
+        UPDATE contracts 
+        SET contract_title = $1, contract_content = $2, updated_at = NOW()
+        WHERE id = $3
+        RETURNING *
+      `, [title, content, contractId]);
+
+      if (result.rows.length === 0) {
+        throw new Error('Contract not found');
+      }
+
+      console.log(`✅ Contract updated: ${contractId}`);
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error updating contract:', error);
+      throw error;
+    }
+  }
 }
 
 module.exports = ContractManager;

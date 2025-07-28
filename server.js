@@ -2505,6 +2505,37 @@ app.post('/api/contracts/:id/sign', async (req, res) => {
     }
 });
 
+// Get individual contract details
+app.get('/api/contracts/:id', isAuthenticated, async (req, res) => {
+    const contractId = req.params.id;
+    
+    try {
+        const contract = await contractManager.getContract(contractId);
+        res.json(contract);
+    } catch (error) {
+        console.error('Error getting contract:', error);
+        res.status(500).json({ error: 'Failed to get contract' });
+    }
+});
+
+// Update contract content
+app.put('/api/contracts/:id', isAuthenticated, async (req, res) => {
+    const contractId = req.params.id;
+    const { title, content } = req.body;
+    
+    if (!title || !content) {
+        return res.status(400).json({ error: 'Title and content are required' });
+    }
+    
+    try {
+        const updatedContract = await contractManager.updateContract(contractId, title, content);
+        res.json(updatedContract);
+    } catch (error) {
+        console.error('Error updating contract:', error);
+        res.status(500).json({ error: 'Failed to update contract' });
+    }
+});
+
 // Setup wizard endpoint - save onboarding data
 app.post('/api/setup-wizard', isAuthenticated, async (req, res) => {
     try {
