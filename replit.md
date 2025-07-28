@@ -26,6 +26,7 @@ This is a comprehensive photography business management platform featuring sessi
 - **HTTPS Contract URL Fix**: Fixed contract signing URLs to use HTTPS, resolving "connection isn't private" security warnings
 - **SendGrid Sender Update**: Changed contract emails from generic domain to verified lance@thelegacyphotography.com for better deliverability
 - **Complete SendGrid Integration**: Removed all nodemailer/SMTP code - entire system now uses SendGrid exclusively for all email functions
+- **Contract Email Integration**: Modified contract sending to open user's default email client instead of SendGrid for customizable sending
 
 ### Firebase Authentication System Implementation Complete (July 27, 2025) - FULLY OPERATIONAL ✅
 - **Firebase v8 Legacy SDK Integration**: Successfully implemented Firebase authentication using v8 legacy SDK for Replit compatibility

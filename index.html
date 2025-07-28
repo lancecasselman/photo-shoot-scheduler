@@ -6225,7 +6225,7 @@ END:VCALENDAR`;
 
         async function sendContract(contractId) {
             try {
-                showMessage('Sending contract to client...', 'info');
+                showMessage('Preparing contract email...', 'info');
                 
                 const response = await fetch(`/api/contracts/${contractId}/send`, {
                     method: 'POST',
@@ -6236,15 +6236,27 @@ END:VCALENDAR`;
                 });
 
                 if (!response.ok) {
-                    throw new Error('Failed to send contract');
+                    throw new Error('Failed to prepare contract email');
                 }
 
                 const result = await response.json();
                 
-                showMessage('Contract sent successfully!', 'success');
+                // Get email data from server response
+                const emailData = result.emailData;
+                if (!emailData) {
+                    throw new Error('Email template not available');
+                }
+                
+                // Create mailto link with pre-filled email
+                const mailtoLink = `mailto:${emailData.to}?subject=${encodeURIComponent(emailData.subject)}&body=${encodeURIComponent(emailData.body)}`;
+                
+                // Open default email client
+                window.location.href = mailtoLink;
+                
+                showMessage('Email client opened! Review and send the contract email.', 'success');
                 
                 // Show the signing URL for reference
-                alert(`Contract sent to client!\n\nSigning URL: ${result.signingUrl}\n\nThe client will receive an email with the signing link.`);
+                alert(`Email client opened with contract details!\n\nSigning URL: ${result.signingUrl}\n\nPlease review the email and send it to your client.`);
                 
                 // Reload existing contracts to update status (only if we have a valid session ID)
                 if (currentContractSessionId) {
@@ -6252,8 +6264,8 @@ END:VCALENDAR`;
                 }
                 
             } catch (error) {
-                console.error('Error sending contract:', error);
-                showMessage('Failed to send contract: ' + error.message, 'error');
+                console.error('Error preparing contract email:', error);
+                showMessage('Failed to prepare contract email: ' + error.message, 'error');
             }
         }
 

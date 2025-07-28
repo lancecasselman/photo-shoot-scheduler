@@ -2415,82 +2415,40 @@ app.post('/api/contracts/:id/send', isAuthenticated, async (req, res) => {
         const signingUrl = `${baseUrl}/contract-signing.html?token=${contract.access_token}`;
         console.log(`🔗 Generated signing URL: ${signingUrl}`);
         
-        // Send email notification to client using SendGrid
-        if (process.env.SENDGRID_API_KEY) {
-            try {
-                const sgMail = require('@sendgrid/mail');
-                sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-                
-                const emailSubject = `📝 Contract Ready for Signature - ${contract.contract_title}`;
-                const emailBody = `
-                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center;">
-                            <h1>📝 Contract Ready for Signature</h1>
-                            <h2>The Legacy Photography</h2>
-                        </div>
-                        
-                        <div style="padding: 30px; background: #f9f9f9;">
-                            <h3>Hello ${contract.client_name},</h3>
-                            
-                            <p>Your photography contract is ready for your electronic signature.</p>
-                            
-                            <div style="background: white; border-left: 4px solid #667eea; padding: 20px; margin: 20px 0;">
-                                <h4>${contract.contract_title}</h4>
-                                <p><strong>Photographer:</strong> ${contract.photographer_name}</p>
-                                <p><strong>Created:</strong> ${new Date(contract.created_at).toLocaleDateString()}</p>
-                            </div>
-                            
-                            <div style="text-align: center; margin: 30px 0;">
-                                <a href="${signingUrl}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
-                                    📝 Sign Contract Now
-                                </a>
-                            </div>
-                            
-                            <p style="color: #666; font-size: 14px;">
-                                Please review the contract carefully and sign electronically using the link above. 
-                                Once signed, you'll receive a copy for your records.
-                            </p>
-                            
-                            <p style="color: #666; font-size: 14px;">
-                                If you have any questions, please don't hesitate to contact us.
-                            </p>
-                        </div>
-                        
-                        <div style="background: #333; color: white; padding: 20px; text-align: center;">
-                            <p>The Legacy Photography<br>
-                            Email: ${contract.photographer_email}<br>
-                            Creating lasting memories through professional photography</p>
-                        </div>
-                    </div>
-                `;
-                
-                const msg = {
-                    to: contract.client_email,
-                    from: {
-                        email: 'lance@thelegacyphotography.com',
-                        name: 'The Legacy Photography'
-                    },
-                    subject: emailSubject,
-                    html: emailBody
-                };
-                
-                console.log(`📧 Attempting to send contract email to: ${contract.client_email}`);
-                console.log(`📧 Email payload:`, JSON.stringify(msg, null, 2));
-                
-                const result = await sgMail.send(msg);
-                console.log(`✅ Contract email sent successfully to: ${contract.client_email}`);
-                console.log(`📧 SendGrid response:`, result);
-            } catch (emailError) {
-                console.error('Error sending contract email:', emailError);
-            }
-        } else {
-            console.log('⚠️ SendGrid not configured - contract email not sent');
-        }
+        // Prepare email data for default email client
+        const emailSubject = `Contract Ready for Signature - ${contract.contract_title}`;
+        const emailBody = `Hello ${contract.client_name},
+
+Your photography contract is ready for your electronic signature.
+
+Contract Details:
+- Title: ${contract.contract_title}
+- Photographer: ${contract.photographer_name}
+- Created: ${new Date(contract.created_at).toLocaleDateString()}
+
+Please click the following link to review and sign your contract:
+${signingUrl}
+
+Please review the contract carefully and sign electronically using the link above. Once signed, you'll receive a copy for your records.
+
+If you have any questions, please don't hesitate to contact us.
+
+Best regards,
+The Legacy Photography
+Email: ${contract.photographer_email}
+Creating lasting memories through professional photography`;
+
+        console.log(`📧 Email template prepared for: ${contract.client_email}`);
         
         res.json({
-            message: 'Contract sent successfully',
+            message: 'Contract email template ready',
             signingUrl: signingUrl,
-            contract: updatedContract
+            contract: updatedContract,
+            emailData: {
+                to: contract.client_email,
+                subject: emailSubject,
+                body: emailBody
+            }
         });
     } catch (error) {
         console.error('Error sending contract:', error);
