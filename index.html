@@ -6135,7 +6135,12 @@ END:VCALENDAR`;
                 }
 
                 const contracts = await response.json();
-                const existingContractsDiv = document.getElementById('existingContracts');
+                const existingContractsDiv = document.getElementById('existingContractsList');
+                
+                if (!existingContractsDiv) {
+                    console.warn('existingContractsList element not found in DOM');
+                    return;
+                }
                 
                 if (contracts.length === 0) {
                     existingContractsDiv.innerHTML = '';
