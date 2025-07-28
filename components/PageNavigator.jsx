@@ -187,8 +187,7 @@ function PageNavigator({ currentPage, setPage, siteBlocks }) {
                         font-size: 9px;
                     }
                 }
-            ` } })</style>
-        </div>
+            ` } })
     );
 }
 
