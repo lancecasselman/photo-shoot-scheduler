@@ -376,6 +376,32 @@ async function initializeDatabase() {
             )
         `);
 
+        // Create contracts table for contract management
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS contracts (
+                id VARCHAR(255) PRIMARY KEY,
+                session_id VARCHAR(255) NOT NULL,
+                user_id VARCHAR(255) NOT NULL,
+                contract_type VARCHAR(100) NOT NULL,
+                contract_title VARCHAR(255) NOT NULL,
+                contract_content TEXT NOT NULL,
+                client_name VARCHAR(255),
+                client_email VARCHAR(255),
+                photographer_name VARCHAR(255),
+                photographer_email VARCHAR(255),
+                access_token VARCHAR(255) UNIQUE NOT NULL,
+                custom_fields JSONB DEFAULT '{}',
+                status VARCHAR(50) DEFAULT 'draft',
+                client_signature TEXT,
+                client_signature_date TIMESTAMP,
+                viewed_at TIMESTAMP,
+                sent_at TIMESTAMP,
+                signed_date TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
         console.log('Database tables initialized successfully');
 
         console.log('Database tables initialized successfully');

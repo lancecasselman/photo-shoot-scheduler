@@ -6115,8 +6115,21 @@ END:VCALENDAR`;
         }
 
         async function loadExistingContracts(sessionId) {
+            // Validate sessionId before making API call
+            if (!sessionId) {
+                console.warn('loadExistingContracts called without valid sessionId');
+                return;
+            }
+            
             try {
-                const response = await fetch(`/api/sessions/${sessionId}/contracts`);
+                const authToken = await getAuthToken();
+                const headers = {};
+                
+                if (authToken) {
+                    headers['Authorization'] = `Bearer ${authToken}`;
+                }
+                
+                const response = await fetch(`/api/sessions/${sessionId}/contracts`, { headers });
                 if (!response.ok) {
                     throw new Error('Failed to load contracts');
                 }
