@@ -654,6 +654,996 @@ const PresetTemplates = {
                         fontWeight: 'bold',
                         margin: '60px 0 30px 0'
                     }
+                },
+                {
+                    id: 'adventure-subtitle',
+                    type: 'paragraph',
+                    content: 'Capturing the spirit of adventure in every frame',
+                    styles: {
+                        fontSize: '20px',
+                        color: '#333',
+                        textAlign: 'center',
+                        margin: '0 auto 40px auto',
+                        maxWidth: '600px'
+                    }
+                }
+            ],
+            about: [
+                {
+                    id: 'adventure-about',
+                    type: 'heading',
+                    content: 'The Adventure Awaits',
+                    styles: {
+                        fontSize: '42px',
+                        color: '#228B22',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 30px 0'
+                    }
+                },
+                {
+                    id: 'adventure-story',
+                    type: 'paragraph',
+                    content: 'Every mountain climbed, every trail blazed, every sunset captured tells a story of courage and exploration.',
+                    styles: {
+                        fontSize: '18px',
+                        color: '#333',
+                        lineHeight: '1.8',
+                        textAlign: 'center',
+                        maxWidth: '700px',
+                        margin: '0 auto 40px auto'
+                    }
+                }
+            ],
+            portfolio: [
+                {
+                    id: 'adventure-portfolio',
+                    type: 'heading',
+                    content: 'Adventures Captured',
+                    styles: {
+                        fontSize: '42px',
+                        color: '#228B22',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 50px 0'
+                    }
+                }
+            ],
+            contact: [
+                {
+                    id: 'adventure-contact',
+                    type: 'heading',
+                    content: 'Ready for Your Adventure?',
+                    styles: {
+                        fontSize: '36px',
+                        color: '#228B22',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 30px 0'
+                    }
+                }
+            ],
+            blog: [
+                {
+                    id: 'adventure-blog',
+                    type: 'heading',
+                    content: 'Adventure Stories',
+                    styles: {
+                        fontSize: '42px',
+                        color: '#228B22',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 30px 0'
+                    }
+                }
+            ]
+        }
+    },
+
+    luxuryPortraits: {
+        name: "Luxury Portraits",
+        description: "Elegant luxury portrait photography with sophisticated styling",
+        category: "Portrait",
+        pages: {
+            home: [
+                {
+                    id: 'luxury-hero',
+                    type: 'heading',
+                    content: 'Luxury Portrait Experience',
+                    styles: {
+                        fontSize: '48px',
+                        color: '#C9A96E',
+                        textAlign: 'center',
+                        fontWeight: '300',
+                        fontFamily: 'serif',
+                        margin: '60px 0 30px 0'
+                    }
+                },
+                {
+                    id: 'luxury-tagline',
+                    type: 'paragraph',
+                    content: 'Where elegance meets artistry in every portrait',
+                    styles: {
+                        fontSize: '20px',
+                        color: '#666',
+                        textAlign: 'center',
+                        fontStyle: 'italic',
+                        margin: '0 auto 50px auto'
+                    }
+                }
+            ],
+            about: [
+                {
+                    id: 'luxury-about',
+                    type: 'heading',
+                    content: 'The Art of Luxury Portraiture',
+                    styles: {
+                        fontSize: '38px',
+                        color: '#C9A96E',
+                        textAlign: 'center',
+                        fontWeight: '300',
+                        margin: '40px 0 30px 0'
+                    }
+                }
+            ],
+            portfolio: [
+                {
+                    id: 'luxury-gallery',
+                    type: 'heading',
+                    content: 'Portrait Gallery',
+                    styles: {
+                        fontSize: '42px',
+                        color: '#C9A96E',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 50px 0'
+                    }
+                }
+            ],
+            contact: [
+                {
+                    id: 'luxury-contact',
+                    type: 'heading',
+                    content: 'Book Your Session',
+                    styles: {
+                        fontSize: '36px',
+                        color: '#C9A96E',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 30px 0'
+                    }
+                }
+            ]
+        }
+    },
+
+    streetPhotography: {
+        name: "Urban Street",
+        description: "Raw street photography capturing urban life and culture",
+        category: "Street",
+        pages: {
+            home: [
+                {
+                    id: 'street-hero',
+                    type: 'heading',
+                    content: 'STREET STORIES',
+                    styles: {
+                        fontSize: '56px',
+                        color: '#000',
+                        textAlign: 'center',
+                        fontWeight: '900',
+                        letterSpacing: '2px',
+                        margin: '60px 0 30px 0'
+                    }
+                },
+                {
+                    id: 'street-subtitle',
+                    type: 'paragraph',
+                    content: 'Documenting the raw beauty of urban life',
+                    styles: {
+                        fontSize: '18px',
+                        color: '#666',
+                        textAlign: 'center',
+                        margin: '0 auto 40px auto'
+                    }
+                }
+            ],
+            about: [
+                {
+                    id: 'street-about',
+                    type: 'heading',
+                    content: 'Life Unscripted',
+                    styles: {
+                        fontSize: '42px',
+                        color: '#000',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 30px 0'
+                    }
+                }
+            ],
+            portfolio: [
+                {
+                    id: 'street-work',
+                    type: 'heading',
+                    content: 'Street Photography',
+                    styles: {
+                        fontSize: '42px',
+                        color: '#000',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 50px 0'
+                    }
+                }
+            ],
+            contact: [
+                {
+                    id: 'street-contact',
+                    type: 'heading',
+                    content: 'Get In Touch',
+                    styles: {
+                        fontSize: '36px',
+                        color: '#000',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 30px 0'
+                    }
+                }
+            ]
+        }
+    },
+
+    familyMoments: {
+        name: "Family Moments",
+        description: "Warm family photography capturing precious moments and connections",
+        category: "Family",
+        pages: {
+            home: [
+                {
+                    id: 'family-hero',
+                    type: 'heading',
+                    content: 'Precious Family Moments',
+                    styles: {
+                        fontSize: '46px',
+                        color: '#E67E22',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '60px 0 30px 0'
+                    }
+                },
+                {
+                    id: 'family-warmth',
+                    type: 'paragraph',
+                    content: 'Creating timeless memories that tell your family\'s unique story',
+                    styles: {
+                        fontSize: '20px',
+                        color: '#333',
+                        textAlign: 'center',
+                        lineHeight: '1.6',
+                        margin: '0 auto 40px auto',
+                        maxWidth: '600px'
+                    }
+                }
+            ],
+            about: [
+                {
+                    id: 'family-about',
+                    type: 'heading',
+                    content: 'Your Family Story',
+                    styles: {
+                        fontSize: '42px',
+                        color: '#E67E22',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 30px 0'
+                    }
+                }
+            ],
+            portfolio: [
+                {
+                    id: 'family-gallery',
+                    type: 'heading',
+                    content: 'Family Gallery',
+                    styles: {
+                        fontSize: '42px',
+                        color: '#E67E22',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 50px 0'
+                    }
+                }
+            ],
+            contact: [
+                {
+                    id: 'family-contact',
+                    type: 'heading',
+                    content: 'Let\'s Create Magic',
+                    styles: {
+                        fontSize: '36px',
+                        color: '#E67E22',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 30px 0'
+                    }
+                }
+            ],
+            blog: [
+                {
+                    id: 'family-blog',
+                    type: 'heading',
+                    content: 'Family Stories',
+                    styles: {
+                        fontSize: '42px',
+                        color: '#E67E22',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 30px 0'
+                    }
+                }
+            ]
+        }
+    },
+
+    corporateHeadshots: {
+        name: "Corporate Professional",
+        description: "Professional business headshots and corporate photography",
+        category: "Corporate",
+        pages: {
+            home: [
+                {
+                    id: 'corporate-hero',
+                    type: 'heading',
+                    content: 'Professional Headshots',
+                    styles: {
+                        fontSize: '48px',
+                        color: '#2C3E50',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '60px 0 30px 0'
+                    }
+                },
+                {
+                    id: 'corporate-subtitle',
+                    type: 'paragraph',
+                    content: 'Executive portraits that command respect and build trust',
+                    styles: {
+                        fontSize: '20px',
+                        color: '#34495E',
+                        textAlign: 'center',
+                        margin: '0 auto 40px auto'
+                    }
+                }
+            ],
+            about: [
+                {
+                    id: 'corporate-about',
+                    type: 'heading',
+                    content: 'Professional Excellence',
+                    styles: {
+                        fontSize: '42px',
+                        color: '#2C3E50',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 30px 0'
+                    }
+                }
+            ],
+            portfolio: [
+                {
+                    id: 'corporate-portfolio',
+                    type: 'heading',
+                    content: 'Executive Gallery',
+                    styles: {
+                        fontSize: '42px',
+                        color: '#2C3E50',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 50px 0'
+                    }
+                }
+            ],
+            contact: [
+                {
+                    id: 'corporate-contact',
+                    type: 'heading',
+                    content: 'Book Your Session',
+                    styles: {
+                        fontSize: '36px',
+                        color: '#2C3E50',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 30px 0'
+                    }
+                }
+            ]
+        }
+    },
+
+    eventDocumentary: {
+        name: "Event Documentary",
+        description: "Comprehensive event photography with storytelling approach",
+        category: "Events",
+        pages: {
+            home: [
+                {
+                    id: 'event-hero',
+                    type: 'heading',
+                    content: 'Your Event, Our Story',
+                    styles: {
+                        fontSize: '50px',
+                        color: '#8E44AD',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '60px 0 30px 0'
+                    }
+                },
+                {
+                    id: 'event-description',
+                    type: 'paragraph',
+                    content: 'Documentary-style event photography that captures every meaningful moment',
+                    styles: {
+                        fontSize: '20px',
+                        color: '#333',
+                        textAlign: 'center',
+                        lineHeight: '1.6',
+                        margin: '0 auto 40px auto',
+                        maxWidth: '700px'
+                    }
+                }
+            ],
+            about: [
+                {
+                    id: 'event-about',
+                    type: 'heading',
+                    content: 'Storytelling Through Events',
+                    styles: {
+                        fontSize: '42px',
+                        color: '#8E44AD',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 30px 0'
+                    }
+                }
+            ],
+            portfolio: [
+                {
+                    id: 'event-portfolio',
+                    type: 'heading',
+                    content: 'Event Galleries',
+                    styles: {
+                        fontSize: '42px',
+                        color: '#8E44AD',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 50px 0'
+                    }
+                }
+            ],
+            contact: [
+                {
+                    id: 'event-contact',
+                    type: 'heading',
+                    content: 'Plan Your Event Coverage',
+                    styles: {
+                        fontSize: '36px',
+                        color: '#8E44AD',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 30px 0'
+                    }
+                }
+            ],
+            blog: [
+                {
+                    id: 'event-blog',
+                    type: 'heading',
+                    content: 'Event Highlights',
+                    styles: {
+                        fontSize: '42px',
+                        color: '#8E44AD',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 30px 0'
+                    }
+                }
+            ]
+        }
+    },
+
+    newbornSpecialist: {
+        name: "Newborn Specialist",
+        description: "Gentle newborn and maternity photography with soft, nurturing tones",
+        category: "Newborn",
+        pages: {
+            home: [
+                {
+                    id: 'newborn-hero',
+                    type: 'heading',
+                    content: 'Welcome to the World',
+                    styles: {
+                        fontSize: '44px',
+                        color: '#F8C471',
+                        textAlign: 'center',
+                        fontWeight: '300',
+                        fontFamily: 'serif',
+                        margin: '60px 0 30px 0'
+                    }
+                },
+                {
+                    id: 'newborn-gentle',
+                    type: 'paragraph',
+                    content: 'Gentle, safe photography celebrating your newest family member',
+                    styles: {
+                        fontSize: '20px',
+                        color: '#85929E',
+                        textAlign: 'center',
+                        lineHeight: '1.6',
+                        margin: '0 auto 40px auto'
+                    }
+                }
+            ],
+            about: [
+                {
+                    id: 'newborn-about',
+                    type: 'heading',
+                    content: 'Tiny Miracles',
+                    styles: {
+                        fontSize: '42px',
+                        color: '#F8C471',
+                        textAlign: 'center',
+                        fontWeight: '300',
+                        margin: '40px 0 30px 0'
+                    }
+                }
+            ],
+            portfolio: [
+                {
+                    id: 'newborn-gallery',
+                    type: 'heading',
+                    content: 'Newborn Gallery',
+                    styles: {
+                        fontSize: '42px',
+                        color: '#F8C471',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 50px 0'
+                    }
+                }
+            ],
+            contact: [
+                {
+                    id: 'newborn-contact',
+                    type: 'heading',
+                    content: 'Schedule Your Session',
+                    styles: {
+                        fontSize: '36px',
+                        color: '#F8C471',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 30px 0'
+                    }
+                }
+            ]
+        }
+    },
+
+    architecturalSpaces: {
+        name: "Architectural Focus",
+        description: "Clean architectural and interior photography highlighting design",
+        category: "Architecture",
+        pages: {
+            home: [
+                {
+                    id: 'arch-hero',
+                    type: 'heading',
+                    content: 'ARCHITECTURAL VISION',
+                    styles: {
+                        fontSize: '52px',
+                        color: '#17202A',
+                        textAlign: 'center',
+                        fontWeight: '700',
+                        letterSpacing: '2px',
+                        margin: '60px 0 30px 0'
+                    }
+                },
+                {
+                    id: 'arch-precision',
+                    type: 'paragraph',
+                    content: 'Capturing the precision and beauty of architectural design',
+                    styles: {
+                        fontSize: '18px',
+                        color: '#566573',
+                        textAlign: 'center',
+                        margin: '0 auto 40px auto'
+                    }
+                }
+            ],
+            about: [
+                {
+                    id: 'arch-about',
+                    type: 'heading',
+                    content: 'Design in Focus',
+                    styles: {
+                        fontSize: '42px',
+                        color: '#17202A',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 30px 0'
+                    }
+                }
+            ],
+            portfolio: [
+                {
+                    id: 'arch-portfolio',
+                    type: 'heading',
+                    content: 'Architectural Portfolio',
+                    styles: {
+                        fontSize: '42px',
+                        color: '#17202A',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 50px 0'
+                    }
+                }
+            ],
+            contact: [
+                {
+                    id: 'arch-contact',
+                    type: 'heading',
+                    content: 'Project Inquiries',
+                    styles: {
+                        fontSize: '36px',
+                        color: '#17202A',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 30px 0'
+                    }
+                }
+            ]
+        }
+    },
+
+    petPhotography: {
+        name: "Pet Portraits",
+        description: "Playful pet photography capturing personality and joy",
+        category: "Pets",
+        pages: {
+            home: [
+                {
+                    id: 'pet-hero',
+                    type: 'heading',
+                    content: 'Pawsome Portraits',
+                    styles: {
+                        fontSize: '48px',
+                        color: '#F39C12',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '60px 0 30px 0'
+                    }
+                },
+                {
+                    id: 'pet-joy',
+                    type: 'paragraph',
+                    content: 'Capturing the unique personality and boundless joy of your furry friends',
+                    styles: {
+                        fontSize: '20px',
+                        color: '#E67E22',
+                        textAlign: 'center',
+                        lineHeight: '1.6',
+                        margin: '0 auto 40px auto',
+                        maxWidth: '600px'
+                    }
+                }
+            ],
+            about: [
+                {
+                    id: 'pet-about',
+                    type: 'heading',
+                    content: 'Every Pet Has a Story',
+                    styles: {
+                        fontSize: '42px',
+                        color: '#F39C12',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 30px 0'
+                    }
+                }
+            ],
+            portfolio: [
+                {
+                    id: 'pet-gallery',
+                    type: 'heading',
+                    content: 'Pet Gallery',
+                    styles: {
+                        fontSize: '42px',
+                        color: '#F39C12',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 50px 0'
+                    }
+                }
+            ],
+            contact: [
+                {
+                    id: 'pet-contact',
+                    type: 'heading',
+                    content: 'Book Pet Session',
+                    styles: {
+                        fontSize: '36px',
+                        color: '#F39C12',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 30px 0'
+                    }
+                }
+            ],
+            blog: [
+                {
+                    id: 'pet-blog',
+                    type: 'heading',
+                    content: 'Pet Photography Tips',
+                    styles: {
+                        fontSize: '42px',
+                        color: '#F39C12',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 30px 0'
+                    }
+                }
+            ]
+        }
+    },
+
+    realEstateShowcase: {
+        name: "Real Estate Showcase",
+        description: "Professional real estate photography highlighting property features",
+        category: "Real Estate",
+        pages: {
+            home: [
+                {
+                    id: 'realestate-hero',
+                    type: 'heading',
+                    content: 'Properties That Sell',
+                    styles: {
+                        fontSize: '48px',
+                        color: '#1B4F72',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '60px 0 30px 0'
+                    }
+                },
+                {
+                    id: 'realestate-value',
+                    type: 'paragraph',
+                    content: 'Professional photography that showcases property value and attracts buyers',
+                    styles: {
+                        fontSize: '20px',
+                        color: '#2E86AB',
+                        textAlign: 'center',
+                        lineHeight: '1.6',
+                        margin: '0 auto 40px auto'
+                    }
+                }
+            ],
+            about: [
+                {
+                    id: 'realestate-about',
+                    type: 'heading',
+                    content: 'Selling Through Imagery',
+                    styles: {
+                        fontSize: '42px',
+                        color: '#1B4F72',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 30px 0'
+                    }
+                }
+            ],
+            portfolio: [
+                {
+                    id: 'realestate-portfolio',
+                    type: 'heading',
+                    content: 'Property Portfolio',
+                    styles: {
+                        fontSize: '42px',
+                        color: '#1B4F72',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 50px 0'
+                    }
+                }
+            ],
+            contact: [
+                {
+                    id: 'realestate-contact',
+                    type: 'heading',
+                    content: 'Schedule Property Shoot',
+                    styles: {
+                        fontSize: '36px',
+                        color: '#1B4F72',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 30px 0'
+                    }
+                }
+            ]
+        }
+    },
+
+    portraitStudio: {
+        name: "Classic Portrait Studio",
+        description: "Traditional studio portraits with timeless elegance",
+        category: "Portrait",
+        pages: {
+            home: [
+                {
+                    id: 'studio-hero',
+                    type: 'heading',
+                    content: 'Classic Portrait Studio',
+                    styles: {
+                        fontSize: '46px',
+                        color: '#922B21',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        fontFamily: 'serif',
+                        margin: '60px 0 30px 0'
+                    }
+                },
+                {
+                    id: 'studio-timeless',
+                    type: 'paragraph',
+                    content: 'Timeless portraits crafted with traditional studio techniques',
+                    styles: {
+                        fontSize: '20px',
+                        color: '#A93226',
+                        textAlign: 'center',
+                        margin: '0 auto 40px auto'
+                    }
+                }
+            ],
+            about: [
+                {
+                    id: 'studio-about',
+                    type: 'heading',
+                    content: 'Traditional Artistry',
+                    styles: {
+                        fontSize: '42px',
+                        color: '#922B21',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 30px 0'
+                    }
+                }
+            ],
+            portfolio: [
+                {
+                    id: 'studio-portfolio',
+                    type: 'heading',
+                    content: 'Portrait Gallery',
+                    styles: {
+                        fontSize: '42px',
+                        color: '#922B21',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 50px 0'
+                    }
+                }
+            ],
+            contact: [
+                {
+                    id: 'studio-contact',
+                    type: 'heading',
+                    content: 'Book Studio Session',
+                    styles: {
+                        fontSize: '36px',
+                        color: '#922B21',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 30px 0'
+                    }
+                }
+            ]
+        }
+    },
+
+    productCommercial: {
+        name: "Product Commercial",
+        description: "Clean commercial photography showcasing products with professional lighting",
+        category: "Commercial",
+        pages: {
+            home: [
+                {
+                    id: 'product-hero',
+                    type: 'heading',
+                    content: 'Professional Product Photography',
+                    styles: {
+                        fontSize: '48px',
+                        color: '#273746',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '60px 0 30px 0'
+                    }
+                },
+                {
+                    id: 'product-quality',
+                    type: 'paragraph',
+                    content: 'High-quality commercial photography that makes your products shine',
+                    styles: {
+                        fontSize: '20px',
+                        color: '#5D6D7E',
+                        textAlign: 'center',
+                        lineHeight: '1.6',
+                        margin: '0 auto 40px auto'
+                    }
+                }
+            ],
+            about: [
+                {
+                    id: 'product-about',
+                    type: 'heading',
+                    content: 'Making Products Irresistible',
+                    styles: {
+                        fontSize: '42px',
+                        color: '#273746',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 30px 0'
+                    }
+                },
+                {
+                    id: 'product-approach',
+                    type: 'paragraph',
+                    content: 'Every product has a story. Our commercial photography brings that story to life with precision lighting and expert composition.',
+                    styles: {
+                        fontSize: '18px',
+                        color: '#333',
+                        lineHeight: '1.8',
+                        textAlign: 'center',
+                        maxWidth: '700px',
+                        margin: '0 auto 40px auto'
+                    }
+                }
+            ],
+            portfolio: [
+                {
+                    id: 'product-showcase',
+                    type: 'heading',
+                    content: 'Product Showcase',
+                    styles: {
+                        fontSize: '42px',
+                        color: '#273746',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 50px 0'
+                    }
+                }
+            ],
+            contact: [
+                {
+                    id: 'product-contact',
+                    type: 'heading',
+                    content: 'Start Your Project',
+                    styles: {
+                        fontSize: '36px',
+                        color: '#273746',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 30px 0'
+                    }
+                }
+            ],
+            blog: [
+                {
+                    id: 'product-blog',
+                    type: 'heading',
+                    content: 'Photography Insights',
+                    styles: {
+                        fontSize: '42px',
+                        color: '#273746',
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0 30px 0'
+                    }
                 }
             ]
         }
@@ -670,7 +1660,17 @@ const TemplateCategories = [
     'Lifestyle',
     'Fashion',
     'Classic',
-    'Adventure'
+    'Adventure',
+    'Portrait',
+    'Street',
+    'Family',
+    'Corporate',
+    'Events',
+    'Newborn',
+    'Architecture',
+    'Pets',
+    'Real Estate',
+    'Commercial'
 ];
 
 // Export the templates
