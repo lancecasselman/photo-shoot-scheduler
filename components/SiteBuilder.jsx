@@ -1,8 +1,6 @@
 const { useState, useEffect } = React;
 
 const SiteBuilder = () => {
-    console.log('SiteBuilder component function called');
-    
     // Multi-page website builder state
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -558,139 +556,63 @@ const SiteBuilder = () => {
         );
     }
 
-    console.log('SiteBuilder rendering with:', {
-        activePage,
-        blocksCount: getCurrentPageBlocks().length,
-        selectedBlock,
-        activeTheme,
-        username
-    });
-
     return React.createElement(
         'div',
-        { 
-            className: 'builder-container',
-            style: {
-                display: 'grid',
-                gridTemplateColumns: '300px 1fr 300px',
-                height: '100vh',
-                gap: '20px',
-                padding: '20px',
-                background: '#f8fafc'
-            }
-        },
-        message && React.createElement('div', { 
-            className: 'message',
-            style: {
-                position: 'fixed',
-                top: '20px',
-                right: '20px',
-                background: '#10b981',
-                color: 'white',
-                padding: '12px 20px',
-                borderRadius: '8px',
-                zIndex: 1000
-            }
-        }, message),
+        { className: 'builder-container' },
+        message && React.createElement('div', { className: 'message' }, message),
         
-        // Left Sidebar - Tools and Block Library
-        React.createElement(
-            'div',
-            { 
-                style: {
-                    background: 'white',
-                    borderRadius: '12px',
-                    padding: '20px',
-                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
-                    overflowY: 'auto'
-                }
-            },
-            
-            // Page Manager
-            React.createElement(window.PageManager, {
-                sitePages: sitePages,
-                activePage: activePage,
-                setActivePage: setActivePage,
-                addNewPage: addNewPage,
-                editPageName: editPageName,
-                togglePageVisibility: togglePageVisibility,
-                deletePage: deletePage
-            }),
-            
-            React.createElement('hr', { style: { margin: '20px 0', border: 'none', borderTop: '1px solid #e5e7eb' } }),
-            
-            // Template Selector
-            React.createElement(window.TemplateSelector, {
-                onApplyTemplate: applyTemplate,
-                currentTheme: activeTheme
-            }),
-            
-            React.createElement('hr', { style: { margin: '20px 0', border: 'none', borderTop: '1px solid #e5e7eb' } }),
-            
-            // Block Library
-            React.createElement(window.BlockLibrary, {
-                onAddBlock: addBlock,
-                brandColor
-            })
-        ),
+        // Page Manager
+        React.createElement(window.PageManager, {
+            sitePages: sitePages,
+            activePage: activePage,
+            setActivePage: setActivePage,
+            addNewPage: addNewPage,
+            editPageName: editPageName,
+            togglePageVisibility: togglePageVisibility,
+            deletePage: deletePage
+        }),
         
-        // Center - Live Preview
-        React.createElement(
-            'div',
-            {
-                style: {
-                    background: 'white',
-                    borderRadius: '12px',
-                    padding: '20px',
-                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
-                    overflow: 'hidden'
-                }
-            },
-            React.createElement(window.LivePreview, {
-                blocks: getCurrentPageBlocks(),
-                selectedBlock,
-                onSelectBlock: setSelectedBlock,
-                onUpdateBlock: updateBlock,
-                onDeleteBlock: deleteBlock,
-                onMoveBlock: moveBlock,
-                theme: activeTheme,
-                brandColor,
-                activePage: activePage
-            })
-        ),
+        // Template Selector
+        React.createElement(window.TemplateSelector, {
+            onApplyTemplate: applyTemplate,
+            currentTheme: activeTheme
+        }),
+        
+        // Render BlockLibrary
+        React.createElement(window.BlockLibrary, {
+            onAddBlock: addBlock,
+            brandColor
+        }),
+        
+        // Render LivePreview with current page blocks
+        React.createElement(window.LivePreview, {
+            blocks: getCurrentPageBlocks(),
+            selectedBlock,
+            onSelectBlock: setSelectedBlock,
+            onUpdateBlock: updateBlock,
+            onDeleteBlock: deleteBlock,
+            onMoveBlock: moveBlock,
+            theme: activeTheme,
+            brandColor,
+            activePage: activePage
+        }),
 
-        // Right Sidebar - Properties Panel
+        // Properties Panel
         React.createElement(
             'div',
-            { 
-                style: {
-                    background: 'white',
-                    borderRadius: '12px',
-                    padding: '20px',
-                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
-                    overflowY: 'auto'
-                }
-            },
-            React.createElement('h3', { style: { marginTop: 0, marginBottom: '20px', color: '#1f2937' } }, '⚙️ Settings'),
+            { className: 'properties' },
+            React.createElement('h3', null, '⚙️ Settings'),
             
             // Theme Selection
             React.createElement(
                 'div',
-                { style: { marginBottom: '20px' } },
-                React.createElement('label', { style: { display: 'block', marginBottom: '8px', fontWeight: '600', color: '#374151' } }, 'Theme'),
+                { className: 'property-group' },
+                React.createElement('label', null, 'Theme'),
                 React.createElement(
                     'select',
                     {
                         value: activeTheme,
-                        onChange: (e) => setActiveTheme(e.target.value),
-                        style: {
-                            width: '100%',
-                            padding: '8px 12px',
-                            border: '1px solid #d1d5db',
-                            borderRadius: '6px',
-                            background: 'white',
-                            fontSize: '14px'
-                        }
+                        onChange: (e) => setActiveTheme(e.target.value)
                     },
                     React.createElement('option', { value: 'classic' }, 'Classic Gold'),
                     React.createElement('option', { value: 'modern' }, 'Modern Blue'),
@@ -702,44 +624,29 @@ const SiteBuilder = () => {
             // Username
             React.createElement(
                 'div',
-                { style: { marginBottom: '20px' } },
-                React.createElement('label', { style: { display: 'block', marginBottom: '8px', fontWeight: '600', color: '#374151' } }, 'Username'),
+                { className: 'property-group' },
+                React.createElement('label', null, 'Username'),
                 React.createElement('input', {
                     type: 'text',
                     value: username,
                     onChange: (e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '')),
-                    placeholder: 'photographer',
-                    style: {
-                        width: '100%',
-                        padding: '8px 12px',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '6px',
-                        fontSize: '14px'
-                    }
+                    placeholder: 'photographer'
                 })
             ),
 
             // Brand Color
             React.createElement(
                 'div',
-                { style: { marginBottom: '20px' } },
-                React.createElement('label', { style: { display: 'block', marginBottom: '8px', fontWeight: '600', color: '#374151' } }, 'Brand Color'),
+                { className: 'property-group' },
+                React.createElement('label', null, 'Brand Color'),
                 React.createElement('input', {
                     type: 'color',
                     value: brandColor,
-                    onChange: (e) => setBrandColor(e.target.value),
-                    style: {
-                        width: '100%',
-                        height: '40px',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '6px',
-                        cursor: 'pointer'
-                    }
+                    onChange: (e) => setBrandColor(e.target.value)
                 })
             ),
 
             // Block Editor (if block selected)
-            selectedBlock && React.createElement('hr', { style: { margin: '20px 0', border: 'none', borderTop: '1px solid #e5e7eb' } }),
             selectedBlock && React.createElement(window.BlockEditor, {
                 block: getCurrentPageBlocks().find(b => b.id === selectedBlock),
                 onUpdateBlock: updateBlock,
@@ -747,45 +654,21 @@ const SiteBuilder = () => {
             }),
 
             // Action Buttons
-            React.createElement('hr', { style: { margin: '20px 0', border: 'none', borderTop: '1px solid #e5e7eb' } }),
             React.createElement(
                 'button',
                 {
+                    className: 'btn-primary',
                     onClick: saveWebsite,
-                    disabled: saving,
-                    style: {
-                        width: '100%',
-                        padding: '12px 16px',
-                        marginBottom: '12px',
-                        background: saving ? '#9ca3af' : '#10b981',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '8px',
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        cursor: saving ? 'not-allowed' : 'pointer',
-                        transition: 'all 0.2s ease'
-                    }
+                    disabled: saving
                 },
                 saving ? '💾 Saving...' : '💾 Save Website'
             ),
             React.createElement(
                 'button',
                 {
+                    className: 'btn-primary',
                     onClick: publishWebsite,
-                    disabled: publishing || !username,
-                    style: {
-                        width: '100%',
-                        padding: '12px 16px',
-                        background: (publishing || !username) ? '#9ca3af' : 'linear-gradient(135deg, #D4AF37 0%, #FFD700 100%)',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '8px',
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        cursor: (publishing || !username) ? 'not-allowed' : 'pointer',
-                        transition: 'all 0.2s ease'
-                    }
+                    disabled: publishing || !username
                 },
                 publishing ? '🚀 Publishing...' : '🚀 Publish Website'
             )
