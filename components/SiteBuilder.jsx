@@ -1,6 +1,8 @@
 const { useState, useEffect } = React;
 
 const SiteBuilder = () => {
+    console.log('SiteBuilder component function called');
+    
     // Multi-page website builder state
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);

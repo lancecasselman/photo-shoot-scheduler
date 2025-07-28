@@ -128,6 +128,7 @@
     <script type="text/babel" src="components/BlockLibrary.jsx"></script>
     <script type="text/babel" src="components/LivePreview.jsx"></script>
     <script type="text/babel" src="components/SiteBuilder.jsx"></script>
+    <script type="text/babel" src="components/SimpleSiteBuilder.jsx"></script>
     
     <script type="text/babel">
         const { useState, useEffect } = React;
@@ -223,7 +224,25 @@
             }
             
             console.log('Rendering SiteBuilder component');
-            return React.createElement(window.SiteBuilder);
+            try {
+                // Use SimpleSiteBuilder for now to test if React rendering works
+                const siteBuilderElement = React.createElement(window.SimpleSiteBuilder);
+                console.log('SimpleSiteBuilder element created:', siteBuilderElement);
+                return siteBuilderElement;
+            } catch (error) {
+                console.error('Error creating SiteBuilder element:', error);
+                return React.createElement('div', { 
+                    style: { 
+                        padding: '20px', 
+                        background: '#fee2e2', 
+                        color: '#dc2626', 
+                        borderRadius: '8px',
+                        margin: '20px'
+                    } 
+                }, 
+                'Error loading SiteBuilder: ' + error.message
+                );
+            }
         };
         
         // Render the app
