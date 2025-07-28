@@ -8470,53 +8470,7 @@ ${name}`;
 
     </div> <!-- End container -->
 
-    <!-- Contract Modal -->
-    <div id="contractModal" class="contract-modal" style="display: none;">
-        <div class="contract-modal-overlay" onclick="closeContractModal()"></div>
-        <div class="contract-modal-content">
-            <div class="contract-modal-header">
-                <h3>📝 Contract Management</h3>
-                <button class="contract-close-btn" onclick="closeContractModal()">&times;</button>
-            </div>
-            <div class="contract-modal-body">
-                <!-- Contract Selection -->
-                <div class="contract-selection">
-                    <h4>Create New Contract</h4>
-                    <div class="contract-options">
-                        <div class="contract-option" onclick="createContract(currentContractSessionId, 'photo_release')">
-                            <div class="contract-icon">📸</div>
-                            <div class="contract-info">
-                                <h5>Photo Print Release</h5>
-                                <p>Grants clients permission to print and share photos for personal use</p>
-                            </div>
-                        </div>
-                        <div class="contract-option" onclick="createContract(currentContractSessionId, 'wedding_contract')">
-                            <div class="contract-icon">💒</div>
-                            <div class="contract-info">
-                                <h5>Wedding Photography Contract</h5>
-                                <p>Comprehensive contract for wedding photography services</p>
-                            </div>
-                        </div>
-                        <div class="contract-option" onclick="createContract(currentContractSessionId, 'general_contract')">
-                            <div class="contract-icon">📋</div>
-                            <div class="contract-info">
-                                <h5>General Photography Contract</h5>
-                                <p>Standard contract for portrait sessions and general photography services</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Existing Contracts -->
-                <div class="existing-contracts">
-                    <h4>Existing Contracts</h4>
-                    <div id="existingContractsList" class="existing-contracts-list">
-                        <!-- Contracts will be loaded here -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Contract Modal moved to end -->
 
     <script>
         // Firebase Website Builder JavaScript Functionality
@@ -9089,6 +9043,54 @@ ${name}`;
         });
 
     </script>
+
+    <!-- Contract Modal -->
+    <div id="contractModal" class="contract-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000;">
+        <div class="contract-modal-overlay" onclick="closeContractModal()" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6);"></div>
+        <div class="contract-modal-content" style="position: relative; background: white; border-radius: 15px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3); margin: auto; margin-top: 5vh; z-index: 10001;">
+            <div class="contract-modal-header">
+                <h3>📝 Contract Management</h3>
+                <button class="contract-close-btn" onclick="closeContractModal()">&times;</button>
+            </div>
+            <div class="contract-modal-body">
+                <!-- Contract Selection -->
+                <div class="contract-selection">
+                    <h4>Create New Contract</h4>
+                    <div class="contract-options">
+                        <div class="contract-option" onclick="createContract(currentContractSessionId, 'photo_release')">
+                            <div class="contract-icon">📸</div>
+                            <div class="contract-info">
+                                <h5>Photo Print Release</h5>
+                                <p>Grants clients permission to print and share photos for personal use</p>
+                            </div>
+                        </div>
+                        <div class="contract-option" onclick="createContract(currentContractSessionId, 'wedding_contract')">
+                            <div class="contract-icon">💒</div>
+                            <div class="contract-info">
+                                <h5>Wedding Photography Contract</h5>
+                                <p>Comprehensive contract for wedding photography services</p>
+                            </div>
+                        </div>
+                        <div class="contract-option" onclick="createContract(currentContractSessionId, 'general_contract')">
+                            <div class="contract-icon">📋</div>
+                            <div class="contract-info">
+                                <h5>General Photography Contract</h5>
+                                <p>Standard contract for portrait sessions and general photography services</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Existing Contracts -->
+                <div class="existing-contracts">
+                    <h4>Existing Contracts</h4>
+                    <div id="existingContractsList" class="existing-contracts-list">
+                        <!-- Contracts will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
 </body>
 </html>
