@@ -6231,8 +6231,10 @@ END:VCALENDAR`;
                 // Show the signing URL for reference
                 alert(`Contract sent to client!\n\nSigning URL: ${result.signingUrl}\n\nThe client will receive an email with the signing link.`);
                 
-                // Reload existing contracts to update status
-                await loadExistingContracts(currentContractSessionId);
+                // Reload existing contracts to update status (only if we have a valid session ID)
+                if (currentContractSessionId) {
+                    await loadExistingContracts(currentContractSessionId);
+                }
                 
             } catch (error) {
                 console.error('Error sending contract:', error);
