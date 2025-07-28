@@ -2487,7 +2487,10 @@ app.post('/api/contracts/:id/send', isAuthenticated, async (req, res) => {
                 
                 const msg = {
                     to: contract.client_email,
-                    from: 'lance@thelegacyphotography.com', // verified sender
+                    from: {
+                        email: 'noreply@photomanagementsystem.com',
+                        name: 'The Legacy Photography'
+                    },
                     subject: emailSubject,
                     html: emailBody
                 };

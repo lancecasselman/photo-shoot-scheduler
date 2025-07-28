@@ -18,6 +18,8 @@ This is a comprehensive photography business management platform featuring sessi
 - **SendGrid Email Integration**: Configured SendGrid API key for professional email delivery instead of blocked emails
 - **Contract Modal Text Visibility**: Fixed contract modal text color - all text now displays in clear black for perfect readability
 - **Contract Email Delivery Fix**: Updated contract sending system to use SendGrid instead of nodemailer for reliable email delivery
+- **SendGrid Sender Verification Fix**: Changed contract emails to use verified sender 'noreply@photomanagementsystem.com' instead of unverified address
+- **Contract Authorization Fix**: Added missing authorization header to sendContract function for proper API authentication
 
 ### Firebase Authentication System Implementation Complete (July 27, 2025) - FULLY OPERATIONAL ✅
 - **Firebase v8 Legacy SDK Integration**: Successfully implemented Firebase authentication using v8 legacy SDK for Replit compatibility
