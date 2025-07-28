@@ -6361,7 +6361,7 @@ END:VCALENDAR`;
 
         // Photography Website Builder Functionality
         let currentTemplate = null;
-        let websiteSettings = {
+        window.websiteSettings = window.websiteSettings || {
             businessName: 'The Legacy Photography',
             tagline: 'Capturing Timeless Moments',
             aboutText: 'Professional photographer specializing in weddings, portraits, and special moments. Creating beautiful memories that last a lifetime.',
@@ -8446,7 +8446,7 @@ ${name}`;
 
     <script>
         // Firebase Website Builder JavaScript Functionality
-        let websiteSettings = {
+        window.websiteSettings = window.websiteSettings || {
             businessName: '',
             welcomeMessage: '',
             theme: 'clean',
