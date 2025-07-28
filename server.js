@@ -2436,10 +2436,12 @@ app.post('/api/contracts/:id/send', isAuthenticated, async (req, res) => {
         
         const signingUrl = `${baseUrl}/contract-signing.html?token=${contract.access_token}`;
         
-        // Send email notification to client
-        if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+        // Send email notification to client using SendGrid
+        if (process.env.SENDGRID_API_KEY) {
             try {
-                const transporter = createEmailTransporter();
+                const sgMail = require('@sendgrid/mail');
+                sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+                
                 const emailSubject = `📝 Contract Ready for Signature - ${contract.contract_title}`;
                 const emailBody = `
                     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -2483,17 +2485,20 @@ app.post('/api/contracts/:id/send', isAuthenticated, async (req, res) => {
                     </div>
                 `;
                 
-                await transporter.sendMail({
-                    from: `"The Legacy Photography" <${process.env.EMAIL_USER}>`,
+                const msg = {
                     to: contract.client_email,
+                    from: 'lance@thelegacyphotography.com', // verified sender
                     subject: emailSubject,
                     html: emailBody
-                });
+                };
                 
+                await sgMail.send(msg);
                 console.log(`✅ Contract email sent to: ${contract.client_email}`);
             } catch (emailError) {
                 console.error('Error sending contract email:', emailError);
             }
+        } else {
+            console.log('⚠️ SendGrid not configured - contract email not sent');
         }
         
         res.json({
