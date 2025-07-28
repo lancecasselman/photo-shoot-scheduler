@@ -5,11 +5,21 @@ const SiteBuilder = () => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activePage, setActivePage] = useState('home');
+    const [sitePages, setSitePages] = useState([
+        { id: 'home', name: 'Home', url: '/', active: true },
+        { id: 'about', name: 'About', url: '/about', active: true },
+        { id: 'portfolio', name: 'Portfolio', url: '/portfolio', active: true },
+        { id: 'blog', name: 'Blog', url: '/blog', active: true },
+        { id: 'contact', name: 'Contact', url: '/contact', active: true },
+        { id: 'privacy', name: 'Privacy Policy', url: '/privacy', active: true }
+    ]);
     const [siteBlocks, setSiteBlocks] = useState({
         home: [],
         about: [],
-        gallery: [],
-        contact: []
+        portfolio: [],
+        blog: [],
+        contact: [],
+        privacy: []
     });
     const [selectedBlock, setSelectedBlock] = useState(null);
     const [activeTheme, setActiveTheme] = useState('classic');
@@ -29,6 +39,112 @@ const SiteBuilder = () => {
         }));
     };
 
+    // Page management functions
+    const addNewPage = () => {
+        const pageName = prompt('Enter page name:');
+        if (pageName && pageName.trim()) {
+            const pageId = pageName.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const pageUrl = `/${pageId}`;
+            
+            setSitePages(prev => [...prev, {
+                id: pageId,
+                name: pageName.trim(),
+                url: pageUrl,
+                active: true
+            }]);
+            
+            setSiteBlocks(prev => ({
+                ...prev,
+                [pageId]: [{
+                    id: `block-${Date.now()}`,
+                    type: 'heading',
+                    content: pageName.trim(),
+                    styles: { 
+                        fontSize: '36px', 
+                        color: '#D4AF37', 
+                        textAlign: 'center', 
+                        fontWeight: 'bold',
+                        margin: '40px 0' 
+                    }
+                }]
+            }));
+            
+            setActivePage(pageId);
+            showMessage(`✅ Page "${pageName}" created successfully!`, 'success');
+        }
+    };
+
+    const editPageName = (pageId) => {
+        const page = sitePages.find(p => p.id === pageId);
+        if (page) {
+            const newName = prompt('Enter new page name:', page.name);
+            if (newName && newName.trim()) {
+                setSitePages(prev => prev.map(p => 
+                    p.id === pageId ? { ...p, name: newName.trim() } : p
+                ));
+                showMessage(`✅ Page renamed to "${newName}"`, 'success');
+            }
+        }
+    };
+
+    const togglePageVisibility = (pageId) => {
+        setSitePages(prev => prev.map(p => 
+            p.id === pageId ? { ...p, active: !p.active } : p
+        ));
+        showMessage('✅ Page visibility updated', 'success');
+    };
+
+    const deletePage = (pageId) => {
+        if (pageId === 'home') {
+            showMessage('❌ Cannot delete the home page', 'error');
+            return;
+        }
+        
+        if (confirm('Are you sure you want to delete this page?')) {
+            setSitePages(prev => prev.filter(p => p.id !== pageId));
+            setSiteBlocks(prev => {
+                const newBlocks = { ...prev };
+                delete newBlocks[pageId];
+                return newBlocks;
+            });
+            
+            if (activePage === pageId) {
+                setActivePage('home');
+            }
+            
+            showMessage('✅ Page deleted successfully', 'success');
+        }
+    };
+
+    // Template application function
+    const applyTemplate = (templateKey) => {
+        if (window.PresetTemplates && window.PresetTemplates[templateKey]) {
+            const template = window.PresetTemplates[templateKey];
+            
+            // Apply template pages
+            const templatePageIds = Object.keys(template.pages);
+            const newPages = templatePageIds.map(pageId => ({
+                id: pageId,
+                name: pageId.charAt(0).toUpperCase() + pageId.slice(1),
+                url: pageId === 'home' ? '/' : `/${pageId}`,
+                active: true
+            }));
+            
+            setSitePages(newPages);
+            setSiteBlocks(template.pages);
+            setActivePage('home');
+            
+            showMessage(`✅ ${template.name} template applied successfully!`, 'success');
+            
+            // Trigger celebration animation
+            if (window.showCelebration) {
+                window.showCelebration(`🎨 ${template.name} Template Applied!`, 50);
+            }
+        }
+    };
+
+
+
     // Initialize Firebase authentication
     useEffect(() => {
         const initializeAuth = () => {
@@ -44,7 +160,7 @@ const SiteBuilder = () => {
                         // Load existing site config from Firestore
                         await loadSiteConfig(user.uid);
                         
-                        // Add default blocks if none exist
+                        // Add default blocks if none exist for home page
                         if (siteBlocks.home.length === 0) {
                             setSiteBlocks(prev => ({
                                 ...prev,
@@ -401,6 +517,12 @@ const SiteBuilder = () => {
         }
     };
 
+    // Show message helper
+    const showMessage = (text, type = 'info') => {
+        setMessage(text);
+        setTimeout(() => setMessage(''), 3000);
+    };
+
     const signInWithGoogle = async () => {
         try {
             const provider = new window.GoogleAuthProvider();
@@ -444,23 +566,21 @@ const SiteBuilder = () => {
         { className: 'builder-container' },
         message && React.createElement('div', { className: 'message' }, message),
         
-        // Page Navigator
-        React.createElement(window.PageNavigator, {
-            currentPage: activePage,
-            setPage: setActivePage,
-            siteBlocks: siteBlocks
+        // Page Manager
+        React.createElement(window.PageManager, {
+            sitePages: sitePages,
+            activePage: activePage,
+            setActivePage: setActivePage,
+            addNewPage: addNewPage,
+            editPageName: editPageName,
+            togglePageVisibility: togglePageVisibility,
+            deletePage: deletePage
         }),
         
-        // Preset Selector
-        React.createElement(window.PresetSelector, {
-            onApplyPreset: applyPreset,
-            currentPreset: currentThemeData
-        }),
-        
-        // Theme Selector
-        React.createElement(window.ThemeSelector, {
-            onApplyTheme: applyTheme,
-            currentTheme: currentThemeData
+        // Template Selector
+        React.createElement(window.TemplateSelector, {
+            onApplyTemplate: applyTemplate,
+            currentTheme: activeTheme
         }),
         
         // Render BlockLibrary
@@ -533,7 +653,7 @@ const SiteBuilder = () => {
 
             // Block Editor (if block selected)
             selectedBlock && React.createElement(window.BlockEditor, {
-                block: blocks.find(b => b.id === selectedBlock),
+                block: getCurrentPageBlocks().find(b => b.id === selectedBlock),
                 onUpdateBlock: updateBlock,
                 brandColor
             }),
