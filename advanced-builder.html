@@ -125,10 +125,9 @@
     <script type="text/babel" src="components/BlockEditor.jsx"></script>
     <script type="text/babel" src="components/PageManager.jsx"></script>
     <script type="text/babel" src="components/TemplateSelector.jsx"></script>
-    <script type="text/babel" src="components/BlockLibrary.jsx"></script>
-    <script type="text/babel" src="components/LivePreview.jsx"></script>
+    <script type="text/babel" src="BlockLibrary.js"></script>
+    <script type="text/babel" src="LivePreview.jsx"></script>
     <script type="text/babel" src="components/SiteBuilder.jsx"></script>
-    <script type="text/babel" src="components/SimpleSiteBuilder.jsx"></script>
     
     <script type="text/babel">
         const { useState, useEffect } = React;
@@ -136,59 +135,27 @@
         const App = () => {
             const [loading, setLoading] = useState(true);
             const [user, setUser] = useState(null);
-            const [componentsLoaded, setComponentsLoaded] = useState(false);
             
             useEffect(() => {
-                console.log('Advanced Builder initializing...');
-                
-                // Check if all components are loaded
-                const checkComponents = () => {
-                    const required = ['SiteBuilder', 'BlockLibrary', 'LivePreview', 'BlockEditor', 'PageManager', 'TemplateSelector', 'PresetTemplates'];
-                    const loaded = required.every(comp => window[comp]);
-                    
-                    console.log('Components status:', required.map(comp => `${comp}: ${!!window[comp]}`).join(', '));
-                    
-                    if (loaded) {
-                        setComponentsLoaded(true);
-                        console.log('All components loaded successfully');
-                    } else {
-                        setTimeout(checkComponents, 200);
-                    }
-                };
-                
                 // Wait for Firebase to be available
                 const checkAuth = () => {
                     if (window.firebaseAuth && window.onAuthStateChanged) {
                         window.onAuthStateChanged(window.firebaseAuth, (user) => {
-                            console.log('Firebase auth state:', user ? user.email : 'not authenticated');
                             setUser(user);
                             setLoading(false);
                         });
                     } else {
-                        // DEV_MODE fallback - create a mock user
-                        console.log('Firebase not available, using development mode');
-                        setUser({ 
-                            email: 'dev@example.com', 
-                            displayName: 'Development User',
-                            uid: 'dev-user-123' 
-                        });
-                        setLoading(false);
+                        setTimeout(checkAuth, 100);
                     }
                 };
                 
-                checkComponents();
                 checkAuth();
             }, []);
             
             const signInWithGoogle = async () => {
                 try {
-                    if (window.signInWithPopup && window.firebaseAuth) {
-                        const provider = new window.GoogleAuthProvider();
-                        await window.signInWithPopup(window.firebaseAuth, provider);
-                    } else {
-                        // Fallback to main auth page
-                        window.location.href = '/auth.html';
-                    }
+                    const provider = new window.GoogleAuthProvider();
+                    await window.signInWithPopup(window.firebaseAuth, provider);
                 } catch (error) {
                     console.error('Sign-in error:', error);
                     // Fallback to main auth page
@@ -196,14 +163,10 @@
                 }
             };
             
-            if (loading || !componentsLoaded) {
+            if (loading) {
                 return (
                     <div className="loading">
                         Loading Advanced Website Builder...
-                        <br />
-                        <small style={{ color: '#666', marginTop: '10px', display: 'block' }}>
-                            Components: {componentsLoaded ? '✅' : '⏳'} | Auth: {loading ? '⏳' : '✅'}
-                        </small>
                     </div>
                 );
             }
@@ -223,31 +186,11 @@
                 );
             }
             
-            console.log('Rendering SiteBuilder component');
-            try {
-                // Use SimpleSiteBuilder for now to test if React rendering works
-                const siteBuilderElement = React.createElement(window.SimpleSiteBuilder);
-                console.log('SimpleSiteBuilder element created:', siteBuilderElement);
-                return siteBuilderElement;
-            } catch (error) {
-                console.error('Error creating SiteBuilder element:', error);
-                return React.createElement('div', { 
-                    style: { 
-                        padding: '20px', 
-                        background: '#fee2e2', 
-                        color: '#dc2626', 
-                        borderRadius: '8px',
-                        margin: '20px'
-                    } 
-                }, 
-                'Error loading SiteBuilder: ' + error.message
-                );
-            }
+            return <SiteBuilder />;
         };
         
         // Render the app
-        console.log('Starting Advanced Website Builder...');
-        ReactDOM.render(React.createElement(App), document.getElementById('siteBuilderRoot'));
+        ReactDOM.render(<App />, document.getElementById('siteBuilderRoot'));
     </script>
 </body>
 </html>
