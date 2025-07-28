@@ -172,8 +172,8 @@ async function sendEmail(to, template, ...args) {
         const msg = {
             to: to,
             from: {
-                email: 'noreply@photomanagementsystem.com',
-                name: 'The Client Management Area'
+                email: 'lance@thelegacyphotography.com',
+                name: 'The Legacy Photography'
             },
             subject: emailContent.subject,
             html: emailContent.html

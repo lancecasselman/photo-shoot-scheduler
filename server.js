@@ -21,8 +21,8 @@ const connectPg = require('connect-pg-simple');
 // Firebase Admin SDK for server-side authentication
 const admin = require('firebase-admin');
 
-// Direct email service using nodemailer
-const nodemailer = require('nodemailer');
+// SendGrid email service (nodemailer removed - using SendGrid only)
+const sgMail = require('@sendgrid/mail');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 // Import notification services
@@ -155,35 +155,9 @@ const createEmailTransporter = () => {
             });
         } else {
             // For other domains, check if SMTP_HOST is configured, otherwise use Gmail as fallback
-            if (process.env.SMTP_HOST) {
-                return nodemailer.createTransport({
-                    host: process.env.SMTP_HOST,
-                    port: process.env.SMTP_PORT || 587,
-                    secure: false,
-                    auth: {
-                        user: process.env.EMAIL_USER,
-                        pass: process.env.EMAIL_PASS
-                    },
-                    tls: {
-                        rejectUnauthorized: false
-                    }
-                });
-            } else {
-                // Fallback to Gmail SMTP if no SMTP_HOST specified
-                console.log(`Email domain ${emailDomain} doesn't have built-in SMTP config, using Gmail as fallback`);
-                return nodemailer.createTransport({
-                    host: 'smtp.gmail.com',
-                    port: 587,
-                    secure: false,
-                    auth: {
-                        user: process.env.EMAIL_USER,
-                        pass: process.env.EMAIL_PASS
-                    },
-                    tls: {
-                        rejectUnauthorized: false
-                    }
-                });
-            }
+            // All email now handled by SendGrid - SMTP removed
+            console.log('SMTP configuration found but using SendGrid instead');
+            return null;
         }
     }
     
