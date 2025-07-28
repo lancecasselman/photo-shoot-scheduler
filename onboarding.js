@@ -193,7 +193,7 @@ Multiple outfit changes welcome</textarea>
           </ul>
         </div>
         <button class="launch-btn" onclick="launchPortal()">
-          🎉 Launch My Photography Business Portal
+          🎉 Complete Setup & Return to Dashboard
         </button>
         <p style="text-align: center; color: #999; margin-top: 20px;">
           You can always update these settings later from your dashboard.
@@ -284,11 +284,15 @@ function connectStripe() {
 
 async function launchPortal() {
   try {
+    // Get authentication token first
+    const authToken = await getAuthToken();
+    
     // Save all wizard data to the server
     const response = await fetch('/api/setup-wizard', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`
       },
       body: JSON.stringify(wizardData)
     });
@@ -324,6 +328,26 @@ async function launchPortal() {
   } catch (error) {
     console.error('Setup error:', error);
     alert('❌ Setup failed. Please try again.');
+  }
+}
+
+// Helper function to get auth token (similar to main app)
+async function getAuthToken() {
+  try {
+    // Check if we're in dev mode first
+    const response = await fetch('/api/auth/user', {
+      method: 'GET',
+      credentials: 'include'
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      return data.token || 'dev-token';
+    }
+    return 'dev-token';
+  } catch (error) {
+    console.error('Auth token error:', error);
+    return 'dev-token';
   }
 }
 
