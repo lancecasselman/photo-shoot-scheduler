@@ -8444,6 +8444,53 @@ ${name}`;
 
     </div> <!-- End container -->
 
+    <!-- Contract Modal -->
+    <div id="contractModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📝 Contract Management</h3>
+                <button class="close-btn" onclick="closeContractModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Contract Selection -->
+                <div class="contract-selection">
+                    <h4>Create New Contract</h4>
+                    <div class="contract-options">
+                        <div class="contract-option" onclick="createContract(currentContractSessionId, 'photo_release')">
+                            <div class="contract-icon">📸</div>
+                            <div class="contract-info">
+                                <h5>Photo Print Release</h5>
+                                <p>Grants clients permission to print and share photos for personal use</p>
+                            </div>
+                        </div>
+                        <div class="contract-option" onclick="createContract(currentContractSessionId, 'wedding_contract')">
+                            <div class="contract-icon">💒</div>
+                            <div class="contract-info">
+                                <h5>Wedding Photography Contract</h5>
+                                <p>Comprehensive contract for wedding photography services</p>
+                            </div>
+                        </div>
+                        <div class="contract-option" onclick="createContract(currentContractSessionId, 'general_contract')">
+                            <div class="contract-icon">📋</div>
+                            <div class="contract-info">
+                                <h5>General Photography Contract</h5>
+                                <p>Standard contract for portrait sessions and general photography services</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Existing Contracts -->
+                <div class="existing-contracts">
+                    <h4>Existing Contracts</h4>
+                    <div id="existingContractsList" class="existing-contracts-list">
+                        <!-- Contracts will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Firebase Website Builder JavaScript Functionality
         window.websiteSettings = window.websiteSettings || {
