@@ -2495,8 +2495,12 @@ app.post('/api/contracts/:id/send', isAuthenticated, async (req, res) => {
                     html: emailBody
                 };
                 
-                await sgMail.send(msg);
-                console.log(`✅ Contract email sent to: ${contract.client_email}`);
+                console.log(`📧 Attempting to send contract email to: ${contract.client_email}`);
+                console.log(`📧 Email payload:`, JSON.stringify(msg, null, 2));
+                
+                const result = await sgMail.send(msg);
+                console.log(`✅ Contract email sent successfully to: ${contract.client_email}`);
+                console.log(`📧 SendGrid response:`, result);
             } catch (emailError) {
                 console.error('Error sending contract email:', emailError);
             }
