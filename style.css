@@ -1128,7 +1128,18 @@ header p {
     color: #000000;
 }
 
-.contract-modal-body * {
+.contract-modal-content,
+.contract-modal-content *,
+.contract-modal-content h1,
+.contract-modal-content h2,
+.contract-modal-content h3,
+.contract-modal-content h4,
+.contract-modal-content h5,
+.contract-modal-content h6,
+.contract-modal-content p,
+.contract-modal-content div,
+.contract-modal-content span,
+.contract-modal-content label {
     color: #000000 !important;
 }
 
