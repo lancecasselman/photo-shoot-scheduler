@@ -659,11 +659,17 @@ function exportToCalendar(sessionId) {
         
         // For mobile devices, use window.location.href for best calendar app integration
         showMessage('Opening calendar app...', 'success');
-        window.location.href = dataUrl;
         
-        // Also try server endpoint as fallback
+        // Primary method: Use server URL which handles mobile browsers better
+        window.location.href = `/api/sessions/${sessionId}/calendar.ics`;
+        
+        // Fallback: Data URL method
         setTimeout(() => {
-            window.open(`/api/sessions/${sessionId}/calendar.ics`, '_blank');
+            try {
+                window.location.href = dataUrl;
+            } catch (error) {
+                console.log('Data URL fallback used');
+            }
         }, 1000);
         
     } else {
@@ -685,7 +691,15 @@ function exportToCalendar(sessionId) {
         // Clean up the blob URL
         setTimeout(() => URL.revokeObjectURL(url), 100);
         
-        showMessage('Calendar event downloaded - double-click the file to add to your calendar', 'success');
+        showMessage('Calendar event downloaded - double-click the .ics file to add to your calendar', 'success');
+        
+        // Also provide server URL as additional option for desktop
+        setTimeout(() => {
+            const serverUrl = `/api/sessions/${sessionId}/calendar.ics`;
+            if (confirm('Would you like to also open the calendar file directly in your browser?')) {
+                window.open(serverUrl, '_blank');
+            }
+        }, 2000);
     }
     
     // Universal fallback: Google Calendar (works on all devices)
@@ -706,12 +720,17 @@ function exportToCalendar(sessionId) {
                 `${session.notes ? 'Notes: ' + session.notes : ''}`
             )}`;
         
-        // Show Google Calendar option after 3 seconds
+        // Show Google Calendar option based on device type
+        const delay = (isIOS || isAndroid) ? 4000 : 3000;
         setTimeout(() => {
-            if (confirm('Would you like to also add this event to Google Calendar?')) {
+            const message = (isIOS || isAndroid) ? 
+                'Calendar app should have opened. Would you also like to add to Google Calendar?' :
+                'Calendar file downloaded. Would you also like to add to Google Calendar?';
+                
+            if (confirm(message)) {
                 window.open(googleCalendarUrl, '_blank');
             }
-        }, 3000);
+        }, delay);
     }, 500);
 }
 
