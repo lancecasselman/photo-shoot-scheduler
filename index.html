@@ -3739,7 +3739,7 @@
             // Ensure contract modal is hidden on page load
             const contractModal = document.getElementById('contractModal');
             if (contractModal) {
-                contractModal.classList.remove('active');
+                contractModal.style.display = 'none';
             }
         });
 
@@ -6112,11 +6112,11 @@ END:VCALENDAR`;
             // Load existing contracts for this session
             await loadExistingContracts(sessionId);
             
-            document.getElementById('contractModal').classList.add('active');
+            document.getElementById('contractModal').style.display = 'flex';
         }
 
         function closeContractModal() {
-            document.getElementById('contractModal').classList.remove('active');
+            document.getElementById('contractModal').style.display = 'none';
             currentContractSessionId = null;
         }
 
@@ -8471,13 +8471,14 @@ ${name}`;
     </div> <!-- End container -->
 
     <!-- Contract Modal -->
-    <div id="contractModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
+    <div id="contractModal" class="contract-modal" style="display: none;">
+        <div class="contract-modal-overlay" onclick="closeContractModal()"></div>
+        <div class="contract-modal-content">
+            <div class="contract-modal-header">
                 <h3>📝 Contract Management</h3>
-                <button class="close-btn" onclick="closeContractModal()">&times;</button>
+                <button class="contract-close-btn" onclick="closeContractModal()">&times;</button>
             </div>
-            <div class="modal-body">
+            <div class="contract-modal-body">
                 <!-- Contract Selection -->
                 <div class="contract-selection">
                     <h4>Create New Contract</h4>
