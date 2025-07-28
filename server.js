@@ -2418,23 +2418,28 @@ app.post('/api/contracts/:id/send', isAuthenticated, async (req, res) => {
         // Mark contract as sent
         const updatedContract = await contractManager.sendContract(contractId);
         
-        // Generate signing URL
+        // Generate signing URL - Always use HTTPS for security
         const host = req.get('host');
         let baseUrl;
         
-        if (host && host.includes('localhost')) {
+        // Check if we're on a Replit domain or localhost
+        if (host && (host.includes('localhost') || host.includes('127.0.0.1'))) {
+            // For localhost, check if we have Replit domains available
             const replitDomains = process.env.REPLIT_DOMAINS;
             if (replitDomains) {
                 const domains = replitDomains.split(',');
                 baseUrl = `https://${domains[0]}`;
             } else {
-                baseUrl = `${req.protocol}://${host}`;
+                // Fallback to HTTP for true localhost development
+                baseUrl = `http://${host}`;
             }
         } else {
+            // For all production domains (including Replit), always use HTTPS
             baseUrl = `https://${host}`;
         }
         
         const signingUrl = `${baseUrl}/contract-signing.html?token=${contract.access_token}`;
+        console.log(`🔗 Generated signing URL: ${signingUrl}`);
         
         // Send email notification to client using SendGrid
         if (process.env.SENDGRID_API_KEY) {
