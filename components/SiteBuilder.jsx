@@ -518,9 +518,9 @@ const SiteBuilder = () => {
     };
 
     // Show message helper
-    const showMessage = (text, type = 'info') => {
+    const showMessage = (text, duration = 3000) => {
         setMessage(text);
-        setTimeout(() => setMessage(''), 3000);
+        setTimeout(() => setMessage(''), duration);
     };
 
     const signInWithGoogle = async () => {
@@ -531,11 +531,6 @@ const SiteBuilder = () => {
             console.error('Sign-in error:', error);
             window.location.href = '/auth.html';
         }
-    };
-
-    const showMessage = (text, duration = 3000) => {
-        setMessage(text);
-        setTimeout(() => setMessage(''), duration);
     };
 
     if (loading) {
