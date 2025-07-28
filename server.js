@@ -2493,7 +2493,7 @@ app.post('/api/contracts/:id/send', isAuthenticated, async (req, res) => {
                 const msg = {
                     to: contract.client_email,
                     from: {
-                        email: 'noreply@photomanagementsystem.com',
+                        email: 'lance@thelegacyphotography.com',
                         name: 'The Legacy Photography'
                     },
                     subject: emailSubject,
