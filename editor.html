@@ -1001,13 +1001,12 @@
                 background: document.getElementById('background-color').value || '#ffffff'
             };
             
-            const enhancedHTML = `
-                <!DOCTYPE html>
-                <html lang="en">
-                <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>${templateName} - ${page}</title>
+            const enhancedHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${templateName} - ${page}</title>
                     <style>
                         * { margin: 0; padding: 0; box-sizing: border-box; }
                         body {
@@ -1139,14 +1138,12 @@
                         </div>
                     </nav>
                     
-                    ${page === 'home' ? `
-                    <section class="hero">
+                    ${page === 'home' ? `<section class="hero">
                         <div class="container">
                             <h1 class="editable" data-edit-type="text" data-edit-id="hero-title">Capturing Love Stories</h1>
                             <p class="editable" data-edit-type="text" data-edit-id="hero-subtitle">Professional photography that tells your unique story</p>
                         </div>
                     </section>
-                    
                     <section class="section">
                         <div class="container">
                             <div class="gallery">
@@ -1157,17 +1154,13 @@
                             </div>
                         </div>
                     </section>` : ''}
-                    
-                    ${page === 'about' ? `
-                    <section class="section">
+                    ${page === 'about' ? `<section class="section">
                         <div class="container">
                             <h2 class="editable" data-edit-type="text" data-edit-id="about-title">About Our Studio</h2>
                             <p class="editable" data-edit-type="text" data-edit-id="about-text">We are passionate photographers dedicated to capturing your most precious moments. With years of experience and an eye for detail, we create timeless memories that you'll treasure forever.</p>
                         </div>
                     </section>` : ''}
-                    
-                    ${page === 'portfolio' ? `
-                    <section class="section">
+                    ${page === 'portfolio' ? `<section class="section">
                         <div class="container">
                             <h2 class="editable" data-edit-type="text" data-edit-id="portfolio-title">Our Portfolio</h2>
                             <div class="gallery">
@@ -1180,9 +1173,7 @@
                             </div>
                         </div>
                     </section>` : ''}
-                    
-                    ${page === 'contact' ? `
-                    <section class="section">
+                    ${page === 'contact' ? `<section class="section">
                         <div class="container">
                             <h2 class="editable" data-edit-type="text" data-edit-id="contact-title">Get In Touch</h2>
                             <p class="editable" data-edit-type="text" data-edit-id="contact-text">Ready to book your session? We'd love to hear from you and discuss how we can capture your special moments.</p>
@@ -1192,7 +1183,6 @@
                             </div>
                         </div>
                     </section>` : ''}
-                    
                     <script>
                         // Click-to-edit functionality
                         document.addEventListener('DOMContentLoaded', function() {
@@ -1222,8 +1212,7 @@
                         });
                     </script>
                 </body>
-                </html>
-            `;
+                </html>`;
             
             iframe.srcdoc = enhancedHTML;
             console.log('✅ Enhanced interactive preview loaded for page:', page);
