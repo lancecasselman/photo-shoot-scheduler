@@ -28,7 +28,12 @@ class FirebaseService {
     
     async init() {
         try {
-            if (typeof firebase !== 'undefined') {
+            // Check if Firebase is loaded and initialize if needed
+            if (typeof firebase !== 'undefined' && firebase.apps.length === 0) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            
+            if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
                 this.auth = firebase.auth();
                 this.firestore = firebase.firestore();
                 this.storage = firebase.storage();
@@ -39,7 +44,7 @@ class FirebaseService {
                     this.onAuthStateChanged(user);
                 });
                 
-                console.log('Firebase services initialized');
+                console.log('Firebase services initialized successfully');
             } else {
                 console.warn('Firebase not available - using local storage fallback');
                 this.initLocalFallback();

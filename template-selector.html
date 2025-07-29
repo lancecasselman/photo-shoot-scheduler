@@ -490,7 +490,24 @@
         function previewTemplate(templateId) {
             const template = templates.find(t => t.id === templateId);
             if (template) {
-                alert(`Preview: ${template.name}\n\nPages: ${template.pages.join(', ')}\nFeatures: ${template.features.join(', ')}\n\nThis would open a preview window in the full version.`);
+                // Generate preview HTML using templateLoader
+                if (window.templateLoader) {
+                    const templateData = window.templateLoader.getTemplate(templateId);
+                    if (templateData) {
+                        const previewHTML = window.templateLoader.generateTemplateHTML(templateData, 'home');
+                        
+                        // Open preview in new window
+                        const previewWindow = window.open('', '_blank', 'width=1200,height=800');
+                        previewWindow.document.write(previewHTML);
+                        previewWindow.document.close();
+                        previewWindow.document.title = `Preview: ${template.name}`;
+                    } else {
+                        // Fallback to basic info
+                        alert(`Preview: ${template.name}\n\nPages: ${template.pages.join(', ')}\nFeatures: ${template.features.join(', ')}\n\nClick "Use This Template" to customize this design.`);
+                    }
+                } else {
+                    alert(`Preview: ${template.name}\n\nPages: ${template.pages.join(', ')}\nFeatures: ${template.features.join(', ')}\n\nClick "Use This Template" to customize this design.`);
+                }
             }
         }
         
