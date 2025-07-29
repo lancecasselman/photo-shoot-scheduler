@@ -29,10 +29,7 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- React and Babel -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.js"></script>
+
     
     <!-- Confetti Animation Styles -->
     <style>
@@ -8488,11 +8485,13 @@ ${name}`;
 
         <!-- Website Builder Tab Content -->
         <div id="websitesTab" class="tab-content">
-            <div class="website-builder-container" id="react-site-builder">
-                <!-- Advanced React Website Builder will be mounted here -->
-                <div class="loading" style="text-align: center; padding: 40px;">
-                    <h2>🎨 Loading Advanced Website Builder...</h2>
-                    <p>Initializing drag-and-drop editor, templates, and live preview...</p>
+            <div class="website-builder-container">
+                <div class="builder-launch-panel">
+                    <h2>Advanced Website Builder</h2>
+                    <p>Create professional photography websites with drag-and-drop editing</p>
+                    <button onclick="launchAdvancedBuilder()" class="btn btn-primary" style="background: linear-gradient(135deg, #d4af37, #ffd700); color: #1a1a1a; font-weight: bold; padding: 15px 30px; font-size: 18px; border-radius: 8px; border: none; cursor: pointer;">
+                        Launch Advanced Builder
+                    </button>
                 </div>
             </div>
         </div> <!-- End Website Builder Tab -->
@@ -8574,105 +8573,12 @@ ${name}`;
         </div>
     </div>
 
-    <!-- Load Website Builder Components -->
-    <script type="text/babel" src="components/PresetTemplates.jsx"></script>
-    <script src="components/firebase-publish.js"></script>
-    <script type="text/babel" src="components/BlockEditor.jsx"></script>
-    <script type="text/babel" src="components/BlockLibrary.jsx"></script>
-    <script type="text/babel" src="components/LivePreview.jsx"></script>
-    <script type="text/babel" src="components/PageManager.jsx"></script>
-    <script type="text/babel" src="components/TemplateSelector.jsx"></script>
-    <script type="text/babel" src="components/SiteBuilder.jsx"></script>
-    
-    <!-- Initialize React Site Builder -->
-    <script type="text/babel">
-        // Initialize the React Site Builder component
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, checking for components...');
-            
-            // Wait for all components to load
-            const initSiteBuilder = () => {
-                console.log('Advanced Builder - Checking components:', {
-                    React: typeof React !== 'undefined',
-                    ReactDOM: typeof ReactDOM !== 'undefined',
-                    SiteBuilder: typeof SiteBuilder !== 'undefined',
-                    PresetTemplates: {
-                        exists: typeof window.PresetTemplates !== 'undefined',
-                        keys: window.PresetTemplates ? Object.keys(window.PresetTemplates) : null,
-                        count: window.PresetTemplates ? Object.keys(window.PresetTemplates).length : 0,
-                        sample: window.PresetTemplates ? window.PresetTemplates.legacyPhotography?.name : null
-                    },
-                    TemplateCategories: {
-                        exists: typeof window.TemplateCategories !== 'undefined',
-                        count: window.TemplateCategories ? window.TemplateCategories.length : 0
-                    },
-                    BlockEditor: typeof window.BlockEditor !== 'undefined',
-                    BlockLibrary: typeof window.BlockLibrary !== 'undefined',
-                    LivePreview: typeof window.LivePreview !== 'undefined',
-                    PageManager: typeof window.PageManager !== 'undefined',
-                    TemplateSelector: typeof window.TemplateSelector !== 'undefined'
-                });
-                
-                if (typeof React !== 'undefined' && 
-                    typeof ReactDOM !== 'undefined' && 
-                    typeof SiteBuilder !== 'undefined' && 
-                    window.PresetTemplates && Object.keys(window.PresetTemplates).length > 0 &&
-                    typeof window.BlockEditor !== 'undefined' &&
-                    typeof window.BlockLibrary !== 'undefined' &&
-                    typeof window.LivePreview !== 'undefined' &&
-                    typeof window.PageManager !== 'undefined' &&
-                    typeof window.TemplateSelector !== 'undefined') {
-                    
-                    console.log('All components loaded, initializing React SiteBuilder...');
-                    const container = document.getElementById('react-site-builder');
-                    console.log('Container found:', container);
-                    
-                    if (container) {
-                        try {
-                            // Clear container first
-                            container.innerHTML = '';
-                            
-                            // Create root and render
-                            const root = ReactDOM.createRoot ? ReactDOM.createRoot(container) : null;
-                            if (root) {
-                                root.render(React.createElement(SiteBuilder));
-                                console.log('SiteBuilder mounted successfully with createRoot');
-                            } else {
-                                ReactDOM.render(React.createElement(SiteBuilder), container);
-                                console.log('SiteBuilder mounted successfully with legacy render');
-                            }
-                            
-                            // Also show the website tab immediately
-                            console.log('All components loaded, mounting React app...');
-                            console.log('Advanced builder mounted successfully');
-                        } catch (error) {
-                            console.error('Error mounting SiteBuilder:', error);
-                            console.log('React version:', React.version);
-                            console.log('Available React methods:', Object.keys(React));
-                            console.log('Available ReactDOM methods:', Object.keys(ReactDOM));
-                        }
-                    } else {
-                        console.error('Website builder container not found');
-                    }
-                } else {
-                    console.log('Still waiting for components...', {
-                        React: typeof React !== 'undefined',
-                        ReactDOM: typeof ReactDOM !== 'undefined', 
-                        SiteBuilder: typeof SiteBuilder !== 'undefined',
-                        PresetTemplates: typeof window.PresetTemplates !== 'undefined' ? Object.keys(window.PresetTemplates).length : 'undefined',
-                        BlockEditor: typeof window.BlockEditor !== 'undefined',
-                        BlockLibrary: typeof window.BlockLibrary !== 'undefined',
-                        LivePreview: typeof window.LivePreview !== 'undefined',
-                        PageManager: typeof window.PageManager !== 'undefined',
-                        TemplateSelector: typeof window.TemplateSelector !== 'undefined'
-                    });
-                    setTimeout(initSiteBuilder, 500);
-                }
-            };
-            
-            // Start initialization with longer delay for Babel compilation
-            setTimeout(initSiteBuilder, 2000);
-        });
+    <script>
+        // Launch Advanced Website Builder
+        function launchAdvancedBuilder() {
+            console.log('Launching advanced builder...');
+            window.open('/advanced-builder.html', '_blank', 'width=1400,height=900');
+        }
     </script>
 
 </body>

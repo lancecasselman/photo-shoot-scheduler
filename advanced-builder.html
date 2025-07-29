@@ -4,239 +4,126 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Advanced Website Builder - Photography Management System</title>
-    <meta name="description" content="Create stunning photography websites with our advanced drag-and-drop builder">
-    
-    <!-- React CDN -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    
-    <!-- Babel for JSX -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <!-- Firebase v9 -->
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
-        import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
-        import { getFirestore } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
-        
-        // Make Firebase available globally
-        window.firebaseApp = initializeApp({
-            apiKey: "AIzaSyDbtboh1bW6xu9Tz9FILkx_0lzGwXQHjyM",
-            authDomain: "photoshcheduleapp.firebaseapp.com",
-            projectId: "photoshcheduleapp",
-            storageBucket: "photoshcheduleapp.appspot.com",
-            messagingSenderId: "1080892259604",
-            appId: "1:1080892259604:web:9c8f4e5d6a7b8c9d0e1f2g"
-        });
-        
-        window.firebaseAuth = getAuth(window.firebaseApp);
-        window.firebaseFirestore = getFirestore(window.firebaseApp);
-        window.GoogleAuthProvider = GoogleAuthProvider;
-        window.signInWithPopup = signInWithPopup;
-        window.onAuthStateChanged = onAuthStateChanged;
-    </script>
-    
-    <!-- Site Builder CSS -->
-    <link rel="stylesheet" href="SiteBuilder.css">
-    
-    <style>
-        body {
-            margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-        }
-        
-        .loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            font-size: 18px;
-            color: #6b7280;
-        }
-        
-        .auth-required {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            padding: 40px;
-            text-align: center;
-        }
-        
-        .auth-required h1 {
-            color: #1f2937;
-            margin-bottom: 16px;
-        }
-        
-        .auth-required p {
-            color: #6b7280;
-            margin-bottom: 24px;
-        }
-        
-        .auth-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 12px 24px;
-            background: #D4AF37;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: all 0.2s ease;
-        }
-        
-        .auth-btn:hover {
-            background: #B8941F;
-            transform: translateY(-1px);
-        }
-        
-        .premium-notice {
-            background: linear-gradient(135deg, #D4AF37 0%, #FFD700 100%);
-            color: white;
-            padding: 16px 24px;
-            text-align: center;
-            font-weight: 600;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        
-        .premium-notice .crown {
-            font-size: 20px;
-            margin-right: 8px;
-        }
-    </style>
+    <link rel="stylesheet" href="advanced-builder.css">
 </head>
 <body>
-    <div class="premium-notice">
-        <span class="crown">👑</span>
-        Premium Website Builder - Create stunning photography websites with drag-and-drop blocks
-    </div>
-    
-    <div id="siteBuilderRoot">
-        <div class="loading">
-            Loading Advanced Website Builder...
+    <div class="builder-container">
+        <!-- Top Navigation -->
+        <div class="builder-header">
+            <div class="header-left">
+                <h1>Advanced Website Builder</h1>
+                <div class="site-status">
+                    <span id="site-status-indicator">●</span>
+                    <span id="site-status-text">Draft</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <button id="preview-btn" class="btn btn-secondary">Preview</button>
+                <button id="save-btn" class="btn btn-primary">Save</button>
+                <button id="publish-btn" class="btn btn-success">Publish</button>
+            </div>
+        </div>
+
+        <!-- Main Builder Layout -->
+        <div class="builder-main">
+            <!-- Left Sidebar - Settings Panel -->
+            <div class="builder-sidebar">
+                <div class="sidebar-section">
+                    <h3>Site Settings</h3>
+                    <div class="setting-group">
+                        <label>Site Title</label>
+                        <input type="text" id="site-title" placeholder="Your Photography Studio">
+                    </div>
+                    <div class="setting-group">
+                        <label>Brand Color</label>
+                        <input type="color" id="brand-color" value="#d4af37">
+                    </div>
+                    <div class="setting-group">
+                        <label>Font Style</label>
+                        <select id="font-style">
+                            <option value="modern">Modern Sans</option>
+                            <option value="classic">Classic Serif</option>
+                            <option value="elegant">Elegant Script</option>
+                            <option value="minimal">Minimal</option>
+                            <option value="bold">Bold Impact</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3>Theme Templates</h3>
+                    <div id="theme-selector" class="theme-grid">
+                        <!-- Themes will be loaded here -->
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h3>Page Manager</h3>
+                    <div id="page-manager">
+                        <div class="page-list">
+                            <div class="page-item active" data-page="home">Home</div>
+                            <div class="page-item" data-page="about">About</div>
+                            <div class="page-item" data-page="gallery">Gallery</div>
+                            <div class="page-item" data-page="contact">Contact</div>
+                        </div>
+                        <button id="add-page-btn" class="btn btn-small">+ Add Page</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center Panel - Live Preview -->
+            <div class="builder-preview">
+                <div class="preview-header">
+                    <div class="preview-controls">
+                        <button class="device-toggle active" data-device="desktop">Desktop</button>
+                        <button class="device-toggle" data-device="tablet">Tablet</button>
+                        <button class="device-toggle" data-device="mobile">Mobile</button>
+                    </div>
+                </div>
+                <div class="preview-frame">
+                    <iframe id="preview-iframe" src="about:blank"></iframe>
+                </div>
+            </div>
+
+            <!-- Right Sidebar - Block Library -->
+            <div class="builder-blocks">
+                <h3>Content Blocks</h3>
+                <div class="block-categories">
+                    <div class="block-category active" data-category="layout">Layout</div>
+                    <div class="block-category" data-category="content">Content</div>
+                    <div class="block-category" data-category="media">Media</div>
+                    <div class="block-category" data-category="forms">Forms</div>
+                </div>
+                <div class="block-library" id="block-library">
+                    <!-- Blocks will be loaded here -->
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Load React components in proper order -->
-    <script type="text/babel" src="components/PresetTemplates.jsx"></script>
-    <script type="text/babel" src="components/BlockEditor.jsx"></script>
-    <script type="text/babel" src="components/PageManager.jsx"></script>
-    <script type="text/babel" src="components/TemplateSelector.jsx"></script>
-    <script type="text/babel" src="components/BlockLibrary.jsx"></script>  
-    <script type="text/babel" src="components/LivePreview.jsx"></script>
-    <script type="text/babel" src="components/SiteBuilder.jsx"></script>
-    
-    <!-- Debug template loading -->
-    <script>
-        window.addEventListener('load', function() {
-            console.log('Templates loaded:', window.PresetTemplates);
-            console.log('Categories loaded:', window.TemplateCategories);
-            console.log('Total templates:', window.PresetTemplates ? Object.keys(window.PresetTemplates).length : 0);
-            
-            // Check all window components
-            console.log('TemplateSelector available:', typeof window.TemplateSelector);
-            console.log('SiteBuilder available:', typeof window.SiteBuilder);
-            console.log('BlockLibrary available:', typeof window.BlockLibrary);
-            console.log('LivePreview available:', typeof window.LivePreview);
-            console.log('PageManager available:', typeof window.PageManager);
-            console.log('BlockEditor available:', typeof window.BlockEditor);
-        });
-        
-        // Better error handling
-        window.addEventListener('error', function(e) {
-            console.error('JavaScript Error:', e.message, e.filename, e.lineno);
-        });
-        
-        // Check component loading periodically
-        let checkCount = 0;
-        const checkComponents = () => {
-            checkCount++;
-            console.log(`Component check #${checkCount}:`);
-            console.log('- PresetTemplates:', typeof window.PresetTemplates, window.PresetTemplates ? Object.keys(window.PresetTemplates).length : 0);
-            console.log('- TemplateSelector:', typeof window.TemplateSelector);
-            console.log('- SiteBuilder:', typeof window.SiteBuilder);
-            console.log('- React available:', typeof React);
-            console.log('- ReactDOM available:', typeof ReactDOM);
-            
-            if (window.SiteBuilder && checkCount < 10) {
-                console.log('All components loaded successfully!');
-                clearInterval(componentInterval);
-            }
-        };
-        
-        const componentInterval = setInterval(checkComponents, 500);
-        setTimeout(() => clearInterval(componentInterval), 10000); // Stop after 10 seconds
-    </script>
-    
-    <script type="text/babel">
-        const { useState, useEffect } = React;
-        
-        const App = () => {
-            const [loading, setLoading] = useState(true);
-            const [user, setUser] = useState(null);
-            
-            useEffect(() => {
-                // Wait for Firebase to be available
-                const checkAuth = () => {
-                    if (window.firebaseAuth && window.onAuthStateChanged) {
-                        window.onAuthStateChanged(window.firebaseAuth, (user) => {
-                            setUser(user);
-                            setLoading(false);
-                        });
-                    } else {
-                        setTimeout(checkAuth, 100);
-                    }
-                };
-                
-                checkAuth();
-            }, []);
-            
-            const signInWithGoogle = async () => {
-                try {
-                    const provider = new window.GoogleAuthProvider();
-                    await window.signInWithPopup(window.firebaseAuth, provider);
-                } catch (error) {
-                    console.error('Sign-in error:', error);
-                    // Fallback to main auth page
-                    window.location.href = '/auth.html';
-                }
-            };
-            
-            if (loading) {
-                console.log('App: Still loading, showing loading screen');
-                return (
-                    <div className="loading">
-                        Loading Advanced Website Builder...
-                    </div>
-                );
-            }
-            
-            if (!user) {
-                console.log('App: No user, showing auth screen');
-                return (
-                    <div className="auth-required">
-                        <h1>Advanced Website Builder</h1>
-                        <p>Sign in to create stunning photography websites with our premium builder.</p>
-                        <button onClick={signInWithGoogle} className="auth-btn">
-                            🔐 Sign In with Google
-                        </button>
-                        <p style={{ marginTop: '20px', fontSize: '14px' }}>
-                            Or go to <a href="/auth.html" style={{ color: '#D4AF37' }}>main authentication page</a>
-                        </p>
-                    </div>
-                );
-            }
-            
-            console.log('App: User authenticated, rendering SiteBuilder');
-            return <SiteBuilder />;
-        };
-        
-        // Render the app with React 18 createRoot
-        const root = ReactDOM.createRoot(document.getElementById('siteBuilderRoot'));
-        root.render(<App />);
-    </script>
+    <!-- Block Editor Modal -->
+    <div id="block-editor-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Block</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="block-editor-content">
+                    <!-- Dynamic editor content -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeBlockEditor()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveBlockChanges()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/firebase-config.js"></script>
+    <script src="js/builder-core.js"></script>
+    <script src="js/theme-engine.js"></script>
+    <script src="js/block-library.js"></script>
+    <script src="js/preview-renderer.js"></script>
 </body>
 </html>

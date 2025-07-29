@@ -1,0 +1,101 @@
+// REPLIT MEGA PROMPT: Replace existing website builder with a full Pixieset-style system
+
+/**
+ * Clear out all existing website builder code.
+ * Remove all builder-related buttons, UI, logic, and storage.
+ * We are replacing it with a brand-new clean system.
+ */
+
+// 🔧 Install required dependencies (Replit Nix config or package.json):
+// - express
+// - firebase-admin
+// - ejs or handlebars (for theme rendering)
+// - multer (for profile image upload)
+
+/**
+ * 📦 New Features to Implement:
+ */
+
+/** 1. Website Builder Layout */
+// Build a new UI tab: /advanced-builder.html
+// Full Pixieset-style layout with:
+// - Left panel for site customization settings (font, brand color, theme selector)
+// - Center preview panel with live theme switching
+// - Drag-and-drop block panel for inserting sections
+
+/** 2. Page System */
+// Each website supports:
+// - Home Page
+// - About Me Page
+// - Gallery Page
+// - Contact Page
+// Each with a customizable set of blocks
+
+/** 3. Block Types */
+// Prebuilt customizable sections:
+// - Hero image with heading + subtitle
+// - Full-width image block
+// - Text block (heading/body)
+// - Gallery grid
+// - Testimonial block
+// - Contact form
+// - Button block
+// - Social links block
+
+/** 4. Design System */
+// - Brand Color Picker
+// - Font Style Selector (5-10 curated font combos)
+// - Theme selector (20 prebuilt templates)
+// - Profile image/logo upload
+
+/** 5. Theme Engine */
+// Store templates in Firebase or local JSON
+// Each template includes:
+// - Block layout order
+// - Default block styles
+// - Mobile/responsive design
+// - Animations (fade, slide, zoom)
+
+/** 6. Editor UI */
+// Drag-and-drop reorder of blocks
+// Edit content inline with live preview
+// Block toolbar (duplicate, delete, move up/down)
+
+/** 7. Save and Publish */
+// Save site config to Firestore under each user
+// Publish renders a static HTML file using Firebase Cloud Functions
+// CDN-hosted at /site/{username}
+
+/** 8. Authentication */
+// Restrict editor and publishing to logged-in users
+
+/** 9. Firebase Integration */
+// Storage: uploaded images/profile logo
+// Firestore: user site configs and selected template
+// Hosting: static HTML output from Cloud Functions
+
+/** 10. Admin / Developer Mode */
+// Ability to test templates from dropdown without auth (in dev mode only)
+
+/** 11. Cleanup Instructions */
+// REMOVE ALL:
+// - old "Website Builder" UI elements
+// - publish/save buttons tied to old system
+// - styling from the old builder
+// - live preview and websiteSettings related code
+
+/** 12. Start from Scratch */
+// Folder: /advanced-builder/
+// Files:
+// - index.html (advanced-builder.html route)
+// - editor.js (builder logic)
+// - themes/ (folder with 20 prebuilt templates in JSON or JS)
+// - firebase.js (handles auth, Firestore, Storage)
+// - previewRenderer.js (builds preview blocks)
+
+/** 13. Deployment Command */
+// Standard Firebase deploy with hosting + functions:
+// firebase deploy --only hosting,functions
+
+// This builder must feel premium, polished, and ready for real-world photographers.
+// NO emojis. Clean UI. Think Pixieset-level quality. Let’s go.
