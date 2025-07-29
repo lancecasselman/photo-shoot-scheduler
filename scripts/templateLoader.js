@@ -43,6 +43,61 @@ class TemplateLoader {
                                 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=400&h=300&fit=crop'
                             ]
                         }
+                    },
+                    about: {
+                        hero: {
+                            title: 'About Us',
+                            subtitle: 'Classic Wedding Photography',
+                            background: 'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=1200&h=600&fit=crop'
+                        },
+                        content: {
+                            title: 'Our Story',
+                            text: 'With over a decade of experience in wedding photography, we specialize in capturing the timeless elegance and natural beauty of your special day. Our style combines classic portraiture with candid moments.',
+                            experience: '10+ years capturing weddings',
+                            specialty: 'Classic elegance and timeless beauty'
+                        }
+                    },
+                    portfolio: {
+                        hero: {
+                            title: 'Wedding Portfolio',
+                            subtitle: 'Timeless Memories',
+                            background: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=1200&h=600&fit=crop'
+                        },
+                        galleries: [
+                            {
+                                title: 'Ceremony Moments',
+                                images: [
+                                    'https://images.unsplash.com/photo-1519741497674-611481863552?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=400&h=300&fit=crop'
+                                ]
+                            },
+                            {
+                                title: 'Reception Celebration',
+                                images: [
+                                    'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1522413452208-996ff3f3e740?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=400&h=300&fit=crop'
+                                ]
+                            }
+                        ]
+                    },
+                    contact: {
+                        hero: {
+                            title: 'Get In Touch',
+                            subtitle: 'Let\'s Create Something Beautiful',
+                            background: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=1200&h=600&fit=crop'
+                        },
+                        contact: {
+                            title: 'Contact Information',
+                            email: 'hello@classicelegance.com',
+                            phone: '+1 (555) 123-4567',
+                            address: '123 Photography Lane, Wedding District, NY 10001'
+                        },
+                        form: {
+                            title: 'Wedding Inquiry',
+                            fields: ['name', 'email', 'phone', 'wedding_date', 'venue', 'message']
+                        }
                     }
                 }
             },
