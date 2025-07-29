@@ -217,6 +217,11 @@
         .controls-section {
             padding: 20px;
             border-bottom: 1px solid #404040;
+            display: none; /* Hide all panels by default */
+        }
+        
+        .controls-section.active {
+            display: block; /* Show active panel */
         }
         
         .controls-section h3 {
@@ -452,7 +457,7 @@
             
             <div class="sidebar-section">
                 <h3>Site Settings</h3>
-                <div class="nav-item" data-panel="site-info">
+                <div class="nav-item active" data-panel="site-info">
                     <i>⚙️</i>
                     <span>Site Information</span>
                 </div>
@@ -698,6 +703,10 @@
                 console.log('🎯 Setting up event listeners...');
                 setupEventListeners();
                 
+                // Initialize default panel
+                console.log('🎛️ Initializing default panel...');
+                showPanel('site-info');
+                
                 // Load saved customizations if any
                 console.log('💾 Loading saved customizations...');
                 await loadSavedCustomizations();
@@ -731,15 +740,19 @@
             // Navigation items
             document.querySelectorAll('.nav-item').forEach(item => {
                 item.addEventListener('click', function() {
-                    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-                    this.classList.add('active');
-                    
+                    // Only remove active from items in the same section
                     if (this.dataset.page) {
+                        // Page navigation - remove active from page nav items only
+                        document.querySelectorAll('.nav-item[data-page]').forEach(i => i.classList.remove('active'));
+                        this.classList.add('active');
                         currentPage = this.dataset.page;
                         updatePreview();
                     }
                     
                     if (this.dataset.panel) {
+                        // Panel navigation - remove active from panel nav items only
+                        document.querySelectorAll('.nav-item[data-panel]').forEach(i => i.classList.remove('active'));
+                        this.classList.add('active');
                         showPanel(this.dataset.panel);
                     }
                 });
@@ -1054,8 +1067,23 @@
         }
         
         function showPanel(panelId) {
-            // This would show/hide different control panels
-            // For now, all panels are visible
+            console.log('🎛️ Switching to panel:', panelId);
+            
+            // Hide all panels
+            document.querySelectorAll('.controls-section').forEach(panel => {
+                panel.classList.remove('active');
+                panel.style.display = 'none';
+            });
+            
+            // Show the selected panel
+            const targetPanel = document.getElementById(panelId + '-panel');
+            if (targetPanel) {
+                targetPanel.classList.add('active');
+                targetPanel.style.display = 'block';
+                console.log('✅ Panel activated:', panelId);
+            } else {
+                console.error('❌ Panel not found:', panelId + '-panel');
+            }
         }
         
         async function saveTemplate() {
