@@ -174,6 +174,8 @@
             align-items: flex-start;
             padding: 20px;
             background: #e9e9e9;
+            min-height: 500px;
+            position: relative;
         }
         
         .preview-iframe {
@@ -182,22 +184,27 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             background: white;
             transition: all 0.3s ease;
+            display: block !important;
+            min-height: 500px;
         }
         
         .preview-iframe.desktop {
             width: 100%;
             height: calc(100vh - 140px);
             max-width: 1200px;
+            min-height: 600px;
         }
         
         .preview-iframe.tablet {
             width: 768px;
             height: 1024px;
+            min-height: 600px;
         }
         
         .preview-iframe.mobile {
             width: 375px;
             height: 667px;
+            min-height: 500px;
         }
         
         /* Right Sidebar - Controls */
@@ -476,7 +483,7 @@
             </div>
             
             <div class="preview-frame">
-                <iframe id="preview-iframe" class="preview-iframe desktop" src="about:blank"></iframe>
+                <iframe id="preview-iframe" class="preview-iframe desktop" src="about:blank" style="min-height: 500px;"></iframe>
             </div>
         </div>
         
@@ -794,6 +801,30 @@
                 if (html) {
                     iframe.srcdoc = html;
                     console.log('✅ Preview updated successfully');
+                    
+                    // Additional debugging to check iframe state
+                    setTimeout(() => {
+                        console.log('🔍 Iframe debugging:');
+                        console.log('  - Iframe element exists:', !!iframe);
+                        console.log('  - Iframe display style:', window.getComputedStyle(iframe).display);
+                        console.log('  - Iframe visibility:', window.getComputedStyle(iframe).visibility);
+                        console.log('  - Iframe width:', iframe.offsetWidth);
+                        console.log('  - Iframe height:', iframe.offsetHeight);
+                        console.log('  - Iframe parent display:', window.getComputedStyle(iframe.parentElement).display);
+                        console.log('  - Preview frame height:', iframe.parentElement.offsetHeight);
+                        
+                        // Try to access iframe content to verify it loaded
+                        try {
+                            if (iframe.contentDocument) {
+                                console.log('  - Iframe content loaded:', !!iframe.contentDocument.body);
+                                console.log('  - Iframe body content length:', iframe.contentDocument.body ? iframe.contentDocument.body.innerHTML.length : 0);
+                            } else {
+                                console.log('  - Iframe content document not accessible (might be loading)');
+                            }
+                        } catch (e) {
+                            console.log('  - Iframe content access error:', e.message);
+                        }
+                    }, 500);
                 } else {
                     console.error('❌ Generated HTML is empty');
                     loadTemplatePageFallback(currentPage);
