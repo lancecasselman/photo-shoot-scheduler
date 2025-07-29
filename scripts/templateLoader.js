@@ -212,6 +212,61 @@ class TemplateLoader {
                                 'https://images.unsplash.com/photo-1542038784456-1ea8e8eba4f6?w=400&h=300&fit=crop'
                             ]
                         }
+                    },
+                    about: {
+                        hero: {
+                            title: 'About Elegant Studio',
+                            subtitle: 'Professional Portrait Photography',
+                            background: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=1200&h=600&fit=crop'
+                        },
+                        content: {
+                            title: 'Our Studio Approach',
+                            text: 'We specialize in creating sophisticated, timeless portraits using professional studio lighting and elegant styling. Our approach combines classic techniques with modern aesthetics.',
+                            experience: '12+ years of studio portrait expertise',
+                            specialty: 'Professional headshots, executive portraits, and elegant studio photography'
+                        }
+                    },
+                    portfolio: {
+                        hero: {
+                            title: 'Studio Portfolio',
+                            subtitle: 'Professional Portrait Gallery',
+                            background: 'https://images.unsplash.com/photo-1542038784456-1ea8e8eba4f6?w=1200&h=600&fit=crop'
+                        },
+                        galleries: [
+                            {
+                                title: 'Executive Portraits',
+                                images: [
+                                    'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1542038784456-1ea8e8eba4f6?w=400&h=300&fit=crop'
+                                ]
+                            },
+                            {
+                                title: 'Professional Headshots',
+                                images: [
+                                    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=300&fit=crop'
+                                ]
+                            }
+                        ]
+                    },
+                    contact: {
+                        hero: {
+                            title: 'Get In Touch',
+                            subtitle: 'Book Your Studio Session',
+                            background: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1200&h=600&fit=crop'
+                        },
+                        contact: {
+                            title: 'Studio Information',
+                            email: 'hello@elegantstudio.com',
+                            phone: '+1 (555) 123-4567',
+                            address: 'Professional Studio, 456 Photography Ave, Studio District, NY 10001'
+                        },
+                        form: {
+                            title: 'Portrait Session Inquiry',
+                            fields: ['name', 'email', 'phone', 'session_type', 'preferred_date', 'message']
+                        }
                     }
                 }
             },
@@ -248,6 +303,61 @@ class TemplateLoader {
                                 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=300&fit=crop',
                                 'https://images.unsplash.com/photo-1542038784456-1ea8e8eba4f6?w=400&h=300&fit=crop'
                             ]
+                        }
+                    },
+                    about: {
+                        hero: {
+                            title: 'About Creative Portfolio',
+                            subtitle: 'Bold Commercial Photography',
+                            background: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=1200&h=600&fit=crop'
+                        },
+                        content: {
+                            title: 'Creative Vision',
+                            text: 'We create bold, impactful commercial photography that stands out in today\'s competitive market. Our creative approach combines artistic vision with strategic thinking.',
+                            experience: '9+ years creating commercial campaigns',
+                            specialty: 'Fashion, advertising, product photography, and brand campaigns'
+                        }
+                    },
+                    portfolio: {
+                        hero: {
+                            title: 'Creative Portfolio',
+                            subtitle: 'Commercial Photography Gallery',
+                            background: 'https://images.unsplash.com/photo-1542038784456-1ea8e8eba4f6?w=1200&h=600&fit=crop'
+                        },
+                        galleries: [
+                            {
+                                title: 'Fashion & Editorial',
+                                images: [
+                                    'https://images.unsplash.com/photo-1493612276216-ee3925520721?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1542038784456-1ea8e8eba4f6?w=400&h=300&fit=crop'
+                                ]
+                            },
+                            {
+                                title: 'Commercial Campaigns',
+                                images: [
+                                    'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1492447166138-50c3889fccb1?w=400&h=300&fit=crop'
+                                ]
+                            }
+                        ]
+                    },
+                    contact: {
+                        hero: {
+                            title: 'Get In Touch',
+                            subtitle: 'Ready to Create Something Bold?',
+                            background: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1200&h=600&fit=crop'
+                        },
+                        contact: {
+                            title: 'Contact Information',
+                            email: 'hello@creativeportfolio.com',
+                            phone: '+1 (555) 123-4567',
+                            address: 'Creative Studio, 789 Art District, NY 10001'
+                        },
+                        form: {
+                            title: 'Commercial Project Inquiry',
+                            fields: ['name', 'email', 'phone', 'company', 'project_type', 'budget', 'message']
                         }
                     }
                 }
