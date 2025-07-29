@@ -4,6 +4,7 @@ const SiteBuilder = () => {
     // Multi-page website builder state
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [templatesLoaded, setTemplatesLoaded] = useState(false);
     const [activePage, setActivePage] = useState('home');
     const [sitePages, setSitePages] = useState([
         { id: 'home', name: 'Home', url: '/', active: true },
@@ -144,6 +145,20 @@ const SiteBuilder = () => {
     };
 
 
+
+    // Check if templates are loaded
+    useEffect(() => {
+        const checkTemplates = () => {
+            if (window.PresetTemplates && Object.keys(window.PresetTemplates).length > 0) {
+                console.log('SiteBuilder: Templates loaded successfully:', Object.keys(window.PresetTemplates).length);
+                setTemplatesLoaded(true);
+            } else {
+                console.log('SiteBuilder: Waiting for templates to load...');
+                setTimeout(checkTemplates, 100);
+            }
+        };
+        checkTemplates();
+    }, []);
 
     // Initialize Firebase authentication
     useEffect(() => {

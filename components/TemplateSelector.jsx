@@ -7,6 +7,13 @@ const TemplateSelector = ({ onApplyTemplate, currentTheme }) => {
     const templates = window.PresetTemplates || {};
     const categories = window.TemplateCategories || ['All'];
     
+    // Debug logging
+    React.useEffect(() => {
+        console.log('TemplateSelector: Templates available:', Object.keys(templates).length);
+        console.log('TemplateSelector: Categories available:', categories.length);
+        console.log('TemplateSelector: First template:', Object.keys(templates)[0]);
+    }, [templates, categories]);
+    
     const filteredTemplates = Object.entries(templates).filter(([key, template]) => {
         if (selectedCategory === 'All') return true;
         return template.category === selectedCategory;

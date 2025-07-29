@@ -125,9 +125,31 @@
     <script type="text/babel" src="components/BlockEditor.jsx"></script>
     <script type="text/babel" src="components/PageManager.jsx"></script>
     <script type="text/babel" src="components/TemplateSelector.jsx"></script>
-    <script type="text/babel" src="BlockLibrary.js"></script>
+    <script type="text/babel" src="BlockLibrary.js"></script>  
     <script type="text/babel" src="LivePreview.jsx"></script>
     <script type="text/babel" src="components/SiteBuilder.jsx"></script>
+    
+    <!-- Debug template loading -->
+    <script>
+        window.addEventListener('load', function() {
+            console.log('Templates loaded:', window.PresetTemplates);
+            console.log('Categories loaded:', window.TemplateCategories);
+            console.log('Total templates:', window.PresetTemplates ? Object.keys(window.PresetTemplates).length : 0);
+            
+            // Check all window components
+            console.log('TemplateSelector available:', typeof window.TemplateSelector);
+            console.log('SiteBuilder available:', typeof window.SiteBuilder);
+            console.log('BlockLibrary available:', typeof window.BlockLibrary);
+            console.log('LivePreview available:', typeof window.LivePreview);
+            console.log('PageManager available:', typeof window.PageManager);
+            console.log('BlockEditor available:', typeof window.BlockEditor);
+        });
+        
+        // Better error handling
+        window.addEventListener('error', function(e) {
+            console.error('JavaScript Error:', e.message, e.filename, e.lineno);
+        });
+    </script>
     
     <script type="text/babel">
         const { useState, useEffect } = React;
