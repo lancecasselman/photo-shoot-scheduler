@@ -1,48 +1,60 @@
-// Preview Renderer for Advanced Website Builder
+// Template Preview Renderer
 
 class PreviewRenderer {
     constructor() {
-        this.currentSite = null;
+        this.currentTemplate = null;
         this.currentPage = 'home';
-        this.currentTheme = 'minimal';
-        this.brandColor = '#d4af37';
-        this.fontStyle = 'modern';
     }
     
-    setSiteData(siteData) {
-        this.currentSite = siteData;
-        this.currentTheme = siteData.theme || 'minimal';
-        this.brandColor = siteData.brandColor || '#d4af37';
-        this.fontStyle = siteData.fontStyle || 'modern';
-    }
-    
-    renderPage(pageId = null) {
-        if (!this.currentSite) {
-            return this.renderEmptyState();
+    // Render a template preview directly in the preview iframe
+    renderTemplate(templateId, pageId = 'home') {
+        const template = this.getTemplateDefinition(templateId);
+        if (!template) {
+            console.error('Template not found:', templateId);
+            return;
         }
         
-        const targetPage = pageId || this.currentPage;
-        const page = this.currentSite.pages[targetPage];
+        this.currentTemplate = template;
+        this.currentPage = pageId;
         
-        if (!page) {
-            return this.renderPageNotFound(targetPage);
-        }
+        const html = this.generateHTML(template, pageId);
         
-        return this.generatePageHTML(page, targetPage);
-    }
-    
-    generatePageHTML(page, pageId) {
-        const blocks = page.blocks || [];
-        const blocksHTML = blocks.map(block => {
-            return `
-                <div class="block-container" data-block-id="${block.id}">
-                    ${blockLibrary.renderBlock(block, this.currentTheme, this.brandColor)}
-                </div>
+        // Find preview iframe or create one
+        let iframe = document.getElementById('preview-iframe');
+        if (!iframe) {
+            iframe = document.createElement('iframe');
+            iframe.id = 'preview-iframe';
+            iframe.style.cssText = `
+                width: 100%;
+                height: 600px;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                background: white;
             `;
-        }).join('');
+            
+            // Find a container or append to body
+            const container = document.querySelector('.preview-container') || document.body;
+            container.appendChild(iframe);
+        }
         
-        const themeCSS = themeEngine.generatePreviewCSS(this.currentTheme, this.brandColor);
-        const customCSS = this.generateCustomCSS();
+        // Write HTML to iframe
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+        iframeDoc.open();
+        iframeDoc.write(html);
+        iframeDoc.close();
+        
+        return iframe;
+    }
+    
+    // Generate complete HTML for a template
+    generateHTML(template, pageId = 'home') {
+        const page = template.structure[pageId];
+        if (!page) {
+            return this.generateErrorHTML(`Page "${pageId}" not found`, template);
+        }
+        
+        const colors = template.colors;
+        const fonts = template.fonts;
         
         return `
             <!DOCTYPE html>
@@ -50,387 +62,475 @@ class PreviewRenderer {
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>${page.name} - ${this.currentSite.title}</title>
+                <title>${template.name} - ${pageId}</title>
                 <style>
-                    ${themeCSS}
-                    ${customCSS}
-                    
-                    /* Preview-specific styles */
-                    .block-container {
-                        position: relative;
-                        margin: 20px 0;
-                    }
-                    
-                    .block-container:hover {
-                        outline: 2px dashed #007bff;
-                        outline-offset: 4px;
-                    }
-                    
-                    .block-container:hover::after {
-                        content: 'Click to edit';
-                        position: absolute;
-                        top: -30px;
-                        left: 0;
-                        background: #007bff;
-                        color: white;
-                        padding: 4px 8px;
-                        font-size: 12px;
-                        border-radius: 4px;
-                        z-index: 1000;
-                    }
-                    
-                    .hero-overlay {
-                        position: absolute;
-                        top: 0;
-                        left: 0;
-                        right: 0;
-                        bottom: 0;
-                        z-index: 1;
-                    }
-                    
-                    .hero-content {
-                        position: relative;
-                        z-index: 2;
-                    }
-                    
-                    /* Ensure forms are responsive */
-                    @media (max-width: 768px) {
-                        .two-column-block > div,
-                        .three-column-block > div {
-                            grid-template-columns: 1fr !important;
-                        }
-                        
-                        .contact-form,
-                        .booking-form {
-                            padding: 20px !important;
-                        }
-                        
-                        .newsletter-signup form {
-                            flex-direction: column !important;
-                        }
-                    }
+                    ${this.generateCSS(template, pageId)}
                 </style>
+                <link href="https://fonts.googleapis.com/css2?family=${encodeURIComponent(fonts.heading)}:wght@400;600;700&family=${encodeURIComponent(fonts.body)}:wght@300;400;500&display=swap" rel="stylesheet">
             </head>
             <body>
-                ${this.renderNavigation()}
-                
-                <main class="page-content">
-                    ${blocksHTML || this.renderEmptyPageContent(pageId)}
-                </main>
-                
-                ${this.renderFooter()}
-                
-                <script>
-                    // Preview interaction handlers
-                    document.addEventListener('click', function(e) {
-                        const blockContainer = e.target.closest('.block-container');
-                        if (blockContainer) {
-                            e.preventDefault();
-                            const blockId = blockContainer.dataset.blockId;
-                            if (blockId && window.parent && window.parent.builder) {
-                                window.parent.builder.openBlockEditor(blockId);
-                            }
-                        }
-                    });
-                    
-                    // Prevent form submissions in preview
-                    document.addEventListener('submit', function(e) {
-                        e.preventDefault();
-                        alert('Form submission is disabled in preview mode');
-                    });
-                </script>
+                ${this.generateNavigation(template)}
+                ${this.generateHeroSection(page, template)}
+                ${this.generateContentSections(page, template)}
+                ${this.generateFooter(template)}
             </body>
             </html>
         `;
     }
     
-    renderNavigation() {
-        if (!this.currentSite || !this.currentSite.pages) {
-            return '';
-        }
-        
-        const pages = Object.keys(this.currentSite.pages)
-            .filter(pageId => this.currentSite.pages[pageId].active)
-            .map(pageId => {
-                const page = this.currentSite.pages[pageId];
-                const isActive = pageId === this.currentPage;
-                return `
-                    <li>
-                        <a href="#${pageId}" 
-                           class="nav-link ${isActive ? 'active' : ''}"
-                           onclick="switchPreviewPage('${pageId}')">
-                            ${page.name}
-                        </a>
-                    </li>
-                `;
-            }).join('');
+    generateCSS(template, pageId) {
+        const colors = template.colors;
+        const fonts = template.fonts;
         
         return `
-            <nav class="main-navigation" style="background: var(--background-color); border-bottom: 1px solid #e1e5e9; padding: 15px 0; position: sticky; top: 0; z-index: 100;">
-                <div class="container">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div class="logo">
-                            <h2 style="margin: 0; color: var(--primary-color);">${this.currentSite.title}</h2>
-                        </div>
-                        <ul style="display: flex; list-style: none; margin: 0; padding: 0; gap: 30px;">
-                            ${pages}
-                        </ul>
-                    </div>
-                </div>
-            </nav>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
             
-            <style>
-                .nav-link {
-                    text-decoration: none;
-                    color: var(--text-color);
-                    font-weight: 500;
-                    padding: 8px 0;
-                    border-bottom: 2px solid transparent;
-                    transition: all 0.3s ease;
-                }
-                
-                .nav-link:hover,
-                .nav-link.active {
-                    color: var(--primary-color);
-                    border-bottom-color: var(--primary-color);
-                }
-                
-                @media (max-width: 768px) {
-                    .main-navigation .container > div {
-                        flex-direction: column;
-                        gap: 15px;
-                    }
-                    
-                    .main-navigation ul {
-                        flex-wrap: wrap;
-                        justify-content: center;
-                        gap: 20px;
-                    }
-                }
-            </style>
+            body {
+                font-family: '${fonts.body}', sans-serif;
+                line-height: 1.6;
+                color: ${colors.text};
+                background: ${colors.accent || '#ffffff'};
+            }
+            
+            h1, h2, h3, h4, h5, h6 {
+                font-family: '${fonts.heading}', serif;
+                color: ${colors.primary};
+            }
+            
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 0 20px;
+            }
+            
+            .navigation {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                background: rgba(0,0,0,0.9);
+                backdrop-filter: blur(10px);
+                padding: 15px 0;
+                text-align: center;
+                z-index: 1000;
+            }
+            
+            .navigation a {
+                color: white;
+                text-decoration: none;
+                margin: 0 20px;
+                font-weight: 500;
+                transition: color 0.3s ease;
+            }
+            
+            .navigation a:hover {
+                color: ${colors.primary};
+            }
+            
+            .hero {
+                background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('HERO_BACKGROUND');
+                background-size: cover;
+                background-position: center;
+                background-attachment: fixed;
+                height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+                color: white;
+                position: relative;
+            }
+            
+            .hero h1 {
+                font-size: 4rem;
+                margin-bottom: 20px;
+                color: white;
+                text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+            }
+            
+            .hero p {
+                font-size: 1.5rem;
+                margin-bottom: 30px;
+                text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+                max-width: 600px;
+            }
+            
+            .btn {
+                display: inline-block;
+                padding: 15px 30px;
+                background: ${colors.primary};
+                color: white;
+                text-decoration: none;
+                border-radius: 5px;
+                font-weight: 600;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            }
+            
+            .btn:hover {
+                background: ${colors.secondary};
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            }
+            
+            .section {
+                padding: 80px 0;
+                margin-top: ${pageId === 'home' ? '0' : '60px'};
+            }
+            
+            .section h2 {
+                font-size: 2.5rem;
+                text-align: center;
+                margin-bottom: 50px;
+                color: ${colors.primary};
+            }
+            
+            .content-box {
+                background: white;
+                border-radius: 15px;
+                padding: 50px;
+                margin: 40px 0;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            }
+            
+            .gallery {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 20px;
+                margin-top: 40px;
+            }
+            
+            .gallery img {
+                width: 100%;
+                height: 250px;
+                object-fit: cover;
+                border-radius: 12px;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            }
+            
+            .gallery img:hover {
+                transform: scale(1.05);
+                box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            }
+            
+            .footer {
+                background: linear-gradient(135deg, ${colors.primary}, ${colors.secondary});
+                color: white;
+                padding: 60px 0;
+                text-align: center;
+            }
+            
+            .footer h2 {
+                color: white;
+                margin-bottom: 20px;
+            }
+            
+            .contact-info {
+                display: flex;
+                justify-content: center;
+                gap: 40px;
+                margin-top: 30px;
+                flex-wrap: wrap;
+            }
+            
+            .contact-item {
+                text-align: center;
+            }
+            
+            .contact-item a {
+                color: white;
+                text-decoration: none;
+                font-weight: 500;
+            }
+            
+            .contact-item a:hover {
+                text-decoration: underline;
+            }
+            
+            @media (max-width: 768px) {
+                .hero h1 { font-size: 2.5rem; }
+                .hero p { font-size: 1.2rem; }
+                .section { padding: 50px 0; }
+                .content-box { padding: 30px 20px; margin: 20px 0; }
+                .navigation { position: relative; }
+                .contact-info { flex-direction: column; gap: 20px; }
+            }
         `;
     }
     
-    renderFooter() {
-        const currentYear = new Date().getFullYear();
-        const contactInfo = this.currentSite?.settings?.contact || {};
+    generateNavigation(template) {
+        const pages = Object.keys(template.structure);
+        if (pages.length <= 1) return '';
+        
+        const pageNames = {
+            'home': 'Home',
+            'about': 'About',
+            'portfolio': 'Portfolio',
+            'contact': 'Contact'
+        };
+        
+        const navItems = pages.map(page => {
+            const name = pageNames[page] || page.charAt(0).toUpperCase() + page.slice(1);
+            return `<a href="#${page}">${name}</a>`;
+        }).join('');
         
         return `
-            <footer style="background: var(--secondary-color); padding: 50px 0 30px 0; margin-top: 80px; border-top: 1px solid #e1e5e9;">
+            <nav class="navigation">
+                ${navItems}
+            </nav>
+        `;
+    }
+    
+    generateHeroSection(page, template) {
+        const hero = page.hero;
+        if (!hero) return '';
+        
+        return `
+            <section class="hero" style="background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('${hero.background}');">
                 <div class="container">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 40px; margin-bottom: 30px;">
-                        <div>
-                            <h3 style="color: var(--primary-color); margin-bottom: 20px;">${this.currentSite?.title || 'Photography Studio'}</h3>
-                            <p style="color: #666; line-height: 1.6;">
-                                Professional photography services capturing life's most precious moments with artistic vision and technical excellence.
-                            </p>
+                    <h1>${hero.title}</h1>
+                    <p>${hero.subtitle}</p>
+                    <a href="#content" class="btn">Explore</a>
+                </div>
+            </section>
+        `;
+    }
+    
+    generateContentSections(page, template) {
+        let content = '';
+        
+        // About section
+        if (page.about) {
+            content += `
+                <section class="section" id="content">
+                    <div class="container">
+                        <div class="content-box">
+                            <h2>${page.about.title}</h2>
+                            <p style="text-align: center; font-size: 1.2rem; line-height: 1.8;">${page.about.content}</p>
                         </div>
-                        
-                        <div>
-                            <h4 style="color: var(--primary-color); margin-bottom: 15px;">Services</h4>
-                            <ul style="list-style: none; padding: 0;">
-                                <li style="margin-bottom: 8px;"><a href="#" style="color: #666; text-decoration: none;">Portrait Photography</a></li>
-                                <li style="margin-bottom: 8px;"><a href="#" style="color: #666; text-decoration: none;">Wedding Photography</a></li>
-                                <li style="margin-bottom: 8px;"><a href="#" style="color: #666; text-decoration: none;">Event Photography</a></li>
-                                <li style="margin-bottom: 8px;"><a href="#" style="color: #666; text-decoration: none;">Commercial Work</a></li>
-                            </ul>
+                    </div>
+                </section>
+            `;
+        }
+        
+        // Content sections (for about/contact pages)
+        if (page.content) {
+            content += `
+                <section class="section">
+                    <div class="container">
+                        <div class="content-box">
+                            ${page.content.story ? `
+                                <h2>Our Story</h2>
+                                <p style="font-size: 1.1rem; line-height: 1.8; margin-bottom: 30px;">${page.content.story}</p>
+                            ` : ''}
+                            ${page.content.mission ? `
+                                <h2>Our Mission</h2>
+                                <p style="font-size: 1.1rem; line-height: 1.8;">${page.content.mission}</p>
+                            ` : ''}
                         </div>
-                        
-                        <div>
-                            <h4 style="color: var(--primary-color); margin-bottom: 15px;">Contact Info</h4>
-                            <div style="color: #666;">
-                                ${contactInfo.email ? `<p style="margin-bottom: 8px;">Email: <a href="mailto:${contactInfo.email}" style="color: var(--primary-color);">${contactInfo.email}</a></p>` : ''}
-                                ${contactInfo.phone ? `<p style="margin-bottom: 8px;">Phone: <a href="tel:${contactInfo.phone}" style="color: var(--primary-color);">${contactInfo.phone}</a></p>` : ''}
-                                ${contactInfo.address ? `<p style="margin-bottom: 8px;">Address: ${contactInfo.address}</p>` : ''}
+                    </div>
+                </section>
+            `;
+        }
+        
+        // Gallery section
+        if (page.gallery) {
+            content += `
+                <section class="section" id="portfolio">
+                    <div class="container">
+                        <h2>${page.gallery.title}</h2>
+                        <div class="gallery">
+                            ${page.gallery.images.map(img => `<img src="${img}" alt="Portfolio image" loading="lazy">`).join('')}
+                        </div>
+                    </div>
+                </section>
+            `;
+        }
+        
+        // Multiple galleries (for portfolio pages)
+        if (page.galleries) {
+            page.galleries.forEach(gallery => {
+                content += `
+                    <section class="section">
+                        <div class="container">
+                            <h2>${gallery.title}</h2>
+                            <div class="gallery">
+                                ${gallery.images.map(img => `<img src="${img}" alt="${gallery.title}" loading="lazy">`).join('')}
+                            </div>
+                        </div>
+                    </section>
+                `;
+            });
+        }
+        
+        // Contact info (for contact pages)
+        if (page.info) {
+            content += `
+                <section class="section">
+                    <div class="container">
+                        <div class="content-box">
+                            <h2>Contact Information</h2>
+                            <div class="contact-info">
+                                <div class="contact-item">
+                                    <h3>Email</h3>
+                                    <a href="mailto:${page.info.email}">${page.info.email}</a>
+                                </div>
+                                <div class="contact-item">
+                                    <h3>Phone</h3>
+                                    <a href="tel:${page.info.phone}">${page.info.phone}</a>
+                                </div>
+                                <div class="contact-item">
+                                    <h3>Location</h3>
+                                    <p>${page.info.location}</p>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    
-                    <div style="border-top: 1px solid #e1e5e9; padding-top: 20px; text-align: center; color: #666;">
-                        <p>&copy; ${currentYear} ${this.currentSite?.title || 'Photography Studio'}. All rights reserved.</p>
-                    </div>
+                </section>
+            `;
+        }
+        
+        return content;
+    }
+    
+    generateFooter(template) {
+        return `
+            <footer class="footer">
+                <div class="container">
+                    <h2>Ready to Get Started?</h2>
+                    <p>Contact us today to discuss your photography needs</p>
+                    <a href="mailto:contact@example.com" class="btn" style="background: white; color: ${template.colors.primary}; margin-top: 20px;">Get In Touch</a>
                 </div>
             </footer>
         `;
     }
     
-    renderEmptyState() {
+    generateErrorHTML(message, template) {
         return `
             <!DOCTYPE html>
             <html lang="en">
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Website Builder Preview</title>
+                <title>Preview Error</title>
                 <style>
                     body {
-                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                        font-family: Arial, sans-serif;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        height: 100vh;
                         margin: 0;
-                        padding: 80px 20px;
+                        background: #f5f5f5;
+                    }
+                    .error-container {
                         text-align: center;
-                        background: #f8f9fa;
-                        color: #333;
-                    }
-                    .empty-state {
-                        max-width: 500px;
-                        margin: 0 auto;
-                    }
-                    .empty-state h2 {
-                        color: #666;
-                        font-size: 24px;
-                        margin-bottom: 15px;
-                    }
-                    .empty-state p {
-                        color: #888;
-                        font-size: 16px;
-                        line-height: 1.6;
+                        padding: 40px;
+                        background: white;
+                        border-radius: 10px;
+                        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
                     }
                 </style>
             </head>
             <body>
-                <div class="empty-state">
-                    <h2>Start Building Your Website</h2>
-                    <p>Add content blocks from the right panel to begin creating your professional photography website.</p>
+                <div class="error-container">
+                    <h2>Preview Error</h2>
+                    <p>${message}</p>
+                    ${template ? `<p>Template: ${template.name}</p>` : ''}
+                    <p>Available pages: ${template ? Object.keys(template.structure).join(', ') : 'None'}</p>
                 </div>
             </body>
             </html>
         `;
     }
     
-    renderPageNotFound(pageId) {
-        return `
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Page Not Found</title>
-                <style>
-                    body {
-                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                        margin: 0;
-                        padding: 80px 20px;
-                        text-align: center;
-                        background: #f8f9fa;
-                        color: #333;
+    // Get template definition with all content
+    getTemplateDefinition(templateId) {
+        // This would normally come from templateLoader, but let's define a few here for testing
+        const templates = {
+            'classic-elegance': {
+                id: 'classic-elegance',
+                name: 'Classic Elegance',
+                category: 'wedding',
+                colors: {
+                    primary: '#d4af37',
+                    secondary: '#f4e5c1',
+                    accent: '#faf7f0',
+                    text: '#2c2c2c'
+                },
+                fonts: {
+                    heading: 'Playfair Display',
+                    body: 'Crimson Text'
+                },
+                structure: {
+                    home: {
+                        hero: {
+                            title: 'Classic Elegance',
+                            subtitle: 'Timeless Wedding Photography',
+                            background: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200&h=600&fit=crop'
+                        },
+                        about: {
+                            title: 'Our Story',
+                            content: 'With a passion for capturing timeless elegance and authentic moments, we create photographs that tell your unique love story with classic sophistication.'
+                        },
+                        gallery: {
+                            title: 'Wedding Gallery',
+                            images: [
+                                'https://images.unsplash.com/photo-1519741497674-611481863552?w=400&h=300&fit=crop',
+                                'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=400&h=300&fit=crop',
+                                'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=400&h=300&fit=crop'
+                            ]
+                        }
                     }
-                    .error-state {
-                        max-width: 500px;
-                        margin: 0 auto;
+                }
+            },
+            'modern-minimalist': {
+                id: 'modern-minimalist',
+                name: 'Modern Minimalist',
+                category: 'portrait',
+                colors: {
+                    primary: '#2c3e50',
+                    secondary: '#34495e',
+                    accent: '#ecf0f1',
+                    text: '#2c3e50'
+                },
+                fonts: {
+                    heading: 'Inter',
+                    body: 'Inter'
+                },
+                structure: {
+                    home: {
+                        hero: {
+                            title: 'Modern Minimalist',
+                            subtitle: 'Clean. Contemporary. Timeless.',
+                            background: 'https://images.unsplash.com/photo-1542038784456-1ea8e8eba4f6?w=1200&h=600&fit=crop'
+                        },
+                        about: {
+                            title: 'Minimalist Approach',
+                            content: 'Clean, contemporary portrait photography that focuses on authentic moments and genuine expressions with modern simplicity.'
+                        },
+                        gallery: {
+                            title: 'Portrait Gallery',
+                            images: [
+                                'https://images.unsplash.com/photo-1542038784456-1ea8e8eba4f6?w=400&h=300&fit=crop',
+                                'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=300&fit=crop',
+                                'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&h=300&fit=crop'
+                            ]
+                        }
                     }
-                </style>
-            </head>
-            <body>
-                <div class="error-state">
-                    <h2>Page "${pageId}" not found</h2>
-                    <p>This page doesn't exist or has been removed.</p>
-                </div>
-            </body>
-            </html>
-        `;
-    }
-    
-    renderEmptyPageContent(pageId) {
-        return `
-            <div style="text-align: center; padding: 80px 20px; color: #666;">
-                <h3>This page is empty</h3>
-                <p>Add content blocks to start building your ${pageId} page.</p>
-            </div>
-        `;
-    }
-    
-    generateCustomCSS() {
-        // Generate custom CSS based on site settings
-        const fontFamilies = {
-            modern: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-            classic: 'Georgia, "Times New Roman", serif',
-            elegant: '"Playfair Display", Georgia, serif',
-            minimal: '"Helvetica Neue", Arial, sans-serif',
-            bold: '"Oswald", "Arial Black", sans-serif'
+                }
+            }
         };
         
-        return `
-            /* Custom site-specific styles */
-            :root {
-                --site-font: ${fontFamilies[this.fontStyle] || fontFamilies.modern};
-            }
-            
-            body {
-                font-family: var(--site-font) !important;
-            }
-            
-            h1, h2, h3, h4, h5, h6 {
-                font-family: var(--site-font) !important;
-            }
-            
-            /* Custom animations */
-            .block-container {
-                animation: fadeInUp 0.6s ease-out;
-            }
-            
-            @keyframes fadeInUp {
-                from {
-                    opacity: 0;
-                    transform: translateY(30px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-            
-            /* Hover effects */
-            .gallery img:hover,
-            .card:hover {
-                transform: translateY(-5px) scale(1.02);
-                transition: transform 0.3s ease;
-            }
-            
-            /* Button animations */
-            .btn {
-                position: relative;
-                overflow: hidden;
-            }
-            
-            .btn::before {
-                content: '';
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                width: 0;
-                height: 0;
-                background: rgba(255,255,255,0.3);
-                border-radius: 50%;
-                transition: all 0.3s ease;
-                transform: translate(-50%, -50%);
-            }
-            
-            .btn:hover::before {
-                width: 100%;
-                height: 100%;
-            }
-        `;
-    }
-    
-    updatePreviewFrame(iframe) {
-        if (!iframe) return;
-        
-        const content = this.renderPage();
-        iframe.srcdoc = content;
-    }
-    
-    switchPage(pageId) {
-        this.currentPage = pageId;
-        return this.renderPage(pageId);
+        return templates[templateId] || null;
     }
 }
 
-// Create global instance
-const previewRenderer = new PreviewRenderer();
+// Initialize the preview renderer
+window.previewRenderer = new PreviewRenderer();
 
-// Global function for page switching in preview
-window.switchPreviewPage = function(pageId) {
-    if (window.parent && window.parent.builder) {
-        window.parent.builder.switchPage(pageId);
-    }
-};
+// Export for use in other scripts
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = PreviewRenderer;
+}
