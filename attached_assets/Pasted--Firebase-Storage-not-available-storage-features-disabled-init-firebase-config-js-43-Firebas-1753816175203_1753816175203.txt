@@ -1,0 +1,135 @@
+  Firebase Storage not available - storage features disabled
+init @ firebase-config.js:43
+ Firebase services initialized successfully
+ 🚀 Editor script loading...
+ 📋 Template from URL: elegant-studio
+ 📱 DOM Content Loaded
+ User authenticated: lancecasselman2011@gmail.com
+firebase-config.js:116 No existing site found
+editor.html?template=elegant-studio:634 ✅ firebase loaded: true
+editor.html?template=elegant-studio:634 ✅ templateLoader loaded: true
+editor.html?template=elegant-studio:634 ✅ editorUI loaded: true
+editor.html?template=elegant-studio:637 🎯 All dependencies loaded, initializing editor...
+editor.html?template=elegant-studio:655 🔧 Initializing editor...
+editor.html?template=elegant-studio:1145 ⏳ Loading overlay: show Loading...
+editor.html?template=elegant-studio:667 🔍 Loading template: elegant-studio
+editor.html?template=elegant-studio:677 📄 Template loaded: Elegant Studio
+editor.html?template=elegant-studio:688 ✅ Template name updated in UI
+editor.html?template=elegant-studio:694 🖼️ Updating preview...
+editor.html?template=elegant-studio:764 🖼️ Updating preview for page: home
+editor.html?template=elegant-studio:774 ⚙️ Current customizations: Object
+editor.html?template=elegant-studio:778 ✨ Applied customizations to template
+editor.html?template=elegant-studio:790 🏗️ Generating HTML for page: home
+editor.html?template=elegant-studio:792 📄 Generated HTML length: 8632
+editor.html?template=elegant-studio:802 🔧 Setting iframe content...
+editor.html?template=elegant-studio:803 📝 HTML preview (first 200 chars): 
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0
+editor.html?template=elegant-studio:809 ✅ srcdoc method attempted
+editor.html?template=elegant-studio:842 ✅ Preview updated successfully
+editor.html?template=elegant-studio:698 🎯 Setting up event listeners...
+editor.html?template=elegant-studio:702 💾 Loading saved customizations...
+editor.html?template=elegant-studio:1145 ⏳ Loading overlay: hide Loading...
+editor.html?template=elegant-studio:706 ✅ Editor loaded with template: Elegant Studio
+editor.html:1 [Intervention] Images loaded lazily and replaced with placeholders. Load events are deferred. See https://go.microsoft.com/fwlink/?linkid=2048113
+editor.html?template=elegant-studio:764 🖼️ Updating preview for page: about
+editor.html?template=elegant-studio:774 ⚙️ Current customizations: Object
+editor.html?template=elegant-studio:778 ✨ Applied customizations to template
+editor.html?template=elegant-studio:790 🏗️ Generating HTML for page: about
+editor.html?template=elegant-studio:792 📄 Generated HTML length: 246
+editor.html?template=elegant-studio:802 🔧 Setting iframe content...
+editor.html?template=elegant-studio:803 📝 HTML preview (first 200 chars): <div style="padding: 50px; text-align: center; font-family: Arial, sans-serif;">
+                        <h2>Page "about" not found for template "Elegant Studio"</h2>
+                        <p>Availa
+editor.html?template=elegant-studio:809 ✅ srcdoc method attempted
+editor.html?template=elegant-studio:842 ✅ Preview updated successfully
+editor.html?template=elegant-studio:846 🔍 Iframe debugging:
+editor.html?template=elegant-studio:847   - Iframe element exists: true
+editor.html?template=elegant-studio:848   - Iframe display style: block
+editor.html?template=elegant-studio:849   - Iframe visibility: visible
+editor.html?template=elegant-studio:850   - Iframe width: 1200
+editor.html?template=elegant-studio:851   - Iframe height: 814
+editor.html?template=elegant-studio:852   - Iframe parent display: flex
+editor.html?template=elegant-studio:853   - Preview frame height: 889
+editor.html?template=elegant-studio:854   - Iframe src: about:blank
+editor.html?template=elegant-studio:855   - Iframe srcdoc length: 246
+editor.html?template=elegant-studio:861   - Iframe content loaded: true
+editor.html?template=elegant-studio:862   - Iframe body content length: 246
+editor.html?template=elegant-studio:863   - Iframe document ready state: complete
+editor.html?template=elegant-studio:865   - First 100 chars of body: <div style="padding: 50px; text-align: center; font-family: Arial, sans-serif;">
+                   
+editor.html?template=elegant-studio:764 🖼️ Updating preview for page: portfolio
+editor.html?template=elegant-studio:774 ⚙️ Current customizations: Object
+editor.html?template=elegant-studio:778 ✨ Applied customizations to template
+editor.html?template=elegant-studio:790 🏗️ Generating HTML for page: portfolio
+editor.html?template=elegant-studio:792 📄 Generated HTML length: 250
+editor.html?template=elegant-studio:802 🔧 Setting iframe content...
+editor.html?template=elegant-studio:803 📝 HTML preview (first 200 chars): <div style="padding: 50px; text-align: center; font-family: Arial, sans-serif;">
+                        <h2>Page "portfolio" not found for template "Elegant Studio"</h2>
+                        <p>Av
+editor.html?template=elegant-studio:809 ✅ srcdoc method attempted
+editor.html?template=elegant-studio:842 ✅ Preview updated successfully
+editor.html?template=elegant-studio:846 🔍 Iframe debugging:
+editor.html?template=elegant-studio:847   - Iframe element exists: true
+editor.html?template=elegant-studio:848   - Iframe display style: block
+editor.html?template=elegant-studio:849   - Iframe visibility: visible
+editor.html?template=elegant-studio:850   - Iframe width: 1200
+editor.html?template=elegant-studio:851   - Iframe height: 814
+editor.html?template=elegant-studio:852   - Iframe parent display: flex
+editor.html?template=elegant-studio:853   - Preview frame height: 889
+editor.html?template=elegant-studio:854   - Iframe src: about:blank
+editor.html?template=elegant-studio:855   - Iframe srcdoc length: 250
+editor.html?template=elegant-studio:861   - Iframe content loaded: true
+editor.html?template=elegant-studio:862   - Iframe body content length: 250
+editor.html?template=elegant-studio:863   - Iframe document ready state: complete
+editor.html?template=elegant-studio:865   - First 100 chars of body: <div style="padding: 50px; text-align: center; font-family: Arial, sans-serif;">
+                   
+editor.html?template=elegant-studio:846 🔍 Iframe debugging:
+editor.html?template=elegant-studio:847   - Iframe element exists: true
+editor.html?template=elegant-studio:848   - Iframe display style: block
+editor.html?template=elegant-studio:849   - Iframe visibility: visible
+editor.html?template=elegant-studio:850   - Iframe width: 1200
+editor.html?template=elegant-studio:851   - Iframe height: 814
+editor.html?template=elegant-studio:852   - Iframe parent display: flex
+editor.html?template=elegant-studio:853   - Preview frame height: 889
+editor.html?template=elegant-studio:854   - Iframe src: about:blank
+editor.html?template=elegant-studio:855   - Iframe srcdoc length: 250
+editor.html?template=elegant-studio:861   - Iframe content loaded: true
+editor.html?template=elegant-studio:862   - Iframe body content length: 250
+editor.html?template=elegant-studio:863   - Iframe document ready state: complete
+editor.html?template=elegant-studio:865   - First 100 chars of body: <div style="padding: 50px; text-align: center; font-family: Arial, sans-serif;">
+                   
+editor.html?template=elegant-studio:764 🖼️ Updating preview for page: contact
+editor.html?template=elegant-studio:774 ⚙️ Current customizations: Object
+editor.html?template=elegant-studio:778 ✨ Applied customizations to template
+editor.html?template=elegant-studio:790 🏗️ Generating HTML for page: contact
+editor.html?template=elegant-studio:792 📄 Generated HTML length: 248
+editor.html?template=elegant-studio:802 🔧 Setting iframe content...
+editor.html?template=elegant-studio:803 📝 HTML preview (first 200 chars): <div style="padding: 50px; text-align: center; font-family: Arial, sans-serif;">
+                        <h2>Page "contact" not found for template "Elegant Studio"</h2>
+                        <p>Avai
+editor.html?template=elegant-studio:809 ✅ srcdoc method attempted
+editor.html?template=elegant-studio:842 ✅ Preview updated successfully
+editor.html?template=elegant-studio:846 🔍 Iframe debugging:
+editor.html?template=elegant-studio:847   - Iframe element exists: true
+editor.html?template=elegant-studio:848   - Iframe display style: block
+editor.html?template=elegant-studio:849   - Iframe visibility: visible
+editor.html?template=elegant-studio:850   - Iframe width: 1200
+editor.html?template=elegant-studio:851   - Iframe height: 814
+editor.html?template=elegant-studio:852   - Iframe parent display: flex
+editor.html?template=elegant-studio:853   - Preview frame height: 889
+editor.html?template=elegant-studio:854   - Iframe src: about:blank
+editor.html?template=elegant-studio:855   - Iframe srcdoc length: 248
+editor.html?template=elegant-studio:861   - Iframe content loaded: true
+editor.html?template=elegant-studio:862   - Iframe body content length: 248
+editor.html?template=elegant-studio:863   - Iframe document ready state: complete
+editor.html?template=elegant-studio:865   - First 100 chars of body: <div style="padding: 50px; text-align: center; font-family: Arial, sans-serif;">
+                   
+[NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
+        Don't show again

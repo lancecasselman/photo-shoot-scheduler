@@ -308,6 +308,61 @@ class TemplateLoader {
                                 'https://images.unsplash.com/photo-1542038784456-1ea8e8eba4f6?w=400&h=300&fit=crop'
                             ]
                         }
+                    },
+                    about: {
+                        hero: {
+                            title: 'About Our Studio',
+                            subtitle: 'Bold Commercial Photography',
+                            background: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=1200&h=600&fit=crop'
+                        },
+                        content: {
+                            title: 'Our Story',
+                            text: 'We specialize in creating bold, high-impact commercial photography that makes your brand stand out. Our unique style combines dramatic lighting with striking compositions.',
+                            experience: '8+ years of commercial photography experience',
+                            specialty: 'Fashion, commercial, and editorial photography'
+                        }
+                    },
+                    portfolio: {
+                        hero: {
+                            title: 'Portfolio',
+                            subtitle: 'Bold Commercial Work',
+                            background: 'https://images.unsplash.com/photo-1542038784456-1ea8e8eba4f6?w=1200&h=600&fit=crop'
+                        },
+                        galleries: [
+                            {
+                                title: 'Fashion Photography',
+                                images: [
+                                    'https://images.unsplash.com/photo-1493612276216-ee3925520721?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1542038784456-1ea8e8eba4f6?w=400&h=300&fit=crop'
+                                ]
+                            },
+                            {
+                                title: 'Commercial Work',
+                                images: [
+                                    'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1492447166138-50c3889fccb1?w=400&h=300&fit=crop'
+                                ]
+                            }
+                        ]
+                    },
+                    contact: {
+                        hero: {
+                            title: 'Get In Touch',
+                            subtitle: 'Ready For Bold Photography?',
+                            background: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1200&h=600&fit=crop'
+                        },
+                        contact: {
+                            title: 'Contact Information',
+                            email: 'hello@boldphotography.com',
+                            phone: '+1 (555) 123-4567',
+                            address: '123 Studio Street, Creative District, NY 10001'
+                        },
+                        form: {
+                            title: 'Project Inquiry',
+                            fields: ['name', 'email', 'phone', 'project_type', 'message']
+                        }
                     }
                 }
             },
