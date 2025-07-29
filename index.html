@@ -8488,7 +8488,7 @@ ${name}`;
 
         <!-- Website Builder Tab Content -->
         <div id="websitesTab" class="tab-content">
-            <div class="website-builder-container">
+            <div class="website-builder-container" id="react-site-builder">
                 <!-- Advanced React Website Builder will be mounted here -->
                 <div class="loading" style="text-align: center; padding: 40px;">
                     <h2>🎨 Loading Advanced Website Builder...</h2>
@@ -8624,7 +8624,7 @@ ${name}`;
                     typeof window.TemplateSelector !== 'undefined') {
                     
                     console.log('All components loaded, initializing React SiteBuilder...');
-                    const container = document.querySelector('.website-builder-container');
+                    const container = document.getElementById('react-site-builder');
                     console.log('Container found:', container);
                     
                     if (container) {
