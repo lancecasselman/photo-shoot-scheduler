@@ -36,7 +36,13 @@ class FirebaseService {
             if (typeof firebase !== 'undefined' && firebase.apps.length > 0) {
                 this.auth = firebase.auth();
                 this.firestore = firebase.firestore();
-                this.storage = firebase.storage();
+                // Check if storage is available
+                if (firebase.storage) {
+                    this.storage = firebase.storage();
+                } else {
+                    console.warn('Firebase Storage not available - storage features disabled');
+                    this.storage = null;
+                }
                 
                 // Listen for auth state changes
                 this.auth.onAuthStateChanged((user) => {

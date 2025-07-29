@@ -447,7 +447,7 @@ class PreviewRenderer {
     
     // Get template definition with all content
     getTemplateDefinition(templateId) {
-        // This would normally come from templateLoader, but let's define a few here for testing
+        // Complete template definitions with all 10 templates
         const templates = {
             'classic-elegance': {
                 id: 'classic-elegance',
@@ -516,6 +516,294 @@ class PreviewRenderer {
                                 'https://images.unsplash.com/photo-1542038784456-1ea8e8eba4f6?w=400&h=300&fit=crop',
                                 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=300&fit=crop',
                                 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&h=300&fit=crop'
+                            ]
+                        }
+                    }
+                }
+            },
+            'vintage-charm': {
+                id: 'vintage-charm',
+                name: 'Vintage Charm',
+                category: 'wedding',
+                colors: {
+                    primary: '#8B7355',
+                    secondary: '#D4AF37',
+                    accent: '#F5E6D3',
+                    text: '#3C2E26'
+                },
+                fonts: {
+                    heading: 'Merriweather',
+                    body: 'Libre Baskerville'
+                },
+                structure: {
+                    home: {
+                        hero: {
+                            title: 'Vintage Romance',
+                            subtitle: 'Timeless Wedding Photography',
+                            background: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=1200&h=600&fit=crop'
+                        },
+                        about: {
+                            title: 'Our Story',
+                            content: 'With a passion for capturing vintage elegance and timeless romance, we create heirloom-quality photographs that tell your unique love story.'
+                        },
+                        gallery: {
+                            title: 'Wedding Gallery',
+                            images: [
+                                'https://images.unsplash.com/photo-1519741497674-611481863552?w=400&h=300&fit=crop',
+                                'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=400&h=300&fit=crop',
+                                'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=400&h=300&fit=crop'
+                            ]
+                        }
+                    }
+                }
+            },
+            'romantic-moments': {
+                id: 'romantic-moments',
+                name: 'Romantic Moments',
+                category: 'wedding',
+                colors: {
+                    primary: '#ffeaa7',
+                    secondary: '#fab1a0',
+                    accent: '#ffeaa7',
+                    text: '#2d3436'
+                },
+                fonts: {
+                    heading: 'Playfair Display',
+                    body: 'Crimson Text'
+                },
+                structure: {
+                    home: {
+                        hero: {
+                            title: 'Romantic Moments',
+                            subtitle: 'Intimate Wedding Photography',
+                            background: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200&h=600&fit=crop'
+                        },
+                        about: {
+                            title: 'Love Stories',
+                            content: 'Capturing the intimate, tender moments that make your love story unique with a soft, romantic touch.'
+                        },
+                        gallery: {
+                            title: 'Romance Gallery',
+                            images: [
+                                'https://images.unsplash.com/photo-1519741497674-611481863552?w=400&h=300&fit=crop',
+                                'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=400&h=300&fit=crop',
+                                'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=400&h=300&fit=crop'
+                            ]
+                        }
+                    }
+                }
+            },
+            'elegant-studio': {
+                id: 'elegant-studio',
+                name: 'Elegant Studio',
+                category: 'portrait',
+                colors: {
+                    primary: '#8b4d8c',
+                    secondary: '#c17cbd',
+                    accent: '#f3e5f5',
+                    text: '#2d2d2d'
+                },
+                fonts: {
+                    heading: 'Lora',
+                    body: 'Open Sans'
+                },
+                structure: {
+                    home: {
+                        hero: {
+                            title: 'Professional Portraits',
+                            subtitle: 'Elegant Studio Photography',
+                            background: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=1200&h=600&fit=crop'
+                        },
+                        about: {
+                            title: 'Studio Excellence',
+                            content: 'Professional studio portraits with sophisticated lighting and elegant styling for discerning clients.'
+                        },
+                        gallery: {
+                            title: 'Studio Portfolio',
+                            images: [
+                                'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=300&fit=crop',
+                                'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&h=300&fit=crop',
+                                'https://images.unsplash.com/photo-1542038784456-1ea8e8eba4f6?w=400&h=300&fit=crop'
+                            ]
+                        }
+                    }
+                }
+            },
+            'creative-portfolio': {
+                id: 'creative-portfolio',
+                name: 'Creative Portfolio',
+                category: 'commercial',
+                colors: {
+                    primary: '#e74c3c',
+                    secondary: '#c0392b',
+                    accent: '#fdedec',
+                    text: '#2c3e50'
+                },
+                fonts: {
+                    heading: 'Montserrat',
+                    body: 'Source Sans Pro'
+                },
+                structure: {
+                    home: {
+                        hero: {
+                            title: 'Creative Vision',
+                            subtitle: 'Commercial & Artistic Photography',
+                            background: 'https://images.unsplash.com/photo-1493612276216-ee3925520721?w=1200&h=600&fit=crop'
+                        },
+                        about: {
+                            title: 'Artistic Excellence',
+                            content: 'Bold, creative commercial photography that pushes boundaries and delivers exceptional results for brands and agencies.'
+                        },
+                        gallery: {
+                            title: 'Creative Work',
+                            images: [
+                                'https://images.unsplash.com/photo-1493612276216-ee3925520721?w=400&h=300&fit=crop',
+                                'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=300&fit=crop',
+                                'https://images.unsplash.com/photo-1542038784456-1ea8e8eba4f6?w=400&h=300&fit=crop'
+                            ]
+                        }
+                    }
+                }
+            },
+            'bold-statement': {
+                id: 'bold-statement',
+                name: 'Bold Statement',
+                category: 'commercial',
+                colors: {
+                    primary: '#000000',
+                    secondary: '#434343',
+                    accent: '#ffffff',
+                    text: '#ffffff'
+                },
+                fonts: {
+                    heading: 'Montserrat',
+                    body: 'Source Sans Pro'
+                },
+                structure: {
+                    home: {
+                        hero: {
+                            title: 'Bold Visual Stories',
+                            subtitle: 'Commercial & Fashion Photography',
+                            background: 'https://images.unsplash.com/photo-1493612276216-ee3925520721?w=1200&h=600&fit=crop'
+                        },
+                        about: {
+                            title: 'Our Vision',
+                            content: 'Creating bold, impactful commercial photography that captures attention and drives results for your brand.'
+                        },
+                        gallery: {
+                            title: 'Latest Work',
+                            images: [
+                                'https://images.unsplash.com/photo-1493612276216-ee3925520721?w=400&h=300&fit=crop',
+                                'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=300&fit=crop',
+                                'https://images.unsplash.com/photo-1542038784456-1ea8e8eba4f6?w=400&h=300&fit=crop'
+                            ]
+                        }
+                    }
+                }
+            },
+            'event-showcase': {
+                id: 'event-showcase',
+                name: 'Event Showcase',
+                category: 'event',
+                colors: {
+                    primary: '#667eea',
+                    secondary: '#764ba2',
+                    accent: '#f8f9fa',
+                    text: '#2c3e50'
+                },
+                fonts: {
+                    heading: 'Montserrat',
+                    body: 'Source Sans Pro'
+                },
+                structure: {
+                    home: {
+                        hero: {
+                            title: 'Event Photography',
+                            subtitle: 'Capturing Every Moment',
+                            background: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=1200&h=600&fit=crop'
+                        },
+                        about: {
+                            title: 'Professional Events',
+                            content: 'Specializing in corporate events, conferences, and special occasions with dynamic, engaging photography.'
+                        },
+                        gallery: {
+                            title: 'Event Gallery',
+                            images: [
+                                'https://images.unsplash.com/photo-1511578314322-379afb476865?w=400&h=300&fit=crop',
+                                'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=400&h=300&fit=crop',
+                                'https://images.unsplash.com/photo-1478146896981-b80fe463b330?w=400&h=300&fit=crop'
+                            ]
+                        }
+                    }
+                }
+            },
+            'nature-inspired': {
+                id: 'nature-inspired',
+                name: 'Nature Inspired',
+                category: 'lifestyle',
+                colors: {
+                    primary: '#1a5f3f',
+                    secondary: '#2d8f57',
+                    accent: '#f0f8f0',
+                    text: '#2c3e50'
+                },
+                fonts: {
+                    heading: 'Playfair Display',
+                    body: 'Open Sans'
+                },
+                structure: {
+                    home: {
+                        hero: {
+                            title: 'Nature\'s Beauty Captured',
+                            subtitle: 'Outdoor & Lifestyle Photography',
+                            background: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1200&h=600&fit=crop'
+                        },
+                        about: {
+                            title: 'Our Connection to Nature',
+                            content: 'Specializing in outdoor portraits and lifestyle photography that celebrates the natural world and authentic human connections.'
+                        },
+                        gallery: {
+                            title: 'Nature Portfolio',
+                            images: [
+                                'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=300&fit=crop',
+                                'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop',
+                                'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&h=300&fit=crop'
+                            ]
+                        }
+                    }
+                }
+            },
+            'urban-edge': {
+                id: 'urban-edge',
+                name: 'Urban Edge',
+                category: 'lifestyle',
+                colors: {
+                    primary: '#4a4a4a',
+                    secondary: '#6a6a6a',
+                    accent: '#f5f5f5',
+                    text: '#2c3e50'
+                },
+                fonts: {
+                    heading: 'Inter',
+                    body: 'Inter'
+                },
+                structure: {
+                    home: {
+                        hero: {
+                            title: 'Urban Stories',
+                            subtitle: 'Street & City Photography',
+                            background: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1200&h=600&fit=crop'
+                        },
+                        about: {
+                            title: 'City Life Captured',
+                            content: 'Documenting the energy, diversity, and raw beauty of urban environments through authentic street photography.'
+                        },
+                        gallery: {
+                            title: 'Urban Gallery',
+                            images: [
+                                'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=400&h=300&fit=crop',
+                                'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=400&h=300&fit=crop',
+                                'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1f?w=400&h=300&fit=crop'
                             ]
                         }
                     }
