@@ -8508,34 +8508,553 @@ ${name}`;
 
     <!-- Contract Modal -->
     <div id="contractModal" class="contract-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000; align-items: center; justify-content: center;">
+                case 'gallery':
+                    previewHTML = generateGalleryTheme();
+                    break;
+                case 'banner':
+                    previewHTML = generateBannerTheme();
+                    break;
+                case 'legacy':
+                    previewHTML = generateLegacyTheme();
+                    break;
+                default:
+                    previewHTML = generateCleanTheme();
+            }
+            
+            previewContainer.innerHTML = previewHTML;
+            previewContainer.className = `website-preview theme-${websiteSettings.theme}`;
+        }
+
+        function generateCleanTheme() {
+            return `
+                <div style="background: linear-gradient(135deg, #f8f9fa, #e9ecef); color: #343a40; padding: 20px; min-height: 400px;">
+                    <header style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid ${websiteSettings.brandColor};">
+                        ${websiteSettings.profileImage ? `<img src="${websiteSettings.profileImage}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-bottom: 15px;">` : ''}
+                        <h1 style="margin: 0; color: ${websiteSettings.brandColor}; font-size: 1.8em;">${websiteSettings.businessName}</h1>
+                    </header>
+                    <main style="text-align: center;">
+                        <p style="font-size: 1.1em; line-height: 1.6; max-width: 300px; margin: 0 auto;">${websiteSettings.welcomeMessage}</p>
+                        <button style="background: ${websiteSettings.brandColor}; color: white; border: none; padding: 12px 24px; border-radius: 6px; margin-top: 20px; cursor: pointer;">Contact Us</button>
+                    </main>
+                </div>
+            `;
+        }
+
+        function generateGalleryTheme() {
+            return `
+                <div style="background: linear-gradient(135deg, #212529, #343a40); color: #f8f9fa; padding: 20px; min-height: 400px;">
+                    <header style="text-align: center; margin-bottom: 30px;">
+                        ${websiteSettings.profileImage ? `<img src="${websiteSettings.profileImage}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-bottom: 15px; border: 3px solid ${websiteSettings.brandColor};">` : ''}
+                        <h1 style="margin: 0; color: ${websiteSettings.brandColor}; font-size: 1.8em;">${websiteSettings.businessName}</h1>
+                    </header>
+                    <main>
+                        <p style="text-align: center; font-size: 1.1em; line-height: 1.6; margin-bottom: 25px;">${websiteSettings.welcomeMessage}</p>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                            <div style="aspect-ratio: 1; background: ${websiteSettings.brandColor}; border-radius: 4px;"></div>
+                            <div style="aspect-ratio: 1; background: ${websiteSettings.brandColor}; border-radius: 4px; opacity: 0.8;"></div>
+                            <div style="aspect-ratio: 1; background: ${websiteSettings.brandColor}; border-radius: 4px; opacity: 0.6;"></div>
+                        </div>
+                    </main>
+                </div>
+            `;
+        }
+
+        function generateBannerTheme() {
+            return `
+                <div style="background: linear-gradient(135deg, #6c757d, #495057); color: #f8f9fa; padding: 0; min-height: 400px; position: relative;">
+                    <div style="background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.4)), ${websiteSettings.profileImage ? `url(${websiteSettings.profileImage})` : `${websiteSettings.brandColor}`}; background-size: cover; background-position: center; padding: 60px 20px; text-align: center;">
+                        <h1 style="margin: 0; color: white; font-size: 2.2em; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">${websiteSettings.businessName}</h1>
+                        <p style="font-size: 1.2em; margin: 20px auto; max-width: 300px; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">${websiteSettings.welcomeMessage}</p>
+                        <button style="background: ${websiteSettings.brandColor}; color: white; border: none; padding: 15px 30px; border-radius: 6px; font-size: 1.1em; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">Book Session</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateLegacyTheme() {
+            return `
+                <div style="background: linear-gradient(135deg, #1a1a1a, #2a2a2a); color: #f4e4bc; padding: 20px; min-height: 400px;">
+                    <header style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid ${websiteSettings.brandColor};">
+                        ${websiteSettings.profileImage ? `<img src="${websiteSettings.profileImage}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-bottom: 15px; border: 3px solid ${websiteSettings.brandColor};">` : ''}
+                        <h1 style="margin: 0; color: ${websiteSettings.brandColor}; font-size: 1.8em; font-family: serif;">${websiteSettings.businessName}</h1>
+                    </header>
+                    <main style="text-align: center;">
+                        <p style="font-size: 1.1em; line-height: 1.6; max-width: 300px; margin: 0 auto 25px; font-style: italic;">${websiteSettings.welcomeMessage}</p>
+                        <div style="display: flex; justify-content: center; gap: 10px;">
+                            <button style="background: linear-gradient(135deg, ${websiteSettings.brandColor}, #f4e4bc); color: #1a1a1a; border: none; padding: 12px 24px; border-radius: 6px; font-weight: bold; cursor: pointer;">Portfolio</button>
+                            <button style="background: transparent; color: ${websiteSettings.brandColor}; border: 2px solid ${websiteSettings.brandColor}; padding: 10px 22px; border-radius: 6px; cursor: pointer;">Contact</button>
+                        </div>
+                    </main>
+                </div>
+            `;
+        }
+
+        // Save website settings to Firestore (placeholder - requires Firebase setup)
+        async function saveWebsiteSettings() {
+            try {
+                // For now, save to localStorage as Firestore would require additional setup
+                localStorage.setItem('website_settings', JSON.stringify(websiteSettings));
+                showMessage('Website settings saved successfully!', 'success');
+                celebrateMilestone('website_saved', websiteSettings.businessName || 'Website');
+            } catch (error) {
+                console.error('Error saving website settings:', error);
+                showMessage('Error saving website settings', 'error');
+            }
+        }
+
+        // Load saved settings on page load
+        function loadSavedSettings() {
+            try {
+                const saved = localStorage.getItem('website_settings');
+                if (saved) {
+                    const settings = JSON.parse(saved);
+                    
+                    // Populate form fields
+                    document.getElementById('businessName').value = settings.businessName || '';
+                    document.getElementById('welcomeMessage').value = settings.welcomeMessage || '';
+                    document.getElementById('themeSelector').value = settings.theme || 'clean';
+                    document.getElementById('brandColor').value = settings.brandColor || '#d4af37';
+                    
+                    if (settings.profileImage) {
+                        websiteSettings.profileImage = settings.profileImage;
+                        document.getElementById('previewImg').src = settings.profileImage;
+                        document.getElementById('imagePreview').style.display = 'block';
+                    }
+                    
+                    updateLivePreview();
+                }
+            } catch (error) {
+                console.error('Error loading saved settings:', error);
+            }
+        }
+
+        // Preview website in new tab
+        function previewWebsite() {
+            updateLivePreview();
+            const previewContent = document.getElementById('websitePreview').innerHTML;
+            const newWindow = window.open('', '_blank');
+            newWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>${websiteSettings.businessName} - Preview</title>
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                </head>
+                <body style="margin: 0; font-family: Arial, sans-serif;">
+                    ${previewContent}
+                </body>
+                </html>
+            `);
+            newWindow.document.close();
+            showMessage('Website preview opened in new tab!', 'success');
+        }
+
+        // Firebase Website Functions
+        
+        // Save website to Firebase
+        async function saveWebsiteToFirebase() {
+            if (!websiteAuth || !websiteAuth.currentUser) {
+                showMessage('Please sign in to save your website', 'error');
+                return;
+            }
+
+            try {
+                // Update settings from form
+                updateWebsiteSettingsFromForm();
+                
+                // Prepare data for Firebase
+                const websiteData = {
+                    title: websiteSettings.businessName,
+                    sections: websiteSettings.sections || [],
+                    theme: websiteSettings.theme,
+                    customUsername: websiteSettings.customUsername,
+                    brandColor: websiteSettings.brandColor,
+                    welcomeMessage: websiteSettings.welcomeMessage,
+                    profileImage: websiteSettings.profileImage,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                await websiteDb.collection('websites').doc(websiteAuth.currentUser.uid).set(websiteData);
+                
+                showMessage('Website saved successfully!', 'success');
+                console.log('Website saved to Firebase:', websiteData);
+                
+            } catch (error) {
+                console.error('Error saving website:', error);
+                showMessage('Failed to save website: ' + error.message, 'error');
+            }
+        }
+
+        // Load website from Firebase
+        async function loadWebsiteFromFirebase() {
+            if (!websiteAuth || !websiteAuth.currentUser) {
+                console.log('No user signed in, loading local defaults');
+                return;
+            }
+
+            try {
+                const doc = await websiteDb.collection('websites').doc(websiteAuth.currentUser.uid).get();
+                
+                if (doc.exists) {
+                    const data = doc.data();
+                    
+                    // Update settings
+                    websiteSettings = {
+                        businessName: data.title || '',
+                        welcomeMessage: data.welcomeMessage || '',
+                        theme: data.theme || 'clean',
+                        brandColor: data.brandColor || '#d4af37',
+                        profileImage: data.profileImage || null,
+                        customUsername: data.customUsername || '',
+                        sections: data.sections || [],
+                        updatedAt: data.updatedAt
+                    };
+                    
+                    // Populate form fields
+                    document.getElementById('businessName').value = websiteSettings.businessName;
+                    document.getElementById('welcomeMessage').value = websiteSettings.welcomeMessage;
+                    document.getElementById('themeSelector').value = websiteSettings.theme;
+                    document.getElementById('brandColor').value = websiteSettings.brandColor;
+                    document.getElementById('customUsername').value = websiteSettings.customUsername;
+                    
+                    if (websiteSettings.profileImage) {
+                        document.getElementById('previewImg').src = websiteSettings.profileImage;
+                        document.getElementById('imagePreview').style.display = 'block';
+                    }
+                    
+                    updateLivePreview();
+                    showMessage('Website loaded from cloud!', 'success');
+                    
+                } else {
+                    console.log('No saved website found, using defaults');
+                }
+                
+            } catch (error) {
+                console.error('Error loading website:', error);
+                showMessage('Failed to load saved website', 'error');
+            }
+        }
+
+        // Publish website to Firebase and make it publicly accessible
+        async function publishWebsiteToFirebase() {
+            if (!websiteAuth || !websiteAuth.currentUser) {
+                showMessage('Please sign in to publish your website', 'error');
+                return;
+            }
+
+            if (!websiteSettings.businessName.trim()) {
+                showMessage('Please enter a business name before publishing', 'error');
+                return;
+            }
+
+            if (!websiteSettings.customUsername.trim()) {
+                showMessage('Please enter a custom username for your site URL', 'error');
+                return;
+            }
+
+            try {
+                // First save the website
+                await saveWebsiteToFirebase();
+                
+                // Update settings from form
+                updateWebsiteSettingsFromForm();
+                
+                // Create public website data
+                const publicWebsiteData = {
+                    title: websiteSettings.businessName,
+                    sections: websiteSettings.sections || [],
+                    theme: websiteSettings.theme,
+                    customUsername: websiteSettings.customUsername,
+                    brandColor: websiteSettings.brandColor,
+                    welcomeMessage: websiteSettings.welcomeMessage,
+                    profileImage: websiteSettings.profileImage,
+                    published: true,
+                    publishedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    ownerUid: websiteAuth.currentUser.uid,
+                    ownerEmail: websiteAuth.currentUser.email
+                };
+
+                // Save to public websites collection with custom username as document ID
+                await websiteDb.collection('published_websites').doc(websiteSettings.customUsername).set(publicWebsiteData);
+                
+                // Show success message with URL
+                const siteUrl = `${window.location.origin}/site/${websiteSettings.customUsername}`;
+                document.getElementById('publishedSiteUrl').value = siteUrl;
+                document.getElementById('publishedSiteInfo').style.display = 'block';
+                
+                showMessage('Website published successfully!', 'success');
+                celebrateMilestone('website_published', websiteSettings.businessName);
+                
+            } catch (error) {
+                console.error('Error publishing website:', error);
+                showMessage('Failed to publish website: ' + error.message, 'error');
+            }
+        }
+
+        // Smart default filler for first-time users
+        function prefillUserDefaults(user) {
+            const businessNameInput = document.getElementById('businessName');
+            const welcomeMessageInput = document.getElementById('welcomeMessage');
+            const usernameInput = document.getElementById('customUsername');
+            
+            // Only prefill if fields are empty
+            if (!businessNameInput.value && user.displayName) {
+                businessNameInput.value = `Hi, I'm ${user.displayName}`;
+                websiteSettings.businessName = businessNameInput.value;
+            }
+            
+            if (!welcomeMessageInput.value) {
+                welcomeMessageInput.value = "I'm a wedding + family photographer based in South Carolina. Let's create something unforgettable.";
+                websiteSettings.welcomeMessage = welcomeMessageInput.value;
+            }
+            
+            if (!usernameInput.value && user.email) {
+                // Generate username from email
+                const emailUsername = user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+                usernameInput.value = emailUsername;
+                websiteSettings.customUsername = emailUsername;
+            }
+            
+            updateLivePreview();
+        }
+
+        // Update settings from form inputs
+        function updateWebsiteSettingsFromForm() {
+            websiteSettings.businessName = document.getElementById('businessName').value;
+            websiteSettings.welcomeMessage = document.getElementById('welcomeMessage').value;
+            websiteSettings.theme = document.getElementById('themeSelector').value;
+            websiteSettings.brandColor = document.getElementById('brandColor').value;
+            websiteSettings.customUsername = document.getElementById('customUsername').value;
+        }
+
+        // Copy published URL to clipboard
+        function copyPublishedUrl() {
+            const urlInput = document.getElementById('publishedSiteUrl');
+            urlInput.select();
+            urlInput.setSelectionRange(0, 99999); // For mobile devices
+            
+            try {
+                document.execCommand('copy');
+                showMessage('URL copied to clipboard!', 'success');
+            } catch (err) {
+                console.error('Failed to copy URL:', err);
+                showMessage('Failed to copy URL', 'error');
+            }
+        }
+
+        // ✅ PREMIUM STATIC SITE PUBLISHING
+        async function publishStaticSite() {
+            if (!websiteAuth || !websiteAuth.currentUser) {
+                showMessage('Please sign in to publish your website', 'error');
+                return;
+            }
+
+            try {
+                // Show loading state
+                const btn = document.getElementById('premiumStaticBtn');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '⏳ Publishing...';
+                btn.disabled = true;
+
+                // Get Firebase auth token
+                const idToken = await websiteAuth.currentUser.getIdToken();
+                
+                // Update settings from form first
+                updateWebsiteSettingsFromForm();
+
+                const response = await fetch('/api/publishStaticSite', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${idToken}`
+                    }
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // Success - show both URLs
+                    showMessage('✅ Premium static site published successfully!', 'success');
+                    
+                    // Update published site info with both URLs
+                    document.getElementById('publishedSiteUrl').value = 
+                        `${window.location.origin}${result.staticUrl}`;
+                    document.getElementById('publishedSiteInfo').style.display = 'block';
+                    
+                    // Trigger confetti celebration
+                    celebrateMilestone('premium_site_published', websiteSettings.businessName || 'Static Site');
+                    
+                    console.log('✅ Premium static site URLs:', result);
+                } else if (response.status === 403) {
+                    // Premium required
+                    showMessage('⭐ Premium subscription required for static site publishing', 'warning');
+                    showPremiumUpgradeDialog();
+                } else {
+                    throw new Error(result.message || 'Publishing failed');
+                }
+
+            } catch (error) {
+                console.error('Static site publishing error:', error);
+                showMessage('Failed to publish static site: ' + error.message, 'error');
+            } finally {
+                // Reset button
+                const btn = document.getElementById('premiumStaticBtn');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // Check premium status and update UI
+        async function checkPremiumStatus() {
+            if (!websiteAuth || !websiteAuth.currentUser) {
+                return;
+            }
+
+            try {
+                const idToken = await websiteAuth.currentUser.getIdToken();
+                const response = await fetch('/api/premium-status', {
+                    headers: {
+                        'Authorization': `Bearer ${idToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const status = await response.json();
+                    updatePremiumUI(status);
+                }
+            } catch (error) {
+                console.error('Premium status check error:', error);
+            }
+        }
+
+        // Update premium UI based on status
+        function updatePremiumUI(status) {
+            const premiumStatusDiv = document.getElementById('premiumStatus');
+            const premiumPlanDisplay = document.getElementById('premiumPlanDisplay');
+            const premiumBtn = document.getElementById('premiumStaticBtn');
+
+            if (status.isPremium) {
+                premiumStatusDiv.style.display = 'block';
+                premiumPlanDisplay.textContent = `(${status.plan || 'Premium'} Plan)`;
+                premiumBtn.style.opacity = '1';
+                premiumBtn.style.cursor = 'pointer';
+            } else {
+                premiumStatusDiv.style.display = 'none';
+                premiumBtn.style.opacity = '0.6';
+                premiumBtn.style.cursor = 'not-allowed';
+            }
+        }
+
+        // Show premium upgrade dialog
+        function showPremiumUpgradeDialog() {
+            if (confirm('⭐ Upgrade to Premium for static site publishing, advanced themes, and analytics!\n\nWould you like to upgrade now?')) {
+                // In development mode, auto-upgrade
+                if (window.location.hostname.includes('replit') || window.location.hostname === 'localhost') {
+                    upgradeToPremium('development');
+                } else {
+                    window.open('/premium', '_blank');
+                }
+            }
+        }
+
+        // Premium upgrade function (development mode)
+        async function upgradeToPremium(plan) {
+            if (!websiteAuth || !websiteAuth.currentUser) {
+                showMessage('Please sign in first', 'error');
+                return;
+            }
+
+            try {
+                const idToken = await websiteAuth.currentUser.getIdToken();
+                const response = await fetch('/api/upgrade-premium', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${idToken}`
+                    },
+                    body: JSON.stringify({ plan })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showMessage('🎉 Premium activated! You now have access to all premium features.', 'success');
+                    celebrateMilestone('premium_upgraded', 'Premium Plan');
+                    checkPremiumStatus(); // Refresh UI
+                } else {
+                    showMessage('Upgrade failed: ' + result.message, 'error');
+                }
+            } catch (error) {
+                console.error('Premium upgrade error:', error);
+                showMessage('Upgrade failed: ' + error.message, 'error');
+            }
+        }
+
+        // Legacy publish function (keeping for compatibility)
+        function publishWebsite() {
+            publishWebsiteToFirebase();
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Firebase for website builder
+            initializeWebsiteFirebase();
+            
+            // Load saved settings (local fallback)
+            loadSavedSettings();
+            updateLivePreview();
+            
+            // Set up autosave (every 30 seconds)
+            setInterval(() => {
+                if (websiteAuth && websiteAuth.currentUser) {
+                    updateWebsiteSettingsFromForm();
+                    console.log('Auto-saving website...');
+                    saveWebsiteToFirebase();
+                }
+            }, 30000);
+        });
+
+    </script>
+
+    <!-- Contract Modal -->
+    <div id="contractModal" class="contract-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000; align-items: center; justify-content: center;">
         <div class="contract-modal-overlay" onclick="closeContractModal()" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6);"></div>
-        <div class="contract-modal-content" style="position: relative; background: white; border-radius: 15px; max-width: 800px; width: 95%; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3); z-index: 10001; color: #000000;">
-            <div class="contract-modal-header" style="color: #000000; padding: 20px; border-bottom: 1px solid #eee;">
-                <h3 style="color: #000000; margin: 0;">📝 Contract Management</h3>
-                <button class="contract-close-btn" onclick="closeContractModal()" style="position: absolute; top: 15px; right: 20px; background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">&times;</button>
+        <div class="contract-modal-content" style="position: relative; background: white; border-radius: 15px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3); z-index: 10001; color: #000000;">
+            <div class="contract-modal-header" style="color: #000000;">
+                <h3 style="color: #000000;">📝 Contract Management</h3>
+                <button class="contract-close-btn" onclick="closeContractModal()">&times;</button>
             </div>
-            <div class="contract-modal-body" style="color: #000000; padding: 20px;">
-                <div class="contract-tabs" style="display: flex; margin-bottom: 20px; border-bottom: 1px solid #eee;">
-                    <button class="contract-tab active" onclick="switchContractTab('create')" style="flex: 1; padding: 10px; background: #d4af37; color: white; border: none; border-radius: 5px 0 0 0; cursor: pointer;">Create New</button>
-                    <button class="contract-tab" onclick="switchContractTab('existing')" style="flex: 1; padding: 10px; background: #f8f9fa; color: #333; border: none; border-radius: 0 5px 0 0; cursor: pointer;">View Existing</button>
-                </div>
-                
-                <div id="createContractTab" class="contract-tab-content">
+            <div class="contract-modal-body" style="color: #000000;">
+                <!-- Contract Selection -->
+                <div class="contract-selection" style="color: #000000;">
                     <h4 style="color: #000000;">Create New Contract</h4>
-                    <div class="form-group" style="margin-bottom: 15px;">
-                        <label for="contractTitleInput" style="display: block; margin-bottom: 5px; font-weight: 600; color: #000000;">Contract Title:</label>
-                        <input type="text" id="contractTitleInput" placeholder="Photography Services Agreement" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; color: #000000;" />
+                    <div class="contract-options">
+                        <div class="contract-option" onclick="createContract(currentContractSessionId, 'photo_release')" style="color: #000000;">
+                            <div class="contract-icon">📸</div>
+                            <div class="contract-info">
+                                <h5 style="color: #000000;">Photo Print Release</h5>
+                                <p style="color: #000000;">Grants clients permission to print and share photos for personal use</p>
+                            </div>
+                        </div>
+                        <div class="contract-option" onclick="createContract(currentContractSessionId, 'wedding_contract')" style="color: #000000;">
+                            <div class="contract-icon">💒</div>
+                            <div class="contract-info">
+                                <h5 style="color: #000000;">Wedding Photography Contract</h5>
+                                <p style="color: #000000;">Comprehensive contract for wedding photography services</p>
+                            </div>
+                        </div>
+                        <div class="contract-option" onclick="createContract(currentContractSessionId, 'general_contract')" style="color: #000000;">
+                            <div class="contract-icon">📋</div>
+                            <div class="contract-info">
+                                <h5 style="color: #000000;">General Photography Contract</h5>
+                                <p style="color: #000000;">Standard contract for portrait sessions and general photography services</p>
+                            </div>
+                        </div>
                     </div>
-                    
-                    <div class="form-group" style="margin-bottom: 15px;">
-                        <label for="contractContentInput" style="display: block; margin-bottom: 5px; font-weight: 600; color: #000000;">Contract Content:</label>
-                        <textarea id="contractContentInput" rows="15" placeholder="Enter your contract terms and conditions here..." style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; color: #000000; resize: vertical;"></textarea>
-                    </div>
-                    
-                    <button onclick="createContract()" style="background: #d4af37; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;">Create Contract</button>
                 </div>
-                
-                <div id="existingContractTab" class="contract-tab-content" style="display: none;">
+
+                <!-- Existing Contracts -->
+                <div class="existing-contracts" style="color: #000000;">
                     <h4 style="color: #000000;">Existing Contracts</h4>
                     <div id="existingContractsList" class="existing-contracts-list" style="color: #000000;">
                         <!-- Contracts will be loaded here -->
