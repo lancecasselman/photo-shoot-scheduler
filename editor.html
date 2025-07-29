@@ -328,9 +328,14 @@
         }
         
         @media (max-width: 768px) {
+            body {
+                overflow: auto;
+            }
+            
             .editor-container {
                 grid-template-columns: 1fr;
-                grid-template-rows: auto 1fr auto;
+                grid-template-rows: auto 1fr;
+                min-height: 100vh;
             }
             
             .left-sidebar,
@@ -339,6 +344,7 @@
                 top: 0;
                 bottom: 0;
                 z-index: 1000;
+                width: 280px;
                 transform: translateX(-100%);
                 transition: transform 0.3s ease;
             }
@@ -351,6 +357,57 @@
             .right-sidebar {
                 right: 0;
                 transform: translateX(100%);
+            }
+            
+            .preview-area {
+                order: 1;
+            }
+            
+            .preview-frame {
+                padding: 10px;
+                min-height: calc(100vh - 70px);
+            }
+            
+            .preview-iframe.desktop,
+            .preview-iframe.tablet,
+            .preview-iframe.mobile {
+                width: 100%;
+                height: calc(100vh - 90px);
+                max-width: none;
+            }
+            
+            .mobile-menu-btn {
+                background: #404040;
+                color: #ccc;
+                border: none;
+                padding: 8px 12px;
+                border-radius: 5px;
+                font-size: 0.8rem;
+                cursor: pointer;
+            }
+            
+            .mobile-menu-btn:hover {
+                background: #667eea;
+                color: white;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .preview-header {
+                flex-wrap: wrap;
+                gap: 10px;
+                padding: 10px;
+            }
+            
+            .device-selector {
+                order: 2;
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .preview-actions {
+                order: 1;
+                margin-left: auto;
             }
         }
     </style>
@@ -544,21 +601,54 @@
     <script src="scripts/editorUI.js"></script>
     
     <script>
+        // Enhanced debugging and error handling for editor initialization
+        console.log('🚀 Editor script loading...');
+        
         // Get template ID from URL parameter
         const urlParams = new URLSearchParams(window.location.search);
         const templateId = urlParams.get('template');
+        
+        console.log('📋 Template from URL:', templateId);
         
         let currentTemplate = null;
         let currentPage = 'home';
         let currentDevice = 'desktop';
         
-        // Initialize editor
+        // Wait for all dependencies to load before initializing
+        let dependenciesLoaded = {
+            firebase: false,
+            templateLoader: false,
+            editorUI: false
+        };
+        
+        // Check dependencies loading
+        function checkDependency(name, condition) {
+            dependenciesLoaded[name] = condition;
+            console.log(`✅ ${name} loaded:`, condition);
+            
+            if (Object.values(dependenciesLoaded).every(loaded => loaded)) {
+                console.log('🎯 All dependencies loaded, initializing editor...');
+                initializeEditor();
+            }
+        }
+        
+        // Initialize editor with comprehensive error handling
         document.addEventListener('DOMContentLoaded', function() {
-            initializeEditor();
+            console.log('📱 DOM Content Loaded');
+            
+            // Check if dependencies are available
+            setTimeout(() => {
+                checkDependency('firebase', typeof firebase !== 'undefined');
+                checkDependency('templateLoader', typeof window.templateLoader !== 'undefined');
+                checkDependency('editorUI', typeof EditorUI !== 'undefined');
+            }, 500);
         });
         
         async function initializeEditor() {
+            console.log('🔧 Initializing editor...');
+            
             if (!templateId) {
+                console.error('❌ No template ID in URL');
                 alert('No template selected. Redirecting to template selector.');
                 window.location.href = '/template-selector.html';
                 return;
@@ -567,30 +657,55 @@
             showLoading(true);
             
             try {
+                console.log('🔍 Loading template:', templateId);
+                
+                // Check if templateLoader is available
+                if (!window.templateLoader) {
+                    console.error('❌ Template loader not available');
+                    throw new Error('Template loader not available');
+                }
+                
                 // Load template
                 currentTemplate = window.templateLoader.getTemplate(templateId);
+                console.log('📄 Template loaded:', currentTemplate ? currentTemplate.name : 'null');
+                
                 if (!currentTemplate) {
-                    throw new Error('Template not found');
+                    console.error('❌ Template not found:', templateId);
+                    throw new Error('Template not found: ' + templateId);
                 }
                 
                 // Update UI
-                document.getElementById('current-template-name').textContent = currentTemplate.name;
+                const templateNameElement = document.getElementById('current-template-name');
+                if (templateNameElement) {
+                    templateNameElement.textContent = currentTemplate.name;
+                    console.log('✅ Template name updated in UI');
+                } else {
+                    console.error('❌ Template name element not found');
+                }
                 
                 // Load template into preview
+                console.log('🖼️ Updating preview...');
                 updatePreview();
                 
                 // Setup event listeners
+                console.log('🎯 Setting up event listeners...');
                 setupEventListeners();
                 
                 // Load saved customizations if any
+                console.log('💾 Loading saved customizations...');
                 await loadSavedCustomizations();
                 
                 showLoading(false);
+                console.log('✅ Editor loaded with template:', currentTemplate.name);
                 
             } catch (error) {
-                console.error('Error initializing editor:', error);
-                alert('Error loading template. Please try again.');
-                window.location.href = '/template-selector.html';
+                console.error('❌ Error initializing editor:', error);
+                showLoading(false);
+                alert('Error loading template: ' + error.message + '. Please try again.');
+                // Don't redirect immediately, let user see the error
+                setTimeout(() => {
+                    window.location.href = '/template-selector.html';
+                }, 3000);
             }
         }
         
@@ -639,20 +754,124 @@
         }
         
         function updatePreview() {
-            if (!currentTemplate) return;
+            console.log('🖼️ Updating preview for page:', currentPage);
             
-            // Get current customizations
-            const customizations = getCustomizations();
+            if (!currentTemplate) {
+                console.error('❌ No current template for preview');
+                return;
+            }
             
-            // Apply customizations to template
-            const customizedTemplate = applyCustomizations(currentTemplate, customizations);
+            try {
+                // Get current customizations
+                const customizations = getCustomizations();
+                console.log('⚙️ Current customizations:', customizations);
+                
+                // Apply customizations to template
+                const customizedTemplate = applyCustomizations(currentTemplate, customizations);
+                console.log('✨ Applied customizations to template');
+                
+                // Check if templateLoader has generateTemplateHTML method
+                if (!window.templateLoader || !window.templateLoader.generateTemplateHTML) {
+                    console.error('❌ Template HTML generator not available');
+                    
+                    // Fallback to loading template files directly
+                    loadTemplatePageFallback(currentPage);
+                    return;
+                }
+                
+                // Generate HTML
+                console.log('🏗️ Generating HTML for page:', currentPage);
+                const html = window.templateLoader.generateTemplateHTML(customizedTemplate, currentPage);
+                console.log('📄 Generated HTML length:', html ? html.length : 'null');
+                
+                // Update iframe
+                const iframe = document.getElementById('preview-iframe');
+                if (!iframe) {
+                    console.error('❌ Preview iframe not found');
+                    return;
+                }
+                
+                if (html) {
+                    iframe.srcdoc = html;
+                    console.log('✅ Preview updated successfully');
+                } else {
+                    console.error('❌ Generated HTML is empty');
+                    loadTemplatePageFallback(currentPage);
+                }
+                
+            } catch (error) {
+                console.error('❌ Error updating preview:', error);
+                loadTemplatePageFallback(currentPage);
+            }
+        }
+        
+        // Fallback function to load template pages directly from files
+        async function loadTemplatePageFallback(page) {
+            console.log('🔄 Using fallback to load template page:', page);
             
-            // Generate HTML
-            const html = window.templateLoader.generateTemplateHTML(customizedTemplate, currentPage);
+            try {
+                const templatePath = `/templates/${templateId}/${page}.html`;
+                console.log('📁 Attempting to fetch:', templatePath);
+                
+                const response = await fetch(templatePath);
+                if (response.ok) {
+                    const html = await response.text();
+                    console.log('✅ Loaded template page from file:', templatePath);
+                    
+                    const iframe = document.getElementById('preview-iframe');
+                    if (iframe) {
+                        iframe.srcdoc = html;
+                        console.log('✅ Preview updated with template file');
+                    }
+                } else {
+                    console.error('❌ Failed to fetch template page:', response.status);
+                    showSimplePreview();
+                }
+            } catch (error) {
+                console.error('❌ Error in fallback load:', error);
+                showSimplePreview();
+            }
+        }
+        
+        // Show a simple preview when all else fails
+        function showSimplePreview() {
+            console.log('📄 Showing simple preview fallback');
             
-            // Update iframe
             const iframe = document.getElementById('preview-iframe');
-            iframe.srcdoc = html;
+            if (iframe) {
+                const simpleHTML = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>${currentTemplate ? currentTemplate.name : 'Template'}</title>
+                        <style>
+                            body { 
+                                font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
+                                margin: 0; 
+                                padding: 40px; 
+                                text-align: center;
+                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                color: white;
+                                min-height: 100vh;
+                                display: flex;
+                                flex-direction: column;
+                                justify-content: center;
+                            }
+                            h1 { font-size: 2.5rem; margin-bottom: 1rem; }
+                            p { font-size: 1.2rem; opacity: 0.9; }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>${currentTemplate ? currentTemplate.name : 'Template Preview'}</h1>
+                        <p>Page: ${currentPage}</p>
+                        <p>Template editor is loading...</p>
+                    </body>
+                    </html>
+                `;
+                iframe.srcdoc = simpleHTML;
+                console.log('✅ Simple preview loaded');
+            }
         }
         
         function getCustomizations() {
@@ -820,9 +1039,19 @@
         }
         
         function showLoading(show, message = 'Loading...') {
+            console.log('⏳ Loading overlay:', show ? 'show' : 'hide', message);
+            
             const overlay = document.getElementById('loading-overlay');
+            if (!overlay) {
+                console.error('❌ Loading overlay element not found');
+                return;
+            }
+            
             if (show) {
-                overlay.querySelector('.loading-content div:last-child').textContent = message;
+                const messageElement = overlay.querySelector('.loading-content div:last-child');
+                if (messageElement) {
+                    messageElement.textContent = message;
+                }
                 overlay.classList.remove('hidden');
             } else {
                 overlay.classList.add('hidden');
@@ -830,24 +1059,32 @@
         }
         
         function showMessage(message, type = 'info') {
-            // Simple message display
-            const messageEl = document.createElement('div');
-            messageEl.style.cssText = `
+            console.log(`📢 Message (${type}):`, message);
+            
+            // Create a temporary message overlay
+            const messageDiv = document.createElement('div');
+            messageDiv.style.cssText = `
                 position: fixed;
                 top: 20px;
                 right: 20px;
-                background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#17a2b8'};
+                background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#007bff'};
                 color: white;
                 padding: 15px 20px;
-                border-radius: 8px;
-                z-index: 10000;
-                font-weight: 500;
+                border-radius: 5px;
+                z-index: 10001;
+                font-size: 0.9rem;
+                max-width: 300px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
             `;
-            messageEl.textContent = message;
-            document.body.appendChild(messageEl);
+            messageDiv.textContent = message;
             
+            document.body.appendChild(messageDiv);
+            
+            // Remove after 3 seconds
             setTimeout(() => {
-                messageEl.remove();
+                if (messageDiv.parentNode) {
+                    messageDiv.parentNode.removeChild(messageDiv);
+                }
             }, 3000);
         }
         
