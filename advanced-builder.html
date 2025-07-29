@@ -206,6 +206,7 @@
             };
             
             if (loading) {
+                console.log('App: Still loading, showing loading screen');
                 return (
                     <div className="loading">
                         Loading Advanced Website Builder...
@@ -214,6 +215,7 @@
             }
             
             if (!user) {
+                console.log('App: No user, showing auth screen');
                 return (
                     <div className="auth-required">
                         <h1>Advanced Website Builder</h1>
@@ -228,11 +230,13 @@
                 );
             }
             
+            console.log('App: User authenticated, rendering SiteBuilder');
             return <SiteBuilder />;
         };
         
-        // Render the app
-        ReactDOM.render(<App />, document.getElementById('siteBuilderRoot'));
+        // Render the app with React 18 createRoot
+        const root = ReactDOM.createRoot(document.getElementById('siteBuilderRoot'));
+        root.render(<App />);
     </script>
 </body>
 </html>
