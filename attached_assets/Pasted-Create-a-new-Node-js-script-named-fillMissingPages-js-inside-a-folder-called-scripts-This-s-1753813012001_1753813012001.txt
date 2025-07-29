@@ -1,0 +1,87 @@
+Create a new Node.js script named `fillMissingPages.js` inside a folder called `/scripts`.
+
+This script should:
+1. Look inside the `/templates/` directory.
+2. For each subfolder (which represents a website template), check if the following files exist:
+   - `about.html`
+   - `portfolio.html`
+   - `contact.html`
+3. If any of those files are missing, automatically create them with the following default content:
+
+🔹 `about.html`:
+```html
+<section class="about-section">
+  <div class="container">
+    <h1>About Me</h1>
+    <p>Hello! I'm a passionate photographer dedicated to capturing life's most meaningful moments.</p>
+  </div>
+</section>
+🔹 portfolio.html:
+
+html
+Copy
+Edit
+<section class="portfolio-section">
+  <div class="container">
+    <h1>My Work</h1>
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <img src="/assets/placeholder1.jpg" alt="Sample" />
+      <img src="/assets/placeholder2.jpg" alt="Sample" />
+      <img src="/assets/placeholder3.jpg" alt="Sample" />
+    </div>
+  </div>
+</section>
+🔹 contact.html:
+
+html
+Copy
+Edit
+<section class="contact-section">
+  <div class="container">
+    <h1>Get in Touch</h1>
+    <form class="space-y-4">
+      <input type="text" placeholder="Your Name" class="input" />
+      <input type="email" placeholder="Your Email" class="input" />
+      <textarea placeholder="Your Message" class="input h-32"></textarea>
+      <button type="submit" class="btn">Send Message</button>
+    </form>
+  </div>
+</section>
+Log a message to the console for each file it creates (or skips if it already exists), e.g.:
+
+✅ Created: elegant-studio/about.html
+
+✔️ Already exists: modern-bold/contact.html
+
+The script must use fs and path modules in Node.js.
+
+Once created, I will run it manually using node scripts/fillMissingPages.js in Replit shell.
+
+yaml
+Copy
+Edit
+
+---
+
+### 💡 Bonus Tips:
+
+- After the Agent builds it, feel free to make it a "dev tool" button in your UI later.
+- Want to extend it with `preview.jpg` detection or `manifest.json` per template next? I got you.
+
+Just say "next round" when you're ready to juice this thing up. 🚀
+
+
+
+
+
+
+Ask ChatGPT
+
+
+
+
+Tools
+
+
+
+ChatGPT can make mistakes. Check important 
