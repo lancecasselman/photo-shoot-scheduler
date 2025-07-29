@@ -26,6 +26,8 @@ const firebaseConfig = {
 
 // Initialize Firebase with error handling
 let app, auth, storage;
+let firebaseInitialized = false;
+
 try {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
@@ -36,14 +38,18 @@ try {
     window.storageRef = ref;
     window.uploadBytes = uploadBytes;
     window.getDownloadURL = getDownloadURL;
+    window.firebaseAuth = auth;
     
+    firebaseInitialized = true;
     console.log('Firebase services initialized successfully');
 } catch (error) {
     console.error('Error initializing Firebase:', error);
-    // Set fallback values
+    // Set fallback values for demo mode
     auth = null;
     storage = null;
     window.firebaseStorage = null;
+    window.firebaseAuth = null;
+    firebaseInitialized = false;
 }
 
 // Check server authentication status
@@ -138,65 +144,81 @@ window.checkAuthAndLoadSessions = function() {
     }
 };
 
-// Auth state observer
-if (auth) {
-    onAuthStateChanged(auth, async (user) => {
-        // Skip Firebase auth handling if server auth is disabled
-        if (!serverAuthEnabled) {
-            console.log('Firebase auth disabled, skipping auth state change');
-            return;
-        }
-    
-    const authDiv = document.getElementById('auth');
-    const appDiv = document.getElementById('app');
-    
-    if (user) {
-        // User is signed in
-        console.log('User signed in:', user.email);
+// Initialize authentication handling
+function initializeAuthHandling() {
+    if (firebaseInitialized && auth) {
+        onAuthStateChanged(auth, async (user) => {
+            // Skip Firebase auth handling if server auth is disabled
+            if (!serverAuthEnabled) {
+                console.log('Firebase auth disabled, skipping auth state change');
+                return;
+            }
         
-        // Create or update user in database
-        try {
-            await fetch('/api/users', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    id: user.uid,
-                    email: user.email,
-                    displayName: user.displayName || user.email
-                })
-            });
-        } catch (error) {
-            console.error('Error creating user:', error);
-        }
-        
-        // Store current user globally with token
-        window.currentUser = user;
-        window.userToken = await user.getIdToken();
-        
-        authDiv.style.display = 'none';
-        appDiv.style.display = 'block';
-        
-        // Load sessions from database
-        if (window.loadSessions) {
-            setTimeout(() => {
-                console.log('Loading sessions for authenticated user');
-                window.loadSessions();
-            }, 100); // Small delay to ensure DOM is ready
-        }
+            const authDiv = document.getElementById('auth');
+            const appDiv = document.getElementById('app');
+            
+            if (user) {
+                // User is signed in
+                console.log('User authenticated:', user.email);
+                
+                // Create or update user in database
+                try {
+                    await fetch('/api/users', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            id: user.uid,
+                            email: user.email,
+                            displayName: user.displayName || user.email
+                        })
+                    });
+                } catch (error) {
+                    console.error('Error creating user:', error);
+                }
+                
+                // Store current user globally with token
+                window.currentUser = user;
+                try {
+                    window.userToken = await user.getIdToken();
+                } catch (error) {
+                    console.warn('Could not get ID token:', error);
+                    window.userToken = null;
+                }
+                
+                if (authDiv && appDiv) {
+                    authDiv.style.display = 'none';
+                    appDiv.style.display = 'block';
+                }
+                
+                // Load sessions from database
+                if (window.loadSessions) {
+                    setTimeout(() => {
+                        console.log('Loading sessions for authenticated user');
+                        window.loadSessions();
+                    }, 100);
+                }
+            } else {
+                // User is signed out
+                if (window.currentUser) {
+                    console.log('User signed out');
+                }
+                window.currentUser = null;
+                window.userToken = null;
+                
+                if (authDiv && appDiv) {
+                    authDiv.style.display = 'block';
+                    appDiv.style.display = 'none';
+                }
+            }
+        });
     } else {
-        // User is signed out - only log if we haven't already handled this
-        if (window.currentUser) {
-            console.log('User signed out');
-        }
-        window.currentUser = null;
-        authDiv.style.display = 'block';
-        appDiv.style.display = 'none';
+        console.log('Firebase auth not available, using fallback mode');
+        bypassAuthentication();
     }
-    });
-} else {
-    console.error('Firebase auth not initialized, using fallback mode');
-    bypassAuthentication();
 }
+
+// Initialize auth handling after page load
+setTimeout(initializeAuthHandling, 500);
 
 // Signup function
 window.signup = async function() {

@@ -1,0 +1,246 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Template Page Debug</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        
+        .debug-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .template-card {
+            background: white;
+            border-radius: 8px;
+            margin: 20px 0;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .template-header {
+            border-bottom: 2px solid #D4AF37;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .page-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .page-card {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            background: #f9f9f9;
+        }
+        
+        .page-card.valid {
+            border-color: #4CAF50;
+            background: #f0fff0;
+        }
+        
+        .page-card.invalid {
+            border-color: #f44336;
+            background: #fff0f0;
+        }
+        
+        .block-list {
+            margin-top: 10px;
+            font-size: 12px;
+        }
+        
+        .block-item {
+            padding: 2px 5px;
+            margin: 2px 0;
+            background: #e0e0e0;
+            border-radius: 3px;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        
+        .status {
+            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 15px;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        
+        .status.valid {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .status.invalid {
+            background: #f44336;
+            color: white;
+        }
+        
+        .summary {
+            background: #2196F3;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-container">
+        <h1>🔍 Template Page Debug Tool</h1>
+        
+        <div class="summary" id="summary">
+            Loading templates...
+        </div>
+        
+        <div id="template-debug-results">
+            <!-- Debug results will be populated here -->
+        </div>
+    </div>
+
+    <!-- Load template components -->
+    <script type="text/babel" src="components/PresetTemplates.jsx"></script>
+    
+    <script>
+        // Wait for templates to load
+        setTimeout(() => {
+            debugAllTemplates();
+        }, 1000);
+        
+        function debugAllTemplates() {
+            const templates = window.PresetTemplates || {};
+            const templateKeys = Object.keys(templates);
+            
+            if (templateKeys.length === 0) {
+                document.getElementById('summary').innerHTML = '❌ No templates found!';
+                return;
+            }
+            
+            let totalPages = 0;
+            let validPages = 0;
+            let invalidPages = 0;
+            
+            const resultsContainer = document.getElementById('template-debug-results');
+            resultsContainer.innerHTML = '';
+            
+            templateKeys.forEach(templateKey => {
+                const template = templates[templateKey];
+                const templateCard = createTemplateDebugCard(template, templateKey);
+                resultsContainer.appendChild(templateCard);
+                
+                // Count pages
+                const pages = Object.keys(template.pages || {});
+                totalPages += pages.length;
+                
+                pages.forEach(pageId => {
+                    const pageContent = template.pages[pageId];
+                    if (validatePageContent(pageContent, pageId)) {
+                        validPages++;
+                    } else {
+                        invalidPages++;
+                    }
+                });
+            });
+            
+            // Update summary
+            document.getElementById('summary').innerHTML = `
+                📊 Debug Summary:<br>
+                • ${templateKeys.length} templates loaded<br>
+                • ${totalPages} total pages<br>
+                • ${validPages} valid pages ✅<br>
+                • ${invalidPages} invalid pages ❌
+            `;
+        }
+        
+        function createTemplateDebugCard(template, templateKey) {
+            const card = document.createElement('div');
+            card.className = 'template-card';
+            
+            const pages = Object.keys(template.pages || {});
+            let validPageCount = 0;
+            
+            const pageCards = pages.map(pageId => {
+                const pageContent = template.pages[pageId];
+                const isValid = validatePageContent(pageContent, pageId);
+                
+                if (isValid) validPageCount++;
+                
+                const blocks = Array.isArray(pageContent) ? pageContent : [];
+                const blockItems = blocks.map(block => 
+                    `<span class="block-item">${block.type || 'unknown'}</span>`
+                ).join('');
+                
+                return `
+                    <div class="page-card ${isValid ? 'valid' : 'invalid'}">
+                        <h4>${pageId.charAt(0).toUpperCase() + pageId.slice(1)}</h4>
+                        <div>Blocks: ${blocks.length}</div>
+                        <div class="block-list">${blockItems}</div>
+                        <span class="status ${isValid ? 'valid' : 'invalid'}">
+                            ${isValid ? '✅ Valid' : '❌ Invalid'}
+                        </span>
+                    </div>
+                `;
+            }).join('');
+            
+            card.innerHTML = `
+                <div class="template-header">
+                    <h2>${template.name}</h2>
+                    <div><strong>Category:</strong> ${template.category}</div>
+                    <div><strong>Pages:</strong> ${validPageCount}/${pages.length} valid</div>
+                </div>
+                <div class="page-grid">
+                    ${pageCards}
+                </div>
+            `;
+            
+            return card;
+        }
+        
+        function validatePageContent(pageContent, pageId) {
+            if (!pageContent) {
+                console.warn(`Page ${pageId} has no content`);
+                return false;
+            }
+            
+            if (!Array.isArray(pageContent)) {
+                console.warn(`Page ${pageId} content is not an array`);
+                return false;
+            }
+            
+            if (pageContent.length === 0) {
+                console.warn(`Page ${pageId} has no blocks`);
+                return false;
+            }
+            
+            // Check each block has required properties
+            const validBlocks = pageContent.every(block => {
+                return block && 
+                       typeof block.id === 'string' && 
+                       typeof block.type === 'string' &&
+                       block.content !== undefined;
+            });
+            
+            if (!validBlocks) {
+                console.warn(`Page ${pageId} has invalid block structure`);
+                return false;
+            }
+            
+            return true;
+        }
+    </script>
+    
+    <!-- Load Babel for JSX transformation -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</body>
+</html>

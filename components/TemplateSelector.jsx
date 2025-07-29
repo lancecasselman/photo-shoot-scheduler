@@ -15,6 +15,10 @@ const TemplateSelector = ({ onApplyTemplate, currentTheme }) => {
     }, [templates, categories]);
     
     const filteredTemplates = Object.entries(templates).filter(([key, template]) => {
+        if (!template || !template.pages) {
+            console.warn(`Template ${key} is missing pages structure`);
+            return false;
+        }
         if (selectedCategory === 'All') return true;
         return template.category === selectedCategory;
     });

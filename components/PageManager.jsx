@@ -94,4 +94,20 @@ const PageManager = ({
 };
 
 // Make component globally available
+// Add page validation and debugging
+window.debugPageContent = function(siteBlocks) {
+    console.log('=== PAGE CONTENT DEBUG ===');
+    Object.keys(siteBlocks).forEach(pageId => {
+        const blocks = siteBlocks[pageId];
+        console.log(`Page: ${pageId}`);
+        console.log(`  - Blocks: ${Array.isArray(blocks) ? blocks.length : 'Invalid'}`);
+        if (Array.isArray(blocks)) {
+            blocks.forEach((block, index) => {
+                console.log(`  - Block ${index}: ${block.type || 'No type'} (ID: ${block.id || 'No ID'})`);
+            });
+        }
+    });
+    console.log('=== END DEBUG ===');
+};
+
 window.PageManager = PageManager;

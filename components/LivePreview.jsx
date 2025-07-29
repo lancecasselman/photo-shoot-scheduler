@@ -267,4 +267,29 @@ const LivePreview = ({
     );
 };
 
+// Add global preview validation function
+window.validatePageContent = function(blocks, pageName) {
+    if (!blocks || !Array.isArray(blocks)) {
+        console.warn(`Page ${pageName} has invalid blocks structure`);
+        return false;
+    }
+    
+    if (blocks.length === 0) {
+        console.warn(`Page ${pageName} has no content blocks`);
+        return false;
+    }
+    
+    // Validate each block has required properties
+    const validBlocks = blocks.every(block => {
+        return block && block.id && block.type;
+    });
+    
+    if (!validBlocks) {
+        console.warn(`Page ${pageName} has invalid block structure`);
+        return false;
+    }
+    
+    return true;
+};
+
 window.LivePreview = LivePreview;

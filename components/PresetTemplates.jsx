@@ -1673,6 +1673,21 @@ const TemplateCategories = [
     'Commercial'
 ];
 
-// Export the templates
+// Export the templates with validation
 window.PresetTemplates = PresetTemplates;
 window.TemplateCategories = TemplateCategories;
+
+// Validate templates on load
+console.log('PresetTemplates loaded with', Object.keys(PresetTemplates).length, 'templates');
+console.log('Template categories:', TemplateCategories);
+
+// Validate each template has required pages
+Object.keys(PresetTemplates).forEach(templateKey => {
+    const template = PresetTemplates[templateKey];
+    const pages = Object.keys(template.pages || {});
+    if (pages.length === 0) {
+        console.warn(`Template ${templateKey} has no pages`);
+    } else {
+        console.log(`Template ${templateKey} has pages:`, pages);
+    }
+});
