@@ -8666,12 +8666,12 @@ ${name}`;
                         PageManager: typeof window.PageManager !== 'undefined',
                         TemplateSelector: typeof window.TemplateSelector !== 'undefined'
                     });
-                    setTimeout(initSiteBuilder, 200);
+                    setTimeout(initSiteBuilder, 500);
                 }
             };
             
-            // Start initialization
-            setTimeout(initSiteBuilder, 1000);
+            // Start initialization with longer delay for Babel compilation
+            setTimeout(initSiteBuilder, 2000);
         });
     </script>
 
