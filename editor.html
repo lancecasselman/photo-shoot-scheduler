@@ -90,6 +90,17 @@
             color: white;
         }
         
+        .nav-item.add-page-btn {
+            background: #28a745;
+            color: white;
+            border: 2px dashed #28a745;
+        }
+        
+        .nav-item.add-page-btn:hover {
+            background: #218838;
+            border-color: #218838;
+        }
+        
         .nav-item i {
             margin-right: 12px;
             width: 20px;
@@ -453,6 +464,10 @@
                     <i>📧</i>
                     <span>Contact</span>
                 </div>
+                <div class="nav-item add-page-btn" onclick="addNewPage()">
+                    <i>➕</i>
+                    <span>Add Page</span>
+                </div>
             </div>
             
             <div class="sidebar-section">
@@ -611,6 +626,7 @@
     <script src="js/firebase-config.js"></script>
     <script src="scripts/templateLoader.js"></script>
     <script src="scripts/editorUI.js"></script>
+    <script src="js/preview-renderer.js"></script>
     
     <script>
         // Enhanced debugging and error handling for editor initialization
@@ -790,69 +806,86 @@
                 const customizedTemplate = applyCustomizations(currentTemplate, customizations);
                 console.log('✨ Applied customizations to template');
                 
-                // Check if templateLoader has generateTemplateHTML method
-                if (!window.templateLoader || !window.templateLoader.generateTemplateHTML) {
-                    console.error('❌ Template HTML generator not available');
+                // Use the new interactive preview renderer
+                if (window.previewRenderer) {
+                    console.log('🎨 Using interactive preview renderer');
+                    const html = window.previewRenderer.generateInteractiveHTML(customizedTemplate, currentPage);
+                    console.log('📄 Generated interactive HTML length:', html ? html.length : 'null');
                     
-                    // Fallback to loading template files directly
-                    loadTemplatePageFallback(currentPage);
-                    return;
-                }
-                
-                // Generate HTML
-                console.log('🏗️ Generating HTML for page:', currentPage);
-                const html = window.templateLoader.generateTemplateHTML(customizedTemplate, currentPage);
-                console.log('📄 Generated HTML length:', html ? html.length : 'null');
-                
-                // Update iframe
-                const iframe = document.getElementById('preview-iframe');
-                if (!iframe) {
-                    console.error('❌ Preview iframe not found');
-                    return;
-                }
-                
-                if (html) {
-                    console.log('🔧 Setting iframe content...');
-                    console.log('📝 HTML preview (first 200 chars):', html.substring(0, 200));
-                    
-                    // Try multiple methods to set iframe content
-                    try {
-                        // Method 1: srcdoc attribute
-                        iframe.srcdoc = html;
-                        console.log('✅ srcdoc method attempted');
-                        
-                        // Method 2: Write directly to iframe document (fallback)
-                        setTimeout(() => {
-                            try {
-                                if (iframe.contentDocument) {
-                                    const doc = iframe.contentDocument;
-                                    if (!doc.body || doc.body.innerHTML.length === 0) {
-                                        console.log('🔄 srcdoc failed, trying document.write method');
-                                        doc.open();
-                                        doc.write(html);
-                                        doc.close();
-                                        console.log('✅ document.write method completed');
-                                    }
-                                }
-                            } catch (e) {
-                                console.error('❌ document.write method failed:', e);
-                                
-                                // Method 3: Data URL fallback
-                                try {
-                                    console.log('🔄 Trying data URL method');
-                                    iframe.src = 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
-                                    console.log('✅ data URL method completed');
-                                } catch (e2) {
-                                    console.error('❌ All iframe methods failed:', e2);
-                                }
-                            }
-                        }, 100);
-                        
-                    } catch (e) {
-                        console.error('❌ Error setting iframe content:', e);
+                    if (html) {
+                        updateIframeContent(html);
+                        return;
                     }
-                    
-                    console.log('✅ Preview updated successfully');
+                }
+                
+                // Fallback to original method
+                if (window.templateLoader && window.templateLoader.generateTemplateHTML) {
+                    console.log('🔄 Using fallback template generator');
+                    const html = window.templateLoader.generateTemplateHTML(customizedTemplate, currentPage);
+                    console.log('📄 Generated HTML length:', html ? html.length : 'null');
+                    if (html) {
+                        updateIframeContent(html);
+                        return;
+                    }
+                }
+                
+                // Final fallback
+                loadTemplatePageFallback(currentPage);
+                
+            } catch (error) {
+                console.error('❌ Error updating preview:', error);
+                loadTemplatePageFallback(currentPage);
+            }
+        }
+        
+        function updateIframeContent(html) {
+            const iframe = document.getElementById('preview-iframe');
+            if (!iframe) {
+                console.error('❌ Preview iframe not found');
+                return;
+            }
+            
+            console.log('🔧 Setting iframe content...');
+            console.log('📝 HTML preview (first 200 chars):', html.substring(0, 200));
+            
+            // Try multiple methods to set iframe content
+            try {
+                // Method 1: srcdoc attribute
+                iframe.srcdoc = html;
+                console.log('✅ srcdoc method attempted');
+                
+                // Method 2: Write directly to iframe document (fallback)
+                setTimeout(() => {
+                    try {
+                        if (iframe.contentDocument) {
+                            const doc = iframe.contentDocument;
+                            if (!doc.body || doc.body.innerHTML.length === 0) {
+                                console.log('🔄 srcdoc failed, trying document.write method');
+                                doc.open();
+                                doc.write(html);
+                                doc.close();
+                                console.log('✅ document.write method completed');
+                            }
+                        }
+                    } catch (e) {
+                        console.error('❌ document.write method failed:', e);
+                        
+                        // Method 3: Data URL fallback
+                        try {
+                            console.log('🔄 Trying data URL method');
+                            iframe.src = 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
+                            console.log('✅ data URL method completed');
+                        } catch (e2) {
+                            console.error('❌ All iframe methods failed:', e2);
+                        }
+                    }
+                }, 100);
+                
+            } catch (e) {
+                console.error('❌ Error setting iframe content:', e);
+            }
+            
+            console.log('✅ Preview updated successfully');
                     
                     // Enhanced debugging with multiple checks
                     setTimeout(() => {
@@ -1229,6 +1262,71 @@
                 clearTimeout(timeout);
                 timeout = setTimeout(later, wait);
             };
+        }
+        
+        // Page Management Functions
+        function addNewPage() {
+            const pageName = prompt('Enter page name (e.g., "services", "pricing", "blog"):');
+            if (!pageName) return;
+            
+            const cleanPageName = pageName.toLowerCase().replace(/[^a-z0-9]/g, '');
+            if (!cleanPageName) {
+                alert('Please enter a valid page name with letters and numbers only.');
+                return;
+            }
+            
+            // Check if page already exists
+            if (currentTemplate.structure[cleanPageName]) {
+                alert('A page with this name already exists.');
+                return;
+            }
+            
+            // Add new page to template structure
+            currentTemplate.structure[cleanPageName] = {
+                title: pageName.charAt(0).toUpperCase() + pageName.slice(1),
+                subtitle: 'New page content goes here',
+                content: {
+                    title: 'Welcome to ' + pageName.charAt(0).toUpperCase() + pageName.slice(1),
+                    text: 'This is your new page. Click on any text to edit it.'
+                }
+            };
+            
+            // Add page navigation item
+            addPageNavItem(cleanPageName, pageName);
+            
+            // Switch to new page
+            currentPage = cleanPageName;
+            updatePreview();
+            
+            // Update navigation
+            document.querySelectorAll('.nav-item[data-page]').forEach(i => i.classList.remove('active'));
+            document.querySelector(`[data-page="${cleanPageName}"]`).classList.add('active');
+            
+            showMessage('New page "' + pageName + '" added successfully!', 'success');
+        }
+        
+        function addPageNavItem(pageKey, pageName) {
+            const pagesSection = document.querySelector('.sidebar-section h3').parentElement;
+            const addButton = pagesSection.querySelector('.add-page-btn');
+            
+            const pageItem = document.createElement('div');
+            pageItem.className = 'nav-item';
+            pageItem.setAttribute('data-page', pageKey);
+            pageItem.innerHTML = `
+                <i>📄</i>
+                <span>${pageName.charAt(0).toUpperCase() + pageName.slice(1)}</span>
+            `;
+            
+            // Add click handler
+            pageItem.addEventListener('click', function() {
+                document.querySelectorAll('.nav-item[data-page]').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+                currentPage = this.dataset.page;
+                updatePreview();
+            });
+            
+            // Insert before add button
+            pagesSection.insertBefore(pageItem, addButton);
         }
     </script>
 </body>
