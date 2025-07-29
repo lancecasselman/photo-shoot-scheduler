@@ -29,6 +29,11 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
+    <!-- React and Babel -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
     <!-- Confetti Animation Styles -->
     <style>
         .confetti-container {
@@ -9229,6 +9234,37 @@ ${name}`;
             </div>
         </div>
     </div>
+
+    <!-- Load Website Builder Components -->
+    <script type="text/babel" src="components/PresetTemplates.jsx"></script>
+    <script src="components/firebase-publish.js"></script>
+    <script type="text/babel" src="components/SiteBuilder.jsx"></script>
+    
+    <!-- Initialize React Site Builder -->
+    <script type="text/babel">
+        // Initialize the React Site Builder component
+        document.addEventListener('DOMContentLoaded', function() {
+            // Wait for all components to load
+            const initSiteBuilder = () => {
+                if (typeof SiteBuilder !== 'undefined' && window.PresetTemplates) {
+                    console.log('Initializing React SiteBuilder...');
+                    const container = document.querySelector('.website-builder-container');
+                    if (container) {
+                        ReactDOM.render(React.createElement(SiteBuilder), container);
+                        console.log('SiteBuilder mounted successfully');
+                    } else {
+                        console.error('Website builder container not found');
+                    }
+                } else {
+                    console.log('Waiting for SiteBuilder components...');
+                    setTimeout(initSiteBuilder, 100);
+                }
+            };
+            
+            // Start initialization
+            setTimeout(initSiteBuilder, 500);
+        });
+    </script>
 
 </body>
 </html>
