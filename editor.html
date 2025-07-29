@@ -3,13 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Template Editor - Photography Website Builder</title>
-    
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    
+    <title>Template Editor</title>
     <style>
         * {
             margin: 0;
@@ -19,70 +13,83 @@
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #1a1a1a;
-            color: #f0f0f0;
-            overflow: hidden;
             height: 100vh;
+            display: flex;
+            background: #f5f5f5;
         }
         
-        .editor-container {
-            display: grid;
-            grid-template-columns: 280px 1fr 320px;
-            height: 100vh;
-        }
-        
-        /* Left Sidebar - Navigation & Settings */
-        .left-sidebar {
-            background: #2a2a2a;
-            border-right: 1px solid #404040;
+        .sidebar {
+            width: 300px;
+            background: white;
+            border-right: 1px solid #e0e0e0;
             overflow-y: auto;
         }
         
-        .sidebar-header {
+        .main-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .toolbar {
+            height: 60px;
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            gap: 10px;
+        }
+        
+        .preview-container {
+            flex: 1;
+            background: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
             padding: 20px;
-            border-bottom: 1px solid #404040;
-            background: #333;
+            overflow: auto;
         }
         
-        .sidebar-header h2 {
-            color: #667eea;
-            font-size: 1.2rem;
-            margin-bottom: 5px;
+        .preview-frame {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 1200px;
+            min-height: 800px;
         }
         
-        .template-name {
-            color: #888;
-            font-size: 0.9rem;
+        .preview-iframe {
+            width: 100%;
+            height: 800px;
+            border: none;
+            border-radius: 8px;
         }
         
         .sidebar-section {
             padding: 20px;
-            border-bottom: 1px solid #404040;
+            border-bottom: 1px solid #e0e0e0;
         }
         
         .sidebar-section h3 {
-            color: #f0f0f0;
-            font-size: 0.9rem;
             margin-bottom: 15px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            color: #333;
+            font-size: 1.1rem;
         }
         
         .nav-item {
             display: flex;
             align-items: center;
-            padding: 12px 16px;
-            margin-bottom: 8px;
-            background: #333;
-            border-radius: 8px;
+            padding: 10px;
+            margin: 5px 0;
             cursor: pointer;
-            transition: all 0.2s ease;
-            color: #ccc;
+            border-radius: 6px;
+            transition: background 0.2s;
         }
         
         .nav-item:hover {
-            background: #404040;
-            color: #667eea;
+            background: #f0f0f0;
         }
         
         .nav-item.active {
@@ -90,1482 +97,342 @@
             color: white;
         }
         
-        .nav-item.add-page-btn {
-            background: #28a745;
-            color: white;
-            border: 2px dashed #28a745;
-        }
-        
-        .nav-item.add-page-btn:hover {
-            background: #218838;
-            border-color: #218838;
-        }
-        
         .nav-item i {
-            margin-right: 12px;
-            width: 20px;
-            text-align: center;
-        }
-        
-        /* Center Preview Area */
-        .preview-area {
-            background: #f5f5f5;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-        
-        .preview-header {
-            background: #333;
-            border-bottom: 1px solid #404040;
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .device-selector {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .device-btn {
-            padding: 8px 15px;
-            background: #404040;
-            color: #ccc;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            transition: all 0.2s ease;
-        }
-        
-        .device-btn:hover,
-        .device-btn.active {
-            background: #667eea;
-            color: white;
-        }
-        
-        .preview-actions {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .action-btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-        
-        .btn-save {
-            background: #28a745;
-            color: white;
-        }
-        
-        .btn-save:hover {
-            background: #218838;
-        }
-        
-        .btn-publish {
-            background: #667eea;
-            color: white;
-        }
-        
-        .btn-publish:hover {
-            background: #5a6fd8;
-        }
-        
-        .preview-frame {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            padding: 20px;
-            background: #e9e9e9;
-            min-height: 500px;
-            position: relative;
-        }
-        
-        .preview-iframe {
-            border: none;
-            border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            background: white;
-            transition: all 0.3s ease;
-            display: block !important;
-            min-height: 500px;
-        }
-        
-        .preview-iframe.desktop {
-            width: 100%;
-            height: calc(100vh - 140px);
-            max-width: 1200px;
-            min-height: 600px;
-        }
-        
-        .preview-iframe.tablet {
-            width: 768px;
-            height: 1024px;
-            min-height: 600px;
-        }
-        
-        .preview-iframe.mobile {
-            width: 375px;
-            height: 667px;
-            min-height: 500px;
-        }
-        
-        /* Right Sidebar - Controls */
-        .right-sidebar {
-            background: #2a2a2a;
-            border-left: 1px solid #404040;
-            overflow-y: auto;
-        }
-        
-        .controls-section {
-            padding: 20px;
-            border-bottom: 1px solid #404040;
-            display: none; /* Hide all panels by default */
-        }
-        
-        .controls-section.active {
-            display: block; /* Show active panel */
-        }
-        
-        .controls-section h3 {
-            color: #f0f0f0;
-            font-size: 0.9rem;
-            margin-bottom: 15px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            margin-right: 10px;
         }
         
         .form-group {
-            margin-bottom: 15px;
+            margin: 15px 0;
         }
         
         .form-group label {
             display: block;
-            color: #ccc;
-            font-size: 0.85rem;
             margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
         }
         
         .form-group input,
         .form-group select,
         .form-group textarea {
             width: 100%;
-            padding: 10px;
-            background: #333;
-            border: 1px solid #555;
-            border-radius: 5px;
-            color: #f0f0f0;
-            font-size: 0.9rem;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
         }
         
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        
-        .color-input {
-            height: 40px;
-            padding: 2px;
-            cursor: pointer;
-        }
-        
-        .font-preview {
-            background: #333;
-            padding: 15px;
-            border-radius: 5px;
-            margin-top: 10px;
-            border: 1px solid #555;
-        }
-        
-        .back-link {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(0,0,0,0.7);
+        .button {
+            background: #667eea;
             color: white;
-            padding: 10px 15px;
-            border-radius: 20px;
-            text-decoration: none;
-            font-size: 0.85rem;
-            z-index: 1000;
-            transition: all 0.2s ease;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
         }
         
-        .back-link:hover {
-            background: rgba(0,0,0,0.9);
+        .button:hover {
+            background: #5a6fd8;
         }
         
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
-        }
-        
-        .loading-content {
-            background: #333;
-            padding: 30px;
-            border-radius: 10px;
-            text-align: center;
-        }
-        
-        .loading-spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #555;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .hidden {
+        .panel {
             display: none;
         }
         
-        @media (max-width: 1200px) {
-            .editor-container {
-                grid-template-columns: 260px 1fr 280px;
-            }
+        .panel.active {
+            display: block;
         }
         
-        @media (max-width: 768px) {
-            body {
-                overflow: auto;
-            }
-            
-            .editor-container {
-                grid-template-columns: 1fr;
-                grid-template-rows: auto 1fr;
-                min-height: 100vh;
-            }
-            
-            .left-sidebar,
-            .right-sidebar {
-                position: fixed;
-                top: 0;
-                bottom: 0;
-                z-index: 1000;
-                width: 280px;
-                transform: translateX(-100%);
-                transition: transform 0.3s ease;
-            }
-            
-            .left-sidebar.open,
-            .right-sidebar.open {
-                transform: translateX(0);
-            }
-            
-            .right-sidebar {
-                right: 0;
-                transform: translateX(100%);
-            }
-            
-            .preview-area {
-                order: 1;
-            }
-            
-            .preview-frame {
-                padding: 10px;
-                min-height: calc(100vh - 70px);
-            }
-            
-            .preview-iframe.desktop,
-            .preview-iframe.tablet,
-            .preview-iframe.mobile {
-                width: 100%;
-                height: calc(100vh - 90px);
-                max-width: none;
-            }
-            
-            .mobile-menu-btn {
-                background: #404040;
-                color: #ccc;
-                border: none;
-                padding: 8px 12px;
-                border-radius: 5px;
-                font-size: 0.8rem;
-                cursor: pointer;
-            }
-            
-            .mobile-menu-btn:hover {
-                background: #667eea;
-                color: white;
-            }
+        .device-tabs {
+            display: flex;
+            gap: 5px;
         }
         
-        @media (max-width: 480px) {
-            .preview-header {
-                flex-wrap: wrap;
-                gap: 10px;
-                padding: 10px;
-            }
-            
-            .device-selector {
-                order: 2;
-                width: 100%;
-                justify-content: center;
-            }
-            
-            .preview-actions {
-                order: 1;
-                margin-left: auto;
-            }
+        .device-tab {
+            padding: 8px 15px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .device-tab.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .color-input {
+            width: 50px !important;
+            height: 40px;
+            padding: 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
         }
     </style>
 </head>
 <body>
-    <a href="/template-selector.html" class="back-link">← Back to Templates</a>
-    
-    <div class="editor-container">
-        <!-- Left Sidebar -->
-        <div class="left-sidebar">
-            <div class="sidebar-header">
-                <h2>Template Editor</h2>
-                <div class="template-name" id="current-template-name">Loading...</div>
+    <div class="sidebar">
+        <!-- Pages Section -->
+        <div class="sidebar-section">
+            <h3>PAGES</h3>
+            <div class="nav-item active" data-page="home">
+                <i>🏠</i>
+                <span>Home</span>
             </div>
-            
-            <div class="sidebar-section">
-                <h3>Pages</h3>
-                <div class="nav-item active" data-page="home">
-                    <i>🏠</i>
-                    <span>Home</span>
-                </div>
-                <div class="nav-item" data-page="about">
-                    <i>👤</i>
-                    <span>About</span>
-                </div>
-                <div class="nav-item" data-page="portfolio">
-                    <i>📸</i>
-                    <span>Portfolio</span>
-                </div>
-                <div class="nav-item" data-page="contact">
-                    <i>📧</i>
-                    <span>Contact</span>
-                </div>
-                <div class="nav-item add-page-btn" onclick="addNewPage()">
-                    <i>➕</i>
-                    <span>Add Page</span>
-                </div>
+            <div class="nav-item" data-page="about">
+                <i>👤</i>
+                <span>About</span>
             </div>
-            
+            <div class="nav-item" data-page="portfolio">
+                <i>📸</i>
+                <span>Portfolio</span>
+            </div>
+            <div class="nav-item" data-page="contact">
+                <i>📧</i>
+                <span>Contact</span>
+            </div>
+        </div>
+        
+        <!-- Settings Panel -->
+        <div class="sidebar-section">
+            <h3>SITE SETTINGS</h3>
+            <div class="nav-item" onclick="showPanel('settings')">
+                <i>⚙️</i>
+                <span>Site Information</span>
+            </div>
+            <div class="nav-item" onclick="showPanel('branding')">
+                <i>🎨</i>
+                <span>Branding</span>
+            </div>
+            <div class="nav-item" onclick="showPanel('content')">
+                <i>📝</i>
+                <span>Content</span>
+            </div>
+        </div>
+        
+        <!-- Settings Panels -->
+        <div class="panel" id="settings-panel">
             <div class="sidebar-section">
-                <h3>Site Settings</h3>
-                <div class="nav-item active" data-panel="site-info">
-                    <i>⚙️</i>
-                    <span>Site Information</span>
+                <div class="form-group">
+                    <label>Site Title</label>
+                    <input type="text" id="site-title" value="Photography Studio" onchange="updatePreview()">
                 </div>
-                <div class="nav-item" data-panel="branding">
-                    <i>🎨</i>
-                    <span>Branding</span>
+                <div class="form-group">
+                    <label>Site Tagline</label>
+                    <input type="text" id="site-tagline" value="Capturing beautiful moments" onchange="updatePreview()">
                 </div>
-                <div class="nav-item" data-panel="content">
-                    <i>📝</i>
-                    <span>Content</span>
+                <div class="form-group">
+                    <label>Contact Email</label>
+                    <input type="email" id="contact-email" value="hello@example.com" onchange="updatePreview()">
+                </div>
+                <div class="form-group">
+                    <label>Contact Phone</label>
+                    <input type="tel" id="contact-phone" value="(555) 123-4567" onchange="updatePreview()">
                 </div>
             </div>
         </div>
         
-        <!-- Center Preview -->
-        <div class="preview-area">
-            <div class="preview-header">
-                <div class="device-selector">
-                    <button class="device-btn active" data-device="desktop">💻 Desktop</button>
-                    <button class="device-btn" data-device="tablet">📱 Tablet</button>
-                    <button class="device-btn" data-device="mobile">📱 Mobile</button>
+        <div class="panel" id="branding-panel">
+            <div class="sidebar-section">
+                <div class="form-group">
+                    <label>Primary Color</label>
+                    <input type="color" id="primary-color" value="#667eea" class="color-input" onchange="updatePreview()">
                 </div>
-                
-                <div class="preview-actions">
-                    <button class="action-btn btn-save" onclick="saveTemplate()">Save</button>
-                    <button class="action-btn btn-publish" onclick="publishSite()">Publish</button>
+                <div class="form-group">
+                    <label>Secondary Color</label>
+                    <input type="color" id="secondary-color" value="#764ba2" class="color-input" onchange="updatePreview()">
                 </div>
-            </div>
-            
-            <div class="preview-frame">
-                <iframe id="preview-iframe" class="preview-iframe desktop" src="about:blank" style="min-height: 500px;"></iframe>
+                <div class="form-group">
+                    <label>Background Color</label>
+                    <input type="color" id="background-color" value="#ffffff" class="color-input" onchange="updatePreview()">
+                </div>
             </div>
         </div>
         
-        <!-- Right Sidebar -->
-        <div class="right-sidebar">
-            <!-- Site Information Panel -->
-            <div class="controls-section" id="site-info-panel">
-                <h3>Site Information</h3>
-                
+        <div class="panel" id="content-panel">
+            <div class="sidebar-section">
                 <div class="form-group">
-                    <label for="site-title">Website Title</label>
-                    <input type="text" id="site-title" placeholder="Your Photography Business">
+                    <label>Element ID</label>
+                    <input type="text" id="element-id" readonly>
                 </div>
-                
                 <div class="form-group">
-                    <label for="site-tagline">Tagline</label>
-                    <input type="text" id="site-tagline" placeholder="Professional Photography Services">
+                    <label>Content</label>
+                    <textarea id="element-value" rows="3" onchange="updateElementContent()"></textarea>
                 </div>
-                
-                <div class="form-group">
-                    <label for="photographer-name">Photographer Name</label>
-                    <input type="text" id="photographer-name" placeholder="Your Name">
-                </div>
-                
-                <div class="form-group">
-                    <label for="contact-email">Email</label>
-                    <input type="email" id="contact-email" placeholder="hello@yoursite.com">
-                </div>
-                
-                <div class="form-group">
-                    <label for="contact-phone">Phone</label>
-                    <input type="tel" id="contact-phone" placeholder="+1 (555) 123-4567">
-                </div>
-            </div>
-            
-            <!-- Branding Panel -->
-            <div class="controls-section" id="branding-panel">
-                <h3>Brand Colors</h3>
-                
-                <div class="form-group">
-                    <label for="primary-color">Primary Color</label>
-                    <input type="color" id="primary-color" class="color-input" value="#667eea">
-                </div>
-                
-                <div class="form-group">
-                    <label for="secondary-color">Secondary Color</label>
-                    <input type="color" id="secondary-color" class="color-input" value="#764ba2">
-                </div>
-                
-                <div class="form-group">
-                    <label for="accent-color">Accent Color</label>
-                    <input type="color" id="accent-color" class="color-input" value="#f8f9fa">
-                </div>
-                
-                <div class="form-group">
-                    <label for="background-color">Background Color</label>
-                    <input type="color" id="background-color" class="color-input" value="#ffffff">
-                </div>
-                
-                <h3 style="margin-top: 30px;">Typography</h3>
-                
-                <div class="form-group">
-                    <label for="heading-font">Heading Font</label>
-                    <select id="heading-font">
-                        <option value="Playfair Display">Playfair Display</option>
-                        <option value="Montserrat">Montserrat</option>
-                        <option value="Lora">Lora</option>
-                        <option value="Inter">Inter</option>
-                        <option value="Merriweather">Merriweather</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="body-font">Body Font</label>
-                    <select id="body-font">
-                        <option value="Open Sans">Open Sans</option>
-                        <option value="Source Sans Pro">Source Sans Pro</option>
-                        <option value="Inter">Inter</option>
-                        <option value="Crimson Text">Crimson Text</option>
-                        <option value="Libre Baskerville">Libre Baskerville</option>
-                    </select>
-                </div>
-                
-                <div class="font-preview" id="font-preview">
-                    <h4 style="font-family: var(--heading-font);">Heading Preview</h4>
-                    <p style="font-family: var(--body-font);">Body text preview with your selected fonts.</p>
-                </div>
-            </div>
-            
-            <!-- Content Panel -->
-            <div class="controls-section" id="content-panel">
-                <h3>📝 Content Editor</h3>
-                <p>Click on any element in the preview to edit its content.</p>
-                
-                <div class="form-group">
-                    <label>Selected Element</label>
-                    <input type="text" id="element-id" readonly placeholder="Click an element to select">
-                    <input type="hidden" id="element-type">
-                </div>
-                
-                <div class="form-group" id="text-editor" style="display: none;">
-                    <label>Text Content</label>
-                    <textarea id="element-value" placeholder="Edit text content..." rows="3"></textarea>
-                    <button class="btn btn-primary" onclick="updateElementContent()" style="margin-top: 10px;">Update Text</button>
-                </div>
-                
-                <div class="form-group" id="image-editor" style="display: none;">
-                    <label>Replace Image</label>
-                    <input type="file" id="image-upload" accept="image/*" onchange="handleImageUpload()" style="margin-bottom: 10px;">
-                    <p class="help-text" style="font-size: 0.9rem; color: #666;">Upload a new image to replace the selected photo</p>
-                </div>
-                
                 <div class="form-group">
                     <label>Text Color</label>
-                    <input type="color" id="text-color" value="#2c3e50" onchange="updateTextColor()">
+                    <input type="color" id="text-color" value="#333333" class="color-input" onchange="updateTextColor()">
                 </div>
-                
                 <div class="form-group">
                     <label>Font Size</label>
-                    <select id="font-size" onchange="updateFontSize()">
-                        <option value="0.9rem">Small</option>
-                        <option value="1rem" selected>Normal</option>
-                        <option value="1.2rem">Large</option>
-                        <option value="1.5rem">Extra Large</option>
-                        <option value="2rem">Heading</option>
-                        <option value="2.5rem">Large Heading</option>
-                        <option value="3rem">Hero Title</option>
-                    </select>
+                    <input type="range" id="font-size" min="12" max="48" value="16" onchange="updateFontSize()">
                 </div>
-                
                 <div class="form-group">
-                    <label>Font Weight</label>
-                    <select id="font-weight" onchange="updateFontWeight()">
-                        <option value="300">Light</option>
-                        <option value="400" selected>Normal</option>
-                        <option value="500">Medium</option>
-                        <option value="600">Semi Bold</option>
-                        <option value="700">Bold</option>
-                    </select>
+                    <label>Upload Image</label>
+                    <input type="file" id="image-upload" accept="image/*" onchange="handleImageUpload()">
                 </div>
             </div>
         </div>
     </div>
     
-    <!-- Loading Overlay -->
-    <div class="loading-overlay hidden" id="loading-overlay">
-        <div class="loading-content">
-            <div class="loading-spinner"></div>
-            <div>Loading template...</div>
+    <div class="main-area">
+        <div class="toolbar">
+            <div class="device-tabs">
+                <button class="device-tab active" onclick="setDevice('desktop')">💻 Desktop</button>
+                <button class="device-tab" onclick="setDevice('tablet')">📱 Tablet</button>
+                <button class="device-tab" onclick="setDevice('mobile')">📱 Mobile</button>
+            </div>
+            <div style="flex: 1;"></div>
+            <button class="button" onclick="saveWebsite()">Save</button>
+            <button class="button" onclick="publishWebsite()">Publish</button>
+        </div>
+        
+        <div class="preview-container">
+            <div class="preview-frame">
+                <iframe id="preview-iframe" class="preview-iframe" src="about:blank"></iframe>
+            </div>
         </div>
     </div>
-
-    <script src="js/firebase-config.js"></script>
-    <script src="scripts/templateLoader.js"></script>
-    <script src="scripts/editorUI.js"></script>
-    <script src="js/preview-renderer.js"></script>
     
     <script>
-        // Enhanced debugging and error handling for editor initialization
-        console.log('🚀 Editor script loading...');
-        
-        // Get template ID from URL parameter
-        const urlParams = new URLSearchParams(window.location.search);
-        const templateId = urlParams.get('template');
-        
-        console.log('📋 Template from URL:', templateId);
-        
-        let currentTemplate = null;
         let currentPage = 'home';
-        let currentDevice = 'desktop';
+        let currentTemplate = { name: 'Photography Studio' };
         
-        // Wait for all dependencies to load before initializing
-        let dependenciesLoaded = {
-            firebase: false,
-            templateLoader: false,
-            editorUI: false
-        };
-        
-        // Check dependencies loading
-        function checkDependency(name, condition) {
-            dependenciesLoaded[name] = condition;
-            console.log(`✅ ${name} loaded:`, condition);
-            
-            if (Object.values(dependenciesLoaded).every(loaded => loaded)) {
-                console.log('🎯 All dependencies loaded, initializing editor...');
-                initializeEditor();
-            }
-        }
-        
-        // Initialize editor with comprehensive error handling
+        // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('📱 DOM Content Loaded');
+            updatePreview();
             
-            // Check if dependencies are available
-            setTimeout(() => {
-                checkDependency('firebase', typeof firebase !== 'undefined');
-                checkDependency('templateLoader', typeof window.templateLoader !== 'undefined');
-                checkDependency('editorUI', typeof EditorUI !== 'undefined');
-            }, 500);
+            // Add page navigation handlers
+            document.querySelectorAll('.nav-item[data-page]').forEach(item => {
+                item.addEventListener('click', function() {
+                    document.querySelectorAll('.nav-item[data-page]').forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+                    currentPage = this.dataset.page;
+                    updatePreview();
+                });
+            });
         });
         
-        async function initializeEditor() {
-            console.log('🔧 Initializing editor...');
+        function showPanel(panelName) {
+            // Hide all panels
+            document.querySelectorAll('.panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
             
-            if (!templateId) {
-                console.error('❌ No template ID in URL');
-                alert('No template selected. Redirecting to template selector.');
-                window.location.href = '/template-selector.html';
-                return;
+            // Show selected panel
+            const panel = document.getElementById(panelName + '-panel');
+            if (panel) {
+                panel.classList.add('active');
             }
-            
-            showLoading(true);
-            
-            try {
-                console.log('🔍 Loading template:', templateId);
-                
-                // Check if templateLoader is available
-                if (!window.templateLoader) {
-                    console.error('❌ Template loader not available');
-                    throw new Error('Template loader not available');
-                }
-                
-                // Load template
-                currentTemplate = window.templateLoader.getTemplate(templateId);
-                console.log('📄 Template loaded:', currentTemplate ? currentTemplate.name : 'null');
-                
-                if (!currentTemplate) {
-                    console.error('❌ Template not found:', templateId);
-                    throw new Error('Template not found: ' + templateId);
-                }
-                
-                // Update UI
-                const templateNameElement = document.getElementById('current-template-name');
-                if (templateNameElement) {
-                    templateNameElement.textContent = currentTemplate.name;
-                    console.log('✅ Template name updated in UI');
-                } else {
-                    console.error('❌ Template name element not found');
-                }
-                
-                // Load template into preview
-                console.log('🖼️ Updating preview...');
-                updatePreview();
-                
-                // Setup event listeners
-                console.log('🎯 Setting up event listeners...');
-                setupEventListeners();
-                
-                // Initialize default panel
-                console.log('🎛️ Initializing default panel...');
-                showPanel('site-info');
-                
-                // Load saved customizations if any
-                console.log('💾 Loading saved customizations...');
-                await loadSavedCustomizations();
-                
-                showLoading(false);
-                console.log('✅ Editor loaded with template:', currentTemplate.name);
-                
-            } catch (error) {
-                console.error('❌ Error initializing editor:', error);
-                showLoading(false);
-                alert('Error loading template: ' + error.message + '. Please try again.');
-                // Don't redirect immediately, let user see the error
-                setTimeout(() => {
-                    window.location.href = '/template-selector.html';
-                }, 3000);
-            }
-        }
-        
-        function setupEventListeners() {
-            // Device selector
-            document.querySelectorAll('.device-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    document.querySelectorAll('.device-btn').forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    currentDevice = this.dataset.device;
-                    updatePreviewDevice();
-                });
-            });
-            
-            // Navigation items
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.addEventListener('click', function() {
-                    // Only remove active from items in the same section
-                    if (this.dataset.page) {
-                        // Page navigation - remove active from page nav items only
-                        document.querySelectorAll('.nav-item[data-page]').forEach(i => i.classList.remove('active'));
-                        this.classList.add('active');
-                        currentPage = this.dataset.page;
-                        updatePreview();
-                    }
-                    
-                    if (this.dataset.panel) {
-                        // Panel navigation - remove active from panel nav items only
-                        document.querySelectorAll('.nav-item[data-panel]').forEach(i => i.classList.remove('active'));
-                        this.classList.add('active');
-                        showPanel(this.dataset.panel);
-                    }
-                });
-            });
-            
-            // Form inputs
-            document.querySelectorAll('input, select, textarea').forEach(input => {
-                input.addEventListener('input', debounce(updatePreview, 300));
-            });
-            
-            // Color inputs
-            document.querySelectorAll('input[type="color"]').forEach(input => {
-                input.addEventListener('change', updatePreview);
-            });
-            
-            // Font selectors
-            document.getElementById('heading-font').addEventListener('change', updateFontPreview);
-            document.getElementById('body-font').addEventListener('change', updateFontPreview);
         }
         
         function updatePreview() {
-            console.log('🖼️ Updating preview for page:', currentPage);
-            
-            if (!currentTemplate) {
-                console.error('❌ No current template for preview');
-                return;
-            }
-            
-            try {
-                // Get current customizations
-                const customizations = getCustomizations();
-                console.log('⚙️ Current customizations:', customizations);
-                
-                // Apply customizations to template
-                const customizedTemplate = applyCustomizations(currentTemplate, customizations);
-                console.log('✨ Applied customizations to template');
-                
-                // Use the new interactive preview renderer
-                if (window.previewRenderer) {
-                    console.log('🎨 Using interactive preview renderer');
-                    const html = window.previewRenderer.generateInteractiveHTML(customizedTemplate, currentPage);
-                    console.log('📄 Generated interactive HTML length:', html ? html.length : 'null');
-                    
-                    if (html) {
-                        updateIframeContent(html);
-                        return;
-                    }
-                }
-                
-                // Fallback to original method
-                if (window.templateLoader && window.templateLoader.generateTemplateHTML) {
-                    console.log('🔄 Using fallback template generator');
-                    const html = window.templateLoader.generateTemplateHTML(customizedTemplate, currentPage);
-                    console.log('📄 Generated HTML length:', html ? html.length : 'null');
-                    if (html) {
-                        updateIframeContent(html);
-                        return;
-                    }
-                }
-                
-                // Final fallback
-                loadTemplatePageFallback(currentPage);
-                
-            } catch (error) {
-                console.error('❌ Error updating preview:', error);
-                loadTemplatePageFallback(currentPage);
-            }
-        }
-        
-        function updateIframeContent(html) {
-            const iframe = document.getElementById('preview-iframe');
-            if (!iframe) {
-                console.error('❌ Preview iframe not found');
-                return;
-            }
-            
-            console.log('🔧 Setting iframe content...');
-            console.log('📝 HTML preview (first 200 chars):', html.substring(0, 200));
-            
-            // Try multiple methods to set iframe content
-            try {
-                // Method 1: srcdoc attribute
-                iframe.srcdoc = html;
-                console.log('✅ srcdoc method attempted');
-                
-                // Method 2: Write directly to iframe document (fallback)
-                setTimeout(() => {
-                    try {
-                        if (iframe.contentDocument) {
-                            const doc = iframe.contentDocument;
-                            if (!doc.body || doc.body.innerHTML.length === 0) {
-                                console.log('🔄 srcdoc failed, trying document.write method');
-                                doc.open();
-                                doc.write(html);
-                                doc.close();
-                                console.log('✅ document.write method completed');
-                            }
-                        }
-                    } catch (e) {
-                        console.error('❌ document.write method failed:', e);
-                        
-                        // Method 3: Data URL fallback
-                        try {
-                            console.log('🔄 Trying data URL method');
-                            iframe.src = 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
-                            console.log('✅ data URL method completed');
-                        } catch (e2) {
-                            console.error('❌ All iframe methods failed:', e2);
-                        }
-                    }
-                }, 100);
-                
-            } catch (e) {
-                console.error('❌ Error setting iframe content:', e);
-            }
-            
-            console.log('✅ Preview updated successfully');
-                    
-            // Enhanced debugging with multiple checks
-            setTimeout(() => {
-                console.log('🔍 Iframe debugging:');
-                console.log('  - Iframe element exists:', !!iframe);
-                console.log('  - Iframe display style:', window.getComputedStyle(iframe).display);
-                console.log('  - Iframe visibility:', window.getComputedStyle(iframe).visibility);
-                console.log('  - Iframe width:', iframe.offsetWidth);
-                console.log('  - Iframe height:', iframe.offsetHeight);
-                console.log('  - Iframe parent display:', window.getComputedStyle(iframe.parentElement).display);
-                console.log('  - Preview frame height:', iframe.parentElement.offsetHeight);
-                console.log('  - Iframe src:', iframe.src);
-                console.log('  - Iframe srcdoc length:', iframe.srcdoc ? iframe.srcdoc.length : 0);
-                
-                // Try to access iframe content to verify it loaded
-                try {
-                    if (iframe.contentDocument) {
-                        const body = iframe.contentDocument.body;
-                        console.log('  - Iframe content loaded:', !!body);
-                        console.log('  - Iframe body content length:', body ? body.innerHTML.length : 0);
-                        console.log('  - Iframe document ready state:', iframe.contentDocument.readyState);
-                        if (body && body.innerHTML.length > 0) {
-                            console.log('  - First 100 chars of body:', body.innerHTML.substring(0, 100));
-                        }
-                    } else {
-                        console.log('  - Iframe content document not accessible (might be loading)');
-                    }
-                } catch (e) {
-                    console.log('  - Iframe content access error:', e.message);
-                }
-            }, 1000);
-        }
-        
-        function debugIframeContent(iframe, html) {
-            if (!html) {
-                console.error('❌ Generated HTML is empty');
-                console.log('🔄 Testing basic iframe functionality...');
-                
-                // Test with simple HTML to verify iframe works
-                const testHTML = `<!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Test</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; padding: 20px; background: #f0f0f0; }
-                        h1 { color: #333; text-align: center; }
-                    </style>
-                </head>
-                <body>
-                    <h1>Iframe Test - This Should Be Visible</h1>
-                    <p>If you can see this text, the iframe is working correctly.</p>
-                    <p>Template: Classic Elegance</p>
-                    <p>Time: ${new Date().toLocaleTimeString()}</p>
-                </body>
-                </html>`;
-                
-                iframe.srcdoc = testHTML;
-                console.log('✅ Test HTML loaded into iframe');
-                
-                // Use enhanced fallback method with click-to-edit
-                loadTemplatePageFallback(currentPage);
-            }
-        }
-        
-        // Enhanced fallback function with full click-to-edit support
-        async function loadTemplatePageFallback(page) {
-            console.log('🔄 Loading enhanced preview with click-to-edit:', page);
-            
-            // Create full interactive preview with current customizations
             const iframe = document.getElementById('preview-iframe');
             if (!iframe) return;
             
-            const templateName = currentTemplate ? currentTemplate.name : 'Photography Studio';
+            const templateName = document.getElementById('site-title').value || 'Photography Studio';
             const colors = {
                 primary: document.getElementById('primary-color').value || '#667eea',
                 secondary: document.getElementById('secondary-color').value || '#764ba2',
-                accent: document.getElementById('accent-color').value || '#f8f9fa',
                 background: document.getElementById('background-color').value || '#ffffff'
             };
             
-            const enhancedHTML = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${templateName} - ${page}</title>
-                    <style>
-                        * { margin: 0; padding: 0; box-sizing: border-box; }
-                        body {
-                            font-family: 'Open Sans', sans-serif;
-                            line-height: 1.6;
-                            color: #2c3e50;
-                            background: ${colors.background};
-                        }
-                        .nav {
-                            background: rgba(255, 255, 255, 0.95);
-                            padding: 1rem 0;
-                            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-                        }
-                        .container {
-                            max-width: 1200px;
-                            margin: 0 auto;
-                            padding: 0 20px;
-                        }
-                        .nav-header {
-                            display: flex;
-                            justify-content: space-between;
-                            align-items: center;
-                        }
-                        .nav-brand {
-                            font-size: 1.5rem;
-                            font-weight: bold;
-                            color: ${colors.primary};
-                            text-decoration: none;
-                            cursor: pointer;
-                            outline: 2px solid transparent;
-                            transition: outline 0.2s;
-                        }
-                        .nav-brand.selected {
-                            outline: 2px solid ${colors.primary};
-                            outline-offset: 2px;
-                        }
-                        .nav-links {
-                            display: flex;
-                            list-style: none;
-                            gap: 2rem;
-                        }
-                        .nav-links a {
-                            color: #333;
-                            text-decoration: none;
-                            font-weight: 500;
-                            transition: color 0.3s;
-                            cursor: pointer;
-                        }
-                        .nav-links a:hover {
-                            color: ${colors.primary};
-                        }
-                        .hero {
-                            background: linear-gradient(135deg, ${colors.primary}, ${colors.secondary});
-                            color: white;
-                            text-align: center;
-                            padding: 80px 0;
-                        }
-                        .hero h1 {
-                            font-size: 3rem;
-                            margin-bottom: 1rem;
-                            color: white;
-                            cursor: pointer;
-                            outline: 2px solid transparent;
-                            transition: outline 0.2s;
-                        }
-                        .hero h1.selected {
-                            outline: 2px solid white;
-                            outline-offset: 2px;
-                        }
-                        .hero p {
-                            font-size: 1.3rem;
-                            opacity: 0.9;
-                            cursor: pointer;
-                            outline: 2px solid transparent;
-                            transition: outline 0.2s;
-                        }
-                        .hero p.selected {
-                            outline: 2px solid white;
-                            outline-offset: 2px;
-                        }
-                        .section {
-                            padding: 60px 0;
-                        }
-                        .gallery {
-                            display: grid;
-                            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-                            gap: 1rem;
-                            margin-top: 2rem;
-                        }
-                        .gallery img {
-                            width: 100%;
-                            height: 200px;
-                            object-fit: cover;
-                            border-radius: 8px;
-                            cursor: pointer;
-                            transition: all 0.3s;
-                            outline: 2px solid transparent;
-                        }
-                        .gallery img:hover {
-                            transform: scale(1.02);
-                        }
-                        .gallery img.selected {
-                            outline: 2px solid ${colors.primary};
-                            outline-offset: 2px;
-                            transform: scale(1.02);
-                        }
-                        .editable {
-                            cursor: pointer;
-                            transition: outline 0.2s;
-                        }
-                        .editable:hover {
-                            outline: 2px dotted ${colors.primary};
-                            outline-offset: 2px;
-                        }
-                    </style>
-                </head>
-                <body>
-                    <nav class="nav">
-                        <div class="container">
-                            <div class="nav-header">
-                                <a class="nav-brand editable" data-edit-type="text" data-edit-id="site-title">${templateName}</a>
-                                <ul class="nav-links">
-                                    <li><a onclick="parent.postMessage({type: 'pageChanged', page: 'home'}, '*')">Home</a></li>
-                                    <li><a onclick="parent.postMessage({type: 'pageChanged', page: 'about'}, '*')">About</a></li>
-                                    <li><a onclick="parent.postMessage({type: 'pageChanged', page: 'portfolio'}, '*')">Portfolio</a></li>
-                                    <li><a onclick="parent.postMessage({type: 'pageChanged', page: 'contact'}, '*')">Contact</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                    </nav>
-                    
-                    ${page === 'home' ? `<section class="hero">
-                        <div class="container">
-                            <h1 class="editable" data-edit-type="text" data-edit-id="hero-title">Capturing Love Stories</h1>
-                            <p class="editable" data-edit-type="text" data-edit-id="hero-subtitle">Professional photography that tells your unique story</p>
-                        </div>
-                    </section>
-                    <section class="section">
-                        <div class="container">
-                            <div class="gallery">
-                                <img class="editable" data-edit-type="image" data-edit-id="gallery-1" src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400" alt="Portfolio Image 1">
-                                <img class="editable" data-edit-type="image" data-edit-id="gallery-2" src="https://images.unsplash.com/photo-1519741497674-611481863552?w=400" alt="Portfolio Image 2">
-                                <img class="editable" data-edit-type="image" data-edit-id="gallery-3" src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=400" alt="Portfolio Image 3">
-                                <img class="editable" data-edit-type="image" data-edit-id="gallery-4" src="https://images.unsplash.com/photo-1469371670807-013ccf25f16a?w=400" alt="Portfolio Image 4">
-                            </div>
-                        </div>
-                    </section>` : ''}
-                    ${page === 'about' ? `<section class="section">
-                        <div class="container">
-                            <h2 class="editable" data-edit-type="text" data-edit-id="about-title">About Our Studio</h2>
-                            <p class="editable" data-edit-type="text" data-edit-id="about-text">We are passionate photographers dedicated to capturing your most precious moments. With years of experience and an eye for detail, we create timeless memories that you'll treasure forever.</p>
-                        </div>
-                    </section>` : ''}
-                    ${page === 'portfolio' ? `<section class="section">
-                        <div class="container">
-                            <h2 class="editable" data-edit-type="text" data-edit-id="portfolio-title">Our Portfolio</h2>
-                            <div class="gallery">
-                                <img class="editable" data-edit-type="image" data-edit-id="portfolio-1" src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400" alt="Portfolio Image 1">
-                                <img class="editable" data-edit-type="image" data-edit-id="portfolio-2" src="https://images.unsplash.com/photo-1519741497674-611481863552?w=400" alt="Portfolio Image 2">
-                                <img class="editable" data-edit-type="image" data-edit-id="portfolio-3" src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=400" alt="Portfolio Image 3">
-                                <img class="editable" data-edit-type="image" data-edit-id="portfolio-4" src="https://images.unsplash.com/photo-1469371670807-013ccf25f16a?w=400" alt="Portfolio Image 4">
-                                <img class="editable" data-edit-type="image" data-edit-id="portfolio-5" src="https://images.unsplash.com/photo-1583394838336-acd977736f90?w=400" alt="Portfolio Image 5">
-                                <img class="editable" data-edit-type="image" data-edit-id="portfolio-6" src="https://images.unsplash.com/photo-1594736797933-d0f06b4ac4de?w=400" alt="Portfolio Image 6">
-                            </div>
-                        </div>
-                    </section>` : ''}
-                    ${page === 'contact' ? `<section class="section">
-                        <div class="container">
-                            <h2 class="editable" data-edit-type="text" data-edit-id="contact-title">Get In Touch</h2>
-                            <p class="editable" data-edit-type="text" data-edit-id="contact-text">Ready to book your session? We'd love to hear from you and discuss how we can capture your special moments.</p>
-                            <div style="margin-top: 2rem;">
-                                <p class="editable" data-edit-type="text" data-edit-id="contact-email">Email: hello@example.com</p>
-                                <p class="editable" data-edit-type="text" data-edit-id="contact-phone">Phone: (555) 123-4567</p>
-                            </div>
-                        </div>
-                    </section>` : ''}
-                    <script>
-                        // Click-to-edit functionality
-                        document.addEventListener('DOMContentLoaded', function() {
-                            document.querySelectorAll('.editable').forEach(element => {
-                                element.addEventListener('click', function(e) {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    
-                                    document.querySelectorAll('.editable.selected').forEach(el => {
-                                        el.classList.remove('selected');
-                                    });
-                                    
-                                    this.classList.add('selected');
-                                    
-                                    const elementData = {
-                                        type: 'elementClicked',
-                                        elementType: this.dataset.editType,
-                                        elementId: this.dataset.editId,
-                                        currentValue: this.textContent.trim(),
-                                        currentSrc: this.src || '',
-                                        rect: this.getBoundingClientRect()
-                                    };
-                                    
-                                    parent.postMessage(elementData, '*');
-                                });
-                            });
-                        });
-                    </script>
-                </body>
-                </html>`;
+            let htmlContent = '';
+            htmlContent += '<!DOCTYPE html><html><head>';
+            htmlContent += '<meta charset="UTF-8">';
+            htmlContent += '<meta name="viewport" content="width=device-width, initial-scale=1.0">';
+            htmlContent += '<title>' + templateName + '</title>';
+            htmlContent += '<style>';
+            htmlContent += '* { margin: 0; padding: 0; box-sizing: border-box; }';
+            htmlContent += 'body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; line-height: 1.6; color: #333; background: ' + colors.background + '; }';
+            htmlContent += '.nav { background: rgba(255,255,255,0.95); padding: 1rem 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }';
+            htmlContent += '.container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }';
+            htmlContent += '.nav-header { display: flex; justify-content: space-between; align-items: center; }';
+            htmlContent += '.nav-brand { font-size: 1.5rem; font-weight: bold; color: ' + colors.primary + '; text-decoration: none; cursor: pointer; }';
+            htmlContent += '.nav-links { display: flex; list-style: none; gap: 2rem; }';
+            htmlContent += '.nav-links a { color: #333; text-decoration: none; font-weight: 500; cursor: pointer; }';
+            htmlContent += '.hero { background: linear-gradient(135deg, ' + colors.primary + ' 0%, ' + colors.secondary + ' 100%); color: white; padding: 100px 0; text-align: center; }';
+            htmlContent += '.hero h1 { font-size: 3rem; margin-bottom: 1rem; cursor: pointer; }';
+            htmlContent += '.hero p { font-size: 1.3rem; opacity: 0.9; cursor: pointer; }';
+            htmlContent += '.section { padding: 60px 0; }';
+            htmlContent += '.gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-top: 2rem; }';
+            htmlContent += '.gallery img { width: 100%; height: 200px; object-fit: cover; border-radius: 8px; cursor: pointer; }';
+            htmlContent += '.editable { cursor: pointer; outline: 2px solid transparent; transition: outline 0.2s; }';
+            htmlContent += '.editable:hover { outline: 2px dotted ' + colors.primary + '; outline-offset: 2px; }';
+            htmlContent += '.editable.selected { outline: 2px solid ' + colors.primary + '; outline-offset: 2px; }';
+            htmlContent += '</style></head><body>';
             
-            iframe.srcdoc = enhancedHTML;
-            console.log('✅ Enhanced interactive preview loaded for page:', page);
-        }
-        
-        // Show a simple preview when all else fails
-        function showSimplePreview() {
-            console.log('📄 Showing simple preview fallback');
+            // Navigation
+            htmlContent += '<nav class="nav"><div class="container"><div class="nav-header">';
+            htmlContent += '<a class="nav-brand editable" data-edit-type="text" data-edit-id="site-title">' + templateName + '</a>';
+            htmlContent += '<ul class="nav-links">';
+            htmlContent += '<li><a onclick="parent.postMessage({type: \'pageChanged\', page: \'home\'}, \'*\')">Home</a></li>';
+            htmlContent += '<li><a onclick="parent.postMessage({type: \'pageChanged\', page: \'about\'}, \'*\')">About</a></li>';
+            htmlContent += '<li><a onclick="parent.postMessage({type: \'pageChanged\', page: \'portfolio\'}, \'*\')">Portfolio</a></li>';
+            htmlContent += '<li><a onclick="parent.postMessage({type: \'pageChanged\', page: \'contact\'}, \'*\')">Contact</a></li>';
+            htmlContent += '</ul></div></div></nav>';
             
-            const iframe = document.getElementById('preview-iframe');
-            if (iframe) {
-                const templateName = currentTemplate ? currentTemplate.name : 'Template Preview';
-                const pageName = currentPage || 'Home';
-                
-                const simpleHTML = '<!DOCTYPE html>' +
-                    '<html><head>' +
-                    '<meta name="viewport" content="width=device-width, initial-scale=1.0">' +
-                    '<title>' + templateName + '</title>' +
-                    '<style>' +
-                    'body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 40px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; }' +
-                    'h1 { font-size: 2.5rem; margin-bottom: 1rem; }' +
-                    'p { font-size: 1.2rem; opacity: 0.9; }' +
-                    '</style></head><body>' +
-                    '<h1>' + templateName + '</h1>' +
-                    '<p>Page: ' + pageName + '</p>' +
-                    '<p>Template editor is loading...</p>' +
-                    '</body></html>';
-                    
-                iframe.srcdoc = simpleHTML;
-                console.log('✅ Simple preview loaded');
-            }
-        }
-        
-        function getCustomizations() {
-            return {
-                siteTitle: document.getElementById('site-title').value || currentTemplate.name,
-                tagline: document.getElementById('site-tagline').value || currentTemplate.description,
-                photographerName: document.getElementById('photographer-name').value || 'Your Name',
-                email: document.getElementById('contact-email').value || 'hello@yoursite.com',
-                phone: document.getElementById('contact-phone').value || '+1 (555) 123-4567',
-                colors: {
-                    primary: document.getElementById('primary-color').value,
-                    secondary: document.getElementById('secondary-color').value,
-                    accent: document.getElementById('accent-color').value
-                },
-                fonts: {
-                    heading: document.getElementById('heading-font').value,
-                    body: document.getElementById('body-font').value
-                },
-                content: {
-                    heroTitle: document.getElementById('hero-title').value,
-                    heroSubtitle: document.getElementById('hero-subtitle').value,
-                    aboutText: document.getElementById('about-text').value,
-                    heroImage: document.getElementById('hero-image').value
-                }
-            };
-        }
-        
-        function applyCustomizations(template, customizations) {
-            const customized = JSON.parse(JSON.stringify(template)); // Deep clone
-            
-            // Apply color customizations
-            if (customizations.colors) {
-                customized.colors = { ...customized.colors, ...customizations.colors };
+            // Page content
+            if (currentPage === 'home') {
+                htmlContent += '<section class="hero"><div class="container">';
+                htmlContent += '<h1 class="editable" data-edit-type="text" data-edit-id="hero-title">Capturing Love Stories</h1>';
+                htmlContent += '<p class="editable" data-edit-type="text" data-edit-id="hero-subtitle">Professional photography that tells your unique story</p>';
+                htmlContent += '</div></section>';
             }
             
-            // Apply font customizations
-            if (customizations.fonts) {
-                customized.fonts = { ...customized.fonts, ...customizations.fonts };
+            if (currentPage === 'about') {
+                htmlContent += '<section class="section"><div class="container">';
+                htmlContent += '<h2 class="editable" data-edit-type="text" data-edit-id="about-title">About Our Studio</h2>';
+                htmlContent += '<p class="editable" data-edit-type="text" data-edit-id="about-text">We are passionate photographers dedicated to capturing your most precious moments.</p>';
+                htmlContent += '</div></section>';
             }
             
-            // Apply content customizations
-            if (customizations.content) {
-                if (customized.structure.home.hero) {
-                    if (customizations.content.heroTitle) {
-                        customized.structure.home.hero.title = customizations.content.heroTitle;
-                    }
-                    if (customizations.content.heroSubtitle) {
-                        customized.structure.home.hero.subtitle = customizations.content.heroSubtitle;
-                    }
-                    if (customizations.content.heroImage) {
-                        customized.structure.home.hero.background = customizations.content.heroImage;
-                    }
-                }
-                
-                if (customized.structure.home.about && customizations.content.aboutText) {
-                    customized.structure.home.about.content = customizations.content.aboutText;
-                }
+            if (currentPage === 'portfolio') {
+                htmlContent += '<section class="section"><div class="container">';
+                htmlContent += '<h2 class="editable" data-edit-type="text" data-edit-id="portfolio-title">Our Portfolio</h2>';
+                htmlContent += '<div class="gallery">';
+                htmlContent += '<img class="editable" data-edit-type="image" data-edit-id="portfolio-1" src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400" alt="Portfolio 1">';
+                htmlContent += '<img class="editable" data-edit-type="image" data-edit-id="portfolio-2" src="https://images.unsplash.com/photo-1519741497674-611481863552?w=400" alt="Portfolio 2">';
+                htmlContent += '</div></div></section>';
             }
             
-            return customized;
-        }
-        
-        function updatePreviewDevice() {
-            const iframe = document.getElementById('preview-iframe');
-            iframe.className = `preview-iframe ${currentDevice}`;
-        }
-        
-        function updateFontPreview() {
-            const headingFont = document.getElementById('heading-font').value;
-            const bodyFont = document.getElementById('body-font').value;
-            const preview = document.getElementById('font-preview');
-            
-            preview.style.setProperty('--heading-font', headingFont);
-            preview.style.setProperty('--body-font', bodyFont);
-            
-            updatePreview();
-        }
-        
-        function showPanel(panelId) {
-            console.log('🎛️ Switching to panel:', panelId);
-            
-            // Hide all panels
-            document.querySelectorAll('.controls-section').forEach(panel => {
-                panel.classList.remove('active');
-                panel.style.display = 'none';
-            });
-            
-            // Show the selected panel
-            const targetPanel = document.getElementById(panelId + '-panel');
-            if (targetPanel) {
-                targetPanel.classList.add('active');
-                targetPanel.style.display = 'block';
-                console.log('✅ Panel activated:', panelId);
-            } else {
-                console.error('❌ Panel not found:', panelId + '-panel');
-            }
-        }
-        
-        async function saveTemplate() {
-            try {
-                showLoading(true, 'Saving...');
-                
-                const customizations = getCustomizations();
-                await window.templateLoader.saveTemplateSelection(templateId, customizations);
-                
-                showMessage('Template saved successfully!', 'success');
-                showLoading(false);
-                
-            } catch (error) {
-                console.error('Error saving template:', error);
-                showMessage('Error saving template. Please try again.', 'error');
-                showLoading(false);
-            }
-        }
-        
-        async function publishSite() {
-            try {
-                showLoading(true, 'Publishing...');
-                
-                const customizations = getCustomizations();
-                const customizedTemplate = applyCustomizations(currentTemplate, customizations);
-                const html = window.templateLoader.generateTemplateHTML(customizedTemplate, 'home');
-                
-                // Here you would integrate with Firebase Hosting or your publishing system
-                console.log('Publishing HTML:', html);
-                
-                showMessage('Site published successfully!', 'success');
-                showLoading(false);
-                
-                // Show publish success dialog with site URL
-                setTimeout(() => {
-                    alert('Your site has been published! You can view it at: https://your-site-url.com');
-                }, 1000);
-                
-            } catch (error) {
-                console.error('Error publishing site:', error);
-                showMessage('Error publishing site. Please try again.', 'error');
-                showLoading(false);
-            }
-        }
-        
-        async function loadSavedCustomizations() {
-            try {
-                const saved = await window.templateLoader.loadSavedTemplate();
-                if (saved && saved.templateId === templateId) {
-                    // Apply saved customizations to form fields
-                    if (saved.customizations) {
-                        const c = saved.customizations;
-                        
-                        if (c.siteTitle) document.getElementById('site-title').value = c.siteTitle;
-                        if (c.tagline) document.getElementById('site-tagline').value = c.tagline;
-                        if (c.photographerName) document.getElementById('photographer-name').value = c.photographerName;
-                        if (c.email) document.getElementById('contact-email').value = c.email;
-                        if (c.phone) document.getElementById('contact-phone').value = c.phone;
-                        
-                        if (c.colors) {
-                            if (c.colors.primary) document.getElementById('primary-color').value = c.colors.primary;
-                            if (c.colors.secondary) document.getElementById('secondary-color').value = c.colors.secondary;
-                            if (c.colors.accent) document.getElementById('accent-color').value = c.colors.accent;
-                        }
-                        
-                        if (c.fonts) {
-                            if (c.fonts.heading) document.getElementById('heading-font').value = c.fonts.heading;
-                            if (c.fonts.body) document.getElementById('body-font').value = c.fonts.body;
-                        }
-                        
-                        if (c.content) {
-                            if (c.content.heroTitle) document.getElementById('hero-title').value = c.content.heroTitle;
-                            if (c.content.heroSubtitle) document.getElementById('hero-subtitle').value = c.content.heroSubtitle;
-                            if (c.content.aboutText) document.getElementById('about-text').value = c.content.aboutText;
-                            if (c.content.heroImage) document.getElementById('hero-image').value = c.content.heroImage;
-                        }
-                        
-                        updateFontPreview();
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading saved customizations:', error);
-            }
-        }
-        
-        function showLoading(show, message = 'Loading...') {
-            console.log('⏳ Loading overlay:', show ? 'show' : 'hide', message);
-            
-            const overlay = document.getElementById('loading-overlay');
-            if (!overlay) {
-                console.error('❌ Loading overlay element not found');
-                return;
+            if (currentPage === 'contact') {
+                htmlContent += '<section class="section"><div class="container">';
+                htmlContent += '<h2 class="editable" data-edit-type="text" data-edit-id="contact-title">Get In Touch</h2>';
+                htmlContent += '<p class="editable" data-edit-type="text" data-edit-id="contact-text">Ready to book your session?</p>';
+                htmlContent += '</div></section>';
             }
             
-            if (show) {
-                const messageElement = overlay.querySelector('.loading-content div:last-child');
-                if (messageElement) {
-                    messageElement.textContent = message;
-                }
-                overlay.classList.remove('hidden');
-            } else {
-                overlay.classList.add('hidden');
-            }
+            // Click-to-edit script
+            htmlContent += '<script>';
+            htmlContent += 'document.addEventListener("DOMContentLoaded", function() {';
+            htmlContent += 'document.querySelectorAll(".editable").forEach(element => {';
+            htmlContent += 'element.addEventListener("click", function(e) {';
+            htmlContent += 'e.preventDefault(); e.stopPropagation();';
+            htmlContent += 'document.querySelectorAll(".editable.selected").forEach(el => el.classList.remove("selected"));';
+            htmlContent += 'this.classList.add("selected");';
+            htmlContent += 'const elementData = { type: "elementClicked", elementType: this.dataset.editType, elementId: this.dataset.editId, currentValue: this.textContent.trim(), currentSrc: this.src || "" };';
+            htmlContent += 'parent.postMessage(elementData, "*");';
+            htmlContent += '});});});';
+            htmlContent += '</script></body></html>';
+            
+            iframe.srcdoc = htmlContent;
         }
         
-        function showMessage(message, type = 'info') {
-            console.log(`📢 Message (${type}):`, message);
-            
-            // Create a temporary message overlay
-            const messageDiv = document.createElement('div');
-            messageDiv.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#007bff'};
-                color: white;
-                padding: 15px 20px;
-                border-radius: 5px;
-                z-index: 10001;
-                font-size: 0.9rem;
-                max-width: 300px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            `;
-            messageDiv.textContent = message;
-            
-            document.body.appendChild(messageDiv);
-            
-            // Remove after 3 seconds
-            setTimeout(() => {
-                if (messageDiv.parentNode) {
-                    messageDiv.parentNode.removeChild(messageDiv);
-                }
-            }, 3000);
-        }
-        
-        function debounce(func, wait) {
-            let timeout;
-            return function executedFunction(...args) {
-                const later = () => {
-                    clearTimeout(timeout);
-                    func(...args);
-                };
-                clearTimeout(timeout);
-                timeout = setTimeout(later, wait);
-            };
-        }
-        
-        // Page Management Functions
-        function addNewPage() {
-            const pageName = prompt('Enter page name (e.g., "services", "pricing", "blog"):');
-            if (!pageName) return;
-            
-            const cleanPageName = pageName.toLowerCase().replace(/[^a-z0-9]/g, '');
-            if (!cleanPageName) {
-                alert('Please enter a valid page name with letters and numbers only.');
-                return;
-            }
-            
-            // Check if page already exists
-            if (currentTemplate.structure[cleanPageName]) {
-                alert('A page with this name already exists.');
-                return;
-            }
-            
-            // Add new page to template structure
-            currentTemplate.structure[cleanPageName] = {
-                title: pageName.charAt(0).toUpperCase() + pageName.slice(1),
-                subtitle: 'New page content goes here',
-                content: {
-                    title: 'Welcome to ' + pageName.charAt(0).toUpperCase() + pageName.slice(1),
-                    text: 'This is your new page. Click on any text to edit it.'
-                }
-            };
-            
-            // Add page navigation item
-            addPageNavItem(cleanPageName, pageName);
-            
-            // Switch to new page
-            currentPage = cleanPageName;
-            updatePreview();
-            
-            // Update navigation
-            document.querySelectorAll('.nav-item[data-page]').forEach(i => i.classList.remove('active'));
-            document.querySelector(`[data-page="${cleanPageName}"]`).classList.add('active');
-            
-            showMessage('New page "' + pageName + '" added successfully!', 'success');
-        }
-        
-        function addPageNavItem(pageKey, pageName) {
-            const pagesSection = document.querySelector('.sidebar-section h3').parentElement;
-            const addButton = pagesSection.querySelector('.add-page-btn');
-            
-            const pageItem = document.createElement('div');
-            pageItem.className = 'nav-item';
-            pageItem.setAttribute('data-page', pageKey);
-            pageItem.innerHTML = `
-                <i>📄</i>
-                <span>${pageName.charAt(0).toUpperCase() + pageName.slice(1)}</span>
-            `;
-            
-            // Add click handler
-            pageItem.addEventListener('click', function() {
-                document.querySelectorAll('.nav-item[data-page]').forEach(i => i.classList.remove('active'));
-                this.classList.add('active');
-                currentPage = this.dataset.page;
-                updatePreview();
-            });
-            
-            // Insert before add button
-            pagesSection.insertBefore(pageItem, addButton);
-        }
-        
-        // Content editing functions
         function updateElementContent() {
             const elementId = document.getElementById('element-id').value;
             const newValue = document.getElementById('element-value').value;
             
             if (!elementId || !newValue) return;
             
-            // Update the element in the iframe
             const iframe = document.getElementById('preview-iframe');
             if (iframe && iframe.contentDocument) {
-                const element = iframe.contentDocument.querySelector(`[data-edit-id="${elementId}"]`);
+                const element = iframe.contentDocument.querySelector('[data-edit-id="' + elementId + '"]');
                 if (element) {
                     element.textContent = newValue;
-                    console.log('✅ Updated element content:', elementId, newValue);
                 }
             }
         }
@@ -1578,42 +445,24 @@
             
             const iframe = document.getElementById('preview-iframe');
             if (iframe && iframe.contentDocument) {
-                const element = iframe.contentDocument.querySelector(`[data-edit-id="${elementId}"]`);
+                const element = iframe.contentDocument.querySelector('[data-edit-id="' + elementId + '"]');
                 if (element) {
                     element.style.color = color;
-                    console.log('✅ Updated text color:', elementId, color);
                 }
             }
         }
         
         function updateFontSize() {
             const elementId = document.getElementById('element-id').value;
-            const fontSize = document.getElementById('font-size').value;
+            const fontSize = document.getElementById('font-size').value + 'px';
             
             if (!elementId) return;
             
             const iframe = document.getElementById('preview-iframe');
             if (iframe && iframe.contentDocument) {
-                const element = iframe.contentDocument.querySelector(`[data-edit-id="${elementId}"]`);
+                const element = iframe.contentDocument.querySelector('[data-edit-id="' + elementId + '"]');
                 if (element) {
                     element.style.fontSize = fontSize;
-                    console.log('✅ Updated font size:', elementId, fontSize);
-                }
-            }
-        }
-        
-        function updateFontWeight() {
-            const elementId = document.getElementById('element-id').value;
-            const fontWeight = document.getElementById('font-weight').value;
-            
-            if (!elementId) return;
-            
-            const iframe = document.getElementById('preview-iframe');
-            if (iframe && iframe.contentDocument) {
-                const element = iframe.contentDocument.querySelector(`[data-edit-id="${elementId}"]`);
-                if (element) {
-                    element.style.fontWeight = fontWeight;
-                    console.log('✅ Updated font weight:', elementId, fontWeight);
                 }
             }
         }
@@ -1630,11 +479,9 @@
             reader.onload = function(e) {
                 const iframe = document.getElementById('preview-iframe');
                 if (iframe && iframe.contentDocument) {
-                    const element = iframe.contentDocument.querySelector(`[data-edit-id="${elementId}"]`);
+                    const element = iframe.contentDocument.querySelector('[data-edit-id="' + elementId + '"]');
                     if (element && element.tagName === 'IMG') {
                         element.src = e.target.result;
-                        console.log('✅ Updated image:', elementId);
-                        showMessage('Image updated successfully!', 'success');
                     }
                 }
             };
@@ -1642,58 +489,40 @@
             reader.readAsDataURL(file);
         }
         
-        // Background color functionality
-        document.getElementById('background-color').addEventListener('change', function() {
-            const color = this.value;
+        function setDevice(device) {
+            document.querySelectorAll('.device-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            
             const iframe = document.getElementById('preview-iframe');
-            if (iframe && iframe.contentDocument) {
-                iframe.contentDocument.body.style.backgroundColor = color;
-                console.log('✅ Updated background color:', color);
+            if (device === 'mobile') {
+                iframe.style.width = '375px';
+            } else if (device === 'tablet') {
+                iframe.style.width = '768px';
+            } else {
+                iframe.style.width = '100%';
             }
-        });
+        }
         
-        // Initialize message handling for preview renderer
+        function saveWebsite() {
+            alert('Website saved!');
+        }
+        
+        function publishWebsite() {
+            alert('Website published!');
+        }
+        
+        // Handle messages from iframe
         window.addEventListener('message', function(event) {
             if (event.data.type === 'elementClicked') {
-                console.log('🎛️ Switching to panel:', 'content');
                 showPanel('content');
                 
-                // Update content form with element data
-                const elementIdField = document.getElementById('element-id');
-                const elementTypeField = document.getElementById('element-type');
-                const elementValueField = document.getElementById('element-value');
-                const textEditor = document.getElementById('text-editor');
-                const imageEditor = document.getElementById('image-editor');
-                
-                if (elementIdField) elementIdField.value = event.data.elementId || '';
-                if (elementTypeField) elementTypeField.value = event.data.elementType || '';
-                
-                // Show appropriate editor based on element type
-                if (event.data.elementType === 'text') {
-                    textEditor.style.display = 'block';
-                    imageEditor.style.display = 'none';
-                    if (elementValueField) {
-                        elementValueField.value = event.data.currentValue || '';
-                        elementValueField.focus();
-                    }
-                } else if (event.data.elementType === 'image') {
-                    textEditor.style.display = 'none';
-                    imageEditor.style.display = 'block';
-                } else {
-                    textEditor.style.display = 'none';
-                    imageEditor.style.display = 'none';
-                }
+                document.getElementById('element-id').value = event.data.elementId || '';
+                document.getElementById('element-value').value = event.data.currentValue || '';
             } else if (event.data.type === 'pageChanged') {
-                // Handle page navigation from within preview
-                const newPage = event.data.page;
-                currentPage = newPage;
-                
-                // Update sidebar navigation
+                currentPage = event.data.page;
                 document.querySelectorAll('.nav-item[data-page]').forEach(i => i.classList.remove('active'));
-                const activeNav = document.querySelector(`[data-page="${newPage}"]`);
+                const activeNav = document.querySelector('[data-page="' + event.data.page + '"]');
                 if (activeNav) activeNav.classList.add('active');
-                
-                // Update preview
                 updatePreview();
             }
         });
