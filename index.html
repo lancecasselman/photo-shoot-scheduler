@@ -9238,31 +9238,65 @@ ${name}`;
     <!-- Load Website Builder Components -->
     <script type="text/babel" src="components/PresetTemplates.jsx"></script>
     <script src="components/firebase-publish.js"></script>
+    <script type="text/babel" src="components/BlockEditor.jsx"></script>
+    <script type="text/babel" src="components/BlockLibrary.jsx"></script>
+    <script type="text/babel" src="components/LivePreview.jsx"></script>
+    <script type="text/babel" src="components/PageManager.jsx"></script>
+    <script type="text/babel" src="components/TemplateSelector.jsx"></script>
     <script type="text/babel" src="components/SiteBuilder.jsx"></script>
     
     <!-- Initialize React Site Builder -->
     <script type="text/babel">
         // Initialize the React Site Builder component
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, checking for components...');
+            
             // Wait for all components to load
             const initSiteBuilder = () => {
-                if (typeof SiteBuilder !== 'undefined' && window.PresetTemplates) {
-                    console.log('Initializing React SiteBuilder...');
+                console.log('Checking components:', {
+                    React: typeof React !== 'undefined',
+                    ReactDOM: typeof ReactDOM !== 'undefined',
+                    SiteBuilder: typeof SiteBuilder !== 'undefined',
+                    PresetTemplates: window.PresetTemplates ? Object.keys(window.PresetTemplates).length : 0,
+                    BlockEditor: typeof window.BlockEditor !== 'undefined',
+                    BlockLibrary: typeof window.BlockLibrary !== 'undefined',
+                    LivePreview: typeof window.LivePreview !== 'undefined',
+                    PageManager: typeof window.PageManager !== 'undefined',
+                    TemplateSelector: typeof window.TemplateSelector !== 'undefined'
+                });
+                
+                if (typeof React !== 'undefined' && 
+                    typeof ReactDOM !== 'undefined' && 
+                    typeof SiteBuilder !== 'undefined' && 
+                    window.PresetTemplates &&
+                    typeof window.BlockEditor !== 'undefined' &&
+                    typeof window.BlockLibrary !== 'undefined' &&
+                    typeof window.LivePreview !== 'undefined' &&
+                    typeof window.PageManager !== 'undefined' &&
+                    typeof window.TemplateSelector !== 'undefined') {
+                    
+                    console.log('All components loaded, initializing React SiteBuilder...');
                     const container = document.querySelector('.website-builder-container');
+                    console.log('Container found:', container);
+                    
                     if (container) {
-                        ReactDOM.render(React.createElement(SiteBuilder), container);
-                        console.log('SiteBuilder mounted successfully');
+                        try {
+                            ReactDOM.render(React.createElement(SiteBuilder), container);
+                            console.log('SiteBuilder mounted successfully');
+                        } catch (error) {
+                            console.error('Error mounting SiteBuilder:', error);
+                        }
                     } else {
                         console.error('Website builder container not found');
                     }
                 } else {
-                    console.log('Waiting for SiteBuilder components...');
-                    setTimeout(initSiteBuilder, 100);
+                    console.log('Still waiting for components...');
+                    setTimeout(initSiteBuilder, 200);
                 }
             };
             
             // Start initialization
-            setTimeout(initSiteBuilder, 500);
+            setTimeout(initSiteBuilder, 1000);
         });
     </script>
 
