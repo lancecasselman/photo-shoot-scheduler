@@ -125,8 +125,8 @@
     <script type="text/babel" src="components/BlockEditor.jsx"></script>
     <script type="text/babel" src="components/PageManager.jsx"></script>
     <script type="text/babel" src="components/TemplateSelector.jsx"></script>
-    <script type="text/babel" src="BlockLibrary.js"></script>  
-    <script type="text/babel" src="LivePreview.jsx"></script>
+    <script type="text/babel" src="components/BlockLibrary.jsx"></script>  
+    <script type="text/babel" src="components/LivePreview.jsx"></script>
     <script type="text/babel" src="components/SiteBuilder.jsx"></script>
     
     <!-- Debug template loading -->
@@ -149,6 +149,26 @@
         window.addEventListener('error', function(e) {
             console.error('JavaScript Error:', e.message, e.filename, e.lineno);
         });
+        
+        // Check component loading periodically
+        let checkCount = 0;
+        const checkComponents = () => {
+            checkCount++;
+            console.log(`Component check #${checkCount}:`);
+            console.log('- PresetTemplates:', typeof window.PresetTemplates, window.PresetTemplates ? Object.keys(window.PresetTemplates).length : 0);
+            console.log('- TemplateSelector:', typeof window.TemplateSelector);
+            console.log('- SiteBuilder:', typeof window.SiteBuilder);
+            console.log('- React available:', typeof React);
+            console.log('- ReactDOM available:', typeof ReactDOM);
+            
+            if (window.SiteBuilder && checkCount < 10) {
+                console.log('All components loaded successfully!');
+                clearInterval(componentInterval);
+            }
+        };
+        
+        const componentInterval = setInterval(checkComponents, 500);
+        setTimeout(() => clearInterval(componentInterval), 10000); // Stop after 10 seconds
     </script>
     
     <script type="text/babel">
