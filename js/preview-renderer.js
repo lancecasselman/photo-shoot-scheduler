@@ -27,32 +27,57 @@ class PreviewRenderer {
     generateInteractiveHTML(template, page) {
         console.log('🏗️ Generating interactive HTML for page:', page);
         
-        if (!template || !template.structure || !template.structure[page]) {
-            console.error('❌ Invalid template structure for page:', page);
+        try {
+            if (!template) {
+                console.error('❌ No template provided');
+                return this.generateErrorHTML(page);
+            }
+            
+            if (!template.structure) {
+                console.error('❌ Template has no structure');
+                return this.generateErrorHTML(page);
+            }
+            
+            if (!template.structure[page]) {
+                console.log('🔄 Page not found in template structure, creating default page structure');
+                // Create default page structure for new pages
+                template.structure[page] = {
+                    title: page.charAt(0).toUpperCase() + page.slice(1),
+                    subtitle: 'New page content goes here',
+                    content: {
+                        title: 'Welcome to ' + page.charAt(0).toUpperCase() + page.slice(1),
+                        text: 'This is your new page. Click on any text to edit it.'
+                    }
+                };
+            }
+            
+            const pageData = template.structure[page];
+            let html = this.generateBaseHTML(template, page);
+            
+            // Add click-to-edit functionality
+            html = this.addInteractiveElements(html, page);
+            
+            return html;
+        } catch (error) {
+            console.error('❌ Error generating interactive HTML:', error);
             return this.generateErrorHTML(page);
         }
-        
-        const pageData = template.structure[page];
-        let html = this.generateBaseHTML(template, page);
-        
-        // Add click-to-edit functionality
-        html = this.addInteractiveElements(html, page);
-        
-        return html;
     }
     
     generateBaseHTML(template, page) {
-        const pageData = template.structure[page];
-        const colors = template.colors || { primary: '#667eea', secondary: '#764ba2', accent: '#f8f9fa' };
-        const fonts = template.fonts || { heading: 'Playfair Display', body: 'Open Sans' };
+        try {
+            const pageData = template.structure[page] || {};
+            const colors = template.colors || { primary: '#667eea', secondary: '#764ba2', accent: '#f8f9fa' };
+            const fonts = template.fonts || { heading: 'Playfair Display', body: 'Open Sans' };
+            const templateName = template.name || 'Photography Studio';
         
-        return `
+            return `
             <!DOCTYPE html>
             <html lang="en">
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>${template.name} - ${page}</title>
+                <title>${templateName} - ${page}</title>
                 <style>
                     * { margin: 0; padding: 0; box-sizing: border-box; }
                     body {
@@ -71,54 +96,21 @@ class PreviewRenderer {
                         margin: 0 auto;
                         padding: 0 20px;
                     }
-                    
-                    /* Interactive editing styles */
-                    .editable {
-                        position: relative;
-                        transition: all 0.2s ease;
-                        cursor: pointer !important;
-                    }
-                    .editable:hover {
-                        outline: 2px dashed ${colors.primary};
-                        outline-offset: 2px;
-                        background: rgba(102, 126, 234, 0.1);
-                    }
-                    .editable.selected {
-                        outline: 2px solid ${colors.primary};
-                        outline-offset: 2px;
-                        background: rgba(102, 126, 234, 0.2);
-                    }
-                    .edit-tooltip {
-                        position: absolute;
-                        top: -30px;
-                        left: 0;
-                        background: ${colors.primary};
-                        color: white;
-                        padding: 4px 8px;
-                        border-radius: 4px;
-                        font-size: 12px;
-                        pointer-events: none;
-                        opacity: 0;
-                        transition: opacity 0.2s;
-                        z-index: 1000;
-                    }
-                    .editable:hover .edit-tooltip {
-                        opacity: 1;
-                    }
-                    
-                    /* Navigation */
                     .nav {
                         background: rgba(255, 255, 255, 0.95);
-                        padding: 1rem 0;
-                        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-                        position: sticky;
+                        backdrop-filter: blur(10px);
+                        position: fixed;
                         top: 0;
-                        z-index: 100;
+                        left: 0;
+                        right: 0;
+                        z-index: 1000;
+                        box-shadow: 0 2px 20px rgba(0,0,0,0.1);
                     }
-                    .nav-container {
+                    .nav-header {
                         display: flex;
                         justify-content: space-between;
                         align-items: center;
+                        padding: 1rem 0;
                     }
                     .nav-brand {
                         font-size: 1.5rem;
@@ -132,40 +124,20 @@ class PreviewRenderer {
                         gap: 2rem;
                     }
                     .nav-links a {
-                        text-decoration: none;
                         color: #333;
+                        text-decoration: none;
                         font-weight: 500;
                         transition: color 0.3s;
                     }
                     .nav-links a:hover {
                         color: ${colors.primary};
                     }
-                    
-                    /* Hero Section */
                     .hero {
                         background: linear-gradient(135deg, ${colors.primary}, ${colors.secondary});
                         color: white;
-                        padding: 4rem 0;
                         text-align: center;
-                        min-height: 60vh;
-                        display: flex;
-                        align-items: center;
-                        background-size: cover;
-                        background-position: center;
-                        position: relative;
-                    }
-                    .hero::before {
-                        content: '';
-                        position: absolute;
-                        top: 0;
-                        left: 0;
-                        right: 0;
-                        bottom: 0;
-                        background: rgba(0,0,0,0.4);
-                    }
-                    .hero-content {
-                        position: relative;
-                        z-index: 2;
+                        padding: 120px 0 80px;
+                        margin-top: 80px;
                     }
                     .hero h1 {
                         font-size: 3rem;
@@ -174,75 +146,63 @@ class PreviewRenderer {
                     }
                     .hero p {
                         font-size: 1.3rem;
-                        margin-bottom: 2rem;
                         opacity: 0.9;
                     }
-                    .btn {
+                    .section {
+                        padding: 60px 0;
+                    }
+                    .section h2 {
+                        font-size: 2.5rem;
+                        text-align: center;
+                        margin-bottom: 3rem;
+                    }
+                    .grid {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                        gap: 2rem;
+                        margin-top: 2rem;
+                    }
+                    .card {
+                        background: white;
+                        border-radius: 10px;
+                        padding: 2rem;
+                        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+                        transition: transform 0.3s;
+                    }
+                    .card:hover {
+                        transform: translateY(-5px);
+                    }
+                    .button {
                         display: inline-block;
+                        background: ${colors.primary};
+                        color: white;
                         padding: 12px 30px;
-                        background: ${colors.accent};
-                        color: ${colors.primary};
+                        border-radius: 25px;
                         text-decoration: none;
-                        border-radius: 5px;
-                        font-weight: bold;
+                        font-weight: 500;
                         transition: all 0.3s;
                         border: none;
                         cursor: pointer;
                     }
-                    .btn:hover {
-                        background: white;
+                    .button:hover {
+                        background: ${colors.secondary};
                         transform: translateY(-2px);
-                        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
                     }
-                    
-                    /* Content Sections */
-                    .section {
-                        padding: 4rem 0;
-                    }
-                    .section h2 {
-                        text-align: center;
-                        margin-bottom: 3rem;
-                        font-size: 2.5rem;
-                    }
-                    .section p {
-                        text-align: center;
-                        max-width: 800px;
-                        margin: 0 auto 2rem;
-                        font-size: 1.1rem;
-                    }
-                    
-                    /* Gallery Grid */
-                    .gallery-grid {
+                    .gallery {
                         display: grid;
-                        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-                        gap: 2rem;
-                        margin-top: 3rem;
+                        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                        gap: 1rem;
+                        margin-top: 2rem;
                     }
-                    .gallery-item {
-                        aspect-ratio: 4/3;
-                        background: #ddd;
-                        border-radius: 10px;
-                        overflow: hidden;
-                        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+                    .gallery img {
+                        width: 100%;
+                        height: 200px;
+                        object-fit: cover;
+                        border-radius: 8px;
                         transition: transform 0.3s;
                     }
-                    .gallery-item:hover {
-                        transform: translateY(-5px);
-                    }
-                    .gallery-item img {
-                        width: 100%;
-                        height: 100%;
-                        object-fit: cover;
-                    }
-                    
-                    /* Contact Form */
-                    .contact-form {
-                        max-width: 600px;
-                        margin: 0 auto;
-                        background: white;
-                        padding: 2rem;
-                        border-radius: 10px;
-                        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+                    .gallery img:hover {
+                        transform: scale(1.05);
                     }
                     .form-group {
                         margin-bottom: 1.5rem;
@@ -250,13 +210,12 @@ class PreviewRenderer {
                     .form-group label {
                         display: block;
                         margin-bottom: 0.5rem;
-                        font-weight: bold;
-                        color: ${colors.primary};
+                        font-weight: 500;
                     }
                     .form-group input,
                     .form-group textarea {
                         width: 100%;
-                        padding: 10px;
+                        padding: 12px;
                         border: 2px solid #ddd;
                         border-radius: 5px;
                         font-size: 1rem;
@@ -266,6 +225,22 @@ class PreviewRenderer {
                     .form-group textarea:focus {
                         outline: none;
                         border-color: ${colors.primary};
+                    }
+                    
+                    /* Editable element styles */
+                    .editable {
+                        position: relative;
+                        transition: all 0.2s ease;
+                    }
+                    .editable:hover {
+                        outline: 2px solid ${colors.primary};
+                        outline-offset: 2px;
+                        cursor: pointer;
+                    }
+                    .editable.selected {
+                        outline: 3px solid ${colors.secondary};
+                        outline-offset: 3px;
+                        background: rgba(102, 126, 234, 0.1);
                     }
                     
                     @media (max-width: 768px) {
@@ -312,229 +287,49 @@ class PreviewRenderer {
                                 parent.postMessage(elementData, '*');
                             });
                         });
-                        
-                        // Add tooltips
-                        document.querySelectorAll('.editable').forEach(element => {
-                            const tooltip = document.createElement('div');
-                            tooltip.className = 'edit-tooltip';
-                            tooltip.textContent = 'Click to edit ' + (element.dataset.editType || 'element');
-                            element.appendChild(tooltip);
-                        });
                     });
                 </script>
             </body>
             </html>
         `;
+        } catch (error) {
+            console.error('❌ Error in generateBaseHTML:', error);
+            return this.generateErrorHTML(page);
+        }
     }
     
     generatePageContent(pageData, page, template) {
-        switch(page) {
-            case 'home':
-                return this.generateHomePage(pageData, template);
-            case 'about':
-                return this.generateAboutPage(pageData, template);
-            case 'portfolio':
-                return this.generatePortfolioPage(pageData, template);
-            case 'contact':
-                return this.generateContactPage(pageData, template);
-            default:
-                return this.generateCustomPage(pageData, template, page);
+        try {
+            switch(page) {
+                case 'home':
+                    return this.generateHomePage(pageData, template);
+                case 'about':
+                    return this.generateAboutPage(pageData, template);
+                case 'portfolio':
+                    return this.generatePortfolioPage(pageData, template);
+                case 'contact':
+                    return this.generateContactPage(pageData, template);
+                default:
+                    return this.generateCustomPage(pageData, template, page);
+            }
+        } catch (error) {
+            console.error('❌ Error generating page content for', page, ':', error);
+            return this.generateCustomPage(pageData || {}, template, page);
         }
     }
     
     generateHomePage(pageData, template) {
-        const hero = pageData.hero || {};
-        const about = pageData.about || {};
-        const gallery = pageData.gallery || {};
+        try {
+            const hero = pageData.hero || {};
+            const about = pageData.about || {};
+            const gallery = pageData.gallery || {};
+            const templateName = template.name || 'Photography Studio';
         
-        return `
+            return `
             <nav class="nav">
                 <div class="container">
-                    <div class="nav-container">
-                        <a href="#home" class="nav-brand editable" data-edit-type="text" data-edit-id="site-title">${template.name}</a>
-                        <ul class="nav-links">
-                            <li><a href="#home">Home</a></li>
-                            <li><a href="#about">About</a></li>
-                            <li><a href="#portfolio">Portfolio</a></li>
-                            <li><a href="#contact">Contact</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </nav>
-            
-            <section class="hero" style="background-image: url('${hero.background || ''}')">
-                <div class="container">
-                    <div class="hero-content">
-                        <h1 class="editable" data-edit-type="text" data-edit-id="hero-title">${hero.title || 'Your Photography Studio'}</h1>
-                        <p class="editable" data-edit-type="text" data-edit-id="hero-subtitle">${hero.subtitle || 'Capturing life\'s precious moments'}</p>
-                        <a href="#contact" class="btn editable" data-edit-type="button" data-edit-id="hero-cta">Get Started</a>
-                    </div>
-                </div>
-            </section>
-            
-            <section class="section">
-                <div class="container">
-                    <h2 class="editable" data-edit-type="text" data-edit-id="about-title">${about.title || 'About Our Studio'}</h2>
-                    <p class="editable" data-edit-type="text" data-edit-id="about-content">${about.content || 'We are passionate photographers dedicated to capturing your most important moments with artistry and care.'}</p>
-                </div>
-            </section>
-            
-            <section class="section">
-                <div class="container">
-                    <h2 class="editable" data-edit-type="text" data-edit-id="gallery-title">${gallery.title || 'Our Work'}</h2>
-                    <div class="gallery-grid">
-                        ${this.generateGalleryImages(gallery.images || [])}
-                    </div>
-                </div>
-            </section>
-        `;
-    }
-    
-    generateAboutPage(pageData, template) {
-        const hero = pageData.hero || {};
-        const content = pageData.content || {};
-        
-        return `
-            <nav class="nav">
-                <div class="container">
-                    <div class="nav-container">
-                        <a href="#home" class="nav-brand editable" data-edit-type="text" data-edit-id="site-title">${template.name}</a>
-                        <ul class="nav-links">
-                            <li><a href="#home">Home</a></li>
-                            <li><a href="#about">About</a></li>
-                            <li><a href="#portfolio">Portfolio</a></li>
-                            <li><a href="#contact">Contact</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </nav>
-            
-            <section class="hero" style="background-image: url('${hero.background || ''}')">
-                <div class="container">
-                    <div class="hero-content">
-                        <h1 class="editable" data-edit-type="text" data-edit-id="about-hero-title">${hero.title || 'About Us'}</h1>
-                        <p class="editable" data-edit-type="text" data-edit-id="about-hero-subtitle">${hero.subtitle || 'Our story and passion'}</p>
-                    </div>
-                </div>
-            </section>
-            
-            <section class="section">
-                <div class="container">
-                    <h2 class="editable" data-edit-type="text" data-edit-id="about-content-title">${content.title || 'Our Story'}</h2>
-                    <p class="editable" data-edit-type="text" data-edit-id="about-content-text">${content.text || 'We are passionate photographers with years of experience capturing life\'s most precious moments.'}</p>
-                    <p class="editable" data-edit-type="text" data-edit-id="about-experience"><strong>Experience:</strong> ${content.experience || '10+ years in photography'}</p>
-                    <p class="editable" data-edit-type="text" data-edit-id="about-specialty"><strong>Specialty:</strong> ${content.specialty || 'Wedding, portrait, and event photography'}</p>
-                </div>
-            </section>
-        `;
-    }
-    
-    generatePortfolioPage(pageData, template) {
-        const hero = pageData.hero || {};
-        const galleries = pageData.galleries || [];
-        
-        return `
-            <nav class="nav">
-                <div class="container">
-                    <div class="nav-container">
-                        <a href="#home" class="nav-brand editable" data-edit-type="text" data-edit-id="site-title">${template.name}</a>
-                        <ul class="nav-links">
-                            <li><a href="#home">Home</a></li>
-                            <li><a href="#about">About</a></li>
-                            <li><a href="#portfolio">Portfolio</a></li>
-                            <li><a href="#contact">Contact</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </nav>
-            
-            <section class="hero" style="background-image: url('${hero.background || ''}')">
-                <div class="container">
-                    <div class="hero-content">
-                        <h1 class="editable" data-edit-type="text" data-edit-id="portfolio-hero-title">${hero.title || 'Our Portfolio'}</h1>
-                        <p class="editable" data-edit-type="text" data-edit-id="portfolio-hero-subtitle">${hero.subtitle || 'Showcasing our best work'}</p>
-                    </div>
-                </div>
-            </section>
-            
-            ${galleries.map((gallery, index) => `
-                <section class="section">
-                    <div class="container">
-                        <h2 class="editable" data-edit-type="text" data-edit-id="gallery-${index}-title">${gallery.title || 'Gallery'}</h2>
-                        <div class="gallery-grid">
-                            ${this.generateGalleryImages(gallery.images || [])}
-                        </div>
-                    </div>
-                </section>
-            `).join('')}
-        `;
-    }
-    
-    generateContactPage(pageData, template) {
-        const hero = pageData.hero || {};
-        const contact = pageData.contact || {};
-        const form = pageData.form || {};
-        
-        return `
-            <nav class="nav">
-                <div class="container">
-                    <div class="nav-container">
-                        <a href="#home" class="nav-brand editable" data-edit-type="text" data-edit-id="site-title">${template.name}</a>
-                        <ul class="nav-links">
-                            <li><a href="#home">Home</a></li>
-                            <li><a href="#about">About</a></li>
-                            <li><a href="#portfolio">Portfolio</a></li>
-                            <li><a href="#contact">Contact</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </nav>
-            
-            <section class="hero" style="background-image: url('${hero.background || ''}')">
-                <div class="container">
-                    <div class="hero-content">
-                        <h1 class="editable" data-edit-type="text" data-edit-id="contact-hero-title">${hero.title || 'Contact Us'}</h1>
-                        <p class="editable" data-edit-type="text" data-edit-id="contact-hero-subtitle">${hero.subtitle || 'Let\'s create something beautiful together'}</p>
-                    </div>
-                </div>
-            </section>
-            
-            <section class="section">
-                <div class="container">
-                    <h2 class="editable" data-edit-type="text" data-edit-id="contact-info-title">${contact.title || 'Get In Touch'}</h2>
-                    <p class="editable" data-edit-type="text" data-edit-id="contact-email"><strong>Email:</strong> ${contact.email || 'hello@studio.com'}</p>
-                    <p class="editable" data-edit-type="text" data-edit-id="contact-phone"><strong>Phone:</strong> ${contact.phone || '+1 (555) 123-4567'}</p>
-                    <p class="editable" data-edit-type="text" data-edit-id="contact-address"><strong>Address:</strong> ${contact.address || 'Studio Address'}</p>
-                    
-                    <div class="contact-form">
-                        <h3 class="editable" data-edit-type="text" data-edit-id="form-title">${form.title || 'Send us a message'}</h3>
-                        <form>
-                            <div class="form-group">
-                                <label for="name">Name</label>
-                                <input type="text" id="name" name="name" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="email">Email</label>
-                                <input type="email" id="email" name="email" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="message">Message</label>
-                                <textarea id="message" name="message" rows="5" required></textarea>
-                            </div>
-                            <button type="submit" class="btn editable" data-edit-type="button" data-edit-id="form-submit">Send Message</button>
-                        </form>
-                    </div>
-                </div>
-            </section>
-        `;
-    }
-    
-    generateCustomPage(pageData, template, page) {
-        return `
-            <nav class="nav">
-                <div class="container">
-                    <div class="nav-container">
-                        <a href="#home" class="nav-brand editable" data-edit-type="text" data-edit-id="site-title">${template.name}</a>
+                    <div class="nav-header">
+                        <a href="#home" class="nav-brand editable" data-edit-type="text" data-edit-id="site-title">${templateName}</a>
                         <ul class="nav-links">
                             <li><a href="#home">Home</a></li>
                             <li><a href="#about">About</a></li>
@@ -547,127 +342,288 @@ class PreviewRenderer {
             
             <section class="hero">
                 <div class="container">
-                    <div class="hero-content">
-                        <h1 class="editable" data-edit-type="text" data-edit-id="${page}-title">${pageData.title || page.charAt(0).toUpperCase() + page.slice(1)}</h1>
-                        <p class="editable" data-edit-type="text" data-edit-id="${page}-subtitle">Page content goes here</p>
+                    <h1 class="editable" data-edit-type="text" data-edit-id="hero-title">${hero.title || 'Capturing Love Stories'}</h1>
+                    <p class="editable" data-edit-type="text" data-edit-id="hero-subtitle">${hero.subtitle || 'Professional photography that tells your unique story'}</p>
+                </div>
+            </section>
+            
+            <section class="section">
+                <div class="container">
+                    <h2 class="editable" data-edit-type="text" data-edit-id="about-title">${about.title || 'About Our Studio'}</h2>
+                    <div class="grid">
+                        <div class="card">
+                            <h3 class="editable" data-edit-type="text" data-edit-id="about-card-1-title">Professional Excellence</h3>
+                            <p class="editable" data-edit-type="text" data-edit-id="about-card-1-text">With years of experience, we deliver stunning photography that captures your most precious moments.</p>
+                        </div>
+                        <div class="card">
+                            <h3 class="editable" data-edit-type="text" data-edit-id="about-card-2-title">Personal Touch</h3>
+                            <p class="editable" data-edit-type="text" data-edit-id="about-card-2-text">Every session is tailored to your unique style and personality, ensuring authentic and beautiful results.</p>
+                        </div>
+                        <div class="card">
+                            <h3 class="editable" data-edit-type="text" data-edit-id="about-card-3-title">Lasting Memories</h3>
+                            <p class="editable" data-edit-type="text" data-edit-id="about-card-3-text">We create timeless images that you'll treasure for generations, preserving your most important moments.</p>
+                        </div>
                     </div>
                 </div>
             </section>
             
             <section class="section">
                 <div class="container">
-                    <h2 class="editable" data-edit-type="text" data-edit-id="${page}-content-title">Content Title</h2>
-                    <p class="editable" data-edit-type="text" data-edit-id="${page}-content-text">Add your content here by clicking on this text.</p>
+                    <h2 class="editable" data-edit-type="text" data-edit-id="gallery-title">${gallery.title || 'Featured Work'}</h2>
+                    <div class="gallery">
+                        <img class="editable" data-edit-type="image" data-edit-id="gallery-1" src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400" alt="Portfolio Image 1">
+                        <img class="editable" data-edit-type="image" data-edit-id="gallery-2" src="https://images.unsplash.com/photo-1519741497674-611481863552?w=400" alt="Portfolio Image 2">
+                        <img class="editable" data-edit-type="image" data-edit-id="gallery-3" src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=400" alt="Portfolio Image 3">
+                        <img class="editable" data-edit-type="image" data-edit-id="gallery-4" src="https://images.unsplash.com/photo-1469371670807-013ccf25f16a?w=400" alt="Portfolio Image 4">
+                    </div>
+                    <div style="text-align: center; margin-top: 2rem;">
+                        <a href="#portfolio" class="button editable" data-edit-type="text" data-edit-id="gallery-cta">View Full Portfolio</a>
+                    </div>
+                </div>
+            </section>
+        `;
+        } catch (error) {
+            console.error('❌ Error generating home page:', error);
+            return this.generateCustomPage(pageData || {}, template, 'home');
+        }
+    }
+    
+    generateAboutPage(pageData, template) {
+        const templateName = template.name || 'Photography Studio';
+        const about = pageData.about || {};
+        
+        return `
+            <nav class="nav">
+                <div class="container">
+                    <div class="nav-header">
+                        <a href="#home" class="nav-brand">${templateName}</a>
+                        <ul class="nav-links">
+                            <li><a href="#home">Home</a></li>
+                            <li><a href="#about">About</a></li>
+                            <li><a href="#portfolio">Portfolio</a></li>
+                            <li><a href="#contact">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+            
+            <section class="hero">
+                <div class="container">
+                    <h1 class="editable" data-edit-type="text" data-edit-id="about-hero-title">${about.title || 'About Our Story'}</h1>
+                    <p class="editable" data-edit-type="text" data-edit-id="about-hero-subtitle">${about.subtitle || 'Passionate photographers dedicated to capturing your special moments'}</p>
+                </div>
+            </section>
+            
+            <section class="section">
+                <div class="container">
+                    <div class="grid">
+                        <div class="card">
+                            <h3 class="editable" data-edit-type="text" data-edit-id="about-experience-title">Our Experience</h3>
+                            <p class="editable" data-edit-type="text" data-edit-id="about-experience-text">With over 10 years in the photography industry, we've captured thousands of precious moments for families, couples, and businesses across the region.</p>
+                        </div>
+                        <div class="card">
+                            <h3 class="editable" data-edit-type="text" data-edit-id="about-approach-title">Our Approach</h3>
+                            <p class="editable" data-edit-type="text" data-edit-id="about-approach-text">We believe in creating a comfortable, relaxed environment where authentic emotions can shine through, resulting in natural and beautiful photographs.</p>
+                        </div>
+                    </div>
                 </div>
             </section>
         `;
     }
     
-    generateGalleryImages(images) {
-        return images.map((image, index) => `
-            <div class="gallery-item">
-                <img src="${image}" alt="Gallery Image ${index + 1}" class="editable" data-edit-type="image" data-edit-id="gallery-image-${index}">
-            </div>
-        `).join('');
+    generatePortfolioPage(pageData, template) {
+        const templateName = template.name || 'Photography Studio';
+        const portfolio = pageData.portfolio || {};
+        
+        return `
+            <nav class="nav">
+                <div class="container">
+                    <div class="nav-header">
+                        <a href="#home" class="nav-brand">${templateName}</a>
+                        <ul class="nav-links">
+                            <li><a href="#home">Home</a></li>
+                            <li><a href="#about">About</a></li>
+                            <li><a href="#portfolio">Portfolio</a></li>
+                            <li><a href="#contact">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+            
+            <section class="hero">
+                <div class="container">
+                    <h1 class="editable" data-edit-type="text" data-edit-id="portfolio-hero-title">${portfolio.title || 'Our Portfolio'}</h1>
+                    <p class="editable" data-edit-type="text" data-edit-id="portfolio-hero-subtitle">${portfolio.subtitle || 'A collection of our finest work'}</p>
+                </div>
+            </section>
+            
+            <section class="section">
+                <div class="container">
+                    <div class="gallery">
+                        <img class="editable" data-edit-type="image" data-edit-id="portfolio-1" src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400" alt="Portfolio Image 1">
+                        <img class="editable" data-edit-type="image" data-edit-id="portfolio-2" src="https://images.unsplash.com/photo-1519741497674-611481863552?w=400" alt="Portfolio Image 2">
+                        <img class="editable" data-edit-type="image" data-edit-id="portfolio-3" src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=400" alt="Portfolio Image 3">
+                        <img class="editable" data-edit-type="image" data-edit-id="portfolio-4" src="https://images.unsplash.com/photo-1469371670807-013ccf25f16a?w=400" alt="Portfolio Image 4">
+                        <img class="editable" data-edit-type="image" data-edit-id="portfolio-5" src="https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=400" alt="Portfolio Image 5">
+                        <img class="editable" data-edit-type="image" data-edit-id="portfolio-6" src="https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=400" alt="Portfolio Image 6">
+                    </div>
+                </div>
+            </section>
+        `;
+    }
+    
+    generateContactPage(pageData, template) {
+        const templateName = template.name || 'Photography Studio';
+        const contact = pageData.contact || {};
+        
+        return `
+            <nav class="nav">
+                <div class="container">
+                    <div class="nav-header">
+                        <a href="#home" class="nav-brand">${templateName}</a>
+                        <ul class="nav-links">
+                            <li><a href="#home">Home</a></li>
+                            <li><a href="#about">About</a></li>
+                            <li><a href="#portfolio">Portfolio</a></li>
+                            <li><a href="#contact">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+            
+            <section class="hero">
+                <div class="container">
+                    <h1 class="editable" data-edit-type="text" data-edit-id="contact-hero-title">${contact.title || 'Get In Touch'}</h1>
+                    <p class="editable" data-edit-type="text" data-edit-id="contact-hero-subtitle">${contact.subtitle || 'Ready to capture your special moments? Let\'s talk!'}</p>
+                </div>
+            </section>
+            
+            <section class="section">
+                <div class="container">
+                    <div class="grid">
+                        <div class="card">
+                            <h3>Contact Form</h3>
+                            <form>
+                                <div class="form-group">
+                                    <label>Name</label>
+                                    <input type="text" placeholder="Your Name">
+                                </div>
+                                <div class="form-group">
+                                    <label>Email</label>
+                                    <input type="email" placeholder="your@email.com">
+                                </div>
+                                <div class="form-group">
+                                    <label>Message</label>
+                                    <textarea rows="5" placeholder="Tell us about your photography needs..."></textarea>
+                                </div>
+                                <button type="submit" class="button">Send Message</button>
+                            </form>
+                        </div>
+                        <div class="card">
+                            <h3>Contact Information</h3>
+                            <p class="editable" data-edit-type="text" data-edit-id="contact-email">Email: hello@studio.com</p>
+                            <p class="editable" data-edit-type="text" data-edit-id="contact-phone">Phone: (555) 123-4567</p>
+                            <p class="editable" data-edit-type="text" data-edit-id="contact-address">Location: Your City, State</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        `;
+    }
+    
+    generateCustomPage(pageData, template, page) {
+        const templateName = template.name || 'Photography Studio';
+        const title = (pageData.title || page.charAt(0).toUpperCase() + page.slice(1));
+        const content = pageData.content || {};
+        
+        return `
+            <nav class="nav">
+                <div class="container">
+                    <div class="nav-header">
+                        <a href="#home" class="nav-brand">${templateName}</a>
+                        <ul class="nav-links">
+                            <li><a href="#home">Home</a></li>
+                            <li><a href="#about">About</a></li>
+                            <li><a href="#portfolio">Portfolio</a></li>
+                            <li><a href="#contact">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+            
+            <section class="hero">
+                <div class="container">
+                    <h1 class="editable" data-edit-type="text" data-edit-id="${page}-hero-title">${title}</h1>
+                    <p class="editable" data-edit-type="text" data-edit-id="${page}-hero-subtitle">${pageData.subtitle || 'Welcome to our ' + page + ' page'}</p>
+                </div>
+            </section>
+            
+            <section class="section">
+                <div class="container">
+                    <div class="card">
+                        <h3 class="editable" data-edit-type="text" data-edit-id="${page}-content-title">${content.title || 'Page Content'}</h3>
+                        <p class="editable" data-edit-type="text" data-edit-id="${page}-content-text">${content.text || 'This is a new page. Click on any text to edit it and customize your content.'}</p>
+                    </div>
+                </div>
+            </section>
+        `;
     }
     
     generateErrorHTML(page) {
         return `
             <!DOCTYPE html>
-            <html>
+            <html lang="en">
             <head>
                 <meta charset="UTF-8">
-                <title>Error Loading Page</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Error - ${page}</title>
                 <style>
                     body { font-family: Arial, sans-serif; padding: 40px; text-align: center; }
-                    .error { color: #dc3545; }
+                    .error { color: #e74c3c; font-size: 1.2rem; }
                 </style>
             </head>
             <body>
-                <h1 class="error">Error Loading ${page} Page</h1>
-                <p>The template structure is missing or invalid for this page.</p>
+                <h1>Preview Error</h1>
+                <p class="error">Unable to generate preview for page: ${page}</p>
+                <p>Please try refreshing or check the template configuration.</p>
             </body>
             </html>
         `;
     }
     
     addInteractiveElements(html, page) {
-        // This method would enhance HTML with additional interactive elements
-        // For now, the base HTML generation already includes interactive elements
+        // Add any additional interactive elements if needed
         return html;
     }
     
     handleElementClick(data) {
         console.log('🎯 Element clicked in preview:', data);
         
-        // Create edit dialog or update right panel
-        this.showElementEditor(data);
-    }
-    
-    showElementEditor(elementData) {
-        // Show editing interface in the right panel
-        const contentPanel = document.getElementById('content-panel');
-        if (!contentPanel) return;
-        
-        // Switch to content panel if not active
-        showPanel('content');
-        
-        // Update content panel with element-specific controls
-        let editorHTML = `
-            <h3>Edit ${elementData.elementType}</h3>
-            <div class="form-group">
-                <label for="element-editor-input">Current ${elementData.elementType}:</label>
-        `;
-        
-        if (elementData.elementType === 'image') {
-            editorHTML += `<input type="url" id="element-editor-input" value="${elementData.currentSrc}" placeholder="Image URL">`;
-        } else if (elementData.elementType === 'button') {
-            editorHTML += `<input type="text" id="element-editor-input" value="${elementData.currentValue}" placeholder="Button text">`;
-        } else {
-            editorHTML += `<textarea id="element-editor-input" rows="3" placeholder="Enter text">${elementData.currentValue}</textarea>`;
+        // Switch to content panel when an element is clicked
+        if (window.showPanel) {
+            window.showPanel('content');
         }
         
-        editorHTML += `
-            </div>
-            <button onclick="updateElement('${elementData.elementId}', '${elementData.elementType}')" class="btn">Update ${elementData.elementType}</button>
-        `;
-        
-        contentPanel.innerHTML = editorHTML;
+        // Update content editing form based on clicked element
+        this.updateContentForm(data);
     }
-}
-
-// Create global instance
-window.previewRenderer = new PreviewRenderer();
-
-// Global function to update elements
-function updateElement(elementId, elementType) {
-    const input = document.getElementById('element-editor-input');
-    const newValue = input.value;
     
-    console.log('📝 Updating element:', elementId, 'with value:', newValue);
-    
-    // Update the preview
-    const iframe = document.getElementById('preview-iframe');
-    if (iframe && iframe.contentDocument) {
-        const element = iframe.contentDocument.querySelector(`[data-edit-id="${elementId}"]`);
-        if (element) {
-            if (elementType === 'image') {
-                element.src = newValue;
-            } else {
-                element.textContent = newValue;
-            }
-            
-            // Update the template data
-            updateTemplateData(elementId, newValue);
-            
-            // Show success message
-            showMessage('Element updated successfully!', 'success');
+    updateContentForm(data) {
+        // Update the content editing form with the clicked element's data
+        const elementIdField = document.getElementById('element-id');
+        const elementTypeField = document.getElementById('element-type');
+        const elementValueField = document.getElementById('element-value');
+        
+        if (elementIdField) elementIdField.value = data.elementId || '';
+        if (elementTypeField) elementTypeField.value = data.elementType || '';
+        if (elementValueField) {
+            elementValueField.value = data.currentValue || '';
+            elementValueField.focus();
         }
     }
 }
 
-function updateTemplateData(elementId, newValue) {
-    // This would update the template structure data
-    // Implementation depends on how template data is stored
-    console.log('💾 Updating template data:', elementId, newValue);
+// Initialize preview renderer when script loads
+if (typeof window !== 'undefined') {
+    window.previewRenderer = new PreviewRenderer();
 }
