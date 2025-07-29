@@ -799,10 +799,49 @@
                 }
                 
                 if (html) {
-                    iframe.srcdoc = html;
+                    console.log('🔧 Setting iframe content...');
+                    console.log('📝 HTML preview (first 200 chars):', html.substring(0, 200));
+                    
+                    // Try multiple methods to set iframe content
+                    try {
+                        // Method 1: srcdoc attribute
+                        iframe.srcdoc = html;
+                        console.log('✅ srcdoc method attempted');
+                        
+                        // Method 2: Write directly to iframe document (fallback)
+                        setTimeout(() => {
+                            try {
+                                if (iframe.contentDocument) {
+                                    const doc = iframe.contentDocument;
+                                    if (!doc.body || doc.body.innerHTML.length === 0) {
+                                        console.log('🔄 srcdoc failed, trying document.write method');
+                                        doc.open();
+                                        doc.write(html);
+                                        doc.close();
+                                        console.log('✅ document.write method completed');
+                                    }
+                                }
+                            } catch (e) {
+                                console.error('❌ document.write method failed:', e);
+                                
+                                // Method 3: Data URL fallback
+                                try {
+                                    console.log('🔄 Trying data URL method');
+                                    iframe.src = 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
+                                    console.log('✅ data URL method completed');
+                                } catch (e2) {
+                                    console.error('❌ All iframe methods failed:', e2);
+                                }
+                            }
+                        }, 100);
+                        
+                    } catch (e) {
+                        console.error('❌ Error setting iframe content:', e);
+                    }
+                    
                     console.log('✅ Preview updated successfully');
                     
-                    // Additional debugging to check iframe state
+                    // Enhanced debugging with multiple checks
                     setTimeout(() => {
                         console.log('🔍 Iframe debugging:');
                         console.log('  - Iframe element exists:', !!iframe);
@@ -812,21 +851,54 @@
                         console.log('  - Iframe height:', iframe.offsetHeight);
                         console.log('  - Iframe parent display:', window.getComputedStyle(iframe.parentElement).display);
                         console.log('  - Preview frame height:', iframe.parentElement.offsetHeight);
+                        console.log('  - Iframe src:', iframe.src);
+                        console.log('  - Iframe srcdoc length:', iframe.srcdoc ? iframe.srcdoc.length : 0);
                         
                         // Try to access iframe content to verify it loaded
                         try {
                             if (iframe.contentDocument) {
-                                console.log('  - Iframe content loaded:', !!iframe.contentDocument.body);
-                                console.log('  - Iframe body content length:', iframe.contentDocument.body ? iframe.contentDocument.body.innerHTML.length : 0);
+                                const body = iframe.contentDocument.body;
+                                console.log('  - Iframe content loaded:', !!body);
+                                console.log('  - Iframe body content length:', body ? body.innerHTML.length : 0);
+                                console.log('  - Iframe document ready state:', iframe.contentDocument.readyState);
+                                if (body && body.innerHTML.length > 0) {
+                                    console.log('  - First 100 chars of body:', body.innerHTML.substring(0, 100));
+                                }
                             } else {
                                 console.log('  - Iframe content document not accessible (might be loading)');
                             }
                         } catch (e) {
                             console.log('  - Iframe content access error:', e.message);
                         }
-                    }, 500);
+                    }, 1000);
                 } else {
                     console.error('❌ Generated HTML is empty');
+                    console.log('🔄 Testing basic iframe functionality...');
+                    
+                    // Test with simple HTML to verify iframe works
+                    const testHTML = `<!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>Test</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; padding: 20px; background: #f0f0f0; }
+                            h1 { color: #333; text-align: center; }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>Iframe Test - This Should Be Visible</h1>
+                        <p>If you can see this text, the iframe is working correctly.</p>
+                        <p>Template: Classic Elegance</p>
+                        <p>Time: ${new Date().toLocaleTimeString()}</p>
+                    </body>
+                    </html>`;
+                    
+                    iframe.srcdoc = testHTML;
+                    console.log('✅ Test HTML loaded into iframe');
+                    
+                    // Also try fallback method
                     loadTemplatePageFallback(currentPage);
                 }
                 
