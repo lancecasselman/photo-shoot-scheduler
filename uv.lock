@@ -423,11 +423,15 @@ name = "repl-nix-workspace"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "requests" },
     { name = "twilio" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "twilio", specifier = ">=9.6.5" }]
+requires-dist = [
+    { name = "requests", specifier = ">=2.32.4" },
+    { name = "twilio", specifier = ">=9.6.5" },
+]
 
 [[package]]
 name = "requests"

@@ -887,69 +887,67 @@
             
             console.log('✅ Preview updated successfully');
                     
-                    // Enhanced debugging with multiple checks
-                    setTimeout(() => {
-                        console.log('🔍 Iframe debugging:');
-                        console.log('  - Iframe element exists:', !!iframe);
-                        console.log('  - Iframe display style:', window.getComputedStyle(iframe).display);
-                        console.log('  - Iframe visibility:', window.getComputedStyle(iframe).visibility);
-                        console.log('  - Iframe width:', iframe.offsetWidth);
-                        console.log('  - Iframe height:', iframe.offsetHeight);
-                        console.log('  - Iframe parent display:', window.getComputedStyle(iframe.parentElement).display);
-                        console.log('  - Preview frame height:', iframe.parentElement.offsetHeight);
-                        console.log('  - Iframe src:', iframe.src);
-                        console.log('  - Iframe srcdoc length:', iframe.srcdoc ? iframe.srcdoc.length : 0);
-                        
-                        // Try to access iframe content to verify it loaded
-                        try {
-                            if (iframe.contentDocument) {
-                                const body = iframe.contentDocument.body;
-                                console.log('  - Iframe content loaded:', !!body);
-                                console.log('  - Iframe body content length:', body ? body.innerHTML.length : 0);
-                                console.log('  - Iframe document ready state:', iframe.contentDocument.readyState);
-                                if (body && body.innerHTML.length > 0) {
-                                    console.log('  - First 100 chars of body:', body.innerHTML.substring(0, 100));
-                                }
-                            } else {
-                                console.log('  - Iframe content document not accessible (might be loading)');
-                            }
-                        } catch (e) {
-                            console.log('  - Iframe content access error:', e.message);
-                        }
-                    }, 1000);
-                } else {
-                    console.error('❌ Generated HTML is empty');
-                    console.log('🔄 Testing basic iframe functionality...');
-                    
-                    // Test with simple HTML to verify iframe works
-                    const testHTML = `<!DOCTYPE html>
-                    <html>
-                    <head>
-                        <meta charset="UTF-8">
-                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                        <title>Test</title>
-                        <style>
-                            body { font-family: Arial, sans-serif; padding: 20px; background: #f0f0f0; }
-                            h1 { color: #333; text-align: center; }
-                        </style>
-                    </head>
-                    <body>
-                        <h1>Iframe Test - This Should Be Visible</h1>
-                        <p>If you can see this text, the iframe is working correctly.</p>
-                        <p>Template: Classic Elegance</p>
-                        <p>Time: ${new Date().toLocaleTimeString()}</p>
-                    </body>
-                    </html>`;
-                    
-                    iframe.srcdoc = testHTML;
-                    console.log('✅ Test HTML loaded into iframe');
-                    
-                    // Also try fallback method
-                    loadTemplatePageFallback(currentPage);
-                }
+            // Enhanced debugging with multiple checks
+            setTimeout(() => {
+                console.log('🔍 Iframe debugging:');
+                console.log('  - Iframe element exists:', !!iframe);
+                console.log('  - Iframe display style:', window.getComputedStyle(iframe).display);
+                console.log('  - Iframe visibility:', window.getComputedStyle(iframe).visibility);
+                console.log('  - Iframe width:', iframe.offsetWidth);
+                console.log('  - Iframe height:', iframe.offsetHeight);
+                console.log('  - Iframe parent display:', window.getComputedStyle(iframe.parentElement).display);
+                console.log('  - Preview frame height:', iframe.parentElement.offsetHeight);
+                console.log('  - Iframe src:', iframe.src);
+                console.log('  - Iframe srcdoc length:', iframe.srcdoc ? iframe.srcdoc.length : 0);
                 
-            } catch (error) {
-                console.error('❌ Error updating preview:', error);
+                // Try to access iframe content to verify it loaded
+                try {
+                    if (iframe.contentDocument) {
+                        const body = iframe.contentDocument.body;
+                        console.log('  - Iframe content loaded:', !!body);
+                        console.log('  - Iframe body content length:', body ? body.innerHTML.length : 0);
+                        console.log('  - Iframe document ready state:', iframe.contentDocument.readyState);
+                        if (body && body.innerHTML.length > 0) {
+                            console.log('  - First 100 chars of body:', body.innerHTML.substring(0, 100));
+                        }
+                    } else {
+                        console.log('  - Iframe content document not accessible (might be loading)');
+                    }
+                } catch (e) {
+                    console.log('  - Iframe content access error:', e.message);
+                }
+            }, 1000);
+        }
+        
+        function debugIframeContent(iframe, html) {
+            if (!html) {
+                console.error('❌ Generated HTML is empty');
+                console.log('🔄 Testing basic iframe functionality...');
+                
+                // Test with simple HTML to verify iframe works
+                const testHTML = `<!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Test</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; background: #f0f0f0; }
+                        h1 { color: #333; text-align: center; }
+                    </style>
+                </head>
+                <body>
+                    <h1>Iframe Test - This Should Be Visible</h1>
+                    <p>If you can see this text, the iframe is working correctly.</p>
+                    <p>Template: Classic Elegance</p>
+                    <p>Time: ${new Date().toLocaleTimeString()}</p>
+                </body>
+                </html>`;
+                
+                iframe.srcdoc = testHTML;
+                console.log('✅ Test HTML loaded into iframe');
+                
+                // Also try fallback method
                 loadTemplatePageFallback(currentPage);
             }
         }
@@ -1328,6 +1326,9 @@
             // Insert before add button
             pagesSection.insertBefore(pageItem, addButton);
         }
+    </script>
+</body>
+</html>
     </script>
 </body>
 </html>
