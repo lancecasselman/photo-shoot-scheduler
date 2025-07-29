@@ -24,24 +24,38 @@ const firebaseConfig = {
     measurementId: "G-MB2KDEFRHL"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const storage = getStorage(app);
-
-// Make storage available globally
-window.firebaseStorage = storage;
-window.storageRef = ref;
-window.uploadBytes = uploadBytes;
-window.getDownloadURL = getDownloadURL;
+// Initialize Firebase with error handling
+let app, auth, storage;
+try {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    storage = getStorage(app);
+    
+    // Make storage available globally
+    window.firebaseStorage = storage;
+    window.storageRef = ref;
+    window.uploadBytes = uploadBytes;
+    window.getDownloadURL = getDownloadURL;
+    
+    console.log('Firebase services initialized successfully');
+} catch (error) {
+    console.error('Error initializing Firebase:', error);
+    // Set fallback values
+    auth = null;
+    storage = null;
+    window.firebaseStorage = null;
+}
 
 // Check server authentication status
 let serverAuthEnabled = true;
 async function checkServerAuthStatus() {
     try {
         const response = await fetch('/api/status');
+        if (!response.ok) {
+            throw new Error(`Status check failed: ${response.status}`);
+        }
         const status = await response.json();
-        serverAuthEnabled = status.authenticationEnabled;
+        serverAuthEnabled = status.authenticationEnabled !== false;
         
         console.log('Server auth status:', serverAuthEnabled);
         
@@ -51,13 +65,12 @@ async function checkServerAuthStatus() {
             bypassAuthentication();
         } else {
             console.log('Server authentication enabled - using Firebase auth');
-            // Don't bypass authentication - let Firebase handle it properly
         }
     } catch (error) {
         console.error('Error checking server status:', error);
-        // If we can't check status, use fallback mode
-        console.log('Using fallback mode due to status check error');
-        bypassAuthentication();
+        // Default to Firebase auth if we can't check status
+        console.log('Defaulting to Firebase authentication');
+        serverAuthEnabled = true;
     }
 }
 
@@ -126,12 +139,13 @@ window.checkAuthAndLoadSessions = function() {
 };
 
 // Auth state observer
-onAuthStateChanged(auth, async (user) => {
-    // Skip Firebase auth handling if server auth is disabled
-    if (!serverAuthEnabled) {
-        console.log('Firebase auth disabled, skipping auth state change');
-        return;
-    }
+if (auth) {
+    onAuthStateChanged(auth, async (user) => {
+        // Skip Firebase auth handling if server auth is disabled
+        if (!serverAuthEnabled) {
+            console.log('Firebase auth disabled, skipping auth state change');
+            return;
+        }
     
     const authDiv = document.getElementById('auth');
     const appDiv = document.getElementById('app');
@@ -178,12 +192,21 @@ onAuthStateChanged(auth, async (user) => {
         authDiv.style.display = 'block';
         appDiv.style.display = 'none';
     }
-});
+    });
+} else {
+    console.error('Firebase auth not initialized, using fallback mode');
+    bypassAuthentication();
+}
 
 // Signup function
 window.signup = async function() {
     if (!serverAuthEnabled) {
         alert('Authentication is disabled in demo mode. You can already use the app.');
+        return;
+    }
+    
+    if (!auth) {
+        alert('Firebase authentication not available. Please refresh the page.');
         return;
     }
     
@@ -214,6 +237,11 @@ window.login = async function() {
         return;
     }
     
+    if (!auth) {
+        alert('Firebase authentication not available. Please refresh the page.');
+        return;
+    }
+    
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
     
@@ -238,6 +266,11 @@ window.login = async function() {
 window.logout = async function() {
     if (!serverAuthEnabled) {
         alert('Authentication is disabled in demo mode. App will continue running.');
+        return;
+    }
+    
+    if (!auth) {
+        alert('Firebase authentication not available. Please refresh the page.');
         return;
     }
     
