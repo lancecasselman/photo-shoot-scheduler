@@ -980,37 +980,253 @@
                 iframe.srcdoc = testHTML;
                 console.log('✅ Test HTML loaded into iframe');
                 
-                // Also try fallback method
+                // Use enhanced fallback method with click-to-edit
                 loadTemplatePageFallback(currentPage);
             }
         }
         
-        // Fallback function to load template pages directly from files
+        // Enhanced fallback function with full click-to-edit support
         async function loadTemplatePageFallback(page) {
-            console.log('🔄 Using fallback to load template page:', page);
+            console.log('🔄 Loading enhanced preview with click-to-edit:', page);
             
-            try {
-                const templatePath = `/templates/${templateId}/${page}.html`;
-                console.log('📁 Attempting to fetch:', templatePath);
-                
-                const response = await fetch(templatePath);
-                if (response.ok) {
-                    const html = await response.text();
-                    console.log('✅ Loaded template page from file:', templatePath);
+            // Create full interactive preview with current customizations
+            const iframe = document.getElementById('preview-iframe');
+            if (!iframe) return;
+            
+            const templateName = currentTemplate ? currentTemplate.name : 'Photography Studio';
+            const colors = {
+                primary: document.getElementById('primary-color').value || '#667eea',
+                secondary: document.getElementById('secondary-color').value || '#764ba2',
+                accent: document.getElementById('accent-color').value || '#f8f9fa',
+                background: document.getElementById('background-color').value || '#ffffff'
+            };
+            
+            const enhancedHTML = `
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>${templateName} - ${page}</title>
+                    <style>
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        body {
+                            font-family: 'Open Sans', sans-serif;
+                            line-height: 1.6;
+                            color: #2c3e50;
+                            background: ${colors.background};
+                        }
+                        .nav {
+                            background: rgba(255, 255, 255, 0.95);
+                            padding: 1rem 0;
+                            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                        }
+                        .container {
+                            max-width: 1200px;
+                            margin: 0 auto;
+                            padding: 0 20px;
+                        }
+                        .nav-header {
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                        }
+                        .nav-brand {
+                            font-size: 1.5rem;
+                            font-weight: bold;
+                            color: ${colors.primary};
+                            text-decoration: none;
+                            cursor: pointer;
+                            outline: 2px solid transparent;
+                            transition: outline 0.2s;
+                        }
+                        .nav-brand.selected {
+                            outline: 2px solid ${colors.primary};
+                            outline-offset: 2px;
+                        }
+                        .nav-links {
+                            display: flex;
+                            list-style: none;
+                            gap: 2rem;
+                        }
+                        .nav-links a {
+                            color: #333;
+                            text-decoration: none;
+                            font-weight: 500;
+                            transition: color 0.3s;
+                            cursor: pointer;
+                        }
+                        .nav-links a:hover {
+                            color: ${colors.primary};
+                        }
+                        .hero {
+                            background: linear-gradient(135deg, ${colors.primary}, ${colors.secondary});
+                            color: white;
+                            text-align: center;
+                            padding: 80px 0;
+                        }
+                        .hero h1 {
+                            font-size: 3rem;
+                            margin-bottom: 1rem;
+                            color: white;
+                            cursor: pointer;
+                            outline: 2px solid transparent;
+                            transition: outline 0.2s;
+                        }
+                        .hero h1.selected {
+                            outline: 2px solid white;
+                            outline-offset: 2px;
+                        }
+                        .hero p {
+                            font-size: 1.3rem;
+                            opacity: 0.9;
+                            cursor: pointer;
+                            outline: 2px solid transparent;
+                            transition: outline 0.2s;
+                        }
+                        .hero p.selected {
+                            outline: 2px solid white;
+                            outline-offset: 2px;
+                        }
+                        .section {
+                            padding: 60px 0;
+                        }
+                        .gallery {
+                            display: grid;
+                            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                            gap: 1rem;
+                            margin-top: 2rem;
+                        }
+                        .gallery img {
+                            width: 100%;
+                            height: 200px;
+                            object-fit: cover;
+                            border-radius: 8px;
+                            cursor: pointer;
+                            transition: all 0.3s;
+                            outline: 2px solid transparent;
+                        }
+                        .gallery img:hover {
+                            transform: scale(1.02);
+                        }
+                        .gallery img.selected {
+                            outline: 2px solid ${colors.primary};
+                            outline-offset: 2px;
+                            transform: scale(1.02);
+                        }
+                        .editable {
+                            cursor: pointer;
+                            transition: outline 0.2s;
+                        }
+                        .editable:hover {
+                            outline: 2px dotted ${colors.primary};
+                            outline-offset: 2px;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <nav class="nav">
+                        <div class="container">
+                            <div class="nav-header">
+                                <a class="nav-brand editable" data-edit-type="text" data-edit-id="site-title">${templateName}</a>
+                                <ul class="nav-links">
+                                    <li><a onclick="parent.postMessage({type: 'pageChanged', page: 'home'}, '*')">Home</a></li>
+                                    <li><a onclick="parent.postMessage({type: 'pageChanged', page: 'about'}, '*')">About</a></li>
+                                    <li><a onclick="parent.postMessage({type: 'pageChanged', page: 'portfolio'}, '*')">Portfolio</a></li>
+                                    <li><a onclick="parent.postMessage({type: 'pageChanged', page: 'contact'}, '*')">Contact</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </nav>
                     
-                    const iframe = document.getElementById('preview-iframe');
-                    if (iframe) {
-                        iframe.srcdoc = html;
-                        console.log('✅ Preview updated with template file');
-                    }
-                } else {
-                    console.error('❌ Failed to fetch template page:', response.status);
-                    showSimplePreview();
-                }
-            } catch (error) {
-                console.error('❌ Error in fallback load:', error);
-                showSimplePreview();
-            }
+                    ${page === 'home' ? `
+                    <section class="hero">
+                        <div class="container">
+                            <h1 class="editable" data-edit-type="text" data-edit-id="hero-title">Capturing Love Stories</h1>
+                            <p class="editable" data-edit-type="text" data-edit-id="hero-subtitle">Professional photography that tells your unique story</p>
+                        </div>
+                    </section>
+                    
+                    <section class="section">
+                        <div class="container">
+                            <div class="gallery">
+                                <img class="editable" data-edit-type="image" data-edit-id="gallery-1" src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400" alt="Portfolio Image 1">
+                                <img class="editable" data-edit-type="image" data-edit-id="gallery-2" src="https://images.unsplash.com/photo-1519741497674-611481863552?w=400" alt="Portfolio Image 2">
+                                <img class="editable" data-edit-type="image" data-edit-id="gallery-3" src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=400" alt="Portfolio Image 3">
+                                <img class="editable" data-edit-type="image" data-edit-id="gallery-4" src="https://images.unsplash.com/photo-1469371670807-013ccf25f16a?w=400" alt="Portfolio Image 4">
+                            </div>
+                        </div>
+                    </section>` : ''}
+                    
+                    ${page === 'about' ? `
+                    <section class="section">
+                        <div class="container">
+                            <h2 class="editable" data-edit-type="text" data-edit-id="about-title">About Our Studio</h2>
+                            <p class="editable" data-edit-type="text" data-edit-id="about-text">We are passionate photographers dedicated to capturing your most precious moments. With years of experience and an eye for detail, we create timeless memories that you'll treasure forever.</p>
+                        </div>
+                    </section>` : ''}
+                    
+                    ${page === 'portfolio' ? `
+                    <section class="section">
+                        <div class="container">
+                            <h2 class="editable" data-edit-type="text" data-edit-id="portfolio-title">Our Portfolio</h2>
+                            <div class="gallery">
+                                <img class="editable" data-edit-type="image" data-edit-id="portfolio-1" src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400" alt="Portfolio Image 1">
+                                <img class="editable" data-edit-type="image" data-edit-id="portfolio-2" src="https://images.unsplash.com/photo-1519741497674-611481863552?w=400" alt="Portfolio Image 2">
+                                <img class="editable" data-edit-type="image" data-edit-id="portfolio-3" src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=400" alt="Portfolio Image 3">
+                                <img class="editable" data-edit-type="image" data-edit-id="portfolio-4" src="https://images.unsplash.com/photo-1469371670807-013ccf25f16a?w=400" alt="Portfolio Image 4">
+                                <img class="editable" data-edit-type="image" data-edit-id="portfolio-5" src="https://images.unsplash.com/photo-1583394838336-acd977736f90?w=400" alt="Portfolio Image 5">
+                                <img class="editable" data-edit-type="image" data-edit-id="portfolio-6" src="https://images.unsplash.com/photo-1594736797933-d0f06b4ac4de?w=400" alt="Portfolio Image 6">
+                            </div>
+                        </div>
+                    </section>` : ''}
+                    
+                    ${page === 'contact' ? `
+                    <section class="section">
+                        <div class="container">
+                            <h2 class="editable" data-edit-type="text" data-edit-id="contact-title">Get In Touch</h2>
+                            <p class="editable" data-edit-type="text" data-edit-id="contact-text">Ready to book your session? We'd love to hear from you and discuss how we can capture your special moments.</p>
+                            <div style="margin-top: 2rem;">
+                                <p class="editable" data-edit-type="text" data-edit-id="contact-email">Email: hello@example.com</p>
+                                <p class="editable" data-edit-type="text" data-edit-id="contact-phone">Phone: (555) 123-4567</p>
+                            </div>
+                        </div>
+                    </section>` : ''}
+                    
+                    <script>
+                        // Click-to-edit functionality
+                        document.addEventListener('DOMContentLoaded', function() {
+                            document.querySelectorAll('.editable').forEach(element => {
+                                element.addEventListener('click', function(e) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    
+                                    document.querySelectorAll('.editable.selected').forEach(el => {
+                                        el.classList.remove('selected');
+                                    });
+                                    
+                                    this.classList.add('selected');
+                                    
+                                    const elementData = {
+                                        type: 'elementClicked',
+                                        elementType: this.dataset.editType,
+                                        elementId: this.dataset.editId,
+                                        currentValue: this.textContent.trim(),
+                                        currentSrc: this.src || '',
+                                        rect: this.getBoundingClientRect()
+                                    };
+                                    
+                                    parent.postMessage(elementData, '*');
+                                });
+                            });
+                        });
+                    </script>
+                </body>
+                </html>
+            `;
+            
+            iframe.srcdoc = enhancedHTML;
+            console.log('✅ Enhanced interactive preview loaded for page:', page);
         }
         
         // Show a simple preview when all else fails
