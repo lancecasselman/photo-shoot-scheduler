@@ -32,7 +32,7 @@
     <!-- React and Babel -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.js"></script>
     
     <!-- Confetti Animation Styles -->
     <style>
@@ -9253,11 +9253,20 @@ ${name}`;
             
             // Wait for all components to load
             const initSiteBuilder = () => {
-                console.log('Checking components:', {
+                console.log('Detailed component checking:', {
                     React: typeof React !== 'undefined',
                     ReactDOM: typeof ReactDOM !== 'undefined',
                     SiteBuilder: typeof SiteBuilder !== 'undefined',
-                    PresetTemplates: window.PresetTemplates ? Object.keys(window.PresetTemplates).length : 0,
+                    PresetTemplates: {
+                        exists: typeof window.PresetTemplates !== 'undefined',
+                        keys: window.PresetTemplates ? Object.keys(window.PresetTemplates) : null,
+                        count: window.PresetTemplates ? Object.keys(window.PresetTemplates).length : 0,
+                        sample: window.PresetTemplates ? window.PresetTemplates.legacyPhotography?.name : null
+                    },
+                    TemplateCategories: {
+                        exists: typeof window.TemplateCategories !== 'undefined',
+                        count: window.TemplateCategories ? window.TemplateCategories.length : 0
+                    },
                     BlockEditor: typeof window.BlockEditor !== 'undefined',
                     BlockLibrary: typeof window.BlockLibrary !== 'undefined',
                     LivePreview: typeof window.LivePreview !== 'undefined',
@@ -9268,7 +9277,7 @@ ${name}`;
                 if (typeof React !== 'undefined' && 
                     typeof ReactDOM !== 'undefined' && 
                     typeof SiteBuilder !== 'undefined' && 
-                    window.PresetTemplates &&
+                    window.PresetTemplates && Object.keys(window.PresetTemplates).length > 0 &&
                     typeof window.BlockEditor !== 'undefined' &&
                     typeof window.BlockLibrary !== 'undefined' &&
                     typeof window.LivePreview !== 'undefined' &&
@@ -9281,10 +9290,23 @@ ${name}`;
                     
                     if (container) {
                         try {
-                            ReactDOM.render(React.createElement(SiteBuilder), container);
-                            console.log('SiteBuilder mounted successfully');
+                            // Clear container first
+                            container.innerHTML = '';
+                            
+                            // Create root and render
+                            const root = ReactDOM.createRoot ? ReactDOM.createRoot(container) : null;
+                            if (root) {
+                                root.render(React.createElement(SiteBuilder));
+                                console.log('SiteBuilder mounted successfully with createRoot');
+                            } else {
+                                ReactDOM.render(React.createElement(SiteBuilder), container);
+                                console.log('SiteBuilder mounted successfully with legacy render');
+                            }
                         } catch (error) {
                             console.error('Error mounting SiteBuilder:', error);
+                            console.log('React version:', React.version);
+                            console.log('Available React methods:', Object.keys(React));
+                            console.log('Available ReactDOM methods:', Object.keys(ReactDOM));
                         }
                     } else {
                         console.error('Website builder container not found');
