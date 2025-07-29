@@ -1224,36 +1224,23 @@
             
             const iframe = document.getElementById('preview-iframe');
             if (iframe) {
-                const simpleHTML = `
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                        <title>${currentTemplate ? currentTemplate.name : 'Template'}</title>
-                        <style>
-                            body { 
-                                font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
-                                margin: 0; 
-                                padding: 40px; 
-                                text-align: center;
-                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                                color: white;
-                                min-height: 100vh;
-                                display: flex;
-                                flex-direction: column;
-                                justify-content: center;
-                            }
-                            h1 { font-size: 2.5rem; margin-bottom: 1rem; }
-                            p { font-size: 1.2rem; opacity: 0.9; }
-                        </style>
-                    </head>
-                    <body>
-                        <h1>${currentTemplate ? currentTemplate.name : 'Template Preview'}</h1>
-                        <p>Page: ${currentPage}</p>
-                        <p>Template editor is loading...</p>
-                    </body>
-                    </html>
-                `;
+                const templateName = currentTemplate ? currentTemplate.name : 'Template Preview';
+                const pageName = currentPage || 'Home';
+                
+                const simpleHTML = '<!DOCTYPE html>' +
+                    '<html><head>' +
+                    '<meta name="viewport" content="width=device-width, initial-scale=1.0">' +
+                    '<title>' + templateName + '</title>' +
+                    '<style>' +
+                    'body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 40px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; }' +
+                    'h1 { font-size: 2.5rem; margin-bottom: 1rem; }' +
+                    'p { font-size: 1.2rem; opacity: 0.9; }' +
+                    '</style></head><body>' +
+                    '<h1>' + templateName + '</h1>' +
+                    '<p>Page: ' + pageName + '</p>' +
+                    '<p>Template editor is loading...</p>' +
+                    '</body></html>';
+                    
                 iframe.srcdoc = simpleHTML;
                 console.log('✅ Simple preview loaded');
             }
