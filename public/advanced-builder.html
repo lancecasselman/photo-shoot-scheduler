@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Advanced Website Builder - Photography Management System</title>
     
-    <!-- React CDN -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- React CDN - Development builds for better error messages -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     
-    <!-- Babel for JSX -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Babel for JSX - Development build -->
+    <script src="https://unpkg.com/@babel/standalone/babel.js"></script>
     
     <!-- Firebase v9 -->
     <script type="module">
@@ -358,14 +358,17 @@
     <script src="/components/presets/websites/outdoorAdventure.js"></script>
     
     <!-- Load React Components -->
-    <script src="/components/PageNavigator.jsx"></script>
-    <script src="/components/ThemeSelector.jsx"></script>
-    <script src="/components/PresetSelector.jsx"></script>
-    <script src="/components/BlockLibrary.jsx"></script>
-    <script src="/components/LivePreview.jsx"></script>
-    <script src="/components/BlockEditor.jsx"></script>
+    <script type="text/babel" src="/components/PresetTemplates.jsx"></script>
     <script src="/components/firebase-publish.js"></script>
-    <script src="/components/SiteBuilder.jsx"></script>
+    <script type="text/babel" src="/components/PageNavigator.jsx"></script>
+    <script type="text/babel" src="/components/ThemeSelector.jsx"></script>
+    <script type="text/babel" src="/components/PresetSelector.jsx"></script>
+    <script type="text/babel" src="/components/BlockLibrary.jsx"></script>
+    <script type="text/babel" src="/components/LivePreview.jsx"></script>
+    <script type="text/babel" src="/components/BlockEditor.jsx"></script>
+    <script type="text/babel" src="/components/PageManager.jsx"></script>
+    <script type="text/babel" src="/components/TemplateSelector.jsx"></script>
+    <script type="text/babel" src="/components/SiteBuilder.jsx"></script>
     
     <!-- Celebration Animation Script -->
     <script>
@@ -490,18 +493,46 @@
 
         // Wait for all components to load
         const initializeApp = () => {
-            if (window.SiteBuilder && window.BlockLibrary && window.LivePreview && window.BlockEditor) {
-                const root = ReactDOM.createRoot(document.getElementById('root'));
-                root.render(React.createElement(App));
+            console.log('Advanced Builder - Checking components:', {
+                React: typeof React !== 'undefined',
+                ReactDOM: typeof ReactDOM !== 'undefined',
+                SiteBuilder: typeof window.SiteBuilder !== 'undefined',
+                BlockLibrary: typeof window.BlockLibrary !== 'undefined',
+                LivePreview: typeof window.LivePreview !== 'undefined',
+                BlockEditor: typeof window.BlockEditor !== 'undefined',
+                PresetTemplates: window.PresetTemplates ? Object.keys(window.PresetTemplates).length : 0,
+                PageManager: typeof window.PageManager !== 'undefined',
+                TemplateSelector: typeof window.TemplateSelector !== 'undefined'
+            });
+            
+            if (window.SiteBuilder && 
+                window.BlockLibrary && 
+                window.LivePreview && 
+                window.BlockEditor &&
+                window.PresetTemplates && Object.keys(window.PresetTemplates).length > 0 &&
+                window.PageManager &&
+                window.TemplateSelector) {
                 
-                // Show builder loaded celebration
-                setTimeout(() => {
-                    if (window.showCelebration) {
-                        window.showCelebration('🎨 Advanced Builder Loaded!', 25);
-                    }
-                }, 500);
+                console.log('All components loaded, mounting React app...');
+                try {
+                    const root = ReactDOM.createRoot(document.getElementById('root'));
+                    root.render(React.createElement(App));
+                    console.log('Advanced builder mounted successfully');
+                    
+                    // Show builder loaded celebration
+                    setTimeout(() => {
+                        if (window.showCelebration) {
+                            window.showCelebration('🎨 Advanced Builder Loaded!', 25);
+                        }
+                    }, 500);
+                } catch (error) {
+                    console.error('Error mounting advanced builder:', error);
+                    console.log('React version:', React.version);
+                    console.log('Available ReactDOM methods:', Object.keys(ReactDOM));
+                }
             } else {
-                setTimeout(initializeApp, 100);
+                console.log('Still waiting for components...');
+                setTimeout(initializeApp, 200);
             }
         };
 
