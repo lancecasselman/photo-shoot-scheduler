@@ -455,6 +455,61 @@ class TemplateLoader {
                                 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&h=300&fit=crop'
                             ]
                         }
+                    },
+                    about: {
+                        hero: {
+                            title: 'About Our Photography',
+                            subtitle: 'Nature & Outdoor Specialists',
+                            background: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&h=600&fit=crop'
+                        },
+                        content: {
+                            title: 'Our Philosophy',
+                            text: 'We believe in the healing power of nature and strive to capture its authentic beauty. Our outdoor photography celebrates the natural world and the connections we form within it.',
+                            experience: '6+ years of outdoor photography',
+                            specialty: 'Nature, landscape, and outdoor lifestyle photography'
+                        }
+                    },
+                    portfolio: {
+                        hero: {
+                            title: 'Nature Portfolio',
+                            subtitle: 'Outdoor Photography Gallery',
+                            background: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1200&h=600&fit=crop'
+                        },
+                        galleries: [
+                            {
+                                title: 'Landscape Photography',
+                                images: [
+                                    'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&h=300&fit=crop'
+                                ]
+                            },
+                            {
+                                title: 'Outdoor Portraits',
+                                images: [
+                                    'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&h=300&fit=crop'
+                                ]
+                            }
+                        ]
+                    },
+                    contact: {
+                        hero: {
+                            title: 'Get In Touch',
+                            subtitle: 'Let\'s Explore Nature Together',
+                            background: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=1200&h=600&fit=crop'
+                        },
+                        contact: {
+                            title: 'Contact Information',
+                            email: 'hello@natureinspired.com',
+                            phone: '+1 (555) 123-4567',
+                            address: 'Available for outdoor shoots nationwide'
+                        },
+                        form: {
+                            title: 'Outdoor Session Inquiry',
+                            fields: ['name', 'email', 'phone', 'session_type', 'location', 'message']
+                        }
                     }
                 }
             },
@@ -491,6 +546,61 @@ class TemplateLoader {
                                 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=400&h=300&fit=crop',
                                 'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1f?w=400&h=300&fit=crop'
                             ]
+                        }
+                    },
+                    about: {
+                        hero: {
+                            title: 'About Urban Edge',
+                            subtitle: 'Street Photography Specialist',
+                            background: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1200&h=600&fit=crop'
+                        },
+                        content: {
+                            title: 'Street Photography Vision',
+                            text: 'Urban environments tell incredible stories. We capture the authentic moments, diverse cultures, and raw energy that make city life so compelling and beautiful.',
+                            experience: '5+ years documenting urban life',
+                            specialty: 'Street photography, urban portraits, and city landscapes'
+                        }
+                    },
+                    portfolio: {
+                        hero: {
+                            title: 'Urban Portfolio',
+                            subtitle: 'Street & City Photography',
+                            background: 'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1f?w=1200&h=600&fit=crop'
+                        },
+                        galleries: [
+                            {
+                                title: 'Street Photography',
+                                images: [
+                                    'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1f?w=400&h=300&fit=crop'
+                                ]
+                            },
+                            {
+                                title: 'Urban Portraits',
+                                images: [
+                                    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&h=300&fit=crop'
+                                ]
+                            }
+                        ]
+                    },
+                    contact: {
+                        hero: {
+                            title: 'Get In Touch',
+                            subtitle: 'Ready to Capture Urban Stories?',
+                            background: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1200&h=600&fit=crop'
+                        },
+                        contact: {
+                            title: 'Contact Information',
+                            email: 'hello@urbanedge.com',
+                            phone: '+1 (555) 123-4567',
+                            address: 'Based in NYC, available for urban shoots worldwide'
+                        },
+                        form: {
+                            title: 'Urban Photography Inquiry',
+                            fields: ['name', 'email', 'phone', 'project_type', 'location', 'message']
                         }
                     }
                 }
@@ -529,6 +639,61 @@ class TemplateLoader {
                                 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=400&h=300&fit=crop'
                             ]
                         }
+                    },
+                    about: {
+                        hero: {
+                            title: 'About Us',
+                            subtitle: 'Romantic Wedding Photography',
+                            background: 'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=1200&h=600&fit=crop'
+                        },
+                        content: {
+                            title: 'Our Love Story',
+                            text: 'We believe every wedding tells a unique love story. Our romantic approach captures the tender, intimate moments that make your celebration truly special.',
+                            experience: '8+ years capturing love stories',
+                            specialty: 'Romantic, intimate wedding photography'
+                        }
+                    },
+                    portfolio: {
+                        hero: {
+                            title: 'Romance Portfolio',
+                            subtitle: 'Intimate Wedding Moments',
+                            background: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=1200&h=600&fit=crop'
+                        },
+                        galleries: [
+                            {
+                                title: 'Intimate Ceremonies',
+                                images: [
+                                    'https://images.unsplash.com/photo-1519741497674-611481863552?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=400&h=300&fit=crop'
+                                ]
+                            },
+                            {
+                                title: 'Romantic Portraits',
+                                images: [
+                                    'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1522413452208-996ff3f3e740?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=400&h=300&fit=crop'
+                                ]
+                            }
+                        ]
+                    },
+                    contact: {
+                        hero: {
+                            title: 'Get In Touch',
+                            subtitle: 'Let\'s Tell Your Love Story',
+                            background: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=1200&h=600&fit=crop'
+                        },
+                        contact: {
+                            title: 'Contact Information',
+                            email: 'hello@romanticmoments.com',
+                            phone: '+1 (555) 123-4567',
+                            address: 'Available for weddings worldwide'
+                        },
+                        form: {
+                            title: 'Wedding Inquiry',
+                            fields: ['name', 'email', 'phone', 'wedding_date', 'venue', 'message']
+                        }
                     }
                 }
             },
@@ -565,6 +730,61 @@ class TemplateLoader {
                                 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=400&h=300&fit=crop',
                                 'https://images.unsplash.com/photo-1478146896981-b80fe463b330?w=400&h=300&fit=crop'
                             ]
+                        }
+                    },
+                    about: {
+                        hero: {
+                            title: 'About Event Showcase',
+                            subtitle: 'Professional Event Photography',
+                            background: 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=1200&h=600&fit=crop'
+                        },
+                        content: {
+                            title: 'Event Expertise',
+                            text: 'We specialize in capturing the energy, connections, and key moments that make corporate events and special occasions memorable and impactful.',
+                            experience: '7+ years documenting events',
+                            specialty: 'Corporate events, conferences, and special occasions'
+                        }
+                    },
+                    portfolio: {
+                        hero: {
+                            title: 'Event Portfolio',
+                            subtitle: 'Professional Event Coverage',
+                            background: 'https://images.unsplash.com/photo-1478146896981-b80fe463b330?w=1200&h=600&fit=crop'
+                        },
+                        galleries: [
+                            {
+                                title: 'Corporate Events',
+                                images: [
+                                    'https://images.unsplash.com/photo-1511578314322-379afb476865?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1478146896981-b80fe463b330?w=400&h=300&fit=crop'
+                                ]
+                            },
+                            {
+                                title: 'Conferences & Meetings',
+                                images: [
+                                    'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=400&h=300&fit=crop'
+                                ]
+                            }
+                        ]
+                    },
+                    contact: {
+                        hero: {
+                            title: 'Get In Touch',
+                            subtitle: 'Ready to Document Your Event?',
+                            background: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=1200&h=600&fit=crop'
+                        },
+                        contact: {
+                            title: 'Contact Information',
+                            email: 'hello@eventshowcase.com',
+                            phone: '+1 (555) 123-4567',
+                            address: 'Available for events nationwide'
+                        },
+                        form: {
+                            title: 'Event Photography Inquiry',
+                            fields: ['name', 'email', 'phone', 'event_type', 'date', 'location', 'message']
                         }
                     }
                 }
