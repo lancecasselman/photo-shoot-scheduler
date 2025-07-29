@@ -31,6 +31,52 @@ const SiteBuilder = () => {
     const [saving, setSaving] = useState(false);
     const [publishing, setPublishing] = useState(false);
 
+    // Initialize component
+    useEffect(() => {
+        const initializeBuilder = async () => {
+            console.log('SiteBuilder: Initializing component...');
+            
+            try {
+                // Check if Firebase auth is available
+                if (window.firebase && window.firebase.auth) {
+                    const unsubscribe = window.firebase.auth().onAuthStateChanged((firebaseUser) => {
+                        if (firebaseUser) {
+                            setUser(firebaseUser);
+                            console.log('SiteBuilder: User authenticated:', firebaseUser.email);
+                        } else {
+                            setUser(null);
+                            console.log('SiteBuilder: No user authenticated');
+                        }
+                        setLoading(false);
+                    });
+                    
+                    return () => unsubscribe();
+                } else {
+                    // No Firebase auth available, set to not loading
+                    console.log('SiteBuilder: No Firebase auth available, proceeding without auth');
+                    setLoading(false);
+                }
+                
+                // Check templates loading
+                if (window.PresetTemplates && Object.keys(window.PresetTemplates).length > 0) {
+                    setTemplatesLoaded(true);
+                    console.log('SiteBuilder: Templates loaded successfully:', Object.keys(window.PresetTemplates).length);
+                }
+            } catch (error) {
+                console.error('SiteBuilder: Initialization error:', error);
+                setLoading(false);
+            }
+        };
+
+        initializeBuilder();
+    }, []);
+
+    // Message management
+    const showMessage = (msg, type = 'info', duration = 5000) => {
+        setMessage(msg);
+        setTimeout(() => setMessage(''), duration);
+    };
+
     // Helper to get current page blocks
     const getCurrentPageBlocks = () => siteBlocks[activePage] || [];
     const setCurrentPageBlocks = (blocks) => {
@@ -530,12 +576,6 @@ const SiteBuilder = () => {
         } finally {
             setPublishing(false);
         }
-    };
-
-    // Show message helper
-    const showMessage = (text, duration = 3000) => {
-        setMessage(text);
-        setTimeout(() => setMessage(''), duration);
     };
 
     const signInWithGoogle = async () => {
