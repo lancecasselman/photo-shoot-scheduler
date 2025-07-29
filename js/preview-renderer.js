@@ -482,6 +482,54 @@ class PreviewRenderer {
                                 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=400&h=300&fit=crop'
                             ]
                         }
+                    },
+                    about: {
+                        hero: {
+                            title: 'About Our Photography',
+                            subtitle: 'Capturing Classic Elegance Since 2015',
+                            background: 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=1200&h=600&fit=crop'
+                        },
+                        content: {
+                            story: 'Our journey began with a love for timeless aesthetics and authentic moments. We specialize in creating photographs that feel like treasured family heirlooms, capturing the classic elegance of your special day.',
+                            mission: 'To create timeless wedding photographs that capture authentic emotions and classic elegance with artistic vision and professional expertise.'
+                        }
+                    },
+                    portfolio: {
+                        hero: {
+                            title: 'Wedding Portfolio',
+                            subtitle: 'Timeless Memories Captured',
+                            background: 'https://images.unsplash.com/photo-1522413452208-996ff3f3e740?w=1200&h=600&fit=crop'
+                        },
+                        galleries: [
+                            {
+                                title: 'Classic Ceremonies',
+                                images: [
+                                    'https://images.unsplash.com/photo-1519741497674-611481863552?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=400&h=300&fit=crop'
+                                ]
+                            },
+                            {
+                                title: 'Elegant Receptions',
+                                images: [
+                                    'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1522413452208-996ff3f3e740?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=400&h=300&fit=crop'
+                                ]
+                            }
+                        ]
+                    },
+                    contact: {
+                        hero: {
+                            title: 'Get In Touch',
+                            subtitle: 'Let\'s Create Something Beautiful Together',
+                            background: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=1200&h=600&fit=crop'
+                        },
+                        info: {
+                            email: 'hello@classicelegance.com',
+                            phone: '+1 (555) 123-4567',
+                            location: 'Available for destination weddings worldwide'
+                        }
                     }
                 }
             },
@@ -554,6 +602,46 @@ class PreviewRenderer {
                                 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=400&h=300&fit=crop'
                             ]
                         }
+                    },
+                    about: {
+                        hero: {
+                            title: 'About Our Photography',
+                            subtitle: 'Capturing Vintage Elegance Since 2015',
+                            background: 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=1200&h=600&fit=crop'
+                        },
+                        content: {
+                            story: 'Our journey began with a love for vintage aesthetics and timeless romance. We specialize in creating photographs that feel like treasured family heirlooms.',
+                            mission: 'To capture the authentic emotions and vintage charm of your special day with artistic vision and professional expertise.'
+                        }
+                    },
+                    portfolio: {
+                        hero: {
+                            title: 'Wedding Portfolio',
+                            subtitle: 'Timeless Memories Captured',
+                            background: 'https://images.unsplash.com/photo-1522413452208-996ff3f3e740?w=1200&h=600&fit=crop'
+                        },
+                        galleries: [
+                            {
+                                title: 'Vintage Ceremonies',
+                                images: [
+                                    'https://images.unsplash.com/photo-1519741497674-611481863552?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=400&h=300&fit=crop'
+                                ]
+                            }
+                        ]
+                    },
+                    contact: {
+                        hero: {
+                            title: 'Get In Touch',
+                            subtitle: 'Let\'s Create Something Beautiful Together',
+                            background: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=1200&h=600&fit=crop'
+                        },
+                        info: {
+                            email: 'hello@vintagecharm.com',
+                            phone: '+1 (555) 123-4567',
+                            location: 'Available for destination weddings worldwide'
+                        }
                     }
                 }
             },
@@ -589,6 +677,46 @@ class PreviewRenderer {
                                 'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=400&h=300&fit=crop',
                                 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=400&h=300&fit=crop'
                             ]
+                        }
+                    },
+                    about: {
+                        hero: {
+                            title: 'About Our Story',
+                            subtitle: 'Intimate Wedding Photography',
+                            background: 'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=1200&h=600&fit=crop'
+                        },
+                        content: {
+                            story: 'We believe every love story deserves to be told with tenderness and authenticity. Our romantic approach captures the quiet moments, gentle touches, and heartfelt emotions.',
+                            mission: 'To preserve the intimate beauty of your wedding day through soft, romantic photography that speaks to the heart.'
+                        }
+                    },
+                    portfolio: {
+                        hero: {
+                            title: 'Romantic Portfolio',
+                            subtitle: 'Intimate Moments Captured',
+                            background: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=1200&h=600&fit=crop'
+                        },
+                        galleries: [
+                            {
+                                title: 'Intimate Ceremonies',
+                                images: [
+                                    'https://images.unsplash.com/photo-1519741497674-611481863552?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=400&h=300&fit=crop'
+                                ]
+                            }
+                        ]
+                    },
+                    contact: {
+                        hero: {
+                            title: 'Let\'s Connect',
+                            subtitle: 'Share Your Love Story With Us',
+                            background: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200&h=600&fit=crop'
+                        },
+                        info: {
+                            email: 'hello@romanticmoments.com',
+                            phone: '+1 (555) 987-6543',
+                            location: 'Intimate venues and destination weddings'
                         }
                     }
                 }
@@ -626,6 +754,46 @@ class PreviewRenderer {
                                 'https://images.unsplash.com/photo-1542038784456-1ea8e8eba4f6?w=400&h=300&fit=crop'
                             ]
                         }
+                    },
+                    about: {
+                        hero: {
+                            title: 'About Our Studio',
+                            subtitle: 'Professional Portrait Photography',
+                            background: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=1200&h=600&fit=crop'
+                        },
+                        content: {
+                            story: 'Our elegant studio provides a sophisticated environment for creating timeless portraits. With professional lighting and expert styling, we capture the essence of each individual.',
+                            mission: 'To create sophisticated studio portraits that reflect the elegance and personality of our discerning clients.'
+                        }
+                    },
+                    portfolio: {
+                        hero: {
+                            title: 'Portrait Portfolio',
+                            subtitle: 'Elegant Studio Work',
+                            background: 'https://images.unsplash.com/photo-1542038784456-1ea8e8eba4f6?w=1200&h=600&fit=crop'
+                        },
+                        galleries: [
+                            {
+                                title: 'Executive Portraits',
+                                images: [
+                                    'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1542038784456-1ea8e8eba4f6?w=400&h=300&fit=crop'
+                                ]
+                            }
+                        ]
+                    },
+                    contact: {
+                        hero: {
+                            title: 'Schedule Your Session',
+                            subtitle: 'Professional Studio Portraits',
+                            background: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=1200&h=600&fit=crop'
+                        },
+                        info: {
+                            email: 'studio@elegantstudio.com',
+                            phone: '+1 (555) 234-5678',
+                            location: 'Professional studio downtown'
+                        }
                     }
                 }
             },
@@ -661,6 +829,46 @@ class PreviewRenderer {
                                 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=300&fit=crop',
                                 'https://images.unsplash.com/photo-1542038784456-1ea8e8eba4f6?w=400&h=300&fit=crop'
                             ]
+                        }
+                    },
+                    about: {
+                        hero: {
+                            title: 'Creative Excellence',
+                            subtitle: 'Commercial Photography Redefined',
+                            background: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=1200&h=600&fit=crop'
+                        },
+                        content: {
+                            story: 'We push creative boundaries to deliver exceptional commercial photography that captures attention and drives results for brands and agencies worldwide.',
+                            mission: 'To create bold, innovative commercial photography that breaks conventions and delivers measurable impact for our clients.'
+                        }
+                    },
+                    portfolio: {
+                        hero: {
+                            title: 'Commercial Portfolio',
+                            subtitle: 'Creative Solutions for Brands',
+                            background: 'https://images.unsplash.com/photo-1542038784456-1ea8e8eba4f6?w=1200&h=600&fit=crop'
+                        },
+                        galleries: [
+                            {
+                                title: 'Brand Campaigns',
+                                images: [
+                                    'https://images.unsplash.com/photo-1493612276216-ee3925520721?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1542038784456-1ea8e8eba4f6?w=400&h=300&fit=crop'
+                                ]
+                            }
+                        ]
+                    },
+                    contact: {
+                        hero: {
+                            title: 'Start Your Project',
+                            subtitle: 'Creative Commercial Photography',
+                            background: 'https://images.unsplash.com/photo-1493612276216-ee3925520721?w=1200&h=600&fit=crop'
+                        },
+                        info: {
+                            email: 'hello@creativeportfolio.com',
+                            phone: '+1 (555) 345-6789',
+                            location: 'Serving brands worldwide'
                         }
                     }
                 }
@@ -698,6 +906,46 @@ class PreviewRenderer {
                                 'https://images.unsplash.com/photo-1542038784456-1ea8e8eba4f6?w=400&h=300&fit=crop'
                             ]
                         }
+                    },
+                    about: {
+                        hero: {
+                            title: 'Bold Creativity',
+                            subtitle: 'Disrupting Visual Narratives',
+                            background: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=1200&h=600&fit=crop'
+                        },
+                        content: {
+                            story: 'We create bold, high-contrast visuals that demand attention and leave lasting impressions. Our approach combines artistic vision with commercial effectiveness.',
+                            mission: 'To produce striking commercial photography that breaks through the noise and delivers powerful brand messaging.'
+                        }
+                    },
+                    portfolio: {
+                        hero: {
+                            title: 'Bold Portfolio',
+                            subtitle: 'High-Impact Commercial Work',
+                            background: 'https://images.unsplash.com/photo-1542038784456-1ea8e8eba4f6?w=1200&h=600&fit=crop'
+                        },
+                        galleries: [
+                            {
+                                title: 'Fashion & Commercial',
+                                images: [
+                                    'https://images.unsplash.com/photo-1493612276216-ee3925520721?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1542038784456-1ea8e8eba4f6?w=400&h=300&fit=crop'
+                                ]
+                            }
+                        ]
+                    },
+                    contact: {
+                        hero: {
+                            title: 'Make a Statement',
+                            subtitle: 'Bold Commercial Photography',
+                            background: 'https://images.unsplash.com/photo-1493612276216-ee3925520721?w=1200&h=600&fit=crop'
+                        },
+                        info: {
+                            email: 'hello@boldstatement.com',
+                            phone: '+1 (555) 456-7890',
+                            location: 'Global commercial projects'
+                        }
                     }
                 }
             },
@@ -733,6 +981,46 @@ class PreviewRenderer {
                                 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=400&h=300&fit=crop',
                                 'https://images.unsplash.com/photo-1478146896981-b80fe463b330?w=400&h=300&fit=crop'
                             ]
+                        }
+                    },
+                    about: {
+                        hero: {
+                            title: 'Professional Event Coverage',
+                            subtitle: 'Dynamic Photography for Every Occasion',
+                            background: 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=1200&h=600&fit=crop'
+                        },
+                        content: {
+                            story: 'We specialize in capturing the energy, connections, and memorable moments that make events successful, from corporate conferences to special celebrations.',
+                            mission: 'To provide comprehensive event photography that tells the complete story of your occasion with professionalism and creativity.'
+                        }
+                    },
+                    portfolio: {
+                        hero: {
+                            title: 'Event Portfolio',
+                            subtitle: 'Comprehensive Event Coverage',
+                            background: 'https://images.unsplash.com/photo-1478146896981-b80fe463b330?w=1200&h=600&fit=crop'
+                        },
+                        galleries: [
+                            {
+                                title: 'Corporate Events',
+                                images: [
+                                    'https://images.unsplash.com/photo-1511578314322-379afb476865?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1478146896981-b80fe463b330?w=400&h=300&fit=crop'
+                                ]
+                            }
+                        ]
+                    },
+                    contact: {
+                        hero: {
+                            title: 'Book Your Event',
+                            subtitle: 'Professional Event Photography',
+                            background: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=1200&h=600&fit=crop'
+                        },
+                        info: {
+                            email: 'events@eventshowcase.com',
+                            phone: '+1 (555) 567-8901',
+                            location: 'Available for events nationwide'
                         }
                     }
                 }
@@ -770,6 +1058,46 @@ class PreviewRenderer {
                                 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&h=300&fit=crop'
                             ]
                         }
+                    },
+                    about: {
+                        hero: {
+                            title: 'Nature Photography',
+                            subtitle: 'Celebrating the Natural World',
+                            background: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&h=600&fit=crop'
+                        },
+                        content: {
+                            story: 'We find inspiration in the natural world, capturing the beauty of outdoor spaces and the authentic connections between people and nature.',
+                            mission: 'To create stunning outdoor photography that celebrates the environment and promotes connection with the natural world.'
+                        }
+                    },
+                    portfolio: {
+                        hero: {
+                            title: 'Nature Portfolio',
+                            subtitle: 'Outdoor Lifestyle Photography',
+                            background: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1200&h=600&fit=crop'
+                        },
+                        galleries: [
+                            {
+                                title: 'Outdoor Adventures',
+                                images: [
+                                    'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&h=300&fit=crop'
+                                ]
+                            }
+                        ]
+                    },
+                    contact: {
+                        hero: {
+                            title: 'Nature Sessions',
+                            subtitle: 'Outdoor Lifestyle Photography',
+                            background: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1200&h=600&fit=crop'
+                        },
+                        info: {
+                            email: 'hello@natureinspired.com',
+                            phone: '+1 (555) 678-9012',
+                            location: 'Beautiful outdoor locations'
+                        }
                     }
                 }
             },
@@ -805,6 +1133,46 @@ class PreviewRenderer {
                                 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=400&h=300&fit=crop',
                                 'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1f?w=400&h=300&fit=crop'
                             ]
+                        }
+                    },
+                    about: {
+                        hero: {
+                            title: 'Urban Photography',
+                            subtitle: 'Street Life & City Culture',
+                            background: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1200&h=600&fit=crop'
+                        },
+                        content: {
+                            story: 'We document the raw energy and authentic moments of city life, capturing the diversity, culture, and stories that make urban environments unique.',
+                            mission: 'To showcase the beauty and complexity of urban life through authentic street photography and lifestyle documentation.'
+                        }
+                    },
+                    portfolio: {
+                        hero: {
+                            title: 'Urban Portfolio',
+                            subtitle: 'Street & Lifestyle Photography',
+                            background: 'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1f?w=1200&h=600&fit=crop'
+                        },
+                        galleries: [
+                            {
+                                title: 'City Stories',
+                                images: [
+                                    'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=400&h=300&fit=crop',
+                                    'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1f?w=400&h=300&fit=crop'
+                                ]
+                            }
+                        ]
+                    },
+                    contact: {
+                        hero: {
+                            title: 'Urban Sessions',
+                            subtitle: 'Street & City Photography',
+                            background: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1200&h=600&fit=crop'
+                        },
+                        info: {
+                            email: 'hello@urbanedge.com',
+                            phone: '+1 (555) 789-0123',
+                            location: 'Urban locations citywide'
                         }
                     }
                 }
