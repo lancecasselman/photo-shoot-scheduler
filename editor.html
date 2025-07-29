@@ -558,6 +558,11 @@
                     <input type="color" id="accent-color" class="color-input" value="#f8f9fa">
                 </div>
                 
+                <div class="form-group">
+                    <label for="background-color">Background Color</label>
+                    <input type="color" id="background-color" class="color-input" value="#ffffff">
+                </div>
+                
                 <h3 style="margin-top: 30px;">Typography</h3>
                 
                 <div class="form-group">
@@ -590,26 +595,54 @@
             
             <!-- Content Panel -->
             <div class="controls-section" id="content-panel">
-                <h3>Page Content</h3>
+                <h3>📝 Content Editor</h3>
+                <p>Click on any element in the preview to edit its content.</p>
                 
                 <div class="form-group">
-                    <label for="hero-title">Hero Title</label>
-                    <input type="text" id="hero-title" placeholder="Your Main Headline">
+                    <label>Selected Element</label>
+                    <input type="text" id="element-id" readonly placeholder="Click an element to select">
+                    <input type="hidden" id="element-type">
+                </div>
+                
+                <div class="form-group" id="text-editor" style="display: none;">
+                    <label>Text Content</label>
+                    <textarea id="element-value" placeholder="Edit text content..." rows="3"></textarea>
+                    <button class="btn btn-primary" onclick="updateElementContent()" style="margin-top: 10px;">Update Text</button>
+                </div>
+                
+                <div class="form-group" id="image-editor" style="display: none;">
+                    <label>Replace Image</label>
+                    <input type="file" id="image-upload" accept="image/*" onchange="handleImageUpload()" style="margin-bottom: 10px;">
+                    <p class="help-text" style="font-size: 0.9rem; color: #666;">Upload a new image to replace the selected photo</p>
                 </div>
                 
                 <div class="form-group">
-                    <label for="hero-subtitle">Hero Subtitle</label>
-                    <input type="text" id="hero-subtitle" placeholder="Your supporting message">
+                    <label>Text Color</label>
+                    <input type="color" id="text-color" value="#2c3e50" onchange="updateTextColor()">
                 </div>
                 
                 <div class="form-group">
-                    <label for="about-text">About Section</label>
-                    <textarea id="about-text" rows="4" placeholder="Tell your story..."></textarea>
+                    <label>Font Size</label>
+                    <select id="font-size" onchange="updateFontSize()">
+                        <option value="0.9rem">Small</option>
+                        <option value="1rem" selected>Normal</option>
+                        <option value="1.2rem">Large</option>
+                        <option value="1.5rem">Extra Large</option>
+                        <option value="2rem">Heading</option>
+                        <option value="2.5rem">Large Heading</option>
+                        <option value="3rem">Hero Title</option>
+                    </select>
                 </div>
                 
                 <div class="form-group">
-                    <label for="hero-image">Hero Background Image URL</label>
-                    <input type="url" id="hero-image" placeholder="https://images.unsplash.com/...">
+                    <label>Font Weight</label>
+                    <select id="font-weight" onchange="updateFontWeight()">
+                        <option value="300">Light</option>
+                        <option value="400" selected>Normal</option>
+                        <option value="500">Medium</option>
+                        <option value="600">Semi Bold</option>
+                        <option value="700">Bold</option>
+                    </select>
                 </div>
             </div>
         </div>
@@ -1326,9 +1359,152 @@
             // Insert before add button
             pagesSection.insertBefore(pageItem, addButton);
         }
-    </script>
-</body>
-</html>
+        
+        // Content editing functions
+        function updateElementContent() {
+            const elementId = document.getElementById('element-id').value;
+            const newValue = document.getElementById('element-value').value;
+            
+            if (!elementId || !newValue) return;
+            
+            // Update the element in the iframe
+            const iframe = document.getElementById('preview-iframe');
+            if (iframe && iframe.contentDocument) {
+                const element = iframe.contentDocument.querySelector(`[data-edit-id="${elementId}"]`);
+                if (element) {
+                    element.textContent = newValue;
+                    console.log('✅ Updated element content:', elementId, newValue);
+                }
+            }
+        }
+        
+        function updateTextColor() {
+            const elementId = document.getElementById('element-id').value;
+            const color = document.getElementById('text-color').value;
+            
+            if (!elementId) return;
+            
+            const iframe = document.getElementById('preview-iframe');
+            if (iframe && iframe.contentDocument) {
+                const element = iframe.contentDocument.querySelector(`[data-edit-id="${elementId}"]`);
+                if (element) {
+                    element.style.color = color;
+                    console.log('✅ Updated text color:', elementId, color);
+                }
+            }
+        }
+        
+        function updateFontSize() {
+            const elementId = document.getElementById('element-id').value;
+            const fontSize = document.getElementById('font-size').value;
+            
+            if (!elementId) return;
+            
+            const iframe = document.getElementById('preview-iframe');
+            if (iframe && iframe.contentDocument) {
+                const element = iframe.contentDocument.querySelector(`[data-edit-id="${elementId}"]`);
+                if (element) {
+                    element.style.fontSize = fontSize;
+                    console.log('✅ Updated font size:', elementId, fontSize);
+                }
+            }
+        }
+        
+        function updateFontWeight() {
+            const elementId = document.getElementById('element-id').value;
+            const fontWeight = document.getElementById('font-weight').value;
+            
+            if (!elementId) return;
+            
+            const iframe = document.getElementById('preview-iframe');
+            if (iframe && iframe.contentDocument) {
+                const element = iframe.contentDocument.querySelector(`[data-edit-id="${elementId}"]`);
+                if (element) {
+                    element.style.fontWeight = fontWeight;
+                    console.log('✅ Updated font weight:', elementId, fontWeight);
+                }
+            }
+        }
+        
+        function handleImageUpload() {
+            const fileInput = document.getElementById('image-upload');
+            const elementId = document.getElementById('element-id').value;
+            
+            if (!fileInput.files[0] || !elementId) return;
+            
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const iframe = document.getElementById('preview-iframe');
+                if (iframe && iframe.contentDocument) {
+                    const element = iframe.contentDocument.querySelector(`[data-edit-id="${elementId}"]`);
+                    if (element && element.tagName === 'IMG') {
+                        element.src = e.target.result;
+                        console.log('✅ Updated image:', elementId);
+                        showMessage('Image updated successfully!', 'success');
+                    }
+                }
+            };
+            
+            reader.readAsDataURL(file);
+        }
+        
+        // Background color functionality
+        document.getElementById('background-color').addEventListener('change', function() {
+            const color = this.value;
+            const iframe = document.getElementById('preview-iframe');
+            if (iframe && iframe.contentDocument) {
+                iframe.contentDocument.body.style.backgroundColor = color;
+                console.log('✅ Updated background color:', color);
+            }
+        });
+        
+        // Initialize message handling for preview renderer
+        window.addEventListener('message', function(event) {
+            if (event.data.type === 'elementClicked') {
+                console.log('🎛️ Switching to panel:', 'content');
+                showPanel('content');
+                
+                // Update content form with element data
+                const elementIdField = document.getElementById('element-id');
+                const elementTypeField = document.getElementById('element-type');
+                const elementValueField = document.getElementById('element-value');
+                const textEditor = document.getElementById('text-editor');
+                const imageEditor = document.getElementById('image-editor');
+                
+                if (elementIdField) elementIdField.value = event.data.elementId || '';
+                if (elementTypeField) elementTypeField.value = event.data.elementType || '';
+                
+                // Show appropriate editor based on element type
+                if (event.data.elementType === 'text') {
+                    textEditor.style.display = 'block';
+                    imageEditor.style.display = 'none';
+                    if (elementValueField) {
+                        elementValueField.value = event.data.currentValue || '';
+                        elementValueField.focus();
+                    }
+                } else if (event.data.elementType === 'image') {
+                    textEditor.style.display = 'none';
+                    imageEditor.style.display = 'block';
+                } else {
+                    textEditor.style.display = 'none';
+                    imageEditor.style.display = 'none';
+                }
+            } else if (event.data.type === 'pageChanged') {
+                // Handle page navigation from within preview
+                const newPage = event.data.page;
+                currentPage = newPage;
+                
+                // Update sidebar navigation
+                document.querySelectorAll('.nav-item[data-page]').forEach(i => i.classList.remove('active'));
+                const activeNav = document.querySelector(`[data-page="${newPage}"]`);
+                if (activeNav) activeNav.classList.add('active');
+                
+                // Update preview
+                updatePreview();
+            }
+        });
     </script>
 </body>
 </html>

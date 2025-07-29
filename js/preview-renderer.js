@@ -288,6 +288,13 @@ class PreviewRenderer {
                             });
                         });
                     });
+                    
+                    // Function to change pages within preview
+                    function changePage(page) {
+                        parent.postMessage({
+                            type: 'pageChanged',
+                            page: page
+                        }, '*');
                 </script>
             </body>
             </html>
@@ -331,10 +338,10 @@ class PreviewRenderer {
                     <div class="nav-header">
                         <a href="#home" class="nav-brand editable" data-edit-type="text" data-edit-id="site-title">${templateName}</a>
                         <ul class="nav-links">
-                            <li><a href="#home">Home</a></li>
-                            <li><a href="#about">About</a></li>
-                            <li><a href="#portfolio">Portfolio</a></li>
-                            <li><a href="#contact">Contact</a></li>
+                            <li><a href="#home" onclick="changePage('home')">Home</a></li>
+                            <li><a href="#about" onclick="changePage('about')">About</a></li>
+                            <li><a href="#portfolio" onclick="changePage('portfolio')">Portfolio</a></li>
+                            <li><a href="#contact" onclick="changePage('contact')">Contact</a></li>
                         </ul>
                     </div>
                 </div>
@@ -398,10 +405,10 @@ class PreviewRenderer {
                     <div class="nav-header">
                         <a href="#home" class="nav-brand">${templateName}</a>
                         <ul class="nav-links">
-                            <li><a href="#home">Home</a></li>
-                            <li><a href="#about">About</a></li>
-                            <li><a href="#portfolio">Portfolio</a></li>
-                            <li><a href="#contact">Contact</a></li>
+                            <li><a href="#home" onclick="changePage('home')">Home</a></li>
+                            <li><a href="#about" onclick="changePage('about')">About</a></li>
+                            <li><a href="#portfolio" onclick="changePage('portfolio')">Portfolio</a></li>
+                            <li><a href="#contact" onclick="changePage('contact')">Contact</a></li>
                         </ul>
                     </div>
                 </div>
@@ -441,10 +448,10 @@ class PreviewRenderer {
                     <div class="nav-header">
                         <a href="#home" class="nav-brand">${templateName}</a>
                         <ul class="nav-links">
-                            <li><a href="#home">Home</a></li>
-                            <li><a href="#about">About</a></li>
-                            <li><a href="#portfolio">Portfolio</a></li>
-                            <li><a href="#contact">Contact</a></li>
+                            <li><a href="#home" onclick="changePage('home')">Home</a></li>
+                            <li><a href="#about" onclick="changePage('about')">About</a></li>
+                            <li><a href="#portfolio" onclick="changePage('portfolio')">Portfolio</a></li>
+                            <li><a href="#contact" onclick="changePage('contact')">Contact</a></li>
                         </ul>
                     </div>
                 </div>
@@ -482,10 +489,10 @@ class PreviewRenderer {
                     <div class="nav-header">
                         <a href="#home" class="nav-brand">${templateName}</a>
                         <ul class="nav-links">
-                            <li><a href="#home">Home</a></li>
-                            <li><a href="#about">About</a></li>
-                            <li><a href="#portfolio">Portfolio</a></li>
-                            <li><a href="#contact">Contact</a></li>
+                            <li><a href="#home" onclick="changePage('home')">Home</a></li>
+                            <li><a href="#about" onclick="changePage('about')">About</a></li>
+                            <li><a href="#portfolio" onclick="changePage('portfolio')">Portfolio</a></li>
+                            <li><a href="#contact" onclick="changePage('contact')">Contact</a></li>
                         </ul>
                     </div>
                 </div>
@@ -542,10 +549,10 @@ class PreviewRenderer {
                     <div class="nav-header">
                         <a href="#home" class="nav-brand">${templateName}</a>
                         <ul class="nav-links">
-                            <li><a href="#home">Home</a></li>
-                            <li><a href="#about">About</a></li>
-                            <li><a href="#portfolio">Portfolio</a></li>
-                            <li><a href="#contact">Contact</a></li>
+                            <li><a href="#home" onclick="changePage('home')">Home</a></li>
+                            <li><a href="#about" onclick="changePage('about')">About</a></li>
+                            <li><a href="#portfolio" onclick="changePage('portfolio')">Portfolio</a></li>
+                            <li><a href="#contact" onclick="changePage('contact')">Contact</a></li>
                         </ul>
                     </div>
                 </div>
@@ -613,12 +620,26 @@ class PreviewRenderer {
         const elementIdField = document.getElementById('element-id');
         const elementTypeField = document.getElementById('element-type');
         const elementValueField = document.getElementById('element-value');
+        const textEditor = document.getElementById('text-editor');
+        const imageEditor = document.getElementById('image-editor');
         
         if (elementIdField) elementIdField.value = data.elementId || '';
         if (elementTypeField) elementTypeField.value = data.elementType || '';
-        if (elementValueField) {
-            elementValueField.value = data.currentValue || '';
-            elementValueField.focus();
+        
+        // Show appropriate editor based on element type
+        if (data.elementType === 'text') {
+            textEditor.style.display = 'block';
+            imageEditor.style.display = 'none';
+            if (elementValueField) {
+                elementValueField.value = data.currentValue || '';
+                elementValueField.focus();
+            }
+        } else if (data.elementType === 'image') {
+            textEditor.style.display = 'none';
+            imageEditor.style.display = 'block';
+        } else {
+            textEditor.style.display = 'none';
+            imageEditor.style.display = 'none';
         }
     }
 }
