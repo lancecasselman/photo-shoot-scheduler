@@ -1681,13 +1681,54 @@ window.TemplateCategories = TemplateCategories;
 console.log('PresetTemplates loaded with', Object.keys(PresetTemplates).length, 'templates');
 console.log('Template categories:', TemplateCategories);
 
-// Validate each template has required pages
+// Enhanced template validation
 Object.keys(PresetTemplates).forEach(templateKey => {
     const template = PresetTemplates[templateKey];
     const pages = Object.keys(template.pages || {});
     if (pages.length === 0) {
-        console.warn(`Template ${templateKey} has no pages`);
+        console.warn(`Template ${templateKey} has no pages - adding default pages`);
+        // Add default pages for broken templates
+        template.pages = {
+            home: [{
+                id: `${templateKey}-home-1`,
+                type: 'heading',
+                content: template.name || 'Welcome',
+                styles: { fontSize: '42px', color: '#D4AF37', textAlign: 'center', fontWeight: 'bold', margin: '40px 0' }
+            }],
+            about: [{
+                id: `${templateKey}-about-1`,
+                type: 'heading',
+                content: 'About',
+                styles: { fontSize: '36px', color: '#D4AF37', textAlign: 'center', fontWeight: 'bold', margin: '40px 0' }
+            }],
+            portfolio: [{
+                id: `${templateKey}-portfolio-1`,
+                type: 'heading',
+                content: 'Portfolio',
+                styles: { fontSize: '36px', color: '#D4AF37', textAlign: 'center', fontWeight: 'bold', margin: '40px 0' }
+            }],
+            contact: [{
+                id: `${templateKey}-contact-1`,
+                type: 'heading',
+                content: 'Contact',
+                styles: { fontSize: '36px', color: '#D4AF37', textAlign: 'center', fontWeight: 'bold', margin: '40px 0' }
+            }]
+        };
     } else {
-        console.log(`Template ${templateKey} has pages:`, pages);
+        console.log(`✅ Template ${templateKey} has ${pages.length} pages:`, pages);
+        
+        // Validate each page has content
+        pages.forEach(pageId => {
+            const pageContent = template.pages[pageId];
+            if (!Array.isArray(pageContent) || pageContent.length === 0) {
+                console.warn(`Page ${pageId} in template ${templateKey} has no content - adding default`);
+                template.pages[pageId] = [{
+                    id: `${templateKey}-${pageId}-default`,
+                    type: 'heading',
+                    content: pageId.charAt(0).toUpperCase() + pageId.slice(1),
+                    styles: { fontSize: '36px', color: '#D4AF37', textAlign: 'center', fontWeight: 'bold', margin: '40px 0' }
+                }];
+            }
+        });
     }
 });

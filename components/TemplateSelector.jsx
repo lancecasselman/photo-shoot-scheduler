@@ -7,11 +7,33 @@ const TemplateSelector = ({ onApplyTemplate, currentTheme }) => {
     const templates = window.PresetTemplates || {};
     const categories = window.TemplateCategories || ['All'];
     
-    // Debug logging
+    // Enhanced debug logging and validation
     React.useEffect(() => {
         console.log('TemplateSelector: Templates available:', Object.keys(templates).length);
         console.log('TemplateSelector: Categories available:', categories.length);
-        console.log('TemplateSelector: First template:', Object.keys(templates)[0]);
+        
+        if (Object.keys(templates).length === 0) {
+            console.error('TemplateSelector: No templates loaded!');
+        } else {
+            console.log('TemplateSelector: First template:', Object.keys(templates)[0]);
+            
+            // Validate templates structure
+            const templateKeys = Object.keys(templates);
+            let validTemplates = 0;
+            let invalidTemplates = 0;
+            
+            templateKeys.forEach(key => {
+                const template = templates[key];
+                if (template && template.name && template.pages && Object.keys(template.pages).length > 0) {
+                    validTemplates++;
+                } else {
+                    invalidTemplates++;
+                    console.warn(`TemplateSelector: Invalid template structure for ${key}:`, template);
+                }
+            });
+            
+            console.log(`TemplateSelector: Validation complete - ${validTemplates} valid, ${invalidTemplates} invalid templates`);
+        }
     }, [templates, categories]);
     
     const filteredTemplates = Object.entries(templates).filter(([key, template]) => {
@@ -23,6 +45,12 @@ const TemplateSelector = ({ onApplyTemplate, currentTheme }) => {
         return template.category === selectedCategory;
     });
     
+    // Check if templates are loaded
+    const templatesLoaded = Object.keys(templates).length > 0;
+    const validTemplates = filteredTemplates.filter(([key, template]) => 
+        template && template.name && template.pages && Object.keys(template.pages).length > 0
+    );
+
     return React.createElement(
         'div',
         { className: 'template-selector' },
@@ -31,9 +59,11 @@ const TemplateSelector = ({ onApplyTemplate, currentTheme }) => {
             'button',
             {
                 className: 'toggle-templates-btn',
-                onClick: () => setShowTemplates(!showTemplates)
+                onClick: () => setShowTemplates(!showTemplates),
+                disabled: !templatesLoaded
             },
-            showTemplates ? '🎨 Hide Templates' : '🎨 Choose Template'
+            !templatesLoaded ? '⏳ Loading Templates...' :
+            showTemplates ? '🎨 Hide Templates' : `🎨 Choose Template (${validTemplates.length} available)`
         ),
         
         showTemplates && React.createElement(
@@ -62,33 +92,57 @@ const TemplateSelector = ({ onApplyTemplate, currentTheme }) => {
                 )
             ),
             
+            // Template Status
+            !templatesLoaded && React.createElement(
+                'div',
+                { className: 'loading-status' },
+                React.createElement('p', null, '⏳ Loading templates...'),
+                React.createElement('small', null, 'Please wait while templates are being loaded and validated.')
+            ),
+            
             // Template Grid
-            React.createElement(
+            templatesLoaded && React.createElement(
                 'div',
                 { className: 'templates-grid' },
-                ...filteredTemplates.map(([key, template]) =>
+                validTemplates.length === 0 ? 
                     React.createElement(
                         'div',
-                        {
-                            key: key,
-                            className: 'template-card'
-                        },
-                        React.createElement('h5', null, template.name),
-                        React.createElement('p', null, template.description),
-                        React.createElement('small', null, `Category: ${template.category}`),
-                        React.createElement(
-                            'button',
+                        { className: 'no-templates' },
+                        React.createElement('p', null, '❌ No valid templates found'),
+                        React.createElement('small', null, `Total templates: ${Object.keys(templates).length}, Valid: ${validTemplates.length}`)
+                    ) :
+                    ...validTemplates.map(([key, template]) => {
+                        const pageCount = Object.keys(template.pages || {}).length;
+                        const blockCount = Object.values(template.pages || {}).reduce((total, blocks) => 
+                            total + (Array.isArray(blocks) ? blocks.length : 0), 0
+                        );
+                        
+                        return React.createElement(
+                            'div',
                             {
-                                className: 'apply-template-btn',
-                                onClick: () => {
-                                    onApplyTemplate(key);
-                                    setShowTemplates(false);
-                                }
+                                key: key,
+                                className: 'template-card'
                             },
-                            'Apply Template'
-                        )
-                    )
-                )
+                            React.createElement('h5', null, template.name || 'Unnamed Template'),
+                            React.createElement('p', null, template.description || 'No description available'),
+                            React.createElement('small', null, `Category: ${template.category || 'Uncategorized'}`),
+                            React.createElement('small', { style: { display: 'block', marginTop: '5px', color: '#666' } }, 
+                                `📄 ${pageCount} pages • 🧱 ${blockCount} blocks`
+                            ),
+                            React.createElement(
+                                'button',
+                                {
+                                    className: 'apply-template-btn',
+                                    onClick: () => {
+                                        console.log(`Applying template: ${key}`, template);
+                                        onApplyTemplate(key);
+                                        setShowTemplates(false);
+                                    }
+                                },
+                                'Apply Template'
+                            )
+                        );
+                    })
             ),
             
             // Close Templates Panel

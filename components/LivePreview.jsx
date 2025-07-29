@@ -211,10 +211,24 @@ const LivePreview = ({
 
     const themeStyles = getThemeStyles();
 
+    // Debug current page and blocks
+    React.useEffect(() => {
+        console.log(`LivePreview: Rendering page "${activePage}" with ${blocks.length} blocks`);
+        if (blocks.length === 0) {
+            console.warn(`LivePreview: No blocks found for page ${activePage}`);
+        } else {
+            blocks.forEach((block, index) => {
+                if (!block.id || !block.type) {
+                    console.error(`LivePreview: Invalid block at index ${index}:`, block);
+                }
+            });
+        }
+    }, [activePage, blocks]);
+
     return React.createElement(
         'div',
         { className: 'canvas' },
-        React.createElement('h3', null, '🎨 Live Preview'),
+        React.createElement('h3', null, `🎨 Live Preview - ${activePage.charAt(0).toUpperCase() + activePage.slice(1)} Page`),
         React.createElement(
             'div',
             {

@@ -163,66 +163,104 @@ const SiteBuilder = () => {
         }
     };
 
-    // Template application function
+    // Enhanced template application function
     const applyTemplate = (templateKey) => {
-        if (window.PresetTemplates && window.PresetTemplates[templateKey]) {
-            const template = window.PresetTemplates[templateKey];
-            
-            // Validate template has pages
-            if (!template.pages || Object.keys(template.pages).length === 0) {
-                showMessage(`❌ Template ${template.name} has no pages to load`, 'error');
-                return;
-            }
-            
-            // Apply template pages
-            const templatePageIds = Object.keys(template.pages);
-            const newPages = templatePageIds.map(pageId => ({
-                id: pageId,
-                name: pageId.charAt(0).toUpperCase() + pageId.slice(1),
-                url: pageId === 'home' ? '/' : `/${pageId}`,
-                active: true
-            }));
-            
-            // Validate each page has content
-            const validatedPages = {};
-            templatePageIds.forEach(pageId => {
-                const pageContent = template.pages[pageId];
-                if (pageContent && Array.isArray(pageContent) && pageContent.length > 0) {
-                    validatedPages[pageId] = pageContent;
-                } else {
-                    console.warn(`Page ${pageId} in template ${templateKey} has no content blocks`);
-                    // Add default content for empty pages
-                    validatedPages[pageId] = [{
-                        id: `default-${Date.now()}`,
-                        type: 'heading',
-                        content: `${pageId.charAt(0).toUpperCase() + pageId.slice(1)} Page`,
-                        styles: {
-                            fontSize: '36px',
-                            color: '#D4AF37',
-                            textAlign: 'center',
-                            fontWeight: 'bold',
-                            margin: '40px 0'
-                        }
-                    }];
-                }
-            });
-            
-            setSitePages(newPages);
-            setSiteBlocks(validatedPages);
-            setActivePage('home');
-            
-            showMessage(`✅ ${template.name} template applied with ${templatePageIds.length} pages!`, 'success');
-            
-            // Log applied pages for debugging
-            console.log('Applied template pages:', templatePageIds);
-            console.log('Page content validation:', validatedPages);
-            
-            // Trigger celebration animation
-            if (window.showCelebration) {
-                window.showCelebration(`🎨 ${template.name} Template Applied!`, 50);
-            }
-        } else {
+        console.log(`SiteBuilder: Applying template ${templateKey}`);
+        
+        if (!window.PresetTemplates) {
+            showMessage('❌ Templates not loaded yet. Please wait and try again.', 'error');
+            return;
+        }
+        
+        const template = window.PresetTemplates[templateKey];
+        if (!template) {
             showMessage(`❌ Template ${templateKey} not found`, 'error');
+            return;
+        }
+        
+        console.log(`SiteBuilder: Found template "${template.name}"`, template);
+        
+        // Validate template has pages
+        if (!template.pages || Object.keys(template.pages).length === 0) {
+            showMessage(`❌ Template ${template.name} has no pages to load`, 'error');
+            return;
+        }
+        
+        // Apply template pages
+        const templatePageIds = Object.keys(template.pages);
+        console.log(`SiteBuilder: Template has pages:`, templatePageIds);
+        
+        const newPages = templatePageIds.map(pageId => ({
+            id: pageId,
+            name: pageId.charAt(0).toUpperCase() + pageId.slice(1),
+            url: pageId === 'home' ? '/' : `/${pageId}`,
+            active: true
+        }));
+        
+        // Enhanced page content validation
+        const validatedPages = {};
+        let totalBlocks = 0;
+        
+        templatePageIds.forEach(pageId => {
+            const pageContent = template.pages[pageId];
+            console.log(`SiteBuilder: Processing page ${pageId}, content:`, pageContent);
+            
+            if (pageContent && Array.isArray(pageContent) && pageContent.length > 0) {
+                // Ensure each block has required properties
+                const validBlocks = pageContent.map((block, index) => {
+                    if (!block.id) {
+                        block.id = `${templateKey}-${pageId}-${index}-${Date.now()}`;
+                    }
+                    if (!block.type) {
+                        block.type = 'heading';
+                        block.content = 'Untitled Block';
+                    }
+                    if (!block.styles) {
+                        block.styles = getDefaultStyles(block.type);
+                    }
+                    return block;
+                });
+                
+                validatedPages[pageId] = validBlocks;
+                totalBlocks += validBlocks.length;
+                console.log(`✅ Page ${pageId} validated with ${validBlocks.length} blocks`);
+            } else {
+                console.warn(`⚠️ Page ${pageId} has no content, adding default`);
+                validatedPages[pageId] = [{
+                    id: `default-${pageId}-${Date.now()}`,
+                    type: 'heading',
+                    content: `${pageId.charAt(0).toUpperCase() + pageId.slice(1)} Page`,
+                    styles: {
+                        fontSize: '36px',
+                        color: brandColor,
+                        textAlign: 'center',
+                        fontWeight: 'bold',
+                        margin: '40px 0'
+                    }
+                }];
+                totalBlocks += 1;
+            }
+        });
+        
+        // Apply the template
+        setSitePages(newPages);
+        setSiteBlocks(validatedPages);
+        setActivePage('home');
+        
+        console.log(`✅ Template applied successfully:`, {
+            template: template.name,
+            pages: templatePageIds.length,
+            totalBlocks: totalBlocks,
+            validatedPages: Object.keys(validatedPages)
+        });
+        
+        showMessage(`✅ ${template.name} template applied! ${templatePageIds.length} pages, ${totalBlocks} blocks loaded.`, 'success');
+        
+        // Trigger celebration animation
+        if (window.showCelebration) {
+            setTimeout(() => {
+                window.showCelebration(`🎨 ${template.name} Template Applied!`, 50);
+            }, 200);
         }
     };
 
