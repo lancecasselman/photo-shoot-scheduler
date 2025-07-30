@@ -875,6 +875,76 @@
         .btn-danger:hover {
             background: #c82333;
         }
+
+        /* Background and Font Control Styles */
+        .background-controls-section,
+        .font-controls-section {
+            margin: var(--spacing-md) 0;
+            padding: var(--spacing-sm);
+            background: var(--warm-white);
+            border-radius: 8px;
+            border: 1px solid var(--beige);
+        }
+
+        .background-controls,
+        .font-controls {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-xs);
+        }
+
+        .background-controls label,
+        .font-controls label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--charcoal);
+            margin-bottom: 0.25rem;
+        }
+
+        .background-controls input[type="color"],
+        .font-controls select {
+            padding: 0.5rem;
+            border: 1px solid var(--beige);
+            border-radius: 4px;
+            background: var(--warm-white);
+            font-size: 0.9rem;
+        }
+
+        .background-controls input[type="text"] {
+            padding: 0.5rem;
+            border: 1px solid var(--beige);
+            border-radius: 4px;
+            background: var(--warm-white);
+            font-size: 0.9rem;
+            font-family: var(--font-body);
+        }
+
+        .btn-reset {
+            padding: 0.25rem 0.5rem;
+            border: 1px solid var(--sage);
+            background: var(--warm-white);
+            color: var(--sage);
+            border-radius: 4px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 0.5rem;
+        }
+
+        .btn-reset:hover {
+            background: var(--sage);
+            color: var(--warm-white);
+        }
+
+        .font-group {
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .page-title-control {
+            margin-top: var(--spacing-sm);
+            padding-top: var(--spacing-sm);
+            border-top: 1px solid var(--beige);
+        }
     </style>
 </head>
 <body>

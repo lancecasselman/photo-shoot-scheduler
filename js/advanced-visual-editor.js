@@ -46,6 +46,36 @@ class AdvancedVisualEditor {
             { id: 'contact', name: 'Contact', icon: '📧' }
         ];
         
+        // Page settings including backgrounds and fonts
+        this.pageSettings = {
+            home: { backgroundColor: '#F7F3F0', pageTitle: 'Home' },
+            about: { backgroundColor: '#F7F3F0', pageTitle: 'About' },
+            gallery: { backgroundColor: '#F7F3F0', pageTitle: 'Gallery' },
+            store: { backgroundColor: '#F7F3F0', pageTitle: 'Store' },
+            contact: { backgroundColor: '#F7F3F0', pageTitle: 'Contact' }
+        };
+        
+        // Global font settings
+        this.fontSettings = {
+            headings: 'Cormorant Garamond',
+            body: 'Quicksand',
+            buttons: 'Quicksand'
+        };
+        
+        // Available fonts
+        this.availableFonts = [
+            'Cormorant Garamond',
+            'Quicksand',
+            'Playfair Display',
+            'Open Sans',
+            'Lora',
+            'Poppins',
+            'Montserrat',
+            'Raleway',
+            'Source Sans Pro',
+            'Merriweather'
+        ];
+        
         // Available block types for the editor
         this.blockTypes = {
             'hero': { 
@@ -165,6 +195,9 @@ class AdvancedVisualEditor {
         this.setupPageSwitcher();
         this.setupThemeSelector();
         this.setupBlockPanel();
+        this.setupBackgroundControls();
+        this.setupFontControls();
+        this.setupDeviceControls();
         this.setupDeviceControls();
         this.setupKeyboardShortcuts();
         this.makePreviewEditable();
@@ -744,18 +777,51 @@ class AdvancedVisualEditor {
         if (!previewFrame) return;
         
         const layout = this.pageLayouts[this.currentPage] || [];
+        const pageSettings = this.pageSettings[this.currentPage] || {};
         
-        // Generate HTML for all blocks
+        // Generate enhanced page HTML with mobile navigation
         let html = this.generatePageCSS();
+        html += this.getFontCSS();
+        html += this.getMobileNavCSS();
+        
+        // Add hamburger menu for mobile navigation
+        html += `
+            <div class="mobile-nav-overlay" id="mobile-nav-overlay">
+                <nav class="mobile-nav">
+                    <div class="mobile-nav-header">
+                        <span class="mobile-nav-title">Navigation</span>
+                        <button class="mobile-nav-close" onclick="toggleMobileNav()">×</button>
+                    </div>
+                    <ul class="mobile-nav-links">
+                        ${this.pages.map(page => `
+                            <li><a href="#${page.id}" onclick="toggleMobileNav(); if(window.editor) window.editor.switchPage('${page.id}')">${page.name}</a></li>
+                        `).join('')}
+                    </ul>
+                </nav>
+            </div>
+            <div class="mobile-nav-toggle" onclick="toggleMobileNav()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        `;
+        
+        // Page container with custom background
+        html += `<div class="page-container" data-page="${this.currentPage}" style="min-height: 100vh; background: ${pageSettings.backgroundColor || '#F7F3F0'}; font-family: var(--font-body);">`;
         
         layout.forEach(block => {
             html += this.renderBlock(block);
         });
         
+        html += `</div>`;
+        
         // Add drag and drop functionality
         html += this.getDragDropScript();
         
         previewFrame.innerHTML = html;
+        
+        // Update page title
+        this.updatePageTitle();
         
         // Setup inline editing after render
         this.makePreviewEditable();
@@ -1127,9 +1193,11 @@ class AdvancedVisualEditor {
             lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
         
-        // Save settings
+        // Save settings including page settings and fonts
         await db.collection('users').doc(this.userId).collection('storefront').doc('settings').set({
             currentTheme: this.currentTheme,
+            pageSettings: this.pageSettings,
+            fontSettings: this.fontSettings,
             lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
         });
         
@@ -1141,7 +1209,11 @@ class AdvancedVisualEditor {
         localStorage.setItem(`layout_${this.userId}_${this.currentPage}`, 
             JSON.stringify(this.pageLayouts[this.currentPage]));
         localStorage.setItem(`settings_${this.userId}`, 
-            JSON.stringify({ currentTheme: this.currentTheme }));
+            JSON.stringify({ 
+                currentTheme: this.currentTheme,
+                pageSettings: this.pageSettings,
+                fontSettings: this.fontSettings
+            }));
         
         console.log('✅ Content saved to localStorage');
         this.showSuccess('Changes saved locally', 1500);
@@ -1725,6 +1797,285 @@ class AdvancedVisualEditor {
             </section>
         `;
     }
+
+    // NEW FEATURE: Background Controls
+    setupBackgroundControls() {
+        const sidebar = document.querySelector('.editor-sidebar');
+        if (!sidebar) return;
+        
+        const backgroundSection = document.createElement('div');
+        backgroundSection.className = 'background-controls-section';
+        backgroundSection.innerHTML = `
+            <h4 style="margin: 1rem 0 0.5rem 0; color: var(--charcoal);">Page Background</h4>
+            <div class="background-controls">
+                <label>Background Color:</label>
+                <input type="color" id="page-background-color" value="${this.pageSettings[this.currentPage]?.backgroundColor || '#F7F3F0'}" />
+                <button class="btn-reset" onclick="window.editor.resetPageBackground()">Reset</button>
+            </div>
+            <div class="page-title-control">
+                <label>Page Title:</label>
+                <input type="text" id="page-title-input" value="${this.pageSettings[this.currentPage]?.pageTitle || this.currentPage}" placeholder="Page title" />
+            </div>
+        `;
+        
+        // Insert after page navigation
+        const pageNav = document.getElementById('page-navigation');
+        if (pageNav && pageNav.parentNode) {
+            pageNav.parentNode.insertBefore(backgroundSection, pageNav.nextSibling);
+        }
+        
+        // Add event listeners
+        const colorInput = document.getElementById('page-background-color');
+        const titleInput = document.getElementById('page-title-input');
+        
+        if (colorInput) {
+            colorInput.addEventListener('change', (e) => {
+                this.updatePageBackground(e.target.value);
+            });
+        }
+        
+        if (titleInput) {
+            titleInput.addEventListener('input', (e) => {
+                this.updatePageTitle(e.target.value);
+            });
+        }
+    }
+
+    // NEW FEATURE: Font Controls
+    setupFontControls() {
+        const sidebar = document.querySelector('.editor-sidebar');
+        if (!sidebar) return;
+        
+        const fontSection = document.createElement('div');
+        fontSection.className = 'font-controls-section';
+        fontSection.innerHTML = `
+            <h4 style="margin: 1rem 0 0.5rem 0; color: var(--charcoal);">Typography</h4>
+            <div class="font-controls">
+                <div class="font-group">
+                    <label>Headings:</label>
+                    <select id="headings-font">
+                        ${this.availableFonts.map(font => 
+                            `<option value="${font}" ${font === this.fontSettings.headings ? 'selected' : ''}>${font}</option>`
+                        ).join('')}
+                    </select>
+                </div>
+                <div class="font-group">
+                    <label>Body Text:</label>
+                    <select id="body-font">
+                        ${this.availableFonts.map(font => 
+                            `<option value="${font}" ${font === this.fontSettings.body ? 'selected' : ''}>${font}</option>`
+                        ).join('')}
+                    </select>
+                </div>
+                <div class="font-group">
+                    <label>Buttons:</label>
+                    <select id="buttons-font">
+                        ${this.availableFonts.map(font => 
+                            `<option value="${font}" ${font === this.fontSettings.buttons ? 'selected' : ''}>${font}</option>`
+                        ).join('')}
+                    </select>
+                </div>
+            </div>
+        `;
+        
+        // Insert after background controls
+        const backgroundSection = document.querySelector('.background-controls-section');
+        if (backgroundSection && backgroundSection.parentNode) {
+            backgroundSection.parentNode.insertBefore(fontSection, backgroundSection.nextSibling);
+        }
+        
+        // Add event listeners
+        ['headings', 'body', 'buttons'].forEach(type => {
+            const select = document.getElementById(`${type}-font`);
+            if (select) {
+                select.addEventListener('change', (e) => {
+                    this.updateFont(type, e.target.value);
+                });
+            }
+        });
+    }
+
+    // Background management functions
+    updatePageBackground(color) {
+        if (!this.pageSettings[this.currentPage]) {
+            this.pageSettings[this.currentPage] = {};
+        }
+        this.pageSettings[this.currentPage].backgroundColor = color;
+        
+        // Update live preview
+        const pageContainer = document.querySelector('.page-container');
+        if (pageContainer) {
+            pageContainer.style.background = color;
+        }
+        
+        this.scheduleAutoSave();
+        this.showSuccess('Background updated');
+    }
+
+    resetPageBackground() {
+        this.updatePageBackground('#F7F3F0');
+        const colorInput = document.getElementById('page-background-color');
+        if (colorInput) {
+            colorInput.value = '#F7F3F0';
+        }
+    }
+
+    updatePageTitle(title) {
+        if (!this.pageSettings[this.currentPage]) {
+            this.pageSettings[this.currentPage] = {};
+        }
+        this.pageSettings[this.currentPage].pageTitle = title;
+        this.scheduleAutoSave();
+    }
+
+    // Font management functions
+    updateFont(type, fontFamily) {
+        this.fontSettings[type] = fontFamily;
+        this.renderPage(); // Re-render to apply font changes
+        this.scheduleAutoSave();
+        this.showSuccess(`${type} font updated to ${fontFamily}`);
+    }
+
+    getFontCSS() {
+        return `
+            <style>
+                @import url('https://fonts.googleapis.com/css2?family=${encodeURIComponent(this.fontSettings.headings)}:wght@300;400;500;600;700&family=${encodeURIComponent(this.fontSettings.body)}:wght@300;400;500;600;700&family=${encodeURIComponent(this.fontSettings.buttons)}:wght@400;500;600&display=swap');
+                
+                :root {
+                    --font-heading: '${this.fontSettings.headings}', serif;
+                    --font-body: '${this.fontSettings.body}', sans-serif;
+                    --font-button: '${this.fontSettings.buttons}', sans-serif;
+                }
+                
+                h1, h2, h3, h4, h5, h6 {
+                    font-family: var(--font-heading) !important;
+                }
+                
+                p, div, span, li {
+                    font-family: var(--font-body) !important;
+                }
+                
+                button, .button, .btn {
+                    font-family: var(--font-button) !important;
+                }
+            </style>
+        `;
+    }
+
+    getMobileNavCSS() {
+        return `
+            <style>
+                .mobile-nav-toggle {
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    z-index: 1001;
+                    width: 30px;
+                    height: 24px;
+                    cursor: pointer;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
+                }
+                
+                .mobile-nav-toggle span {
+                    display: block;
+                    height: 3px;
+                    width: 100%;
+                    background: var(--charcoal);
+                    border-radius: 1px;
+                    transition: all 0.3s ease;
+                }
+                
+                .mobile-nav-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.8);
+                    z-index: 1000;
+                    opacity: 0;
+                    visibility: hidden;
+                    transition: all 0.3s ease;
+                }
+                
+                .mobile-nav-overlay.active {
+                    opacity: 1;
+                    visibility: visible;
+                }
+                
+                .mobile-nav {
+                    position: absolute;
+                    top: 0;
+                    right: 0;
+                    width: 280px;
+                    height: 100%;
+                    background: var(--warm-white);
+                    transform: translateX(100%);
+                    transition: transform 0.3s ease;
+                    padding: 2rem;
+                    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.2);
+                }
+                
+                .mobile-nav-overlay.active .mobile-nav {
+                    transform: translateX(0);
+                }
+                
+                .mobile-nav-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 2rem;
+                    border-bottom: 1px solid var(--beige);
+                    padding-bottom: 1rem;
+                }
+                
+                .mobile-nav-title {
+                    font-family: var(--font-heading);
+                    font-size: 1.4rem;
+                    color: var(--charcoal);
+                    font-weight: 600;
+                }
+                
+                .mobile-nav-close {
+                    background: none;
+                    border: none;
+                    font-size: 1.5rem;
+                    cursor: pointer;
+                    color: var(--charcoal);
+                    padding: 0.5rem;
+                }
+                
+                .mobile-nav-links {
+                    list-style: none;
+                    padding: 0;
+                    margin: 0;
+                }
+                
+                .mobile-nav-links li {
+                    margin-bottom: 1rem;
+                }
+                
+                .mobile-nav-links a {
+                    display: block;
+                    padding: 1rem;
+                    color: var(--charcoal);
+                    text-decoration: none;
+                    font-family: var(--font-body);
+                    font-weight: 500;
+                    border-radius: 6px;
+                    transition: all 0.2s ease;
+                }
+                
+                .mobile-nav-links a:hover {
+                    background: var(--beige);
+                    color: var(--muted-gold);
+                    transform: translateX(5px);
+                }
+            </style>
+        `;
+    }
 }
 
 // Global functions for HTML onclick handlers
@@ -1751,6 +2102,14 @@ function previewSite() {
         } else {
             alert('Editor not ready. Please wait for initialization.');
         }
+    }
+}
+
+// Global mobile navigation toggle function
+function toggleMobileNav() {
+    const overlay = document.getElementById('mobile-nav-overlay');
+    if (overlay) {
+        overlay.classList.toggle('active');
     }
 }
 

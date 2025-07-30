@@ -6,7 +6,36 @@ This is a comprehensive photography business management platform featuring sessi
 
 ## Recent Changes
 
-### Advanced Dynamic Block-Based Visual Website Editor (July 30, 2025) - FULLY OPERATIONAL ✅
+### Enhanced Visual Website Builder with Full Creative Control (July 30, 2025) - FULLY OPERATIONAL ✅
+- **Complete Creative Control Implementation**: Enhanced advanced visual editor with 5 major new features providing full customization capabilities
+- **Background Customization System**: 
+  - Per-page background color picker with live preview updates
+  - Real-time background changes in preview frame
+  - Reset functionality to default Light + Airy theme colors
+  - Page title editing with instant updates
+- **Comprehensive Font Control System**:
+  - Separate font selection for Headings, Body Text, and Buttons
+  - 10 professional Google Fonts available (Cormorant Garamond, Quicksand, Playfair Display, Open Sans, Lora, Poppins, Montserrat, Raleway, Source Sans Pro, Merriweather)
+  - Real-time font preview with automatic Google Fonts loading
+  - Typography settings persist across theme switches
+- **Mobile Hamburger Navigation**:
+  - Professional hamburger menu toggle in top-right corner of live preview
+  - Smooth slide-out navigation panel with page links
+  - Click-outside-to-close functionality
+  - Responsive mobile navigation with Light + Airy styling
+  - Working page navigation within live preview
+- **Enhanced Theme Switching**:
+  - Fixed theme loading with robust default page generation
+  - Visual theme previews with category-based gradients
+  - All 20 themes now load instantly with appropriate content
+  - Theme switches preserve custom backgrounds and fonts
+- **Live Preview Instant Updates**:
+  - All customizations (backgrounds, fonts, content) update immediately
+  - No page reloads required for any changes
+  - Firebase and localStorage persistence for all settings
+  - Real-time synchronization across all creative control features
+
+### Advanced Dynamic Block-Based Visual Website Editor (July 30, 2025) - ENHANCED WITH CREATIVE CONTROLS ✅
 - **Complete 6-Phase Implementation**: Fully upgraded storefront builder to exceed Pixieset/Format functionality with dynamic block-based editing system
 - **Phase 1 - Advanced Inline Editing**: 
   - Click any text to edit directly with `contenteditable="true"` - no forms or modals
