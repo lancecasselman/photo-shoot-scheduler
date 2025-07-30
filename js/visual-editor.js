@@ -59,6 +59,7 @@ class VisualEditor {
         Object.entries(this.themes).forEach(([key, name]) => {
             const themeOption = document.createElement('div');
             themeOption.className = `theme-option ${key === this.currentTheme ? 'active' : ''}`;
+            themeOption.dataset.theme = key;
             themeOption.innerHTML = `
                 <div class="theme-preview" style="background: linear-gradient(135deg, #f7f3f0, #e8ddd4)"></div>
                 <div class="theme-name">${name}</div>
@@ -83,6 +84,7 @@ class VisualEditor {
         pages.forEach(page => {
             const pageItem = document.createElement('div');
             pageItem.className = `page-nav-item ${page.id === this.currentPage ? 'active' : ''}`;
+            pageItem.dataset.page = page.id;
             pageItem.innerHTML = `
                 <span class="page-icon">${page.icon}</span>
                 <span>${page.name}</span>
@@ -118,7 +120,11 @@ class VisualEditor {
         document.querySelectorAll('.theme-option').forEach(option => {
             option.classList.remove('active');
         });
-        document.querySelector(`[data-theme="${themeKey}"]`)?.classList.add('active');
+        // Find and activate the current theme
+        const selectedTheme = document.querySelector(`[data-theme="${themeKey}"]`);
+        if (selectedTheme) {
+            selectedTheme.classList.add('active');
+        }
         
         this.currentTheme = themeKey;
         this.loadTheme(themeKey);
@@ -131,7 +137,12 @@ class VisualEditor {
         document.querySelectorAll('.page-nav-item').forEach(item => {
             item.classList.remove('active');
         });
-        event.target.closest('.page-nav-item').classList.add('active');
+        
+        // Find and activate the current page
+        const pageElement = document.querySelector(`[data-page="${pageId}"]`);
+        if (pageElement) {
+            pageElement.closest('.page-nav-item').classList.add('active');
+        }
         
         this.currentPage = pageId;
         this.loadTheme(this.currentTheme);
