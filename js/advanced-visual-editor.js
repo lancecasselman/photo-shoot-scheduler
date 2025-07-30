@@ -1589,15 +1589,24 @@ class AdvancedVisualEditor {
 
     // UTILITY FUNCTIONS
     generatePageCSS() {
+        const themeColors = this.getThemeColors(this.currentTheme);
         return `
             <style>
                 :root {
-                    --cream: #F7F3F0;
-                    --beige: #E8DDD4;
-                    --sage: #9CAFA3;
-                    --muted-gold: #C4962D;
-                    --charcoal: #2C2C2C;
-                    --warm-white: #FEFCFA;
+                    --primary: ${themeColors.primary};
+                    --secondary: ${themeColors.secondary};
+                    --accent: ${themeColors.accent};
+                    --background: ${themeColors.background};
+                    --text: ${themeColors.text};
+                    --light: ${themeColors.light};
+                    
+                    /* Legacy color names for backward compatibility */
+                    --cream: ${themeColors.background};
+                    --beige: ${themeColors.secondary};
+                    --sage: ${themeColors.accent};
+                    --muted-gold: ${themeColors.accent};
+                    --charcoal: ${themeColors.text};
+                    --warm-white: ${themeColors.light};
                 }
                 
                 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1676,6 +1685,173 @@ class AdvancedVisualEditor {
                 }
             </style>
         `;
+    }
+
+    getThemeColors(themeKey) {
+        const colorSchemes = {
+            'light-airy': {
+                primary: '#F7F3F0',
+                secondary: '#E8DDD4', 
+                accent: '#C4962D',
+                background: '#F7F3F0',
+                text: '#2C2C2C',
+                light: '#FEFDFB'
+            },
+            'bold-editorial': {
+                primary: '#1A1A1A',
+                secondary: '#333333',
+                accent: '#FF6B35',
+                background: '#FFFFFF',
+                text: '#1A1A1A',
+                light: '#F8F8F8'
+            },
+            'earthy-boho': {
+                primary: '#8B5A3C',
+                secondary: '#D4B896',
+                accent: '#E8B86D',
+                background: '#F5F1EB',
+                text: '#3E2723',
+                light: '#FAF7F2'
+            },
+            'modern-luxe': {
+                primary: '#2C3E50',
+                secondary: '#34495E',
+                accent: '#E74C3C',
+                background: '#ECF0F1',
+                text: '#2C3E50',
+                light: '#FFFFFF'
+            },
+            'coastal-lifestyle': {
+                primary: '#1B4B6B',
+                secondary: '#3498DB',
+                accent: '#F39C12',
+                background: '#EBF4F7',
+                text: '#1B4B6B',
+                light: '#FFFFFF'
+            },
+            'minimal-portfolio': {
+                primary: '#000000',
+                secondary: '#666666',
+                accent: '#007ACC',
+                background: '#FFFFFF',
+                text: '#000000',
+                light: '#F9F9F9'
+            },
+            'monochrome-studio': {
+                primary: '#000000',
+                secondary: '#808080',
+                accent: '#CCCCCC',
+                background: '#FFFFFF',
+                text: '#000000',
+                light: '#F5F5F5'
+            },
+            'dark-moody-wedding': {
+                primary: '#2E1B1B',
+                secondary: '#5D4037',
+                accent: '#D4AF37',
+                background: '#1C1C1C',
+                text: '#F5F5F5',
+                light: '#2E2E2E'
+            },
+            'romantic-serif': {
+                primary: '#8E6B7B',
+                secondary: '#C4A4B0',
+                accent: '#E91E63',
+                background: '#FDF7F9',
+                text: '#4A2C3A',
+                light: '#FFFFFF'
+            },
+            'fashion-forward': {
+                primary: '#FF1744',
+                secondary: '#E91E63',
+                accent: '#FFC107',
+                background: '#000000',
+                text: '#FFFFFF',
+                light: '#1A1A1A'
+            },
+            'commercial-grid': {
+                primary: '#37474F',
+                secondary: '#546E7A',
+                accent: '#26C6DA',
+                background: '#FAFAFA',
+                text: '#263238',
+                light: '#FFFFFF'
+            },
+            'film-vibe': {
+                primary: '#5D4037',
+                secondary: '#8D6E63',
+                accent: '#FF8F00',
+                background: '#FFF8E1',
+                text: '#3E2723',
+                light: '#FFFDE7'
+            },
+            'urban-black-gold': {
+                primary: '#000000',
+                secondary: '#424242',
+                accent: '#FFD700',
+                background: '#121212',
+                text: '#FFFFFF',
+                light: '#1E1E1E'
+            },
+            'cottagecore-vibes': {
+                primary: '#6A4C93',
+                secondary: '#A8DADC',
+                accent: '#F1FAEE',
+                background: '#F7F3E9',
+                text: '#457B9D',
+                light: '#FFFFFF'
+            },
+            'rustic-barn': {
+                primary: '#8B4513',
+                secondary: '#D2691E',
+                accent: '#CD853F',
+                background: '#FDF5E6',
+                text: '#654321',
+                light: '#FFFAF0'
+            },
+            'luxury-fine-art': {
+                primary: '#4A4A4A',
+                secondary: '#B8860B',
+                accent: '#DAA520',
+                background: '#FFFEF7',
+                text: '#2F2F2F',
+                light: '#FFFFFF'
+            },
+            'street-photography': {
+                primary: '#1A1A1A',
+                secondary: '#FF4444',
+                accent: '#FFFF00',
+                background: '#F0F0F0',
+                text: '#000000',
+                light: '#FFFFFF'
+            },
+            'scenic-landscapes': {
+                primary: '#2E7D32',
+                secondary: '#4CAF50',
+                accent: '#81C784',
+                background: '#E8F5E8',
+                text: '#1B5E20',
+                light: '#F1F8E9'
+            },
+            'scrolling-story': {
+                primary: '#3F51B5',
+                secondary: '#5C6BC0',
+                accent: '#7986CB',
+                background: '#E8EAF6',
+                text: '#1A237E',
+                light: '#F3F4F9'
+            },
+            'storybook-magazine': {
+                primary: '#E65100',
+                secondary: '#FF9800',
+                accent: '#FFB74D',
+                background: '#FFF3E0',
+                text: '#BF360C',
+                light: '#FFFFFF'
+            }
+        };
+        
+        return colorSchemes[themeKey] || colorSchemes['light-airy'];
     }
 
     getDragDropScript() {
