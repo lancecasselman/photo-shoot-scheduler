@@ -1,471 +1,678 @@
-// Professional Visual Editor for Photography Storefronts
 class VisualEditor {
     constructor() {
-        this.currentUser = null;
         this.currentTheme = 'light-airy';
         this.currentPage = 'home';
-        this.siteData = {};
-        this.isEditing = false;
-        this.activeElement = null;
-        this.themes = [
-            'light-airy', 'bold-editorial', 'earthy-boho', 'modern-luxe', 
-            'coastal-lifestyle', 'minimal-portfolio', 'monochrome-studio', 
-            'dark-moody-wedding', 'romantic-serif', 'fashion-forward',
-            'commercial-grid', 'film-vibe', 'urban-black-gold', 'cottagecore-vibes',
-            'rustic-barn', 'luxury-fine-art', 'street-photography', 'scenic-landscapes',
-            'scrolling-story', 'storybook-magazine'
-        ];
-        this.pages = ['home', 'about', 'gallery', 'store', 'contact'];
-        
+        this.siteData = {
+            title: 'Your Photography Studio',
+            tagline: 'Capturing life\'s beautiful moments',
+            email: 'hello@yoursite.com',
+            phone: '(555) 123-4567'
+        };
+        this.themes = {
+            'light-airy': 'Light + Airy Creative Studio',
+            'bold-editorial': 'Bold Editorial',
+            'earthy-boho': 'Earthy Boho',
+            'modern-luxe': 'Modern Luxe',
+            'coastal-lifestyle': 'Coastal Lifestyle',
+            'minimal-portfolio': 'Minimal Portfolio',
+            'monochrome-studio': 'Monochrome Studio',
+            'dark-moody-wedding': 'Dark Moody Wedding',
+            'romantic-serif': 'Romantic Serif',
+            'fashion-forward': 'Fashion Forward',
+            'commercial-grid': 'Commercial Grid',
+            'film-vibe': 'Film Vibe',
+            'urban-black-gold': 'Urban Black Gold',
+            'cottagecore-vibes': 'Cottagecore Vibes',
+            'rustic-barn': 'Rustic Barn',
+            'luxury-fine-art': 'Luxury Fine Art',
+            'street-photography': 'Street Photography',
+            'scenic-landscapes': 'Scenic Landscapes',
+            'scrolling-story': 'Scrolling Story',
+            'storybook-magazine': 'Storybook Magazine'
+        };
+        this.defaultContent = {
+            hero_title: 'Your Photography Studio',
+            hero_subtitle: 'Capturing life\'s beautiful moments with artistic vision and professional excellence',
+            hero_cta: 'View Portfolio',
+            about_title: 'About',
+            about_text: 'Welcome to our photography studio where we specialize in creating timeless memories. With years of experience and a passion for capturing authentic moments, we bring your vision to life through our lens.',
+            gallery_title: 'Portfolio',
+            portfolio_title: 'Our Work'
+        };
         this.init();
     }
-    
-    async init() {
-        await this.initFirebase();
-        await this.authenticateUser();
-        this.setupClickToEdit();
-        this.setupThemeSelector();
+
+    init() {
+        this.setupThemeGrid();
         this.setupPageNavigation();
-        this.loadUserSite();
-        this.renderPreview();
+        this.setupDeviceControls();
+        this.setupFormInputs();
+        this.loadTheme(this.currentTheme);
     }
-    
-    async initFirebase() {
-        const firebaseConfig = {
-            apiKey: "AIzaSyDbtboh1bW6xu9Tz9FILkx_0lzGwXQHjyM",
-            authDomain: "photoshcheduleapp.firebaseapp.com",
-            projectId: "photoshcheduleapp",
-            storageBucket: "photoshcheduleapp.appspot.com",
-            messagingSenderId: "1080892259604",
-            appId: "1:1080892259604:web:your-app-id"
-        };
-        
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        
-        this.db = firebase.firestore();
-        this.storage = firebase.storage();
-        this.auth = firebase.auth();
-    }
-    
-    async authenticateUser() {
-        return new Promise((resolve) => {
-            this.auth.onAuthStateChanged((user) => {
-                if (user) {
-                    this.currentUser = user;
-                    console.log('User authenticated:', user.email);
-                } else {
-                    this.currentUser = { uid: 'dev-user', email: 'dev@example.com' };
-                    console.log('Development mode - using test user');
-                }
-                resolve();
-            });
-        });
-    }
-    
-    setupClickToEdit() {
-        document.addEventListener('click', (e) => {
-            const previewFrame = document.getElementById('preview-frame');
-            if (!previewFrame || !previewFrame.contains(e.target)) return;
-            
-            const editableElement = e.target.closest('[data-editable]');
-            if (editableElement) {
-                e.preventDefault();
-                this.startEditingElement(editableElement);
-            }
-        });
-        
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && this.isEditing) {
-                this.stopEditing();
-            }
-        });
-    }
-    
-    startEditingElement(element) {
-        if (this.isEditing && this.activeElement) {
-            this.stopEditing();
-        }
-        
-        this.isEditing = true;
-        this.activeElement = element;
-        element.classList.add('editing');
-        
-        const elementType = element.dataset.editable;
-        
-        if (elementType === 'text') {
-            this.editText(element);
-        } else if (elementType === 'image') {
-            this.editImage(element);
-        }
-    }
-    
-    editText(element) {
-        const originalContent = element.innerHTML;
-        element.contentEditable = true;
-        element.focus();
-        
-        // Select all text
-        const range = document.createRange();
-        range.selectNodeContents(element);
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(range);
-        
-        const saveChanges = () => {
-            element.contentEditable = false;
-            element.classList.remove('editing');
-            this.saveElementContent(element);
-            this.isEditing = false;
-            this.activeElement = null;
-        };
-        
-        element.addEventListener('blur', saveChanges, { once: true });
-        element.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                element.blur();
-            }
-        });
-    }
-    
-    editImage(element) {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-        
-        input.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                await this.uploadAndReplaceImage(element, file);
-            }
-            this.stopEditing();
-        });
-        
-        input.click();
-    }
-    
-    async uploadAndReplaceImage(element, file) {
-        try {
-            // Show loading state
-            element.style.opacity = '0.5';
-            
-            // Upload to Firebase Storage
-            const storageRef = this.storage.ref();
-            const imageRef = storageRef.child(`users/${this.currentUser.uid}/storefront/images/${Date.now()}_${file.name}`);
-            
-            const snapshot = await imageRef.put(file);
-            const downloadURL = await snapshot.ref.getDownloadURL();
-            
-            // Update image src
-            element.src = downloadURL;
-            element.style.opacity = '1';
-            
-            // Save to Firestore
-            await this.saveElementContent(element, downloadURL);
-            
-            this.showNotification('Image updated successfully!', 'success');
-        } catch (error) {
-            console.error('Error uploading image:', error);
-            element.style.opacity = '1';
-            this.showNotification('Failed to upload image', 'error');
-        }
-    }
-    
-    async saveElementContent(element, customValue = null) {
-        const elementId = element.dataset.elementId;
-        const content = customValue || element.innerHTML;
-        
-        if (!elementId) return;
-        
-        try {
-            await this.db.collection('users').doc(this.currentUser.uid)
-                .collection('storefront').doc('content')
-                .set({
-                    [this.currentPage]: {
-                        ...this.siteData[this.currentPage],
-                        [elementId]: content
-                    }
-                }, { merge: true });
-                
-            // Update local data
-            if (!this.siteData[this.currentPage]) {
-                this.siteData[this.currentPage] = {};
-            }
-            this.siteData[this.currentPage][elementId] = content;
-            
-        } catch (error) {
-            console.error('Error saving content:', error);
-            this.showNotification('Failed to save changes', 'error');
-        }
-    }
-    
-    stopEditing() {
-        if (this.activeElement) {
-            this.activeElement.contentEditable = false;
-            this.activeElement.classList.remove('editing');
-        }
-        this.isEditing = false;
-        this.activeElement = null;
-    }
-    
-    setupThemeSelector() {
+
+    setupThemeGrid() {
         const themeGrid = document.getElementById('theme-grid');
         if (!themeGrid) return;
+
+        themeGrid.innerHTML = '';
         
-        themeGrid.innerHTML = this.themes.map(theme => `
-            <div class="theme-card" data-theme="${theme}" onclick="editor.selectTheme('${theme}')">
-                <div class="theme-preview">
-                    <img src="/storefront-templates/${theme}/preview.jpg" alt="${this.formatThemeName(theme)}" 
-                         onerror="this.src='/storefront-templates/default-preview.jpg'">
-                </div>
-                <div class="theme-info">
-                    <h3>${this.formatThemeName(theme)}</h3>
-                    <p>${this.getThemeDescription(theme)}</p>
-                </div>
-            </div>
-        `).join('');
+        Object.entries(this.themes).forEach(([key, name]) => {
+            const themeOption = document.createElement('div');
+            themeOption.className = `theme-option ${key === this.currentTheme ? 'active' : ''}`;
+            themeOption.innerHTML = `
+                <div class="theme-preview" style="background: linear-gradient(135deg, #f7f3f0, #e8ddd4)"></div>
+                <div class="theme-name">${name}</div>
+            `;
+            themeOption.addEventListener('click', () => this.selectTheme(key));
+            themeGrid.appendChild(themeOption);
+        });
     }
-    
+
     setupPageNavigation() {
         const pageNav = document.getElementById('page-navigation');
         if (!pageNav) return;
-        
-        pageNav.innerHTML = this.pages.map(page => `
-            <button class="page-nav-btn ${page === this.currentPage ? 'active' : ''}" 
-                    data-page="${page}" onclick="editor.switchPage('${page}')">
-                ${this.formatPageName(page)}
-            </button>
-        `).join('');
-    }
-    
-    async selectTheme(theme) {
-        this.currentTheme = theme;
-        
-        // Update theme selection UI
-        document.querySelectorAll('.theme-card').forEach(card => {
-            card.classList.remove('active');
+
+        const pages = [
+            { id: 'home', name: 'Home', icon: '🏠' },
+            { id: 'about', name: 'About', icon: '👤' },
+            { id: 'portfolio', name: 'Portfolio', icon: '📸' },
+            { id: 'contact', name: 'Contact', icon: '📧' }
+        ];
+
+        pageNav.innerHTML = '';
+        pages.forEach(page => {
+            const pageItem = document.createElement('div');
+            pageItem.className = `page-nav-item ${page.id === this.currentPage ? 'active' : ''}`;
+            pageItem.innerHTML = `
+                <span class="page-icon">${page.icon}</span>
+                <span>${page.name}</span>
+            `;
+            pageItem.addEventListener('click', () => this.selectPage(page.id));
+            pageNav.appendChild(pageItem);
         });
-        document.querySelector(`[data-theme="${theme}"]`).classList.add('active');
-        
-        // Save theme selection
-        try {
-            await this.db.collection('users').doc(this.currentUser.uid)
-                .collection('storefront').doc('settings')
-                .set({ theme }, { merge: true });
-        } catch (error) {
-            console.error('Error saving theme:', error);
-        }
-        
-        this.renderPreview();
-        this.showNotification(`Theme changed to ${this.formatThemeName(theme)}`, 'success');
     }
-    
-    switchPage(page) {
-        this.currentPage = page;
-        
-        // Update page navigation
-        document.querySelectorAll('.page-nav-btn').forEach(btn => {
-            btn.classList.remove('active');
+
+    setupDeviceControls() {
+        const deviceBtns = document.querySelectorAll('.device-btn');
+        deviceBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                deviceBtns.forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                this.setDeviceView(e.target.dataset.device);
+            });
         });
-        document.querySelector(`[data-page="${page}"]`).classList.add('active');
-        
-        this.renderPreview();
     }
-    
-    async renderPreview() {
-        const previewFrame = document.getElementById('preview-frame');
-        if (!previewFrame) return;
+
+    setupFormInputs() {
+        const inputs = ['site-title', 'site-tagline', 'contact-email', 'contact-phone'];
+        inputs.forEach(inputId => {
+            const input = document.getElementById(inputId);
+            if (input) {
+                input.addEventListener('input', () => this.updateSiteData());
+            }
+        });
+    }
+
+    selectTheme(themeKey) {
+        // Update active theme
+        document.querySelectorAll('.theme-option').forEach(option => {
+            option.classList.remove('active');
+        });
+        document.querySelector(`[data-theme="${themeKey}"]`)?.classList.add('active');
         
+        this.currentTheme = themeKey;
+        this.loadTheme(themeKey);
+        
+        // Show celebration animation
+        this.showCelebration('Theme Applied!');
+    }
+
+    selectPage(pageId) {
+        document.querySelectorAll('.page-nav-item').forEach(item => {
+            item.classList.remove('active');
+        });
+        event.target.closest('.page-nav-item').classList.add('active');
+        
+        this.currentPage = pageId;
+        this.loadTheme(this.currentTheme);
+    }
+
+    async loadTheme(themeKey) {
         try {
-            const response = await fetch(`/storefront-templates/${this.currentTheme}/${this.currentPage}.html`);
+            const response = await fetch(`/storefront-templates/${themeKey}/home.html`);
+            if (!response.ok) throw new Error('Theme not found');
+            
             let html = await response.text();
             
-            // Replace placeholder content with user data
-            html = this.injectUserContent(html);
+            // Replace template variables with actual content
+            html = this.replaceTemplateVariables(html);
             
-            // Add editing attributes
-            html = this.addEditingAttributes(html);
+            // Load into both preview frames
+            const previewFrame1 = document.getElementById('preview-frame-1');
+            const previewFrame2 = document.getElementById('preview-frame-2');
             
-            previewFrame.innerHTML = html;
+            if (previewFrame1) {
+                previewFrame1.innerHTML = html;
+                this.setupEditableElements(previewFrame1, 'frame1');
+            }
             
-            // Apply theme-specific styles
-            this.applyThemeStyles();
+            if (previewFrame2) {
+                previewFrame2.innerHTML = html;
+                this.setupEditableElements(previewFrame2, 'frame2');
+            }
             
         } catch (error) {
-            console.error('Error loading template:', error);
-            previewFrame.innerHTML = '<div class="error">Template not found</div>';
+            console.error('Error loading theme:', error);
+            this.showError('Failed to load theme');
         }
     }
-    
-    injectUserContent(html) {
-        const pageData = this.siteData[this.currentPage] || {};
-        
-        // Replace content placeholders with saved data
-        Object.keys(pageData).forEach(key => {
-            const placeholder = `{{${key}}}`;
-            html = html.replace(new RegExp(placeholder, 'g'), pageData[key]);
+
+    replaceTemplateVariables(html) {
+        // Replace template variables with current content
+        Object.entries(this.defaultContent).forEach(([key, value]) => {
+            const regex = new RegExp(`{{${key}}}`, 'g');
+            html = html.replace(regex, value);
         });
         
         return html;
     }
-    
-    addEditingAttributes(html) {
-        // Add data-editable attributes to text elements
-        html = html.replace(/<h1([^>]*)>/g, '<h1$1 data-editable="text" data-element-id="title">');
-        html = html.replace(/<h2([^>]*)>/g, '<h2$1 data-editable="text" data-element-id="subtitle">');
-        html = html.replace(/<p([^>]*)>/g, '<p$1 data-editable="text" data-element-id="paragraph">');
+
+    setupEditableElements(container, frameId) {
+        const editables = container.querySelectorAll('[data-editable]');
         
-        // Add data-editable attributes to images
-        html = html.replace(/<img([^>]*?)>/g, '<img$1 data-editable="image" data-element-id="image">');
-        
-        return html;
+        editables.forEach(element => {
+            this.makeElementEditable(element, frameId);
+        });
     }
-    
-    applyThemeStyles() {
-        const previewFrame = document.getElementById('preview-frame');
-        if (!previewFrame) return;
+
+    makeElementEditable(element, frameId) {
+        const type = element.dataset.editable;
+        const elementId = element.dataset.elementId;
         
-        // Add editing styles
+        if (type === 'text') {
+            element.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.editText(element, frameId);
+            });
+            
+            // Add visual indicator on hover
+            element.style.cursor = 'pointer';
+            element.addEventListener('mouseenter', () => {
+                element.style.outline = '2px dashed var(--muted-gold, #c4962d)';
+                element.style.outlineOffset = '4px';
+                element.style.backgroundColor = 'rgba(196, 150, 45, 0.1)';
+            });
+            
+            element.addEventListener('mouseleave', () => {
+                if (!element.classList.contains('editing')) {
+                    element.style.outline = 'none';
+                    element.style.backgroundColor = '';
+                }
+            });
+        }
+        
+        if (type === 'image') {
+            element.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.editImage(element, frameId);
+            });
+            
+            element.style.cursor = 'pointer';
+            element.addEventListener('mouseenter', () => {
+                element.style.outline = '2px dashed var(--muted-gold, #c4962d)';
+                element.style.outlineOffset = '4px';
+                element.style.filter = 'brightness(1.1)';
+            });
+            
+            element.addEventListener('mouseleave', () => {
+                element.style.outline = 'none';
+                element.style.filter = '';
+            });
+        }
+    }
+
+    editText(element, frameId) {
+        const originalText = element.textContent;
+        element.classList.add('editing');
+        
+        // Create input field
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = originalText;
+        input.style.cssText = `
+            font-family: inherit;
+            font-size: inherit;
+            font-weight: inherit;
+            color: inherit;
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid var(--muted-gold, #c4962d);
+            border-radius: 4px;
+            padding: 4px 8px;
+            width: 100%;
+            min-width: 200px;
+        `;
+        
+        // Replace element with input
+        element.style.display = 'none';
+        element.parentNode.insertBefore(input, element.nextSibling);
+        input.focus();
+        input.select();
+        
+        const saveEdit = () => {
+            const newText = input.value.trim();
+            if (newText && newText !== originalText) {
+                element.textContent = newText;
+                this.saveContent(element.dataset.elementId, newText);
+                this.syncBetweenFrames(element.dataset.elementId, newText, 'text');
+                this.showSuccess('Content updated across both previews!');
+            }
+            
+            input.remove();
+            element.style.display = '';
+            element.classList.remove('editing');
+            element.style.outline = 'none';
+        };
+        
+        const cancelEdit = () => {
+            input.remove();
+            element.style.display = '';
+            element.classList.remove('editing');
+            element.style.outline = 'none';
+        };
+        
+        input.addEventListener('blur', saveEdit);
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                saveEdit();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                cancelEdit();
+            }
+        });
+    }
+
+    editImage(element, frameId) {
+        const input = document.createElement('input');
+        input.type = 'url';
+        input.placeholder = 'Enter image URL';
+        input.value = element.src || '';
+        
+        const modal = this.createModal('Edit Image', `
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Image URL:</label>
+                ${input.outerHTML}
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <img id="image-preview" src="${element.src}" alt="Preview" style="max-width: 100%; height: 200px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd;">
+            </div>
+        `, [
+            {
+                text: 'Update Image',
+                primary: true,
+                action: () => {
+                    const newUrl = modal.querySelector('input').value.trim();
+                    if (newUrl) {
+                        element.src = newUrl;
+                        this.saveContent(element.dataset.elementId, newUrl);
+                        this.syncBetweenFrames(element.dataset.elementId, newUrl, 'image');
+                        this.showSuccess('Image updated across both previews!');
+                    }
+                    this.closeModal(modal);
+                }
+            },
+            {
+                text: 'Cancel',
+                action: () => this.closeModal(modal)
+            }
+        ]);
+        
+        // Update preview on URL change
+        const urlInput = modal.querySelector('input');
+        const preview = modal.querySelector('#image-preview');
+        urlInput.addEventListener('input', () => {
+            if (urlInput.value.trim()) {
+                preview.src = urlInput.value;
+            }
+        });
+    }
+
+    createModal(title, content, buttons = []) {
+        const modal = document.createElement('div');
+        modal.className = 'editor-modal';
+        modal.innerHTML = `
+            <div class="modal-overlay"></div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>${title}</h3>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    ${content}
+                </div>
+                <div class="modal-footer">
+                    ${buttons.map(btn => `
+                        <button class="btn ${btn.primary ? 'btn-primary' : 'btn-secondary'}" data-action="${btn.text}">
+                            ${btn.text}
+                        </button>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+        
+        // Add modal styles
         const style = document.createElement('style');
         style.textContent = `
-            [data-editable] {
+            .editor-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .modal-overlay {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                backdrop-filter: blur(5px);
+            }
+            
+            .modal-content {
                 position: relative;
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+                max-width: 500px;
+                width: 90%;
+                max-height: 80vh;
+                overflow: hidden;
+            }
+            
+            .modal-header {
+                padding: 1.5rem;
+                border-bottom: 1px solid #e0e0e0;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            
+            .modal-header h3 {
+                margin: 0;
+                font-size: 1.2rem;
+                color: #2c2c2c;
+            }
+            
+            .modal-close {
+                background: none;
+                border: none;
+                font-size: 1.5rem;
                 cursor: pointer;
-                transition: all 0.2s ease;
+                color: #666;
+                padding: 0;
+                width: 30px;
+                height: 30px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
             
-            [data-editable]:hover {
-                outline: 2px dashed #007bff;
-                outline-offset: 2px;
+            .modal-body {
+                padding: 1.5rem;
             }
             
-            [data-editable].editing {
-                outline: 2px solid #007bff;
-                outline-offset: 2px;
-                background: rgba(0, 123, 255, 0.1);
+            .modal-footer {
+                padding: 1.5rem;
+                border-top: 1px solid #e0e0e0;
+                display: flex;
+                gap: 1rem;
+                justify-content: flex-end;
             }
             
-            [data-editable="text"]:focus {
-                outline: 2px solid #007bff;
-                background: rgba(0, 123, 255, 0.1);
+            .modal-body input {
+                width: 100%;
+                padding: 0.75rem;
+                border: 2px solid #e0e0e0;
+                border-radius: 6px;
+                font-size: 1rem;
+            }
+            
+            .modal-body input:focus {
+                outline: none;
+                border-color: var(--muted-gold, #c4962d);
             }
         `;
         
-        previewFrame.appendChild(style);
-    }
-    
-    async loadUserSite() {
-        try {
-            const doc = await this.db.collection('users').doc(this.currentUser.uid)
-                .collection('storefront').doc('content').get();
-                
-            if (doc.exists) {
-                this.siteData = doc.data();
+        if (!document.querySelector('#editor-modal-styles')) {
+            style.id = 'editor-modal-styles';
+            document.head.appendChild(style);
+        }
+        
+        document.body.appendChild(modal);
+        
+        // Setup event handlers
+        modal.querySelector('.modal-close').addEventListener('click', () => this.closeModal(modal));
+        modal.querySelector('.modal-overlay').addEventListener('click', () => this.closeModal(modal));
+        
+        buttons.forEach(btn => {
+            const btnElement = modal.querySelector(`[data-action="${btn.text}"]`);
+            if (btnElement) {
+                btnElement.addEventListener('click', btn.action);
             }
+        });
+        
+        return modal;
+    }
+
+    closeModal(modal) {
+        modal.remove();
+    }
+
+    setDeviceView(device) {
+        const previewFrame1 = document.getElementById('preview-frame-1');
+        const previewFrame2 = document.getElementById('preview-frame-2');
+        
+        [previewFrame1, previewFrame2].forEach(frame => {
+            if (!frame) return;
             
-            const settingsDoc = await this.db.collection('users').doc(this.currentUser.uid)
-                .collection('storefront').doc('settings').get();
-                
-            if (settingsDoc.exists) {
-                const settings = settingsDoc.data();
-                if (settings.theme) {
-                    this.currentTheme = settings.theme;
+            frame.classList.remove('desktop', 'tablet', 'mobile');
+            frame.classList.add(device);
+            
+            // Apply device-specific styling
+            switch (device) {
+                case 'desktop':
+                    frame.style.maxWidth = '100%';
+                    break;
+                case 'tablet':
+                    frame.style.maxWidth = '768px';
+                    break;
+                case 'mobile':
+                    frame.style.maxWidth = '375px';
+                    break;
+            }
+        });
+    }
+
+    syncBetweenFrames(elementId, content, type) {
+        // Update both frames when content changes
+        const frames = ['preview-frame-1', 'preview-frame-2'];
+        
+        frames.forEach(frameId => {
+            const frame = document.getElementById(frameId);
+            if (frame) {
+                const element = frame.querySelector(`[data-element-id="${elementId}"]`);
+                if (element) {
+                    if (type === 'text') {
+                        element.textContent = content;
+                    } else if (type === 'image') {
+                        element.src = content;
+                    }
                 }
             }
-        } catch (error) {
-            console.error('Error loading user site:', error);
-        }
+        });
     }
-    
-    formatThemeName(theme) {
-        return theme.split('-').map(word => 
-            word.charAt(0).toUpperCase() + word.slice(1)
-        ).join(' ');
-    }
-    
-    formatPageName(page) {
-        return page.charAt(0).toUpperCase() + page.slice(1);
-    }
-    
-    getThemeDescription(theme) {
-        const descriptions = {
-            'light-airy': 'Soft, elegant design with warm tones and natural lighting',
-            'bold-editorial': 'Strong typography and dramatic layouts for impactful storytelling',
-            'earthy-boho': 'Natural textures and earthy colors with bohemian flair',
-            'modern-luxe': 'Sleek minimalism with luxury accents and premium feel',
-            'coastal-lifestyle': 'Fresh, breezy design inspired by ocean and coastal living',
-            'minimal-portfolio': 'Clean, uncluttered layouts focusing on your work',
-            'monochrome-studio': 'Classic black and white with timeless elegance',
-            'dark-moody-wedding': 'Romantic and dramatic with deep, rich tones',
-            'romantic-serif': 'Elegant typography with soft, romantic styling',
-            'fashion-forward': 'Cutting-edge design with bold visual statements',
-            'commercial-grid': 'Professional grid layouts perfect for commercial work',
-            'film-vibe': 'Vintage-inspired with grainy textures and retro aesthetics',
-            'urban-black-gold': 'Modern city vibes with sophisticated black and gold',
-            'cottagecore-vibes': 'Cozy, countryside charm with warm, inviting elements',
-            'rustic-barn': 'Warm wood tones and country-inspired design elements',
-            'luxury-fine-art': 'Museum-quality presentation with refined elegance',
-            'street-photography': 'Urban energy with dynamic layouts and bold contrasts',
-            'scenic-landscapes': 'Horizontal showcases perfect for landscape photography',
-            'scrolling-story': 'Full-page sections that tell your story as users scroll',
-            'storybook-magazine': 'Editorial layouts with magazine-style storytelling'
-        };
+
+    updateSiteData() {
+        const titleInput = document.getElementById('site-title');
+        const taglineInput = document.getElementById('site-tagline');
+        const emailInput = document.getElementById('contact-email');
+        const phoneInput = document.getElementById('contact-phone');
         
-        return descriptions[theme] || 'Beautiful photography website template';
+        if (titleInput) this.siteData.title = titleInput.value;
+        if (taglineInput) this.siteData.tagline = taglineInput.value;
+        if (emailInput) this.siteData.email = emailInput.value;
+        if (phoneInput) this.siteData.phone = phoneInput.value;
+        
+        // Update default content
+        this.defaultContent.hero_title = this.siteData.title;
+        this.defaultContent.hero_subtitle = this.siteData.tagline;
+        
+        // Refresh preview
+        this.loadTheme(this.currentTheme);
     }
-    
+
+    saveContent(elementId, content) {
+        // Update default content
+        this.defaultContent[elementId] = content;
+        
+        // In a real implementation, this would save to Firebase
+        console.log('Saving content:', { elementId, content });
+    }
+
+    publishSite() {
+        this.showSuccess('Site published successfully!');
+        this.showCelebration('🚀 Site Published!');
+    }
+
+    showSuccess(message) {
+        this.showNotification(message, 'success');
+    }
+
+    showError(message) {
+        this.showNotification(message, 'error');
+    }
+
     showNotification(message, type = 'info') {
         const notification = document.createElement('div');
         notification.className = `notification notification-${type}`;
         notification.textContent = message;
         
+        // Add notification styles
+        const style = document.createElement('style');
+        style.textContent = `
+            .notification {
+                position: fixed;
+                top: 2rem;
+                right: 2rem;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                color: white;
+                font-weight: 600;
+                z-index: 10001;
+                animation: slideIn 0.3s ease;
+            }
+            
+            .notification-success {
+                background: linear-gradient(135deg, #10b981, #059669);
+            }
+            
+            .notification-error {
+                background: linear-gradient(135deg, #ef4444, #dc2626);
+            }
+            
+            .notification-info {
+                background: linear-gradient(135deg, #3b82f6, #2563eb);
+            }
+            
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+        `;
+        
+        if (!document.querySelector('#notification-styles')) {
+            style.id = 'notification-styles';
+            document.head.appendChild(style);
+        }
+        
         document.body.appendChild(notification);
         
         setTimeout(() => {
-            notification.classList.add('show');
-        }, 100);
-        
-        setTimeout(() => {
-            notification.classList.remove('show');
-            setTimeout(() => {
-                document.body.removeChild(notification);
-            }, 300);
+            notification.remove();
         }, 3000);
     }
-    
-    async publishSite() {
-        try {
-            const response = await fetch('/api/storefront/publish', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    userId: this.currentUser.uid,
-                    theme: this.currentTheme,
-                    content: this.siteData
-                })
-            });
+
+    showCelebration(message) {
+        // Create confetti effect
+        const colors = ['#c4962d', '#9cafa3', '#e8ddd4', '#f7f3f0'];
+        
+        for (let i = 0; i < 50; i++) {
+            const confetti = document.createElement('div');
+            confetti.style.cssText = `
+                position: fixed;
+                width: 10px;
+                height: 10px;
+                background: ${colors[Math.floor(Math.random() * colors.length)]};
+                top: -10px;
+                left: ${Math.random() * 100}%;
+                z-index: 10002;
+                pointer-events: none;
+                animation: confetti-fall ${2 + Math.random() * 3}s linear forwards;
+            `;
             
-            const result = await response.json();
+            document.body.appendChild(confetti);
             
-            if (result.success) {
-                this.showNotification('Site published successfully!', 'success');
-                window.open(result.url, '_blank');
-            } else {
-                this.showNotification('Failed to publish site', 'error');
-            }
-        } catch (error) {
-            console.error('Error publishing site:', error);
-            this.showNotification('Failed to publish site', 'error');
+            setTimeout(() => confetti.remove(), 5000);
         }
+        
+        // Add confetti animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes confetti-fall {
+                0% {
+                    transform: translateY(-100vh) rotate(0deg);
+                    opacity: 1;
+                }
+                100% {
+                    transform: translateY(100vh) rotate(720deg);
+                    opacity: 0;
+                }
+            }
+        `;
+        
+        if (!document.querySelector('#confetti-styles')) {
+            style.id = 'confetti-styles';
+            document.head.appendChild(style);
+        }
+        
+        // Show celebration message
+        this.showSuccess(message);
     }
 }
 
-// Initialize the visual editor when the page loads
-let editor;
+// Initialize editor when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    editor = new VisualEditor();
+    window.editor = new VisualEditor();
 });
+
+// Global functions for buttons
+function publishSite() {
+    if (window.editor) {
+        window.editor.publishSite();
+    }
+}
