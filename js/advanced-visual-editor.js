@@ -192,9 +192,17 @@ class AdvancedVisualEditor {
 
     setupThemeSelector() {
         const themeGrid = document.getElementById('theme-grid');
-        if (!themeGrid) return;
+        if (!themeGrid) {
+            console.warn('Theme grid element not found');
+            return;
+        }
 
         themeGrid.innerHTML = '';
+        
+        if (Object.keys(this.themes).length === 0) {
+            themeGrid.innerHTML = '<p style="text-align: center; color: var(--sage);">No themes available</p>';
+            return;
+        }
         
         Object.entries(this.themes).forEach(([key, theme]) => {
             const themeOption = document.createElement('div');
@@ -202,10 +210,10 @@ class AdvancedVisualEditor {
             themeOption.dataset.theme = key;
             themeOption.innerHTML = `
                 <div class="theme-preview">
-                    <div class="theme-preview-content">
-                        <div class="preview-header"></div>
-                        <div class="preview-body"></div>
-                        <div class="preview-footer"></div>
+                    <div class="theme-preview-content" style="background: ${this.getThemePreviewGradient(theme.category)}">
+                        <div class="preview-header" style="height: 20%; background: rgba(255,255,255,0.9);"></div>
+                        <div class="preview-body" style="height: 60%; background: rgba(255,255,255,0.7);"></div>
+                        <div class="preview-footer" style="height: 20%; background: rgba(255,255,255,0.9);"></div>
                     </div>
                 </div>
                 <div class="theme-info">
@@ -217,6 +225,29 @@ class AdvancedVisualEditor {
             themeOption.addEventListener('click', () => this.changeTheme(key));
             themeGrid.appendChild(themeOption);
         });
+        
+        console.log(`✅ Loaded ${Object.keys(this.themes).length} themes in theme selector`);
+    }
+
+    getThemePreviewGradient(category) {
+        const gradients = {
+            'elegant': 'linear-gradient(135deg, #F7F3F0, #E8DDD4)',
+            'dramatic': 'linear-gradient(135deg, #2C2C2C, #4A4A4A)',
+            'natural': 'linear-gradient(135deg, #9CAFA3, #7A8B80)',
+            'minimal': 'linear-gradient(135deg, #FFFFFF, #F0F0F0)',
+            'lifestyle': 'linear-gradient(135deg, #A8DADC, #457B9D)',
+            'classic': 'linear-gradient(135deg, #E0E0E0, #BDBDBD)',
+            'modern': 'linear-gradient(135deg, #C4962D, #D4A843)',
+            'business': 'linear-gradient(135deg, #457B9D, #1D3557)',
+            'vintage': 'linear-gradient(135deg, #8D7053, #A0845C)',
+            'urban': 'linear-gradient(135deg, #2C2C2C, #C4962D)',
+            'rustic': 'linear-gradient(135deg, #8B4513, #A0522D)',
+            'nature': 'linear-gradient(135deg, #228B22, #32CD32)',
+            'narrative': 'linear-gradient(135deg, #8B008B, #9370DB)',
+            'editorial': 'linear-gradient(135deg, #DC143C, #FF6347)'
+        };
+        
+        return gradients[category] || 'linear-gradient(135deg, #F7F3F0, #E8DDD4)';
     }
 
     setupBlockPanel() {
@@ -378,36 +409,170 @@ class AdvancedVisualEditor {
 
     async loadDefaultPageTemplate() {
         try {
-            const response = await fetch(`/storefront-templates/${this.currentTheme}/${this.currentPage}.html`);
-            let html;
-            
-            if (response.ok) {
-                html = await response.text();
-            } else {
-                // Try alternative names
-                const alternatives = { 'gallery': 'portfolio', 'store': 'shop' };
-                if (alternatives[this.currentPage]) {
-                    const altResponse = await fetch(`/storefront-templates/${this.currentTheme}/${alternatives[this.currentPage]}.html`);
-                    if (altResponse.ok) {
-                        html = await altResponse.text();
-                    }
-                }
-                
-                // Final fallback
-                if (!html) {
-                    const homeResponse = await fetch(`/storefront-templates/${this.currentTheme}/home.html`);
-                    html = await homeResponse.text();
-                }
-            }
-            
-            // Convert template to blocks
-            this.pageLayouts[this.currentPage] = this.convertTemplateToBlocks(html);
+            // Always create default blocks for any page that doesn't exist
+            this.pageLayouts[this.currentPage] = this.createDefaultPageBlocks(this.currentPage);
             await this.renderPage();
+            this.showSuccess(`Created default ${this.currentPage} page`);
             
         } catch (error) {
-            console.error('Failed to load template:', error);
-            this.showError('Failed to load page template');
+            console.error('Failed to create default template:', error);
+            this.showError('Failed to create page template');
         }
+    }
+
+    createDefaultPageBlocks(pageId) {
+        const commonBlocks = [];
+        
+        switch (pageId) {
+            case 'home':
+                commonBlocks.push(
+                    {
+                        id: `hero-${Date.now()}`,
+                        type: 'hero',
+                        content: {
+                            headline: 'Welcome to Our Photography Studio',
+                            subtitle: 'Capturing life\'s most precious moments with artistic vision',
+                            buttonText: 'View Portfolio',
+                            imageUrl: 'https://images.unsplash.com/photo-1554048612-b6a482b22084?ixlib=rb-4.0.3&w=1200&q=80'
+                        }
+                    },
+                    {
+                        id: `about-${Date.now()}`,
+                        type: 'about',
+                        content: {
+                            title: 'Our Story',
+                            text: 'We are passionate photographers dedicated to creating timeless memories through our lens. With years of experience and an eye for detail, we capture the essence of every moment.'
+                        }
+                    },
+                    {
+                        id: `cta-${Date.now()}`,
+                        type: 'cta',
+                        content: {
+                            title: 'Ready to Book Your Session?',
+                            text: 'Let\'s create beautiful memories together',
+                            buttonText: 'Contact Us',
+                            buttonUrl: '#contact'
+                        }
+                    }
+                );
+                break;
+                
+            case 'about':
+                commonBlocks.push(
+                    {
+                        id: `about-main-${Date.now()}`,
+                        type: 'about',
+                        content: {
+                            title: 'About Our Studio',
+                            text: 'Our photography journey began with a simple belief: every moment deserves to be captured beautifully. We specialize in creating authentic, emotional images that tell your unique story.'
+                        }
+                    },
+                    {
+                        id: `text-mission-${Date.now()}`,
+                        type: 'text',
+                        content: {
+                            text: 'Our mission is to provide exceptional photography services that exceed expectations. We believe in building relationships with our clients and creating art that will be treasured for generations.'
+                        }
+                    }
+                );
+                break;
+                
+            case 'gallery':
+                commonBlocks.push(
+                    {
+                        id: `gallery-hero-${Date.now()}`,
+                        type: 'text',
+                        content: {
+                            text: 'Explore our portfolio of beautiful moments captured with passion and creativity.'
+                        }
+                    },
+                    {
+                        id: `image-grid-${Date.now()}`,
+                        type: 'image-grid',
+                        content: {
+                            images: [
+                                'https://images.unsplash.com/photo-1554048612-b6a482b22084?ixlib=rb-4.0.3&w=400&q=80',
+                                'https://images.unsplash.com/photo-1583195764036-6dc248ac07d9?ixlib=rb-4.0.3&w=400&q=80',
+                                'https://images.unsplash.com/photo-1519741497674-611481863552?ixlib=rb-4.0.3&w=400&q=80',
+                                'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?ixlib=rb-4.0.3&w=400&q=80',
+                                'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?ixlib=rb-4.0.3&w=400&q=80',
+                                'https://images.unsplash.com/photo-1520854221256-17451cc331bf?ixlib=rb-4.0.3&w=400&q=80'
+                            ]
+                        }
+                    }
+                );
+                break;
+                
+            case 'store':
+                commonBlocks.push(
+                    {
+                        id: `store-hero-${Date.now()}`,
+                        type: 'text',
+                        content: {
+                            text: 'Professional photography packages tailored to your needs.'
+                        }
+                    },
+                    {
+                        id: `pricing-${Date.now()}`,
+                        type: 'pricing',
+                        content: {
+                            packages: [
+                                {
+                                    name: 'Essential',
+                                    price: '$299',
+                                    features: ['2 Hour Session', '50 Edited Photos', 'Digital Gallery', 'Print Release']
+                                },
+                                {
+                                    name: 'Premium',
+                                    price: '$599',
+                                    features: ['4 Hour Session', '150 Edited Photos', 'Digital Gallery', 'Print Release', 'USB Drive', '10 Prints']
+                                },
+                                {
+                                    name: 'Elite',
+                                    price: '$999',
+                                    features: ['Full Day Coverage', '300+ Photos', 'Premium Gallery', 'Print Release', 'Custom USB', '20 Prints', 'Photo Album']
+                                }
+                            ]
+                        }
+                    }
+                );
+                break;
+                
+            case 'contact':
+                commonBlocks.push(
+                    {
+                        id: `contact-hero-${Date.now()}`,
+                        type: 'text',
+                        content: {
+                            text: 'Ready to capture your special moments? We\'d love to hear from you.'
+                        }
+                    },
+                    {
+                        id: `contact-cta-${Date.now()}`,
+                        type: 'cta',
+                        content: {
+                            title: 'Get In Touch',
+                            text: 'Contact us today to discuss your photography needs',
+                            buttonText: 'Send Message',
+                            buttonUrl: 'mailto:studio@example.com'
+                        }
+                    }
+                );
+                break;
+                
+            default:
+                commonBlocks.push(
+                    {
+                        id: `default-${Date.now()}`,
+                        type: 'text',
+                        content: {
+                            text: `Welcome to the ${pageId} page. Click to edit this text and add more blocks using the sidebar.`
+                        }
+                    }
+                );
+        }
+        
+        return commonBlocks;
     }
 
     convertTemplateToBlocks(html) {
@@ -442,12 +607,20 @@ class AdvancedVisualEditor {
 
     // PHASE 3: THEME SWITCHING
     async changeTheme(themeKey) {
-        if (themeKey === this.currentTheme) return;
+        if (themeKey === this.currentTheme) {
+            this.showSuccess(`${this.themes[themeKey].name} theme already active`);
+            return;
+        }
+        
+        if (!this.themes[themeKey]) {
+            this.showError('Theme not found');
+            return;
+        }
         
         try {
             this.showLoading('Applying new theme...');
             
-            // Update active theme
+            // Update active theme in UI
             document.querySelectorAll('.theme-option').forEach(option => {
                 option.classList.remove('active');
             });
@@ -461,17 +634,23 @@ class AdvancedVisualEditor {
             await this.saveAllContent();
             
             // Apply new theme
+            const previousTheme = this.currentTheme;
             this.currentTheme = themeKey;
+            
+            // Re-render with new theme styling
             await this.renderPage();
             
             // Save theme preference
             await this.saveUserSettings();
             
+            console.log(`Theme changed from ${previousTheme} to ${themeKey}`);
             this.showSuccess(`Applied ${this.themes[themeKey].name} theme`);
             
         } catch (error) {
             console.error('Failed to change theme:', error);
             this.showError('Failed to change theme');
+            // Revert theme on error
+            this.currentTheme = previousTheme;
         }
     }
 
