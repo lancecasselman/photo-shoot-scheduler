@@ -807,6 +807,9 @@ class AdvancedVisualEditor {
         
         previewFrame.innerHTML = html;
         
+        console.log(`✅ Page rendered with HTML length: ${html.length}`);
+        console.log(`Preview frame content:`, previewFrame.innerHTML.substring(0, 300) + '...');
+        
         // Update page title
         this.updatePageTitle();
         
@@ -825,7 +828,14 @@ class AdvancedVisualEditor {
         
         console.log(`Rendering block:`, { type: block.type, id: block.id, content: block.content });
         
+        // Check if template is a function
+        if (typeof blockTemplate !== 'function') {
+            console.error(`Template for ${block.type} is not a function:`, blockTemplate);
+            return '';
+        }
+        
         let html = blockTemplate(block.content);
+        console.log(`Generated HTML for ${block.type}:`, html.substring(0, 100) + '...');
         
         if (!html || html.trim() === '') {
             console.error(`Template returned empty HTML for block type: ${block.type}`);
