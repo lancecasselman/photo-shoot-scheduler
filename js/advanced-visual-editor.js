@@ -212,10 +212,15 @@ class AdvancedVisualEditor {
             const pageItem = document.createElement('div');
             pageItem.className = `page-nav-item ${page.id === this.currentPage ? 'active' : ''}`;
             pageItem.dataset.page = page.id;
+            
+            // Check if this is a custom page (not one of the default pages)
+            const isCustomPage = !['home', 'about', 'portfolio', 'contact'].includes(page.id);
+            
             pageItem.innerHTML = `
                 <span class="page-icon">${page.icon}</span>
                 <span class="page-name">${page.name}</span>
                 <div class="page-status"></div>
+                ${isCustomPage ? '<button class="page-delete-btn" onclick="event.stopPropagation(); window.editor.showDeletePageModal(\'' + page.id + '\')" title="Delete Page">×</button>' : ''}
             `;
             
             pageItem.addEventListener('click', () => this.switchPage(page.id));
@@ -488,6 +493,90 @@ class AdvancedVisualEditor {
         } catch (error) {
             console.error('Failed to create page:', error);
             this.showError('Failed to create page');
+        }
+    }
+
+    showDeletePageModal(pageId) {
+        const page = this.pages.find(p => p.id === pageId);
+        if (!page) return;
+
+        const modalHTML = `
+            <div class="modal-overlay" id="delete-page-modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Delete Page</h3>
+                        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to delete the <strong>"${page.name}"</strong> page?</p>
+                        <p style="color: #dc3545; font-size: 0.9rem;">This action cannot be undone. All content on this page will be permanently lost.</p>
+                        <div class="modal-actions">
+                            <button class="btn-secondary" onclick="document.getElementById('delete-page-modal').remove()">Cancel</button>
+                            <button class="btn-danger" onclick="window.editor.deletePage('${pageId}')">Delete Page</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        
+        // Focus on the modal for accessibility
+        setTimeout(() => {
+            const modal = document.getElementById('delete-page-modal');
+            if (modal) modal.focus();
+        }, 100);
+    }
+
+    async deletePage(pageId) {
+        // Prevent deletion of default pages
+        if (['home', 'about', 'portfolio', 'contact'].includes(pageId)) {
+            this.showError('Cannot delete default pages');
+            return;
+        }
+
+        const page = this.pages.find(p => p.id === pageId);
+        if (!page) {
+            this.showError('Page not found');
+            return;
+        }
+
+        try {
+            // Remove page from pages array
+            this.pages = this.pages.filter(p => p.id !== pageId);
+            
+            // Remove page layout and settings
+            delete this.pageLayouts[pageId];
+            delete this.pageSettings[pageId];
+            
+            // If we're deleting the current page, switch to home
+            if (this.currentPage === pageId) {
+                this.currentPage = 'home';
+            }
+            
+            // Save to Firebase/localStorage
+            await this.saveUserSettings();
+            await this.saveAllContent();
+            
+            // Refresh page switcher to remove deleted page
+            this.setupPageSwitcher();
+            
+            // Re-render the current page to update navigation
+            await this.renderPage();
+            
+            // Switch to home if we deleted the current page
+            if (this.currentPage !== pageId) {
+                await this.switchPage(this.currentPage);
+            }
+            
+            // Close modal
+            document.getElementById('delete-page-modal')?.remove();
+            
+            this.showSuccess(`Deleted "${page.name}" page`);
+            
+        } catch (error) {
+            console.error('Failed to delete page:', error);
+            this.showError('Failed to delete page');
         }
     }
 
@@ -2145,6 +2234,78 @@ class AdvancedVisualEditor {
                     opacity: 1;
                     background: var(--accent) !important;
                     color: white;
+                }
+
+                /* Page Delete Button Styling */
+                .page-delete-btn {
+                    position: absolute;
+                    top: 2px;
+                    right: 2px;
+                    background: #dc3545;
+                    color: white;
+                    border: none;
+                    width: 18px;
+                    height: 18px;
+                    border-radius: 50%;
+                    font-size: 12px;
+                    line-height: 1;
+                    cursor: pointer;
+                    display: none;
+                    align-items: center;
+                    justify-content: center;
+                    transition: all 0.2s ease;
+                    z-index: 10;
+                }
+
+                .page-nav-item {
+                    position: relative;
+                }
+
+                .page-nav-item:hover .page-delete-btn {
+                    display: flex;
+                }
+
+                .page-delete-btn:hover {
+                    background: #c82333;
+                    transform: scale(1.1);
+                }
+
+                /* Modal Action Button Styles */
+                .modal-actions {
+                    display: flex;
+                    gap: 10px;
+                    justify-content: flex-end;
+                    margin-top: 20px;
+                }
+
+                .btn-secondary {
+                    background: #6c757d;
+                    color: white;
+                    border: none;
+                    padding: 8px 16px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-family: var(--font-sans);
+                    transition: background 0.2s ease;
+                }
+
+                .btn-secondary:hover {
+                    background: #5a6268;
+                }
+
+                .btn-danger {
+                    background: #dc3545;
+                    color: white;
+                    border: none;
+                    padding: 8px 16px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-family: var(--font-sans);
+                    transition: background 0.2s ease;
+                }
+
+                .btn-danger:hover {
+                    background: #c82333;
                 }
 
                 /* Modal Styling */
