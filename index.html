@@ -587,29 +587,31 @@
             z-index: auto;
         }
         
-        /* Simplified List View Styles */
+        /* Light + Airy Session List View Styles */
         .session-list-item {
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(20px);
-            border-radius: 15px;
-            margin-bottom: 15px;
-            border: 1px solid rgba(212, 175, 55, 0.2);
+            background: var(--bg-primary);
+            border-radius: var(--border-radius);
+            margin-bottom: var(--spacing-md);
+            border: 2px solid var(--accent-beige);
             transition: all 0.3s ease;
             cursor: pointer;
             overflow: hidden;
+            box-shadow: var(--shadow-soft);
         }
 
         .session-list-item:hover {
-            border-color: #d4af37;
-            box-shadow: 0 5px 20px rgba(212, 175, 55, 0.2);
+            border-color: var(--gold-muted);
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-2px);
         }
 
         .session-list-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px 25px;
-            border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--accent-beige);
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--cream-warm) 100%);
         }
 
         .session-info {
@@ -618,42 +620,45 @@
 
         .client-name {
             font-size: 1.4em;
-            color: #d4af37;
-            margin: 0 0 8px 0;
-            font-weight: bold;
+            color: var(--gold-muted);
+            margin: 0 0 var(--spacing-xs) 0;
+            font-weight: 600;
+            font-family: var(--font-heading);
         }
 
         .session-meta {
             display: flex;
-            gap: 20px;
+            gap: var(--spacing-md);
             font-size: 0.9em;
-            color: #ccc;
+            color: var(--text-secondary);
             flex-wrap: wrap;
+            font-family: var(--font-body);
         }
 
         .session-meta span {
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: var(--spacing-xs);
         }
 
         .session-date {
             font-weight: 600;
+            color: var(--text-primary);
         }
 
         .session-location {
-            color: #bbb;
+            color: var(--accent-sage);
         }
 
         .session-price {
-            color: #d4af37;
-            font-weight: bold;
+            color: var(--gold-muted);
+            font-weight: 600;
             font-size: 1.1em;
         }
 
         .expand-icon {
             font-size: 1.2em;
-            color: #d4af37;
+            color: var(--gold-muted);
             transition: transform 0.3s ease;
             min-width: 30px;
             text-align: center;
@@ -662,7 +667,7 @@
         .session-details {
             padding: var(--spacing-lg);
             border-top: 2px solid var(--accent-beige);
-            background: var(--bg-primary);
+            background: linear-gradient(135deg, var(--cream-warm) 0%, var(--bg-primary) 100%);
             margin-top: var(--spacing-md);
             border-radius: var(--border-radius-sm);
         }
@@ -685,31 +690,35 @@
         }
 
         .detail-item {
-            margin-bottom: 10px;
-            line-height: 1.5;
+            margin-bottom: var(--spacing-sm);
+            line-height: 1.6;
+            color: var(--text-primary);
         }
 
         .detail-item strong {
-            color: var(--text-primary);
+            color: var(--gold-muted);
             margin-right: var(--spacing-xs);
             font-weight: 600;
         }
 
         .quick-action-btn {
-            background: #d4af37;
-            color: #000;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 20px;
-            margin-left: 10px;
+            background: var(--gold-muted);
+            color: var(--bg-primary);
+            border: 1px solid var(--accent-beige);
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--border-radius-full);
+            margin-left: var(--spacing-sm);
             cursor: pointer;
             font-size: 0.9em;
-            transition: all 0.2s ease;
+            font-weight: 500;
+            transition: all 0.3s ease;
         }
 
         .quick-action-btn:hover {
-            background: #f4d03f;
-            transform: scale(1.05);
+            background: var(--cream-warm);
+            color: var(--gold-muted);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-soft);
         }
 
         .action-buttons {
@@ -806,18 +815,20 @@
         .session-title {
             font-size: 1.4em;
             font-weight: 600;
-            color: #d4af37;
+            color: var(--gold-muted);
             letter-spacing: -0.01em;
+            font-family: var(--font-heading);
         }
         
         .session-type {
-            background: linear-gradient(135deg, #d4af37 0%, #f4e4bc 100%);
-            color: #1a1a1a;
-            padding: 6px 16px;
-            border-radius: 25px;
+            background: linear-gradient(135deg, var(--gold-muted) 0%, var(--cream-warm) 100%);
+            color: var(--text-primary);
+            padding: var(--spacing-xs) var(--spacing-md);
+            border-radius: var(--border-radius-full);
             font-size: 0.85em;
             font-weight: 600;
             letter-spacing: 0.02em;
+            border: 1px solid var(--accent-beige);
         }
         
         .session-details {
@@ -831,14 +842,14 @@
         }
         
         .detail-label {
-            font-weight: 500;
+            font-weight: 600;
             width: 90px;
-            color: #d4af37;
+            color: var(--gold-muted);
             font-size: 0.9em;
         }
         
         .detail-value {
-            color: #f5f5f5;
+            color: var(--text-primary);
             font-weight: 400;
         }
         
@@ -1137,41 +1148,52 @@
         }
         
         .admin-checkboxes {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 20px;
-            margin: 20px 0;
+            background: var(--cream-warm);
+            border: 2px solid var(--accent-beige);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-lg);
+            margin: var(--spacing-lg) 0;
+            box-shadow: var(--shadow-soft);
         }
         
         .admin-checkboxes h3 {
-            margin: 0 0 15px 0;
-            color: #2d3748;
+            margin: 0 0 var(--spacing-md) 0;
+            color: var(--gold-muted);
             font-size: 1.1em;
             font-weight: 600;
+            font-family: var(--font-heading);
         }
         
         .checkbox-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 12px;
+            gap: var(--spacing-sm);
         }
         
         .checkbox-group {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-xs);
+            border-radius: var(--border-radius-sm);
+            transition: all 0.3s ease;
+        }
+        
+        .checkbox-group:hover {
+            background: var(--accent-beige);
         }
         
         .checkbox-group input[type="checkbox"] {
             width: 18px;
             height: 18px;
-            accent-color: #667eea;
+            accent-color: var(--gold-muted);
             cursor: pointer;
         }
         
         .checkbox-group label {
             cursor: pointer;
+            color: var(--text-primary);
+            font-weight: 500;
         }
         
         .upload-limits-info {
@@ -3449,11 +3471,12 @@
 
         /* Enhanced Client Dashboard Styles */
         .client-dashboard-controls {
-            background: #1a1a1a;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 25px;
-            border: 1px solid #444;
+            background: var(--bg-primary);
+            padding: var(--spacing-lg);
+            border-radius: var(--border-radius);
+            margin-bottom: var(--spacing-xl);
+            border: 2px solid var(--accent-beige);
+            box-shadow: var(--shadow-soft);
         }
 
         .search-and-filters {
@@ -3486,38 +3509,48 @@
         }
 
         .filter-group label {
-            color: #d4af37;
-            font-weight: bold;
+            color: var(--gold-muted);
+            font-weight: 600;
             font-size: 0.9em;
+            font-family: var(--font-heading);
         }
 
         .checkbox-filters {
             display: flex;
-            gap: 15px;
+            gap: var(--spacing-md);
             flex-wrap: wrap;
         }
 
         .checkbox-filters label {
             display: flex;
             align-items: center;
-            gap: 5px;
-            color: #f5f5f5;
-            font-weight: normal;
+            gap: var(--spacing-xs);
+            color: var(--text-primary);
+            font-weight: 500;
             cursor: pointer;
+            font-family: var(--font-body);
         }
 
         .checkbox-filters input[type="checkbox"] {
-            accent-color: #d4af37;
+            accent-color: var(--gold-muted);
         }
 
         .filter-group select,
         .filter-group input[type="date"] {
-            padding: 8px 12px;
-            border-radius: 6px;
-            border: 1px solid #d4af37;
-            background: #2a2a2a;
-            color: #f5f5f5;
+            padding: var(--spacing-sm) var(--spacing-sm);
+            border-radius: var(--border-radius-sm);
+            border: 2px solid var(--accent-beige);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
             font-size: 14px;
+            font-family: var(--font-body);
+            transition: all 0.3s ease;
+        }
+
+        .filter-group select:focus,
+        .filter-group input[type="date"]:focus {
+            border-color: var(--gold-muted);
+            box-shadow: 0 0 0 3px rgba(193, 163, 94, 0.2);
         }
 
         .archive-and-actions {
@@ -3525,21 +3558,22 @@
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #444;
+            gap: var(--spacing-md);
+            padding-top: var(--spacing-md);
+            border-top: 2px solid var(--accent-beige);
         }
 
         .archive-toggle {
             display: flex;
             align-items: center;
-            gap: 8px;
-            color: #f5f5f5;
+            gap: var(--spacing-xs);
+            color: var(--text-primary);
             cursor: pointer;
+            font-family: var(--font-body);
         }
 
         .archive-toggle input[type="checkbox"] {
-            accent-color: #d4af37;
+            accent-color: var(--gold-muted);
         }
 
         .btn-secondary, .btn-primary {
@@ -3572,17 +3606,19 @@
         }
 
         .session-notes {
-            background: #2a2a2a;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
-            border: 1px solid #444;
+            background: var(--cream-warm);
+            padding: var(--spacing-md);
+            border-radius: var(--border-radius);
+            margin-top: var(--spacing-md);
+            border: 2px solid var(--accent-beige);
+            box-shadow: var(--shadow-soft);
         }
 
         .session-notes h4 {
-            color: #d4af37;
-            margin-bottom: 10px;
+            color: var(--gold-muted);
+            margin-bottom: var(--spacing-sm);
             font-size: 1em;
+            font-family: var(--font-heading);
         }
 
         .notes-checklist {
@@ -3595,10 +3631,11 @@
         .notes-checklist label {
             display: flex;
             align-items: center;
-            gap: 5px;
-            color: #f5f5f5;
+            gap: var(--spacing-xs);
+            color: var(--text-primary);
             font-size: 0.9em;
             cursor: pointer;
+            font-family: var(--font-body);
         }
 
         .notes-textarea {
@@ -3730,7 +3767,7 @@
                 <!-- Real-time Search Bar -->
                 <div class="search-section">
                     <input type="text" id="clientSearch" placeholder="Search clients by name, location, or email..." 
-                           oninput="filterSessions()" style="width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #d4af37; background: #2a2a2a; color: #f5f5f5; font-size: 16px;">
+                           oninput="filterSessions()" style="width: 100%; padding: 12px; border-radius: var(--border-radius); border: 2px solid var(--gold-muted); background: var(--bg-primary); color: var(--text-primary); font-size: 16px; font-family: var(--font-body);">
                 </div>
                 
                 <!-- Filter Controls -->
