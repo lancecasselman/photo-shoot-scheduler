@@ -35,7 +35,7 @@ class AdvancedVisualEditor {
         this.pages = [
             { id: 'home', name: 'Home', icon: '🏠' },
             { id: 'about', name: 'About', icon: '👤' },
-            { id: 'portfolio', name: 'Portfolio', icon: '📸' },
+            { id: 'gallery', name: 'Portfolio', icon: '📸' },
             { id: 'contact', name: 'Contact', icon: '📧' }
         ];
         
@@ -55,7 +55,7 @@ class AdvancedVisualEditor {
         this.pageBlocks = {
             home: [],
             about: [],
-            portfolio: [],
+            gallery: [],
             contact: []
         };
         
@@ -164,11 +164,15 @@ class AdvancedVisualEditor {
         const sidebar = document.querySelector('.editor-sidebar');
         if (!sidebar) return;
 
+        // Check if block section already exists
+        if (sidebar.querySelector('.block-section')) return;
+
         const blockSection = document.createElement('div');
+        blockSection.className = 'block-section';
         blockSection.innerHTML = `
             <h3>🧱 Blocks</h3>
             <div class="block-actions">
-                <button class="btn btn-primary" onclick="editor.showAddBlockModal()">
+                <button class="btn btn-primary" onclick="window.editor && window.editor.showAddBlockModal()">
                     ➕ Add Block
                 </button>
             </div>
@@ -245,15 +249,31 @@ class AdvancedVisualEditor {
     async loadPageContent(pageId) {
         // Load specific page content
         try {
-            const response = await fetch(`/storefront-templates/${this.currentTheme}/${pageId}.html`);
+            let response = await fetch(`/storefront-templates/${this.currentTheme}/${pageId}.html`);
             let html;
             
             if (response.ok) {
                 html = await response.text();
             } else {
-                // Fallback to home page if specific page doesn't exist
-                const homeResponse = await fetch(`/storefront-templates/${this.currentTheme}/home.html`);
-                html = await homeResponse.text();
+                // Try alternative page names
+                const alternatives = {
+                    'gallery': 'portfolio',
+                    'portfolio': 'gallery'
+                };
+                
+                if (alternatives[pageId]) {
+                    response = await fetch(`/storefront-templates/${this.currentTheme}/${alternatives[pageId]}.html`);
+                    if (response.ok) {
+                        html = await response.text();
+                    }
+                }
+                
+                // Final fallback to home page
+                if (!html) {
+                    const homeResponse = await fetch(`/storefront-templates/${this.currentTheme}/home.html`);
+                    html = await homeResponse.text();
+                    console.log(`Using home template as fallback for ${pageId}`);
+                }
             }
             
             // Process the HTML
@@ -573,7 +593,7 @@ class AdvancedVisualEditor {
             </div>
             <div class="modal-actions">
                 <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Cancel</button>
-                <button class="btn btn-primary" onclick="editor.addSelectedBlock()">Add Block</button>
+                <button class="btn btn-primary" onclick="window.editor && window.editor.addSelectedBlock()">Add Block</button>
             </div>
         `;
         
@@ -760,16 +780,39 @@ class AdvancedVisualEditor {
 
     // Utility Functions
     replaceTemplateVariables(html) {
-        // Replace template variables with saved content
+        // Replace template placeholders with saved content or defaults
+        const replacements = {
+            '{{heroTitle}}': this.getContentValue('hero_title') || 'Light + Airy Creative Studio',
+            '{{heroSubtitle}}': this.getContentValue('hero_subtitle') || 'Capturing Life\'s Beautiful Moments',
+            '{{studioName}}': this.getContentValue('studio_name') || 'Light + Airy Creative Studio',
+            '{{tagline}}': this.getContentValue('tagline') || 'Professional Photography Services',
+            '{{aboutText}}': this.getContentValue('about_text') || 'We specialize in capturing the moments that matter most to you.',
+            '{{contactEmail}}': this.getContentValue('contact_email') || 'hello@lightairycreative.com',
+            '{{contactPhone}}': this.getContentValue('contact_phone') || '(555) 123-4567'
+        };
+        
+        Object.entries(replacements).forEach(([placeholder, value]) => {
+            html = html.replace(new RegExp(placeholder.replace(/[{}]/g, '\\$&'), 'g'), value);
+        });
+        
+        // Replace content in elements with matching block IDs
         Object.entries(this.contentData[this.currentPage] || {}).forEach(([blockId, data]) => {
             if (data.type === 'text') {
-                // Replace content in elements with matching block IDs
                 const regex = new RegExp(`data-block-id="${blockId}"[^>]*>([^<]*)<`, 'g');
                 html = html.replace(regex, `data-block-id="${blockId}">${data.content}<`);
             }
         });
         
         return html;
+    }
+    
+    getContentValue(key) {
+        // Get content value from saved data or defaults
+        const pageData = this.contentData[this.currentPage] || {};
+        const blockData = Object.values(pageData).find(block => 
+            block.type === 'text' && block.content && block.content.includes(key)
+        );
+        return blockData ? blockData.content : null;
     }
 
     addHamburgerMenu(html) {
@@ -954,6 +997,8 @@ class AdvancedVisualEditor {
                     // Trigger page change in editor
                     if (window.editor) {
                         window.editor.selectPage(this.dataset.page);
+                    } else {
+                        console.log('Editor not available, page change skipped');
                     }
                 });
             });
@@ -1031,6 +1076,10 @@ class AdvancedVisualEditor {
     }
 
     showNotification(message, type = 'info', duration = 3000) {
+        // Remove existing notifications of the same type
+        const existing = document.querySelectorAll(`.notification-${type}`);
+        existing.forEach(n => n.remove());
+        
         const notification = document.createElement('div');
         notification.className = `notification notification-${type}`;
         notification.textContent = message;
@@ -1039,9 +1088,13 @@ class AdvancedVisualEditor {
         
         if (duration > 0) {
             setTimeout(() => {
-                notification.remove();
+                if (notification.parentNode) {
+                    notification.remove();
+                }
             }, duration);
         }
+        
+        return notification;
     }
 }
 
@@ -1049,12 +1102,18 @@ class AdvancedVisualEditor {
 function publishSite() {
     if (window.editor) {
         window.editor.publishSite();
+    } else {
+        console.error('Editor not initialized');
+        alert('Editor not ready. Please wait for initialization.');
     }
 }
 
 function previewSite() {
     if (window.editor) {
         window.editor.previewSite();
+    } else {
+        console.error('Editor not initialized');
+        alert('Editor not ready. Please wait for initialization.');
     }
 }
 
