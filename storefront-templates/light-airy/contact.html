@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact - Photography</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --cream: #F7F3F0;
+            --beige: #E8DDD4;
+            --sage: #9CAFA3;
+            --muted-gold: #C4962D;
+            --charcoal: #2C2C2C;
+            --warm-white: #FEFCFA;
+            --font-heading: 'Cormorant Garamond', serif;
+            --font-body: 'Quicksand', sans-serif;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: var(--font-body);
+            background: var(--cream);
+            color: var(--charcoal);
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: var(--warm-white);
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(44, 44, 44, 0.08);
+        }
+        
+        .nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-family: var(--font-heading);
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--muted-gold);
+            text-decoration: none;
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+        
+        .nav-link {
+            text-decoration: none;
+            color: var(--charcoal);
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--muted-gold);
+        }
+        
+        .main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+        
+        .page-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+        
+        .page-title {
+            font-family: var(--font-heading);
+            font-size: 3rem;
+            color: var(--charcoal);
+            margin-bottom: 1rem;
+        }
+        
+        .page-description {
+            font-size: 1.2rem;
+            color: var(--charcoal);
+            opacity: 0.8;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .contact-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            margin-bottom: 4rem;
+        }
+        
+        .contact-form {
+            background: var(--warm-white);
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(44, 44, 44, 0.08);
+        }
+        
+        .form-title {
+            font-family: var(--font-heading);
+            font-size: 1.8rem;
+            color: var(--charcoal);
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 500;
+            color: var(--charcoal);
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--beige);
+            border-radius: 6px;
+            font-family: var(--font-body);
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--muted-gold);
+            box-shadow: 0 0 0 3px rgba(196, 150, 45, 0.1);
+        }
+        
+        .form-textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+        
+        .form-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.7rem center;
+            background-size: 1rem;
+            padding-right: 2.5rem;
+        }
+        
+        .submit-btn {
+            background: var(--muted-gold);
+            color: var(--warm-white);
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-family: var(--font-body);
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        .submit-btn:hover {
+            background: #D4AF37;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(196, 150, 45, 0.3);
+        }
+        
+        .contact-info {
+            background: var(--warm-white);
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(44, 44, 44, 0.08);
+        }
+        
+        .info-title {
+            font-family: var(--font-heading);
+            font-size: 1.8rem;
+            color: var(--charcoal);
+            margin-bottom: 1.5rem;
+        }
+        
+        .contact-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .contact-icon {
+            font-size: 1.5rem;
+            color: var(--muted-gold);
+            margin-top: 0.2rem;
+        }
+        
+        .contact-details h4 {
+            font-weight: 600;
+            color: var(--charcoal);
+            margin-bottom: 0.3rem;
+        }
+        
+        .contact-details p {
+            color: var(--charcoal);
+            opacity: 0.8;
+            line-height: 1.5;
+        }
+        
+        .contact-details a {
+            color: var(--muted-gold);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .contact-details a:hover {
+            color: #D4AF37;
+        }
+        
+        .social-links {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .social-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+            background: var(--beige);
+            color: var(--charcoal);
+            border-radius: 50%;
+            text-decoration: none;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+        
+        .social-link:hover {
+            background: var(--muted-gold);
+            color: var(--warm-white);
+            transform: translateY(-3px);
+        }
+        
+        .business-hours {
+            background: var(--warm-white);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(44, 44, 44, 0.08);
+            margin-top: 2rem;
+        }
+        
+        .hours-title {
+            font-family: var(--font-heading);
+            font-size: 1.5rem;
+            color: var(--charcoal);
+            margin-bottom: 1rem;
+        }
+        
+        .hours-list {
+            list-style: none;
+        }
+        
+        .hours-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--beige);
+        }
+        
+        .hours-item:last-child {
+            border-bottom: none;
+        }
+        
+        .day {
+            font-weight: 500;
+            color: var(--charcoal);
+        }
+        
+        .time {
+            color: var(--charcoal);
+            opacity: 0.8;
+        }
+        
+        .footer {
+            background: var(--charcoal);
+            color: var(--warm-white);
+            padding: 3rem 2rem 2rem;
+            text-align: center;
+            margin-top: 4rem;
+        }
+        
+        @media (max-width: 768px) {
+            .contact-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            
+            .page-title {
+                font-size: 2.2rem;
+            }
+            
+            .contact-form,
+            .contact-info {
+                padding: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <a href="#" class="logo">Your Photography</a>
+            <ul class="nav-links">
+                <li><a href="#" class="nav-link">Home</a></li>
+                <li><a href="#" class="nav-link">About</a></li>
+                <li><a href="#" class="nav-link">Gallery</a></li>
+                <li><a href="#" class="nav-link">Store</a></li>
+                <li><a href="#" class="nav-link">Journal</a></li>
+                <li><a href="#" class="nav-link active">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="main">
+        <div class="page-header">
+            <h1 class="page-title">Get In Touch</h1>
+            <p class="page-description">Ready to capture your special moments? Let's discuss your photography needs and create something beautiful together.</p>
+        </div>
+        
+        <div class="contact-content">
+            <div class="contact-form">
+                <h2 class="form-title">Send a Message</h2>
+                <form>
+                    <div class="form-group">
+                        <label class="form-label" for="name">Your Name</label>
+                        <input type="text" class="form-input" id="name" name="name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="email">Email Address</label>
+                        <input type="email" class="form-input" id="email" name="email" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="phone">Phone Number</label>
+                        <input type="tel" class="form-input" id="phone" name="phone">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="session-type">Session Type</label>
+                        <select class="form-input form-select" id="session-type" name="session-type">
+                            <option value="">Select a session type</option>
+                            <option value="wedding">Wedding</option>
+                            <option value="engagement">Engagement</option>
+                            <option value="family">Family Portrait</option>
+                            <option value="maternity">Maternity</option>
+                            <option value="newborn">Newborn</option>
+                            <option value="individual">Individual Portrait</option>
+                            <option value="lifestyle">Lifestyle</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="event-date">Preferred Date</label>
+                        <input type="date" class="form-input" id="event-date" name="event-date">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="message">Message</label>
+                        <textarea class="form-input form-textarea" id="message" name="message" placeholder="Tell me about your vision, location preferences, and any special details..."></textarea>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn">Send Message</button>
+                </form>
+            </div>
+            
+            <div class="contact-info">
+                <h2 class="info-title">Contact Information</h2>
+                
+                <div class="contact-item">
+                    <div class="contact-icon">📧</div>
+                    <div class="contact-details">
+                        <h4>Email</h4>
+                        <p><a href="mailto:" id="contactEmail">hello@photographer.com</a></p>
+                    </div>
+                </div>
+                
+                <div class="contact-item">
+                    <div class="contact-icon">📱</div>
+                    <div class="contact-details">
+                        <h4>Phone</h4>
+                        <p><a href="tel:" id="contactPhone">(555) 123-4567</a></p>
+                    </div>
+                </div>
+                
+                <div class="contact-item">
+                    <div class="contact-icon">📍</div>
+                    <div class="contact-details">
+                        <h4>Location</h4>
+                        <p id="contactAddress">Your Studio Address<br>City, State 12345</p>
+                    </div>
+                </div>
+                
+                <div class="contact-item">
+                    <div class="contact-icon">💬</div>
+                    <div class="contact-details">
+                        <h4>Response Time</h4>
+                        <p>I typically respond within 24 hours. For urgent inquiries, please call directly.</p>
+                    </div>
+                </div>
+                
+                <div class="social-links">
+                    <a href="#" class="social-link" title="Instagram">📷</a>
+                    <a href="#" class="social-link" title="Facebook">📘</a>
+                    <a href="#" class="social-link" title="Pinterest">📌</a>
+                    <a href="#" class="social-link" title="Email">📧</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="business-hours">
+            <h3 class="hours-title">Business Hours</h3>
+            <ul class="hours-list">
+                <li class="hours-item">
+                    <span class="day">Monday - Friday</span>
+                    <span class="time">9:00 AM - 6:00 PM</span>
+                </li>
+                <li class="hours-item">
+                    <span class="day">Saturday</span>
+                    <span class="time">10:00 AM - 4:00 PM</span>
+                </li>
+                <li class="hours-item">
+                    <span class="day">Sunday</span>
+                    <span class="time">By Appointment</span>
+                </li>
+            </ul>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2025 Your Photography. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // Form submission
+        document.querySelector('form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Get form data
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            
+            // Simulate form submission
+            alert('Thank you for your message! I will get back to you within 24 hours.');
+            this.reset();
+        });
+        
+        // Listen for data updates
+        window.addEventListener('message', function(event) {
+            if (event.data.type === 'updateSiteData') {
+                const data = event.data.data;
+                const pageData = data.pages.contact;
+                
+                if (pageData) {
+                    const contactEmail = document.getElementById('contactEmail');
+                    const contactPhone = document.getElementById('contactPhone');
+                    const contactAddress = document.getElementById('contactAddress');
+                    
+                    if (contactEmail && pageData.email) {
+                        contactEmail.textContent = pageData.email;
+                        contactEmail.href = `mailto:${pageData.email}`;
+                    }
+                    
+                    if (contactPhone && pageData.phone) {
+                        contactPhone.textContent = pageData.phone;
+                        contactPhone.href = `tel:${pageData.phone}`;
+                    }
+                    
+                    if (contactAddress && pageData.address) {
+                        contactAddress.innerHTML = pageData.address.replace(/\n/g, '<br>');
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

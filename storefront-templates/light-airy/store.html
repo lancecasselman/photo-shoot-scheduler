@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Print Store - Photography</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --cream: #F7F3F0;
+            --beige: #E8DDD4;
+            --sage: #9CAFA3;
+            --muted-gold: #C4962D;
+            --charcoal: #2C2C2C;
+            --warm-white: #FEFCFA;
+            --font-heading: 'Cormorant Garamond', serif;
+            --font-body: 'Quicksand', sans-serif;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: var(--font-body);
+            background: var(--cream);
+            color: var(--charcoal);
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: var(--warm-white);
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(44, 44, 44, 0.08);
+        }
+        
+        .nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-family: var(--font-heading);
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--muted-gold);
+            text-decoration: none;
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+        
+        .nav-link {
+            text-decoration: none;
+            color: var(--charcoal);
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--muted-gold);
+        }
+        
+        .main {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+        
+        .page-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+        
+        .page-title {
+            font-family: var(--font-heading);
+            font-size: 3rem;
+            color: var(--charcoal);
+            margin-bottom: 1rem;
+        }
+        
+        .page-description {
+            font-size: 1.2rem;
+            color: var(--charcoal);
+            opacity: 0.8;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .product-categories {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+        
+        .category-btn {
+            padding: 0.5rem 1.5rem;
+            border: 2px solid var(--beige);
+            background: transparent;
+            color: var(--charcoal);
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: var(--font-body);
+            font-weight: 500;
+        }
+        
+        .category-btn:hover,
+        .category-btn.active {
+            background: var(--muted-gold);
+            border-color: var(--muted-gold);
+            color: var(--warm-white);
+        }
+        
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+        
+        .product-card {
+            background: var(--warm-white);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(44, 44, 44, 0.08);
+            transition: transform 0.3s ease;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(44, 44, 44, 0.15);
+        }
+        
+        .product-image {
+            width: 100%;
+            aspect-ratio: 4/3;
+            background: linear-gradient(135deg, var(--beige), var(--sage));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--warm-white);
+            font-size: 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .product-info {
+            padding: 1.5rem;
+        }
+        
+        .product-title {
+            font-family: var(--font-heading);
+            font-size: 1.3rem;
+            color: var(--charcoal);
+            margin-bottom: 0.5rem;
+        }
+        
+        .product-description {
+            color: var(--charcoal);
+            opacity: 0.8;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .product-sizes {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .size-option {
+            padding: 0.3rem 0.8rem;
+            border: 1px solid var(--beige);
+            border-radius: 15px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .size-option:hover,
+        .size-option.selected {
+            background: var(--muted-gold);
+            border-color: var(--muted-gold);
+            color: var(--warm-white);
+        }
+        
+        .product-price {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .price {
+            font-family: var(--font-heading);
+            font-size: 1.2rem;
+            color: var(--muted-gold);
+            font-weight: 600;
+        }
+        
+        .add-to-cart {
+            background: var(--muted-gold);
+            color: var(--warm-white);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: var(--font-body);
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        .add-to-cart:hover {
+            background: #D4AF37;
+            transform: translateY(-1px);
+        }
+        
+        .cart-summary {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: var(--warm-white);
+            padding: 1rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(44, 44, 44, 0.15);
+            min-width: 200px;
+            z-index: 100;
+        }
+        
+        .cart-title {
+            font-family: var(--font-heading);
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: var(--charcoal);
+        }
+        
+        .cart-items {
+            font-size: 0.9rem;
+            color: var(--charcoal);
+            opacity: 0.8;
+            margin-bottom: 1rem;
+        }
+        
+        .cart-total {
+            font-weight: 600;
+            color: var(--muted-gold);
+            border-top: 1px solid var(--beige);
+            padding-top: 0.5rem;
+        }
+        
+        .checkout-btn {
+            background: var(--sage);
+            color: var(--warm-white);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: var(--font-body);
+            font-weight: 500;
+            width: 100%;
+            margin-top: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .checkout-btn:hover {
+            background: #8BA695;
+        }
+        
+        .footer {
+            background: var(--charcoal);
+            color: var(--warm-white);
+            padding: 3rem 2rem 2rem;
+            text-align: center;
+        }
+        
+        @media (max-width: 768px) {
+            .page-title {
+                font-size: 2.2rem;
+            }
+            
+            .products-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            
+            .product-categories {
+                gap: 0.5rem;
+            }
+            
+            .category-btn {
+                padding: 0.4rem 1rem;
+                font-size: 0.9rem;
+            }
+            
+            .cart-summary {
+                position: static;
+                margin-bottom: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <a href="#" class="logo">Your Photography</a>
+            <ul class="nav-links">
+                <li><a href="#" class="nav-link">Home</a></li>
+                <li><a href="#" class="nav-link">About</a></li>
+                <li><a href="#" class="nav-link">Gallery</a></li>
+                <li><a href="#" class="nav-link active">Store</a></li>
+                <li><a href="#" class="nav-link">Journal</a></li>
+                <li><a href="#" class="nav-link">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="main">
+        <div class="page-header">
+            <h1 class="page-title" id="storeTitle">Print Store</h1>
+            <p class="page-description" id="storeDescription">High-quality professional prints of your favorite images, delivered to your door</p>
+        </div>
+        
+        <div class="product-categories">
+            <button class="category-btn active" data-category="all">All Products</button>
+            <button class="category-btn" data-category="prints">Prints</button>
+            <button class="category-btn" data-category="canvas">Canvas</button>
+            <button class="category-btn" data-category="metal">Metal Prints</button>
+            <button class="category-btn" data-category="albums">Albums</button>
+        </div>
+        
+        <div class="cart-summary">
+            <h3 class="cart-title">Cart Summary</h3>
+            <div class="cart-items" id="cartItems">0 items</div>
+            <div class="cart-total" id="cartTotal">Total: $0.00</div>
+            <button class="checkout-btn">Checkout</button>
+        </div>
+        
+        <div class="products-grid">
+            <!-- Print Products -->
+            <div class="product-card" data-category="prints">
+                <div class="product-image">
+                    <span>🖼️</span>
+                </div>
+                <div class="product-info">
+                    <h3 class="product-title">Professional Prints</h3>
+                    <p class="product-description">Premium quality prints on professional paper with archival inks</p>
+                    <div class="product-sizes">
+                        <span class="size-option" data-price="25">5x7</span>
+                        <span class="size-option" data-price="35">8x10</span>
+                        <span class="size-option selected" data-price="45">11x14</span>
+                        <span class="size-option" data-price="65">16x20</span>
+                    </div>
+                    <div class="product-price">
+                        <span class="price">$45.00</span>
+                    </div>
+                    <button class="add-to-cart">Add to Cart</button>
+                </div>
+            </div>
+            
+            <!-- Canvas Products -->
+            <div class="product-card" data-category="canvas">
+                <div class="product-image">
+                    <span>🎨</span>
+                </div>
+                <div class="product-info">
+                    <h3 class="product-title">Canvas Gallery Wraps</h3>
+                    <p class="product-description">Museum-quality canvas prints ready to hang</p>
+                    <div class="product-sizes">
+                        <span class="size-option" data-price="85">12x16</span>
+                        <span class="size-option selected" data-price="125">16x20</span>
+                        <span class="size-option" data-price="165">20x24</span>
+                        <span class="size-option" data-price="225">24x36</span>
+                    </div>
+                    <div class="product-price">
+                        <span class="price">$125.00</span>
+                    </div>
+                    <button class="add-to-cart">Add to Cart</button>
+                </div>
+            </div>
+            
+            <!-- Metal Prints -->
+            <div class="product-card" data-category="metal">
+                <div class="product-image">
+                    <span>✨</span>
+                </div>
+                <div class="product-info">
+                    <h3 class="product-title">Metal Prints</h3>
+                    <p class="product-description">Vibrant colors on aluminum with a modern finish</p>
+                    <div class="product-sizes">
+                        <span class="size-option" data-price="75">8x12</span>
+                        <span class="size-option selected" data-price="95">12x18</span>
+                        <span class="size-option" data-price="145">16x24</span>
+                        <span class="size-option" data-price="195">20x30</span>
+                    </div>
+                    <div class="product-price">
+                        <span class="price">$95.00</span>
+                    </div>
+                    <button class="add-to-cart">Add to Cart</button>
+                </div>
+            </div>
+            
+            <!-- Albums -->
+            <div class="product-card" data-category="albums">
+                <div class="product-image">
+                    <span>📚</span>
+                </div>
+                <div class="product-info">
+                    <h3 class="product-title">Photo Albums</h3>
+                    <p class="product-description">Luxury bound albums with premium pages</p>
+                    <div class="product-sizes">
+                        <span class="size-option" data-price="185">8x8 (20 pages)</span>
+                        <span class="size-option selected" data-price="245">10x10 (30 pages)</span>
+                        <span class="size-option" data-price="325">12x12 (40 pages)</span>
+                    </div>
+                    <div class="product-price">
+                        <span class="price">$245.00</span>
+                    </div>
+                    <button class="add-to-cart">Add to Cart</button>
+                </div>
+            </div>
+            
+            <!-- Framed Prints -->
+            <div class="product-card" data-category="prints">
+                <div class="product-image">
+                    <span>🖼️</span>
+                </div>
+                <div class="product-info">
+                    <h3 class="product-title">Framed Prints</h3>
+                    <p class="product-description">Professional prints in elegant frames</p>
+                    <div class="product-sizes">
+                        <span class="size-option" data-price="85">8x10</span>
+                        <span class="size-option selected" data-price="125">11x14</span>
+                        <span class="size-option" data-price="165">16x20</span>
+                        <span class="size-option" data-price="225">20x24</span>
+                    </div>
+                    <div class="product-price">
+                        <span class="price">$125.00</span>
+                    </div>
+                    <button class="add-to-cart">Add to Cart</button>
+                </div>
+            </div>
+            
+            <!-- Acrylic Prints -->
+            <div class="product-card" data-category="prints">
+                <div class="product-image">
+                    <span>💎</span>
+                </div>
+                <div class="product-info">
+                    <h3 class="product-title">Acrylic Prints</h3>
+                    <p class="product-description">Crystal clear acrylic for stunning depth</p>
+                    <div class="product-sizes">
+                        <span class="size-option" data-price="95">8x12</span>
+                        <span class="size-option selected" data-price="135">12x18</span>
+                        <span class="size-option" data-price="185">16x24</span>
+                        <span class="size-option" data-price="245">20x30</span>
+                    </div>
+                    <div class="product-price">
+                        <span class="price">$135.00</span>
+                    </div>
+                    <button class="add-to-cart">Add to Cart</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2025 Your Photography. All rights reserved.</p>
+    </footer>
+
+    <script>
+        let cart = [];
+        let cartTotal = 0;
+        
+        // Category filtering
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                const category = btn.dataset.category;
+                const products = document.querySelectorAll('.product-card');
+                
+                products.forEach(product => {
+                    if (category === 'all' || product.dataset.category === category) {
+                        product.style.display = 'block';
+                    } else {
+                        product.style.display = 'none';
+                    }
+                });
+            });
+        });
+        
+        // Size selection and price updates
+        document.querySelectorAll('.size-option').forEach(option => {
+            option.addEventListener('click', () => {
+                const productCard = option.closest('.product-card');
+                const sizeOptions = productCard.querySelectorAll('.size-option');
+                const priceElement = productCard.querySelector('.price');
+                
+                sizeOptions.forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+                
+                const price = option.dataset.price;
+                priceElement.textContent = `$${price}.00`;
+            });
+        });
+        
+        // Add to cart functionality
+        document.querySelectorAll('.add-to-cart').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const productCard = btn.closest('.product-card');
+                const title = productCard.querySelector('.product-title').textContent;
+                const selectedSize = productCard.querySelector('.size-option.selected');
+                const price = parseFloat(selectedSize.dataset.price);
+                
+                cart.push({
+                    title: title,
+                    size: selectedSize.textContent,
+                    price: price
+                });
+                
+                updateCartDisplay();
+                
+                // Visual feedback
+                btn.textContent = 'Added!';
+                btn.style.background = '#9CAFA3';
+                setTimeout(() => {
+                    btn.textContent = 'Add to Cart';
+                    btn.style.background = '';
+                }, 1000);
+            });
+        });
+        
+        function updateCartDisplay() {
+            const cartItems = document.getElementById('cartItems');
+            const cartTotalElement = document.getElementById('cartTotal');
+            
+            cartTotal = cart.reduce((total, item) => total + item.price, 0);
+            
+            cartItems.textContent = `${cart.length} item${cart.length !== 1 ? 's' : ''}`;
+            cartTotalElement.textContent = `Total: $${cartTotal.toFixed(2)}`;
+        }
+        
+        // Checkout functionality
+        document.querySelector('.checkout-btn').addEventListener('click', () => {
+            if (cart.length > 0) {
+                alert(`Checkout functionality would process ${cart.length} items for $${cartTotal.toFixed(2)}`);
+            } else {
+                alert('Your cart is empty');
+            }
+        });
+        
+        // Listen for data updates
+        window.addEventListener('message', function(event) {
+            if (event.data.type === 'updateSiteData') {
+                const data = event.data.data;
+                const pageData = data.pages.store;
+                
+                if (pageData) {
+                    const storeTitle = document.getElementById('storeTitle');
+                    const storeDescription = document.getElementById('storeDescription');
+                    
+                    if (storeTitle && pageData.title) {
+                        storeTitle.textContent = pageData.title;
+                    }
+                    
+                    if (storeDescription && pageData.description) {
+                        storeDescription.textContent = pageData.description;
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

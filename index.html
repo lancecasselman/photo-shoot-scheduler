@@ -3745,6 +3745,11 @@
                             Business Setup
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="openStorefront(); closeMobileMenu();">
+                            🏪 Storefront Builder
+                        </a>
+                    </li>
                 </ul>
             </nav>
         </div>
@@ -10834,6 +10839,12 @@ I'm so grateful to work with clients like ${clientName} who trust me to capture 
                 mobileMenu.classList.remove('show');
             }
         });
+
+        // Storefront Builder Function
+        function openStorefront() {
+            showMessage('Opening Storefront Builder...', 'info');
+            window.open('/storefront.html', '_blank');
+        }
 
     </script>
 

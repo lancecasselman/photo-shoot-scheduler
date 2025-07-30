@@ -376,7 +376,27 @@ async function initializeDatabase() {
             )
         `);
 
-        console.log('Database tables initialized successfully');
+        // Create storefront_sites table for storefront builder
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS storefront_sites (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                user_id VARCHAR(255) UNIQUE NOT NULL,
+                site_data JSONB NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        
+        // Create published_sites table for published storefronts
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS published_sites (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                user_id VARCHAR(255) UNIQUE NOT NULL,
+                username VARCHAR(255) UNIQUE NOT NULL,
+                site_data JSONB NOT NULL,
+                published_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
 
         console.log('Database tables initialized successfully');
     } catch (error) {
@@ -920,6 +940,203 @@ app.delete('/api/sessions/:sessionId/photos/:filename', isAuthenticated, async (
         res.status(500).json({ error: 'Failed to delete photo' });
     }
 });
+
+// ===== STOREFRONT BUILDER API ENDPOINTS =====
+
+// Serve storefront builder page
+app.get('/storefront', isAuthenticated, (req, res) => {
+    res.sendFile(path.join(__dirname, 'storefront.html'));
+});
+
+// Serve storefront preview pages
+app.get('/storefront-preview/:page', async (req, res) => {
+    const { page } = req.params;
+    const theme = req.query.theme || 'light-airy';
+    
+    try {
+        const templatePath = path.join(__dirname, 'storefront-templates', theme, `${page}.html`);
+        
+        if (fs.existsSync(templatePath)) {
+            let template = fs.readFileSync(templatePath, 'utf8');
+            
+            // Replace template variables with query parameters if provided
+            if (req.query.heroTitle) {
+                template = template.replace(/\{\{heroTitle\}\}/g, req.query.heroTitle);
+            }
+            if (req.query.heroSubtitle) {
+                template = template.replace(/\{\{heroSubtitle\}\}/g, req.query.heroSubtitle);
+            }
+            if (req.query.heroCta) {
+                template = template.replace(/\{\{heroCta\}\}/g, req.query.heroCta);
+            }
+            
+            res.send(template);
+        } else {
+            res.status(404).send('Template not found');
+        }
+    } catch (error) {
+        console.error('Error serving template:', error);
+        res.status(500).send('Template error');
+    }
+});
+
+// Save storefront data
+app.post('/api/storefront/save', isAuthenticated, async (req, res) => {
+    try {
+        const { siteData } = req.body;
+        const userId = req.user.uid;
+        
+        // Save to database
+        const query = `
+            INSERT INTO storefront_sites (user_id, site_data, updated_at)
+            VALUES ($1, $2, NOW())
+            ON CONFLICT (user_id)
+            DO UPDATE SET 
+                site_data = $2,
+                updated_at = NOW()
+            RETURNING *
+        `;
+        
+        await pool.query(query, [userId, JSON.stringify(siteData)]);
+        
+        res.json({ success: true, message: 'Site data saved successfully' });
+    } catch (error) {
+        console.error('Error saving storefront data:', error);
+        res.status(500).json({ error: 'Failed to save site data' });
+    }
+});
+
+// Load storefront data
+app.get('/api/storefront/load', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.user.uid;
+        
+        const query = 'SELECT site_data FROM storefront_sites WHERE user_id = $1';
+        const result = await pool.query(query, [userId]);
+        
+        if (result.rows.length > 0) {
+            res.json({ siteData: result.rows[0].site_data });
+        } else {
+            res.json({ siteData: null });
+        }
+    } catch (error) {
+        console.error('Error loading storefront data:', error);
+        res.status(500).json({ error: 'Failed to load site data' });
+    }
+});
+
+// Publish storefront site
+app.post('/api/storefront/publish', isAuthenticated, async (req, res) => {
+    try {
+        const { siteData } = req.body;
+        const userId = req.user.uid;
+        const username = req.user.email.split('@')[0]; // Use email prefix as username
+        
+        // Save published site data
+        const query = `
+            INSERT INTO published_sites (user_id, username, site_data, published_at)
+            VALUES ($1, $2, $3, NOW())
+            ON CONFLICT (user_id)
+            DO UPDATE SET 
+                site_data = $3,
+                published_at = NOW()
+            RETURNING *
+        `;
+        
+        await pool.query(query, [userId, username, JSON.stringify(siteData)]);
+        
+        // Generate public site files (simplified version)
+        await generateStaticSite(username, siteData);
+        
+        const siteUrl = `${req.protocol}://${req.get('host')}/sites/${username}`;
+        res.json({ 
+            success: true, 
+            message: 'Site published successfully',
+            url: siteUrl
+        });
+    } catch (error) {
+        console.error('Error publishing site:', error);
+        res.status(500).json({ error: 'Failed to publish site' });
+    }
+});
+
+// Serve published sites
+app.get('/sites/:username/:page?', async (req, res) => {
+    try {
+        const { username, page = 'home' } = req.params;
+        
+        // Get published site data
+        const query = 'SELECT site_data FROM published_sites WHERE username = $1';
+        const result = await pool.query(query, [username]);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).send('Site not found');
+        }
+        
+        const siteData = result.rows[0].site_data;
+        const theme = siteData.theme || 'light-airy';
+        
+        // Load template
+        const templatePath = path.join(__dirname, 'storefront-templates', theme, `${page}.html`);
+        
+        if (!fs.existsSync(templatePath)) {
+            return res.status(404).send('Page not found');
+        }
+        
+        let template = fs.readFileSync(templatePath, 'utf8');
+        
+        // Replace template variables with actual data
+        const pageData = siteData.pages[page];
+        if (pageData) {
+            // Replace all template variables
+            template = template.replace(/\{\{([^}]+)\}\}/g, (match, key) => {
+                return pageData[key] || match;
+            });
+        }
+        
+        res.send(template);
+    } catch (error) {
+        console.error('Error serving published site:', error);
+        res.status(500).send('Site error');
+    }
+});
+
+// Generate static site files (simplified)
+async function generateStaticSite(username, siteData) {
+    const siteDir = path.join(__dirname, 'static-sites', username);
+    
+    // Create directory if it doesn't exist
+    if (!fs.existsSync(siteDir)) {
+        fs.mkdirSync(siteDir, { recursive: true });
+    }
+    
+    const theme = siteData.theme || 'light-airy';
+    const pages = ['home', 'about', 'gallery', 'store', 'blog', 'contact'];
+    
+    for (const page of pages) {
+        try {
+            const templatePath = path.join(__dirname, 'storefront-templates', theme, `${page}.html`);
+            
+            if (fs.existsSync(templatePath)) {
+                let template = fs.readFileSync(templatePath, 'utf8');
+                
+                // Replace template variables
+                const pageData = siteData.pages[page];
+                if (pageData) {
+                    template = template.replace(/\{\{([^}]+)\}\}/g, (match, key) => {
+                        return pageData[key] || match;
+                    });
+                }
+                
+                // Save generated page
+                const outputFile = page === 'home' ? 'index.html' : `${page}.html`;
+                fs.writeFileSync(path.join(siteDir, outputFile), template);
+            }
+        } catch (error) {
+            console.error(`Error generating ${page} for ${username}:`, error);
+        }
+    }
+}
 
 // Delete session
 app.delete('/api/sessions/:id', isAuthenticated, async (req, res) => {

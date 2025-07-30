@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gallery - Photography</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --cream: #F7F3F0;
+            --beige: #E8DDD4;
+            --sage: #9CAFA3;
+            --muted-gold: #C4962D;
+            --charcoal: #2C2C2C;
+            --warm-white: #FEFCFA;
+            --font-heading: 'Cormorant Garamond', serif;
+            --font-body: 'Quicksand', sans-serif;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: var(--font-body);
+            background: var(--cream);
+            color: var(--charcoal);
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: var(--warm-white);
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(44, 44, 44, 0.08);
+        }
+        
+        .nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-family: var(--font-heading);
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--muted-gold);
+            text-decoration: none;
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+        
+        .nav-link {
+            text-decoration: none;
+            color: var(--charcoal);
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--muted-gold);
+        }
+        
+        .main {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+        
+        .page-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+        
+        .page-title {
+            font-family: var(--font-heading);
+            font-size: 3rem;
+            color: var(--charcoal);
+            margin-bottom: 1rem;
+        }
+        
+        .page-description {
+            font-size: 1.2rem;
+            color: var(--charcoal);
+            opacity: 0.8;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .gallery-filters {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: 0.5rem 1.5rem;
+            border: 2px solid var(--beige);
+            background: transparent;
+            color: var(--charcoal);
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: var(--font-body);
+            font-weight: 500;
+        }
+        
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: var(--muted-gold);
+            border-color: var(--muted-gold);
+            color: var(--warm-white);
+        }
+        
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+        
+        .gallery-item {
+            background: var(--warm-white);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(44, 44, 44, 0.08);
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .gallery-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(44, 44, 44, 0.15);
+        }
+        
+        .gallery-image {
+            width: 100%;
+            aspect-ratio: 4/3;
+            background: linear-gradient(135deg, var(--beige), var(--sage));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--warm-white);
+            font-size: 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .gallery-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        
+        .gallery-item:hover .gallery-image img {
+            transform: scale(1.05);
+        }
+        
+        .gallery-info {
+            padding: 1.5rem;
+        }
+        
+        .gallery-title {
+            font-family: var(--font-heading);
+            font-size: 1.3rem;
+            color: var(--charcoal);
+            margin-bottom: 0.5rem;
+        }
+        
+        .gallery-category {
+            color: var(--muted-gold);
+            font-weight: 500;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .lightbox.active {
+            display: flex;
+        }
+        
+        .lightbox-image {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+        
+        .lightbox-close {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.1);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s ease;
+        }
+        
+        .lightbox-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .footer {
+            background: var(--charcoal);
+            color: var(--warm-white);
+            padding: 3rem 2rem 2rem;
+            text-align: center;
+        }
+        
+        @media (max-width: 768px) {
+            .page-title {
+                font-size: 2.2rem;
+            }
+            
+            .gallery-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            
+            .gallery-filters {
+                gap: 0.5rem;
+            }
+            
+            .filter-btn {
+                padding: 0.4rem 1rem;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <a href="#" class="logo">Your Photography</a>
+            <ul class="nav-links">
+                <li><a href="#" class="nav-link">Home</a></li>
+                <li><a href="#" class="nav-link">About</a></li>
+                <li><a href="#" class="nav-link active">Gallery</a></li>
+                <li><a href="#" class="nav-link">Store</a></li>
+                <li><a href="#" class="nav-link">Journal</a></li>
+                <li><a href="#" class="nav-link">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="main">
+        <div class="page-header">
+            <h1 class="page-title" id="galleryTitle">Portfolio</h1>
+            <p class="page-description" id="galleryDescription">Explore my collection of work showcasing different styles and moments</p>
+        </div>
+        
+        <div class="gallery-filters">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="wedding">Wedding</button>
+            <button class="filter-btn" data-filter="portrait">Portrait</button>
+            <button class="filter-btn" data-filter="family">Family</button>
+            <button class="filter-btn" data-filter="lifestyle">Lifestyle</button>
+        </div>
+        
+        <div class="gallery-grid">
+            <div class="gallery-item" data-category="wedding">
+                <div class="gallery-image">
+                    <span>💒</span>
+                </div>
+                <div class="gallery-info">
+                    <h3 class="gallery-title">Romantic Wedding</h3>
+                    <p class="gallery-category">Wedding</p>
+                </div>
+            </div>
+            
+            <div class="gallery-item" data-category="portrait">
+                <div class="gallery-image">
+                    <span>👤</span>
+                </div>
+                <div class="gallery-info">
+                    <h3 class="gallery-title">Professional Portrait</h3>
+                    <p class="gallery-category">Portrait</p>
+                </div>
+            </div>
+            
+            <div class="gallery-item" data-category="family">
+                <div class="gallery-image">
+                    <span>👨‍👩‍👧‍👦</span>
+                </div>
+                <div class="gallery-info">
+                    <h3 class="gallery-title">Family Memories</h3>
+                    <p class="gallery-category">Family</p>
+                </div>
+            </div>
+            
+            <div class="gallery-item" data-category="lifestyle">
+                <div class="gallery-image">
+                    <span>🌸</span>
+                </div>
+                <div class="gallery-info">
+                    <h3 class="gallery-title">Lifestyle Session</h3>
+                    <p class="gallery-category">Lifestyle</p>
+                </div>
+            </div>
+            
+            <div class="gallery-item" data-category="wedding">
+                <div class="gallery-image">
+                    <span>💍</span>
+                </div>
+                <div class="gallery-info">
+                    <h3 class="gallery-title">Engagement Session</h3>
+                    <p class="gallery-category">Wedding</p>
+                </div>
+            </div>
+            
+            <div class="gallery-item" data-category="portrait">
+                <div class="gallery-image">
+                    <span>🎭</span>
+                </div>
+                <div class="gallery-info">
+                    <h3 class="gallery-title">Creative Portrait</h3>
+                    <p class="gallery-category">Portrait</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="lightbox" id="lightbox">
+        <div class="lightbox-close">&times;</div>
+        <img class="lightbox-image" id="lightboxImage" src="" alt="">
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2025 Your Photography. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // Gallery filtering
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Update active filter
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                const filter = btn.dataset.filter;
+                const items = document.querySelectorAll('.gallery-item');
+                
+                items.forEach(item => {
+                    if (filter === 'all' || item.dataset.category === filter) {
+                        item.style.display = 'block';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        });
+        
+        // Lightbox functionality
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImage = document.getElementById('lightboxImage');
+        
+        document.querySelectorAll('.gallery-item').forEach(item => {
+            item.addEventListener('click', () => {
+                // For now, just show a placeholder
+                lightboxImage.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjRjdGM0YwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIzNiIgZmlsbD0iIzJDMkMyQyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkdhbGxlcnkgSW1hZ2U8L3RleHQ+PC9zdmc+';
+                lightbox.classList.add('active');
+            });
+        });
+        
+        // Close lightbox
+        lightbox.addEventListener('click', () => {
+            lightbox.classList.remove('active');
+        });
+        
+        document.querySelector('.lightbox-close').addEventListener('click', (e) => {
+            e.stopPropagation();
+            lightbox.classList.remove('active');
+        });
+        
+        // Listen for data updates
+        window.addEventListener('message', function(event) {
+            if (event.data.type === 'updateSiteData') {
+                const data = event.data.data;
+                const pageData = data.pages.gallery;
+                
+                if (pageData) {
+                    const galleryTitle = document.getElementById('galleryTitle');
+                    const galleryDescription = document.getElementById('galleryDescription');
+                    
+                    if (galleryTitle && pageData.title) {
+                        galleryTitle.textContent = pageData.title;
+                    }
+                    
+                    if (galleryDescription && pageData.description) {
+                        galleryDescription.textContent = pageData.description;
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - Photography</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --cream: #F7F3F0;
+            --beige: #E8DDD4;
+            --sage: #9CAFA3;
+            --muted-gold: #C4962D;
+            --charcoal: #2C2C2C;
+            --warm-white: #FEFCFA;
+            --font-heading: 'Cormorant Garamond', serif;
+            --font-body: 'Quicksand', sans-serif;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: var(--font-body);
+            background: var(--cream);
+            color: var(--charcoal);
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: var(--warm-white);
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(44, 44, 44, 0.08);
+        }
+        
+        .nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-family: var(--font-heading);
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--muted-gold);
+            text-decoration: none;
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+        
+        .nav-link {
+            text-decoration: none;
+            color: var(--charcoal);
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        
+        .nav-link:hover,
+        .nav-link.active {
+            color: var(--muted-gold);
+        }
+        
+        .main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+        
+        .page-title {
+            font-family: var(--font-heading);
+            font-size: 3rem;
+            text-align: center;
+            color: var(--charcoal);
+            margin-bottom: 3rem;
+        }
+        
+        .about-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: start;
+            margin-bottom: 4rem;
+        }
+        
+        .about-image {
+            text-align: center;
+        }
+        
+        .about-image img {
+            width: 100%;
+            max-width: 500px;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(44, 44, 44, 0.12);
+        }
+        
+        .image-placeholder {
+            width: 100%;
+            max-width: 500px;
+            aspect-ratio: 3/4;
+            background: linear-gradient(135deg, var(--beige), var(--sage));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--warm-white);
+            font-size: 4rem;
+            box-shadow: 0 8px 30px rgba(44, 44, 44, 0.12);
+        }
+        
+        .about-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+        }
+        
+        .about-text p {
+            margin-bottom: 1.5rem;
+        }
+        
+        .about-text h3 {
+            font-family: var(--font-heading);
+            font-size: 1.8rem;
+            color: var(--muted-gold);
+            margin-bottom: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 4rem;
+        }
+        
+        .service-card {
+            background: var(--warm-white);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(44, 44, 44, 0.08);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        
+        .service-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .service-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .service-title {
+            font-family: var(--font-heading);
+            font-size: 1.5rem;
+            color: var(--charcoal);
+            margin-bottom: 1rem;
+        }
+        
+        .service-description {
+            color: var(--charcoal);
+            opacity: 0.8;
+        }
+        
+        .footer {
+            background: var(--charcoal);
+            color: var(--warm-white);
+            padding: 3rem 2rem 2rem;
+            text-align: center;
+            margin-top: 4rem;
+        }
+        
+        @media (max-width: 768px) {
+            .about-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            
+            .page-title {
+                font-size: 2.2rem;
+            }
+            
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <a href="#" class="logo">Your Photography</a>
+            <ul class="nav-links">
+                <li><a href="#" class="nav-link">Home</a></li>
+                <li><a href="#" class="nav-link active">About</a></li>
+                <li><a href="#" class="nav-link">Gallery</a></li>
+                <li><a href="#" class="nav-link">Store</a></li>
+                <li><a href="#" class="nav-link">Journal</a></li>
+                <li><a href="#" class="nav-link">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="main">
+        <h1 class="page-title">About Me</h1>
+        
+        <div class="about-content">
+            <div class="about-image">
+                <div class="image-placeholder" id="aboutImage">📸</div>
+            </div>
+            <div class="about-text">
+                <p id="aboutStory">I am a passionate photographer dedicated to capturing authentic moments and creating timeless memories. With years of experience and an eye for detail, I specialize in creating beautiful, artistic images that tell your unique story.</p>
+                
+                <h3>My Approach</h3>
+                <p>Every session is approached with creativity, professionalism, and a commitment to excellence. I believe in building genuine connections with my clients to capture their true essence and create images that will be treasured for generations.</p>
+                
+                <h3>Experience</h3>
+                <p>With years of experience in photography, I have developed a keen eye for composition, lighting, and emotion. My work has been featured in various publications and I've had the privilege of documenting countless special moments for families and couples.</p>
+            </div>
+        </div>
+        
+        <div class="services-grid">
+            <div class="service-card">
+                <div class="service-icon">💑</div>
+                <h3 class="service-title">Wedding Photography</h3>
+                <p class="service-description">Capturing your special day with artistic vision and attention to every precious moment.</p>
+            </div>
+            <div class="service-card">
+                <div class="service-icon">👨‍👩‍👧‍👦</div>
+                <h3 class="service-title">Family Portraits</h3>
+                <p class="service-description">Creating beautiful family memories that showcase your unique bond and personalities.</p>
+            </div>
+            <div class="service-card">
+                <div class="service-icon">👤</div>
+                <h3 class="service-title">Portrait Sessions</h3>
+                <p class="service-description">Professional portraits that capture your authentic self with style and elegance.</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2025 Your Photography. All rights reserved.</p>
+    </footer>
+
+    <script>
+        window.addEventListener('message', function(event) {
+            if (event.data.type === 'updateSiteData') {
+                const data = event.data.data;
+                const pageData = data.pages.about;
+                
+                if (pageData) {
+                    const aboutStory = document.getElementById('aboutStory');
+                    const aboutImage = document.getElementById('aboutImage');
+                    
+                    if (aboutStory && pageData.story) {
+                        aboutStory.textContent = pageData.story;
+                    }
+                    
+                    if (aboutImage && pageData.image) {
+                        aboutImage.innerHTML = `<img src="${pageData.image}" alt="About Me" />`;
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
