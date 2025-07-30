@@ -4,6 +4,14 @@
 
 This is a comprehensive photography business management platform featuring session scheduling, PostgreSQL database, photo galleries, email/SMS notifications, iPhone Calendar integration, Stripe invoicing, e-signature contracts, and revolutionary AI-powered website builder. Built with vanilla JavaScript, HTML/CSS, and Express.js backend. Features drag-and-drop photo uploads, session management, and responsive design optimized for mobile devices.
 
+## User Preferences
+
+### Communication Style (July 30, 2025)
+- **Direct & Innovative**: User prefers "innovative shit talking version" - straightforward, no-bullshit communication style
+- **Skip Formalities**: Cut through pleasantries and get straight to the technical implementation
+- **Bold Solutions**: Focus on cutting-edge, innovative approaches rather than safe, conventional methods
+- **Real Talk**: Be direct about what works, what doesn't, and why certain approaches are better
+
 ## Recent Changes
 
 ### Website Navigation Header Implementation (July 30, 2025) - COMPLETED ✅
