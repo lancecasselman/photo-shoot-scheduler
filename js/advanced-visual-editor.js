@@ -755,30 +755,40 @@ class AdvancedVisualEditor {
         html += this.getFontCSS();
         html += this.getMobileNavCSS();
         
-        // Add hamburger menu for mobile navigation
+        // Add website header with hamburger menu navigation
         html += `
-            <div class="mobile-nav-overlay" id="mobile-nav-overlay">
-                <nav class="mobile-nav">
-                    <div class="mobile-nav-header">
-                        <span class="mobile-nav-title">Navigation</span>
-                        <button class="mobile-nav-close" onclick="toggleMobileNav()">×</button>
-                    </div>
-                    <ul class="mobile-nav-links">
+            <header class="website-header">
+                <div class="website-header-content">
+                    <a href="#" class="website-logo">Photography Studio</a>
+                    
+                    <!-- Desktop Navigation -->
+                    <nav class="website-nav">
                         ${this.pages.map(page => `
-                            <li><a href="#${page.id}" onclick="toggleMobileNav(); if(window.editor) window.editor.switchPage('${page.id}')">${page.name}</a></li>
+                            <a href="#${page.id}" class="${page.id === this.currentPage ? 'active' : ''}" onclick="if(window.editor) window.editor.switchPage('${page.id}'); return false;">${page.name}</a>
                         `).join('')}
-                    </ul>
+                    </nav>
+                    
+                    <!-- Hamburger Menu Button -->
+                    <div class="website-hamburger" onclick="toggleWebsiteNav()">
+                        <div class="website-hamburger-line"></div>
+                        <div class="website-hamburger-line"></div>
+                        <div class="website-hamburger-line"></div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Mobile Navigation Overlay -->
+            <div class="website-mobile-overlay" id="website-mobile-overlay" onclick="closeWebsiteNav(event)">
+                <nav class="website-mobile-nav">
+                    ${this.pages.map(page => `
+                        <a href="#${page.id}" class="${page.id === this.currentPage ? 'active' : ''}" onclick="toggleWebsiteNav(); if(window.editor) window.editor.switchPage('${page.id}'); return false;">${page.name}</a>
+                    `).join('')}
                 </nav>
-            </div>
-            <div class="mobile-nav-toggle" onclick="toggleMobileNav()">
-                <span></span>
-                <span></span>
-                <span></span>
             </div>
         `;
         
-        // Page container with custom background
-        html += `<div class="page-container" data-page="${this.currentPage}" style="min-height: 100vh; background: ${pageSettings.backgroundColor || '#F7F3F0'}; font-family: var(--font-body);">`;
+        // Page container with custom background and content wrapper for fixed header
+        html += `<div class="content-wrapper"><div class="page-container" data-page="${this.currentPage}" style="min-height: calc(100vh - 60px); background: ${pageSettings.backgroundColor || '#F7F3F0'}; font-family: var(--font-body);">`;
         
         if (layout.length === 0) {
             html += `
@@ -800,7 +810,7 @@ class AdvancedVisualEditor {
             });
         }
         
-        html += `</div>`;
+        html += `</div></div>`;
         
         // Add drag and drop functionality
         html += this.getDragDropScript();
@@ -1617,6 +1627,158 @@ class AdvancedVisualEditor {
                     color: var(--charcoal);
                     line-height: 1.6;
                 }
+
+                /* Website Navigation Header */
+                .website-header {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    background: rgba(255, 255, 255, 0.95);
+                    backdrop-filter: blur(10px);
+                    z-index: 1000;
+                    border-bottom: 1px solid var(--beige);
+                    height: 60px;
+                }
+
+                .website-header-content {
+                    max-width: 1200px;
+                    margin: 0 auto;
+                    padding: 0 2rem;
+                    height: 100%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                }
+
+                .website-logo {
+                    font-family: 'Cormorant Garamond', serif;
+                    font-size: 1.5rem;
+                    font-weight: 600;
+                    color: var(--accent);
+                    text-decoration: none;
+                }
+
+                .website-nav {
+                    display: flex;
+                    gap: 2rem;
+                    align-items: center;
+                }
+
+                .website-nav a {
+                    color: var(--text);
+                    text-decoration: none;
+                    font-weight: 500;
+                    transition: color 0.2s ease;
+                }
+
+                .website-nav a:hover {
+                    color: var(--accent);
+                }
+
+                .website-nav a.active {
+                    color: var(--accent);
+                    font-weight: 600;
+                }
+
+                /* Hamburger Menu for Website */
+                .website-hamburger {
+                    display: none;
+                    flex-direction: column;
+                    justify-content: space-between;
+                    width: 25px;
+                    height: 18px;
+                    cursor: pointer;
+                    position: relative;
+                    z-index: 1001;
+                }
+
+                .website-hamburger-line {
+                    width: 100%;
+                    height: 2px;
+                    background-color: var(--accent);
+                    border-radius: 2px;
+                    transition: all 0.3s ease;
+                }
+
+                .website-hamburger.active .website-hamburger-line:nth-child(1) {
+                    transform: rotate(45deg) translate(5px, 5px);
+                }
+
+                .website-hamburger.active .website-hamburger-line:nth-child(2) {
+                    opacity: 0;
+                }
+
+                .website-hamburger.active .website-hamburger-line:nth-child(3) {
+                    transform: rotate(-45deg) translate(7px, -6px);
+                }
+
+                /* Mobile Navigation for Website */
+                .website-mobile-nav {
+                    position: fixed;
+                    top: 0;
+                    right: -300px;
+                    width: 280px;
+                    height: 100vh;
+                    background: var(--light);
+                    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+                    transition: right 0.3s ease;
+                    z-index: 1000;
+                    padding: 80px 2rem 2rem;
+                    overflow-y: auto;
+                }
+
+                .website-mobile-nav.active {
+                    right: 0;
+                }
+
+                .website-mobile-nav a {
+                    display: block;
+                    padding: 1rem 0;
+                    color: var(--text);
+                    text-decoration: none;
+                    font-weight: 500;
+                    border-bottom: 1px solid var(--secondary);
+                    transition: color 0.2s ease;
+                }
+
+                .website-mobile-nav a:hover,
+                .website-mobile-nav a.active {
+                    color: var(--accent);
+                }
+
+                .website-mobile-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.5);
+                    z-index: 999;
+                    opacity: 0;
+                    visibility: hidden;
+                    transition: all 0.3s ease;
+                }
+
+                .website-mobile-overlay.active {
+                    opacity: 1;
+                    visibility: visible;
+                }
+
+                @media (max-width: 768px) {
+                    .website-nav {
+                        display: none;
+                    }
+
+                    .website-hamburger {
+                        display: flex;
+                    }
+                }
+
+                /* Content spacing for fixed header */
+                .content-wrapper {
+                    margin-top: 60px;
+                }
                 
                 .editor-block {
                     position: relative;
@@ -1857,7 +2019,54 @@ class AdvancedVisualEditor {
     getDragDropScript() {
         return `
             <script>
-                // Drag and drop functionality will be handled by the main editor
+                // Website Navigation JavaScript
+                function toggleWebsiteNav() {
+                    const overlay = document.getElementById('website-mobile-overlay');
+                    const hamburger = document.querySelector('.website-hamburger');
+                    
+                    overlay.classList.toggle('active');
+                    hamburger.classList.toggle('active');
+                }
+
+                function closeWebsiteNav(event) {
+                    if (event.target === event.currentTarget) {
+                        toggleWebsiteNav();
+                    }
+                }
+
+                // Close navigation when clicking outside or pressing escape
+                document.addEventListener('keydown', function(event) {
+                    if (event.key === 'Escape') {
+                        const overlay = document.getElementById('website-mobile-overlay');
+                        if (overlay && overlay.classList.contains('active')) {
+                            toggleWebsiteNav();
+                        }
+                    }
+                });
+
+                // Prevent page scrolling when mobile nav is open
+                function preventScroll() {
+                    const overlay = document.getElementById('website-mobile-overlay');
+                    if (overlay && overlay.classList.contains('active')) {
+                        document.body.style.overflow = 'hidden';
+                    } else {
+                        document.body.style.overflow = '';
+                    }
+                }
+
+                // Watch for mobile nav changes
+                const observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.attributeName === 'class') {
+                            preventScroll();
+                        }
+                    });
+                });
+
+                const overlay = document.getElementById('website-mobile-overlay');
+                if (overlay) {
+                    observer.observe(overlay, { attributes: true });
+                }
             </script>
         `;
     }
