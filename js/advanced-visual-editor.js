@@ -387,6 +387,11 @@ class AdvancedVisualEditor {
             }
             
             this.currentPage = pageId;
+            
+            // Update background and font controls for new page
+            this.setupBackgroundControls();
+            this.setupFontControls();
+            
             await this.loadCurrentPage();
             
             this.showSuccess(`Switched to ${pageId} page`);
@@ -442,10 +447,16 @@ class AdvancedVisualEditor {
 
     async loadDefaultPageTemplate() {
         try {
-            // Always create default blocks for any page that doesn't exist
-            this.pageLayouts[this.currentPage] = this.createDefaultPageBlocks(this.currentPage);
+            console.log(`🔄 Loading default template for ${this.currentPage} page`);
+            
+            // Generate default content for the current page
+            this.pageLayouts[this.currentPage] = await this.generateDefaultPageContent(this.currentPage);
+            
+            // Render the page with new content
             await this.renderPage();
-            this.showSuccess(`Created default ${this.currentPage} page`);
+            
+            console.log(`✅ Default template loaded for ${this.currentPage} page`);
+            this.showSuccess(`Created default content for ${this.currentPage} page`);
             
         } catch (error) {
             console.error('Failed to create default template:', error);
@@ -453,160 +464,7 @@ class AdvancedVisualEditor {
         }
     }
 
-    createDefaultPageBlocks(pageId) {
-        const commonBlocks = [];
-        
-        switch (pageId) {
-            case 'home':
-                commonBlocks.push(
-                    {
-                        id: `hero-${Date.now()}`,
-                        type: 'hero',
-                        content: {
-                            headline: 'Welcome to Our Photography Studio',
-                            subtitle: 'Capturing life\'s most precious moments with artistic vision',
-                            buttonText: 'View Portfolio',
-                            imageUrl: 'https://images.unsplash.com/photo-1554048612-b6a482b22084?ixlib=rb-4.0.3&w=1200&q=80'
-                        }
-                    },
-                    {
-                        id: `about-${Date.now()}`,
-                        type: 'about',
-                        content: {
-                            title: 'Our Story',
-                            text: 'We are passionate photographers dedicated to creating timeless memories through our lens. With years of experience and an eye for detail, we capture the essence of every moment.'
-                        }
-                    },
-                    {
-                        id: `cta-${Date.now()}`,
-                        type: 'cta',
-                        content: {
-                            title: 'Ready to Book Your Session?',
-                            text: 'Let\'s create beautiful memories together',
-                            buttonText: 'Contact Us',
-                            buttonUrl: '#contact'
-                        }
-                    }
-                );
-                break;
-                
-            case 'about':
-                commonBlocks.push(
-                    {
-                        id: `about-main-${Date.now()}`,
-                        type: 'about',
-                        content: {
-                            title: 'About Our Studio',
-                            text: 'Our photography journey began with a simple belief: every moment deserves to be captured beautifully. We specialize in creating authentic, emotional images that tell your unique story.'
-                        }
-                    },
-                    {
-                        id: `text-mission-${Date.now()}`,
-                        type: 'text',
-                        content: {
-                            text: 'Our mission is to provide exceptional photography services that exceed expectations. We believe in building relationships with our clients and creating art that will be treasured for generations.'
-                        }
-                    }
-                );
-                break;
-                
-            case 'gallery':
-                commonBlocks.push(
-                    {
-                        id: `gallery-hero-${Date.now()}`,
-                        type: 'text',
-                        content: {
-                            text: 'Explore our portfolio of beautiful moments captured with passion and creativity.'
-                        }
-                    },
-                    {
-                        id: `image-grid-${Date.now()}`,
-                        type: 'image-grid',
-                        content: {
-                            images: [
-                                'https://images.unsplash.com/photo-1554048612-b6a482b22084?ixlib=rb-4.0.3&w=400&q=80',
-                                'https://images.unsplash.com/photo-1583195764036-6dc248ac07d9?ixlib=rb-4.0.3&w=400&q=80',
-                                'https://images.unsplash.com/photo-1519741497674-611481863552?ixlib=rb-4.0.3&w=400&q=80',
-                                'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?ixlib=rb-4.0.3&w=400&q=80',
-                                'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?ixlib=rb-4.0.3&w=400&q=80',
-                                'https://images.unsplash.com/photo-1520854221256-17451cc331bf?ixlib=rb-4.0.3&w=400&q=80'
-                            ]
-                        }
-                    }
-                );
-                break;
-                
-            case 'store':
-                commonBlocks.push(
-                    {
-                        id: `store-hero-${Date.now()}`,
-                        type: 'text',
-                        content: {
-                            text: 'Professional photography packages tailored to your needs.'
-                        }
-                    },
-                    {
-                        id: `pricing-${Date.now()}`,
-                        type: 'pricing',
-                        content: {
-                            packages: [
-                                {
-                                    name: 'Essential',
-                                    price: '$299',
-                                    features: ['2 Hour Session', '50 Edited Photos', 'Digital Gallery', 'Print Release']
-                                },
-                                {
-                                    name: 'Premium',
-                                    price: '$599',
-                                    features: ['4 Hour Session', '150 Edited Photos', 'Digital Gallery', 'Print Release', 'USB Drive', '10 Prints']
-                                },
-                                {
-                                    name: 'Elite',
-                                    price: '$999',
-                                    features: ['Full Day Coverage', '300+ Photos', 'Premium Gallery', 'Print Release', 'Custom USB', '20 Prints', 'Photo Album']
-                                }
-                            ]
-                        }
-                    }
-                );
-                break;
-                
-            case 'contact':
-                commonBlocks.push(
-                    {
-                        id: `contact-hero-${Date.now()}`,
-                        type: 'text',
-                        content: {
-                            text: 'Ready to capture your special moments? We\'d love to hear from you.'
-                        }
-                    },
-                    {
-                        id: `contact-cta-${Date.now()}`,
-                        type: 'cta',
-                        content: {
-                            title: 'Get In Touch',
-                            text: 'Contact us today to discuss your photography needs',
-                            buttonText: 'Send Message',
-                            buttonUrl: 'mailto:studio@example.com'
-                        }
-                    }
-                );
-                break;
-                
-            default:
-                commonBlocks.push(
-                    {
-                        id: `default-${Date.now()}`,
-                        type: 'text',
-                        content: {
-                            text: `Welcome to the ${pageId} page. Click to edit this text and add more blocks using the sidebar.`
-                        }
-                    }
-                );
-        }
-        
-        return commonBlocks;
-    }
+
 
     convertTemplateToBlocks(html) {
         // Simple conversion - in production this would be more sophisticated
@@ -670,6 +528,9 @@ class AdvancedVisualEditor {
             const previousTheme = this.currentTheme;
             this.currentTheme = themeKey;
             
+            // Generate default content for all pages if they're empty
+            await this.ensureAllPagesHaveContent();
+            
             // Re-render with new theme styling
             await this.renderPage();
             
@@ -685,6 +546,116 @@ class AdvancedVisualEditor {
             // Revert theme on error
             this.currentTheme = previousTheme;
         }
+    }
+
+    async ensureAllPagesHaveContent() {
+        console.log('🔄 Ensuring all pages have content...');
+        
+        for (const page of this.pages) {
+            if (!this.pageLayouts[page.id] || this.pageLayouts[page.id].length === 0) {
+                this.pageLayouts[page.id] = await this.generateDefaultPageContent(page.id);
+                console.log(`✅ Generated default content for ${page.name} page`);
+            }
+        }
+    }
+
+    async generateDefaultPageContent(pageId) {
+        const blocks = [];
+        
+        switch (pageId) {
+            case 'home':
+                blocks.push({
+                    id: `hero-${Date.now()}`,
+                    type: 'hero',
+                    content: {
+                        headline: 'Professional Photography Studio',
+                        subtitle: 'Capturing life\'s most precious moments with artistic vision',
+                        buttonText: 'View Our Work',
+                        imageUrl: 'https://images.unsplash.com/photo-1554048612-b6a482b22084?ixlib=rb-4.0.3&w=1200&q=80'
+                    }
+                });
+                blocks.push({
+                    id: `text-${Date.now()}`,
+                    type: 'text',
+                    content: {
+                        text: 'Welcome to our photography studio where every moment becomes a timeless memory. We specialize in capturing the essence of your special occasions with creativity and professional excellence.'
+                    }
+                });
+                break;
+                
+            case 'about':
+                blocks.push({
+                    id: `about-${Date.now()}`,
+                    type: 'about',
+                    content: {
+                        title: 'About Our Studio',
+                        text: 'With years of experience in photography, we bring passion and professionalism to every shoot. Our mission is to create beautiful, lasting memories that you\'ll treasure forever.'
+                    }
+                });
+                blocks.push({
+                    id: `text-${Date.now() + 1}`,
+                    type: 'text',
+                    content: {
+                        text: 'Our approach combines technical expertise with artistic vision, ensuring that every photograph tells your unique story.'
+                    }
+                });
+                break;
+                
+            case 'gallery':
+                blocks.push({
+                    id: `text-${Date.now()}`,
+                    type: 'text',
+                    content: {
+                        text: 'Explore our portfolio of recent work and see the stories we\'ve helped capture.'
+                    }
+                });
+                blocks.push({
+                    id: `image-grid-${Date.now()}`,
+                    type: 'image-grid',
+                    content: {
+                        images: [
+                            'https://images.unsplash.com/photo-1554048612-b6a482b22084?ixlib=rb-4.0.3&w=400&q=80',
+                            'https://images.unsplash.com/photo-1583195764036-6dc248ac07d9?ixlib=rb-4.0.3&w=400&q=80',
+                            'https://images.unsplash.com/photo-1519741497674-611481863552?ixlib=rb-4.0.3&w=400&q=80',
+                            'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?ixlib=rb-4.0.3&w=400&q=80',
+                            'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?ixlib=rb-4.0.3&w=400&q=80',
+                            'https://images.unsplash.com/photo-1537633552985-df8429e8048b?ixlib=rb-4.0.3&w=400&q=80'
+                        ]
+                    }
+                });
+                break;
+                
+            case 'contact':
+                blocks.push({
+                    id: `text-${Date.now()}`,
+                    type: 'text',
+                    content: {
+                        text: 'Ready to capture your special moments? Get in touch to discuss your photography needs.'
+                    }
+                });
+                blocks.push({
+                    id: `cta-${Date.now()}`,
+                    type: 'cta',
+                    content: {
+                        title: 'Book Your Session',
+                        text: 'Contact us today to schedule your photography session',
+                        buttonText: 'Get In Touch',
+                        buttonUrl: '#contact'
+                    }
+                });
+                break;
+                
+            default:
+                blocks.push({
+                    id: `text-${Date.now()}`,
+                    type: 'text',
+                    content: {
+                        text: `Welcome to the ${pageId} page. Click to edit this content and make it your own.`
+                    }
+                });
+        }
+        
+        return blocks;
     }
 
     // PHASE 4: BLOCK SYSTEM
