@@ -821,6 +821,60 @@
         .page-status.saved {
             background: var(--sage);
         }
+
+        /* Notification System Styles */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            z-index: 10000;
+            animation: slideInRight 0.3s ease;
+            max-width: 300px;
+            box-shadow: var(--shadow-medium);
+        }
+
+        .notification-success {
+            background: var(--sage);
+            color: var(--warm-white);
+        }
+
+        .notification-error {
+            background: #dc3545;
+            color: var(--warm-white);
+        }
+
+        .notification-loading {
+            background: var(--muted-gold);
+            color: var(--warm-white);
+        }
+
+        .notification-info {
+            background: var(--charcoal);
+            color: var(--warm-white);
+        }
+
+        /* Button Mini Styles */
+        .btn-mini {
+            padding: 0.25rem 0.5rem;
+            border: none;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
     </style>
 </head>
 <body>

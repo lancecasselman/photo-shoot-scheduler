@@ -337,10 +337,14 @@ class AdvancedVisualEditor {
         try {
             // Load page layout from Firebase or fallback
             const layout = await this.loadPageLayout(this.currentPage);
-            this.pageLayouts[this.currentPage] = layout;
             
-            // Render the page
-            await this.renderPage();
+            if (layout && layout.length > 0) {
+                this.pageLayouts[this.currentPage] = layout;
+                await this.renderPage();
+            } else {
+                // Load default template if no saved layout
+                await this.loadDefaultPageTemplate();
+            }
             
         } catch (error) {
             console.error('Failed to load page:', error);
@@ -586,17 +590,12 @@ class AdvancedVisualEditor {
         
         let html = blockTemplate(block.content);
         
-        // Add editing attributes
-        html = html.replace(/<([^>]+)>/g, (match, tagContent) => {
-            if (tagContent.includes('data-editable')) {
-                return match; // Already has editing attributes
+        // Add editing attributes to specific elements only
+        html = html.replace(/<(h[1-6]|p|span|div|button)[^>]*data-editable="true"[^>]*>/g, (match, tagName) => {
+            if (match.includes(`data-block-id="${block.id}"`)) {
+                return match; // Already has block ID
             }
-            
-            // Add block ID and editing attributes
-            const blockId = `data-block-id="${block.id}"`;
-            const editableAttr = `data-editable="true"`;
-            
-            return `<${tagContent} ${blockId} ${editableAttr}>`;
+            return match.replace('>', ` data-block-id="${block.id}">`);
         });
         
         // Wrap in draggable container
@@ -754,30 +753,47 @@ class AdvancedVisualEditor {
 
     saveBlockContent(element, type, content) {
         const blockElement = element.closest('[data-block-id]');
-        if (!blockElement) return;
+        if (!blockElement) {
+            console.warn('No block element found for content save');
+            return;
+        }
         
         const blockId = blockElement.dataset.blockId;
         const block = this.findBlockById(blockId);
         
         if (block) {
+            // Store previous content for undo
+            const previousContent = { ...block.content };
+            
             // Update content based on type
             if (type === 'text') {
-                // Find the appropriate content field to update
                 const fieldName = this.getContentFieldName(element, block.type);
                 if (fieldName) {
                     block.content[fieldName] = content;
+                } else {
+                    // Fallback to text field
+                    block.content.text = content;
                 }
             } else if (type === 'image') {
                 block.content.imageUrl = content;
             }
             
-            // Add to undo stack
-            this.addToUndoStack('editContent', { blockId, type, content });
+            // Add to undo stack with previous content
+            this.addToUndoStack('editContent', { 
+                blockId, 
+                type, 
+                newContent: content,
+                previousContent 
+            });
             
             // Schedule auto-save
             this.scheduleAutoSave();
             
             console.log(`Saved ${type} content for block ${blockId}`);
+            this.showSuccess('Content updated', 1000);
+            
+        } else {
+            console.error('Block not found for ID:', blockId);
         }
     }
 
@@ -802,7 +818,10 @@ class AdvancedVisualEditor {
 
     // PHASE 4: DRAG AND DROP
     setupBlockDragDrop() {
-        const blocks = document.querySelectorAll('.editor-block');
+        const previewFrame = document.getElementById('preview-frame');
+        if (!previewFrame) return;
+        
+        const blocks = previewFrame.querySelectorAll('.editor-block');
         
         blocks.forEach(block => {
             block.addEventListener('dragstart', (e) => {
@@ -814,20 +833,43 @@ class AdvancedVisualEditor {
             block.addEventListener('dragend', () => {
                 this.isDragging = false;
                 block.classList.remove('dragging');
+                this.updateBlockOrder();
             });
             
             block.addEventListener('dragover', (e) => {
                 e.preventDefault();
-                const dragging = document.querySelector('.dragging');
-                const afterElement = this.getDragAfterElement(block.parentNode, e.clientY);
+                const dragging = previewFrame.querySelector('.dragging');
+                if (!dragging || dragging === block) return;
+                
+                const afterElement = this.getDragAfterElement(previewFrame, e.clientY);
                 
                 if (afterElement == null) {
-                    block.parentNode.appendChild(dragging);
+                    previewFrame.appendChild(dragging);
                 } else {
-                    block.parentNode.insertBefore(dragging, afterElement);
+                    previewFrame.insertBefore(dragging, afterElement);
                 }
             });
         });
+    }
+    
+    updateBlockOrder() {
+        // Update the layout order based on DOM order
+        const previewFrame = document.getElementById('preview-frame');
+        if (!previewFrame) return;
+        
+        const blockElements = previewFrame.querySelectorAll('.editor-block');
+        const newLayout = [];
+        
+        blockElements.forEach(blockEl => {
+            const blockId = blockEl.dataset.blockId;
+            const block = this.findBlockById(blockId);
+            if (block) {
+                newLayout.push(block);
+            }
+        });
+        
+        this.pageLayouts[this.currentPage] = newLayout;
+        this.scheduleAutoSave();
     }
 
     getDragAfterElement(container, y) {
@@ -1117,10 +1159,12 @@ class AdvancedVisualEditor {
 
     // PHASE 6: UX POLISH
     setupAutoSave() {
-        // Auto-save every 30 seconds if there are changes
+        // Auto-save every 30 seconds if there are unsaved changes
         setInterval(() => {
-            if (this.autoSaveTimeout) {
+            if (this.autoSaveTimeout && !this.isEditing) {
                 this.saveAllContent();
+                clearTimeout(this.autoSaveTimeout);
+                this.autoSaveTimeout = null;
             }
         }, 30000);
     }
@@ -1220,16 +1264,25 @@ class AdvancedVisualEditor {
         const layout = this.pageLayouts[this.currentPage] || [];
         
         blocksContainer.innerHTML = '';
+        
+        if (layout.length === 0) {
+            blocksContainer.innerHTML = '<p style="text-align: center; color: var(--sage); font-style: italic;">No blocks yet. Add blocks from the panel above.</p>';
+            return;
+        }
+        
         layout.forEach((block, index) => {
+            const blockType = this.blockTypes[block.type];
+            if (!blockType) return;
+            
             const blockItem = document.createElement('div');
             blockItem.className = 'block-item';
             blockItem.innerHTML = `
                 <div class="block-item-info">
-                    <span class="block-icon">${this.blockTypes[block.type].icon}</span>
-                    <span class="block-name">${this.blockTypes[block.type].name}</span>
+                    <span class="block-icon">${blockType.icon}</span>
+                    <span class="block-name">${blockType.name}</span>
                 </div>
                 <div class="block-item-actions">
-                    <button class="btn-mini btn-danger" onclick="window.editor.deleteBlock('${block.id}')">×</button>
+                    <button class="btn-mini btn-danger" onclick="window.editor && window.editor.deleteBlock ? window.editor.deleteBlock('${block.id}') : console.error('Delete function not available')">×</button>
                 </div>
             `;
             blocksContainer.appendChild(blockItem);
@@ -1237,6 +1290,9 @@ class AdvancedVisualEditor {
     }
 
     showEditingIndicator(element) {
+        // Remove existing indicator first
+        this.hideEditingIndicator();
+        
         const indicator = document.createElement('div');
         indicator.className = 'editing-indicator';
         indicator.textContent = 'Editing...';
@@ -1248,6 +1304,8 @@ class AdvancedVisualEditor {
         indicator.style.padding = '0.5rem 1rem';
         indicator.style.borderRadius = '4px';
         indicator.style.zIndex = '9999';
+        indicator.style.fontSize = '0.9rem';
+        indicator.style.fontWeight = '500';
         
         document.body.appendChild(indicator);
     }
@@ -1492,20 +1550,28 @@ class AdvancedVisualEditor {
 
 // Global functions for HTML onclick handlers
 function publishSite() {
-    if (window.editor) {
+    if (window.editor && typeof window.editor.publishSite === 'function') {
         window.editor.publishSite();
     } else {
-        console.error('Editor not initialized');
-        alert('Editor not ready. Please wait for initialization.');
+        console.error('Editor not ready for publishing');
+        if (window.editor) {
+            window.editor.showError('Publishing not ready. Please wait for editor to fully load.');
+        } else {
+            alert('Editor not ready. Please wait for initialization.');
+        }
     }
 }
 
 function previewSite() {
-    if (window.editor) {
+    if (window.editor && typeof window.editor.previewSite === 'function') {
         window.editor.previewSite();
     } else {
-        console.error('Editor not initialized');
-        alert('Editor not ready. Please wait for initialization.');
+        console.error('Editor not ready for preview');
+        if (window.editor) {
+            window.editor.showError('Preview not ready. Please wait for editor to fully load.');
+        } else {
+            alert('Editor not ready. Please wait for initialization.');
+        }
     }
 }
 
