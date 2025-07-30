@@ -477,12 +477,7 @@
             margin-bottom: var(--spacing-md);
         }
         
-        .user-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
+        /* Removed user avatar styling */
         
         .logout-btn {
             background: var(--rose-dusty);
@@ -3735,20 +3730,19 @@
         <!-- Header with Hamburger Menu -->
         <div class="header">
             <div class="header-left">
-                <div class="logo">Light + Airy Studio</div>
-            </div>
-            
-            <div class="header-right">
-                <div id="userInfo" class="user-info" style="display: block;">
-                    <img id="userAvatar" class="user-avatar" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1pYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=facepad&facepad=2&w=256&h=256&q=80" alt="User Avatar">
-                    <span id="userName">lance@thelegacyphotography.com</span>
-                    <button onclick="firebaseLogout()" class="logout-btn">Sign Out</button>
-                </div>
                 <button class="hamburger-menu" onclick="toggleMobileMenu()">
                     <span class="hamburger-line"></span>
                     <span class="hamburger-line"></span>
                     <span class="hamburger-line"></span>
                 </button>
+                <div class="logo">Light + Airy Studio</div>
+            </div>
+            
+            <div class="header-right">
+                <div id="userInfo" class="user-info" style="display: block;">
+                    <span id="userName">lance@thelegacyphotography.com</span>
+                    <button onclick="firebaseLogout()" class="logout-btn">Sign Out</button>
+                </div>
             </div>
         </div>
 
