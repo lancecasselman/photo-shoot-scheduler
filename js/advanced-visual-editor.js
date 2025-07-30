@@ -221,6 +221,17 @@ class AdvancedVisualEditor {
             pageItem.addEventListener('click', () => this.switchPage(page.id));
             pageNav.appendChild(pageItem);
         });
+        
+        // Add "Add Page" button
+        const addPageButton = document.createElement('div');
+        addPageButton.className = 'page-nav-item add-page-btn';
+        addPageButton.innerHTML = `
+            <span class="page-icon">➕</span>
+            <span class="page-name">Add Page</span>
+            <div class="page-status"></div>
+        `;
+        addPageButton.addEventListener('click', () => this.showAddPageModal());
+        pageNav.appendChild(addPageButton);
     }
 
     setupThemeSelector() {
@@ -366,7 +377,120 @@ class AdvancedVisualEditor {
         });
     }
 
-    // PHASE 2: PAGE SWITCHING
+    // PHASE 2: PAGE SWITCHING & MANAGEMENT
+    showAddPageModal() {
+        const modalHTML = `
+            <div class="modal-overlay" id="add-page-modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Add New Page</h3>
+                        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="page-name-input">Page Name</label>
+                            <input type="text" id="page-name-input" placeholder="e.g., Services, Pricing, Blog" maxlength="20">
+                        </div>
+                        <div class="form-group">
+                            <label for="page-icon-input">Page Icon (Emoji)</label>
+                            <input type="text" id="page-icon-input" placeholder="🎯" maxlength="2">
+                        </div>
+                        <div class="icon-suggestions">
+                            <span class="icon-option" onclick="document.getElementById('page-icon-input').value='🎯'">🎯</span>
+                            <span class="icon-option" onclick="document.getElementById('page-icon-input').value='💰'">💰</span>
+                            <span class="icon-option" onclick="document.getElementById('page-icon-input').value='📝'">📝</span>
+                            <span class="icon-option" onclick="document.getElementById('page-icon-input').value='🏆'">🏆</span>
+                            <span class="icon-option" onclick="document.getElementById('page-icon-input').value='✨'">✨</span>
+                            <span class="icon-option" onclick="document.getElementById('page-icon-input').value='📞'">📞</span>
+                            <span class="icon-option" onclick="document.getElementById('page-icon-input').value='🎨'">🎨</span>
+                            <span class="icon-option" onclick="document.getElementById('page-icon-input').value='🌟'">🌟</span>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+                        <button class="btn btn-primary" onclick="window.editor.createNewPage()">Create Page</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        
+        // Focus on the name input
+        setTimeout(() => {
+            document.getElementById('page-name-input').focus();
+        }, 100);
+        
+        // Handle Enter key to create page
+        document.getElementById('page-name-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.createNewPage();
+            }
+        });
+    }
+
+    async createNewPage() {
+        const nameInput = document.getElementById('page-name-input');
+        const iconInput = document.getElementById('page-icon-input');
+        
+        if (!nameInput || !iconInput) return;
+        
+        const pageName = nameInput.value.trim();
+        const pageIcon = iconInput.value.trim() || '📄';
+        
+        if (!pageName) {
+            this.showError('Please enter a page name');
+            return;
+        }
+        
+        // Create page ID from name (lowercase, replace spaces with hyphens)
+        const pageId = pageName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+        
+        // Check if page already exists
+        if (this.pages.find(page => page.id === pageId)) {
+            this.showError('A page with that name already exists');
+            return;
+        }
+        
+        try {
+            // Add new page to pages array
+            this.pages.push({
+                id: pageId,
+                name: pageName,
+                icon: pageIcon
+            });
+            
+            // Initialize page layout and settings
+            this.pageLayouts[pageId] = [];
+            this.pageSettings[pageId] = { 
+                backgroundColor: '#F7F3F0', 
+                pageTitle: pageName 
+            };
+            
+            // Save to Firebase/localStorage
+            await this.saveUserSettings();
+            await this.saveAllContent();
+            
+            // Refresh page switcher to show new page
+            this.setupPageSwitcher();
+            
+            // Re-render the current page to update navigation
+            await this.renderPage();
+            
+            // Switch to the new page
+            await this.switchPage(pageId);
+            
+            // Close modal
+            document.getElementById('add-page-modal')?.remove();
+            
+            this.showSuccess(`Created "${pageName}" page`);
+            
+        } catch (error) {
+            console.error('Failed to create page:', error);
+            this.showError('Failed to create page');
+        }
+    }
+
     async switchPage(pageId) {
         if (pageId === this.currentPage) return;
         
@@ -1324,6 +1448,14 @@ class AdvancedVisualEditor {
                 if (settingsDoc.exists) {
                     const settings = settingsDoc.data();
                     this.currentTheme = settings.currentTheme || 'light-airy';
+                    
+                    // Load custom pages if available
+                    if (settings.pages) {
+                        this.pages = settings.pages;
+                    }
+                    if (settings.pageSettings) {
+                        this.pageSettings = { ...this.pageSettings, ...settings.pageSettings };
+                    }
                 }
                 
                 console.log('✅ Content loaded from Firebase');
@@ -1339,20 +1471,28 @@ class AdvancedVisualEditor {
 
     loadFromLocalStorage() {
         try {
-            // Load layouts
+            // Load settings first (includes custom pages)
+            const settingsSaved = localStorage.getItem(`settings_${this.userId}`);
+            if (settingsSaved) {
+                const settings = JSON.parse(settingsSaved);
+                this.currentTheme = settings.currentTheme || 'light-airy';
+                
+                // Load custom pages if available
+                if (settings.pages) {
+                    this.pages = settings.pages;
+                }
+                if (settings.pageSettings) {
+                    this.pageSettings = { ...this.pageSettings, ...settings.pageSettings };
+                }
+            }
+            
+            // Load layouts for all pages (including custom ones)
             this.pages.forEach(page => {
                 const saved = localStorage.getItem(`layout_${this.userId}_${page.id}`);
                 if (saved) {
                     this.pageLayouts[page.id] = JSON.parse(saved);
                 }
             });
-            
-            // Load settings
-            const settingsSaved = localStorage.getItem(`settings_${this.userId}`);
-            if (settingsSaved) {
-                const settings = JSON.parse(settingsSaved);
-                this.currentTheme = settings.currentTheme || 'light-airy';
-            }
             
             console.log('✅ Content loaded from localStorage');
             
@@ -1364,7 +1504,9 @@ class AdvancedVisualEditor {
     async saveUserSettings() {
         const settings = {
             currentTheme: this.currentTheme,
-            currentPage: this.currentPage
+            currentPage: this.currentPage,
+            pages: this.pages,
+            pageSettings: this.pageSettings
         };
         
         if (this.firebaseInitialized) {
@@ -1989,6 +2131,163 @@ class AdvancedVisualEditor {
                 
                 .dragging {
                     opacity: 0.5;
+                }
+
+                /* Add Page Button Styling */
+                .add-page-btn {
+                    border: 2px dashed var(--accent) !important;
+                    background: transparent !important;
+                    opacity: 0.7;
+                    transition: all 0.3s ease;
+                }
+
+                .add-page-btn:hover {
+                    opacity: 1;
+                    background: var(--accent) !important;
+                    color: white;
+                }
+
+                /* Modal Styling */
+                .modal-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 10000;
+                    backdrop-filter: blur(4px);
+                }
+
+                .modal-content {
+                    background: white;
+                    border-radius: 8px;
+                    padding: 0;
+                    max-width: 500px;
+                    width: 90%;
+                    max-height: 80vh;
+                    overflow: hidden;
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                }
+
+                .modal-header {
+                    padding: 1.5rem 2rem 1rem;
+                    border-bottom: 1px solid #eee;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+
+                .modal-header h3 {
+                    margin: 0;
+                    color: var(--text);
+                    font-family: 'Cormorant Garamond', serif;
+                    font-size: 1.4rem;
+                }
+
+                .modal-close {
+                    background: none;
+                    border: none;
+                    font-size: 1.5rem;
+                    cursor: pointer;
+                    color: #999;
+                    padding: 0;
+                    width: 30px;
+                    height: 30px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                .modal-close:hover {
+                    color: var(--accent);
+                }
+
+                .modal-body {
+                    padding: 1.5rem 2rem;
+                }
+
+                .form-group {
+                    margin-bottom: 1.5rem;
+                }
+
+                .form-group label {
+                    display: block;
+                    margin-bottom: 0.5rem;
+                    font-weight: 500;
+                    color: var(--text);
+                }
+
+                .form-group input {
+                    width: 100%;
+                    padding: 0.75rem;
+                    border: 2px solid #eee;
+                    border-radius: 4px;
+                    font-size: 1rem;
+                    transition: border-color 0.2s ease;
+                }
+
+                .form-group input:focus {
+                    outline: none;
+                    border-color: var(--accent);
+                }
+
+                .icon-suggestions {
+                    display: flex;
+                    gap: 0.5rem;
+                    margin-top: 0.5rem;
+                }
+
+                .icon-option {
+                    padding: 0.5rem;
+                    background: #f5f5f5;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 1.2rem;
+                    transition: background 0.2s ease;
+                }
+
+                .icon-option:hover {
+                    background: var(--accent);
+                    color: white;
+                }
+
+                .modal-footer {
+                    padding: 1rem 2rem 1.5rem;
+                    border-top: 1px solid #eee;
+                    display: flex;
+                    gap: 1rem;
+                    justify-content: flex-end;
+                }
+
+                .btn {
+                    padding: 0.75rem 1.5rem;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-weight: 500;
+                    transition: all 0.2s ease;
+                }
+
+                .btn-secondary {
+                    background: #f5f5f5;
+                    color: #666;
+                }
+
+                .btn-secondary:hover {
+                    background: #eee;
+                }
+
+                .btn-primary {
+                    background: var(--accent);
+                    color: white;
+                }
+
+                .btn-primary:hover {
+                    background: #b8821e;
                 }
             </style>
         `;

@@ -1323,6 +1323,16 @@
     <!-- Include Advanced Dynamic Visual Editor JavaScript -->
     <script src="/js/advanced-visual-editor.js"></script>
     
+    <!-- Initialize Advanced Visual Editor -->
+    <script>
+        // Initialize the editor when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Create global editor instance
+            window.editor = new AdvancedVisualEditor();
+            console.log('🚀 Advanced Visual Editor initialized');
+        });
+    </script>
+    
     <!-- Hamburger Menu JavaScript -->
     <script>
         function toggleMobileNav() {
