@@ -1187,22 +1187,34 @@ class AdvancedVisualEditor {
     async saveToFirebase() {
         const db = firebase.firestore();
         
-        // Save layouts
-        await db.collection('users').doc(this.userId).collection('storefront').doc('layouts').set({
-            [this.currentPage]: this.pageLayouts[this.currentPage],
-            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true });
-        
-        // Save settings including page settings and fonts
-        await db.collection('users').doc(this.userId).collection('storefront').doc('settings').set({
-            currentTheme: this.currentTheme,
-            pageSettings: this.pageSettings,
-            fontSettings: this.fontSettings,
-            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        console.log('✅ Content saved to Firebase');
-        this.showSuccess('Changes saved', 1500);
+        try {
+            // Convert data to plain objects to avoid Firestore serialization issues
+            const layoutData = {
+                [this.currentPage]: JSON.parse(JSON.stringify(this.pageLayouts[this.currentPage] || [])),
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            const settingsData = {
+                currentTheme: this.currentTheme,
+                pageSettings: JSON.parse(JSON.stringify(this.pageSettings || {})),
+                fontSettings: JSON.parse(JSON.stringify(this.fontSettings || {})),
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            // Save layouts
+            await db.collection('users').doc(this.userId).collection('storefront').doc('layouts').set(layoutData, { merge: true });
+            
+            // Save settings
+            await db.collection('users').doc(this.userId).collection('storefront').doc('settings').set(settingsData);
+            
+            console.log('✅ Content saved to Firebase');
+            this.showSuccess('Changes saved', 1500);
+        } catch (error) {
+            console.error('Firebase save error:', error);
+            // Fallback to localStorage
+            this.saveToLocalStorage();
+            this.showError('Saved locally (Firebase unavailable)');
+        }
     }
 
     saveToLocalStorage() {
@@ -1803,10 +1815,16 @@ class AdvancedVisualEditor {
         const sidebar = document.querySelector('.editor-sidebar');
         if (!sidebar) return;
         
+        // Remove existing background controls to avoid duplicates
+        const existingSection = document.querySelector('.background-controls-section');
+        if (existingSection) {
+            existingSection.remove();
+        }
+        
         const backgroundSection = document.createElement('div');
         backgroundSection.className = 'background-controls-section';
         backgroundSection.innerHTML = `
-            <h4 style="margin: 1rem 0 0.5rem 0; color: var(--charcoal);">Page Background</h4>
+            <h4 style="margin: 1rem 0 0.5rem 0; color: var(--deep-charcoal);">Page Background</h4>
             <div class="background-controls">
                 <label>Background Color:</label>
                 <input type="color" id="page-background-color" value="${this.pageSettings[this.currentPage]?.backgroundColor || '#F7F3F0'}" />
@@ -1819,26 +1837,28 @@ class AdvancedVisualEditor {
         `;
         
         // Insert after page navigation
-        const pageNav = document.getElementById('page-navigation');
+        const pageNav = document.querySelector('.page-navigation');
         if (pageNav && pageNav.parentNode) {
             pageNav.parentNode.insertBefore(backgroundSection, pageNav.nextSibling);
         }
         
         // Add event listeners
-        const colorInput = document.getElementById('page-background-color');
-        const titleInput = document.getElementById('page-title-input');
-        
-        if (colorInput) {
-            colorInput.addEventListener('change', (e) => {
-                this.updatePageBackground(e.target.value);
-            });
-        }
-        
-        if (titleInput) {
-            titleInput.addEventListener('input', (e) => {
-                this.updatePageTitle(e.target.value);
-            });
-        }
+        setTimeout(() => {
+            const colorInput = document.getElementById('page-background-color');
+            const titleInput = document.getElementById('page-title-input');
+            
+            if (colorInput) {
+                colorInput.addEventListener('change', (e) => {
+                    this.updatePageBackground(e.target.value);
+                });
+            }
+            
+            if (titleInput) {
+                titleInput.addEventListener('input', (e) => {
+                    this.updatePageTitle(e.target.value);
+                });
+            }
+        }, 100);
     }
 
     // NEW FEATURE: Font Controls
@@ -1846,10 +1866,16 @@ class AdvancedVisualEditor {
         const sidebar = document.querySelector('.editor-sidebar');
         if (!sidebar) return;
         
+        // Remove existing font controls to avoid duplicates
+        const existingSection = document.querySelector('.font-controls-section');
+        if (existingSection) {
+            existingSection.remove();
+        }
+        
         const fontSection = document.createElement('div');
         fontSection.className = 'font-controls-section';
         fontSection.innerHTML = `
-            <h4 style="margin: 1rem 0 0.5rem 0; color: var(--charcoal);">Typography</h4>
+            <h4 style="margin: 1rem 0 0.5rem 0; color: var(--deep-charcoal);">Typography</h4>
             <div class="font-controls">
                 <div class="font-group">
                     <label>Headings:</label>
@@ -1884,15 +1910,17 @@ class AdvancedVisualEditor {
             backgroundSection.parentNode.insertBefore(fontSection, backgroundSection.nextSibling);
         }
         
-        // Add event listeners
-        ['headings', 'body', 'buttons'].forEach(type => {
-            const select = document.getElementById(`${type}-font`);
-            if (select) {
-                select.addEventListener('change', (e) => {
-                    this.updateFont(type, e.target.value);
-                });
-            }
-        });
+        // Add event listeners with delay to ensure DOM is ready
+        setTimeout(() => {
+            ['headings', 'body', 'buttons'].forEach(type => {
+                const select = document.getElementById(`${type}-font`);
+                if (select) {
+                    select.addEventListener('change', (e) => {
+                        this.updateFont(type, e.target.value);
+                    });
+                }
+            });
+        }, 100);
     }
 
     // Background management functions

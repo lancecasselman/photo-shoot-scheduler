@@ -945,6 +945,150 @@
             padding-top: var(--spacing-sm);
             border-top: 1px solid var(--beige);
         }
+
+        /* Mobile Optimizations */
+        @media (max-width: 768px) {
+            .editor-container {
+                flex-direction: column;
+                height: auto;
+                min-height: 100vh;
+                padding-top: var(--header-height);
+            }
+            
+            .editor-sidebar {
+                width: 100%;
+                height: auto;
+                min-height: 50vh;
+                order: 2;
+                border-right: none;
+                border-top: 1px solid var(--beige);
+                padding: var(--spacing-sm);
+                overflow-y: auto;
+                max-height: 60vh;
+            }
+            
+            .preview-container {
+                order: 1;
+                height: 40vh;
+                min-height: 300px;
+                flex-shrink: 0;
+                width: 100%;
+            }
+            
+            .theme-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: var(--spacing-xs);
+            }
+            
+            .device-controls {
+                justify-content: center;
+                flex-wrap: wrap;
+                gap: var(--spacing-xs);
+            }
+            
+            .device-controls button {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.8rem;
+            }
+            
+            /* Mobile-specific control sections */
+            .background-controls-section,
+            .font-controls-section {
+                margin: var(--spacing-sm) 0;
+                padding: var(--spacing-xs);
+            }
+            
+            .background-controls input[type="color"],
+            .font-controls select,
+            .background-controls input[type="text"] {
+                width: 100%;
+                margin-bottom: var(--spacing-xs);
+            }
+            
+            .font-group {
+                margin-bottom: var(--spacing-xs);
+            }
+            
+            .font-group select {
+                width: 100%;
+            }
+            
+            /* Page navigation mobile optimization */
+            .page-navigation {
+                display: flex;
+                flex-wrap: wrap;
+                gap: var(--spacing-xs);
+                justify-content: center;
+            }
+            
+            .page-navigation button {
+                flex: 1;
+                min-width: calc(50% - var(--spacing-xs));
+                padding: 0.6rem 0.4rem;
+                font-size: 0.8rem;
+            }
+            
+            .preview-header h3 {
+                font-size: 1rem;
+            }
+            
+            .preview-panel-header h4 {
+                font-size: 0.9rem;
+            }
+            
+            .edit-indicator {
+                font-size: 0.7rem;
+            }
+        }
+        
+        /* Extra small mobile devices */
+        @media (max-width: 480px) {
+            .preview-container {
+                height: 35vh;
+                min-height: 250px;
+            }
+            
+            .editor-sidebar {
+                min-height: 65vh;
+                max-height: 75vh;
+            }
+            
+            .theme-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .page-navigation button {
+                min-width: 100%;
+                margin-bottom: var(--spacing-xs);
+            }
+            
+            .device-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .device-controls button {
+                width: 100%;
+                margin-bottom: var(--spacing-xs);
+            }
+            
+            .header-content {
+                padding: 0 var(--spacing-sm);
+            }
+            
+            .storefront-logo {
+                font-size: 1rem;
+            }
+            
+            .header-actions {
+                gap: var(--spacing-xs);
+            }
+            
+            .header-actions .btn {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.8rem;
+            }
+        }
     </style>
 </head>
 <body>
