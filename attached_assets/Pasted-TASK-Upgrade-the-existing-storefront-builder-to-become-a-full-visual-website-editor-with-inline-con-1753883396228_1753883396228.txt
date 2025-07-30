@@ -1,0 +1,80 @@
+TASK: Upgrade the existing storefront builder to become a full visual website editor with inline content editing, theme switching, multi-page editing, and dynamic block layouts. All updates must be visually reflected in real time and persist via Firebase.
+
+PHASE 1: INLINE EDITING
+
+1. Add inline editing for all text content using `contenteditable="true"`
+   - On blur or Enter key, save the updated text to Firebase under:
+     /users/{userId}/storefront/content/{page}/{blockId}/text
+   - Each block must have a unique `blockId` for tracking
+
+2. Enable image editing by:
+   - Wrapping all editable images in a clickable div
+   - On click, open file picker (`<input type="file">`)
+   - Upload to Firebase Storage under: `/storefront-images/{userId}/`
+   - Replace the image's `src` with the download URL
+   - Save reference path to Firestore for that block
+
+PHASE 2: THEME SWITCHING
+
+1. Build a theme selection UI modal or page
+   - Load previews from: `/templates/{themeName}/preview.jpg`
+   - When a theme is selected:
+     - Load all pages (home, about, gallery, etc.) from `/templates/{themeName}/[page].html`
+     - Save the selected theme to Firebase: `/users/{userId}/storefront/theme`
+     - Rebuild current preview using the new template
+
+2. Maintain user content when switching themes
+   - If block types match (e.g., hero → hero), retain user content
+   - Otherwise prompt: “Replace content with new theme defaults?”
+
+PHASE 3: MULTI-PAGE SUPPORT
+
+1. Add route or page switcher:
+   - e.g., `?page=home`, `?page=about`, etc.
+   - Load relevant layout from template + content from Firebase:
+     `/users/{userId}/storefront/content/{page}/`
+
+2. Allow user to edit each page using the same inline system
+
+PHASE 4: BLOCK-BASED LAYOUTS
+
+1. Convert all pages into dynamic block systems:
+   - Each page’s layout should be stored as:
+     /storefront/content/{page}.json
+     ```json
+     {
+       "blocks": [
+         { "type": "hero", "id": "block1", "content": { ... } },
+         { "type": "gallery", "id": "block2", "content": { ... } }
+       ]
+     }
+     ```
+
+2. Add a UI sidebar to:
+   - Add new blocks (from available types)
+   - Remove or disable blocks
+   - Drag and drop to reorder (use `Sortable.js` or custom script)
+
+3. When adding a block:
+   - Load prebuilt layout from `/templates/{themeName}/blocks/{blockType}.html`
+   - Inject into preview
+   - Append structure to Firebase layout JSON
+
+PHASE 5: DATA BINDING + SAVING
+
+1. All changes (text, images, block order) must autosave to Firebase
+2. Rebuild the preview DOM from saved layout + content JSON
+3. Create a “Save” button that ensures full sync and status message
+
+PHASE 6: PUBLISH + PREVIEW
+
+1. Add “Preview Site” and “Publish” buttons
+   - Preview renders current layout
+   - Publish compiles full site and deploys to:
+     - yourplatform.com/{username}
+     - Optional custom domain (Firebase Hosting setup later)
+
+2. Save rendered HTML or static build map to `/published-sites/{userId}/`
+
+FINAL GOAL:
+The storefront builder becomes a fully dynamic, block-based, inline-editable visual site builder. Photographers can build and customize entire multi-page websites using professional themes, edit text/images directly, and publish in one click. Every update happens in real time, backed by Firebase, with zero reloads and no form modals. The user experience must feel smoother and more intuitive than Pixieset or Format.
