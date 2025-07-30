@@ -97,6 +97,144 @@
             align-items: center;
             gap: var(--spacing-md);
         }
+
+        /* Hamburger Menu */
+        .hamburger-menu {
+            display: none;
+            flex-direction: column;
+            justify-content: space-between;
+            width: 30px;
+            height: 22px;
+            cursor: pointer;
+            position: relative;
+            z-index: 101;
+        }
+
+        .hamburger-line {
+            width: 100%;
+            height: 3px;
+            background-color: var(--muted-gold);
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .hamburger-menu.active .hamburger-line:nth-child(1) {
+            transform: rotate(45deg) translate(6px, 6px);
+        }
+
+        .hamburger-menu.active .hamburger-line:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger-menu.active .hamburger-line:nth-child(3) {
+            transform: rotate(-45deg) translate(6px, -6px);
+        }
+
+        /* Mobile Navigation Overlay */
+        .mobile-nav-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 200;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-nav-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .mobile-nav-menu {
+            position: fixed;
+            top: 0;
+            right: -300px;
+            width: 280px;
+            height: 100%;
+            background: var(--warm-white);
+            box-shadow: var(--shadow-medium);
+            transition: right 0.3s ease;
+            z-index: 201;
+            padding: var(--spacing-xl) var(--spacing-lg);
+            overflow-y: auto;
+        }
+
+        .mobile-nav-overlay.active .mobile-nav-menu {
+            right: 0;
+        }
+
+        .mobile-nav-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-xl);
+            padding-bottom: var(--spacing-md);
+            border-bottom: 2px solid var(--beige);
+        }
+
+        .mobile-nav-title {
+            font-family: var(--font-serif);
+            font-size: 1.4rem;
+            color: var(--muted-gold);
+            font-weight: 600;
+        }
+
+        .mobile-nav-close {
+            background: none;
+            border: none;
+            font-size: 2rem;
+            color: var(--muted-gold);
+            cursor: pointer;
+            padding: 0;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mobile-nav-links {
+            list-style: none;
+            padding: 0;
+        }
+
+        .mobile-nav-links li {
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .mobile-nav-links a {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-md);
+            color: var(--deep-charcoal);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .mobile-nav-links a:hover {
+            background: var(--beige);
+            color: var(--muted-gold);
+            transform: translateX(5px);
+        }
+
+        .mobile-nav-actions {
+            margin-top: var(--spacing-xl);
+            padding-top: var(--spacing-md);
+            border-top: 1px solid var(--beige);
+        }
+
+        .mobile-nav-actions .btn {
+            width: 100%;
+            margin-bottom: var(--spacing-sm);
+            justify-content: center;
+        }
         
         /* Buttons */
         .btn {
@@ -948,6 +1086,13 @@
 
         /* Mobile Optimizations */
         @media (max-width: 768px) {
+            .hamburger-menu {
+                display: flex;
+            }
+
+            .header-actions {
+                display: none;
+            }
             .editor-container {
                 flex-direction: column;
                 height: auto;
@@ -1100,8 +1245,38 @@
                 <button class="btn btn-secondary" onclick="publishSite()">📤 Publish Site</button>
                 <a href="/" class="btn btn-primary">← Back to Dashboard</a>
             </div>
+            <!-- Hamburger Menu Button -->
+            <div class="hamburger-menu" onclick="toggleMobileNav()">
+                <div class="hamburger-line"></div>
+                <div class="hamburger-line"></div>
+                <div class="hamburger-line"></div>
+            </div>
         </div>
     </header>
+
+    <!-- Mobile Navigation Overlay -->
+    <div class="mobile-nav-overlay" id="mobileNavOverlay" onclick="closeMobileNav(event)">
+        <nav class="mobile-nav-menu" onclick="event.stopPropagation()">
+            <div class="mobile-nav-header">
+                <span class="mobile-nav-title">Visual Editor</span>
+                <button class="mobile-nav-close" onclick="toggleMobileNav()">×</button>
+            </div>
+            
+            <ul class="mobile-nav-links">
+                <li><a href="#" onclick="showSection('themes')">🎨 Themes</a></li>
+                <li><a href="#" onclick="showSection('background')">🖼️ Background</a></li>
+                <li><a href="#" onclick="showSection('fonts')">📝 Typography</a></li>
+                <li><a href="#" onclick="showSection('blocks')">🧱 Add Blocks</a></li>
+                <li><a href="#" onclick="showSection('pages')">📄 Pages</a></li>
+                <li><a href="#" onclick="showSection('settings')">⚙️ Settings</a></li>
+            </ul>
+            
+            <div class="mobile-nav-actions">
+                <button class="btn btn-secondary" onclick="publishSite(); toggleMobileNav();">📤 Publish Site</button>
+                <a href="/" class="btn btn-primary">← Back to Dashboard</a>
+            </div>
+        </nav>
+    </div>
     
     <!-- Visual Editor Interface -->
     <div class="editor-container">
@@ -1147,5 +1322,72 @@
     
     <!-- Include Advanced Dynamic Visual Editor JavaScript -->
     <script src="/js/advanced-visual-editor.js"></script>
+    
+    <!-- Hamburger Menu JavaScript -->
+    <script>
+        function toggleMobileNav() {
+            const overlay = document.getElementById('mobileNavOverlay');
+            const hamburger = document.querySelector('.hamburger-menu');
+            
+            overlay.classList.toggle('active');
+            hamburger.classList.toggle('active');
+        }
+
+        function closeMobileNav(event) {
+            if (event.target === event.currentTarget) {
+                toggleMobileNav();
+            }
+        }
+
+        function showSection(sectionType) {
+            // Close mobile nav
+            toggleMobileNav();
+            
+            // Scroll to the appropriate section in the sidebar
+            let targetElement;
+            
+            switch(sectionType) {
+                case 'themes':
+                    targetElement = document.querySelector('.theme-grid');
+                    break;
+                case 'pages':
+                    targetElement = document.querySelector('.page-navigation');
+                    break;
+                case 'background':
+                case 'fonts':
+                case 'blocks':
+                case 'settings':
+                    // These sections might be added to the sidebar in the future
+                    // For now, just scroll to the top of the sidebar
+                    targetElement = document.querySelector('.editor-sidebar');
+                    break;
+                default:
+                    targetElement = document.querySelector('.editor-sidebar');
+            }
+            
+            if (targetElement) {
+                targetElement.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start' 
+                });
+                
+                // Highlight the section briefly
+                targetElement.style.backgroundColor = 'var(--beige)';
+                setTimeout(() => {
+                    targetElement.style.backgroundColor = '';
+                }, 1500);
+            }
+        }
+
+        // Close mobile nav when clicking outside or pressing escape
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const overlay = document.getElementById('mobileNavOverlay');
+                if (overlay.classList.contains('active')) {
+                    toggleMobileNav();
+                }
+            }
+        });
+    </script>
 </body>
 </html>
