@@ -14,6 +14,9 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
     
+    <!-- Visual Editor -->
+    <script src="/js/visual-editor.js"></script>
+    
     <style>
         :root {
             /* Light + Airy Creative Studio Color Palette */
@@ -123,6 +126,246 @@
         .btn-secondary:hover {
             background: var(--sage);
             color: var(--warm-white);
+        }
+        
+        /* Visual Editor Styles */
+        .editor-container {
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            height: calc(100vh - 80px);
+            gap: 1rem;
+            padding: 1rem;
+        }
+        
+        .editor-sidebar {
+            background: var(--warm-white);
+            border-radius: var(--card-border-radius);
+            box-shadow: var(--shadow-light);
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+        
+        .editor-sidebar h3 {
+            font-family: var(--font-heading);
+            color: var(--muted-gold);
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+        
+        .preview-container {
+            background: var(--warm-white);
+            border-radius: var(--card-border-radius);
+            box-shadow: var(--shadow-medium);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .preview-header {
+            padding: 1rem;
+            background: var(--beige);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--sage);
+        }
+        
+        .preview-header h3 {
+            font-family: var(--font-heading);
+            color: var(--charcoal);
+            margin: 0;
+        }
+        
+        .device-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .device-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--sage);
+            background: transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: var(--transition-smooth);
+        }
+        
+        .device-btn:hover,
+        .device-btn.active {
+            background: var(--muted-gold);
+            color: var(--warm-white);
+            border-color: var(--muted-gold);
+        }
+        
+        .preview-frame {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+        
+        #preview-frame {
+            width: 100%;
+            min-height: 100%;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        /* Theme Selection */
+        .theme-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .theme-card {
+            border: 2px solid var(--beige);
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            background: white;
+        }
+        
+        .theme-card:hover,
+        .theme-card.active {
+            border-color: var(--muted-gold);
+            box-shadow: var(--shadow-medium);
+        }
+        
+        .theme-preview {
+            height: 80px;
+            background: linear-gradient(135deg, var(--beige), var(--sage));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--charcoal);
+            font-weight: 600;
+        }
+        
+        .theme-info {
+            padding: 1rem;
+        }
+        
+        .theme-info h4 {
+            font-family: var(--font-heading);
+            color: var(--charcoal);
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+        
+        .theme-info p {
+            color: var(--soft-brown);
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        
+        /* Page Navigation */
+        .page-navigation {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .page-nav-btn {
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--beige);
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: var(--font-body);
+            font-weight: 500;
+            transition: var(--transition-smooth);
+            text-align: left;
+        }
+        
+        .page-nav-btn:hover,
+        .page-nav-btn.active {
+            background: var(--muted-gold);
+            color: var(--warm-white);
+            border-color: var(--muted-gold);
+        }
+        
+        /* Notification System */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 10000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification-success {
+            background: #10b981;
+        }
+        
+        .notification-error {
+            background: #ef4444;
+        }
+        
+        .notification-info {
+            background: #3b82f6;
+        }
+        
+        /* Editing States */
+        [data-editable] {
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        [data-editable]:hover {
+            outline: 2px dashed var(--muted-gold);
+            outline-offset: 2px;
+        }
+        
+        [data-editable].editing {
+            outline: 2px solid var(--muted-gold);
+            outline-offset: 2px;
+            background: rgba(196, 150, 45, 0.1);
+        }
+        
+        [data-editable="text"]:focus {
+            outline: 2px solid var(--muted-gold);
+            background: rgba(196, 150, 45, 0.1);
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 1200px) {
+            .editor-container {
+                grid-template-columns: 250px 1fr 250px;
+            }
+        }
+        
+        @media (max-width: 968px) {
+            .editor-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr auto;
+                height: auto;
+            }
+            
+            .editor-sidebar {
+                height: auto;
+                max-height: 300px;
+            }
+            
+            .preview-container {
+                min-height: 70vh;
+            }
         }
         
         /* Main Layout */
@@ -439,10 +682,78 @@
     <!-- Header -->
     <header class="storefront-header">
         <div class="header-content">
-            <a href="/app" class="storefront-logo">Photography Management System</a>
+            <a href="#" class="storefront-logo">Visual Editor</a>
             <div class="header-actions">
-                <button class="btn btn-secondary" onclick="previewSite()">
-                    <span>👁️</span> Preview Site
+                <button class="btn btn-secondary" onclick="editor.publishSite()">📤 Publish Site</button>
+                <a href="/" class="btn btn-primary">← Back to Dashboard</a>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Visual Editor Interface -->
+    <div class="editor-container">
+        <!-- Left Sidebar - Themes & Pages -->
+        <div class="editor-sidebar">
+            <h3>📋 Pages</h3>
+            <div class="page-navigation" id="page-navigation">
+                <!-- Populated by JavaScript -->
+            </div>
+            
+            <h3>🎨 Themes</h3>
+            <div class="theme-grid" id="theme-grid">
+                <!-- Populated by JavaScript -->
+            </div>
+        </div>
+        
+        <!-- Center - Live Preview -->
+        <div class="preview-container">
+            <div class="preview-header">
+                <h3>Live Preview</h3>
+                <div class="device-controls">
+                    <button class="device-btn active" data-device="desktop">💻 Desktop</button>
+                    <button class="device-btn" data-device="tablet">📱 Tablet</button>
+                    <button class="device-btn" data-device="mobile">📱 Mobile</button>
+                </div>
+            </div>
+            <div class="preview-frame">
+                <div id="preview-frame">
+                    <!-- Live website preview loads here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Sidebar - Settings -->
+        <div class="editor-sidebar">
+            <h3>⚙️ Settings</h3>
+            <div class="settings-section">
+                <h4>Site Information</h4>
+                <div class="form-group">
+                    <label>Site Title</label>
+                    <input type="text" id="site-title" placeholder="Your Photography Studio">
+                </div>
+                <div class="form-group">
+                    <label>Tagline</label>
+                    <input type="text" id="site-tagline" placeholder="Capturing life's beautiful moments">
+                </div>
+                <div class="form-group">
+                    <label>Contact Email</label>
+                    <input type="email" id="contact-email" placeholder="hello@yoursite.com">
+                </div>
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="tel" id="contact-phone" placeholder="(555) 123-4567">
+                </div>
+            </div>
+            
+            <h3>📸 Content</h3>
+            <div class="content-section">
+                <p style="color: var(--soft-brown); font-size: 0.9rem; line-height: 1.4;">
+                    Click any text or image in the preview to edit it directly. Changes save automatically.
+                </p>
+            </div>
+        </div>
+    </div>
+</html>
                 </button>
                 <button class="btn btn-primary" onclick="publishSite()">
                     <span>🚀</span> Publish Site

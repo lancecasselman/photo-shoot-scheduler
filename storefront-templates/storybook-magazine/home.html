@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Storybook Magazine</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;700;900&family=Source+Sans+Pro:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Source Sans Pro', sans-serif;
+            background: #ffffff;
+            color: #2c2c2c;
+            line-height: 1.6;
+        }
+        
+        .magazine-layout {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            min-height: 100vh;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .sidebar-left {
+            background: #f8f8f8;
+            padding: 3rem 2rem;
+            border-right: 1px solid #e0e0e0;
+        }
+        
+        .main-content {
+            background: #ffffff;
+            padding: 4rem 3rem;
+        }
+        
+        .sidebar-right {
+            background: #f8f8f8;
+            padding: 3rem 2rem;
+            border-left: 1px solid #e0e0e0;
+        }
+        
+        .magazine-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            color: #2c2c2c;
+            letter-spacing: -1px;
+            line-height: 1.1;
+        }
+        
+        .magazine-subtitle {
+            font-size: 1.1rem;
+            color: #666666;
+            margin-bottom: 3rem;
+            font-weight: 300;
+            line-height: 1.6;
+        }
+        
+        .feature-image {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            margin-bottom: 2rem;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .article-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: #2c2c2c;
+            line-height: 1.2;
+        }
+        
+        .article-content {
+            font-size: 1.1rem;
+            color: #444444;
+            line-height: 1.8;
+            margin-bottom: 2rem;
+            columns: 2;
+            column-gap: 3rem;
+            text-align: justify;
+        }
+        
+        .sidebar-section {
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .sidebar-section:last-child {
+            border-bottom: none;
+        }
+        
+        .sidebar-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #2c2c2c;
+        }
+        
+        .sidebar-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            margin-bottom: 1rem;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .sidebar-text {
+            font-size: 0.95rem;
+            color: #555555;
+            line-height: 1.6;
+        }
+        
+        .quote-box {
+            background: #f8f8f8;
+            padding: 2rem;
+            margin: 2rem 0;
+            border-left: 4px solid #2c2c2c;
+            font-style: italic;
+            font-size: 1.2rem;
+            color: #444444;
+        }
+        
+        .byline {
+            font-size: 0.9rem;
+            color: #888888;
+            margin-bottom: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .read-more {
+            display: inline-block;
+            padding: 0.8rem 2rem;
+            background: #2c2c2c;
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        
+        .read-more:hover {
+            background: #444444;
+            transform: translateY(-2px);
+        }
+        
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        
+        .gallery-item {
+            height: 150px;
+            object-fit: cover;
+            border: 1px solid #e0e0e0;
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .gallery-item:hover {
+            transform: scale(1.05);
+        }
+        
+        .drop-cap {
+            float: left;
+            font-family: 'Playfair Display', serif;
+            font-size: 4rem;
+            line-height: 3rem;
+            margin: 0.2rem 0.5rem 0 0;
+            color: #2c2c2c;
+            font-weight: 700;
+        }
+        
+        @media (max-width: 1024px) {
+            .magazine-layout {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar-left,
+            .sidebar-right {
+                padding: 2rem;
+                border: none;
+                border-top: 1px solid #e0e0e0;
+            }
+            
+            .main-content {
+                padding: 2rem;
+            }
+            
+            .article-content {
+                columns: 1;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .magazine-title {
+                font-size: 2.5rem;
+            }
+            
+            .article-title {
+                font-size: 2rem;
+            }
+            
+            .gallery-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="magazine-layout">
+        <aside class="sidebar-left">
+            <div class="sidebar-section">
+                <h3 class="sidebar-title" data-editable="text" data-element-id="sidebar-title-1">Latest Stories</h3>
+                <img src="https://images.unsplash.com/photo-1519741497674-611481863552?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2670&q=80" 
+                     alt="Sidebar 1" class="sidebar-image" data-editable="image" data-element-id="sidebar-image-1">
+                <p class="sidebar-text" data-editable="text" data-element-id="sidebar-text-1">{{sidebar_text_1}}</p>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3 class="sidebar-title" data-editable="text" data-element-id="sidebar-title-2">Behind the Lens</h3>
+                <div class="gallery-grid">
+                    <img src="https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2670&q=80" 
+                         alt="Gallery 1" class="gallery-item" data-editable="image" data-element-id="gallery-1">
+                    <img src="https://images.unsplash.com/photo-1520854221256-17451cc331bf?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2670&q=80" 
+                         alt="Gallery 2" class="gallery-item" data-editable="image" data-element-id="gallery-2">
+                    <img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2669&q=80" 
+                         alt="Gallery 3" class="gallery-item" data-editable="image" data-element-id="gallery-3">
+                    <img src="https://images.unsplash.com/photo-1583394838336-acd977736f90?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2584&q=80" 
+                         alt="Gallery 4" class="gallery-item" data-editable="image" data-element-id="gallery-4">
+                </div>
+            </div>
+        </aside>
+        
+        <main class="main-content">
+            <h1 class="magazine-title" data-editable="text" data-element-id="main-title">{{main_title}}</h1>
+            <p class="magazine-subtitle" data-editable="text" data-element-id="main-subtitle">{{main_subtitle}}</p>
+            
+            <img src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2574&q=80" 
+                 alt="Feature" class="feature-image" data-editable="image" data-element-id="feature-image">
+            
+            <div class="byline" data-editable="text" data-element-id="byline">{{byline}}</div>
+            
+            <h2 class="article-title" data-editable="text" data-element-id="article-title">{{article_title}}</h2>
+            
+            <div class="article-content">
+                <span class="drop-cap">P</span>
+                <p data-editable="text" data-element-id="article-content">{{article_content}}</p>
+            </div>
+            
+            <div class="quote-box">
+                <p data-editable="text" data-element-id="quote">"{{quote}}"</p>
+            </div>
+            
+            <a href="#contact" class="read-more" data-editable="text" data-element-id="read-more">{{read_more}}</a>
+        </main>
+        
+        <aside class="sidebar-right">
+            <div class="sidebar-section">
+                <h3 class="sidebar-title" data-editable="text" data-element-id="about-title">About the Artist</h3>
+                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2574&q=80" 
+                     alt="About" class="sidebar-image" data-editable="image" data-element-id="about-image">
+                <p class="sidebar-text" data-editable="text" data-element-id="about-text">{{about_text}}</p>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3 class="sidebar-title" data-editable="text" data-element-id="contact-title">Get in Touch</h3>
+                <p class="sidebar-text" data-editable="text" data-element-id="contact-text">{{contact_text}}</p>
+                <a href="#contact" class="read-more" data-editable="text" data-element-id="contact-cta">{{contact_cta}}</a>
+            </div>
+        </aside>
+    </div>
+</body>
+</html>

@@ -1,0 +1,71 @@
+TASK: Upgrade the existing storefront builder into a full, professional-grade visual editor tailored for photographers. The editor should include inline editing, image replacement, 20 fully prebuilt website themes, and full-page set templates (home, about, gallery, store, contact). All changes should update visually and in real-time, with zero reloads or save buttons.
+
+PHASE 1: CLICK-TO-EDIT ENGINE
+1. Implement live click-to-edit support for all text and images inside the preview window.
+2. When the user clicks any text:
+   - Replace it with an editable input or contentEditable element
+   - Auto-save changes to local state and Firebase under:
+     `/users/{userId}/storefront/content/{pageName}`
+3. When the user clicks any image:
+   - Open a file picker or image selector
+   - Upload to Firebase Storage and replace the preview src
+   - Save metadata path to Firestore for the correct block and element
+
+4. Enable drag-to-reorder sections and toggles to show/hide blocks
+   - Blocks must include: hero, image grid, testimonial, about blurb, pricing, call-to-action, blog preview
+
+PHASE 2: 20 PREBUILT VISUAL THEMES
+1. Create a themes directory: `/storefront-templates/{template-name}/`
+2. Add 20 beautifully designed, mobile-responsive full website templates
+   Each template should include:
+   - Page files: `home.html`, `about.html`, `gallery.html`, `store.html`, `contact.html`
+   - Soft animations and modern styling
+   - Distinct visual styles (see below for categories)
+3. Theme categories:
+   - Light + Airy (already working)
+   - Bold & Editorial
+   - Earthy Boho
+   - Modern Luxe
+   - Coastal Lifestyle
+   - Minimal Portfolio
+   - Monochrome Studio
+   - Dark Moody Wedding
+   - Romantic Serif
+   - Fashion-Forward
+   - Commercial Grid
+   - Film Vibe (grainy/retro)
+   - Urban Black & Gold
+   - Cottagecore Vibes
+   - Rustic Barn Style
+   - Luxury Fine Art
+   - Street Photography Layout
+   - Scenic Landscapes (horizontal showcase)
+   - Scrolling Story Layout (w/ full-page sections)
+   - Storybook Magazine
+
+PHASE 3: LAYOUT + CONTENT ENGINE
+1. Create a dynamic page loader that:
+   - Pulls the selected theme and layout from Firebase
+   - Allows each page (`home`, `about`, etc.) to have its own layout variation
+   - Loads blocks dynamically with template metadata
+
+2. Save all editable content to Firestore under:
+   `/users/{userId}/storefront/content/{pageName}`
+
+3. Allow switching themes while preserving saved content
+   - If block types match, keep content inserted
+   - Otherwise, prompt user to map blocks or reset
+
+PHASE 4: PUBLISHING
+1. Final rendered page should live at:
+   `yourplatform.com/{username}`
+2. User can preview all changes before publishing
+3. Firebase Hosting or static page build should deploy live version on publish
+
+PHASE 5: ADMIN PANEL (FOR YOUR TEAM)
+1. Allow your team to upload new themes
+2. Manage user storefronts, reset if broken
+3. Add analytics dashboard later (views, orders, link clicks)
+
+FINAL GOAL:
+Each user can build a gorgeous, modern, multi-page storefront by selecting a prebuilt template and clicking directly into the page to edit text and images. All layout styles are built-in and tailored to professional photographers. Visual feedback is instant. The experience must exceed the quality and usability of Pixieset, Format, and other competitors in both beauty and simplicity.
