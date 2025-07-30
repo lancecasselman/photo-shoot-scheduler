@@ -785,10 +785,46 @@ class AdvancedVisualEditor {
                     `).join('')}
                 </nav>
             </div>
+
+            <script>
+                function toggleWebsiteNav() {
+                    const overlay = document.getElementById('website-mobile-overlay');
+                    const hamburger = document.querySelector('.website-hamburger');
+                    const mobileNav = document.querySelector('.website-mobile-nav');
+                    
+                    if (overlay) {
+                        overlay.classList.toggle('active');
+                    }
+                    if (hamburger) {
+                        hamburger.classList.toggle('active');
+                    }
+                    if (mobileNav) {
+                        mobileNav.classList.toggle('active');
+                    }
+                }
+
+                function closeWebsiteNav(event) {
+                    if (event.target === event.currentTarget) {
+                        toggleWebsiteNav();
+                    }
+                }
+
+                // Close navigation when clicking outside
+                document.addEventListener('click', function(event) {
+                    const overlay = document.getElementById('website-mobile-overlay');
+                    const hamburger = document.querySelector('.website-hamburger');
+                    
+                    if (overlay && overlay.classList.contains('active') && 
+                        !hamburger.contains(event.target) && 
+                        !event.target.closest('.website-mobile-nav')) {
+                        toggleWebsiteNav();
+                    }
+                });
+            </script>
         `;
         
         // Page container with custom background and content wrapper for fixed header
-        html += `<div class="content-wrapper"><div class="page-container" data-page="${this.currentPage}" style="min-height: calc(100vh - 60px); background: ${pageSettings.backgroundColor || '#F7F3F0'}; font-family: var(--font-body);">`;
+        html += `<div class="content-wrapper"><div class="page-container" data-page="${this.currentPage}" style="min-height: calc(100vh - 60px); margin-top: 60px; background: ${pageSettings.backgroundColor || '#F7F3F0'}; font-family: var(--font-body);">`;
         
         if (layout.length === 0) {
             html += `
