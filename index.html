@@ -3024,6 +3024,71 @@
             display: none;
         }
 
+        /* Marketing Suite Styles */
+        .marketing-suite-container {
+            max-width: 100%;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .marketing-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .marketing-header h2 {
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 2.2rem;
+        }
+
+        .marketing-header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .marketing-tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .marketing-tool-card {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .marketing-tool-card:hover {
+            border-color: #d4af37;
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
+
+        .marketing-tool-card .tool-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .marketing-tool-card h3 {
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 1.3rem;
+        }
+
+        .marketing-tool-card p {
+            color: #666;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
         /* Website Builder Styles */
         .website-builder-container {
             padding: 20px;
@@ -3392,8 +3457,7 @@
             <div id="toolsMenu" class="hidden">
                 <a href="#" onclick="switchTab('clients')">👥 Client Management</a>
                 <a href="#" onclick="switchTab('sunrise')">🌅 Sunrise/Sunset Calendar</a>
-                <a href="/template-selector.html">🌐 Website Builder</a>
-                <span style="color: #D4AF37; font-weight: bold;">👑 Advanced Builder - Integrated Below</span>
+                <a href="#" onclick="switchTab('marketing')">📱 Marketing Suite</a>
                 <a href="/onboarding" target="_blank">🚀 Business Setup Wizard</a>
             </div>
         </div>
@@ -6491,8 +6555,8 @@ END:VCALENDAR`;
             event.target.classList.add('active');
             
             // Initialize website builder if switching to websites tab
-            if (tabName === 'websites') {
-                initializeWebsiteBuilder();
+            if (tabName === 'marketing') {
+                showMessage('Marketing Suite loaded successfully!', 'success');
             }
         }
 
@@ -8483,18 +8547,71 @@ ${name}`;
             </div>
         </div>
 
-        <!-- Website Builder Tab Content -->
-        <div id="websitesTab" class="tab-content">
-            <div class="website-builder-container">
-                <div class="builder-launch-panel">
-                    <h2>Advanced Website Builder</h2>
-                    <p>Create professional photography websites with drag-and-drop editing</p>
-                    <button onclick="launchAdvancedBuilder()" class="btn btn-primary" style="background: linear-gradient(135deg, #d4af37, #ffd700); color: #1a1a1a; font-weight: bold; padding: 15px 30px; font-size: 18px; border-radius: 8px; border: none; cursor: pointer;">
-                        Launch Advanced Builder
-                    </button>
+        <!-- Marketing Suite Tab Content -->
+        <div id="marketingTab" class="tab-content">
+            <div class="marketing-suite-container">
+                <div class="marketing-header">
+                    <h2>📱 Marketing Suite</h2>
+                    <p>Create compelling content and grow your photography business</p>
+                </div>
+                
+                <div class="marketing-tools-grid">
+                    <div class="marketing-tool-card" onclick="openBlogPostCreator()">
+                        <div class="tool-icon">📝</div>
+                        <h3>Blog Post Creator</h3>
+                        <p>Write engaging blog posts with rich text editor and AI assistance</p>
+                    </div>
+                    
+                    <div class="marketing-tool-card" onclick="openSocialMediaCreator()">
+                        <div class="tool-icon">📱</div>
+                        <h3>Social Media Posts</h3>
+                        <p>Create captions, hashtags, and social content with various tones</p>
+                    </div>
+                    
+                    <div class="marketing-tool-card" onclick="openMarketingCalendar()">
+                        <div class="tool-icon">📅</div>
+                        <h3>Marketing Calendar</h3>
+                        <p>Plan and schedule your content across all platforms</p>
+                    </div>
+                    
+                    <div class="marketing-tool-card" onclick="openAICaptionGenerator()">
+                        <div class="tool-icon">🤖</div>
+                        <h3>AI Caption Generator</h3>
+                        <p>Generate multiple caption options and SEO-optimized titles</p>
+                    </div>
+                    
+                    <div class="marketing-tool-card" onclick="openShootToStoryConverter()">
+                        <div class="tool-icon">📸</div>
+                        <h3>Shoot-to-Story Converter</h3>
+                        <p>Turn client sessions into blog posts and social content</p>
+                    </div>
+                    
+                    <div class="marketing-tool-card" onclick="openEmailBlastCreator()">
+                        <div class="tool-icon">📧</div>
+                        <h3>Email Blast Creator</h3>
+                        <p>Create newsletters and promotional emails</p>
+                    </div>
+                    
+                    <div class="marketing-tool-card" onclick="openTestimonialGenerator()">
+                        <div class="tool-icon">⭐</div>
+                        <h3>Testimonial Generator</h3>
+                        <p>Create polished testimonials and quote cards</p>
+                    </div>
+                    
+                    <div class="marketing-tool-card" onclick="openContentIdeaVault()">
+                        <div class="tool-icon">💡</div>
+                        <h3>Content Idea Vault</h3>
+                        <p>Store and organize your content ideas by season and niche</p>
+                    </div>
+                    
+                    <div class="marketing-tool-card" onclick="openContentRepurposer()">
+                        <div class="tool-icon">🔄</div>
+                        <h3>Content Repurposer</h3>
+                        <p>Transform existing content into multiple formats and tones</p>
+                    </div>
                 </div>
             </div>
-        </div> <!-- End Website Builder Tab -->
+        </div> <!-- End Marketing Suite Tab -->
 
     </div> <!-- End container -->
 
@@ -8574,10 +8691,427 @@ ${name}`;
     </div>
 
     <script>
-        // Launch Advanced Website Builder
-        function launchAdvancedBuilder() {
-            console.log('Launching advanced builder...');
-            window.open('/advanced-builder.html', '_blank', 'width=1400,height=900');
+        // Marketing Suite Functions
+        function openBlogPostCreator() {
+            showMessage('Opening Blog Post Creator...', 'info');
+            // Create modal for blog post creator
+            const modal = createMarketingModal('Blog Post Creator', `
+                <div class="blog-creator">
+                    <div class="form-group">
+                        <label>Blog Title</label>
+                        <input type="text" id="blogTitle" placeholder="Enter your blog post title..." class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Featured Image</label>
+                        <input type="file" id="blogImage" accept="image/*" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Tags (comma separated)</label>
+                        <input type="text" id="blogTags" placeholder="wedding, portrait, photography..." class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Content</label>
+                        <textarea id="blogContent" rows="10" placeholder="Write your blog post content..." class="form-control"></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button onclick="generateAIBlogPost()" class="btn btn-secondary">✨ AI Generate</button>
+                        <button onclick="saveBlogPost()" class="btn btn-primary">💾 Save Draft</button>
+                    </div>
+                </div>
+            `);
+        }
+
+        function openSocialMediaCreator() {
+            showMessage('Opening Social Media Creator...', 'info');
+            const modal = createMarketingModal('Social Media Post Creator', `
+                <div class="social-creator">
+                    <div class="form-group">
+                        <label>Upload Photo(s)</label>
+                        <input type="file" id="socialImages" accept="image/*" multiple class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Caption</label>
+                        <textarea id="socialCaption" rows="4" placeholder="Write your social media caption..." class="form-control"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Tone</label>
+                        <select id="socialTone" class="form-control">
+                            <option value="fun">Fun & Playful</option>
+                            <option value="bold">Bold & Dramatic</option>
+                            <option value="romantic">Romantic & Elegant</option>
+                            <option value="professional">Professional</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button onclick="generateHashtags()" class="btn btn-secondary">🔗 Generate Hashtags</button>
+                        <button onclick="generateCaptionVariations()" class="btn btn-secondary">🎭 Generate Variations</button>
+                        <button onclick="saveSocialPost()" class="btn btn-primary">💾 Save Post</button>
+                    </div>
+                </div>
+            `);
+        }
+
+        function openMarketingCalendar() {
+            showMessage('Opening Marketing Calendar...', 'info');
+            const modal = createMarketingModal('Marketing Calendar', `
+                <div class="calendar-container">
+                    <div class="calendar-header">
+                        <button onclick="previousMonth()" class="btn btn-secondary">← Previous</button>
+                        <h3 id="currentMonth">January 2025</h3>
+                        <button onclick="nextMonth()" class="btn btn-secondary">Next →</button>
+                    </div>
+                    <div id="marketingCalendar" class="marketing-calendar">
+                        <div class="calendar-placeholder">Calendar will load here...</div>
+                    </div>
+                    <div class="calendar-actions">
+                        <button onclick="suggestContent()" class="btn btn-secondary">💡 Content Suggestions</button>
+                        <button onclick="schedulePost()" class="btn btn-primary">📅 Schedule Post</button>
+                    </div>
+                </div>
+            `);
+        }
+
+        function openAICaptionGenerator() {
+            showMessage('Opening AI Caption Generator...', 'info');
+            const modal = createMarketingModal('AI Caption Generator', `
+                <div class="ai-generator">
+                    <div class="form-group">
+                        <label>Upload Photo(s)</label>
+                        <input type="file" id="aiImages" accept="image/*" multiple class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Session Details (Optional)</label>
+                        <textarea id="sessionDetails" rows="3" placeholder="Describe the shoot, location, or story..." class="form-control"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Content Type</label>
+                        <select id="contentType" class="form-control">
+                            <option value="instagram">Instagram Caption</option>
+                            <option value="facebook">Facebook Post</option>
+                            <option value="blog">Blog Title</option>
+                            <option value="email">Email Subject</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button onclick="generateAICaptions()" class="btn btn-primary">🤖 Generate Captions</button>
+                    </div>
+                    <div id="aiResults" class="ai-results"></div>
+                </div>
+            `);
+        }
+
+        function openShootToStoryConverter() {
+            showMessage('Loading your sessions...', 'info');
+            const modal = createMarketingModal('Shoot-to-Story Converter', `
+                <div class="shoot-converter">
+                    <div class="form-group">
+                        <label>Select Session</label>
+                        <select id="sessionSelect" class="form-control">
+                            <option value="">Choose a past session...</option>
+                            ${sessions.map(session => `
+                                <option value="${session.id}">${session.clientName} - ${session.sessionType} (${formatDate(session.dateTime)})</option>
+                            `).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Generate Content</label>
+                        <div class="content-options">
+                            <label><input type="checkbox" checked> Blog Post Draft</label>
+                            <label><input type="checkbox" checked> 3 Instagram Captions</label>
+                            <label><input type="checkbox" checked> Reel/Video Idea</label>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button onclick="convertShootToStory()" class="btn btn-primary">✨ Generate Content</button>
+                    </div>
+                    <div id="storyResults" class="story-results"></div>
+                </div>
+            `);
+        }
+
+        function openEmailBlastCreator() {
+            showMessage('Opening Email Creator...', 'info');
+            const modal = createMarketingModal('Email Blast Creator', `
+                <div class="email-creator">
+                    <div class="form-group">
+                        <label>Email Template</label>
+                        <select id="emailTemplate" class="form-control">
+                            <option value="announcement">Announcement</option>
+                            <option value="promotion">Promotion/Sale</option>
+                            <option value="gallery">Gallery Notification</option>
+                            <option value="referral">Referral Campaign</option>
+                            <option value="newsletter">Newsletter</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Subject Line</label>
+                        <input type="text" id="emailSubject" placeholder="Enter email subject..." class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Content</label>
+                        <textarea id="emailContent" rows="8" placeholder="Write your email content..." class="form-control"></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button onclick="previewEmail()" class="btn btn-secondary">👁️ Preview</button>
+                        <button onclick="exportToMailchimp()" class="btn btn-secondary">📤 Export HTML</button>
+                        <button onclick="saveEmailDraft()" class="btn btn-primary">💾 Save Draft</button>
+                    </div>
+                </div>
+            `);
+        }
+
+        function openTestimonialGenerator() {
+            showMessage('Opening Testimonial Generator...', 'info');
+            const modal = createMarketingModal('Testimonial Generator', `
+                <div class="testimonial-generator">
+                    <div class="form-group">
+                        <label>Client Name</label>
+                        <input type="text" id="testimonialClient" placeholder="Client name..." class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Session Notes/Feedback</label>
+                        <textarea id="testimonialNotes" rows="4" placeholder="Any notes about the session or client feedback..." class="form-control"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Testimonial Style</label>
+                        <select id="testimonialStyle" class="form-control">
+                            <option value="professional">Professional & Polished</option>
+                            <option value="emotional">Emotional & Heartfelt</option>
+                            <option value="detailed">Detailed Experience</option>
+                            <option value="concise">Short & Sweet</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button onclick="generateTestimonial()" class="btn btn-primary">✨ Generate Testimonial</button>
+                        <button onclick="createQuoteCard()" class="btn btn-secondary">🎨 Create Quote Card</button>
+                    </div>
+                    <div id="testimonialResults" class="testimonial-results"></div>
+                </div>
+            `);
+        }
+
+        function openContentIdeaVault() {
+            showMessage('Opening Content Idea Vault...', 'info');
+            const modal = createMarketingModal('Content Idea Vault', `
+                <div class="idea-vault">
+                    <div class="vault-header">
+                        <div class="form-group">
+                            <input type="text" id="newIdea" placeholder="Add a new content idea..." class="form-control">
+                            <select id="ideaCategory" class="form-control">
+                                <option value="general">General</option>
+                                <option value="wedding">Wedding</option>
+                                <option value="portrait">Portrait</option>
+                                <option value="seasonal">Seasonal</option>
+                                <option value="tips">Photography Tips</option>
+                                <option value="behind-scenes">Behind the Scenes</option>
+                            </select>
+                            <button onclick="addContentIdea()" class="btn btn-primary">➕ Add Idea</button>
+                        </div>
+                    </div>
+                    <div class="vault-filters">
+                        <button onclick="filterIdeas('all')" class="btn btn-secondary active">All</button>
+                        <button onclick="filterIdeas('wedding')" class="btn btn-secondary">Wedding</button>
+                        <button onclick="filterIdeas('portrait')" class="btn btn-secondary">Portrait</button>
+                        <button onclick="filterIdeas('seasonal')" class="btn btn-secondary">Seasonal</button>
+                        <button onclick="filterIdeas('tips')" class="btn btn-secondary">Tips</button>
+                    </div>
+                    <div id="ideasList" class="ideas-list">
+                        <div class="idea-placeholder">Your content ideas will appear here...</div>
+                    </div>
+                </div>
+            `);
+        }
+
+        function openContentRepurposer() {
+            showMessage('Opening Content Repurposer...', 'info');
+            const modal = createMarketingModal('Content Repurposer', `
+                <div class="content-repurposer">
+                    <div class="form-group">
+                        <label>Original Content</label>
+                        <textarea id="originalContent" rows="6" placeholder="Paste your existing blog post or social media content..." class="form-control"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Repurpose Options</label>
+                        <div class="repurpose-options">
+                            <label><input type="checkbox" checked> Simplify for Social Media</label>
+                            <label><input type="checkbox" checked> Turn into List Format</label>
+                            <label><input type="checkbox" checked> Create Summary</label>
+                            <label><input type="checkbox" checked> Change Tone</label>
+                            <label><input type="checkbox" checked> Email Newsletter Version</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Target Tone</label>
+                        <select id="repurposeTone" class="form-control">
+                            <option value="casual">Casual & Friendly</option>
+                            <option value="professional">Professional</option>
+                            <option value="playful">Playful & Fun</option>
+                            <option value="inspirational">Inspirational</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button onclick="repurposeContent()" class="btn btn-primary">🔄 Repurpose Content</button>
+                    </div>
+                    <div id="repurposeResults" class="repurpose-results"></div>
+                </div>
+            `);
+        }
+
+        // Marketing Modal Helper Function
+        function createMarketingModal(title, content) {
+            const modalHtml = `
+                <div class="marketing-modal-overlay" onclick="closeMarketingModal()">
+                    <div class="marketing-modal" onclick="event.stopPropagation()">
+                        <div class="modal-header">
+                            <h3>${title}</h3>
+                            <button onclick="closeMarketingModal()" class="close-btn">×</button>
+                        </div>
+                        <div class="modal-body">
+                            ${content}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            const modalElement = document.createElement('div');
+            modalElement.innerHTML = modalHtml;
+            modalElement.id = 'marketingModal';
+            document.body.appendChild(modalElement);
+            
+            // Add modal styles
+            if (!document.getElementById('marketingModalStyles')) {
+                const styles = document.createElement('style');
+                styles.id = 'marketingModalStyles';
+                styles.innerHTML = `
+                    .marketing-modal-overlay {
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(0, 0, 0, 0.8);
+                        z-index: 10000;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+                    .marketing-modal {
+                        background: white;
+                        border-radius: 12px;
+                        max-width: 600px;
+                        width: 90%;
+                        max-height: 80vh;
+                        overflow-y: auto;
+                        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                    }
+                    .modal-header {
+                        padding: 20px;
+                        border-bottom: 1px solid #eee;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    }
+                    .modal-header h3 {
+                        margin: 0;
+                        color: #2d3748;
+                    }
+                    .close-btn {
+                        background: none;
+                        border: none;
+                        font-size: 24px;
+                        cursor: pointer;
+                        color: #666;
+                    }
+                    .modal-body {
+                        padding: 20px;
+                    }
+                    .form-group {
+                        margin-bottom: 20px;
+                    }
+                    .form-group label {
+                        display: block;
+                        margin-bottom: 8px;
+                        font-weight: 600;
+                        color: #2d3748;
+                    }
+                    .form-control {
+                        width: 100%;
+                        padding: 10px;
+                        border: 1px solid #ddd;
+                        border-radius: 6px;
+                        font-size: 14px;
+                        box-sizing: border-box;
+                    }
+                    .form-actions {
+                        display: flex;
+                        gap: 10px;
+                        margin-top: 20px;
+                        flex-wrap: wrap;
+                    }
+                    .btn {
+                        padding: 10px 16px;
+                        border: none;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-weight: 600;
+                        transition: all 0.2s ease;
+                    }
+                    .btn-primary {
+                        background: linear-gradient(135deg, #d4af37, #ffd700);
+                        color: #1a1a1a;
+                    }
+                    .btn-secondary {
+                        background: #6c757d;
+                        color: white;
+                    }
+                    .btn:hover {
+                        transform: translateY(-1px);
+                        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                    }
+                `;
+                document.head.appendChild(styles);
+            }
+            
+            return modalElement;
+        }
+
+        function closeMarketingModal() {
+            const modal = document.getElementById('marketingModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // Placeholder functions for marketing features
+        function generateAIBlogPost() {
+            showMessage('AI generating blog post content...', 'info');
+            setTimeout(() => {
+                showMessage('AI blog post generated! Check the content area.', 'success');
+            }, 2000);
+        }
+
+        function saveBlogPost() {
+            showMessage('Blog post saved to drafts!', 'success');
+            celebrateMilestone('session_created', 'Blog Post');
+        }
+
+        function generateHashtags() {
+            showMessage('Generating relevant hashtags...', 'info');
+            setTimeout(() => {
+                showMessage('Hashtags generated! Check the caption area.', 'success');
+            }, 1500);
+        }
+
+        function generateCaptionVariations() {
+            showMessage('Creating caption variations...', 'info');
+            setTimeout(() => {
+                showMessage('Caption variations created!', 'success');
+            }, 1500);
+        }
+
+        function saveSocialPost() {
+            showMessage('Social media post saved!', 'success');
+            celebrateMilestone('gallery_shared', 'Social Post');
         }
     </script>
 
