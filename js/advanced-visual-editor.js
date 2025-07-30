@@ -140,6 +140,9 @@ class AdvancedVisualEditor {
         // Content storage for all blocks
         this.contentData = {};
         
+        // Initialize luxury components early
+        this.initializeLuxuryComponents();
+        
         this.init();
     }
 
@@ -285,8 +288,10 @@ class AdvancedVisualEditor {
             return;
         }
 
-        // Initialize luxury components
-        this.initializeLuxuryComponents();
+        // Initialize luxury components if not already done
+        if (!this.luxuryComponents) {
+            this.initializeLuxuryComponents();
+        }
 
         // Create luxury components title
         const title = document.createElement('h3');
@@ -497,14 +502,67 @@ class AdvancedVisualEditor {
         };
 
         this.pageLayouts[currentPage].push(newBlock);
-        this.renderPage();
-        this.autoSave();
         
-        this.showSuccess(`Added ${component.name} component! 🎨`);
+        // Update preview immediately
+        this.updatePreview();
+        
+        // Save changes
+        this.saveToStorage();
+        
+        this.showNotification(`Added ${component.name} component!`, 'success');
         
         // Trigger celebration for major components
         if (['massive-hero', 'transformational-messaging', 'award-credentials'].includes(componentKey)) {
-            this.triggerCelebration('component_added', component.name);
+            this.celebration();
+        }
+    }
+
+    // Add missing utility functions
+    updatePreview() {
+        // Simple preview update - just refresh the iframe content
+        const iframe = document.getElementById('preview-frame');
+        if (iframe) {
+            // Trigger a refresh of the preview content
+            this.loadCurrentPage();
+        }
+    }
+
+    saveToStorage() {
+        // Save current state to localStorage as backup
+        try {
+            const editorState = {
+                currentPage: this.currentPage,
+                currentTheme: this.currentTheme,
+                pageLayouts: this.pageLayouts,
+                pageSettings: this.pageSettings,
+                fontSettings: this.fontSettings
+            };
+            localStorage.setItem('visualEditorState', JSON.stringify(editorState));
+            console.log('💾 Saved to localStorage');
+        } catch (error) {
+            console.error('Failed to save to localStorage:', error);
+        }
+    }
+
+    showNotification(message, type = 'info') {
+        // Simple notification system
+        console.log(`${type.toUpperCase()}: ${message}`);
+        
+        // Try to use existing notification system if available
+        if (typeof this.showSuccess === 'function' && type === 'success') {
+            this.showSuccess(message);
+        } else if (typeof this.showError === 'function' && type === 'error') {
+            this.showError(message);
+        }
+    }
+
+    celebration() {
+        // Simple celebration - could be enhanced with confetti
+        console.log('🎉 Celebration triggered!');
+        
+        // Try to use existing celebration system if available
+        if (typeof triggerCelebration === 'function') {
+            triggerCelebration('component_added', 'Luxury Component');
         }
     }
 
