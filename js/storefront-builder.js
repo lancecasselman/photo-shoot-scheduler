@@ -383,12 +383,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize Firebase if available
     if (typeof firebase !== 'undefined' && firebaseConfig) {
         try {
-            firebase.initializeApp(firebaseConfig);
+            // Check if Firebase is already initialized
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
         } catch (error) {
             console.log('Firebase initialization failed:', error);
         }
     }
     
-    // Initialize storefront builder
-    window.storefrontBuilder = new StorefrontBuilder();
+    // Initialize storefront builder only if needed
+    if (typeof StorefrontBuilder !== 'undefined' && !window.storefrontBuilder) {
+        window.storefrontBuilder = new StorefrontBuilder();
+    }
 });

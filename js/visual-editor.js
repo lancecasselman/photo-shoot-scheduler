@@ -944,7 +944,10 @@ class VisualEditor {
 
 // Initialize editor when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    window.editor = new VisualEditor();
+    // Only initialize if not already initialized and the class exists
+    if (typeof VisualEditor !== 'undefined' && !window.editor) {
+        window.editor = new VisualEditor();
+    }
 });
 
 // Global functions for buttons
