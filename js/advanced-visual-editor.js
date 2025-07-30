@@ -780,9 +780,25 @@ class AdvancedVisualEditor {
         // Page container with custom background
         html += `<div class="page-container" data-page="${this.currentPage}" style="min-height: 100vh; background: ${pageSettings.backgroundColor || '#F7F3F0'}; font-family: var(--font-body);">`;
         
-        layout.forEach(block => {
-            html += this.renderBlock(block);
-        });
+        if (layout.length === 0) {
+            html += `
+                <div style="padding: 4rem 2rem; text-align: center; color: var(--sage);">
+                    <h2>This page is empty</h2>
+                    <p>Add blocks using the sidebar to start building your page</p>
+                </div>
+            `;
+        } else {
+            console.log(`Rendering ${layout.length} blocks for ${this.currentPage} page`);
+            layout.forEach((block, index) => {
+                console.log(`Rendering block ${index + 1}:`, block);
+                const blockHtml = this.renderBlock(block);
+                if (blockHtml) {
+                    html += blockHtml;
+                } else {
+                    console.error(`Block ${index + 1} rendered empty HTML:`, block);
+                }
+            });
+        }
         
         html += `</div>`;
         
@@ -802,9 +818,19 @@ class AdvancedVisualEditor {
 
     renderBlock(block) {
         const blockTemplate = this.blockTypes[block.type]?.template;
-        if (!blockTemplate) return '';
+        if (!blockTemplate) {
+            console.warn(`No template found for block type: ${block.type}`);
+            return '';
+        }
+        
+        console.log(`Rendering block:`, { type: block.type, id: block.id, content: block.content });
         
         let html = blockTemplate(block.content);
+        
+        if (!html || html.trim() === '') {
+            console.error(`Template returned empty HTML for block type: ${block.type}`);
+            return '';
+        }
         
         // Add editing attributes to specific elements only
         html = html.replace(/<(h[1-6]|p|span|div|button)[^>]*data-editable="true"[^>]*>/g, (match, tagName) => {
