@@ -158,18 +158,12 @@ class VisualEditor {
             // Replace template variables with actual content
             html = this.replaceTemplateVariables(html);
             
-            // Load into both preview frames
-            const previewFrame1 = document.getElementById('preview-frame-1');
-            const previewFrame2 = document.getElementById('preview-frame-2');
+            // Load into preview frame
+            const previewFrame = document.getElementById('preview-frame');
             
-            if (previewFrame1) {
-                previewFrame1.innerHTML = html;
-                this.setupEditableElements(previewFrame1, 'frame1');
-            }
-            
-            if (previewFrame2) {
-                previewFrame2.innerHTML = html;
-                this.setupEditableElements(previewFrame2, 'frame2');
+            if (previewFrame) {
+                previewFrame.innerHTML = html;
+                this.setupEditableElements(previewFrame);
             }
             
         } catch (error) {
@@ -185,18 +179,315 @@ class VisualEditor {
             html = html.replace(regex, value);
         });
         
+        // Add hamburger menu to every template
+        html = this.addHamburgerMenu(html);
+        
         return html;
     }
 
-    setupEditableElements(container, frameId) {
+    addHamburgerMenu(html) {
+        const hamburgerMenuHTML = `
+        <!-- Hamburger Menu -->
+        <div class="hamburger-menu-overlay" id="hamburger-overlay"></div>
+        <div class="hamburger-menu" id="hamburger-menu">
+            <div class="hamburger-header">
+                <h3>Navigate Pages</h3>
+                <button class="hamburger-close" id="hamburger-close">&times;</button>
+            </div>
+            <div class="hamburger-nav">
+                <a href="#" class="hamburger-nav-item active" data-page="home">
+                    <span class="nav-icon">🏠</span>
+                    <span>Home</span>
+                </a>
+                <a href="#" class="hamburger-nav-item" data-page="about">
+                    <span class="nav-icon">👤</span>
+                    <span>About</span>
+                </a>
+                <a href="#" class="hamburger-nav-item" data-page="portfolio">
+                    <span class="nav-icon">📸</span>
+                    <span>Portfolio</span>
+                </a>
+                <a href="#" class="hamburger-nav-item" data-page="contact">
+                    <span class="nav-icon">📧</span>
+                    <span>Contact</span>
+                </a>
+            </div>
+        </div>
+        
+        <!-- Hamburger Button -->
+        <button class="hamburger-btn" id="hamburger-btn">
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+            <span class="hamburger-line"></span>
+        </button>
+        
+        <style>
+        .hamburger-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(196, 150, 45, 0.9);
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .hamburger-btn:hover {
+            background: rgba(196, 150, 45, 1);
+            transform: scale(1.05);
+        }
+        
+        .hamburger-line {
+            display: block;
+            width: 20px;
+            height: 3px;
+            background: white;
+            margin: 3px 0;
+            transition: all 0.3s ease;
+            border-radius: 2px;
+        }
+        
+        .hamburger-btn.active .hamburger-line:nth-child(1) {
+            transform: rotate(45deg) translate(6px, 6px);
+        }
+        
+        .hamburger-btn.active .hamburger-line:nth-child(2) {
+            opacity: 0;
+        }
+        
+        .hamburger-btn.active .hamburger-line:nth-child(3) {
+            transform: rotate(-45deg) translate(6px, -6px);
+        }
+        
+        .hamburger-menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1001;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .hamburger-menu-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .hamburger-menu {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 280px;
+            height: 100vh;
+            background: #f7f3f0;
+            z-index: 1002;
+            transition: all 0.3s ease;
+            box-shadow: 2px 0 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .hamburger-menu.active {
+            left: 0;
+        }
+        
+        .hamburger-header {
+            padding: 20px;
+            border-bottom: 1px solid #e8ddd4;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #e8ddd4;
+        }
+        
+        .hamburger-header h3 {
+            margin: 0;
+            color: #2c2c2c;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.2rem;
+        }
+        
+        .hamburger-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #2c2c2c;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: background 0.2s ease;
+        }
+        
+        .hamburger-close:hover {
+            background: rgba(196, 150, 45, 0.1);
+        }
+        
+        .hamburger-nav {
+            padding: 20px 0;
+        }
+        
+        .hamburger-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px 20px;
+            color: #2c2c2c;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+        
+        .hamburger-nav-item:hover {
+            background: rgba(196, 150, 45, 0.1);
+            border-left-color: #c4962d;
+        }
+        
+        .hamburger-nav-item.active {
+            background: rgba(196, 150, 45, 0.2);
+            border-left-color: #c4962d;
+            color: #c4962d;
+            font-weight: 600;
+        }
+        
+        .nav-icon {
+            font-size: 1.2rem;
+        }
+        
+        @media (max-width: 768px) {
+            .hamburger-menu {
+                width: 250px;
+                left: -250px;
+            }
+        }
+        </style>
+        
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const hamburgerBtn = document.getElementById('hamburger-btn');
+            const hamburgerMenu = document.getElementById('hamburger-menu');
+            const hamburgerOverlay = document.getElementById('hamburger-overlay');
+            const hamburgerClose = document.getElementById('hamburger-close');
+            const navItems = document.querySelectorAll('.hamburger-nav-item');
+            
+            function openMenu() {
+                hamburgerBtn.classList.add('active');
+                hamburgerMenu.classList.add('active');
+                hamburgerOverlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+            
+            function closeMenu() {
+                hamburgerBtn.classList.remove('active');
+                hamburgerMenu.classList.remove('active');
+                hamburgerOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+            
+            hamburgerBtn.addEventListener('click', function() {
+                if (hamburgerMenu.classList.contains('active')) {
+                    closeMenu();
+                } else {
+                    openMenu();
+                }
+            });
+            
+            hamburgerClose.addEventListener('click', closeMenu);
+            hamburgerOverlay.addEventListener('click', closeMenu);
+            
+            navItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Update active state
+                    navItems.forEach(nav => nav.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Get target page
+                    const targetPage = this.dataset.page;
+                    
+                    // Simulate page navigation (in real implementation, this would load different content)
+                    console.log('Navigating to:', targetPage);
+                    
+                    // Close menu
+                    closeMenu();
+                    
+                    // Show notification
+                    showPageNotification(targetPage);
+                });
+            });
+            
+            function showPageNotification(page) {
+                const notification = document.createElement('div');
+                notification.style.cssText = \`
+                    position: fixed;
+                    top: 80px;
+                    left: 20px;
+                    background: #c4962d;
+                    color: white;
+                    padding: 12px 20px;
+                    border-radius: 8px;
+                    z-index: 1003;
+                    font-weight: 600;
+                    animation: slideInLeft 0.3s ease, fadeOut 0.3s ease 2s forwards;
+                \`;
+                notification.textContent = \`Navigated to \${page.charAt(0).toUpperCase() + page.slice(1)} page\`;
+                
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 2500);
+            }
+            
+            // Add animations
+            const style = document.createElement('style');
+            style.textContent = \`
+                @keyframes slideInLeft {
+                    from { transform: translateX(-100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                
+                @keyframes fadeOut {
+                    from { opacity: 1; }
+                    to { opacity: 0; }
+                }
+            \`;
+            document.head.appendChild(style);
+        });
+        </script>
+        `;
+        
+        // Insert hamburger menu right after opening body tag
+        const bodyIndex = html.indexOf('<body');
+        if (bodyIndex !== -1) {
+            const bodyCloseIndex = html.indexOf('>', bodyIndex) + 1;
+            html = html.slice(0, bodyCloseIndex) + hamburgerMenuHTML + html.slice(bodyCloseIndex);
+        }
+        
+        return html;
+    }
+
+    setupEditableElements(container) {
         const editables = container.querySelectorAll('[data-editable]');
         
         editables.forEach(element => {
-            this.makeElementEditable(element, frameId);
+            this.makeElementEditable(element);
         });
     }
 
-    makeElementEditable(element, frameId) {
+    makeElementEditable(element) {
         const type = element.dataset.editable;
         const elementId = element.dataset.elementId;
         
@@ -204,7 +495,7 @@ class VisualEditor {
             element.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                this.editText(element, frameId);
+                this.editText(element);
             });
             
             // Add visual indicator on hover
@@ -227,7 +518,7 @@ class VisualEditor {
             element.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                this.editImage(element, frameId);
+                this.editImage(element);
             });
             
             element.style.cursor = 'pointer';
@@ -244,7 +535,7 @@ class VisualEditor {
         }
     }
 
-    editText(element, frameId) {
+    editText(element) {
         const originalText = element.textContent;
         element.classList.add('editing');
         
@@ -276,8 +567,7 @@ class VisualEditor {
             if (newText && newText !== originalText) {
                 element.textContent = newText;
                 this.saveContent(element.dataset.elementId, newText);
-                this.syncBetweenFrames(element.dataset.elementId, newText, 'text');
-                this.showSuccess('Content updated across both previews!');
+                this.showSuccess('Content updated!');
             }
             
             input.remove();
@@ -305,7 +595,7 @@ class VisualEditor {
         });
     }
 
-    editImage(element, frameId) {
+    editImage(element) {
         const input = document.createElement('input');
         input.type = 'url';
         input.placeholder = 'Enter image URL';
@@ -328,8 +618,7 @@ class VisualEditor {
                     if (newUrl) {
                         element.src = newUrl;
                         this.saveContent(element.dataset.elementId, newUrl);
-                        this.syncBetweenFrames(element.dataset.elementId, newUrl, 'image');
-                        this.showSuccess('Image updated across both previews!');
+                        this.showSuccess('Image updated!');
                     }
                     this.closeModal(modal);
                 }
@@ -489,47 +778,24 @@ class VisualEditor {
     }
 
     setDeviceView(device) {
-        const previewFrame1 = document.getElementById('preview-frame-1');
-        const previewFrame2 = document.getElementById('preview-frame-2');
+        const previewFrame = document.getElementById('preview-frame');
+        if (!previewFrame) return;
         
-        [previewFrame1, previewFrame2].forEach(frame => {
-            if (!frame) return;
-            
-            frame.classList.remove('desktop', 'tablet', 'mobile');
-            frame.classList.add(device);
-            
-            // Apply device-specific styling
-            switch (device) {
-                case 'desktop':
-                    frame.style.maxWidth = '100%';
-                    break;
-                case 'tablet':
-                    frame.style.maxWidth = '768px';
-                    break;
-                case 'mobile':
-                    frame.style.maxWidth = '375px';
-                    break;
-            }
-        });
-    }
-
-    syncBetweenFrames(elementId, content, type) {
-        // Update both frames when content changes
-        const frames = ['preview-frame-1', 'preview-frame-2'];
+        previewFrame.classList.remove('desktop', 'tablet', 'mobile');
+        previewFrame.classList.add(device);
         
-        frames.forEach(frameId => {
-            const frame = document.getElementById(frameId);
-            if (frame) {
-                const element = frame.querySelector(`[data-element-id="${elementId}"]`);
-                if (element) {
-                    if (type === 'text') {
-                        element.textContent = content;
-                    } else if (type === 'image') {
-                        element.src = content;
-                    }
-                }
-            }
-        });
+        // Apply device-specific styling
+        switch (device) {
+            case 'desktop':
+                previewFrame.style.maxWidth = '100%';
+                break;
+            case 'tablet':
+                previewFrame.style.maxWidth = '768px';
+                break;
+            case 'mobile':
+                previewFrame.style.maxWidth = '375px';
+                break;
+        }
     }
 
     updateSiteData() {

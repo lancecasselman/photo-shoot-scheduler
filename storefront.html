@@ -597,10 +597,9 @@
             color: var(--warm-white);
         }
         
-        .dual-preview-layout {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
+        .single-preview-layout {
+            display: flex;
+            flex-direction: column;
             height: calc(100vh - 200px);
         }
         
@@ -610,6 +609,9 @@
             box-shadow: var(--shadow-light);
             overflow: hidden;
             border: 2px solid var(--beige);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
         }
         
         .preview-panel-header {
@@ -769,23 +771,14 @@
                     <button class="device-btn" data-device="mobile">📱 Mobile</button>
                 </div>
             </div>
-            <div class="dual-preview-layout">
+            <div class="single-preview-layout">
                 <div class="preview-panel">
                     <div class="preview-panel-header">
-                        <h4>Main Preview</h4>
+                        <h4>Live Preview</h4>
                         <span class="edit-indicator">Click any text or image to edit</span>
                     </div>
-                    <div class="preview-frame" id="preview-frame-1">
-                        <!-- Primary editable preview loads here -->
-                    </div>
-                </div>
-                <div class="preview-panel">
-                    <div class="preview-panel-header">
-                        <h4>Secondary Preview</h4>
-                        <span class="edit-indicator">Live sync with main preview</span>
-                    </div>
-                    <div class="preview-frame" id="preview-frame-2">
-                        <!-- Secondary editable preview loads here -->
+                    <div class="preview-frame" id="preview-frame">
+                        <!-- Editable preview loads here -->
                     </div>
                 </div>
             </div>
