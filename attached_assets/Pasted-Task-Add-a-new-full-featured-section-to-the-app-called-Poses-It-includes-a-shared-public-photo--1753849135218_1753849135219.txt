@@ -1,0 +1,85 @@
+Task: Add a new full-featured section to the app called “Poses.” It includes a shared, public photo gallery, a personal favorites gallery for each user, and a photo submission form. All data must be linked to the submitting photographer.
+
+Step 1: Add New Sidebar Route
+- Add a new route in the sidebar labeled “Poses”
+- Clicking it opens a landing page with navigation to:
+  - Shared Gallery
+  - Favorites
+  - Submit a Photo
+
+Step 2: Shared Pose Gallery
+- Create a new page at /poses/shared
+- Fetch all documents from Firestore at /publicPhotoGallery/ where approved == true
+- Display photos in a responsive grid
+- Each photo card includes:
+  - Full-size image or thumbnail
+  - Photographer name (displayed beneath or as overlay)
+  - Category tags
+  - “Favorite” button (heart icon), visible if logged in
+- Add filters at the top by:
+  - Category (wedding, senior, family, etc.)
+  - Tag search input (match from tags array)
+- Sort options: newest, most favorited
+
+Step 3: Photographer Favorites Gallery
+- Create a new page at /poses/favorites
+- For the logged-in user, fetch:
+  - /users/{userId}/favoritePoses/
+- Display the associated pose photo cards from /publicPhotoGallery/ (joined by poseId)
+- Allow users to remove poses from their favorites
+
+Step 4: Submit a Photo Page
+- Create a form at /poses/submit
+- Form fields:
+  - File uploader for 1 image
+  - Optional category dropdown (wedding, family, senior, etc.)
+  - Optional tags input (comma separated or chip input)
+- On submit:
+  - Upload photo to Firebase Storage at /shared-gallery/
+  - Create document in /publicPhotoGallery/ with fields:
+    - imageUrl (download URL)
+    - category (array)
+    - tags (array)
+    - photographerId (from auth)
+    - photographerName (from user profile)
+    - submittedAt (timestamp)
+    - approved: false
+- Show a confirmation that submission is pending approval
+
+Step 5: Firebase Firestore + Storage Setup
+- Firestore Collection: /publicPhotoGallery/
+  - Fields:
+    - imageUrl
+    - category (array)
+    - tags (array)
+    - photographerId
+    - photographerName
+    - submittedAt
+    - approved
+    - favoritedBy (array of userIds)
+
+- Favorites Subcollection:
+  - /users/{userId}/favoritePoses/{poseId}
+
+- Firebase Storage:
+  - /shared-gallery/{fileName}
+  - Public read access for all users
+
+Step 6: Firebase Rules
+- Only authenticated users can write to /publicPhotoGallery/
+- Only admin users can set approved == true
+- Only the current user can write to /users/{userId}/favoritePoses/
+
+Step 7: Admin Approval Panel (Optional Phase)
+- Add simple backend or Firestore viewer to allow admin to mark approved: true
+- Filter unapproved submissions
+
+Step 8: UX Notes
+- All views must be fully mobile responsive
+- Default fallback if no photos are found
+- Display photographer credit clearly on all images
+- Display uploaded date (optional)
+- Optimize for lazy-loading and fast image preview
+
+Goal:
+Create a platform-wide resource for pose inspiration using real user-submitted photos. All content is linked to photographers and categorized for easy searching. Users can favorite poses and reference them in their shoot planning or marketing tools.

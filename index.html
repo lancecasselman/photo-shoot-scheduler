@@ -3458,6 +3458,7 @@
                 <a href="#" onclick="switchTab('clients')">👥 Client Management</a>
                 <a href="#" onclick="switchTab('sunrise')">🌅 Sunrise/Sunset Calendar</a>
                 <a href="#" onclick="switchTab('marketing')">📱 Marketing Suite</a>
+                <a href="#" onclick="switchTab('poses')">📸 Poses</a>
                 <a href="/onboarding" target="_blank">🚀 Business Setup Wizard</a>
             </div>
         </div>
@@ -6558,6 +6559,11 @@ END:VCALENDAR`;
             if (tabName === 'marketing') {
                 showMessage('Marketing Suite loaded successfully!', 'success');
             }
+            
+            // Initialize poses section if selected
+            if (tabName === 'poses') {
+                initializePosesSection();
+            }
         }
 
         // Photography Website Builder Functionality
@@ -8613,6 +8619,124 @@ ${name}`;
             </div>
         </div> <!-- End Marketing Suite Tab -->
 
+        <!-- Poses Tab Content -->
+        <div id="posesTab" class="tab-content">
+            <div class="poses-container">
+                <div class="poses-header">
+                    <h2>📸 Poses Gallery</h2>
+                    <p>Discover, share, and save pose inspiration from the photography community</p>
+                </div>
+
+                <div class="poses-navigation">
+                    <button onclick="showPosesSection('shared')" class="poses-nav-btn active" id="sharedNavBtn">
+                        🌍 Shared Gallery
+                    </button>
+                    <button onclick="showPosesSection('favorites')" class="poses-nav-btn" id="favoritesNavBtn">
+                        ❤️ My Favorites
+                    </button>
+                    <button onclick="showPosesSection('submit')" class="poses-nav-btn" id="submitNavBtn">
+                        📤 Submit Photo
+                    </button>
+                </div>
+
+                <!-- Shared Gallery Section -->
+                <div id="sharedGallerySection" class="poses-section active">
+                    <div class="gallery-filters">
+                        <div class="filter-group">
+                            <label>Category:</label>
+                            <select id="categoryFilter" onchange="filterPoses()">
+                                <option value="">All Categories</option>
+                                <option value="wedding">Wedding</option>
+                                <option value="portrait">Portrait</option>
+                                <option value="family">Family</option>
+                                <option value="senior">Senior</option>
+                                <option value="engagement">Engagement</option>
+                                <option value="maternity">Maternity</option>
+                                <option value="newborn">Newborn</option>
+                                <option value="couple">Couple</option>
+                                <option value="group">Group</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Search Tags:</label>
+                            <input type="text" id="tagSearch" placeholder="Search tags..." onkeyup="filterPoses()">
+                        </div>
+                        <div class="filter-group">
+                            <label>Sort by:</label>
+                            <select id="sortBy" onchange="sortPoses()">
+                                <option value="newest">Newest First</option>
+                                <option value="oldest">Oldest First</option>
+                                <option value="mostFavorited">Most Favorited</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="sharedGalleryGrid" class="poses-grid">
+                        <div class="loading-placeholder">
+                            <p>Loading pose gallery...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Favorites Section -->
+                <div id="favoritesSection" class="poses-section">
+                    <div class="favorites-header">
+                        <h3>❤️ Your Favorite Poses</h3>
+                        <p>Poses you've saved for inspiration</p>
+                    </div>
+                    <div id="favoritesGrid" class="poses-grid">
+                        <div class="loading-placeholder">
+                            <p>Loading your favorites...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Photo Section -->
+                <div id="submitSection" class="poses-section">
+                    <div class="submit-header">
+                        <h3>📤 Submit a Pose Photo</h3>
+                        <p>Share your best pose ideas with the photography community</p>
+                    </div>
+
+                    <form id="poseSubmitForm" class="pose-submit-form">
+                        <div class="form-group">
+                            <label for="poseImage">Photo Upload *</label>
+                            <input type="file" id="poseImage" accept="image/*" required class="form-control">
+                            <small>Supported formats: JPG, PNG. Max size: 5MB</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="poseCategory">Category</label>
+                            <select id="poseCategory" class="form-control">
+                                <option value="wedding">Wedding</option>
+                                <option value="portrait">Portrait</option>
+                                <option value="family">Family</option>
+                                <option value="senior">Senior</option>
+                                <option value="engagement">Engagement</option>
+                                <option value="maternity">Maternity</option>
+                                <option value="newborn">Newborn</option>
+                                <option value="couple">Couple</option>
+                                <option value="group">Group</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="poseTags">Tags (comma separated)</label>
+                            <input type="text" id="poseTags" placeholder="e.g., romantic, outdoor, golden hour, sitting" class="form-control">
+                            <small>Help others find your pose with descriptive tags</small>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">📤 Submit for Review</button>
+                            <button type="button" onclick="resetPoseForm()" class="btn btn-secondary">🔄 Reset</button>
+                        </div>
+                    </form>
+
+                    <div id="submitResult" class="submit-result"></div>
+                </div>
+            </div>
+        </div> <!-- End Poses Tab -->
+
     </div> <!-- End container -->
 
     <!-- Contract Modal moved to end -->
@@ -9270,6 +9394,242 @@ ${name}`;
                             grid-template-columns: 1fr;
                         }
                     }
+                    
+                    /* Poses Section Styles */
+                    .poses-container {
+                        padding: 30px;
+                        max-width: 1200px;
+                        margin: 0 auto;
+                    }
+                    .poses-header {
+                        text-align: center;
+                        margin-bottom: 30px;
+                    }
+                    .poses-header h2 {
+                        color: #2d3748;
+                        margin-bottom: 10px;
+                    }
+                    .poses-navigation {
+                        display: flex;
+                        justify-content: center;
+                        gap: 15px;
+                        margin-bottom: 30px;
+                        border-bottom: 1px solid #e2e8f0;
+                        padding-bottom: 15px;
+                    }
+                    .poses-nav-btn {
+                        padding: 12px 20px;
+                        border: none;
+                        background: #f7fafc;
+                        color: #4a5568;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-weight: 500;
+                        transition: all 0.3s ease;
+                    }
+                    .poses-nav-btn:hover {
+                        background: #edf2f7;
+                        transform: translateY(-2px);
+                    }
+                    .poses-nav-btn.active {
+                        background: #D4AF37;
+                        color: white;
+                    }
+                    .poses-section {
+                        display: none;
+                    }
+                    .poses-section.active {
+                        display: block;
+                    }
+                    .gallery-filters {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                        gap: 15px;
+                        margin-bottom: 30px;
+                        padding: 20px;
+                        background: #f8f9fa;
+                        border-radius: 12px;
+                        border: 1px solid #e9ecef;
+                    }
+                    .filter-group {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 5px;
+                    }
+                    .filter-group label {
+                        font-weight: 600;
+                        color: #495057;
+                        font-size: 14px;
+                    }
+                    .poses-grid {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                        gap: 20px;
+                        margin-top: 20px;
+                    }
+                    .pose-card {
+                        background: white;
+                        border-radius: 12px;
+                        overflow: hidden;
+                        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                        transition: all 0.3s ease;
+                        border: 1px solid #e2e8f0;
+                    }
+                    .pose-card:hover {
+                        transform: translateY(-5px);
+                        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+                    }
+                    .pose-image {
+                        width: 100%;
+                        height: 250px;
+                        object-fit: cover;
+                        cursor: pointer;
+                    }
+                    .pose-content {
+                        padding: 15px;
+                    }
+                    .pose-photographer {
+                        font-weight: 600;
+                        color: #2d3748;
+                        margin-bottom: 8px;
+                        font-size: 14px;
+                    }
+                    .pose-category {
+                        display: inline-block;
+                        background: #D4AF37;
+                        color: white;
+                        padding: 4px 8px;
+                        border-radius: 12px;
+                        font-size: 12px;
+                        font-weight: 500;
+                        margin-bottom: 8px;
+                    }
+                    .pose-tags {
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 5px;
+                        margin-bottom: 12px;
+                    }
+                    .pose-tag {
+                        background: #e2e8f0;
+                        color: #4a5568;
+                        padding: 2px 6px;
+                        border-radius: 8px;
+                        font-size: 11px;
+                    }
+                    .pose-actions {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    }
+                    .favorite-btn {
+                        background: none;
+                        border: none;
+                        font-size: 18px;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                        padding: 5px;
+                        border-radius: 50%;
+                    }
+                    .favorite-btn:hover {
+                        background: #f1f5f9;
+                        transform: scale(1.1);
+                    }
+                    .favorite-btn.favorited {
+                        color: #e53e3e;
+                    }
+                    .favorite-count {
+                        font-size: 12px;
+                        color: #718096;
+                    }
+                    .pose-submit-form {
+                        max-width: 600px;
+                        margin: 0 auto;
+                        background: white;
+                        padding: 30px;
+                        border-radius: 12px;
+                        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                    }
+                    .submit-result {
+                        margin-top: 20px;
+                        padding: 15px;
+                        border-radius: 8px;
+                        display: none;
+                    }
+                    .submit-result.success {
+                        background: #d4edda;
+                        border: 1px solid #c3e6cb;
+                        color: #155724;
+                    }
+                    .submit-result.error {
+                        background: #f8d7da;
+                        border: 1px solid #f5c6cb;
+                        color: #721c24;
+                    }
+                    .loading-placeholder {
+                        text-align: center;
+                        padding: 40px;
+                        color: #718096;
+                    }
+                    .empty-state {
+                        text-align: center;
+                        padding: 60px 20px;
+                        color: #718096;
+                    }
+                    .empty-state h3 {
+                        margin-bottom: 10px;
+                        color: #4a5568;
+                    }
+                    .pose-lightbox {
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(0, 0, 0, 0.9);
+                        z-index: 1000;
+                        display: none;
+                        justify-content: center;
+                        align-items: center;
+                    }
+                    .lightbox-content {
+                        max-width: 90%;
+                        max-height: 90%;
+                        object-fit: contain;
+                    }
+                    .lightbox-close {
+                        position: absolute;
+                        top: 20px;
+                        right: 30px;
+                        color: white;
+                        font-size: 40px;
+                        cursor: pointer;
+                        font-weight: bold;
+                    }
+                    @media (max-width: 768px) {
+                        .poses-navigation {
+                            flex-direction: column;
+                            gap: 10px;
+                        }
+                        .poses-nav-btn {
+                            width: 100%;
+                        }
+                        .gallery-filters {
+                            grid-template-columns: 1fr;
+                        }
+                        .poses-grid {
+                            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                            gap: 15px;
+                        }
+                        .pose-submit-form {
+                            padding: 20px;
+                        }
+                        .lightbox-close {
+                            top: 10px;
+                            right: 15px;
+                            font-size: 30px;
+                        }
+                    }
                 `;
                 document.head.appendChild(styles);
             }
@@ -9678,6 +10038,431 @@ I'm so grateful to work with clients like ${clientName} who trust me to capture 
                 }, 500);
             }, 1000);
         }
+
+        // Poses Section JavaScript Functions
+        let currentPoses = [];
+        let userFavorites = [];
+        let currentUserId = null;
+
+        async function initializePosesSection() {
+            showMessage('Loading Poses Gallery...', 'info');
+            
+            try {
+                // Get current user ID for favorites
+                currentUserId = 'dev-user-123';
+                
+                // Load poses data (starts with demo data)
+                loadDemoPoses();
+                
+                // Load user favorites
+                if (currentUserId) {
+                    await loadUserFavorites();
+                }
+                
+                showMessage('Poses gallery loaded successfully!', 'success');
+                
+            } catch (error) {
+                console.error('Error initializing poses:', error);
+                showMessage('Using demo poses data', 'warning');
+                loadDemoPoses();
+            }
+        }
+
+        function showPosesSection(sectionName) {
+            // Update navigation buttons
+            document.querySelectorAll('.poses-nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(sectionName + 'NavBtn').classList.add('active');
+            
+            // Show selected section
+            document.querySelectorAll('.poses-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(sectionName + 'Section').classList.add('active');
+            
+            // Load section-specific data
+            if (sectionName === 'shared') {
+                displaySharedPoses();
+            } else if (sectionName === 'favorites') {
+                displayFavorites();
+            }
+        }
+
+        function loadDemoPoses() {
+            // Demo poses data with realistic photographer information
+            currentPoses = [
+                {
+                    id: 'pose_1',
+                    imageUrl: 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=400',
+                    category: ['wedding'],
+                    tags: ['romantic', 'outdoor', 'golden hour', 'couple'],
+                    photographerId: 'photographer_1',
+                    photographerName: 'Sarah Mitchell Photography',
+                    submittedAt: new Date('2024-01-15').toISOString(),
+                    approved: true,
+                    favoritedBy: ['user1', 'user2', 'user3']
+                },
+                {
+                    id: 'pose_2',
+                    imageUrl: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400',
+                    category: ['family'],
+                    tags: ['family', 'children', 'outdoor', 'natural'],
+                    photographerId: 'photographer_2',
+                    photographerName: 'Mike Johnson Studios',
+                    submittedAt: new Date('2024-01-10').toISOString(),
+                    approved: true,
+                    favoritedBy: ['user1', 'user4']
+                },
+                {
+                    id: 'pose_3',
+                    imageUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400',
+                    category: ['portrait'],
+                    tags: ['portrait', 'studio', 'professional', 'headshot'],
+                    photographerId: 'photographer_3',
+                    photographerName: 'Elena Rodriguez Photography',
+                    submittedAt: new Date('2024-01-20').toISOString(),
+                    approved: true,
+                    favoritedBy: ['user2', 'user3', 'user5']
+                },
+                {
+                    id: 'pose_4',
+                    imageUrl: 'https://images.unsplash.com/photo-1522673607200-164d1b6ce486?w=400',
+                    category: ['engagement'],
+                    tags: ['engagement', 'couple', 'romantic', 'sunset'],
+                    photographerId: 'photographer_4',
+                    photographerName: 'David Chen Photography',
+                    submittedAt: new Date('2024-01-25').toISOString(),
+                    approved: true,
+                    favoritedBy: ['user1', 'user3']
+                },
+                {
+                    id: 'pose_5',
+                    imageUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400',
+                    category: ['senior'],
+                    tags: ['senior', 'graduation', 'outdoor', 'bright'],
+                    photographerId: 'photographer_5',
+                    photographerName: 'Jessica Thompson Photo',
+                    submittedAt: new Date('2024-01-30').toISOString(),
+                    approved: true,
+                    favoritedBy: ['user4', 'user5']
+                },
+                {
+                    id: 'pose_6',
+                    imageUrl: 'https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?w=400',
+                    category: ['maternity'],
+                    tags: ['maternity', 'expecting', 'studio', 'elegant'],
+                    photographerId: 'photographer_6',
+                    photographerName: 'Amanda Foster Photography',
+                    submittedAt: new Date('2024-02-01').toISOString(),
+                    approved: true,
+                    favoritedBy: ['user2', 'user4']
+                }
+            ];
+        }
+
+        async function loadUserFavorites() {
+            try {
+                userFavorites = ['pose_1', 'pose_3']; // Demo favorites for current user
+                // In production: fetch from /users/{userId}/favoritePoses/
+            } catch (error) {
+                console.error('Error loading user favorites:', error);
+                userFavorites = [];
+            }
+        }
+
+        function displaySharedPoses() {
+            const grid = document.getElementById('sharedGalleryGrid');
+            
+            if (currentPoses.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <h3>No poses available</h3>
+                        <p>Be the first to submit a pose to the community gallery!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const posesHtml = currentPoses.map(pose => createPoseCard(pose)).join('');
+            grid.innerHTML = posesHtml;
+        }
+
+        function createPoseCard(pose) {
+            const isFavorited = userFavorites.includes(pose.id);
+            const favoriteCount = pose.favoritedBy ? pose.favoritedBy.length : 0;
+            
+            return `
+                <div class="pose-card" data-pose-id="${pose.id}">
+                    <img src="${pose.imageUrl}" alt="Pose by ${pose.photographerName}" class="pose-image" onclick="openPoseLightbox('${pose.imageUrl}', '${pose.photographerName}')">
+                    <div class="pose-content">
+                        <div class="pose-photographer">📸 ${pose.photographerName}</div>
+                        <div class="pose-category">${pose.category[0] || 'General'}</div>
+                        <div class="pose-tags">
+                            ${pose.tags.map(tag => `<span class="pose-tag">${tag}</span>`).join('')}
+                        </div>
+                        <div class="pose-actions">
+                            <button class="favorite-btn ${isFavorited ? 'favorited' : ''}" onclick="toggleFavorite('${pose.id}')" title="${isFavorited ? 'Remove from favorites' : 'Add to favorites'}">
+                                ${isFavorited ? '❤️' : '🤍'}
+                            </button>
+                            <span class="favorite-count">${favoriteCount} ${favoriteCount === 1 ? 'favorite' : 'favorites'}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function filterPoses() {
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const tagSearch = document.getElementById('tagSearch').value.toLowerCase();
+            
+            let filteredPoses = currentPoses;
+            
+            // Filter by category
+            if (categoryFilter) {
+                filteredPoses = filteredPoses.filter(pose => 
+                    pose.category.includes(categoryFilter)
+                );
+            }
+            
+            // Filter by tags
+            if (tagSearch) {
+                filteredPoses = filteredPoses.filter(pose => 
+                    pose.tags.some(tag => tag.toLowerCase().includes(tagSearch))
+                );
+            }
+            
+            displayFilteredPoses(filteredPoses);
+        }
+
+        function sortPoses() {
+            const sortBy = document.getElementById('sortBy').value;
+            let sortedPoses = [...currentPoses];
+            
+            switch (sortBy) {
+                case 'newest':
+                    sortedPoses.sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+                    break;
+                case 'oldest':
+                    sortedPoses.sort((a, b) => new Date(a.submittedAt) - new Date(b.submittedAt));
+                    break;
+                case 'mostFavorited':
+                    sortedPoses.sort((a, b) => (b.favoritedBy?.length || 0) - (a.favoritedBy?.length || 0));
+                    break;
+            }
+            
+            displayFilteredPoses(sortedPoses);
+        }
+
+        function displayFilteredPoses(poses) {
+            const grid = document.getElementById('sharedGalleryGrid');
+            
+            if (poses.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <h3>No poses found</h3>
+                        <p>Try adjusting your filters or search terms</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const posesHtml = poses.map(pose => createPoseCard(pose)).join('');
+            grid.innerHTML = posesHtml;
+        }
+
+        async function toggleFavorite(poseId) {
+            try {
+                const isFavorited = userFavorites.includes(poseId);
+                
+                if (isFavorited) {
+                    // Remove from favorites
+                    userFavorites = userFavorites.filter(id => id !== poseId);
+                    showMessage('Removed from favorites', 'info');
+                } else {
+                    // Add to favorites
+                    userFavorites.push(poseId);
+                    showMessage('Added to favorites!', 'success');
+                    celebrateMilestone('gallery_shared', 'Pose Favorited');
+                }
+                
+                // Update the UI
+                displaySharedPoses();
+                
+            } catch (error) {
+                console.error('Error toggling favorite:', error);
+                showMessage('Error updating favorites', 'error');
+            }
+        }
+
+        function displayFavorites() {
+            const grid = document.getElementById('favoritesGrid');
+            
+            const favoritePoses = currentPoses.filter(pose => userFavorites.includes(pose.id));
+            
+            if (favoritePoses.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <h3>No favorite poses yet</h3>
+                        <p>Browse the shared gallery and save poses you love!</p>
+                        <button onclick="showPosesSection('shared')" class="btn btn-primary" style="margin-top: 15px;">
+                            🌍 Browse Shared Gallery
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            const posesHtml = favoritePoses.map(pose => createFavoritePoseCard(pose)).join('');
+            grid.innerHTML = posesHtml;
+        }
+
+        function createFavoritePoseCard(pose) {
+            return `
+                <div class="pose-card" data-pose-id="${pose.id}">
+                    <img src="${pose.imageUrl}" alt="Pose by ${pose.photographerName}" class="pose-image" onclick="openPoseLightbox('${pose.imageUrl}', '${pose.photographerName}')">
+                    <div class="pose-content">
+                        <div class="pose-photographer">📸 ${pose.photographerName}</div>
+                        <div class="pose-category">${pose.category[0] || 'General'}</div>
+                        <div class="pose-tags">
+                            ${pose.tags.map(tag => `<span class="pose-tag">${tag}</span>`).join('')}
+                        </div>
+                        <div class="pose-actions">
+                            <button class="favorite-btn favorited" onclick="removeFavorite('${pose.id}')" title="Remove from favorites">
+                                ❤️
+                            </button>
+                            <span class="favorite-count">Saved to favorites</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function removeFavorite(poseId) {
+            try {
+                userFavorites = userFavorites.filter(id => id !== poseId);
+                showMessage('Removed from favorites', 'info');
+                displayFavorites();
+                
+                // Also update shared gallery view if visible
+                if (document.getElementById('sharedGallerySection').classList.contains('active')) {
+                    displaySharedPoses();
+                }
+            } catch (error) {
+                console.error('Error removing favorite:', error);
+                showMessage('Error removing favorite', 'error');
+            }
+        }
+
+        function openPoseLightbox(imageUrl, photographerName) {
+            const lightbox = document.createElement('div');
+            lightbox.className = 'pose-lightbox';
+            lightbox.style.display = 'flex';
+            lightbox.innerHTML = `
+                <span class="lightbox-close" onclick="closePoseLightbox()">&times;</span>
+                <img src="${imageUrl}" alt="Pose by ${photographerName}" class="lightbox-content">
+            `;
+            
+            document.body.appendChild(lightbox);
+            
+            // Close on click outside image
+            lightbox.addEventListener('click', function(e) {
+                if (e.target === lightbox) {
+                    closePoseLightbox();
+                }
+            });
+            
+            // Close on escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closePoseLightbox();
+                }
+            });
+        }
+
+        function closePoseLightbox() {
+            const lightbox = document.querySelector('.pose-lightbox');
+            if (lightbox) {
+                lightbox.remove();
+            }
+        }
+
+        // Pose submission form handling
+        async function handlePoseSubmission(event) {
+            event.preventDefault();
+            
+            const imageFile = document.getElementById('poseImage').files[0];
+            const category = document.getElementById('poseCategory').value;
+            const tagsInput = document.getElementById('poseTags').value;
+            
+            if (!imageFile) {
+                showMessage('Please select an image to upload', 'error');
+                return;
+            }
+            
+            // Validate file size (5MB limit)
+            if (imageFile.size > 5 * 1024 * 1024) {
+                showMessage('Image size must be less than 5MB', 'error');
+                return;
+            }
+            
+            try {
+                showMessage('Uploading pose for review...', 'info');
+                
+                // Parse tags
+                const tags = tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag);
+                
+                // Simulate upload delay
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                // Show success message
+                const resultDiv = document.getElementById('submitResult');
+                resultDiv.className = 'submit-result success';
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = `
+                    <h4>✅ Submission Successful!</h4>
+                    <p>Your pose has been submitted for review. It will appear in the shared gallery once approved by our moderators.</p>
+                    <p><strong>Category:</strong> ${category}</p>
+                    <p><strong>Tags:</strong> ${tags.join(', ')}</p>
+                `;
+                
+                // Clear form
+                resetPoseForm();
+                
+                // Celebrate
+                celebrateMilestone('photos_uploaded', 'Pose Submitted');
+                showMessage('Pose submitted successfully! Pending approval.', 'success');
+                
+            } catch (error) {
+                console.error('Error submitting pose:', error);
+                
+                const resultDiv = document.getElementById('submitResult');
+                resultDiv.className = 'submit-result error';
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = `
+                    <h4>❌ Submission Failed</h4>
+                    <p>There was an error submitting your pose. Please try again.</p>
+                    <p><small>Error: ${error.message}</small></p>
+                `;
+                
+                showMessage('Error submitting pose. Please try again.', 'error');
+            }
+        }
+
+        function resetPoseForm() {
+            document.getElementById('poseSubmitForm').reset();
+            const resultDiv = document.getElementById('submitResult');
+            resultDiv.style.display = 'none';
+        }
+
+        // Initialize pose form submission when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            const submitForm = document.getElementById('poseSubmitForm');
+            if (submitForm) {
+                submitForm.addEventListener('submit', handlePoseSubmission);
+            }
+        });
+
     </script>
 
 </body>
