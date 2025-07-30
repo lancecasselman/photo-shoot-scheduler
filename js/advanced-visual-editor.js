@@ -240,42 +240,386 @@ class AdvancedVisualEditor {
     }
 
     setupThemeSelector() {
-        const themeGrid = document.getElementById('theme-grid');
-        if (!themeGrid) {
-            console.warn('Theme grid element not found');
+        const themeDropdown = document.getElementById('theme-dropdown');
+        if (!themeDropdown) {
+            console.warn('Theme dropdown element not found');
             return;
         }
 
-        themeGrid.innerHTML = '';
+        // Clear existing options except the first placeholder
+        themeDropdown.innerHTML = '<option value="">Select a theme...</option>';
         
         if (Object.keys(this.themes).length === 0) {
-            themeGrid.innerHTML = '<p style="text-align: center; color: var(--sage);">No themes available</p>';
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = 'No themes available';
+            option.disabled = true;
+            themeDropdown.appendChild(option);
             return;
         }
         
         Object.entries(this.themes).forEach(([key, theme]) => {
-            const themeOption = document.createElement('div');
-            themeOption.className = `theme-option ${key === this.currentTheme ? 'active' : ''}`;
-            themeOption.dataset.theme = key;
-            themeOption.innerHTML = `
-                <div class="theme-preview">
-                    <div class="theme-preview-content" style="background: ${this.getThemePreviewGradient(theme.category)}">
-                        <div class="preview-header" style="height: 20%; background: rgba(255,255,255,0.9);"></div>
-                        <div class="preview-body" style="height: 60%; background: rgba(255,255,255,0.7);"></div>
-                        <div class="preview-footer" style="height: 20%; background: rgba(255,255,255,0.9);"></div>
-                    </div>
-                </div>
-                <div class="theme-info">
-                    <div class="theme-name">${theme.name}</div>
-                    <div class="theme-category">${theme.category}</div>
-                </div>
-            `;
-            
-            themeOption.addEventListener('click', () => this.changeTheme(key));
-            themeGrid.appendChild(themeOption);
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = `${theme.name} - ${theme.category}`;
+            if (key === this.currentTheme) {
+                option.selected = true;
+            }
+            themeDropdown.appendChild(option);
         });
         
-        console.log(`✅ Loaded ${Object.keys(this.themes).length} themes in theme selector`);
+        // Add event listener for theme changes
+        themeDropdown.addEventListener('change', (e) => {
+            if (e.target.value) {
+                this.changeTheme(e.target.value);
+            }
+        });
+        
+        console.log(`✅ Loaded ${Object.keys(this.themes).length} themes in dropdown`);
+        
+        // Also setup template selector
+        this.setupTemplateSelector();
+    }
+
+    setupTemplateSelector() {
+        const templateDropdown = document.getElementById('template-dropdown');
+        if (!templateDropdown) {
+            console.warn('Template dropdown element not found');
+            return;
+        }
+
+        // Initialize prebuilt templates
+        this.initializePrebuiltTemplates();
+
+        // Clear existing options except the first placeholder
+        templateDropdown.innerHTML = '<option value="">Choose a complete website...</option>';
+        
+        Object.entries(this.prebuiltTemplates).forEach(([key, template]) => {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = `${template.name} - ${template.category}`;
+            templateDropdown.appendChild(option);
+        });
+        
+        // Add event listener for template selection
+        templateDropdown.addEventListener('change', (e) => {
+            if (e.target.value) {
+                this.applyPrebuiltTemplate(e.target.value);
+                // Reset dropdown after selection
+                e.target.value = '';
+            }
+        });
+        
+        console.log(`✅ Loaded ${Object.keys(this.prebuiltTemplates).length} prebuilt templates`);
+    }
+
+    initializePrebuiltTemplates() {
+        this.prebuiltTemplates = {
+            'creative-portfolio': {
+                name: 'Creative Portfolio Showcase',
+                category: 'Portfolio',
+                theme: 'light-airy',
+                description: 'Perfect for showcasing creative work with elegant galleries',
+                pages: {
+                    home: [
+                        { type: 'hero', content: { title: 'Creative Vision Studio', subtitle: 'Capturing moments that tell your story', buttonText: 'View Portfolio', image: 'https://images.unsplash.com/photo-1554048612-b6a482b224b1?w=800' }},
+                        { type: 'about', content: { title: 'About Our Studio', text: 'We specialize in creating timeless photographs that capture the essence of every moment. Our artistic approach combines technical excellence with creative vision.' }},
+                        { type: 'gallery', content: { title: 'Featured Work', images: ['https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400', 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=400', 'https://images.unsplash.com/photo-1537633552985-df8429e8048b?w=400'] }},
+                        { type: 'cta', content: { title: 'Ready to Create Something Beautiful?', text: 'Let\'s discuss your vision and bring it to life through stunning photography.', buttonText: 'Get Started' }}
+                    ],
+                    about: [
+                        { type: 'hero', content: { title: 'Our Story', subtitle: 'Passionate about capturing life\'s most precious moments', image: 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=800' }},
+                        { type: 'text', content: { title: 'Meet the Team', text: 'With over a decade of experience, our team brings together artistic vision and technical mastery to create photographs that stand the test of time.' }},
+                        { type: 'testimonial', content: { quote: 'The most incredible photography experience. Every shot was perfect!', author: 'Sarah Johnson', role: 'Bride' }}
+                    ]
+                }
+            },
+            'wedding-dreams': {
+                name: 'Wedding Dreams Studio',
+                category: 'Wedding',
+                theme: 'romantic-serif',
+                description: 'Romantic wedding photography with elegant styling',
+                pages: {
+                    home: [
+                        { type: 'hero', content: { title: 'Your Perfect Day Awaits', subtitle: 'Luxury wedding photography for the most important day of your life', buttonText: 'View Galleries', image: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=800' }},
+                        { type: 'text', content: { title: 'Timeless Romance', text: 'We believe every love story deserves to be told with beauty, elegance, and attention to every precious detail.' }},
+                        { type: 'gallery', content: { title: 'Recent Weddings', images: ['https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=400', 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=400', 'https://images.unsplash.com/photo-1594736797933-d0ccef7ad58c?w=400'] }},
+                        { type: 'pricing', content: { title: 'Wedding Packages', plans: [{ name: 'Essential', price: '$2,500', features: ['6 Hours Coverage', '300+ Edited Photos', 'Online Gallery'] }, { name: 'Premium', price: '$4,500', features: ['8 Hours Coverage', '500+ Photos', 'Engagement Session', 'Wedding Album'] }] }}
+                    ]
+                }
+            },
+            'modern-business': {
+                name: 'Modern Business Studio',
+                category: 'Corporate',
+                theme: 'modern-luxe',
+                description: 'Professional corporate and headshot photography',
+                pages: {
+                    home: [
+                        { type: 'hero', content: { title: 'Professional Corporate Photography', subtitle: 'Elevate your brand with stunning professional imagery', buttonText: 'Book Session', image: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=800' }},
+                        { type: 'text', content: { title: 'Business Excellence', text: 'We help businesses and professionals create powerful visual content that builds trust and drives success.' }},
+                        { type: 'gallery', content: { title: 'Corporate Portfolio', images: ['https://images.unsplash.com/photo-1551836022-deb4988cc6c0?w=400', 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400', 'https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=400'] }}
+                    ]
+                }
+            },
+            'family-moments': {
+                name: 'Family Moments Studio',
+                category: 'Family',
+                theme: 'light-airy',
+                description: 'Warm family photography capturing precious connections',
+                pages: {
+                    home: [
+                        { type: 'hero', content: { title: 'Capturing Family Love', subtitle: 'Preserving the precious moments that matter most', buttonText: 'Book Family Session', image: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?w=800' }},
+                        { type: 'text', content: { title: 'Your Family Story', text: 'Every family has a unique story to tell. We specialize in capturing the love, laughter, and connections that make your family special.' }},
+                        { type: 'gallery', content: { title: 'Family Sessions', images: ['https://images.unsplash.com/photo-1609220136736-443140cffec6?w=400', 'https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?w=400', 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400'] }}
+                    ]
+                }
+            },
+            'artistic-portraits': {
+                name: 'Artistic Portraits Studio',
+                category: 'Portrait',
+                theme: 'dramatic-editorial',
+                description: 'Bold artistic portrait photography with dramatic flair',
+                pages: {
+                    home: [
+                        { type: 'hero', content: { title: 'Artistic Portrait Experience', subtitle: 'Bold, dramatic portraits that capture your unique essence', buttonText: 'Create Your Portrait', image: 'https://images.unsplash.com/photo-1494790108755-2616c78c1ff1?w=800' }},
+                        { type: 'about', content: { title: 'Artistic Vision', text: 'We create powerful portraits that go beyond traditional photography, using dramatic lighting and artistic composition to reveal your true character.' }},
+                        { type: 'gallery', content: { title: 'Portrait Gallery', images: ['https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400', 'https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?w=400', 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400'] }}
+                    ]
+                }
+            },
+            'luxury-events': {
+                name: 'Luxury Events Studio',
+                category: 'Events',
+                theme: 'luxury-fine-art',
+                description: 'High-end event photography for exclusive occasions',
+                pages: {
+                    home: [
+                        { type: 'hero', content: { title: 'Luxury Event Photography', subtitle: 'Capturing the elegance of your most important celebrations', buttonText: 'Plan Your Event', image: 'https://images.unsplash.com/photo-1464047736614-af63643285bf?w=800' }},
+                        { type: 'text', content: { title: 'Exclusive Events', text: 'From intimate gatherings to grand celebrations, we document luxury events with the sophistication they deserve.' }},
+                        { type: 'gallery', content: { title: 'Event Portfolio', images: ['https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=400', 'https://images.unsplash.com/photo-1519167758481-83f29c8e9e8e?w=400', 'https://images.unsplash.com/photo-1478146896981-b80fe463b330?w=400'] }}
+                    ]
+                }
+            },
+            'newborn-specialist': {
+                name: 'Newborn Specialist Studio',
+                category: 'Newborn',
+                theme: 'minimal-portfolio',
+                description: 'Gentle newborn and maternity photography',
+                pages: {
+                    home: [
+                        { type: 'hero', content: { title: 'Precious Beginnings', subtitle: 'Capturing the miracle of new life with gentle artistry', buttonText: 'Book Newborn Session', image: 'https://images.unsplash.com/photo-1544816155-12df9643f363?w=800' }},
+                        { type: 'text', content: { title: 'Gentle Touch', text: 'Specializing in newborn, maternity, and baby photography with the safety and comfort of your little one as our top priority.' }},
+                        { type: 'gallery', content: { title: 'Little Miracles', images: ['https://images.unsplash.com/photo-1555252333-9f8e92e65df9?w=400', 'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400', 'https://images.unsplash.com/photo-1516627145497-ae4e8ac40d52?w=400'] }}
+                    ]
+                }
+            },
+            'lifestyle-brand': {
+                name: 'Lifestyle Brand Studio',
+                category: 'Lifestyle',
+                theme: 'coastal-lifestyle',
+                description: 'Authentic lifestyle and brand photography',
+                pages: {
+                    home: [
+                        { type: 'hero', content: { title: 'Authentic Lifestyle Stories', subtitle: 'Real moments, genuine connections, beautiful memories', buttonText: 'Tell Your Story', image: 'https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?w=800' }},
+                        { type: 'about', content: { title: 'Lifestyle Approach', text: 'We capture the authentic beauty of everyday moments, creating images that feel natural, genuine, and full of life.' }},
+                        { type: 'gallery', content: { title: 'Lifestyle Sessions', images: ['https://images.unsplash.com/photo-1524863479829-916d8e77f114?w=400', 'https://images.unsplash.com/photo-1509099836639-18ba1795216d?w=400', 'https://images.unsplash.com/photo-1516738901171-8eb4fc13bd20?w=400'] }}
+                    ]
+                }
+            },
+            'fashion-editorial': {
+                name: 'Fashion Editorial Studio',
+                category: 'Fashion',
+                theme: 'fashion-forward',
+                description: 'High-fashion editorial and commercial photography',
+                pages: {
+                    home: [
+                        { type: 'hero', content: { title: 'Fashion Editorial Excellence', subtitle: 'Creating stunning editorial content for fashion and beauty brands', buttonText: 'View Portfolio', image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800' }},
+                        { type: 'text', content: { title: 'Fashion Forward', text: 'Specializing in high-end fashion photography, beauty campaigns, and editorial content that sets trends and defines style.' }},
+                        { type: 'gallery', content: { title: 'Editorial Work', images: ['https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=400', 'https://images.unsplash.com/photo-1504472478235-9bc48ba4d60f?w=400', 'https://images.unsplash.com/photo-1487412912498-0447578fcca8?w=400'] }}
+                    ]
+                }
+            },
+            'commercial-product': {
+                name: 'Commercial Product Studio',
+                category: 'Product',
+                theme: 'commercial-grid',
+                description: 'Professional product and commercial photography',
+                pages: {
+                    home: [
+                        { type: 'hero', content: { title: 'Commercial Photography Excellence', subtitle: 'Professional product photography that drives sales and builds brands', buttonText: 'Start Project', image: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=800' }},
+                        { type: 'text', content: { title: 'Product Excellence', text: 'We create compelling product imagery that showcases your brand in the best light, driving engagement and sales.' }},
+                        { type: 'gallery', content: { title: 'Product Portfolio', images: ['https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400', 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400', 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=400'] }}
+                    ]
+                }
+            },
+            'real-estate-pro': {
+                name: 'Real Estate Pro Studio',
+                category: 'Real Estate',
+                theme: 'minimal-portfolio',
+                description: 'Professional real estate and architectural photography',
+                pages: {
+                    home: [
+                        { type: 'hero', content: { title: 'Real Estate Photography Pro', subtitle: 'Showcase properties with stunning professional photography', buttonText: 'Book Shoot', image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800' }},
+                        { type: 'text', content: { title: 'Property Showcase', text: 'We help real estate professionals sell properties faster with high-quality photography that highlights every property\'s best features.' }},
+                        { type: 'gallery', content: { title: 'Property Portfolio', images: ['https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=400', 'https://images.unsplash.com/photo-1554995207-c18c203602cb?w=400', 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400'] }}
+                    ]
+                }
+            },
+            'pet-portraits': {
+                name: 'Pet Portraits Studio',
+                category: 'Pets',
+                theme: 'earthy-boho',
+                description: 'Playful pet photography capturing personality and joy',
+                pages: {
+                    home: [
+                        { type: 'hero', content: { title: 'Pet Portrait Paradise', subtitle: 'Capturing the personality and joy of your beloved companions', buttonText: 'Book Pet Session', image: 'https://images.unsplash.com/photo-1552053831-71594a27632d?w=800' }},
+                        { type: 'text', content: { title: 'Furry Friends', text: 'We specialize in pet photography that captures the unique personality, love, and joy that our animal companions bring to our lives.' }},
+                        { type: 'gallery', content: { title: 'Pet Gallery', images: ['https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=400', 'https://images.unsplash.com/photo-1574144611937-0df059b5ef3e?w=400', 'https://images.unsplash.com/photo-1534361960057-19889db9621e?w=400'] }}
+                    ]
+                }
+            },
+            'senior-portraits': {
+                name: 'Senior Portraits Studio',
+                category: 'Senior',
+                theme: 'urban-black-gold',
+                description: 'Modern senior portrait photography',
+                pages: {
+                    home: [
+                        { type: 'hero', content: { title: 'Senior Portrait Experience', subtitle: 'Celebrating your achievements with style and confidence', buttonText: 'Plan Your Session', image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800' }},
+                        { type: 'text', content: { title: 'Your Moment', text: 'Senior year is a milestone worth celebrating. We create portraits that capture your personality, achievements, and bright future ahead.' }},
+                        { type: 'gallery', content: { title: 'Senior Gallery', images: ['https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400', 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400', 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400'] }}
+                    ]
+                }
+            },
+            'travel-adventure': {
+                name: 'Travel Adventure Studio',
+                category: 'Travel',
+                theme: 'scenic-landscapes',
+                description: 'Adventure and travel photography for wanderers',
+                pages: {
+                    home: [
+                        { type: 'hero', content: { title: 'Adventure Awaits', subtitle: 'Documenting your travels and adventures around the world', buttonText: 'Plan Adventure', image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800' }},
+                        { type: 'text', content: { title: 'Travel Stories', text: 'We capture the spirit of adventure, the beauty of new places, and the memories that last a lifetime.' }},
+                        { type: 'gallery', content: { title: 'Adventure Gallery', images: ['https://images.unsplash.com/photo-1506197603052-3cc9c3a201bd?w=400', 'https://images.unsplash.com/photo-1533460004989-cef01064af7e?w=400', 'https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=400'] }}
+                    ]
+                }
+            },
+            'architectural-focus': {
+                name: 'Architectural Focus Studio',
+                category: 'Architecture',
+                theme: 'monochrome-studio',
+                description: 'Specialized architectural and interior photography',
+                pages: {
+                    home: [
+                        { type: 'hero', content: { title: 'Architectural Excellence', subtitle: 'Showcasing design and architecture through stunning photography', buttonText: 'View Projects', image: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800' }},
+                        { type: 'text', content: { title: 'Design Focus', text: 'We specialize in architectural photography that highlights the beauty, craftsmanship, and vision behind exceptional design.' }},
+                        { type: 'gallery', content: { title: 'Architectural Portfolio', images: ['https://images.unsplash.com/photo-1565182999561-18d7dc61c393?w=400', 'https://images.unsplash.com/photo-1518005020951-eccb494ad742?w=400', 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400'] }}
+                    ]
+                }
+            },
+            'street-photography': {
+                name: 'Street Photography Studio',
+                category: 'Street',
+                theme: 'street-photography',
+                description: 'Urban street photography capturing city life',
+                pages: {
+                    home: [
+                        { type: 'hero', content: { title: 'Urban Stories', subtitle: 'Capturing the raw energy and authentic moments of city life', buttonText: 'Explore Gallery', image: 'https://images.unsplash.com/photo-1496568816309-51d7c20e3b21?w=800' }},
+                        { type: 'text', content: { title: 'Street Life', text: 'We document the authentic moments, diverse characters, and vibrant energy that make urban environments come alive.' }},
+                        { type: 'gallery', content: { title: 'Street Gallery', images: ['https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=400', 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=400', 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=400'] }}
+                    ]
+                }
+            },
+            'vintage-film': {
+                name: 'Vintage Film Studio',
+                category: 'Vintage',
+                theme: 'film-vibe',
+                description: 'Film-inspired photography with vintage aesthetics',
+                pages: {
+                    home: [
+                        { type: 'hero', content: { title: 'Vintage Film Experience', subtitle: 'Timeless photography inspired by classic film aesthetics', buttonText: 'Discover More', image: 'https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?w=800' }},
+                        { type: 'text', content: { title: 'Film Inspired', text: 'We create photographs with the timeless quality and artistic beauty of classic film photography, bringing vintage charm to modern moments.' }},
+                        { type: 'gallery', content: { title: 'Film Gallery', images: ['https://images.unsplash.com/photo-1531259683007-016a7b628fc3?w=400', 'https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?w=400', 'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=400'] }}
+                    ]
+                }
+            },
+            'fine-art-studio': {
+                name: 'Fine Art Studio',
+                category: 'Fine Art',
+                theme: 'luxury-fine-art',
+                description: 'Museum-quality fine art photography',
+                pages: {
+                    home: [
+                        { type: 'hero', content: { title: 'Fine Art Photography', subtitle: 'Creating museum-quality photographs as works of art', buttonText: 'View Collection', image: 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=800' }},
+                        { type: 'text', content: { title: 'Artistic Vision', text: 'We approach photography as a fine art form, creating images that transcend documentation to become timeless works of artistic expression.' }},
+                        { type: 'gallery', content: { title: 'Art Collection', images: ['https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400', 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400', 'https://images.unsplash.com/photo-1500462918059-b1a0cb512f1d?w=400'] }}
+                    ]
+                }
+            },
+            'documentary-storyteller': {
+                name: 'Documentary Storyteller Studio',
+                category: 'Documentary',
+                theme: 'storybook-magazine',
+                description: 'Authentic documentary and storytelling photography',
+                pages: {
+                    home: [
+                        { type: 'hero', content: { title: 'Stories Worth Telling', subtitle: 'Documentary photography that captures authentic human experiences', buttonText: 'See Stories', image: 'https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=800' }},
+                        { type: 'text', content: { title: 'Real Stories', text: 'We document real people, genuine emotions, and authentic moments that tell powerful stories about the human experience.' }},
+                        { type: 'gallery', content: { title: 'Documentary Work', images: ['https://images.unsplash.com/photo-1544816155-12df9643f363?w=400', 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400', 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=400'] }}
+                    ]
+                }
+            },
+            'countryside-rustic': {
+                name: 'Countryside Rustic Studio',
+                category: 'Rustic',
+                theme: 'rustic-barn',
+                description: 'Rustic countryside photography with natural charm',
+                pages: {
+                    home: [
+                        { type: 'hero', content: { title: 'Countryside Charm', subtitle: 'Rustic photography celebrating the beauty of country life', buttonText: 'Explore Nature', image: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800' }},
+                        { type: 'text', content: { title: 'Rural Beauty', text: 'We capture the authentic charm, natural beauty, and peaceful simplicity of countryside living and rural landscapes.' }},
+                        { type: 'gallery', content: { title: 'Country Gallery', images: ['https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=400', 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400', 'https://images.unsplash.com/photo-1546587348-d12660c30c50?w=400'] }}
+                    ]
+                }
+            }
+        };
+    }
+
+    async applyPrebuiltTemplate(templateKey) {
+        try {
+            const template = this.prebuiltTemplates[templateKey];
+            if (!template) {
+                this.showError('Template not found');
+                return;
+            }
+
+            this.showLoading(`Applying ${template.name}...`);
+
+            // Apply the theme first
+            await this.changeTheme(template.theme);
+
+            // Clear existing layouts and apply template pages
+            this.pageLayouts = {};
+            
+            // Apply template layouts to each page
+            Object.entries(template.pages).forEach(([pageId, blocks]) => {
+                this.pageLayouts[pageId] = blocks;
+            });
+
+            // Save the new content
+            await this.saveAllContent();
+            await this.saveUserSettings();
+
+            // Refresh the current page
+            this.setupPageSwitcher();
+            await this.renderPage();
+
+            this.showSuccess(`Applied "${template.name}" template! 🎉`);
+
+        } catch (error) {
+            console.error('Failed to apply template:', error);
+            this.showError('Failed to apply template');
+        }
     }
 
     getThemePreviewGradient(category) {

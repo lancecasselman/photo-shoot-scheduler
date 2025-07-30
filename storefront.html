@@ -325,12 +325,41 @@
             font-weight: 600;
         }
         
-        /* Theme Grid */
+        /* Dropdown Containers */
+        .dropdown-container {
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .theme-dropdown,
+        .template-dropdown {
+            width: 100%;
+            padding: var(--spacing-md);
+            border: 2px solid var(--beige);
+            border-radius: 8px;
+            background: var(--warm-white);
+            color: var(--deep-charcoal);
+            font-family: var(--font-sans);
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .theme-dropdown:hover,
+        .template-dropdown:hover {
+            border-color: var(--muted-gold);
+            box-shadow: 0 0 0 3px rgba(196, 150, 45, 0.1);
+        }
+        
+        .theme-dropdown:focus,
+        .template-dropdown:focus {
+            outline: none;
+            border-color: var(--muted-gold);
+            box-shadow: 0 0 0 3px rgba(196, 150, 45, 0.2);
+        }
+        
+        /* Old Theme Grid (keeping for backward compatibility) */
         .theme-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: var(--spacing-sm);
-            margin-bottom: var(--spacing-xl);
+            display: none;
         }
         
         .theme-option {
@@ -1288,8 +1317,19 @@
             </div>
             
             <h3>🎨 Themes</h3>
-            <div class="theme-grid" id="theme-grid">
-                <!-- Populated by JavaScript -->
+            <div class="dropdown-container">
+                <select class="theme-dropdown" id="theme-dropdown">
+                    <option value="">Select a theme...</option>
+                    <!-- Populated by JavaScript -->
+                </select>
+            </div>
+            
+            <h3>🏗️ Prebuilt Templates</h3>
+            <div class="dropdown-container">
+                <select class="template-dropdown" id="template-dropdown">
+                    <option value="">Choose a complete website...</option>
+                    <!-- Populated by JavaScript -->
+                </select>
             </div>
         </div>
         
