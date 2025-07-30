@@ -1430,40 +1430,149 @@ class AdvancedVisualEditor {
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>Photography Studio</title>
+                <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
                 ${this.generatePageCSS()}
+                ${this.getFontCSS()}
+                <style>
+                    .page-content {
+                        display: none;
+                        min-height: calc(100vh - 60px);
+                        margin-top: 60px;
+                    }
+                    .page-content.active {
+                        display: block;
+                    }
+                </style>
             </head>
             <body>
-                <nav class="site-nav">
-                    ${this.pages.map(page => `
-                        <a href="#${page.id}" class="nav-link">${page.icon} ${page.name}</a>
-                    `).join('')}
-                </nav>
+                <!-- Website Navigation Header -->
+                <header class="website-header">
+                    <div class="website-header-content">
+                        <a href="#" class="website-logo">Photography Studio</a>
+                        
+                        <!-- Desktop Navigation -->
+                        <nav class="website-nav">
+                            ${this.pages.map(page => `
+                                <a href="#${page.id}" class="nav-link" onclick="showPage('${page.id}')">${page.name}</a>
+                            `).join('')}
+                        </nav>
+                        
+                        <!-- Hamburger Menu Button -->
+                        <div class="website-hamburger" onclick="toggleWebsiteNav()">
+                            <div class="website-hamburger-line"></div>
+                            <div class="website-hamburger-line"></div>
+                            <div class="website-hamburger-line"></div>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Mobile Navigation Overlay -->
+                <div class="website-mobile-overlay" id="website-mobile-overlay" onclick="closeWebsiteNav(event)">
+                    <nav class="website-mobile-nav">
+                        ${this.pages.map(page => `
+                            <a href="#${page.id}" onclick="showPage('${page.id}'); toggleWebsiteNav();">${page.name}</a>
+                        `).join('')}
+                    </nav>
+                </div>
         `;
         
-        // Add all pages
+        // Add all pages as separate content areas
         for (const page of this.pages) {
             const layout = this.pageLayouts[page.id] || [];
-            html += `<section id="${page.id}" class="page-section">`;
+            const pageSettings = this.pageSettings[page.id] || {};
+            const isHomePage = page.id === 'home';
             
-            layout.forEach(block => {
-                const blockTemplate = this.blockTypes[block.type]?.template;
-                if (blockTemplate) {
-                    html += blockTemplate(block.content);
-                }
-            });
+            html += `
+                <div class="page-content ${isHomePage ? 'active' : ''}" id="page-${page.id}" style="background: ${pageSettings.backgroundColor || '#F7F3F0'}; font-family: var(--font-body);">
+            `;
             
-            html += '</section>';
+            if (layout.length === 0) {
+                html += `
+                    <div style="padding: 6rem 2rem; text-align: center; color: var(--sage);">
+                        <h2>Welcome to ${page.name}</h2>
+                        <p>This page is ready for your content</p>
+                    </div>
+                `;
+            } else {
+                layout.forEach(block => {
+                    const blockHtml = this.renderBlock(block);
+                    if (blockHtml) {
+                        html += blockHtml;
+                    }
+                });
+            }
+            
+            html += `</div>`;
         }
         
+        // Add JavaScript for page navigation and mobile menu
         html += `
                 <script>
-                    // Simple page navigation
-                    document.querySelectorAll('.nav-link').forEach(link => {
-                        link.addEventListener('click', (e) => {
-                            e.preventDefault();
-                            const targetId = link.getAttribute('href').substring(1);
-                            document.getElementById(targetId).scrollIntoView({ behavior: 'smooth' });
+                    // Page navigation functions
+                    function showPage(pageId) {
+                        // Hide all pages
+                        document.querySelectorAll('.page-content').forEach(page => {
+                            page.classList.remove('active');
                         });
+                        
+                        // Show selected page
+                        const targetPage = document.getElementById('page-' + pageId);
+                        if (targetPage) {
+                            targetPage.classList.add('active');
+                        }
+                        
+                        // Update navigation active states
+                        document.querySelectorAll('.nav-link').forEach(link => {
+                            link.classList.remove('active');
+                        });
+                        document.querySelectorAll('[href="#' + pageId + '"]').forEach(link => {
+                            link.classList.add('active');
+                        });
+                        
+                        // Scroll to top
+                        window.scrollTo(0, 0);
+                        
+                        return false; // Prevent default link behavior
+                    }
+
+                    // Mobile navigation functions
+                    function toggleWebsiteNav() {
+                        const overlay = document.getElementById('website-mobile-overlay');
+                        const hamburger = document.querySelector('.website-hamburger');
+                        const mobileNav = document.querySelector('.website-mobile-nav');
+                        
+                        if (overlay) {
+                            overlay.classList.toggle('active');
+                        }
+                        if (hamburger) {
+                            hamburger.classList.toggle('active');
+                        }
+                        if (mobileNav) {
+                            mobileNav.classList.toggle('active');
+                        }
+                    }
+
+                    function closeWebsiteNav(event) {
+                        if (event.target === event.currentTarget) {
+                            toggleWebsiteNav();
+                        }
+                    }
+
+                    // Close navigation when clicking outside
+                    document.addEventListener('click', function(event) {
+                        const overlay = document.getElementById('website-mobile-overlay');
+                        const hamburger = document.querySelector('.website-hamburger');
+                        
+                        if (overlay && overlay.classList.contains('active') && 
+                            !hamburger.contains(event.target) && 
+                            !event.target.closest('.website-mobile-nav')) {
+                            toggleWebsiteNav();
+                        }
+                    });
+
+                    // Initialize first page as active
+                    document.addEventListener('DOMContentLoaded', function() {
+                        showPage('home');
                     });
                 </script>
             </body>
