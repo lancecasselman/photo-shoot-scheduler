@@ -8800,33 +8800,111 @@ ${name}`;
             `);
         }
 
-        function openShootToStoryConverter() {
+        async function openShootToStoryConverter() {
             showMessage('Loading your sessions...', 'info');
-            const modal = createMarketingModal('Shoot-to-Story Converter', `
-                <div class="shoot-converter">
-                    <div class="form-group">
-                        <label>Select Session</label>
-                        <select id="sessionSelect" class="form-control">
-                            <option value="">Choose a past session...</option>
-                            ${sessions.map(session => `
-                                <option value="${session.id}">${session.clientName} - ${session.sessionType} (${formatDate(session.dateTime)})</option>
-                            `).join('')}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Generate Content</label>
-                        <div class="content-options">
-                            <label><input type="checkbox" checked> Blog Post Draft</label>
-                            <label><input type="checkbox" checked> 3 Instagram Captions</label>
-                            <label><input type="checkbox" checked> Reel/Video Idea</label>
+            
+            try {
+                // Fetch user sessions from the backend API
+                const response = await fetch('/api/sessions', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('authToken') || 'dev-token'}`
+                    }
+                });
+                
+                let userSessions = [];
+                if (response.ok) {
+                    userSessions = await response.json();
+                } else {
+                    console.log('Using fallback sessions data');
+                    userSessions = sessions || [];
+                }
+                
+                // Sort sessions by date (most recent first) and limit to 10
+                const recentSessions = userSessions
+                    .sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime))
+                    .slice(0, 10);
+                
+                const modal = createMarketingModal('Shoot-to-Story Converter', `
+                    <div class="shoot-converter">
+                        <div class="form-group">
+                            <label>Select Recent Session</label>
+                            <select id="sessionSelect" class="form-control" onchange="loadSessionData(this.value)">
+                                <option value="">Choose a past session...</option>
+                                ${recentSessions.map(session => `
+                                    <option value="${session.id}" data-session='${JSON.stringify(session).replace(/'/g, '&apos;')}'>${session.clientName || 'Unknown Client'} - ${session.sessionType || 'Session'} (${formatDateTime(session.dateTime)})</option>
+                                `).join('')}
+                            </select>
                         </div>
+                        
+                        <div class="form-group">
+                            <label>Filter by Type</label>
+                            <select id="sessionTypeFilter" class="form-control" onchange="filterSessionsByType()">
+                                <option value="">All Sessions</option>
+                                <option value="wedding">Wedding</option>
+                                <option value="portrait">Portrait</option>
+                                <option value="family">Family</option>
+                                <option value="engagement">Engagement</option>
+                                <option value="senior">Senior</option>
+                                <option value="event">Event</option>
+                            </select>
+                        </div>
+                        
+                        <div id="sessionPreview" class="session-preview" style="display: none;">
+                            <h4>Session Preview</h4>
+                            <div id="sessionDetails" class="session-details"></div>
+                            <div id="sessionPhotos" class="session-photos"></div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Generate Content</label>
+                            <div class="content-options">
+                                <label><input type="checkbox" id="generateBlog" checked> Blog Post Draft</label>
+                                <label><input type="checkbox" id="generateInstagram" checked> 3 Instagram Captions</label>
+                                <label><input type="checkbox" id="generateReel" checked> Reel/Video Idea</label>
+                                <label><input type="checkbox" id="generateEmail"> Email Newsletter Content</label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button onclick="convertShootToStory()" class="btn btn-primary" disabled id="generateBtn">✨ Generate Content</button>
+                            <button onclick="exportToOtherTools()" class="btn btn-secondary" style="display: none;" id="exportBtn">📤 Export to Tools</button>
+                        </div>
+                        
+                        <div id="storyResults" class="story-results"></div>
                     </div>
-                    <div class="form-actions">
-                        <button onclick="convertShootToStory()" class="btn btn-primary">✨ Generate Content</button>
+                `);
+                
+                showMessage('Sessions loaded successfully!', 'success');
+                
+            } catch (error) {
+                console.error('Error loading sessions:', error);
+                showMessage('Error loading sessions. Using offline mode.', 'warning');
+                
+                // Fallback modal with placeholder
+                const modal = createMarketingModal('Shoot-to-Story Converter', `
+                    <div class="shoot-converter">
+                        <div class="error-message">
+                            <p>⚠️ Unable to load sessions from database. Please check your connection.</p>
+                            <p>Create some photography sessions first to use this tool.</p>
+                        </div>
+                        <div class="form-group">
+                            <label>Manual Session Input</label>
+                            <input type="text" id="manualClient" placeholder="Client Name" class="form-control">
+                            <input type="text" id="manualLocation" placeholder="Location" class="form-control" style="margin-top: 10px;">
+                            <select id="manualType" class="form-control" style="margin-top: 10px;">
+                                <option value="wedding">Wedding</option>
+                                <option value="portrait">Portrait</option>
+                                <option value="family">Family</option>
+                                <option value="engagement">Engagement</option>
+                            </select>
+                        </div>
+                        <div class="form-actions">
+                            <button onclick="convertManualToStory()" class="btn btn-primary">✨ Generate Content</button>
+                        </div>
+                        <div id="storyResults" class="story-results"></div>
                     </div>
-                    <div id="storyResults" class="story-results"></div>
-                </div>
-            `);
+                `);
+            }
         }
 
         function openEmailBlastCreator() {
@@ -9068,6 +9146,130 @@ ${name}`;
                         transform: translateY(-1px);
                         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
                     }
+                    .content-options {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                        gap: 10px;
+                        margin-top: 10px;
+                    }
+                    .content-options label {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        font-weight: normal;
+                    }
+                    .session-preview {
+                        background: #f8f9fa;
+                        border: 1px solid #dee2e6;
+                        border-radius: 8px;
+                        padding: 15px;
+                        margin: 15px 0;
+                    }
+                    .session-details {
+                        margin-bottom: 15px;
+                    }
+                    .session-info p {
+                        margin: 5px 0;
+                        font-size: 14px;
+                    }
+                    .photo-samples h5 {
+                        margin-bottom: 10px;
+                        color: #2d3748;
+                    }
+                    .photo-grid {
+                        display: grid;
+                        grid-template-columns: repeat(3, 1fr);
+                        gap: 8px;
+                        margin-bottom: 10px;
+                    }
+                    .sample-photo {
+                        width: 100%;
+                        height: 60px;
+                        object-fit: cover;
+                        border-radius: 4px;
+                        border: 1px solid #ddd;
+                    }
+                    .photo-count {
+                        font-size: 12px;
+                        color: #666;
+                        text-align: center;
+                        margin: 0;
+                    }
+                    .no-photos {
+                        color: #666;
+                        font-style: italic;
+                        text-align: center;
+                        margin: 0;
+                    }
+                    .error-message {
+                        background: #fff3cd;
+                        border: 1px solid #ffeaa7;
+                        border-radius: 6px;
+                        padding: 15px;
+                        margin-bottom: 20px;
+                        text-align: center;
+                    }
+                    .error-message p {
+                        margin: 5px 0;
+                        color: #856404;
+                    }
+                    .generated-content {
+                        margin-top: 20px;
+                        padding: 15px;
+                        background: #f8f9fa;
+                        border-radius: 8px;
+                    }
+                    .content-section {
+                        margin-bottom: 25px;
+                        padding: 15px;
+                        background: white;
+                        border-radius: 6px;
+                        border: 1px solid #dee2e6;
+                    }
+                    .content-section h5 {
+                        margin-bottom: 15px;
+                        color: #2d3748;
+                        border-bottom: 1px solid #eee;
+                        padding-bottom: 8px;
+                    }
+                    .content-item {
+                        margin-bottom: 15px;
+                    }
+                    .content-item strong {
+                        display: block;
+                        margin-bottom: 5px;
+                        color: #4a5568;
+                    }
+                    .export-options {
+                        margin-top: 20px;
+                        padding: 15px;
+                        background: #e8f5e8;
+                        border-radius: 8px;
+                        border: 1px solid #c3e6c3;
+                    }
+                    .export-buttons {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                        gap: 10px;
+                        margin: 15px 0;
+                    }
+                    .export-note {
+                        font-size: 12px;
+                        color: #666;
+                        text-align: center;
+                        margin: 10px 0 0 0;
+                    }
+                    @media (max-width: 768px) {
+                        .photo-grid {
+                            grid-template-columns: repeat(2, 1fr);
+                        }
+                        .content-options {
+                            grid-template-columns: 1fr;
+                        }
+                        .export-buttons {
+                            grid-template-columns: 1fr;
+                        }
+                    }
                 `;
                 document.head.appendChild(styles);
             }
@@ -9112,6 +9314,369 @@ ${name}`;
         function saveSocialPost() {
             showMessage('Social media post saved!', 'success');
             celebrateMilestone('gallery_shared', 'Social Post');
+        }
+
+        // Shoot-to-Story Converter Functions
+        function loadSessionData(sessionId) {
+            if (!sessionId) {
+                document.getElementById('sessionPreview').style.display = 'none';
+                document.getElementById('generateBtn').disabled = true;
+                return;
+            }
+            
+            const sessionSelect = document.getElementById('sessionSelect');
+            const selectedOption = sessionSelect.querySelector(`option[value="${sessionId}"]`);
+            
+            if (selectedOption) {
+                try {
+                    const sessionData = JSON.parse(selectedOption.getAttribute('data-session'));
+                    displaySessionPreview(sessionData);
+                    document.getElementById('generateBtn').disabled = false;
+                } catch (error) {
+                    console.error('Error parsing session data:', error);
+                    showMessage('Error loading session details', 'error');
+                }
+            }
+        }
+        
+        function displaySessionPreview(session) {
+            const previewDiv = document.getElementById('sessionPreview');
+            const detailsDiv = document.getElementById('sessionDetails');
+            const photosDiv = document.getElementById('sessionPhotos');
+            
+            // Display session details
+            detailsDiv.innerHTML = `
+                <div class="session-info">
+                    <p><strong>Client:</strong> ${session.clientName || 'Unknown'}</p>
+                    <p><strong>Type:</strong> ${session.sessionType || 'Session'}</p>
+                    <p><strong>Date:</strong> ${formatDateTime(session.dateTime)}</p>
+                    <p><strong>Location:</strong> ${session.location || 'Location not specified'}</p>
+                    <p><strong>Notes:</strong> ${session.notes || 'No notes available'}</p>
+                </div>
+            `;
+            
+            // Display sample photos if available
+            if (session.photos && session.photos.length > 0) {
+                const samplePhotos = session.photos.slice(0, 3);
+                photosDiv.innerHTML = `
+                    <div class="photo-samples">
+                        <h5>Sample Photos (${session.photos.length} total)</h5>
+                        <div class="photo-grid">
+                            ${samplePhotos.map(photo => `
+                                <img src="${photo.url || photo.path}" alt="Session photo" class="sample-photo">
+                            `).join('')}
+                        </div>
+                        ${session.photos.length > 3 ? `<p class="photo-count">+${session.photos.length - 3} more photos</p>` : ''}
+                    </div>
+                `;
+            } else {
+                photosDiv.innerHTML = '<p class="no-photos">No photos available for this session</p>';
+            }
+            
+            previewDiv.style.display = 'block';
+        }
+        
+        function filterSessionsByType() {
+            const filter = document.getElementById('sessionTypeFilter').value;
+            const sessionSelect = document.getElementById('sessionSelect');
+            const options = sessionSelect.querySelectorAll('option');
+            
+            options.forEach(option => {
+                if (option.value === '') return; // Keep placeholder option
+                
+                try {
+                    const sessionData = JSON.parse(option.getAttribute('data-session') || '{}');
+                    if (!filter || sessionData.sessionType === filter) {
+                        option.style.display = 'block';
+                    } else {
+                        option.style.display = 'none';
+                    }
+                } catch (error) {
+                    console.error('Error filtering session:', error);
+                }
+            });
+            
+            // Reset selection if current selection is now hidden
+            const currentValue = sessionSelect.value;
+            if (currentValue) {
+                const currentOption = sessionSelect.querySelector(`option[value="${currentValue}"]`);
+                if (currentOption && currentOption.style.display === 'none') {
+                    sessionSelect.value = '';
+                    loadSessionData('');
+                }
+            }
+        }
+        
+        async function convertShootToStory() {
+            const sessionSelect = document.getElementById('sessionSelect');
+            const selectedSessionId = sessionSelect.value;
+            
+            if (!selectedSessionId) {
+                showMessage('Please select a session first', 'warning');
+                return;
+            }
+            
+            const selectedOption = sessionSelect.querySelector(`option[value="${selectedSessionId}"]`);
+            const sessionData = JSON.parse(selectedOption.getAttribute('data-session'));
+            
+            const generateBlog = document.getElementById('generateBlog')?.checked;
+            const generateInstagram = document.getElementById('generateInstagram')?.checked;
+            const generateReel = document.getElementById('generateReel')?.checked;
+            const generateEmail = document.getElementById('generateEmail')?.checked;
+            
+            showMessage('Generating content from your session...', 'info');
+            
+            // Simulate content generation based on session data
+            setTimeout(() => {
+                const results = generateContentFromSession(sessionData, {
+                    blog: generateBlog,
+                    instagram: generateInstagram,
+                    reel: generateReel,
+                    email: generateEmail
+                });
+                
+                displayGeneratedContent(results);
+                document.getElementById('exportBtn').style.display = 'inline-block';
+                showMessage('Content generated successfully!', 'success');
+                celebrateMilestone('session_created', 'Story Content');
+            }, 2000);
+        }
+        
+        function generateContentFromSession(session, options) {
+            const results = {};
+            const clientName = session.clientName || 'the client';
+            const location = session.location || 'a beautiful location';
+            const sessionType = session.sessionType || 'photography session';
+            const date = new Date(session.dateTime);
+            const month = date.toLocaleString('default', { month: 'long' });
+            
+            if (options.blog) {
+                results.blog = {
+                    title: `${clientName}'s ${sessionType} at ${location}`,
+                    content: `What an incredible ${sessionType} with ${clientName}! We had the most amazing time capturing beautiful moments at ${location} this past ${month}. 
+
+The session was filled with genuine laughter, sweet moments, and stunning backdrops that perfectly complemented ${clientName}'s personality. From the golden hour lighting to the natural interactions, every shot tells a story of this special time in their life.
+
+${session.notes ? `What made this session extra special: ${session.notes}` : ''}
+
+I'm so grateful to work with clients like ${clientName} who trust me to capture their most precious moments. These photos will be treasured for years to come!`,
+                    tags: ['photography', sessionType.toLowerCase(), location.toLowerCase().replace(/\s+/g, ''), 'photoshoot']
+                };
+            }
+            
+            if (options.instagram) {
+                results.instagram = [
+                    `✨ ${clientName}'s ${sessionType} at ${location} was absolutely magical! Every single shot tells a beautiful story. Swipe to see some of my favorites! 📸✨\n\n#${sessionType.toLowerCase()}photography #${location.toLowerCase().replace(/\s+/g, '')} #photography #photoshoot #love`,
+                    
+                    `Can we talk about how stunning ${clientName} looked during their ${sessionType}?! 😍 The natural light at ${location} was absolutely perfect. So grateful for clients who trust my vision! 💕\n\n#photographer #${sessionType.toLowerCase()} #naturallightphotography #beautiful`,
+                    
+                    `Behind the scenes: ${clientName} and I exploring ${location} for the perfect shots! This is why I love what I do - capturing genuine moments and creating lasting memories 📷💫\n\n#behindthescenes #${sessionType.toLowerCase()}session #photographylife #blessed`
+                ];
+            }
+            
+            if (options.reel) {
+                results.reel = {
+                    idea: `"Getting Ready for ${clientName}'s ${sessionType}"`,
+                    content: `Show behind-the-scenes of setting up at ${location}, quick shots of different poses/angles, and the final reveal of favorite images. Use trending audio about "that golden hour magic" or "when everything comes together perfectly."`,
+                    hooks: [
+                        `POV: Your photographer finds the perfect spot at ${location}`,
+                        `${sessionType} session magic at ${location}`,
+                        `When the lighting hits just right...`
+                    ]
+                };
+            }
+            
+            if (options.email) {
+                results.email = {
+                    subject: `${clientName}'s Beautiful ${sessionType} - Sneak Peeks Inside!`,
+                    content: `Hi everyone!\n\nI just had to share some highlights from ${clientName}'s recent ${sessionType} at ${location}! The session was absolutely incredible, and I'm so excited to show you a few of my favorite shots.\n\nFrom the perfect lighting to ${clientName}'s natural beauty, everything came together beautifully. These are the moments that remind me why I love photography so much!\n\nWhat's your favorite type of photography session? I'd love to hear from you!\n\nXOXO,\nLance`
+                };
+            }
+            
+            return results;
+        }
+        
+        function displayGeneratedContent(results) {
+            const resultsDiv = document.getElementById('storyResults');
+            let html = '<div class="generated-content"><h4>Generated Content</h4>';
+            
+            if (results.blog) {
+                html += `
+                    <div class="content-section">
+                        <h5>📝 Blog Post Draft</h5>
+                        <div class="content-item">
+                            <strong>Title:</strong> ${results.blog.title}<br>
+                            <strong>Content:</strong><br>
+                            <textarea class="form-control" rows="8" id="blogContent">${results.blog.content}</textarea>
+                            <strong>Tags:</strong> ${results.blog.tags.join(', ')}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (results.instagram) {
+                html += `
+                    <div class="content-section">
+                        <h5>📱 Instagram Captions</h5>
+                        ${results.instagram.map((caption, index) => `
+                            <div class="content-item">
+                                <strong>Caption ${index + 1}:</strong><br>
+                                <textarea class="form-control" rows="4" id="instagramCaption${index + 1}">${caption}</textarea>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            
+            if (results.reel) {
+                html += `
+                    <div class="content-section">
+                        <h5>🎬 Reel/Video Idea</h5>
+                        <div class="content-item">
+                            <strong>Title:</strong> ${results.reel.idea}<br>
+                            <strong>Content:</strong><br>
+                            <textarea class="form-control" rows="3" id="reelContent">${results.reel.content}</textarea>
+                            <strong>Hook Ideas:</strong><br>
+                            <ul>
+                                ${results.reel.hooks.map(hook => `<li>${hook}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            if (results.email) {
+                html += `
+                    <div class="content-section">
+                        <h5>📧 Email Newsletter Content</h5>
+                        <div class="content-item">
+                            <strong>Subject:</strong> <input type="text" class="form-control" id="emailSubject" value="${results.email.subject}"><br>
+                            <strong>Content:</strong><br>
+                            <textarea class="form-control" rows="6" id="emailContent">${results.email.content}</textarea>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            html += '</div>';
+            resultsDiv.innerHTML = html;
+        }
+        
+        function exportToOtherTools() {
+            showMessage('Exporting content to other marketing tools...', 'info');
+            
+            setTimeout(() => {
+                const exportOptions = `
+                    <div class="export-options">
+                        <h4>Export Options</h4>
+                        <div class="export-buttons">
+                            <button onclick="exportToBlogCreator()" class="btn btn-secondary">📝 Export to Blog Creator</button>
+                            <button onclick="exportToSocialMedia()" class="btn btn-secondary">📱 Export to Social Media</button>
+                            <button onclick="exportToEmailBlast()" class="btn btn-secondary">📧 Export to Email Creator</button>
+                        </div>
+                        <p class="export-note">Choose where to send your generated content for further editing and publishing.</p>
+                    </div>
+                `;
+                
+                const resultsDiv = document.getElementById('storyResults');
+                resultsDiv.innerHTML += exportOptions;
+                
+                showMessage('Export options ready!', 'success');
+            }, 1000);
+        }
+        
+        function convertManualToStory() {
+            const clientName = document.getElementById('manualClient')?.value || 'Client';
+            const location = document.getElementById('manualLocation')?.value || 'Location';
+            const sessionType = document.getElementById('manualType')?.value || 'session';
+            
+            if (!clientName || !location) {
+                showMessage('Please fill in client name and location', 'warning');
+                return;
+            }
+            
+            const manualSession = {
+                clientName,
+                location,
+                sessionType,
+                dateTime: new Date().toISOString(),
+                notes: ''
+            };
+            
+            showMessage('Generating content...', 'info');
+            
+            setTimeout(() => {
+                const results = generateContentFromSession(manualSession, {
+                    blog: true,
+                    instagram: true,
+                    reel: true,
+                    email: false
+                });
+                
+                displayGeneratedContent(results);
+                showMessage('Content generated successfully!', 'success');
+                celebrateMilestone('session_created', 'Manual Story Content');
+            }, 2000);
+        }
+        
+        function exportToBlogCreator() {
+            closeMarketingModal();
+            showMessage('Opening Blog Creator with generated content...', 'info');
+            setTimeout(() => {
+                openBlogPostCreator();
+                // Pre-fill blog creator with generated content if available
+                setTimeout(() => {
+                    const blogTitle = document.querySelector('#blogTitle');
+                    const blogContent = document.querySelector('#blogContent');
+                    const generatedBlogContent = document.querySelector('#storyResults #blogContent');
+                    
+                    if (blogTitle && generatedBlogContent) {
+                        blogTitle.value = generatedBlogContent.value.split('\n')[0];
+                    }
+                    if (blogContent && generatedBlogContent) {
+                        blogContent.value = generatedBlogContent.value;
+                    }
+                }, 500);
+            }, 1000);
+        }
+        
+        function exportToSocialMedia() {
+            closeMarketingModal();
+            showMessage('Opening Social Media Creator with generated captions...', 'info');
+            setTimeout(() => {
+                openSocialMediaCreator();
+                // Pre-fill social media creator with generated content if available
+                setTimeout(() => {
+                    const socialCaption = document.querySelector('#socialCaption');
+                    const generatedCaption = document.querySelector('#storyResults #instagramCaption1');
+                    
+                    if (socialCaption && generatedCaption) {
+                        socialCaption.value = generatedCaption.value;
+                    }
+                }, 500);
+            }, 1000);
+        }
+        
+        function exportToEmailBlast() {
+            closeMarketingModal();
+            showMessage('Opening Email Creator with generated content...', 'info');
+            setTimeout(() => {
+                openEmailBlastCreator();
+                // Pre-fill email creator with generated content if available
+                setTimeout(() => {
+                    const emailSubject = document.querySelector('#emailSubject');
+                    const emailContent = document.querySelector('#emailContent');
+                    const generatedEmailSubject = document.querySelector('#storyResults #emailSubject');
+                    const generatedEmailContent = document.querySelector('#storyResults #emailContent');
+                    
+                    if (emailSubject && generatedEmailSubject) {
+                        emailSubject.value = generatedEmailSubject.value;
+                    }
+                    if (emailContent && generatedEmailContent) {
+                        emailContent.value = generatedEmailContent.value;
+                    }
+                }, 500);
+            }, 1000);
         }
     </script>
 
