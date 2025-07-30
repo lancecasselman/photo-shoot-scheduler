@@ -106,7 +106,7 @@ class AdvancedVisualEditor {
                 name: 'Call to Action', 
                 icon: '📢',
                 description: 'Button or link to drive action',
-                template: this.getCTATemplate()
+                template: this.getCtaTemplate()
             },
             'testimonial': { 
                 name: 'Testimonial', 
@@ -1751,7 +1751,7 @@ class AdvancedVisualEditor {
         `;
     }
 
-    getCTATemplate() {
+    getCtaTemplate() {
         return (content) => `
             <section class="cta-section" style="background: var(--beige); padding: 4rem 2rem; text-align: center;">
                 <h2 data-editable="true" style="font-size: 2rem; margin-bottom: 1rem;">${content.title || 'Ready to Get Started?'}</h2>
