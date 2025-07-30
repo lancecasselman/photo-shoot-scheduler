@@ -330,8 +330,7 @@
             margin-bottom: var(--spacing-lg);
         }
         
-        .theme-dropdown,
-        .template-dropdown {
+        .theme-dropdown {
             width: 100%;
             padding: var(--spacing-md);
             border: 2px solid var(--beige);
@@ -344,17 +343,76 @@
             transition: all 0.2s ease;
         }
         
-        .theme-dropdown:hover,
-        .template-dropdown:hover {
+        .theme-dropdown:hover {
             border-color: var(--muted-gold);
             box-shadow: 0 0 0 3px rgba(196, 150, 45, 0.1);
         }
         
-        .theme-dropdown:focus,
-        .template-dropdown:focus {
+        .theme-dropdown:focus {
             outline: none;
             border-color: var(--muted-gold);
             box-shadow: 0 0 0 3px rgba(196, 150, 45, 0.2);
+        }
+
+        /* Luxury Components Styling */
+        .luxury-component-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-md);
+        }
+
+        .luxury-component-card {
+            background: var(--warm-white);
+            border: 2px solid var(--beige);
+            border-radius: 8px;
+            padding: var(--spacing-md);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .luxury-component-card:hover {
+            border-color: var(--muted-gold);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .luxury-component-card:active {
+            transform: translateY(0);
+        }
+
+        .component-icon {
+            font-size: 1.5rem;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .component-name {
+            font-family: var(--font-serif);
+            font-weight: 600;
+            color: var(--muted-gold);
+            font-size: 0.95rem;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .component-description {
+            font-size: 0.8rem;
+            color: var(--soft-brown);
+            line-height: 1.4;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .component-category {
+            display: inline-block;
+            background: var(--sage);
+            color: var(--warm-white);
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            font-weight: 500;
+            letter-spacing: 0.5px;
         }
         
         /* Old Theme Grid (keeping for backward compatibility) */
@@ -1324,12 +1382,9 @@
                 </select>
             </div>
             
-            <h3>🏗️ Prebuilt Templates</h3>
-            <div class="dropdown-container">
-                <select class="template-dropdown" id="template-dropdown">
-                    <option value="">Choose a complete website...</option>
-                    <!-- Populated by JavaScript -->
-                </select>
+            <!-- Luxury Design Components -->
+            <div id="luxury-components">
+                <!-- Populated by JavaScript with luxury components -->
             </div>
         </div>
         
