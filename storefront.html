@@ -584,6 +584,243 @@
                 opacity: 1;
             }
         }
+
+        /* Enhanced Block Editor Styles */
+        .block-panel {
+            margin-top: var(--spacing-lg);
+        }
+
+        .block-types {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--spacing-xs);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .block-type {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-sm);
+            border: 1px solid var(--beige);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: var(--warm-white);
+        }
+
+        .block-type:hover {
+            border-color: var(--sage);
+            background: var(--cream);
+            transform: translateY(-1px);
+        }
+
+        .block-icon {
+            font-size: 1.2rem;
+        }
+
+        .block-name {
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .current-blocks {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .block-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--spacing-sm);
+            margin-bottom: var(--spacing-xs);
+            background: var(--beige);
+            border-radius: 6px;
+            cursor: grab;
+        }
+
+        .block-item:active {
+            cursor: grabbing;
+        }
+
+        .block-item-info {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+        }
+
+        .block-item-actions {
+            display: flex;
+            gap: var(--spacing-xs);
+        }
+
+        .editor-actions {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+
+        /* Enhanced Preview Styles */
+        .preview-frame.desktop {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        .preview-frame.tablet {
+            max-width: 768px;
+            margin: 0 auto;
+            border: 1px solid var(--beige);
+            border-radius: 8px;
+        }
+
+        .preview-frame.mobile {
+            max-width: 375px;
+            margin: 0 auto;
+            border: 1px solid var(--beige);
+            border-radius: 8px;
+        }
+
+        /* Inline Editing Enhancement */
+        .editor-block {
+            position: relative;
+            margin: 1rem 0;
+            transition: all 0.2s ease;
+        }
+
+        .editor-block:hover {
+            box-shadow: 0 0 0 2px rgba(196, 150, 45, 0.3);
+        }
+
+        .block-controls {
+            display: none;
+            position: absolute;
+            top: -40px;
+            left: 0;
+            right: 0;
+            background: rgba(196, 150, 45, 0.95);
+            color: var(--warm-white);
+            padding: var(--spacing-xs);
+            font-size: 0.8rem;
+            z-index: 100;
+            border-radius: 4px 4px 0 0;
+        }
+
+        .editor-block:hover .block-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .block-type-label {
+            font-weight: 600;
+        }
+
+        .block-actions {
+            display: flex;
+            gap: var(--spacing-xs);
+        }
+
+        .editable-image-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .image-edit-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(44, 44, 44, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border-radius: 8px;
+        }
+
+        .editable-image-wrapper:hover .image-edit-overlay {
+            opacity: 1;
+        }
+
+        .image-edit-btn {
+            background: var(--muted-gold);
+            color: var(--warm-white);
+            border: none;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: var(--font-sans);
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .image-edit-btn:hover {
+            background: #B8862A;
+            transform: translateY(-1px);
+        }
+
+        /* Content Editing States */
+        [contenteditable="true"] {
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        [contenteditable="true"]:hover {
+            outline: 2px dashed var(--muted-gold);
+            outline-offset: 4px;
+        }
+
+        [contenteditable="true"]:focus,
+        .editing {
+            outline: 2px solid var(--muted-gold) !important;
+            outline-offset: 4px;
+            background: rgba(196, 150, 45, 0.1);
+        }
+
+        /* Drag and Drop States */
+        .dragging {
+            opacity: 0.6;
+            transform: rotate(2deg);
+        }
+
+        .drag-over {
+            border-top: 3px solid var(--muted-gold);
+        }
+
+        /* Loading and Status Indicators */
+        .editing-indicator {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: var(--muted-gold);
+            color: var(--warm-white);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: 4px;
+            z-index: 9999;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .page-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--sage);
+            margin-left: auto;
+        }
+
+        .page-status.modified {
+            background: var(--muted-gold);
+        }
+
+        .page-status.saved {
+            background: var(--sage);
+        }
     </style>
 </head>
 <body>
@@ -640,7 +877,7 @@
     <!-- Firebase Configuration -->
     <script src="firebase-config.js"></script>
     
-    <!-- Include Advanced Visual Editor JavaScript -->
-    <script src="/js/visual-editor-v2.js"></script>
+    <!-- Include Advanced Dynamic Visual Editor JavaScript -->
+    <script src="/js/advanced-visual-editor.js"></script>
 </body>
 </html>
