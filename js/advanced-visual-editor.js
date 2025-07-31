@@ -76,57 +76,8 @@ class AdvancedVisualEditor {
             'Merriweather'
         ];
         
-        // Available block types for the editor
-        this.blockTypes = {
-            'hero': { 
-                name: 'Hero Section', 
-                icon: '🎯',
-                description: 'Large banner with headline and call-to-action',
-                template: this.getHeroTemplate()
-            },
-            'about': { 
-                name: 'About Section', 
-                icon: '👤',
-                description: 'Information about your studio',
-                template: this.getAboutTemplate()
-            },
-            'image-grid': { 
-                name: 'Image Grid', 
-                icon: '🖼️',
-                description: 'Gallery of photos in grid layout',
-                template: this.getImageGridTemplate()
-            },
-            'text': { 
-                name: 'Text Block', 
-                icon: '📝',
-                description: 'Rich text content section',
-                template: this.getTextTemplate()
-            },
-            'cta': { 
-                name: 'Call to Action', 
-                icon: '📢',
-                description: 'Button or link to drive action',
-                template: this.getCtaTemplate()
-            },
-            'testimonial': { 
-                name: 'Testimonial', 
-                icon: '💬',
-                description: 'Client review or quote',
-                template: this.getTestimonialTemplate()
-            },
-            'pricing': { 
-                name: 'Pricing Table', 
-                icon: '💰',
-                description: 'Service packages and pricing',
-                template: this.getPricingTemplate()
-            },
-            'blog': { 
-                name: 'Blog Preview', 
-                icon: '📰',
-                description: 'Latest blog posts or news',
-                template: this.getBlogTemplate()
-            }
-        };
+        // Block types replaced by luxury components - keeping minimal for compatibility
+        this.blockTypes = {};
         
         // Current page layout (blocks)
         this.pageLayouts = {
