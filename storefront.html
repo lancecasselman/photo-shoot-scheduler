@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Visual Website Builder - Light & Airy Creative Studio</title>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
@@ -1608,7 +1608,44 @@
                 border-radius: 0 !important;
             }
             
+            /* Override any desktop constraints on mobile */
+            .preview-header.desktop-only {
+                display: none !important;
+            }
+            
+            /* Ensure preview iframe takes full space */
+            #preview-frame {
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+            }
+            
             /* Force full screen preview on mobile */
+            .editor-container {
+                display: block !important;
+                padding: 0 !important;
+            }
+            
+            .editor-sidebar {
+                display: none !important;
+                width: 0 !important;
+            }
+            
+            .preview-container {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                width: 100vw !important;
+                height: calc(100vh - 80px) !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                max-width: none !important;
+                z-index: 1 !important;
+            }
+            
             .single-preview-layout {
                 position: fixed !important;
                 top: 0 !important;
@@ -1617,6 +1654,7 @@
                 height: calc(100vh - 80px) !important;
                 margin: 0 !important;
                 padding: 0 !important;
+                background: white !important;
             }
             
             .preview-panel {
