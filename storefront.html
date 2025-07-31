@@ -37,7 +37,7 @@
             
             /* Layout */
             --header-height: 80px;
-            --sidebar-width: 240px;
+            --sidebar-width: 280px;
             --card-border-radius: 12px;
             --shadow-light: 0 4px 20px rgba(44, 44, 44, 0.08);
             --shadow-medium: 0 8px 30px rgba(44, 44, 44, 0.12);
@@ -272,27 +272,12 @@
             transform: translateY(-1px);
         }
         
-        /* FORCE DESKTOP GRID LAYOUT - NUCLEAR OPTION */
+        /* Main Layout */
         .editor-container {
             margin-top: var(--header-height);
-            display: grid !important;
-            grid-template-columns: 200px 1fr !important;
-            grid-template-rows: unset !important;
-            height: calc(100vh - var(--header-height)) !important;
-            /* Kill all flex bullshit */
-            flex-direction: unset !important;
-            flex: unset !important;
-        }
-        
-        /* Force the preview to take full width */
-        .preview-panel {
-            width: 100% !important;
-            flex: unset !important;
-        }
-        
-        .preview-area {
-            width: 100% !important;
-            flex: unset !important;
+            display: grid;
+            grid-template-columns: var(--sidebar-width) 1fr;
+            height: calc(100vh - var(--header-height));
         }
         
         /* Left Sidebar */
@@ -803,10 +788,9 @@
         }
         
         /* Responsive Design */
-        @media (max-width: 1200px) and (min-width: 769px) {
+        @media (max-width: 1200px) {
             .editor-container {
-                grid-template-columns: 180px 1fr !important;
-                grid-template-rows: unset !important;
+                grid-template-columns: 250px 1fr;
             }
             
             .theme-grid {
@@ -821,7 +805,7 @@
         
         @media (max-width: 768px) {
             .editor-container {
-                grid-template-columns: 1fr !important;
+                grid-template-columns: 1fr;
                 grid-template-rows: auto 1fr;
             }
             
@@ -1420,7 +1404,7 @@
             border-top: 1px solid var(--beige);
         }
 
-        /* Mobile Layout - Bottom Navigation Pattern Like Wix/Figma */
+        /* Enhanced Mobile Optimizations */
         @media (max-width: 768px) {
             .hamburger-menu {
                 display: flex;
@@ -1431,471 +1415,36 @@
             }
             
             .editor-container {
-                display: grid !important;
-                grid-template-columns: 160px 1fr !important;
-                grid-template-rows: unset !important;
-                height: calc(100vh - var(--header-height)) !important;
-                margin-top: var(--header-height) !important;
-                padding: 0;
+                flex-direction: column;
+                height: auto;
+                min-height: 100vh;
+                padding-top: var(--header-height);
                 gap: 0;
-                overflow: hidden;
-                position: relative;
             }
             
-            /* CapCut-Style Horizontal Scrolling Toolbar */
-            .mobile-capcut-toolbar {
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                background: linear-gradient(135deg, var(--warm-white), #F5F0EA);
+            .editor-sidebar {
+                width: 100%;
+                height: auto;
+                min-height: 45vh;
+                order: 2;
+                border-right: none;
                 border-top: 2px solid var(--muted-gold);
-                z-index: 1000;
-                box-shadow: 0 -4px 20px rgba(44, 44, 44, 0.15);
-                height: 90px;
-                padding: var(--spacing-xs) 0;
-            }
-            
-            .capcut-tools-scroll {
-                display: flex;
-                overflow-x: auto;
-                overflow-y: hidden;
-                height: 100%;
-                padding: 0 var(--spacing-sm);
-                gap: var(--spacing-lg);
-                scroll-behavior: smooth;
-                scrollbar-width: none; /* Firefox */
-                -ms-overflow-style: none; /* IE/Edge */
-            }
-            
-            .capcut-tools-scroll::-webkit-scrollbar {
-                display: none; /* Chrome/Safari */
-            }
-            
-            .tool-group {
-                display: flex;
-                flex-direction: row;
-                gap: var(--spacing-xs);
-                min-width: fit-content;
-                align-items: flex-end;
-                padding: var(--spacing-xs);
-                border-radius: 12px;
-                background: rgba(255, 255, 255, 0.7);
-                border: 1px solid rgba(196, 150, 45, 0.2);
-            }
-            
-            .group-label {
-                position: absolute;
-                top: -15px;
-                left: 50%;
-                transform: translateX(-50%);
-                font-size: 0.6rem;
-                color: var(--muted-gold);
-                font-weight: 600;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-                background: var(--warm-white);
-                padding: 2px 6px;
-                border-radius: 4px;
-                white-space: nowrap;
-                border: 1px solid var(--muted-gold);
-            }
-            
-            .tool-group {
-                position: relative;
-                margin-top: 15px; /* Space for group label */
-            }
-            
-            .tool-item {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 2px;
-                padding: var(--spacing-xs);
-                border-radius: 8px;
-                cursor: pointer;
-                transition: all 0.3s ease;
-                min-width: 45px;
-                background: transparent;
-                border: 1px solid transparent;
-            }
-            
-            .tool-item:hover {
-                background: rgba(196, 150, 45, 0.1);
-                border-color: var(--muted-gold);
-                transform: translateY(-2px);
-            }
-            
-            .tool-item.active {
-                background: var(--muted-gold);
-                color: var(--warm-white);
-            }
-            
-            .tool-icon {
-                font-size: 1.1rem;
-                transition: all 0.3s ease;
-            }
-            
-            .tool-label {
-                font-size: 0.6rem;
-                font-weight: 500;
-                color: var(--deep-charcoal);
-                transition: all 0.3s ease;
-                text-align: center;
-                white-space: nowrap;
-            }
-            
-            .tool-item:hover .tool-label {
-                color: var(--muted-gold);
-                font-weight: 600;
-            }
-            
-            .tool-item.active .tool-label {
-                color: var(--warm-white);
-                font-weight: 600;
-            }
-            
-            /* Contextual Tool Panel - Slides up from bottom */
-            .mobile-context-panel {
-                position: fixed;
-                bottom: 80px;
-                left: 0;
-                right: 0;
-                background: var(--warm-white);
-                border-top: 1px solid var(--beige);
-                transform: translateY(100%);
-                transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-                z-index: 999;
-                max-height: 60vh;
+                padding: var(--spacing-lg);
                 overflow-y: auto;
-                box-shadow: 0 -4px 20px rgba(44, 44, 44, 0.15);
+                max-height: 55vh;
+                background: var(--warm-white);
+                box-shadow: 0 -4px 20px rgba(44, 44, 44, 0.08);
             }
             
-            .mobile-context-panel.open {
-                transform: translateY(0);
-            }
-            
-            .tools-panel-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: var(--spacing-xl);
-                padding-bottom: var(--spacing-md);
-                border-bottom: 1px solid var(--beige);
-            }
-            
-            .tools-panel-title {
-                font-family: var(--font-serif);
-                font-size: 1.5rem;
-                color: var(--muted-gold);
-                font-weight: 600;
-            }
-            
-            .close-tools-btn {
-                width: 40px;
-                height: 40px;
-                border: none;
-                background: var(--sage);
-                color: var(--warm-white);
-                border-radius: 50%;
-                font-size: 1.2rem;
-                cursor: pointer;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                transition: all 0.3s ease;
-            }
-            
-            .close-tools-btn:hover {
-                background: #8A9E7D;
-                transform: rotate(90deg);
-            }
-            
-            /* Tabbed Tools Interface */
-            .tools-tabs {
-                display: flex;
-                gap: var(--spacing-xs);
-                margin-bottom: var(--spacing-xl);
-                background: var(--cream);
-                padding: var(--spacing-xs);
-                border-radius: 8px;
-            }
-            
-            .tool-tab {
-                flex: 1;
-                padding: 0.8rem 0.5rem;
-                background: transparent;
-                border: none;
-                border-radius: 6px;
-                font-size: 0.9rem;
-                font-weight: 500;
-                cursor: pointer;
-                transition: all 0.3s ease;
-                color: var(--deep-charcoal);
-                text-align: center;
-            }
-            
-            .tool-tab.active {
-                background: var(--muted-gold);
-                color: var(--warm-white);
-                transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(196, 150, 45, 0.3);
-            }
-            
-            .tool-tab:hover:not(.active) {
-                background: var(--beige);
-            }
-            
-            /* Tool Content Sections */
-            .tool-content {
-                display: none;
-            }
-            
-            .tool-content.active {
-                display: block;
-                animation: fadeIn 0.3s ease;
-            }
-            
-            @keyframes fadeIn {
-                from { opacity: 0; transform: translateY(10px); }
-                to { opacity: 1; transform: translateY(0); }
-            }
-            
-            /* Enhanced Preview Container - CapCut Style Full Screen */
             .preview-container {
-                order: 1; /* Preview takes entire center screen */
-                flex: 1;
-                background: var(--warm-white);
-                border-radius: 0;
-                position: relative;
-                overflow: hidden;
-                z-index: 1;
-                display: flex;
-                flex-direction: column;
-                min-height: 0;
-                height: calc(100vh - 90px); /* Full height minus CapCut toolbar */
-                margin: 0;
-                padding: 0;
-            }
-            
-            .preview-header {
-                display: none !important; /* Hide on mobile - using CapCut style */
-            }
-            
-            .preview-header h3 {
-                font-size: 1rem;
-                margin: 0;
-                color: var(--deep-charcoal);
-            }
-            
-            .device-controls {
-                display: none !important; /* Hide on mobile - using CapCut style */
-            }
-            
-            .single-preview-layout {
-                flex: 1;
-                overflow: hidden;
-                min-height: 0;
-            }
-            
-            .preview-panel {
-                height: 100%;
-                display: flex;
-                flex-direction: column;
-            }
-            
-            .preview-panel-header {
-                display: none; /* Hide duplicate header on mobile */
-            }
-            
-            #preview-frame {
-                flex: 1;
-                overflow-y: auto;
-                background: var(--warm-white);
-                min-height: calc(100vh - 90px); /* Full screen minus CapCut toolbar */
-                height: calc(100vh - 90px);
-                padding: 0;
-                border-radius: 0;
-                margin: 0;
+                order: 1;
+                height: 45vh;
+                min-height: 320px;
+                flex-shrink: 0;
                 width: 100%;
-                border: none;
+                background: var(--deep-charcoal);
+                border-radius: 0;
             }
-            
-            /* Hide desktop sidebar completely on mobile */
-            .editor-sidebar {
-                display: none !important;
-                visibility: hidden !important;
-            }
-            
-            /* Hide mobile toolbar - using CapCut style only */
-            .mobile-toolbar {
-                display: none !important;
-            }
-            
-            .mobile-tools-panel {
-                display: none !important;
-                visibility: hidden !important;
-            }
-            
-            /* Enhanced mobile form styling */
-            .font-controls .font-group {
-                margin-bottom: var(--spacing-lg);
-            }
-            
-            .font-controls label {
-                display: block;
-                margin-bottom: var(--spacing-xs);
-                font-weight: 600;
-                color: var(--deep-charcoal);
-                font-size: 0.9rem;
-            }
-            
-            .background-controls {
-                display: flex;
-                flex-direction: column;
-                gap: var(--spacing-md);
-            }
-            
-            .background-controls label {
-                font-weight: 600;
-                color: var(--deep-charcoal);
-                font-size: 0.9rem;
-            }
-            
-            .background-controls input {
-                padding: 0.8rem;
-                border: 2px solid var(--beige);
-                border-radius: 8px;
-                font-size: 1rem;
-            }
-            
-            .btn-reset {
-                padding: 0.8rem 1.2rem;
-                background: var(--sage);
-                color: var(--warm-white);
-                border: none;
-                border-radius: 8px;
-                font-weight: 600;
-                cursor: pointer;
-                transition: all 0.3s ease;
-            }
-            
-            .btn-reset:hover {
-                background: #8A9E7D;
-                transform: translateY(-1px);
-            }
-            
-            /* Enhanced dropdown styling for mobile */
-            .dropdown-container {
-                margin-bottom: var(--spacing-lg);
-            }
-            
-            .dropdown-container select {
-                width: 100%;
-                padding: 1rem;
-                border: 2px solid var(--beige);
-                border-radius: 8px;
-                background: var(--warm-white);
-                font-size: 1rem;
-                color: var(--deep-charcoal);
-                cursor: pointer;
-                transition: all 0.3s ease;
-            }
-            
-            .dropdown-container select:focus {
-                border-color: var(--muted-gold);
-                outline: none;
-                box-shadow: 0 0 0 3px rgba(196, 150, 45, 0.1);
-            }
-            
-            /* Mobile page navigation styling */
-            #mobile-page-navigation {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-                gap: var(--spacing-sm);
-                margin-top: var(--spacing-md);
-            }
-            
-            #mobile-page-navigation .page-nav-item {
-                padding: 1rem;
-                background: var(--cream);
-                border: 2px solid var(--beige);
-                border-radius: 8px;
-                text-align: center;
-                cursor: pointer;
-                transition: all 0.3s ease;
-                font-weight: 500;
-            }
-            
-            #mobile-page-navigation .page-nav-item:hover {
-                background: var(--beige);
-                transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(44, 44, 44, 0.1);
-            }
-            
-            #mobile-page-navigation .page-nav-item.active {
-                background: var(--muted-gold);
-                color: var(--warm-white);
-                border-color: var(--muted-gold);
-            }
-        }
-        
-        /* Desktop-only elements */
-        @media (min-width: 769px) {
-            /* HIDE ALL MOBILE ELEMENTS ON DESKTOP */
-            .mobile-capcut-toolbar,
-            .mobile-context-panel,
-            .mobile-nav-overlay,
-            .mobile-toolbar,
-            .mobile-tools-panel,
-            .hamburger-menu {
-                display: none !important;
-                visibility: hidden !important;
-            }
-            
-            /* NUCLEAR DESKTOP GRID OVERRIDE - KILL ALL MOBILE INTERFERENCE */
-            .editor-container {
-                display: grid !important;
-                grid-template-columns: 200px 1fr !important;
-                grid-template-rows: unset !important;
-                flex-direction: unset !important;
-                flex: unset !important;
-                padding-bottom: 0 !important;
-            }
-            
-            .sidebar-container,
-            .editor-sidebar {
-                display: block !important;
-                order: unset !important;
-                flex: unset !important;
-                width: 200px !important;
-                max-width: 200px !important;
-            }
-            
-            .preview-container,
-            .preview-panel,
-            .preview-area {
-                order: unset !important;
-                height: auto !important;
-                flex: unset !important;
-                width: 100% !important;
-                max-width: 100% !important;
-                padding-bottom: 0 !important;
-            }
-            
-            .preview-header h3 {
-                font-size: 1.2rem;
-            }
-            
-            .device-controls {
-                display: flex !important;
-                gap: var(--spacing-sm);
-            }
-            
-            .preview-panel-header {
-                display: flex !important;
-            }
-        }
             
             /* Enhanced panel sections for mobile */
             .panel-section {
@@ -2347,97 +1896,7 @@
     
     <!-- Visual Editor Interface -->
     <div class="editor-container">
-        <!-- Mobile Toolbar -->
-        <div class="mobile-toolbar">
-            <button class="mobile-tools-btn" id="mobileToolsBtn" onclick="toggleMobileTools()">
-                <span>🛠️</span>
-                <span>Edit Tools</span>
-            </button>
-        </div>
-
-        <!-- MOBILE TOOLS PANEL - REMOVED FOR CAPCUT STYLE -->
-        <div class="mobile-tools-panel" id="mobileToolsPanel" style="display: none !important;">
-            <div class="tools-panel-header">
-                <h2 class="tools-panel-title">Website Editor</h2>
-                <button class="close-tools-btn" onclick="toggleMobileTools()">×</button>
-            </div>
-            
-            <!-- Tabbed Tools Interface -->
-            <div class="tools-tabs">
-                <button class="tool-tab active" data-tab="pages">📄 Pages</button>
-                <button class="tool-tab" data-tab="themes">🎨 Style</button>
-                <button class="tool-tab" data-tab="components">💎 Add</button>
-                <button class="tool-tab" data-tab="customize">⚙️ Custom</button>
-            </div>
-            
-            <!-- Tool Content Sections -->
-            <div class="tool-content active" id="pages-content">
-                <h4>📋 Page Navigation</h4>
-                <div class="page-navigation" id="mobile-page-navigation">
-                    <!-- Populated by JavaScript -->
-                </div>
-            </div>
-            
-            <div class="tool-content" id="themes-content">
-                <h4>🎨 Choose Theme</h4>
-                <div class="dropdown-container">
-                    <select class="theme-dropdown" id="mobile-theme-dropdown">
-                        <option value="">Select a theme...</option>
-                    </select>
-                </div>
-                
-                <h4>🏗️ Website Templates</h4>
-                <div class="dropdown-container">
-                    <select class="template-dropdown" id="mobile-template-dropdown">
-                        <option value="">Choose template...</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div class="tool-content" id="components-content">
-                <h4>💎 Luxury Components</h4>
-                <div class="dropdown-container">
-                    <select class="luxury-dropdown" id="mobile-luxury-dropdown">
-                        <option value="">Add luxury element...</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div class="tool-content" id="customize-content">
-                <h4>🔤 Typography</h4>
-                <div class="font-controls">
-                    <div class="font-group">
-                        <label>Heading Font</label>
-                        <select class="font-dropdown" id="mobile-heading-font">
-                            <option value="Cormorant Garamond">Cormorant Garamond</option>
-                            <option value="Playfair Display">Playfair Display</option>
-                            <option value="Lora">Lora</option>
-                            <option value="Merriweather">Merriweather</option>
-                        </select>
-                    </div>
-                    <div class="font-group">
-                        <label>Body Font</label>
-                        <select class="font-dropdown" id="mobile-body-font">
-                            <option value="Quicksand">Quicksand</option>
-                            <option value="Open Sans">Open Sans</option>
-                            <option value="Poppins">Poppins</option>
-                            <option value="Source Sans Pro">Source Sans Pro</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <h4>🎨 Background</h4>
-                <div class="background-controls">
-                    <label>Background Color</label>
-                    <input type="color" class="color-picker" id="mobile-bg-color" value="#F7F3F0">
-                    <label>Page Title</label>
-                    <input type="text" id="mobile-page-title" placeholder="Enter page title">
-                    <button class="btn-reset" onclick="resetPageBackground()">Reset Background</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Left Sidebar - Desktop Only -->
+        <!-- Left Sidebar - Themes & Pages -->
         <div class="editor-sidebar">
             <h3>📋 Pages</h3>
             <div class="page-navigation" id="page-navigation">
@@ -2589,101 +2048,6 @@
         </div>
     </div>
     
-    <!-- Mobile CapCut-Style Horizontal Scrolling Tools -->
-    <div class="mobile-capcut-toolbar">
-        <div class="capcut-tools-scroll">
-            <!-- Page Tools Group -->
-            <div class="tool-group">
-                <div class="group-label">Pages</div>
-                <div class="tool-item" onclick="switchPageMobile('home')">
-                    <div class="tool-icon">🏠</div>
-                    <div class="tool-label">Home</div>
-                </div>
-                <div class="tool-item" onclick="switchPageMobile('about')">
-                    <div class="tool-icon">👤</div>
-                    <div class="tool-label">About</div>
-                </div>
-                <div class="tool-item" onclick="switchPageMobile('portfolio')">
-                    <div class="tool-icon">📸</div>
-                    <div class="tool-label">Portfolio</div>
-                </div>
-                <div class="tool-item" onclick="switchPageMobile('contact')">
-                    <div class="tool-icon">📞</div>
-                    <div class="tool-label">Contact</div>
-                </div>
-            </div>
-            
-            <!-- Theme Tools Group -->
-            <div class="tool-group">
-                <div class="group-label">Design</div>
-                <div class="tool-item" onclick="openMobileThemeSelector()">
-                    <div class="tool-icon">🎨</div>
-                    <div class="tool-label">Themes</div>
-                </div>
-                <div class="tool-item" onclick="openMobileTemplateSelector()">
-                    <div class="tool-icon">📋</div>
-                    <div class="tool-label">Templates</div>
-                </div>
-                <div class="tool-item" onclick="openBackgroundPicker()">
-                    <div class="tool-icon">🌈</div>
-                    <div class="tool-label">Background</div>
-                </div>
-                <div class="tool-item" onclick="openFontPicker()">
-                    <div class="tool-icon">🔤</div>
-                    <div class="tool-label">Fonts</div>
-                </div>
-            </div>
-            
-            <!-- Component Tools Group -->
-            <div class="tool-group">
-                <div class="group-label">Add</div>
-                <div class="tool-item" onclick="addLuxuryComponent('massive-hero-text')">
-                    <div class="tool-icon">🦸</div>
-                    <div class="tool-label">Hero</div>
-                </div>
-                <div class="tool-item" onclick="addLuxuryComponent('full-width-gallery')">
-                    <div class="tool-icon">🖼️</div>
-                    <div class="tool-label">Gallery</div>
-                </div>
-                <div class="tool-item" onclick="addLuxuryComponent('transformational-experience')">
-                    <div class="tool-icon">📝</div>
-                    <div class="tool-label">Text</div>
-                </div>
-                <div class="tool-item" onclick="addLuxuryComponent('luxury-pricing')">
-                    <div class="tool-icon">💰</div>
-                    <div class="tool-label">Pricing</div>
-                </div>
-                <div class="tool-item" onclick="addLuxuryComponent('award-winning-positioning')">
-                    <div class="tool-icon">💬</div>
-                    <div class="tool-label">Review</div>
-                </div>
-            </div>
-            
-            <!-- Action Tools Group -->
-            <div class="tool-group">
-                <div class="group-label">Actions</div>
-                <div class="tool-item" onclick="previewWebsite()">
-                    <div class="tool-icon">👁️</div>
-                    <div class="tool-label">Preview</div>
-                </div>
-                <div class="tool-item" onclick="saveChanges()">
-                    <div class="tool-icon">💾</div>
-                    <div class="tool-label">Save</div>
-                </div>
-                <div class="tool-item" onclick="undoAction()">
-                    <div class="tool-icon">↩️</div>
-                    <div class="tool-label">Undo</div>
-                </div>
-                <div class="tool-item" onclick="redoAction()">
-                    <div class="tool-icon">↪️</div>
-                    <div class="tool-label">Redo</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Mobile Context Panel - REMOVED FOR CAPCUT STYLE -->
-    
     <!-- Firebase Configuration -->
     <script src="firebase-config.js"></script>
     
@@ -2763,251 +2127,6 @@
                 // Publishing functionality would be implemented here
             }
         }
-
-        // Mobile Navigation Functions - Bottom Nav Pattern
-        function showMobilePanel(panelType) {
-            const panel = document.getElementById('mobile-context-panel');
-            const title = document.getElementById('context-panel-title');
-            const body = document.getElementById('context-panel-body');
-            
-            // Update active navigation item
-            document.querySelectorAll('.mobile-nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            event.target.closest('.mobile-nav-item').classList.add('active');
-            
-            // Set panel content based on type
-            switch(panelType) {
-                case 'pages':
-                    title.textContent = 'Pages';
-                    body.innerHTML = createPagesContent();
-                    break;
-                case 'themes':
-                    title.textContent = 'Themes';
-                    body.innerHTML = createThemesContent();
-                    break;
-                case 'components':
-                    title.textContent = 'Add Components';
-                    body.innerHTML = createComponentsContent();
-                    break;
-                case 'customize':
-                    title.textContent = 'Customize';
-                    body.innerHTML = createCustomizeContent();
-                    break;
-                case 'preview':
-                    title.textContent = 'Preview';
-                    body.innerHTML = createPreviewContent();
-                    break;
-            }
-            
-            // Show panel
-            panel.classList.add('open');
-            
-            // Populate dropdowns after content is rendered
-            setTimeout(() => {
-                populateMobileDropdowns();
-            }, 100);
-        }
-        
-        function closeMobilePanel() {
-            const panel = document.getElementById('mobile-context-panel');
-            panel.classList.remove('open');
-            
-            // Remove active states
-            document.querySelectorAll('.mobile-nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-        }
-        
-        // Content creation functions for mobile panels
-        function createPagesContent() {
-            // Get current page from editor if available
-            const currentPage = window.editor ? window.editor.currentPage : 'home';
-            
-            return `
-                <div class="mobile-pages-content">
-                    <div class="page-selector-container">
-                        <select id="mobile-page-selector" class="page-selector" onchange="switchPageMobile(this.value)">
-                            <option value="home" ${currentPage === 'home' ? 'selected' : ''}>🏠 Home</option>
-                            <option value="about" ${currentPage === 'about' ? 'selected' : ''}>👤 About</option>
-                            <option value="portfolio" ${currentPage === 'portfolio' ? 'selected' : ''}>📸 Portfolio</option>
-                            <option value="contact" ${currentPage === 'contact' ? 'selected' : ''}>📞 Contact</option>
-                        </select>
-                    </div>
-                    <div class="page-management">
-                        <button class="btn btn-primary full-width" onclick="showPageCreationModal()">➕ Add New Page</button>
-                    </div>
-                </div>
-            `;
-        }
-        
-        function createThemesContent() {
-            return `
-                <div class="mobile-themes-content">
-                    <div class="theme-selector-container">
-                        <select id="mobile-theme-selector" class="theme-selector" onchange="changeThemeMobile(this.value)">
-                            <option value="">Select Theme...</option>
-                        </select>
-                    </div>
-                    <div class="template-container">
-                        <select id="mobile-template-selector" class="template-selector" onchange="applyTemplateMobile(this.value)">
-                            <option value="">Apply Template...</option>
-                        </select>
-                    </div>
-                </div>
-            `;
-        }
-        
-        function createComponentsContent() {
-            return `
-                <div class="mobile-components-content">
-                    <div class="luxury-components">
-                        <select id="mobile-luxury-component-selector" class="luxury-selector" onchange="addLuxuryComponentMobile(this.value)">
-                            <option value="">Add Luxury Component...</option>
-                        </select>
-                    </div>
-                </div>
-            `;
-        }
-        
-        function createCustomizeContent() {
-            return `
-                <div class="mobile-customize-content">
-                    <div class="background-controls">
-                        <h4>Background</h4>
-                        <input type="color" id="bg-color" class="color-picker" onchange="window.editor && window.editor.updatePageBackground(this.value)">
-                        <button class="btn btn-sm" onclick="window.editor && window.editor.resetPageBackground()">Reset</button>
-                    </div>
-                    <div class="font-controls">
-                        <h4>Typography</h4>
-                        <select id="heading-font" class="font-selector" onchange="window.editor && window.editor.updateHeadingFont(this.value)">
-                            <option value="">Select Heading Font...</option>
-                        </select>
-                        <select id="body-font" class="font-selector" onchange="window.editor && window.editor.updateBodyFont(this.value)">
-                            <option value="">Select Body Font...</option>
-                        </select>
-                    </div>
-                </div>
-            `;
-        }
-        
-        function createPreviewContent() {
-            return `
-                <div class="mobile-preview-content">
-                    <div class="preview-actions">
-                        <button class="btn btn-primary full-width" onclick="previewWebsite()">👁️ Open Full Preview</button>
-                        <button class="btn btn-secondary full-width" onclick="saveChanges()">💾 Save Changes</button>
-                        <button class="btn btn-secondary full-width" onclick="exportCode()">📤 Export Code</button>
-                    </div>
-                </div>
-            `;
-        }
-
-        // Mobile wrapper functions that integrate with editor
-        function switchPageMobile(page) {
-            if (window.editor) {
-                window.editor.switchPage(page);
-                markToolActive('page-' + page);
-            }
-        }
-
-        // CapCut-Style Mobile Interface Functions
-        function openMobileThemeSelector() {
-            if (window.editor) {
-                const themeDropdown = document.getElementById('theme-selector');
-                if (themeDropdown) {
-                    themeDropdown.click();
-                }
-                markToolActive('themes');
-            }
-        }
-
-        function openMobileTemplateSelector() {
-            if (window.visualEditor) {
-                const templateDropdown = document.getElementById('template-dropdown');
-                if (templateDropdown) {
-                    templateDropdown.focus();
-                    templateDropdown.click();
-                }
-                markToolActive('templates');
-            }
-        }
-
-        function openBackgroundPicker() {
-            if (window.visualEditor) {
-                const bgPicker = document.getElementById('page-bg-color');
-                if (bgPicker) {
-                    bgPicker.focus();
-                    bgPicker.click();
-                }
-                markToolActive('background');
-            }
-        }
-
-        function openFontPicker() {
-            if (window.visualEditor) {
-                const fontDropdown = document.getElementById('heading-font');
-                if (fontDropdown) {
-                    fontDropdown.focus();
-                    fontDropdown.click();
-                }
-                markToolActive('fonts');
-            }
-        }
-
-        function addComponentMobile(componentType) {
-            if (window.visualEditor) {
-                switch(componentType) {
-                    case 'hero':
-                        window.visualEditor.addLuxuryComponent('massive-hero-text');
-                        break;
-                    case 'gallery':
-                        window.visualEditor.addLuxuryComponent('full-width-gallery');
-                        break;
-                    case 'text':
-                        window.visualEditor.addLuxuryComponent('transformational-experience');
-                        break;
-                    case 'pricing':
-                        window.visualEditor.addLuxuryComponent('luxury-pricing');
-                        break;
-                    case 'testimonial':
-                        window.visualEditor.addLuxuryComponent('award-winning-positioning');
-                        break;
-                    default:
-                        console.log('Unknown component type:', componentType);
-                }
-                markToolActive(componentType);
-            }
-        }
-
-        function saveChangesMobile() {
-            if (window.visualEditor) {
-                window.visualEditor.saveToFirebase();
-                markToolActive('save');
-            }
-        }
-
-        // Desktop editor functions - clean and functional
-        function addLuxuryComponent(componentType) {
-            if (window.editor && window.editor.addLuxuryComponent) {
-                window.editor.addLuxuryComponent(componentType);
-                window.editor.showNotification(`Added ${componentType} component`, 'success');
-            }
-        }
-
-        function undoAction() {
-            if (window.editor && window.editor.undo) {
-                window.editor.undo();
-                window.editor.showNotification('Undone', 'info');
-            }
-        }
-
-        function redoAction() {
-            if (window.editor && window.editor.redo) {
-                window.editor.redo();
-                window.editor.showNotification('Redone', 'info');
-            }
-        }
     </script>
     
     <!-- Hamburger Menu JavaScript -->
@@ -3066,7 +2185,15 @@
             }
         }
 
-        // OLD MOBILE PANEL FUNCTIONS - ALL REMOVED FOR CAPCUT STYLE
+        // Close mobile nav when clicking outside or pressing escape
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const overlay = document.getElementById('mobileNavOverlay');
+                if (overlay.classList.contains('active')) {
+                    toggleMobileNav();
+                }
+            }
+        });
     </script>
 </body>
 </html>
