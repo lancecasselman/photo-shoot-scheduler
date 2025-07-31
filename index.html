@@ -6859,9 +6859,11 @@ END:VCALENDAR`;
             // Set active nav tab
             event.target.classList.add('active');
             
-            // Initialize website builder if switching to websites tab
+            // Initialize specific tabs when switching
             if (tabName === 'marketing') {
                 showMessage('Marketing Suite loaded successfully!', 'success');
+            } else if (tabName === 'poses') {
+                initializePosesSection();
             }
             
             // Initialize poses section if selected
@@ -8271,9 +8273,11 @@ ${name}`;
                 clickedTab.classList.add('active');
             }
             
-            // Initialize sunrise calendar if switching to that tab
+            // Initialize specific tabs when switching
             if (tabName === 'sunrise') {
                 initializeSunriseCalendar();
+            } else if (tabName === 'poses') {
+                initializePosesSection();
             }
         }
 
@@ -10516,7 +10520,7 @@ I'm so grateful to work with clients like ${clientName} who trust me to capture 
 
         function createPoseCard(pose) {
             const isFavorited = userFavorites.includes(pose.id);
-            const favoriteCount = pose.favoritedBy ? pose.favoritedBy.length : 0;
+            const favoriteCount = pose.favoriteCount || 0;
             
             return `
                 <div class="pose-card" data-pose-id="${pose.id}">
