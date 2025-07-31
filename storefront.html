@@ -1416,12 +1416,13 @@
             
             .editor-container {
                 flex-direction: column;
-                height: calc(100vh - var(--header-height));
-                padding-top: 0;
+                height: 100vh; /* Full screen height */
+                padding: 0;
                 gap: 0;
                 overflow: hidden;
                 position: relative;
                 padding-bottom: 90px; /* Space for CapCut toolbar */
+                margin-top: 0; /* No header space needed */
             }
             
             /* CapCut-Style Horizontal Scrolling Toolbar */
@@ -1643,11 +1644,11 @@
                 to { opacity: 1; transform: translateY(0); }
             }
             
-            /* Enhanced Preview Container - Mobile Fix */
+            /* Enhanced Preview Container - CapCut Style Full Screen */
             .preview-container {
-                order: 2; /* Place preview in center between top toolbar and bottom nav */
+                order: 1; /* Preview takes entire center screen */
                 flex: 1;
-                background: var(--deep-charcoal);
+                background: var(--warm-white);
                 border-radius: 0;
                 position: relative;
                 overflow: hidden;
@@ -1655,17 +1656,13 @@
                 display: flex;
                 flex-direction: column;
                 min-height: 0;
-                height: calc(100vh - 140px); /* Maximize height between toolbars */
+                height: calc(100vh - 90px); /* Full height minus CapCut toolbar */
+                margin: 0;
+                padding: 0;
             }
             
             .preview-header {
-                background: var(--warm-white);
-                border-bottom: 1px solid var(--beige);
-                padding: var(--spacing-sm);
-                flex-shrink: 0;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
+                display: none !important; /* Hide on mobile - using CapCut style */
             }
             
             .preview-header h3 {
@@ -1675,7 +1672,7 @@
             }
             
             .device-controls {
-                display: none; /* Hide on mobile */
+                display: none !important; /* Hide on mobile - using CapCut style */
             }
             
             .single-preview-layout {
@@ -1698,11 +1695,13 @@
                 flex: 1;
                 overflow-y: auto;
                 background: var(--warm-white);
-                min-height: calc(100vh - 200px); /* Large preview taking most of screen */
-                height: calc(100vh - 200px);
-                padding: var(--spacing-md);
-                border-radius: 8px;
-                margin: var(--spacing-sm);
+                min-height: calc(100vh - 90px); /* Full screen minus CapCut toolbar */
+                height: calc(100vh - 90px);
+                padding: 0;
+                border-radius: 0;
+                margin: 0;
+                width: 100%;
+                border: none;
             }
             
             /* Hide desktop sidebar completely on mobile */
@@ -1711,12 +1710,9 @@
                 visibility: hidden !important;
             }
             
-            /* Mobile-specific styling - Force visibility */
+            /* Hide mobile toolbar - using CapCut style only */
             .mobile-toolbar {
-                display: flex !important;
-                width: 100%;
-                height: 60px;
-                flex-shrink: 0;
+                display: none !important;
             }
             
             .mobile-tools-panel {
