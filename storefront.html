@@ -37,7 +37,7 @@
             
             /* Layout */
             --header-height: 80px;
-            --sidebar-width: 180px;
+            --sidebar-width: 240px;
             --card-border-radius: 12px;
             --shadow-light: 0 4px 20px rgba(44, 44, 44, 0.08);
             --shadow-medium: 0 8px 30px rgba(44, 44, 44, 0.12);
@@ -276,7 +276,7 @@
         .editor-container {
             margin-top: var(--header-height);
             display: grid;
-            grid-template-columns: 180px 1fr !important;
+            grid-template-columns: 240px 1fr;
             height: calc(100vh - var(--header-height));
         }
         
@@ -790,7 +790,7 @@
         /* Responsive Design */
         @media (max-width: 1200px) {
             .editor-container {
-                grid-template-columns: 180px 1fr !important;
+                grid-template-columns: 220px 1fr;
             }
             
             .theme-grid {
@@ -805,7 +805,7 @@
         
         @media (max-width: 768px) {
             .editor-container {
-                grid-template-columns: 1fr;
+                grid-template-columns: 1fr !important;
                 grid-template-rows: auto 1fr;
             }
             
@@ -1416,7 +1416,8 @@
             
             .editor-container {
                 display: grid !important;
-                grid-template-columns: 160px 1fr !important;
+                grid-template-columns: 1fr !important;
+                grid-template-rows: auto 1fr;
                 height: calc(100vh - var(--header-height)) !important;
                 margin-top: var(--header-height) !important;
                 padding: 0;
