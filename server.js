@@ -980,6 +980,95 @@ app.get('/storefront-preview/:page', async (req, res) => {
     }
 });
 
+// User storefront preview endpoint
+app.get('/preview/:userId', async (req, res) => {
+    const { userId } = req.params;
+    
+    try {
+        // Load user's storefront data from database or localStorage equivalent
+        const query = 'SELECT site_data FROM storefront_sites WHERE user_id = $1';
+        const result = await pool.query(query, [userId]);
+        
+        let siteData = {};
+        if (result.rows.length > 0) {
+            siteData = result.rows[0].site_data;
+        }
+        
+        // Generate preview HTML
+        const previewHTML = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website Preview</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Quicksand:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --warm-white: #FEFDFB;
+            --beige: #F5F1EB;
+            --sage: #9CAF88;
+            --muted-gold: #C4962D;
+            --soft-brown: #8B7355;
+            --deep-charcoal: #2C2C2C;
+            --font-serif: 'Cormorant Garamond', serif;
+            --font-sans: 'Quicksand', sans-serif;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: var(--font-sans);
+            line-height: 1.6;
+            color: var(--deep-charcoal);
+            background: var(--warm-white);
+        }
+        
+        .preview-header {
+            background: var(--muted-gold);
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 0.9rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .preview-content {
+            min-height: calc(100vh - 50px);
+        }
+    </style>
+</head>
+<body>
+    <div class="preview-header">
+        📱 Website Preview - This is how your site will look to visitors
+    </div>
+    <div class="preview-content" id="preview-content">
+        ${siteData.previewHTML || '<div style="padding: 40px; text-align: center;"><h2>Your website preview will appear here</h2><p>Go back to the editor and add content to see your preview.</p></div>'}
+    </div>
+</body>
+</html>
+        `;
+        
+        res.send(previewHTML);
+        
+    } catch (error) {
+        console.error('Error loading preview:', error);
+        res.status(500).send(`
+            <div style="padding: 40px; text-align: center; font-family: Arial, sans-serif;">
+                <h2>Preview Error</h2>
+                <p>Unable to load website preview. Please try again.</p>
+                <button onclick="window.close()" style="margin-top: 20px; padding: 10px 20px; background: #C4962D; color: white; border: none; border-radius: 4px; cursor: pointer;">Close Preview</button>
+            </div>
+        `);
+    }
+});
+
 // Save storefront data
 app.post('/api/storefront/save', isAuthenticated, async (req, res) => {
     try {

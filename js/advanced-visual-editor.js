@@ -770,6 +770,9 @@ class AdvancedVisualEditor {
 
     // Save current state to storage
     async saveToStorage() {
+        const previewFrame = document.getElementById('preview-frame');
+        const previewHTML = previewFrame ? previewFrame.innerHTML : '';
+        
         const data = {
             currentTheme: this.currentTheme,
             currentPage: this.currentPage,
@@ -777,7 +780,8 @@ class AdvancedVisualEditor {
             pageSettings: this.pageSettings,
             fontSettings: this.fontSettings,
             contentData: this.contentData,
-            pages: this.pages
+            pages: this.pages,
+            previewHTML: previewHTML
         };
 
         try {
@@ -787,9 +791,24 @@ class AdvancedVisualEditor {
                 await db.collection('storefronts').doc(this.userId).set(data, { merge: true });
                 console.log('💾 Saved to Firebase');
             } else {
-                // Fallback to localStorage
+                // Save to server database
+                const response = await fetch('/api/storefront/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ siteData: data })
+                });
+                
+                if (response.ok) {
+                    console.log('💾 Saved to server database');
+                } else {
+                    throw new Error('Server save failed');
+                }
+                
+                // Also save to localStorage as backup
                 localStorage.setItem(`storefront_${this.userId}`, JSON.stringify(data));
-                console.log('💾 Saved to localStorage');
+                console.log('💾 Saved to localStorage backup');
             }
         } catch (error) {
             console.error('❌ Save failed:', error);
