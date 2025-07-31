@@ -10360,8 +10360,8 @@ I'm so grateful to work with clients like ${clientName} who trust me to capture 
                 await loadPosesFromAPI();
                 
                 // Load user favorites if authenticated
-                if (currentUser && currentUser.uid) {
-                    currentUserId = currentUser.uid;
+                if (firebase.auth().currentUser) {
+                    currentUserId = firebase.auth().currentUser.uid;
                     await loadUserFavorites();
                 }
                 
@@ -10731,6 +10731,42 @@ I'm so grateful to work with clients like ${clientName} who trust me to capture 
             }
         }
 
+        // Image optimization function for large files
+        async function optimizeImage(file, maxWidth = 1200, maxHeight = 1600, quality = 0.8) {
+            return new Promise((resolve) => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+                
+                img.onload = function() {
+                    // Calculate new dimensions while maintaining aspect ratio
+                    let { width, height } = img;
+                    
+                    if (width > maxWidth || height > maxHeight) {
+                        const ratio = Math.min(maxWidth / width, maxHeight / height);
+                        width *= ratio;
+                        height *= ratio;
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    // Draw and compress
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    canvas.toBlob((blob) => {
+                        const optimizedFile = new File([blob], file.name, {
+                            type: file.type,
+                            lastModified: Date.now(),
+                        });
+                        resolve(optimizedFile);
+                    }, file.type, quality);
+                };
+                
+                img.src = URL.createObjectURL(file);
+            });
+        }
+
         // Pose submission form handling
         async function handlePoseSubmission(event) {
             event.preventDefault();
@@ -10749,14 +10785,22 @@ I'm so grateful to work with clients like ${clientName} who trust me to capture 
                 return;
             }
             
-            // Validate file size (5MB limit)
-            if (imageFile.size > 5 * 1024 * 1024) {
-                showMessage('Image size must be less than 5MB', 'error');
+            // Auto-optimize large images
+            let processedFile = imageFile;
+            if (imageFile.size > 2 * 1024 * 1024) { // 2MB threshold
+                showMessage('Optimizing large image...', 'info');
+                processedFile = await optimizeImage(imageFile);
+                showMessage(`Image optimized: ${(imageFile.size / 1024 / 1024).toFixed(1)}MB → ${(processedFile.size / 1024 / 1024).toFixed(1)}MB`, 'success');
+            }
+            
+            // Final size check after optimization
+            if (processedFile.size > 5 * 1024 * 1024) {
+                showMessage('Image is still too large after optimization. Please use a smaller image.', 'error');
                 return;
             }
             
             const formData = new FormData();
-            formData.append('poseImage', imageFile);
+            formData.append('poseImage', processedFile);
             formData.append('category', category);
             formData.append('tags', tagsInput);
             
