@@ -1,3 +1,5 @@
+console.log('Onboarding script loaded successfully');
+
 const steps = [
   "businessInfo",
   "branding", 
@@ -377,7 +379,7 @@ async function getAuthToken() {
 
 // Initialize wizard
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('Onboarding wizard initialized');
+  console.log('DOMContentLoaded fired - initializing wizard');
   
   // Get DOM elements
   formContainer = document.getElementById("wizard-form");
@@ -385,6 +387,19 @@ document.addEventListener('DOMContentLoaded', () => {
   progressFill = document.getElementById("progressFill");
   nextBtn = document.getElementById("nextBtn");
   prevBtn = document.getElementById("prevBtn");
+  
+  console.log('DOM elements found:', {
+    formContainer: !!formContainer,
+    stepNum: !!stepNum,
+    progressFill: !!progressFill,
+    nextBtn: !!nextBtn,
+    prevBtn: !!prevBtn
+  });
+  
+  if (!formContainer || !nextBtn || !prevBtn) {
+    console.error('Critical DOM elements missing!');
+    return;
+  }
   
   // Attach event listeners
   attachEventListeners();
