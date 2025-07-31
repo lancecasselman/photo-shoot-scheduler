@@ -54,7 +54,7 @@ function getStepHTML(step) {
         </div>
         <div class="form-group">
           <label for="bizLocation">Primary Location *</label>
-          <input type="text" id="bizLocation" placeholder="e.g. Charleston, SC" required />
+          <input type="text" id="bizLocation" placeholder="City, State (e.g. Charleston, SC)" required pattern="^[A-Za-z\s]+,\s*[A-Za-z]{2}$" title="Please enter city and state (e.g. Charleston, SC)" />
         </div>
         <div class="form-group">
           <label for="bizPhone">Phone Number *</label>
@@ -266,6 +266,21 @@ function validateStep() {
         input.style.borderColor = '';
       }, 3000);
       return false;
+    }
+    
+    // Special validation for location field
+    if (input.id === 'bizLocation') {
+      const locationPattern = /^[A-Za-z\s]+,\s*[A-Za-z]{2}$/;
+      if (!locationPattern.test(input.value.trim())) {
+        console.log('Location format validation failed');
+        alert('Please enter location as City, State (e.g. Charleston, SC)');
+        input.focus();
+        input.style.borderColor = '#ff6b6b';
+        setTimeout(() => {
+          input.style.borderColor = '';
+        }, 3000);
+        return false;
+      }
     }
   }
   console.log('Validation passed');
