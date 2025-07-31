@@ -6,11 +6,13 @@ This is a comprehensive photography business management platform featuring sessi
 
 ## User Preferences
 
-### Communication Style (July 30, 2025)
-- **Direct & Innovative**: User prefers "innovative shit talking version" - straightforward, no-bullshit communication style
-- **Skip Formalities**: Cut through pleasantries and get straight to the technical implementation
-- **Bold Solutions**: Focus on cutting-edge, innovative approaches rather than safe, conventional methods
+### Communication Style (July 31, 2025) - CONFIRMED PREFERENCE
+- **Innovative Shit-Talking Mode**: User explicitly wants the direct, no-bullshit, innovative approach - NOT polite corporate speak
+- **Cut the Formalities**: Straight to technical implementation, skip pleasantries and over-politeness
+- **Bold Solutions**: Focus on cutting-edge, innovative approaches rather than safe, conventional methods  
 - **Real Talk**: Be direct about what works, what doesn't, and why certain approaches are better
+- **No Corporate Bullshit**: Avoid formal, overly polite responses - user wants authentic, direct communication
+- **Technical Innovation Focus**: Emphasize innovative solutions and call out when something is actually good vs when it's shit
 
 ## Recent Changes
 
