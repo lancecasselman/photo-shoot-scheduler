@@ -595,7 +595,7 @@ class AdvancedVisualEditor {
     addLuxuryComponent(componentKey) {
         const component = this.luxuryComponents[componentKey];
         if (!component) {
-            console.error('Component not found:', componentKey);
+            console.error('❌ Component not found:', componentKey);
             return;
         }
 
@@ -606,16 +606,19 @@ class AdvancedVisualEditor {
 
         // Add the luxury component as a new block
         const newBlock = {
-            id: 'block_' + Date.now(),
-            ...component.template
+            id: 'luxury_' + Date.now(),
+            type: component.template.type,
+            content: { ...component.template.content },
+            componentKey: componentKey
         };
 
         this.pageLayouts[currentPage].push(newBlock);
+        console.log(`✅ Added ${component.name} to ${currentPage} page`);
         
-        // Update preview immediately
-        this.updatePreview();
+        // Update the live preview with the new component
+        this.updateLivePreviewWithComponent(newBlock);
         
-        // Save changes
+        // Save changes to storage
         this.saveToStorage();
         
         this.showNotification(`Added ${component.name} component!`, 'success');
@@ -624,6 +627,78 @@ class AdvancedVisualEditor {
         if (['massive-hero', 'transformational-messaging', 'award-credentials'].includes(componentKey)) {
             this.celebration();
         }
+    }
+    
+    updateLivePreviewWithComponent(newBlock) {
+        const previewFrame = document.getElementById('preview-frame');
+        if (!previewFrame) {
+            console.warn('Preview frame not found');
+            return;
+        }
+        
+        // Generate HTML for the new component
+        let componentHTML = '';
+        const theme = this.themes[this.currentTheme] || this.themes['light-airy'];
+        const themeStyles = this.getThemeStyles(theme);
+        
+        switch(newBlock.type) {
+            case 'hero':
+                componentHTML = `
+                    <div style="${themeStyles.container}; padding: 60px 30px; text-align: center;">
+                        <h1 style="${themeStyles.heading}; font-size: 3.5em; line-height: 1.1;">${newBlock.content.title}</h1>
+                        <p style="${themeStyles.subtitle}; font-size: 1.4em; margin: 20px 0 30px;">${newBlock.content.subtitle}</p>
+                        <button style="background: var(--muted-gold); color: white; padding: 15px 30px; border: none; border-radius: 8px; font-size: 1.1em; cursor: pointer;">${newBlock.content.buttonText}</button>
+                    </div>
+                `;
+                break;
+            case 'text':
+                componentHTML = `
+                    <div style="${themeStyles.content}; margin: 30px 0;">
+                        <h2 style="${themeStyles.heading}; font-size: 2.2em;">${newBlock.content.title}</h2>
+                        <p style="${themeStyles.text}; font-size: 1.2em; line-height: 1.6;">${newBlock.content.text}</p>
+                    </div>
+                `;
+                break;
+            case 'credentials':
+                componentHTML = `
+                    <div style="${themeStyles.content}; margin: 30px 0; text-align: center;">
+                        <h2 style="${themeStyles.heading}; font-size: 2.5em;">${newBlock.content.title}</h2>
+                        <div style="margin: 20px 0;">
+                            ${newBlock.content.awards.map(award => `<p style="${themeStyles.text}; margin: 8px 0;">🏆 ${award}</p>`).join('')}
+                        </div>
+                        <p style="${themeStyles.subtitle}; font-size: 1.3em; margin-top: 20px;">${newBlock.content.experience}</p>
+                    </div>
+                `;
+                break;
+            case 'products':
+                componentHTML = `
+                    <div style="${themeStyles.content}; margin: 30px 0; text-align: center;">
+                        <h2 style="${themeStyles.heading}; font-size: 2.8em; margin-bottom: 30px;">${newBlock.content.title}</h2>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                            ${newBlock.content.products ? newBlock.content.products.map(product => `
+                                <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 8px;">
+                                    <h3 style="${themeStyles.text}; font-size: 1.3em;">${product.name}</h3>
+                                    <p style="${themeStyles.text};">${product.price}</p>
+                                </div>
+                            `).join('') : ''}
+                        </div>
+                    </div>
+                `;
+                break;
+            default:
+                componentHTML = `
+                    <div style="${themeStyles.content}; margin: 30px 0; text-align: center;">
+                        <h2 style="${themeStyles.heading};">New Component Added</h2>
+                        <p style="${themeStyles.text};">Luxury component: ${newBlock.componentKey}</p>
+                    </div>
+                `;
+        }
+        
+        // Append the new component to existing content
+        const existingContent = previewFrame.innerHTML;
+        previewFrame.innerHTML = existingContent + componentHTML;
+        
+        console.log(`🎨 Updated preview with ${newBlock.type} component`);
     }
 
     // Add missing utility functions
@@ -636,21 +711,121 @@ class AdvancedVisualEditor {
         }
     }
 
-    saveToStorage() {
-        // Save current state to localStorage as backup
+    async saveToStorage() {
+        const editorState = {
+            currentPage: this.currentPage,
+            currentTheme: this.currentTheme,
+            pageLayouts: this.pageLayouts,
+            pageSettings: this.pageSettings,
+            fontSettings: this.fontSettings,
+            pages: this.pages,
+            contentData: this.contentData,
+            previewHTML: this.generatePreviewHTML()
+        };
+
         try {
-            const editorState = {
-                currentPage: this.currentPage,
-                currentTheme: this.currentTheme,
-                pageLayouts: this.pageLayouts,
-                pageSettings: this.pageSettings,
-                fontSettings: this.fontSettings
-            };
+            if (this.firebaseInitialized) {
+                // Save to Firebase if available
+                const db = firebase.firestore();
+                await db.collection('storefronts').doc(this.userId).set(editorState, { merge: true });
+                console.log('💾 Saved to Firebase');
+            } else {
+                // Save to server database
+                const response = await fetch('/api/storefront/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ siteData: editorState })
+                });
+                
+                if (response.ok) {
+                    console.log('💾 Saved to server database');
+                } else {
+                    throw new Error('Server save failed');
+                }
+            }
+            
+            // Save to localStorage as backup
             localStorage.setItem('visualEditorState', JSON.stringify(editorState));
-            console.log('💾 Saved to localStorage');
+            console.log('💾 State saved successfully');
+            
         } catch (error) {
-            console.error('Failed to save to localStorage:', error);
+            console.error('❌ Failed to save:', error);
+            // Still save to localStorage as fallback
+            localStorage.setItem('visualEditorState', JSON.stringify(editorState));
+            console.log('💾 Saved to localStorage fallback');
         }
+    }
+    
+    generatePreviewHTML() {
+        const theme = this.themes[this.currentTheme] || this.themes['light-airy'];
+        const themeStyles = this.getThemeStyles(theme);
+        const currentLayout = this.pageLayouts[this.currentPage] || [];
+        
+        let html = `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Photography Studio - ${this.currentPage}</title>
+                <style>
+                    body { margin: 0; padding: 0; font-family: ${themeStyles.container.includes('serif') ? '"Cormorant Garamond", serif' : '"Quicksand", sans-serif'}; }
+                    .preview-container { ${themeStyles.container} }
+                </style>
+            </head>
+            <body>
+                <div class="preview-container">
+        `;
+        
+        // Add all components from current page
+        currentLayout.forEach(block => {
+            switch(block.type) {
+                case 'hero':
+                    html += `
+                        <div style="padding: 60px 30px; text-align: center;">
+                            <h1 style="font-size: 3.5em; line-height: 1.1; margin-bottom: 20px;">${block.content.title}</h1>
+                            <p style="font-size: 1.4em; margin: 20px 0 30px;">${block.content.subtitle}</p>
+                            <button style="background: #C4962D; color: white; padding: 15px 30px; border: none; border-radius: 8px; font-size: 1.1em; cursor: pointer;">${block.content.buttonText}</button>
+                        </div>
+                    `;
+                    break;
+                case 'text':
+                    html += `
+                        <div style="margin: 30px; padding: 20px;">
+                            <h2 style="font-size: 2.2em; margin-bottom: 15px;">${block.content.title}</h2>
+                            <p style="font-size: 1.2em; line-height: 1.6;">${block.content.text}</p>
+                        </div>
+                    `;
+                    break;
+                case 'credentials':
+                    html += `
+                        <div style="margin: 30px; padding: 20px; text-align: center;">
+                            <h2 style="font-size: 2.5em; margin-bottom: 20px;">${block.content.title}</h2>
+                            <div style="margin: 20px 0;">
+                                ${block.content.awards.map(award => `<p style="margin: 8px 0;">🏆 ${award}</p>`).join('')}
+                            </div>
+                            <p style="font-size: 1.3em; margin-top: 20px;">${block.content.experience}</p>
+                        </div>
+                    `;
+                    break;
+                default:
+                    html += `
+                        <div style="margin: 30px; padding: 20px; text-align: center;">
+                            <h2>Component: ${block.componentKey || block.type}</h2>
+                        </div>
+                    `;
+            }
+        });
+        
+        html += `
+                </div>
+            </body>
+            </html>
+        `;
+        
+        return html;
     }
 
     showNotification(message, type = 'info') {

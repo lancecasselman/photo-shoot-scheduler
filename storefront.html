@@ -1775,10 +1775,28 @@
             }
         }
 
-        function previewWebsite() {
+        async function previewWebsite() {
             if (window.editor) {
-                window.open('/preview/' + window.editor.userId, '_blank');
-                window.editor.showNotification('Opening preview in new tab', 'info');
+                try {
+                    // Save current state first
+                    await window.editor.saveToStorage();
+                    
+                    // Open preview in new tab
+                    const previewUrl = `/preview/${window.editor.userId}`;
+                    const previewWindow = window.open(previewUrl, '_blank');
+                    
+                    if (previewWindow) {
+                        window.editor.showNotification('Opening preview in new tab', 'success');
+                        console.log(`🔍 Opening preview: ${previewUrl}`);
+                    } else {
+                        window.editor.showNotification('Popup blocked - please allow popups', 'error');
+                    }
+                } catch (error) {
+                    console.error('Preview error:', error);
+                    window.editor.showNotification('Failed to open preview', 'error');
+                }
+            } else {
+                console.error('Editor not initialized');
             }
         }
 
