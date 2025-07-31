@@ -11155,5 +11155,20 @@ I'm so grateful to work with clients like ${clientName} who trust me to capture 
 
         </div> <!-- Close main-content -->
     </div> <!-- Close container -->
+    
+    <!-- Include subscription onboarding for new users -->
+    <script src="subscription-onboarding.js"></script>
+    <script>
+        // Check if user just completed subscription
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('onboarding') === 'true') {
+            // Trigger onboarding flow
+            setTimeout(() => {
+                if (typeof OnboardingFlow !== 'undefined') {
+                    OnboardingFlow.showOnboardingModal();
+                }
+            }, 1000);
+        }
+    </script>
 </body>
 </html>

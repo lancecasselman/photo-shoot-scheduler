@@ -390,18 +390,140 @@ app.get('/subscription-success', isAuthenticated, async (req, res) => {
         await pool.query(
             `UPDATE users 
              SET subscription_status = 'active', 
-                 subscription_expires = $1 
+                 subscription_expires = $1,
+                 onboarding_completed = false
              WHERE id = $2`,
             [expires, req.user.id]
         );
         
-        // Redirect to main app
-        res.redirect('/');
+        // Redirect to main app with onboarding flag
+        res.redirect('/?onboarding=true');
     } catch (error) {
         console.error('Error updating subscription:', error);
         res.redirect('/');
     }
 });
+
+// Onboarding status endpoint
+app.get('/api/onboarding/status', isAuthenticated, async (req, res) => {
+    try {
+        const result = await pool.query(
+            'SELECT onboarding_completed, business_name, primary_color FROM users WHERE id = $1',
+            [req.user.id]
+        );
+        
+        const user = result.rows[0];
+        res.json({
+            completed: user?.onboarding_completed || false,
+            hasBusinessInfo: !!user?.business_name,
+            currentSettings: {
+                businessName: user?.business_name,
+                primaryColor: user?.primary_color
+            }
+        });
+    } catch (error) {
+        console.error('Onboarding status error:', error);
+        res.status(500).json({ error: 'Failed to get onboarding status' });
+    }
+});
+
+// Complete onboarding endpoint
+app.post('/api/onboarding/complete', isAuthenticated, async (req, res) => {
+    try {
+        const {
+            businessName,
+            businessType,
+            location,
+            primaryColor,
+            defaultSessionPrice,
+            defaultDeposit,
+            sessionDuration
+        } = req.body;
+        
+        // Update user profile with onboarding data
+        await pool.query(
+            `UPDATE users 
+             SET business_name = $1,
+                 business_type = $2,
+                 location = $3,
+                 primary_color = $4,
+                 default_session_price = $5,
+                 default_deposit = $6,
+                 default_session_duration = $7,
+                 onboarding_completed = true,
+                 onboarding_date = NOW()
+             WHERE id = $8`,
+            [
+                businessName,
+                businessType,
+                location,
+                primaryColor,
+                defaultSessionPrice,
+                defaultDeposit,
+                sessionDuration,
+                req.user.id
+            ]
+        );
+        
+        // Create default session types based on business type
+        const defaultSessionTypes = getDefaultSessionTypes(businessType);
+        for (const sessionType of defaultSessionTypes) {
+            await pool.query(
+                'INSERT INTO session_types (user_id, name, default_price) VALUES ($1, $2, $3)',
+                [req.user.id, sessionType.name, sessionType.price || defaultSessionPrice]
+            );
+        }
+        
+        res.json({ success: true, message: 'Onboarding completed successfully' });
+    } catch (error) {
+        console.error('Onboarding completion error:', error);
+        res.status(500).json({ error: 'Failed to complete onboarding' });
+    }
+});
+
+// Helper function to get default session types
+function getDefaultSessionTypes(businessType) {
+    const typeMap = {
+        wedding: [
+            { name: 'Full Day Wedding', price: 2500 },
+            { name: 'Half Day Wedding', price: 1500 },
+            { name: 'Engagement Session', price: 350 },
+            { name: 'Bridal Portrait', price: 450 }
+        ],
+        portrait: [
+            { name: 'Individual Portrait', price: 250 },
+            { name: 'Professional Headshot', price: 200 },
+            { name: 'Senior Portrait', price: 350 },
+            { name: 'Model Portfolio', price: 500 }
+        ],
+        family: [
+            { name: 'Family Session', price: 350 },
+            { name: 'Maternity Session', price: 300 },
+            { name: 'Newborn Session', price: 400 },
+            { name: 'Extended Family', price: 500 }
+        ],
+        commercial: [
+            { name: 'Product Photography', price: 500 },
+            { name: 'Corporate Headshots', price: 150 },
+            { name: 'Real Estate', price: 350 },
+            { name: 'Brand Campaign', price: 2000 }
+        ],
+        event: [
+            { name: 'Corporate Event', price: 800 },
+            { name: 'Birthday Party', price: 400 },
+            { name: 'Graduation', price: 300 },
+            { name: 'Conference Coverage', price: 1200 }
+        ],
+        mixed: [
+            { name: 'Portrait Session', price: 250 },
+            { name: 'Event Coverage', price: 500 },
+            { name: 'Commercial Shoot', price: 750 },
+            { name: 'Custom Package', price: 0 }
+        ]
+    };
+    
+    return typeMap[businessType] || typeMap.mixed;
+}
 
 // Create subscription endpoint
 app.post('/api/create-subscription', isAuthenticated, async (req, res) => {

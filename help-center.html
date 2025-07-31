@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Help Center - Photography Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Quicksand', -apple-system, sans-serif;
+            background: #fafaf8;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .help-header {
+            background: white;
+            padding: 2rem 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #d4af37;
+        }
+        
+        .back-btn {
+            background: #f0f0f0;
+            color: #333;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        
+        .back-btn:hover {
+            background: #e0e0e0;
+        }
+        
+        .hero-section {
+            background: linear-gradient(135deg, #d4af37 0%, #f4e4bc 100%);
+            padding: 4rem 0;
+            text-align: center;
+        }
+        
+        .hero-content h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: #000;
+        }
+        
+        .search-box {
+            max-width: 600px;
+            margin: 2rem auto;
+            position: relative;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 1rem 3rem 1rem 1rem;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .search-box button {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #d4af37;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            cursor: pointer;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        
+        .quick-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+        
+        .link-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .link-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .link-card .icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .link-card h3 {
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+        
+        .link-card p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .faq-section {
+            margin: 4rem 0;
+        }
+        
+        .faq-section h2 {
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .faq-item {
+            background: white;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .faq-question {
+            padding: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 500;
+        }
+        
+        .faq-question:hover {
+            background: #f9f9f9;
+        }
+        
+        .faq-answer {
+            padding: 0 1.5rem;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+        
+        .faq-item.active .faq-answer {
+            padding: 1.5rem;
+            max-height: 500px;
+        }
+        
+        .faq-item.active .arrow {
+            transform: rotate(180deg);
+        }
+        
+        .arrow {
+            transition: transform 0.3s;
+        }
+        
+        .video-tutorials {
+            background: white;
+            padding: 3rem;
+            border-radius: 12px;
+            margin: 3rem 0;
+        }
+        
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .video-card {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+        
+        .video-card:hover {
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        
+        .video-thumbnail {
+            width: 100%;
+            height: 180px;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+        }
+        
+        .video-info {
+            padding: 1rem;
+        }
+        
+        .video-info h4 {
+            margin-bottom: 0.5rem;
+        }
+        
+        .video-info p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .contact-section {
+            background: linear-gradient(135deg, #f4e4bc 0%, #d4af37 100%);
+            padding: 3rem;
+            border-radius: 12px;
+            text-align: center;
+            margin: 3rem 0;
+        }
+        
+        .contact-options {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .contact-btn {
+            background: white;
+            color: #333;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s;
+        }
+        
+        .contact-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <header class="help-header">
+        <div class="header-content">
+            <div class="logo">📸 Photography Management System</div>
+            <a href="/" class="back-btn">← Back to Dashboard</a>
+        </div>
+    </header>
+    
+    <section class="hero-section">
+        <div class="hero-content">
+            <h1>How can we help you?</h1>
+            <div class="search-box">
+                <input type="text" placeholder="Search for help articles...">
+                <button>Search</button>
+            </div>
+        </div>
+    </section>
+    
+    <div class="container">
+        <section class="quick-links">
+            <div class="link-card" onclick="scrollToSection('getting-started')">
+                <div class="icon">🚀</div>
+                <h3>Getting Started</h3>
+                <p>New to the platform? Start here</p>
+            </div>
+            <div class="link-card" onclick="scrollToSection('sessions')">
+                <div class="icon">📅</div>
+                <h3>Managing Sessions</h3>
+                <p>Learn about scheduling and tracking</p>
+            </div>
+            <div class="link-card" onclick="scrollToSection('payments')">
+                <div class="icon">💰</div>
+                <h3>Payments & Invoicing</h3>
+                <p>Accept payments and send invoices</p>
+            </div>
+            <div class="link-card" onclick="scrollToSection('galleries')">
+                <div class="icon">🖼️</div>
+                <h3>Photo Galleries</h3>
+                <p>Share photos with your clients</p>
+            </div>
+            <div class="link-card" onclick="scrollToSection('website')">
+                <div class="icon">🌐</div>
+                <h3>Website Builder</h3>
+                <p>Create your portfolio website</p>
+            </div>
+            <div class="link-card" onclick="scrollToSection('support')">
+                <div class="icon">💬</div>
+                <h3>Contact Support</h3>
+                <p>Get help from our team</p>
+            </div>
+        </section>
+        
+        <section class="faq-section" id="getting-started">
+            <h2>Frequently Asked Questions</h2>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    <span>How do I get started after subscribing?</span>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="faq-answer">
+                    <p>After your subscription is activated, you'll be guided through our quick setup wizard that helps you:</p>
+                    <ul style="margin-left: 2rem; margin-top: 1rem;">
+                        <li>Set up your business information</li>
+                        <li>Choose your brand colors and style</li>
+                        <li>Configure your default pricing</li>
+                        <li>Add your photography services</li>
+                    </ul>
+                    <p style="margin-top: 1rem;">The entire process takes about 5 minutes and can be modified anytime from your settings.</p>
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    <span>How do I add my first photography session?</span>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="faq-answer">
+                    <p>To add a new session:</p>
+                    <ol style="margin-left: 2rem; margin-top: 1rem;">
+                        <li>Click the "Add New Session" button on your dashboard</li>
+                        <li>Fill in client details (name, email, phone)</li>
+                        <li>Select the session type and date/time</li>
+                        <li>Set the location and pricing</li>
+                        <li>Add any notes or special requirements</li>
+                        <li>Click "Add Session" to save</li>
+                    </ol>
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    <span>How do I connect Stripe for payments?</span>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="faq-answer">
+                    <p>To accept payments through the platform:</p>
+                    <ol style="margin-left: 2rem; margin-top: 1rem;">
+                        <li>Go to Settings → Payment Setup</li>
+                        <li>Click "Connect Stripe Account"</li>
+                        <li>Follow Stripe's onboarding process</li>
+                        <li>Once connected, you can send invoices and accept payments</li>
+                    </ol>
+                    <p style="margin-top: 1rem;">Note: You'll need a Stripe account. It's free to create one at stripe.com</p>
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    <span>How do I create and share client galleries?</span>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="faq-answer">
+                    <p>To create a photo gallery:</p>
+                    <ol style="margin-left: 2rem; margin-top: 1rem;">
+                        <li>Open the session you want to add photos to</li>
+                        <li>Click "Upload Photos"</li>
+                        <li>Select and upload your edited photos</li>
+                        <li>Click "Gallery" to view the gallery</li>
+                        <li>Click "Copy URL" to get the shareable link</li>
+                        <li>Send the link to your client</li>
+                    </ol>
+                    <p style="margin-top: 1rem;">Galleries are password-protected and can be customized with your branding.</p>
+                </div>
+            </div>
+            
+            <div class="faq-item">
+                <div class="faq-question" onclick="toggleFAQ(this)">
+                    <span>How do I build my portfolio website?</span>
+                    <span class="arrow">▼</span>
+                </div>
+                <div class="faq-answer">
+                    <p>Our website builder makes it easy:</p>
+                    <ol style="margin-left: 2rem; margin-top: 1rem;">
+                        <li>Click "Website Builder" from your dashboard</li>
+                        <li>Choose from 20+ professional templates</li>
+                        <li>Customize colors, fonts, and layout</li>
+                        <li>Add your portfolio images</li>
+                        <li>Update your business information</li>
+                        <li>Publish to your custom domain or free subdomain</li>
+                    </ol>
+                    <p style="margin-top: 1rem;">All websites are mobile-responsive and SEO-optimized.</p>
+                </div>
+            </div>
+        </section>
+        
+        <section class="video-tutorials">
+            <h2>Video Tutorials</h2>
+            <div class="video-grid">
+                <div class="video-card">
+                    <div class="video-thumbnail">▶️</div>
+                    <div class="video-info">
+                        <h4>Platform Overview (2 min)</h4>
+                        <p>Quick tour of all features</p>
+                    </div>
+                </div>
+                <div class="video-card">
+                    <div class="video-thumbnail">▶️</div>
+                    <div class="video-info">
+                        <h4>Setting Up Your First Session</h4>
+                        <p>Step-by-step session creation</p>
+                    </div>
+                </div>
+                <div class="video-card">
+                    <div class="video-thumbnail">▶️</div>
+                    <div class="video-info">
+                        <h4>Website Builder Tutorial</h4>
+                        <p>Create your portfolio site</p>
+                    </div>
+                </div>
+                <div class="video-card">
+                    <div class="video-thumbnail">▶️</div>
+                    <div class="video-info">
+                        <h4>Payment Processing Guide</h4>
+                        <p>Accept payments with Stripe</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="contact-section" id="support">
+            <h2>Still need help?</h2>
+            <p>Our support team is here to assist you</p>
+            <div class="contact-options">
+                <a href="mailto:support@photomanagementsystem.com" class="contact-btn">
+                    <span>📧</span>
+                    <span>Email Support</span>
+                </a>
+                <a href="#" class="contact-btn" onclick="openChat()">
+                    <span>💬</span>
+                    <span>Live Chat</span>
+                </a>
+            </div>
+        </section>
+    </div>
+    
+    <script>
+        function toggleFAQ(element) {
+            const faqItem = element.parentElement;
+            faqItem.classList.toggle('active');
+        }
+        
+        function scrollToSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            if (section) {
+                section.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+        
+        function openChat() {
+            // Implement chat widget
+            alert('Chat support coming soon! Please email us at support@photomanagementsystem.com');
+        }
+        
+        // Search functionality
+        document.querySelector('.search-box input').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const faqItems = document.querySelectorAll('.faq-item');
+            
+            faqItems.forEach(item => {
+                const question = item.querySelector('.faq-question').textContent.toLowerCase();
+                const answer = item.querySelector('.faq-answer').textContent.toLowerCase();
+                
+                if (question.includes(searchTerm) || answer.includes(searchTerm)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
