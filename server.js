@@ -1,5 +1,5 @@
 // 🔄 TOGGLEABLE AUTH GUARD SYSTEM
-const DEV_MODE = false; // 👉 Set to false to re-enable login protection
+const DEV_MODE = true; // 👉 Temporarily enabled for onboarding testing
 
 // SUCCESS: PREMIUM MODE IMPLEMENTATION
 const PREMIUM_FEATURES = {
