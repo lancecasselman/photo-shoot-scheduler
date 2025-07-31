@@ -4096,6 +4096,148 @@ app.post('/api/save-business-profile', express.urlencoded({ extended: true }), a
     }
 });
 
+// ==========================================
+// POSES GALLERY API - PUBLIC ACCESS FOR ALL PHOTOGRAPHERS
+// ==========================================
+
+// Get all approved poses (PUBLIC - no auth required)
+app.get('/api/poses', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT p.*, u.display_name as photographer_name 
+            FROM poses p 
+            LEFT JOIN users u ON p.user_id = u.id 
+            WHERE p.approved = true 
+            ORDER BY p.created_at DESC
+        `);
+        
+        const poses = result.rows.map(row => ({
+            id: row.id,
+            imageUrl: row.image_url,
+            category: row.category || [],
+            tags: row.tags || [],
+            photographerId: row.user_id,
+            photographerName: row.photographer_name || 'Anonymous',
+            submittedAt: row.created_at,
+            approved: row.approved,
+            favoriteCount: parseInt(row.favorite_count) || 0
+        }));
+        
+        res.json(poses);
+    } catch (error) {
+        console.error('Error fetching poses:', error);
+        res.status(500).json({ error: 'Failed to fetch poses' });
+    }
+});
+
+// Submit new pose (requires auth)
+app.post('/api/poses', isAuthenticated, upload.single('poseImage'), async (req, res) => {
+    try {
+        const { category, tags } = req.body;
+        const userId = req.user.uid;
+        
+        if (!req.file) {
+            return res.status(400).json({ error: 'Image file is required' });
+        }
+        
+        // Create image URL from uploaded file
+        const imageUrl = `/uploads/${req.file.filename}`;
+        
+        // Parse tags and category
+        const tagArray = tags ? tags.split(',').map(tag => tag.trim().toLowerCase()) : [];
+        const categoryArray = category ? [category.toLowerCase()] : [];
+        
+        const result = await pool.query(`
+            INSERT INTO poses (user_id, image_url, category, tags, approved, created_at) 
+            VALUES ($1, $2, $3, $4, false, NOW()) 
+            RETURNING *
+        `, [userId, imageUrl, JSON.stringify(categoryArray), JSON.stringify(tagArray)]);
+        
+        const newPose = result.rows[0];
+        console.log('🎯 New pose submitted:', newPose.id);
+        
+        res.json({ 
+            success: true, 
+            message: 'Pose submitted successfully! It will be reviewed before appearing in the gallery.',
+            poseId: newPose.id 
+        });
+        
+    } catch (error) {
+        console.error('Error submitting pose:', error);
+        res.status(500).json({ error: 'Failed to submit pose' });
+    }
+});
+
+// Toggle pose favorite (requires auth)
+app.post('/api/poses/:poseId/favorite', isAuthenticated, async (req, res) => {
+    try {
+        const { poseId } = req.params;
+        const userId = req.user.uid;
+        
+        // Check if already favorited
+        const existingFavorite = await pool.query(`
+            SELECT * FROM pose_favorites WHERE user_id = $1 AND pose_id = $2
+        `, [userId, poseId]);
+        
+        if (existingFavorite.rows.length > 0) {
+            // Remove favorite
+            await pool.query(`DELETE FROM pose_favorites WHERE user_id = $1 AND pose_id = $2`, [userId, poseId]);
+            res.json({ favorited: false, message: 'Removed from favorites' });
+        } else {
+            // Add favorite
+            await pool.query(`
+                INSERT INTO pose_favorites (user_id, pose_id, created_at) 
+                VALUES ($1, $2, NOW())
+            `, [userId, poseId]);
+            res.json({ favorited: true, message: 'Added to favorites' });
+        }
+        
+        // Update favorite count in poses table
+        await pool.query(`
+            UPDATE poses SET favorite_count = (
+                SELECT COUNT(*) FROM pose_favorites WHERE pose_id = $1
+            ) WHERE id = $1
+        `, [poseId]);
+        
+    } catch (error) {
+        console.error('Error toggling favorite:', error);
+        res.status(500).json({ error: 'Failed to update favorite' });
+    }
+});
+
+// Get user's favorite poses (requires auth)
+app.get('/api/poses/favorites', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.user.uid;
+        
+        const result = await pool.query(`
+            SELECT p.*, u.display_name as photographer_name 
+            FROM poses p 
+            JOIN pose_favorites pf ON p.id = pf.pose_id 
+            LEFT JOIN users u ON p.user_id = u.id 
+            WHERE pf.user_id = $1 AND p.approved = true 
+            ORDER BY pf.created_at DESC
+        `, [userId]);
+        
+        const favorites = result.rows.map(row => ({
+            id: row.id,
+            imageUrl: row.image_url,
+            category: row.category || [],
+            tags: row.tags || [],
+            photographerId: row.user_id,
+            photographerName: row.photographer_name || 'Anonymous',
+            submittedAt: row.created_at,
+            approved: row.approved,
+            favoriteCount: parseInt(row.favorite_count) || 0
+        }));
+        
+        res.json(favorites);
+    } catch (error) {
+        console.error('Error fetching user favorites:', error);
+        res.status(500).json({ error: 'Failed to fetch favorites' });
+    }
+});
+
 // JavaScript test page
 app.get('/js-test', (req, res) => {
     res.sendFile(path.join(__dirname, 'simple-test.html'));

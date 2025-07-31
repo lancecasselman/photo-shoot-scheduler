@@ -10352,14 +10352,12 @@ I'm so grateful to work with clients like ${clientName} who trust me to capture 
             showMessage('Loading Poses Gallery...', 'info');
             
             try {
-                // Get current user ID for favorites
-                currentUserId = 'dev-user-123';
+                // Load poses from API
+                await loadPosesFromAPI();
                 
-                // Load poses data (starts with demo data)
-                loadDemoPoses();
-                
-                // Load user favorites
-                if (currentUserId) {
+                // Load user favorites if authenticated
+                if (currentUser && currentUser.uid) {
+                    currentUserId = currentUser.uid;
                     await loadUserFavorites();
                 }
                 
@@ -10368,6 +10366,22 @@ I'm so grateful to work with clients like ${clientName} who trust me to capture 
             } catch (error) {
                 console.error('Error initializing poses:', error);
                 showMessage('Using demo poses data', 'warning');
+                loadDemoPoses();
+            }
+        }
+
+        async function loadPosesFromAPI() {
+            try {
+                const response = await fetch('/api/poses');
+                if (response.ok) {
+                    currentPoses = await response.json();
+                    displaySharedPoses();
+                } else {
+                    throw new Error('Failed to load poses from API');
+                }
+            } catch (error) {
+                console.error('Error loading poses from API:', error);
+                // Fallback to demo data
                 loadDemoPoses();
             }
         }
@@ -10467,8 +10481,16 @@ I'm so grateful to work with clients like ${clientName} who trust me to capture 
 
         async function loadUserFavorites() {
             try {
-                userFavorites = ['pose_1', 'pose_3']; // Demo favorites for current user
-                // In production: fetch from /users/{userId}/favoritePoses/
+                if (!currentUserId) return;
+                
+                const response = await fetch('/api/poses/favorites');
+                if (response.ok) {
+                    const favorites = await response.json();
+                    userFavorites = favorites.map(pose => pose.id);
+                    displayFavorites(favorites);
+                } else {
+                    userFavorites = [];
+                }
             } catch (error) {
                 console.error('Error loading user favorites:', error);
                 userFavorites = [];
@@ -10577,20 +10599,31 @@ I'm so grateful to work with clients like ${clientName} who trust me to capture 
 
         async function toggleFavorite(poseId) {
             try {
-                const isFavorited = userFavorites.includes(poseId);
-                
-                if (isFavorited) {
-                    // Remove from favorites
-                    userFavorites = userFavorites.filter(id => id !== poseId);
-                    showMessage('Removed from favorites', 'info');
-                } else {
-                    // Add to favorites
-                    userFavorites.push(poseId);
-                    showMessage('Added to favorites!', 'success');
-                    celebrateMilestone('gallery_shared', 'Pose Favorited');
+                if (!currentUserId) {
+                    showMessage('Please sign in to save favorites', 'warning');
+                    return;
                 }
                 
-                // Update the UI
+                const response = await fetch(`/api/poses/${poseId}/favorite`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    
+                    if (result.favorited) {
+                        userFavorites.push(poseId);
+                        showMessage('Added to favorites!', 'success');
+                        celebrateMilestone('gallery_shared', 'Pose Favorited');
+                    } else {
+                        userFavorites = userFavorites.filter(id => id !== poseId);
+                        showMessage('Removed from favorites', 'info');
+                    }
+                    
+                    // Update the UI
                 displaySharedPoses();
                 
             } catch (error) {
@@ -10695,9 +10728,49 @@ I'm so grateful to work with clients like ${clientName} who trust me to capture 
         async function handlePoseSubmission(event) {
             event.preventDefault();
             
+            if (!currentUserId) {
+                showMessage('Please sign in to submit poses', 'warning');
+                return;
+            }
+            
             const imageFile = document.getElementById('poseImage').files[0];
             const category = document.getElementById('poseCategory').value;
             const tagsInput = document.getElementById('poseTags').value;
+            
+            if (!imageFile) {
+                showMessage('Please select an image to upload', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('poseImage', imageFile);
+            formData.append('category', category);
+            formData.append('tags', tagsInput);
+            
+            try {
+                showMessage('Uploading pose...', 'info');
+                
+                const response = await fetch('/api/poses', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    showMessage(result.message, 'success');
+                    
+                    // Reset form
+                    document.getElementById('poseSubmitForm').reset();
+                    
+                    // Reload poses gallery
+                    await loadPosesFromAPI();
+                } else {
+                    throw new Error('Failed to submit pose');
+                }
+            } catch (error) {
+                console.error('Error submitting pose:', error);
+                showMessage('Failed to submit pose. Please try again.', 'error');
+            }
             
             if (!imageFile) {
                 showMessage('Please select an image to upload', 'error');

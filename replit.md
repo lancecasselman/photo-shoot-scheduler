@@ -60,6 +60,7 @@ This is a comprehensive photography business management platform designed to rev
 - **Authentication**: Multi-user authentication system using Firebase Authentication (v8 legacy SDK) with Google Sign-in and Email/Password options, integrated with PostgreSQL for user management.
 - **Subscriber Onboarding**: Streamlined 2-step setup process for new subscribers focusing on Stripe payment integration and business profile configuration. Uses native device email/SMS capabilities instead of requiring external API services.
 - **Core Features**: Session scheduling, client information tracking, workflow management, pricing, and notes system.
+- **Shared Poses Gallery** (Added Jan 31, 2025): Community-driven photography pose inspiration gallery where photographers can view, favorite, and submit pose ideas. Features public access for viewing, authenticated submissions, and moderation system.
 
 ### System Design Choices
 - **Cloud Database**: PostgreSQL as the primary persistent data storage, with Firebase Firestore as an alternative/fallback for certain data.
