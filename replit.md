@@ -44,6 +44,14 @@ This is a comprehensive photography business management platform designed to rev
   - Primary and secondary color customization
   - Default background image upload
   - Background transparency controls for text blocks (0-100% opacity)
+- **Subscription System** (Added Jan 31, 2025):
+  - Integrated Stripe payment processing for SaaS subscriptions
+  - Three pricing tiers: $25/month, $125/6 months (1 month free), $200/year (2 months free)
+  - Subscription modal UI with responsive pricing grid
+  - Stripe Checkout Sessions for secure payment processing
+  - Automatic user status updates after successful payment
+  - Free access for owner accounts (lancecasselman@icloud.com, lancecasselman2011@gmail.com)
+  - Subscription middleware protecting all main application routes
 - **Photo Management**: Unlimited photo upload system (any file size/quantity) with sequential processing, real-time progress tracking, individual photo deletion, and lightbox viewing.
 - **Session Management**: CRUD operations for client sessions, including detailed information, workflow status tracking (contract signed, paid, edited, delivered) with real-time database updates.
 - **Payment Processing**: Integration with Stripe for deposit invoices, full invoicing, and an optional tipping system.

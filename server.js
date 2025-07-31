@@ -367,6 +367,18 @@ app.get('/api/stripe-public-key', (req, res) => {
     res.json({ publicKey: process.env.VITE_STRIPE_PUBLIC_KEY || '' });
 });
 
+// Logout endpoint
+app.post('/api/auth/logout', (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+            console.error('Logout error:', err);
+            res.status(500).json({ message: 'Logout failed' });
+        } else {
+            res.json({ message: 'Logged out successfully' });
+        }
+    });
+});
+
 // Subscription success page
 app.get('/subscription-success', isAuthenticated, async (req, res) => {
     try {

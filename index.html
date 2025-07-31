@@ -11132,6 +11132,25 @@ I'm so grateful to work with clients like ${clientName} who trust me to capture 
             checkSubscriptionStatus();
         });
 
+        // Firebase logout function
+        async function firebaseLogout() {
+            try {
+                await firebase.auth().signOut();
+                
+                // Also clear server session
+                await fetch('/api/auth/logout', { 
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                
+                // Redirect to auth page
+                window.location.href = '/auth.html';
+            } catch (error) {
+                console.error('Logout error:', error);
+                showMessage('Error logging out', 'error');
+            }
+        }
+
     </script>
 
         </div> <!-- Close main-content -->
