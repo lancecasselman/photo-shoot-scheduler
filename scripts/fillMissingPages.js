@@ -65,7 +65,7 @@ function createMissingPages(templateDir, templateName) {
     } else {
       try {
         fs.writeFileSync(filePath, pageTemplates[page], 'utf8');
-        console.log(`  ✅ Created: ${templateName}/${page}`);
+        console.log(`  SUCCESS: Created: ${templateName}/${page}`);
         filesCreated++;
       } catch (error) {
         console.log(`  ❌ Failed to create: ${templateName}/${page} - ${error.message}`);
@@ -80,7 +80,7 @@ function createMissingPages(templateDir, templateName) {
  * Main function to process all templates
  */
 function main() {
-  console.log('🚀 Starting Template Page Generator...\n');
+  console.log('Starting Starting Template Page Generator...\n');
   
   const templatesDir = path.join(process.cwd(), 'templates');
   
@@ -90,7 +90,7 @@ function main() {
     
     try {
       fs.mkdirSync(templatesDir, { recursive: true });
-      console.log('✅ Created templates directory');
+      console.log('SUCCESS: Created templates directory');
     } catch (error) {
       console.log(`❌ Failed to create templates directory: ${error.message}`);
       return;
@@ -153,7 +153,7 @@ function main() {
 
   // Summary
   console.log('\n📊 Summary:');
-  console.log(`  ✅ Files created: ${totalCreated}`);
+  console.log(`  SUCCESS: Files created: ${totalCreated}`);
   console.log(`  ✔️  Files skipped (already exist): ${totalSkipped}`);
   console.log(`  📁 Templates processed: ${templateDirs.length}`);
   

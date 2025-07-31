@@ -63,11 +63,11 @@ class AdvancedVisualEditor {
         
         // Available pages
         this.pages = [
-            { id: 'home', name: 'Home', icon: '🏠' },
-            { id: 'about', name: 'About', icon: '👤' },
-            { id: 'gallery', name: 'Gallery', icon: '📸' },
+            { id: 'home', name: 'Home', icon: '' },
+            { id: 'about', name: 'About', icon: '' },
+            { id: 'gallery', name: 'Gallery', icon: '' },
             { id: 'store', name: 'Store', icon: '🛍️' },
-            { id: 'contact', name: 'Contact', icon: '📧' }
+            { id: 'contact', name: 'Contact', icon: '' }
         ];
         
         // Page settings including backgrounds and fonts
@@ -131,7 +131,7 @@ class AdvancedVisualEditor {
     }
 
     async init() {
-        console.log('🚀 Initializing Advanced Visual Editor...');
+        console.log('Starting Initializing Advanced Visual Editor...');
         
         try {
             // Initialize Firebase
@@ -154,7 +154,7 @@ class AdvancedVisualEditor {
             // Setup preview editing functionality
             this.setupPreviewEditing();
             
-            console.log('✅ Advanced Visual Editor initialized successfully');
+            console.log('SUCCESS: Advanced Visual Editor initialized successfully');
             this.showNotification('Editor ready - click any text or image to edit!', 'success');
             
             // Check if mobile view needs initialization
@@ -183,7 +183,7 @@ class AdvancedVisualEditor {
                 throw new Error('Firebase not available');
             }
         } catch (error) {
-            console.log('⚠️ Firebase not available, using localStorage fallback');
+            console.log('WARNING: Firebase not available, using localStorage fallback');
             this.firebaseInitialized = false;
         }
     }
@@ -274,14 +274,14 @@ class AdvancedVisualEditor {
             }
         });
         
-        console.log(`✅ Loaded ${Object.keys(this.themes).length} themes in dropdown`);
+        console.log(`SUCCESS: Loaded ${Object.keys(this.themes).length} themes in dropdown`);
     }
 
     setupPrebuiltTemplates() {
         // Setup prebuilt templates dropdown
         const templateDropdown = document.getElementById('template-dropdown');
         if (!templateDropdown) {
-            console.log('⚠️ Template dropdown not found');
+            console.log('WARNING: Template dropdown not found');
             return;
         }
 
@@ -317,14 +317,14 @@ class AdvancedVisualEditor {
             }
         });
         
-        console.log(`✅ Successfully populated template dropdown with ${Object.keys(this.prebuiltTemplates).length} templates`);
+        console.log(`SUCCESS: Successfully populated template dropdown with ${Object.keys(this.prebuiltTemplates).length} templates`);
     }
 
     setupLuxuryComponents() {
         // Setup luxury components dropdown
         const luxuryDropdown = document.getElementById('luxury-dropdown');
         if (!luxuryDropdown) {
-            console.log('⚠️ Luxury dropdown not found');
+            console.log('WARNING: Luxury dropdown not found');
             return;
         }
 
@@ -334,7 +334,7 @@ class AdvancedVisualEditor {
             this.initializeLuxuryComponents();
         }
 
-        console.log(`🎨 Populating luxury dropdown with ${Object.keys(this.luxuryComponents).length} components`);
+        console.log(` Populating luxury dropdown with ${Object.keys(this.luxuryComponents).length} components`);
 
         // Clear existing options (except first one)
         luxuryDropdown.innerHTML = '<option value="">Add luxury component...</option>';
@@ -352,7 +352,7 @@ class AdvancedVisualEditor {
             if (e.target.value) {
                 const componentKey = e.target.value;
                 const component = this.luxuryComponents[componentKey];
-                console.log(`🚀 Adding luxury component: ${component.name}`);
+                console.log(`Starting Adding luxury component: ${component.name}`);
                 this.addLuxuryComponent(componentKey);
                 
                 // Reset dropdown
@@ -360,7 +360,7 @@ class AdvancedVisualEditor {
             }
         });
         
-        console.log(`✅ Successfully populated luxury dropdown with ${Object.keys(this.luxuryComponents).length} components`);
+        console.log(`SUCCESS: Successfully populated luxury dropdown with ${Object.keys(this.luxuryComponents).length} components`);
     }
 
     initializePrebuiltTemplates() {
@@ -1141,7 +1141,7 @@ class AdvancedVisualEditor {
             }
         };
 
-        console.log(`✅ Loaded ${Object.keys(this.luxuryComponents).length} luxury design components`);
+        console.log(`SUCCESS: Loaded ${Object.keys(this.luxuryComponents).length} luxury design components`);
     }
 
     async applyPrebuiltTemplate(templateKey) {
@@ -1173,7 +1173,7 @@ class AdvancedVisualEditor {
         };
 
         this.pageLayouts[currentPage].push(newBlock);
-        console.log(`✅ Added ${component.name} to ${currentPage} page`);
+        console.log(`SUCCESS: Added ${component.name} to ${currentPage} page`);
         
         // Update the live preview with the new component
         this.updateLivePreviewWithComponent(newBlock);
@@ -1190,7 +1190,7 @@ class AdvancedVisualEditor {
     }
     
     updateLivePreviewWithComponent(newBlock) {
-        console.log(`🎨 Updating live preview with ${newBlock.type} component:`, newBlock);
+        console.log(` Updating live preview with ${newBlock.type} component:`, newBlock);
         
         // Instead of trying to manipulate iframe content directly,
         // refresh the entire preview to show all components including the new one
@@ -1376,7 +1376,7 @@ class AdvancedVisualEditor {
 
     celebration() {
         // Simple celebration - could be enhanced with confetti
-        console.log('🎉 Celebration triggered!');
+        console.log(' Celebration triggered!');
         
         // Try to use existing celebration system if available
         if (typeof triggerCelebration === 'function') {
@@ -1399,10 +1399,10 @@ class AdvancedVisualEditor {
                 this.pageSettings = state.pageSettings || this.pageSettings;
                 this.fontSettings = state.fontSettings || this.fontSettings;
                 this.siteSettings = state.siteSettings || this.siteSettings;
-                console.log('✅ Loaded state from localStorage');
+                console.log('SUCCESS: Loaded state from localStorage');
             }
         } catch (error) {
-            console.log('⚠️ No saved state found, using defaults');
+            console.log('WARNING: No saved state found, using defaults');
         }
     }
 
@@ -1520,7 +1520,7 @@ class AdvancedVisualEditor {
                                     <p style="font-size: 1.3em; line-height: 1.8; color: #8B7355;">${block.content.text}</p>
                                     ${block.content.awards ? `
                                         <div style="margin-top: 20px;">
-                                            ${block.content.awards.map(award => `<p style="margin: 8px 0; color: #C4962D;">✓ ${award}</p>`).join('')}
+                                            ${block.content.awards.map(award => `<p style="margin: 8px 0; color: #C4962D;"> ${award}</p>`).join('')}
                                         </div>
                                     ` : ''}
                                 </div>
@@ -1554,7 +1554,7 @@ class AdvancedVisualEditor {
                                             <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 2em; margin-bottom: 10px; color: #2C2C2C;">${pkg.name}</h3>
                                             <p style="font-size: 2.5em; color: #C4962D; margin: 20px 0; font-weight: 600;">${pkg.price}</p>
                                             <ul style="list-style: none; padding: 0; margin: 30px 0;">
-                                                ${pkg.features.map(feature => `<li style="margin: 15px 0; color: #8B7355;">✓ ${feature}</li>`).join('')}
+                                                ${pkg.features.map(feature => `<li style="margin: 15px 0; color: #8B7355;"> ${feature}</li>`).join('')}
                                             </ul>
                                             <button style="background: #C4962D; color: white; padding: 15px 30px; border: none; border-radius: 8px; font-size: 1.1em; cursor: pointer; width: 100%;">Select Package</button>
                                         </div>
@@ -1689,7 +1689,7 @@ class AdvancedVisualEditor {
 
     // Theme change handler
     async changeTheme(themeKey) {
-        console.log(`🎨 Changing theme to: ${themeKey}`);
+        console.log(` Changing theme to: ${themeKey}`);
         this.currentTheme = themeKey;
         
         const theme = this.themes[themeKey];
@@ -1808,7 +1808,7 @@ class AdvancedVisualEditor {
             });
         }
         
-        console.log('🎨 Background controls setup completed');
+        console.log(' Background controls setup completed');
     }
 
     setupFontControls() {
@@ -2098,7 +2098,7 @@ class AdvancedVisualEditor {
         const previewFrame = document.getElementById('preview-frame');
         if (previewFrame) {
             previewFrame.style.backgroundColor = color;
-            console.log(`🎨 Background color updated to: ${color}`);
+            console.log(` Background color updated to: ${color}`);
             this.showNotification('Background color updated', 'success');
             this.saveToStorage();
         }
@@ -2113,7 +2113,7 @@ class AdvancedVisualEditor {
                 previewFrame.style.backgroundImage = `url('${e.target.result}')`;
                 previewFrame.style.backgroundSize = 'cover';
                 previewFrame.style.backgroundPosition = 'center';
-                console.log('🎨 Background image updated');
+                console.log(' Background image updated');
                 this.showNotification('Background image updated', 'success');
                 this.saveToStorage();
             }
@@ -2350,7 +2350,7 @@ class AdvancedVisualEditor {
         await this.saveToStorage();
         
         this.showNotification(`Template "${template.name}" loaded successfully!`, 'success');
-        console.log(`✅ Template loaded: ${template.name}`);
+        console.log(`SUCCESS: Template loaded: ${template.name}`);
     }
 
     // Initialize with luxury component system
@@ -2470,7 +2470,7 @@ class AdvancedVisualEditor {
         element.style.outline = '2px solid #C4962D';
         element.style.outlineOffset = '2px';
         
-        console.log('✅ Element selected for editing');
+        console.log('SUCCESS: Element selected for editing');
         this.showEditingControls();
     }
 
@@ -2532,7 +2532,7 @@ class AdvancedVisualEditor {
             });
         });
 
-        console.log(`✅ Made ${textElements.length} text elements editable`);
+        console.log(`SUCCESS: Made ${textElements.length} text elements editable`);
     }
 
     showEditingControls() {
@@ -2580,7 +2580,7 @@ class AdvancedVisualEditor {
 
     // Add block method - supports different block types with image layouts
     addBlock(type, options = {}) {
-        console.log(`🚀 Adding block of type: ${type}`, options);
+        console.log(`Starting Adding block of type: ${type}`, options);
         
         const blockId = `block_${Date.now()}`;
         let blockContent;

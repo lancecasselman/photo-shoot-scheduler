@@ -8,28 +8,28 @@ const OnboardingFlow = {
     steps: [
         {
             id: 'welcome',
-            title: '🎉 Welcome to Photography Management System!',
+            title: ' Welcome to Photography Management System!',
             subtitle: 'Your subscription is active. Let\'s get you set up in 5 minutes.',
             content: `
                 <div class="welcome-content">
                     <div class="feature-grid">
                         <div class="feature-card">
-                            <span class="feature-icon">📸</span>
+                            <span class="feature-icon"></span>
                             <h3>Session Management</h3>
                             <p>Track all your photography sessions</p>
                         </div>
                         <div class="feature-card">
-                            <span class="feature-icon">💰</span>
+                            <span class="feature-icon"></span>
                             <h3>Invoicing & Payments</h3>
                             <p>Get paid faster with Stripe</p>
                         </div>
                         <div class="feature-card">
-                            <span class="feature-icon">🌐</span>
+                            <span class="feature-icon"></span>
                             <h3>Website Builder</h3>
                             <p>Create stunning portfolio sites</p>
                         </div>
                         <div class="feature-card">
-                            <span class="feature-icon">📱</span>
+                            <span class="feature-icon"></span>
                             <h3>Client Galleries</h3>
                             <p>Share photos beautifully</p>
                         </div>
@@ -43,7 +43,7 @@ const OnboardingFlow = {
         },
         {
             id: 'business-basics',
-            title: '📋 Business Basics',
+            title: ' Business Basics',
             subtitle: 'Tell us about your photography business',
             fields: [
                 {
@@ -59,12 +59,12 @@ const OnboardingFlow = {
                     label: 'Primary Photography Type',
                     type: 'select',
                     options: [
-                        { value: 'wedding', label: '💑 Wedding Photography' },
-                        { value: 'portrait', label: '👤 Portrait Photography' },
-                        { value: 'family', label: '👨‍👩‍👧‍👦 Family Photography' },
-                        { value: 'commercial', label: '🏢 Commercial Photography' },
-                        { value: 'event', label: '🎉 Event Photography' },
-                        { value: 'mixed', label: '🎨 Multiple Specialties' }
+                        { value: 'wedding', label: ' Wedding Photography' },
+                        { value: 'portrait', label: ' Portrait Photography' },
+                        { value: 'family', label: ' Family Photography' },
+                        { value: 'commercial', label: ' Commercial Photography' },
+                        { value: 'event', label: ' Event Photography' },
+                        { value: 'mixed', label: ' Multiple Specialties' }
                     ],
                     required: true
                 },
@@ -79,7 +79,7 @@ const OnboardingFlow = {
         },
         {
             id: 'quick-branding',
-            title: '🎨 Quick Branding',
+            title: ' Quick Branding',
             subtitle: 'Personalize your platform (you can change this anytime)',
             fields: [
                 {
@@ -108,7 +108,7 @@ const OnboardingFlow = {
         },
         {
             id: 'session-defaults',
-            title: '💵 Default Pricing',
+            title: ' Default Pricing',
             subtitle: 'Set your standard rates (easily adjustable per session)',
             fields: [
                 {
@@ -144,7 +144,7 @@ const OnboardingFlow = {
         },
         {
             id: 'quick-start',
-            title: '🚀 Ready to Go!',
+            title: ' Ready to Go!',
             subtitle: 'You\'re all set! Here\'s what to do next:',
             content: `
                 <div class="completion-content">
@@ -178,7 +178,7 @@ const OnboardingFlow = {
                             📹 Watch 2-Min Tutorial
                         </button>
                         <button class="primary-button" onclick="OnboardingFlow.completeOnboarding()">
-                            ✨ Go to Dashboard
+                             Go to Dashboard
                         </button>
                     </div>
                     
@@ -499,7 +499,7 @@ const OnboardingFlow = {
         message.className = 'success-toast';
         message.innerHTML = `
             <div class="success-content">
-                <span class="success-icon">✅</span>
+                <span class="success-icon"></span>
                 <span>Setup complete! Loading your dashboard...</span>
             </div>
         `;

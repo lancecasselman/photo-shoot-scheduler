@@ -22,7 +22,7 @@ function updateProgress() {
   stepNum.textContent = currentStep + 1;
   
   prevBtn.disabled = currentStep === 0;
-  nextBtn.textContent = currentStep === steps.length - 1 ? 'Launch 🚀' : 'Next ➡';
+  nextBtn.textContent = currentStep === steps.length - 1 ? 'Launch Starting' : 'Next ➡';
 }
 
 function renderStep() {
@@ -112,7 +112,7 @@ function getStepHTML(step) {
       `;
     case "communication":
       return `
-        <h2>📧 Communication Preferences</h2>
+        <h2> Communication Preferences</h2>
         <div class="checkbox-group">
           <input type="checkbox" id="enableEmail" checked />
           <label for="enableEmail">Enable Email Notifications</label>
@@ -177,7 +177,7 @@ Multiple outfit changes welcome</textarea>
       `;
     case "previewLaunch":
       return `
-        <h2>🚀 Ready to Launch!</h2>
+        <h2>Starting Ready to Launch!</h2>
         <div class="success-message">
           <h3>Setup Complete!</h3>
           <p>Your photography management system is configured and ready to go.</p>
@@ -185,11 +185,11 @@ Multiple outfit changes welcome</textarea>
         <div style="background: rgba(212, 175, 55, 0.1); padding: 20px; border-radius: 8px; margin: 20px 0;">
           <h4 style="color: #d4af37; margin-top: 0;">What happens next:</h4>
           <ul style="color: #ccc; line-height: 1.8;">
-            <li>✅ Your business settings will be saved</li>
-            <li>✅ Dashboard will be configured with your branding</li>
-            <li>✅ Your first session type will be available</li>
-            <li>✅ Payment processing will be ready (if Stripe connected)</li>
-            <li>✅ Email templates will be configured</li>
+            <li>SUCCESS: Your business settings will be saved</li>
+            <li>SUCCESS: Dashboard will be configured with your branding</li>
+            <li>SUCCESS: Your first session type will be available</li>
+            <li>SUCCESS: Payment processing will be ready (if Stripe connected)</li>
+            <li>SUCCESS: Email templates will be configured</li>
           </ul>
         </div>
         <button class="launch-btn" onclick="launchPortal()">
@@ -279,7 +279,7 @@ prevBtn.addEventListener("click", () => {
 
 function connectStripe() {
   // For now, just show a success message since we have the keys configured
-  alert("✅ Stripe integration is already configured with your secret keys!");
+  alert("SUCCESS: Stripe integration is already configured with your secret keys!");
 }
 
 async function launchPortal() {

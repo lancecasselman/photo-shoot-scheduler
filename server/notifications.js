@@ -10,9 +10,9 @@ function initializeNotificationServices() {
     if (process.env.SENDGRID_API_KEY) {
         sgMail.setApiKey(process.env.SENDGRID_API_KEY);
         sendGridConfigured = true;
-        console.log('📧 SendGrid configured successfully');
+        console.log(' SendGrid configured successfully');
     } else {
-        console.log('⚠️ SendGrid API key not provided - email notifications disabled');
+        console.log('WARNING: SendGrid API key not provided - email notifications disabled');
     }
 
     // Initialize Twilio
@@ -20,7 +20,7 @@ function initializeNotificationServices() {
         twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
         console.log('📱 Twilio configured successfully');
     } else {
-        console.log('⚠️ Twilio credentials not provided - SMS notifications disabled');
+        console.log('WARNING: Twilio credentials not provided - SMS notifications disabled');
     }
 }
 
@@ -40,7 +40,7 @@ const emailTemplates = {
                     <p style="color: #666; line-height: 1.6;">Welcome to your professional photography business management platform. You now have access to:</p>
                     
                     <ul style="color: #666; line-height: 1.8;">
-                        <li>📅 <strong>Session Scheduling</strong> - Manage all your photography sessions</li>
+                        <li>Schedule: <strong>Session Scheduling</strong> - Manage all your photography sessions</li>
                         <li>📸 <strong>Photo Gallery System</strong> - Share galleries with clients securely</li>
                         <li>💰 <strong>Stripe Invoicing</strong> - Professional billing and payment processing</li>
                         <li>📱 <strong>Mobile Optimization</strong> - Manage your business from anywhere</li>
@@ -162,7 +162,7 @@ const emailTemplates = {
 // Send email notification
 async function sendEmail(to, template, ...args) {
     if (!sendGridConfigured) {
-        console.log('📧 Email not sent - SendGrid not configured');
+        console.log(' Email not sent - SendGrid not configured');
         return { success: false, error: 'SendGrid not configured' };
     }
 
@@ -180,10 +180,10 @@ async function sendEmail(to, template, ...args) {
         };
 
         await sgMail.send(msg);
-        console.log(`📧 Email sent successfully to ${to}: ${emailContent.subject}`);
+        console.log(` Email sent successfully to ${to}: ${emailContent.subject}`);
         return { success: true };
     } catch (error) {
-        console.error('📧 Email send error:', error);
+        console.error(' Email send error:', error);
         return { success: false, error: error.message };
     }
 }

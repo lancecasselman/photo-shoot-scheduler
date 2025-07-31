@@ -227,7 +227,7 @@ class ContractManager {
         JSON.stringify(customData)
       ]);
 
-      console.log(`✅ Contract created: ${template.title} for session ${sessionId}`);
+      console.log(`SUCCESS: Contract created: ${template.title} for session ${sessionId}`);
       return result.rows[0];
     } catch (error) {
       console.error('Error creating contract:', error);
@@ -304,7 +304,7 @@ class ContractManager {
         throw new Error('Contract not found');
       }
 
-      console.log(`✅ Contract signed: ${contractId}`);
+      console.log(`SUCCESS: Contract signed: ${contractId}`);
       return result.rows[0];
     } catch (error) {
       console.error('Error signing contract:', error);
@@ -324,7 +324,7 @@ class ContractManager {
         RETURNING *
       `, [contractId]);
 
-      console.log(`✅ Contract sent: ${contractId}`);
+      console.log(`SUCCESS: Contract sent: ${contractId}`);
       return result.rows[0];
     } catch (error) {
       console.error('Error sending contract:', error);
@@ -412,7 +412,7 @@ class ContractManager {
         throw new Error('Contract not found');
       }
 
-      console.log(`✅ Contract updated: ${contractId}`);
+      console.log(`SUCCESS: Contract updated: ${contractId}`);
       return result.rows[0];
     } catch (error) {
       console.error('Error updating contract:', error);

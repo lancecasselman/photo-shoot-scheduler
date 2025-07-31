@@ -1,7 +1,7 @@
 // 🔄 TOGGLEABLE AUTH GUARD SYSTEM
 const DEV_MODE = false; // 👉 Set to false to re-enable login protection
 
-// SUCCESS: PREMIUM MODE IMPLEMENTATION
+// ✅ PREMIUM MODE IMPLEMENTATION
 const PREMIUM_FEATURES = {
     STATIC_SITE_PUBLISHING: true,
     ADVANCED_THEMES: true,
@@ -54,10 +54,10 @@ try {
         });
         console.log('Firebase Admin SDK initialized successfully');
     } else {
-        console.log('WARNING: Firebase credentials not provided - authentication disabled');
+        console.log('⚠️ Firebase credentials not provided - authentication disabled');
     }
 } catch (error) {
-    console.log('WARNING: Firebase Admin SDK initialization failed:', error.message);
+    console.log('⚠️ Firebase Admin SDK initialization failed:', error.message);
 }
 
 // Firebase Authentication middleware
@@ -966,7 +966,7 @@ const upload = multer({
         fieldValue: 50 * 1024 * 1024 * 1024 // 50GB field value
     },
     fileFilter: (req, file, cb) => {
-        console.log(` File filter check: ${file.originalname} (${file.mimetype})`);
+        console.log(`🔍 File filter check: ${file.originalname} (${file.mimetype})`);
         if (file.mimetype.startsWith('image/')) {
             cb(null, true);
         } else {
@@ -991,7 +991,7 @@ app.get('/api/sessions', isAuthenticated, requireSubscription, async (req, res) 
         const userId = req.user.uid;
         
         // Debug logging to see what user is requesting sessions
-        console.log(' Sessions requested by user:', {
+        console.log('🔍 Sessions requested by user:', {
             uid: userId,
             email: req.user.email,
             displayName: req.user.displayName
@@ -1001,7 +1001,7 @@ app.get('/api/sessions', isAuthenticated, requireSubscription, async (req, res) 
         console.log(`📋 Found ${sessions.length} sessions for user ${userId}`);
         
         if (sessions.length === 0) {
-            console.log('WARNING: No sessions found. Checking if user should have access to existing sessions...');
+            console.log('⚠️ No sessions found. Checking if user should have access to existing sessions...');
             
             // Check if this user should have access to the lancecasselman@icloud.com sessions
             if (req.user.email === 'lancecasselman@icloud.com' || req.user.email === 'lancecasselman2011@gmail.com') {
@@ -1081,25 +1081,25 @@ app.put('/api/sessions/:id', isAuthenticated, async (req, res) => {
 app.post('/api/sessions/:id/upload-photos', isAuthenticated, (req, res) => {
     const sessionId = req.params.id;
     
-    console.log(` Starting upload for session ${sessionId}...`);
+    console.log(`🔍 Starting upload for session ${sessionId}...`);
     
     // Disable all timeouts for upload requests
     req.setTimeout(0); // Infinite timeout
     res.setTimeout(0); // Infinite timeout
     
-    console.log(` Request started - method: ${req.method}, content-length: ${req.headers['content-length']}`);
-    console.log(` Headers:`, req.headers);
+    console.log(`📊 Request started - method: ${req.method}, content-length: ${req.headers['content-length']}`);
+    console.log(`📊 Headers:`, req.headers);
     
-    console.log(`Starting Starting multer processing for session ${sessionId}...`);
+    console.log(`🚀 Starting multer processing for session ${sessionId}...`);
     
     upload.array('photos')(req, res, async (uploadError) => {
-        console.log(` Multer callback triggered - error: ${uploadError ? 'YES' : 'NO'}`);
+        console.log(`📊 Multer callback triggered - error: ${uploadError ? 'YES' : 'NO'}`);
         
         if (uploadError) {
-            console.error(' Multer upload error:', uploadError);
-            console.error(' Error stack:', uploadError.stack);
-            console.error(' Error code:', uploadError.code);
-            console.error(' Error field:', uploadError.field);
+            console.error('❌ Multer upload error:', uploadError);
+            console.error('❌ Error stack:', uploadError.stack);
+            console.error('❌ Error code:', uploadError.code);
+            console.error('❌ Error field:', uploadError.field);
             
             // Send immediate error response
             if (!res.headersSent) {
@@ -1113,11 +1113,11 @@ app.post('/api/sessions/:id/upload-photos', isAuthenticated, (req, res) => {
             return;
         }
         
-        console.log(` Multer success - starting processing...`);
-        console.log(` Files received: ${req.files ? req.files.length : 0}`);
+        console.log(`📊 Multer success - starting processing...`);
+        console.log(`📊 Files received: ${req.files ? req.files.length : 0}`);
         
         if (!req.files || req.files.length === 0) {
-            console.log(' No files received in request');
+            console.log('❌ No files received in request');
             if (!res.headersSent) {
                 return res.status(400).json({ error: 'No files uploaded' });
             }
@@ -1126,13 +1126,13 @@ app.post('/api/sessions/:id/upload-photos', isAuthenticated, (req, res) => {
 
         const uploadedPhotos = [];
         
-        console.log(` Processing ${req.files.length} files for session ${sessionId}`);
+        console.log(`📸 Processing ${req.files.length} files for session ${sessionId}`);
 
         // Process files with detailed logging
         for (let i = 0; i < req.files.length; i++) {
             const file = req.files[i];
             try {
-                console.log(`File: Processing file: ${file.originalname} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
+                console.log(`📁 Processing file: ${file.originalname} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
                 
                 const photoData = {
                     filename: file.filename,
@@ -1142,15 +1142,15 @@ app.post('/api/sessions/:id/upload-photos', isAuthenticated, (req, res) => {
                 };
                 
                 uploadedPhotos.push(photoData);
-                console.log(`SUCCESS: File processed: ${file.originalname}`);
+                console.log(`✅ File processed: ${file.originalname}`);
                 
             } catch (fileError) {
-                console.error(` Error processing file ${file.originalname}:`, fileError);
+                console.error(`❌ Error processing file ${file.originalname}:`, fileError);
                 // Continue with other files
             }
         }
 
-        console.log(` Attempting to update session ${sessionId} with ${uploadedPhotos.length} photos`);
+        console.log(`📊 Attempting to update session ${sessionId} with ${uploadedPhotos.length} photos`);
 
         // Send immediate response to prevent connection timeout
         if (!res.headersSent) {
@@ -1164,18 +1164,18 @@ app.post('/api/sessions/:id/upload-photos', isAuthenticated, (req, res) => {
         
         // Update database asynchronously in background
         try {
-            console.log(` Background database update starting...`);
+            console.log(`📊 Background database update starting...`);
             const session = await getSessionById(sessionId);
             if (session) {
                 const existingPhotos = session.photos || [];
                 const updatedPhotos = [...existingPhotos, ...uploadedPhotos];
                 await updateSession(sessionId, { photos: updatedPhotos });
-                console.log(`SUCCESS: Background database update completed: ${uploadedPhotos.length} new photos`);
+                console.log(`✅ Background database update completed: ${uploadedPhotos.length} new photos`);
             } else {
-                console.error(` Session ${sessionId} not found for background database update`);
+                console.error(`❌ Session ${sessionId} not found for background database update`);
             }
         } catch (dbError) {
-            console.error(` Background database update error:`, dbError);
+            console.error(`❌ Background database update error:`, dbError);
             // Don't send response here as we already sent one above
         }
 
@@ -1303,8 +1303,8 @@ app.get('/preview/:userId', async (req, res) => {
         const pages = siteData.pages || [
             { id: 'home', name: 'Home', icon: '🏠' },
             { id: 'about', name: 'About', icon: '👤' },
-            { id: 'portfolio', name: 'Portfolio', icon: '' },
-            { id: 'contact', name: 'Contact', icon: '' }
+            { id: 'portfolio', name: 'Portfolio', icon: '📸' },
+            { id: 'contact', name: 'Contact', icon: '📧' }
         ];
         
         // For the currently edited page in the editor, use the stored preview HTML
@@ -2130,7 +2130,7 @@ app.get('/gallery/:id', async (req, res) => {
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title> Photo Gallery - ${session.clientName}</title>
+                <title>📸 Photo Gallery - ${session.clientName}</title>
                 <style>
                     * {
                         margin: 0;
@@ -2384,7 +2384,7 @@ app.get('/gallery/:id', async (req, res) => {
             <body>
                 <div class="gallery-container">
                     <div class="gallery-header">
-                        <h1> Photo Gallery</h1>
+                        <h1>📸 Photo Gallery</h1>
                         <p>Client: <strong>${session.clientName}</strong> | Session: ${session.sessionType} | Date: ${new Date(session.dateTime).toLocaleDateString()}</p>
                     </div>
                     
@@ -2657,7 +2657,7 @@ Professional Photography Services`;
 
     const emailHtml = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h2 style="color: #667eea;"> Your Photo Gallery is Ready!</h2>
+            <h2 style="color: #667eea;">📸 Your Photo Gallery is Ready!</h2>
             <p>Hi ${session.clientName},</p>
             <p>Your photos from your <strong>${session.sessionType}</strong> session are now ready for viewing and download.</p>
             <div style="text-align: center; margin: 30px 0;">
@@ -2698,7 +2698,7 @@ Professional Photography Services`;
         // For now, we'll log SMS details and provide direct links
         // In production, this could integrate with carrier APIs or web-to-SMS services
         if (session.phoneNumber) {
-            const smsMessage = ` ${session.clientName}, your ${session.sessionType} photos are ready! View gallery: ${galleryUrl}`;
+            const smsMessage = `📸 ${session.clientName}, your ${session.sessionType} photos are ready! View gallery: ${galleryUrl}`;
             console.log(`SMS notification prepared for ${session.phoneNumber}: ${smsMessage}`);
             
             // Create a simple SMS link for manual sending if needed
@@ -2782,14 +2782,14 @@ app.get('/api/sessions/:id/email-preview', (req, res) => {
         <body>
             <div class="email-container">
                 <div class="email-header">
-                    <h1 style="margin: 0;"> Email Preview</h1>
+                    <h1 style="margin: 0;">📧 Email Preview</h1>
                     <p style="margin: 5px 0 0 0; opacity: 0.9;">Preview of gallery notification email</p>
                 </div>
                 <div class="email-meta">
                     <strong>To:</strong> ${emailData.to}<br>
                     <strong>Subject:</strong> ${emailData.subject}<br>
                     <strong>Created:</strong> ${new Date(emailData.createdAt).toLocaleString()}<br><br>
-                    <a href="mailto:${emailData.to}?subject=${encodeURIComponent(emailData.subject)}&body=${encodeURIComponent(emailData.text)}" class="mailto-btn"> Open in Email Client</a>
+                    <a href="mailto:${emailData.to}?subject=${encodeURIComponent(emailData.subject)}&body=${encodeURIComponent(emailData.text)}" class="mailto-btn">📧 Open in Email Client</a>
                     <button class="copy-btn" onclick="copyToClipboard('${emailData.to}')">Copy Email Address</button>
                     <button class="copy-btn" onclick="copyToClipboard(\`${emailData.text.replace(/`/g, '\\`')}\`)">Copy Email Body</button>
                 </div>
@@ -3716,7 +3716,7 @@ The Legacy Photography
 Email: ${contract.photographer_email}
 Creating lasting memories through professional photography`;
 
-        console.log(` Email template prepared for: ${contract.client_email}`);
+        console.log(`📧 Email template prepared for: ${contract.client_email}`);
         
         res.json({
             message: 'Contract email template ready',
@@ -3924,11 +3924,11 @@ app.post('/api/setup-wizard', isAuthenticated, async (req, res) => {
             ]);
         }
         
-        console.log('SUCCESS: Onboarding wizard data saved successfully for user:', userId);
+        console.log('✅ Onboarding wizard data saved successfully for user:', userId);
         res.json({ success: true, message: 'Setup completed successfully' });
         
     } catch (error) {
-        console.error(' Error saving wizard data:', error);
+        console.error('❌ Error saving wizard data:', error);
         res.status(500).json({ error: 'Failed to save setup data' });
     }
 });
@@ -4015,7 +4015,7 @@ app.get('/site/:username', async (req, res) => {
                 </head>
                 <body>
                     <div class="error">
-                        <h1> Site Not Found</h1>
+                        <h1>📸 Site Not Found</h1>
                         <p>The photography website "${username}" doesn't exist or hasn't been published yet.</p>
                         <a href="/">← Back to Photography Management System</a>
                     </div>
@@ -4242,7 +4242,7 @@ function generatePublicWebsite(websiteData) {
                 <h2>Get In Touch</h2>
                 <p>Ready to capture your special moments? Let's create something beautiful together.</p>
                 <br>
-                <a href="mailto:lance@thelegacyphotography.com" class="contact-btn"> Send Email</a>
+                <a href="mailto:lance@thelegacyphotography.com" class="contact-btn">📧 Send Email</a>
                 <a href="tel:8434851315" class="contact-btn">📞 Call Now</a>
                 <a href="sms:8434851315" class="contact-btn">💬 Text Message</a>
             </div>
@@ -4287,7 +4287,7 @@ app.get('/dashboard', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// SUCCESS: PREMIUM ENDPOINT: Publish Static Site
+// ✅ PREMIUM ENDPOINT: Publish Static Site
 app.post('/api/publishStaticSite', isAuthenticated, requirePremium, async (req, res) => {
     try {
         const userId = req.user.uid;
@@ -4327,7 +4327,7 @@ app.post('/api/publishStaticSite', isAuthenticated, requirePremium, async (req, 
                 publishedBy: userId
             });
 
-        console.log(`SUCCESS: Premium static site published for user ${userId} as ${username}`);
+        console.log(`✅ Premium static site published for user ${userId} as ${username}`);
 
         res.json({ 
             success: true, 
@@ -4392,7 +4392,7 @@ function generatePremiumStaticSite(config, username) {
                 <h2>Get In Touch</h2>
                 <p>Ready to capture your special moments? Let's create something beautiful together.</p>
                 <div class="contact-buttons">
-                    <a href="mailto:lance@thelegacyphotography.com" class="contact-btn email"> Send Email</a>
+                    <a href="mailto:lance@thelegacyphotography.com" class="contact-btn email">📧 Send Email</a>
                     <a href="tel:8434851315" class="contact-btn phone">📞 Call Now</a>
                     <a href="sms:8434851315" class="contact-btn sms">💬 Text Message</a>
                 </div>
@@ -4892,7 +4892,7 @@ function generateStaticHTML(siteConfig, theme, username) {
                 
                 <div class="contact-buttons">
                     <a href="mailto:lance@thelegacyphotography.com" class="contact-btn">
-                         Email Me
+                        📧 Email Me
                     </a>
                     <a href="tel:843-485-1315" class="contact-btn">
                         📞 Call Now
@@ -4993,7 +4993,7 @@ function ensureStaticSitesDirectory() {
     const staticSitesDir = path.join(__dirname, 'static-sites');
     if (!fs.existsSync(staticSitesDir)) {
         fs.mkdirSync(staticSitesDir, { recursive: true });
-        console.log('File: Created static-sites directory');
+        console.log('📁 Created static-sites directory');
     }
 }
 
@@ -5009,12 +5009,12 @@ async function startServer() {
     paymentScheduler.start();
     
     const server = app.listen(PORT, '0.0.0.0', () => {
-        console.log(` Photo Session Scheduler running on http://0.0.0.0:${PORT}`);
+        console.log(`📸 Photo Session Scheduler running on http://0.0.0.0:${PORT}`);
         console.log('Database connected and ready');
         if (process.env.TEST_MODE === 'true') {
             console.log('🧪 TEST MODE ENABLED - Development authentication bypass active');
         } else {
-            console.log('AUTH: Authentication required for all access - no anonymous mode');
+            console.log('🔐 Authentication required for all access - no anonymous mode');
         }
     });
     
@@ -5024,7 +5024,7 @@ async function startServer() {
     server.headersTimeout = 0; // 0 = infinite
     server.requestTimeout = 0; // 0 = infinite
     server.maxHeadersCount = 0; // Remove header count limit
-    console.log('File: Server configured with INFINITE timeouts - no upload limits!');
+    console.log('📁 Server configured with INFINITE timeouts - no upload limits!');
 }
 
 startServer().catch(error => {

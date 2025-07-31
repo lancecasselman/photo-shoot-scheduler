@@ -14,7 +14,7 @@ class PaymentScheduler {
       return;
     }
 
-    console.log('🚀 Starting automated payment scheduler...');
+    console.log('Starting Starting automated payment scheduler...');
 
     // Run daily at 9:00 AM to process payments and send invoices
     cron.schedule('0 9 * * *', async () => {
@@ -29,7 +29,7 @@ class PaymentScheduler {
 
     // Run weekly on Mondays at 8:00 AM for comprehensive review
     cron.schedule('0 8 * * 1', async () => {
-      console.log('📅 Weekly payment plan review started at', new Date().toLocaleString());
+      console.log('Schedule: Weekly payment plan review started at', new Date().toLocaleString());
       try {
         await this.weeklyPaymentReview();
       } catch (error) {
@@ -43,7 +43,7 @@ class PaymentScheduler {
       try {
         const overduePayments = await this.paymentManager.getOverduePayments();
         if (overduePayments.length > 0) {
-          console.log(`⚠️ Found ${overduePayments.length} overdue payments - processing urgently`);
+          console.log(`WARNING: Found ${overduePayments.length} overdue payments - processing urgently`);
           await this.paymentManager.processAutomatedPayments();
         }
       } catch (error) {
@@ -56,7 +56,7 @@ class PaymentScheduler {
       console.log('🔧 Manual payment processing triggered');
       try {
         const results = await this.paymentManager.processAutomatedPayments();
-        console.log('✅ Manual processing completed:', results);
+        console.log('SUCCESS: Manual processing completed:', results);
         return results;
       } catch (error) {
         console.error('❌ Manual processing failed:', error);
@@ -65,8 +65,8 @@ class PaymentScheduler {
     };
 
     this.isRunning = true;
-    console.log('✅ Payment scheduler started successfully');
-    console.log('📅 Schedules active:');
+    console.log('SUCCESS: Payment scheduler started successfully');
+    console.log('Schedule: Schedules active:');
     console.log('   • Daily at 9:00 AM - Invoice processing');
     console.log('   • Weekly on Mondays at 8:00 AM - Comprehensive review');
     console.log('   • Every 4 hours (9 AM, 1 PM, 5 PM) - Overdue payment checks');
@@ -108,7 +108,7 @@ class PaymentScheduler {
               .set({ status: 'completed' })
               .where(eq(paymentPlans.id, plan.id));
             plansUpdated++;
-            console.log(`✅ Plan ${plan.id} marked as completed`);
+            console.log(`SUCCESS: Plan ${plan.id} marked as completed`);
             continue;
           }
 

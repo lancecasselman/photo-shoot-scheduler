@@ -292,13 +292,13 @@ function createSessionCard(session) {
 
     const calendarBtn = document.createElement('button');
     calendarBtn.className = 'btn btn-success';
-    calendarBtn.textContent = '📅 Add to Calendar';
+    calendarBtn.textContent = 'Schedule: Add to Calendar';
     calendarBtn.onclick = () => exportToCalendar(session.id);
 
     // Direct email client button
     const emailClientBtn = document.createElement('button');
     emailClientBtn.className = 'btn btn-primary';
-    emailClientBtn.textContent = '📧 Email Client';
+    emailClientBtn.textContent = ' Email Client';
     emailClientBtn.onclick = () => openEmailClient(session);
     emailClientBtn.style.backgroundColor = '#007bff';
     emailClientBtn.style.marginBottom = '5px';
@@ -311,7 +311,7 @@ function createSessionCard(session) {
     // Email preview button (shows after gallery notification is generated)
     const emailPreviewBtn = document.createElement('button');
     emailPreviewBtn.className = 'btn btn-outline-primary';
-    emailPreviewBtn.textContent = '📧 Email Preview';
+    emailPreviewBtn.textContent = ' Email Preview';
     emailPreviewBtn.style.fontSize = '0.85em';
     emailPreviewBtn.onclick = () => {
         const previewUrl = `/api/sessions/${session.id}/email-preview`;
@@ -742,7 +742,7 @@ function openEmailClient(session) {
 I hope this email finds you well! I wanted to reach out regarding your upcoming ${session.sessionType} photography session.
 
 Session Details:
-📅 Date & Time: ${new Date(session.dateTime).toLocaleDateString()} at ${new Date(session.dateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+Schedule: Date & Time: ${new Date(session.dateTime).toLocaleDateString()} at ${new Date(session.dateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
 📍 Location: ${session.location}
 💰 Investment: $${session.price}
 ⏱️ Duration: ${session.duration} minutes
@@ -757,7 +757,7 @@ Best regards,
 Lance - The Legacy Photography
 Professional Photography Services
 📞 Call/Text: ${session.phoneNumber}
-📧 Email: lance@thelegacyphotography.com`;
+ Email: lance@thelegacyphotography.com`;
 
     const mailtoUrl = `mailto:${session.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     
@@ -770,7 +770,7 @@ Professional Photography Services
     emailLink.click();
     document.body.removeChild(emailLink);
     
-    showMessage(`📧 Opening email client for ${session.clientName}`, 'success');
+    showMessage(` Opening email client for ${session.clientName}`, 'success');
 }
 
 // Copy gallery URL to clipboard
@@ -800,7 +800,7 @@ async function copyGalleryUrl(sessionId) {
             // Update the button text to show it's been generated
             const button = document.querySelector(`[data-session-id="${sessionId}"] .btn-warning`);
             if (button) {
-                button.textContent = '✅ Gallery URL Copied';
+                button.textContent = 'SUCCESS: Gallery URL Copied';
                 button.disabled = true;
                 button.style.backgroundColor = '#28a745';
             }
@@ -837,7 +837,7 @@ async function sendGalleryNotification(sessionId) {
         
         if (result.mailtoUrl) {
             // Open email client with pre-filled content
-            showMessage('📧 Opening your email client with gallery notification...', 'info');
+            showMessage(' Opening your email client with gallery notification...', 'info');
             
             // Open mailto link
             const emailLink = document.createElement('a');
@@ -850,17 +850,17 @@ async function sendGalleryNotification(sessionId) {
             
             // Show success message with preview option
             setTimeout(() => {
-                showMessage('📧 Email client opened! Or preview the email first:', 'success');
+                showMessage(' Email client opened! Or preview the email first:', 'success');
                 
                 // Add email preview button
                 setTimeout(() => {
-                    if (confirm('📧 Want to see the email preview before sending? Click OK to open email preview.')) {
+                    if (confirm(' Want to see the email preview before sending? Click OK to open email preview.')) {
                         window.open(result.emailPreviewUrl, '_blank');
                     }
                 }, 2000);
             }, 1000);
         } else {
-            showMessage('⚠️ Email notification prepared. Check console for details.', 'warning');
+            showMessage('WARNING: Email notification prepared. Check console for details.', 'warning');
         }
         
         // Always show SMS option

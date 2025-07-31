@@ -3828,7 +3828,7 @@
                         Show Archived Sessions
                     </label>
                     <button onclick="clearAllFilters()" class="btn-secondary">Clear Filters</button>
-                    <button onclick="exportAllSessions()" class="btn-primary">📄 Export All Sessions</button>
+                    <button onclick="exportAllSessions()" class="btn-primary"> Export All Sessions</button>
                 </div>
             </div>
         </div>
@@ -4251,7 +4251,7 @@
                             <h3 class="client-name">${session.clientName}</h3>
                             <div class="session-meta">
                                 <span class="session-date">Calendar ${formatDateTime(session.dateTime)}</span>
-                                <span class="session-location">📍 ${session.location}</span>
+                                <span class="session-location"> ${session.location}</span>
                                 <span class="session-price">Money $${session.price}</span>
                             </div>
                         </div>
@@ -4312,7 +4312,7 @@
                                 <div class="status-item">
                                     <input type="checkbox" id="edited_${session.id}" ${session.edited ? 'checked' : ''} 
                                            onchange="toggleWorkflowStatus('${session.id}', 'edited', this.checked); event.stopPropagation();">
-                                    <label for="edited_${session.id}">✏️ Edited</label>
+                                    <label for="edited_${session.id}"> Edited</label>
                                 </div>
                                 <div class="status-item">
                                     <input type="checkbox" id="delivered_${session.id}" ${session.delivered ? 'checked' : ''} 
@@ -4322,7 +4322,7 @@
                                 <div class="status-item">
                                     <input type="checkbox" id="sendReminder_${session.id}" ${session.sendReminder ? 'checked' : ''} 
                                            onchange="toggleWorkflowStatus('${session.id}', 'sendReminder', this.checked); event.stopPropagation();">
-                                    <label for="sendReminder_${session.id}">⏰ Send Reminder</label>
+                                    <label for="sendReminder_${session.id}"> Send Reminder</label>
                                 </div>
                                 <div class="status-item">
                                     <input type="checkbox" id="notifyGalleryReady_${session.id}" ${session.notifyGalleryReady ? 'checked' : ''} 
@@ -4334,10 +4334,10 @@
 
                         <div class="session-actions">
                             <div class="action-buttons">
-                                <button onclick="editSession('${session.id}'); event.stopPropagation();" class="action-btn edit-btn">✏️ Edit</button>
+                                <button onclick="editSession('${session.id}'); event.stopPropagation();" class="action-btn edit-btn"> Edit</button>
                                 <button onclick="openUploadModal('${session.id}'); event.stopPropagation();" class="action-btn upload-btn">Photo Upload${session.photos && session.photos.length ? ` (${session.photos.length})` : ''}</button>
                                 <button onclick="viewSessionGallery('${session.id}'); event.stopPropagation();" class="action-btn gallery-btn">Image Gallery</button>
-                                <button onclick="copyGalleryUrl('${session.id}'); event.stopPropagation();" class="action-btn copy-btn">🔗 Copy URL</button>
+                                <button onclick="copyGalleryUrl('${session.id}'); event.stopPropagation();" class="action-btn copy-btn"> Copy URL</button>
                                 <button onclick="addToCalendar('${session.id}'); event.stopPropagation();" class="action-btn calendar-btn">Calendar Calendar</button>
                                 <button onclick="openEmailClient('${session.id}'); event.stopPropagation();" class="action-btn email-btn">Email Email</button>
                                 <button onclick="openContractModal('${session.id}'); event.stopPropagation();" class="action-btn contract-btn">Document Contract</button>
@@ -4348,9 +4348,9 @@
                                     <button onclick="sendDepositInvoice('${session.id}'); event.stopPropagation();" class="action-btn deposit-btn">Money Deposit</button>
                                     <button onclick="openPaymentPlanModal('${session.id}'); event.stopPropagation();" class="action-btn plan-btn">Chart Payment Plan</button>
                                 `}
-                                <button onclick="exportSessionPDF('${session.id}'); event.stopPropagation();" class="export-btn">📄 Export PDF</button>
-                                <button onclick="toggleArchiveSession('${session.id}'); event.stopPropagation();" class="archive-btn">${session.archived ? '📂 Unarchive' : '📁 Archive'}</button>
-                                <button onclick="deleteSession('${session.id}'); event.stopPropagation();" class="action-btn delete-btn">🗑️ Delete</button>
+                                <button onclick="exportSessionPDF('${session.id}'); event.stopPropagation();" class="export-btn"> Export PDF</button>
+                                <button onclick="toggleArchiveSession('${session.id}'); event.stopPropagation();" class="archive-btn">${session.archived ? ' Unarchive' : ' Archive'}</button>
+                                <button onclick="deleteSession('${session.id}'); event.stopPropagation();" class="action-btn delete-btn"> Delete</button>
                             </div>
                         </div>
 
@@ -4699,9 +4699,9 @@
                             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
                                 <p>Document Contract Signed: ${session.contractSigned ? 'Success Yes' : 'Error No'}</p>
                                 <p>Money Paid: ${session.paid ? 'Success Yes' : 'Error No'}</p>
-                                <p>✏️ Edited: ${session.edited ? 'Success Yes' : 'Error No'}</p>
+                                <p> Edited: ${session.edited ? 'Success Yes' : 'Error No'}</p>
                                 <p>Package Delivered: ${session.delivered ? 'Success Yes' : 'Error No'}</p>
-                                <p>⏰ Send Reminder: ${session.sendReminder ? 'Success Yes' : 'Error No'}</p>
+                                <p> Send Reminder: ${session.sendReminder ? 'Success Yes' : 'Error No'}</p>
                                 <p>Image Gallery Ready: ${session.notifyGalleryReady ? 'Success Yes' : 'Error No'}</p>
                             </div>
                         </div>
@@ -4751,7 +4751,7 @@
                     <body>
                         <div class="no-print" style="text-align: center; padding: 20px;">
                             <button onclick="window.print()" style="background: #d4af37; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 16px;">
-                                📄 Print/Save as PDF
+                                 Print/Save as PDF
                             </button>
                         </div>
                         ${pdfContent}
@@ -5068,7 +5068,7 @@
                 try {
                     const formData = new FormData();
                     files.forEach((file, index) => {
-                        console.log(`📁 Adding file ${index + 1}: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
+                        console.log(` Adding file ${index + 1}: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
                         formData.append('photos', file);
                     });
 
@@ -6540,7 +6540,7 @@ END:VCALENDAR`;
                                 </div>
                                 <div class="contract-item-actions">
                                     <button class="btn btn-secondary btn-sm" onclick="editContract('${contract.id}')">
-                                        ✏️ Edit
+                                         Edit
                                     </button>
                                     ${contract.status === 'pending' ? `
                                         <button class="btn btn-primary btn-sm" onclick="sendContract('${contract.id}')">
@@ -8351,7 +8351,7 @@ ${name}`;
                 const locationEl = document.getElementById('sunriseLocation');
                 const dateEl = document.getElementById('sunriseSelectedDate');
                 
-                if (locationEl) locationEl.textContent = `📍 ${location}`;
+                if (locationEl) locationEl.textContent = ` ${location}`;
                 if (dateEl) dateEl.textContent = `Calendar ${new Date(date).toLocaleDateString()}`;
                 
                 // Update time values based on actual API response structure
@@ -8772,7 +8772,7 @@ ${name}`;
                     </div>
                     
                     <div class="form-group">
-                        <label for="locationInput">📍 Location</label>
+                        <label for="locationInput"> Location</label>
                         <div class="location-search-container" style="position: relative; width: 300px;">
                             <input type="text" id="locationInput" name="locationInput" placeholder="Start typing city name..." 
                                    autocomplete="off"
@@ -8799,7 +8799,7 @@ ${name}`;
 
                 <div id="sunriseResults" class="sunrise-results" style="display: none;">
                     <div class="sunrise-card">
-                        <h3 id="sunriseLocation">📍 Location</h3>
+                        <h3 id="sunriseLocation"> Location</h3>
                         <p id="sunriseSelectedDate">Calendar Date</p>
                         
                         <div class="sunrise-times-grid">
@@ -9094,7 +9094,7 @@ ${name}`;
         <div class="contract-modal-overlay" onclick="closeContractEditModal()" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6);"></div>
         <div class="contract-modal-content" style="position: relative; background: white; border-radius: 15px; max-width: 800px; width: 95%; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3); z-index: 10001; color: #000000;">
             <div class="contract-modal-header" style="color: #000000; padding: 20px; border-bottom: 1px solid #eee;">
-                <h3 style="color: #000000; margin: 0;">✏️ Edit Contract</h3>
+                <h3 style="color: #000000; margin: 0;"> Edit Contract</h3>
                 <button class="contract-close-btn" onclick="closeContractEditModal()" style="position: absolute; top: 15px; right: 20px; background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">&times;</button>
             </div>
             <div class="contract-modal-body" style="color: #000000; padding: 20px;">
@@ -9171,7 +9171,7 @@ ${name}`;
                         </select>
                     </div>
                     <div class="form-actions">
-                        <button onclick="generateHashtags()" class="btn btn-secondary">🔗 Generate Hashtags</button>
+                        <button onclick="generateHashtags()" class="btn btn-secondary"> Generate Hashtags</button>
                         <button onclick="generateCaptionVariations()" class="btn btn-secondary">🎭 Generate Variations</button>
                         <button onclick="saveSocialPost()" class="btn btn-primary">💾 Save Post</button>
                     </div>
@@ -9411,7 +9411,7 @@ ${name}`;
                                 <option value="tips">Photography Tips</option>
                                 <option value="behind-scenes">Behind the Scenes</option>
                             </select>
-                            <button onclick="addContentIdea()" class="btn btn-primary">➕ Add Idea</button>
+                            <button onclick="addContentIdea()" class="btn btn-primary"> Add Idea</button>
                         </div>
                     </div>
                     <div class="vault-filters">
@@ -10859,7 +10859,7 @@ I'm so grateful to work with clients like ${clientName} who trust me to capture 
                 <div class="subscription-backdrop" onclick="closeSubscriptionModal()"></div>
                 <div class="subscription-content">
                     <button class="close-btn" onclick="closeSubscriptionModal()">×</button>
-                    <h2>📸 Subscription Required</h2>
+                    <h2> Subscription Required</h2>
                     <p style="margin: 1rem 0; color: #666;">${message}</p>
                     
                     <h3 style="margin: 2rem 0 1rem 0; color: #d4af37;">Choose Your Plan</h3>

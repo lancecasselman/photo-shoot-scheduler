@@ -66,7 +66,7 @@ class PaymentPlanManager {
         })
         .where(eq(photographySessions.id, sessionId));
 
-      console.log(`✅ Payment plan created: ${monthsDiff} payments of $${monthlyPayment}`);
+      console.log(`SUCCESS: Payment plan created: ${monthsDiff} payments of $${monthlyPayment}`);
       return { plan, payments: paymentRecordsList };
 
     } catch (error) {
@@ -157,7 +157,7 @@ class PaymentPlanManager {
           })
           .where(eq(photographySessions.id, payment.sessionId));
 
-        console.log(`✅ Payment ${payment.paymentNumber} marked as paid. ${isCompleted ? 'Plan completed!' : `${plan.totalPayments - newPaymentsCompleted} payments remaining`}`);
+        console.log(`SUCCESS: Payment ${payment.paymentNumber} marked as paid. ${isCompleted ? 'Plan completed!' : `${plan.totalPayments - newPaymentsCompleted} payments remaining`}`);
       }
 
       return payment;
@@ -261,7 +261,7 @@ class PaymentPlanManager {
             status: sentInvoice.status
           };
 
-          console.log(`✅ Stripe invoice sent for payment ${payment.paymentNumber}: ${sentInvoice.hosted_invoice_url}`);
+          console.log(`SUCCESS: Stripe invoice sent for payment ${payment.paymentNumber}: ${sentInvoice.hosted_invoice_url}`);
         } catch (stripeError) {
           console.error('Stripe invoice error:', stripeError.message);
           // Continue with email fallback
@@ -278,7 +278,7 @@ class PaymentPlanManager {
         })
         .where(eq(paymentRecords.id, paymentId));
 
-      console.log(`✅ Invoice sent for payment ${payment.paymentNumber}`);
+      console.log(`SUCCESS: Invoice sent for payment ${payment.paymentNumber}`);
       return payment;
 
     } catch (error) {
@@ -348,7 +348,7 @@ class PaymentPlanManager {
       for (const payment of paymentsDueToday) {
         try {
           await this.sendPaymentInvoice(payment.id);
-          console.log(`✅ Sent invoice for payment ${payment.paymentNumber}`);
+          console.log(`SUCCESS: Sent invoice for payment ${payment.paymentNumber}`);
         } catch (error) {
           console.error(`❌ Failed to send invoice for payment ${payment.id}:`, error.message);
         }
@@ -368,7 +368,7 @@ class PaymentPlanManager {
             })
             .where(eq(paymentRecords.id, payment.id));
 
-          console.log(`✅ Reminder sent for payment ${payment.paymentNumber} due ${payment.dueDate.toLocaleDateString()}`);
+          console.log(`SUCCESS: Reminder sent for payment ${payment.paymentNumber} due ${payment.dueDate.toLocaleDateString()}`);
         } catch (error) {
           console.error(`❌ Failed to send reminder for payment ${payment.id}:`, error.message);
         }
@@ -377,7 +377,7 @@ class PaymentPlanManager {
       // Update overdue payments
       const overduePayments = await this.getOverduePayments();
       if (overduePayments.length > 0) {
-        console.log(`⚠️ Found ${overduePayments.length} overdue payments`);
+        console.log(`WARNING: Found ${overduePayments.length} overdue payments`);
         
         for (const payment of overduePayments) {
           await db.update(paymentRecords)
@@ -386,7 +386,7 @@ class PaymentPlanManager {
         }
       }
 
-      console.log('✅ Automated payment processing completed');
+      console.log('SUCCESS: Automated payment processing completed');
       return {
         invoicesSent: paymentsDueToday.length,
         remindersSent: upcomingPayments.length,
