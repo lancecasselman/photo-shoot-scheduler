@@ -1416,10 +1416,11 @@
             
             .editor-container {
                 flex-direction: column;
-                height: 100vh;
-                padding-top: var(--header-height);
+                height: calc(100vh - var(--header-height));
+                padding-top: 0;
                 gap: 0;
                 overflow: hidden;
+                position: relative;
             }
             
             /* Mobile Toolbar */
@@ -1429,8 +1430,9 @@
                 border-bottom: 1px solid var(--beige);
                 padding: var(--spacing-sm);
                 box-shadow: 0 2px 8px rgba(44, 44, 44, 0.1);
-                z-index: 50;
+                z-index: 100;
                 order: 1;
+                position: relative;
             }
             
             .mobile-tools-btn {
@@ -1469,7 +1471,7 @@
                 background: var(--warm-white);
                 transform: translateY(100%);
                 transition: transform 0.4s ease;
-                z-index: 40;
+                z-index: 1000;
                 overflow-y: auto;
                 padding: var(--spacing-lg);
                 border-top: 2px solid var(--muted-gold);
@@ -1569,11 +1571,38 @@
             /* Enhanced Preview Container */
             .preview-container {
                 order: 2;
-                flex: 1;
+                height: calc(100vh - var(--header-height) - 60px);
                 background: var(--deep-charcoal);
                 border-radius: 0;
                 position: relative;
                 overflow: hidden;
+                z-index: 1;
+                display: flex;
+                flex-direction: column;
+            }
+            
+            .preview-header {
+                background: var(--warm-white);
+                border-bottom: 1px solid var(--beige);
+                padding: var(--spacing-md);
+                flex-shrink: 0;
+            }
+            
+            .single-preview-layout {
+                flex: 1;
+                overflow: hidden;
+            }
+            
+            .preview-panel {
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+            }
+            
+            #preview-frame {
+                flex: 1;
+                overflow-y: auto;
+                background: var(--warm-white);
             }
             
             /* Hide desktop sidebar completely on mobile */
