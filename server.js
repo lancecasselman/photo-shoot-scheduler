@@ -3950,66 +3950,31 @@ app.get('/api/onboarding-status', isAuthenticated, async (req, res) => {
     }
 });
 
-// NEW SETUP ROUTE - BYPASSING ALL ONBOARDING BULLSHIT
+// SKIP ALL SETUP BULLSHIT - STRAIGHT TO APP
 app.get('/setup', (req, res) => {
     res.send(`
         <!DOCTYPE html>
         <html>
-        <head><title>Business Setup</title>
+        <head><title>Skip Setup</title>
         <style>
-            body { font-family: Arial; max-width: 500px; margin: 50px auto; padding: 20px; background: #f5f5f5; }
-            .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-            input, select { width: 100%; padding: 12px; margin: 8px 0; border: 2px solid #ddd; border-radius: 4px; font-size: 16px; }
-            button { background: #28a745; color: white; padding: 15px; border: none; border-radius: 4px; width: 100%; cursor: pointer; font-size: 18px; font-weight: bold; }
-            button:hover { background: #218838; }
-            label { font-weight: bold; display: block; margin-top: 15px; }
-            h2 { color: #333; text-align: center; margin-bottom: 30px; }
+            body { font-family: Arial; text-align: center; margin: 100px auto; max-width: 400px; }
+            .skip { background: #dc3545; color: white; padding: 20px 40px; border: none; border-radius: 8px; font-size: 20px; font-weight: bold; text-decoration: none; display: inline-block; }
+            .skip:hover { background: #c82333; }
+            h2 { margin-bottom: 30px; }
         </style>
         </head>
         <body>
-            <div class="container">
-                <h2>🎯 SETUP YOUR BUSINESS</h2>
-                <form action="/api/setup-complete" method="POST">
-                    <label>Business Name:</label>
-                    <input type="text" name="businessName" value="The Legacy Photography" required>
-                    
-                    <label>Your Name:</label>
-                    <input type="text" name="ownerName" value="Lance Casselman" required>
-                    
-                    <label>Email:</label>
-                    <input type="email" name="email" value="lancecasselman@icloud.com" required>
-                    
-                    <label>Phone:</label>
-                    <input type="tel" name="phone" value="843-485-1315" required>
-                    
-                    <label>Location (City, State):</label>
-                    <input type="text" name="location" value="Charleston, SC" required>
-                    
-                    <label>Main Specialty:</label>
-                    <select name="specialties">
-                        <option value="wedding">Wedding Photography</option>
-                        <option value="portrait">Portrait Photography</option>
-                        <option value="family">Family Photography</option>
-                    </select>
-                    
-                    <label>Experience Level:</label>
-                    <select name="experience">
-                        <option value="professional">Professional (10+ years)</option>
-                        <option value="experienced">Experienced (5-10 years)</option>
-                        <option value="intermediate">Intermediate (3-5 years)</option>
-                    </select>
-                    
-                    <button type="submit">✅ COMPLETE SETUP</button>
-                </form>
-            </div>
+            <h2>Setup Not Required</h2>
+            <p>Your authentication is working and you have access to all sessions.</p>
+            <a href="/" class="skip">SKIP SETUP - GO TO APP</a>
         </body>
         </html>
     `);
 });
 
-// LEGACY ONBOARDING ROUTE (DISABLED)
+// NUKE ALL ONBOARDING ROUTES
 app.get('/onboarding', (req, res) => {
-    res.redirect('/setup');
+    res.redirect('/');
 });
 
 // JavaScript test page
