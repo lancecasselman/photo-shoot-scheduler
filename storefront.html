@@ -2981,6 +2981,7 @@
                 window.visualEditor.switchPage(page);
                 markToolActive('page-' + page);
             }
+        }
 
         // Update existing CapCut toolbar with proper onclick handlers
         function updateCapCutToolbar() {
@@ -3043,6 +3044,30 @@
             if (window.editor && theme) {
                 window.editor.changeTheme(theme);
                 closeMobilePanel();
+            }
+        }
+
+        function openMobileThemeSelector() {
+            if (window.editor) {
+                // Open theme dropdown in mobile interface
+                const themeDropdown = document.querySelector('#theme-selector, .theme-dropdown');
+                if (themeDropdown) {
+                    themeDropdown.focus();
+                    themeDropdown.click();
+                }
+                markToolActive('themes');
+            }
+        }
+
+        function openMobileTemplateSelector() {
+            if (window.editor) {
+                // Open template dropdown in mobile interface
+                const templateDropdown = document.querySelector('#prebuilt-template-selector, .template-dropdown');
+                if (templateDropdown) {
+                    templateDropdown.focus();
+                    templateDropdown.click();
+                }
+                markToolActive('templates');
             }
         }
         
