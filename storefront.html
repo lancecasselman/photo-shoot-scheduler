@@ -1842,12 +1842,15 @@
         
         /* Desktop-only elements */
         @media (min-width: 769px) {
-            .mobile-capcut-toolbar {
+            /* HIDE ALL MOBILE ELEMENTS ON DESKTOP */
+            .mobile-capcut-toolbar,
+            .mobile-context-panel,
+            .mobile-nav-overlay,
+            .mobile-toolbar,
+            .mobile-tools-panel,
+            .hamburger-menu {
                 display: none !important;
-            }
-            
-            .mobile-context-panel {
-                display: none !important;
+                visibility: hidden !important;
             }
             
             /* NUCLEAR DESKTOP GRID OVERRIDE - KILL ALL MOBILE INTERFERENCE */
@@ -1866,6 +1869,7 @@
                 order: unset !important;
                 flex: unset !important;
                 width: 200px !important;
+                max-width: 200px !important;
             }
             
             .preview-container,
@@ -1875,6 +1879,7 @@
                 height: auto !important;
                 flex: unset !important;
                 width: 100% !important;
+                max-width: 100% !important;
                 padding-bottom: 0 !important;
             }
             
