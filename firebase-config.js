@@ -1,7 +1,7 @@
-// Firebase Configuration
+// Firebase Configuration - Updated with new credentials
 const firebaseConfig = {
     apiKey: "AIzaSyDbtboh1bW6xu9Tz9FILkx_0lzGwXQHjyM",
-    authDomain: "photoshcheduleapp.firebaseapp.com",
+    authDomain: "photoshcheduleapp.firebaseapp.com", 
     projectId: "photoshcheduleapp",
     storageBucket: "photoshcheduleapp.appspot.com",
     messagingSenderId: "1080892259604",

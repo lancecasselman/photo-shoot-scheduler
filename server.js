@@ -1,5 +1,5 @@
 // 🔄 TOGGLEABLE AUTH GUARD SYSTEM
-const DEV_MODE = true; // 👉 Temporarily enabled for onboarding testing
+const DEV_MODE = false; // 👉 Authentication enabled for proper Google login testing
 
 // SUCCESS: PREMIUM MODE IMPLEMENTATION
 const PREMIUM_FEATURES = {
