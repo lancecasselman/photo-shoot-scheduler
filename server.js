@@ -3955,6 +3955,11 @@ app.get('/onboarding', (req, res) => {
     res.sendFile(path.join(__dirname, 'test-onboarding.html'));
 });
 
+// JavaScript test page
+app.get('/js-test', (req, res) => {
+    res.sendFile(path.join(__dirname, 'simple-test.html'));
+});
+
 // Serve original onboarding for reference
 app.get('/onboarding-old', (req, res) => {
     if (!DEV_MODE) {
