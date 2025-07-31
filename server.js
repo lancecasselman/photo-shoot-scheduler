@@ -996,8 +996,67 @@ app.get('/preview/:userId', async (req, res) => {
         
         // Check if we have stored HTML from the editor
         if (siteData.previewHTML) {
-            // Use the generated HTML from the editor
-            res.send(siteData.previewHTML);
+            // Create full preview page with the stored HTML
+            const fullPreviewHTML = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website Preview</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Quicksand:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --warm-white: #FEFDFB;
+            --beige: #F5F1EB;
+            --sage: #9CAF88;
+            --muted-gold: #C4962D;
+            --soft-brown: #8B7355;
+            --deep-charcoal: #2C2C2C;
+            --font-serif: 'Cormorant Garamond', serif;
+            --font-sans: 'Quicksand', sans-serif;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: var(--font-sans);
+            line-height: 1.6;
+            color: var(--deep-charcoal);
+            background: var(--warm-white);
+        }
+        
+        .preview-header {
+            background: var(--muted-gold);
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+            font-size: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .preview-content {
+            min-height: calc(100vh - 60px);
+        }
+    </style>
+</head>
+<body>
+    <div class="preview-header">
+        📱 Website Preview - This is how your site will look to visitors
+    </div>
+    <div class="preview-content">
+        ${siteData.previewHTML}
+    </div>
+</body>
+</html>`;
+            res.send(fullPreviewHTML);
             return;
         }
         

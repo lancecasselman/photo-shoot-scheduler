@@ -1123,32 +1123,32 @@ class AdvancedVisualEditor {
         };
 
         try {
+            // Always save to server database for preview functionality
+            const response = await fetch('/api/storefront/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`
+                },
+                body: JSON.stringify({ siteData: data })
+            });
+            
+            if (response.ok) {
+                console.log('💾 Saved to server database');
+            } else {
+                console.error('Server save failed');
+            }
+            
+            // Also save to Firebase if available
             if (this.firebaseInitialized) {
-                // Save to Firebase if available
                 const db = firebase.firestore();
                 await db.collection('storefronts').doc(this.userId).set(data, { merge: true });
                 console.log('💾 Saved to Firebase');
-            } else {
-                // Save to server database
-                const response = await fetch('/api/storefront/save', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`
-                    },
-                    body: JSON.stringify({ siteData: data })
-                });
-                
-                if (response.ok) {
-                    console.log('💾 Saved to server database');
-                } else {
-                    throw new Error('Server save failed');
-                }
-                
-                // Also save to localStorage as backup
-                localStorage.setItem(`storefront_${this.userId}`, JSON.stringify(data));
-                console.log('💾 Saved to localStorage backup');
             }
+            
+            // Save to localStorage as backup
+            localStorage.setItem(`storefront_${this.userId}`, JSON.stringify(data));
+            console.log('💾 Saved to localStorage backup');
         } catch (error) {
             console.error('❌ Save failed:', error);
             this.showNotification('Failed to save changes', 'error');
