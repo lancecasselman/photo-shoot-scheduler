@@ -354,6 +354,30 @@
             box-shadow: 0 0 0 3px rgba(196, 150, 45, 0.2);
         }
 
+        .template-dropdown, .luxury-dropdown {
+            width: 100%;
+            padding: var(--spacing-md);
+            border: 2px solid var(--beige);
+            border-radius: 8px;
+            background: var(--warm-white);
+            color: var(--deep-charcoal);
+            font-family: var(--font-sans);
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .template-dropdown:hover, .luxury-dropdown:hover {
+            border-color: var(--muted-gold);
+            box-shadow: 0 0 0 3px rgba(196, 150, 45, 0.1);
+        }
+
+        .template-dropdown:focus, .luxury-dropdown:focus {
+            outline: none;
+            border-color: var(--muted-gold);
+            box-shadow: 0 0 0 3px rgba(196, 150, 45, 0.2);
+        }
+
         /* Luxury Components Styling */
         .luxury-component-grid {
             display: grid;
@@ -1542,9 +1566,20 @@
                 </select>
             </div>
             
-            <!-- Luxury Design Components -->
-            <div id="luxury-components">
-                <!-- Populated by JavaScript with luxury components -->
+            <h3>🏗️ Prebuilt Websites</h3>
+            <div class="dropdown-container">
+                <select class="template-dropdown" id="template-dropdown">
+                    <option value="">Choose a website template...</option>
+                    <!-- Populated by JavaScript -->
+                </select>
+            </div>
+            
+            <h3>💎 Luxury Elements</h3>
+            <div class="dropdown-container">
+                <select class="luxury-dropdown" id="luxury-dropdown">
+                    <option value="">Add luxury component...</option>
+                    <!-- Populated by JavaScript -->
+                </select>
             </div>
             
             <!-- Typography Controls -->

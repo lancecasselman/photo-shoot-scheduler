@@ -151,6 +151,7 @@ class AdvancedVisualEditor {
     setupUI() {
         this.setupPageSwitcher();
         this.setupThemeSelector();
+        this.setupPrebuiltTemplates();
         this.setupLuxuryComponents();
         this.setupBlockPanel();
         this.setupBackgroundControls();
@@ -235,11 +236,54 @@ class AdvancedVisualEditor {
         console.log(`✅ Loaded ${Object.keys(this.themes).length} themes in dropdown`);
     }
 
+    setupPrebuiltTemplates() {
+        // Setup prebuilt templates dropdown
+        const templateDropdown = document.getElementById('template-dropdown');
+        if (!templateDropdown) {
+            console.log('⚠️ Template dropdown not found');
+            return;
+        }
+
+        // Initialize prebuilt templates if not already done
+        if (!this.prebuiltTemplates) {
+            console.log('📦 Initializing prebuilt templates...');
+            this.initializePrebuiltTemplates();
+        }
+
+        console.log(`🏗️ Populating template dropdown with ${Object.keys(this.prebuiltTemplates).length} templates`);
+
+        // Clear existing options (except first one)
+        templateDropdown.innerHTML = '<option value="">Choose a website template...</option>';
+        
+        // Add prebuilt templates to dropdown
+        Object.entries(this.prebuiltTemplates).forEach(([key, template]) => {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = `${template.name} - ${template.category}`;
+            templateDropdown.appendChild(option);
+        });
+
+        // Add event listener for template selection
+        templateDropdown.addEventListener('change', (e) => {
+            if (e.target.value) {
+                const templateKey = e.target.value;
+                const template = this.prebuiltTemplates[templateKey];
+                console.log(`🏗️ Loading prebuilt template: ${template.name}`);
+                this.loadPrebuiltTemplate(templateKey);
+                
+                // Reset dropdown
+                e.target.value = '';
+            }
+        });
+        
+        console.log(`✅ Successfully populated template dropdown with ${Object.keys(this.prebuiltTemplates).length} templates`);
+    }
+
     setupLuxuryComponents() {
-        console.log('🔍 Setting up luxury components...');
-        const luxuryContainer = document.getElementById('luxury-components');
-        if (!luxuryContainer) {
-            console.error('❌ Luxury components container not found - #luxury-components element missing!');
+        // Setup luxury components dropdown
+        const luxuryDropdown = document.getElementById('luxury-dropdown');
+        if (!luxuryDropdown) {
+            console.log('⚠️ Luxury dropdown not found');
             return;
         }
 
@@ -249,48 +293,152 @@ class AdvancedVisualEditor {
             this.initializeLuxuryComponents();
         }
 
-        console.log(`🎨 Found ${Object.keys(this.luxuryComponents).length} luxury components to display`);
+        console.log(`🎨 Populating luxury dropdown with ${Object.keys(this.luxuryComponents).length} components`);
 
-        // Create luxury components title
-        const title = document.createElement('h3');
-        title.textContent = '💎 Luxury Design Components';
-        title.style.color = '#C4962D';
-        title.style.marginBottom = '16px';
-        luxuryContainer.innerHTML = '';
-        luxuryContainer.appendChild(title);
-
-        // Create component grid
-        const componentGrid = document.createElement('div');
-        componentGrid.className = 'luxury-component-grid';
+        // Clear existing options (except first one)
+        luxuryDropdown.innerHTML = '<option value="">Add luxury component...</option>';
         
+        // Add luxury components to dropdown
         Object.entries(this.luxuryComponents).forEach(([key, component]) => {
-            const card = document.createElement('div');
-            card.className = 'luxury-component-card';
-            card.dataset.component = key;
-            
-            card.innerHTML = `
-                <div class="component-icon">${component.icon}</div>
-                <div class="component-name">${component.name}</div>
-                <div class="component-description">${component.description}</div>
-                <div class="component-category">${component.category}</div>
-            `;
-            
-            card.addEventListener('click', () => {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = `${component.icon} ${component.name}`;
+            luxuryDropdown.appendChild(option);
+        });
+
+        // Add event listener for dropdown selection
+        luxuryDropdown.addEventListener('change', (e) => {
+            if (e.target.value) {
+                const componentKey = e.target.value;
+                const component = this.luxuryComponents[componentKey];
                 console.log(`🚀 Adding luxury component: ${component.name}`);
-                this.addLuxuryComponent(key);
-            });
-            
-            componentGrid.appendChild(card);
+                this.addLuxuryComponent(componentKey);
+                
+                // Reset dropdown
+                e.target.value = '';
+            }
         });
         
-        luxuryContainer.appendChild(componentGrid);
-        
-        console.log(`✅ Successfully displayed ${Object.keys(this.luxuryComponents).length} luxury components in sidebar`);
+        console.log(`✅ Successfully populated luxury dropdown with ${Object.keys(this.luxuryComponents).length} components`);
     }
 
     initializePrebuiltTemplates() {
-        // Remove all prebuilt templates - user wants ground-up luxury building capability
-        this.prebuiltTemplates = {};
+        // Define prebuilt website templates
+        this.prebuiltTemplates = {
+            'luxury-portrait': {
+                name: 'Luxury Portrait Studio',
+                description: 'High-end portrait photography website with elegant design',
+                category: 'portrait',
+                pages: {
+                    home: {
+                        title: 'Luxury Portrait Studio',
+                        sections: [
+                            {
+                                type: 'hero',
+                                content: {
+                                    title: 'Capturing Your Most Beautiful Self',
+                                    subtitle: 'Professional Portrait Photography',
+                                    buttonText: 'Book Your Session',
+                                    backgroundImage: 'https://images.unsplash.com/photo-1554844013-894a9d3f2e13?w=1200'
+                                }
+                            },
+                            {
+                                type: 'about',
+                                content: {
+                                    title: 'Award-Winning Photography',
+                                    text: 'With over 10 years of experience, we specialize in creating stunning portraits that capture your unique personality and style.',
+                                    image: 'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=600'
+                                }
+                            }
+                        ]
+                    }
+                }
+            },
+            'wedding-photography': {
+                name: 'Wedding Photography Studio',
+                description: 'Romantic wedding photography website template',
+                category: 'wedding',
+                pages: {
+                    home: {
+                        title: 'Wedding Photography',
+                        sections: [
+                            {
+                                type: 'hero',
+                                content: {
+                                    title: 'Your Love Story Beautifully Told',
+                                    subtitle: 'Wedding Photography & Cinematography',
+                                    buttonText: 'View Our Work',
+                                    backgroundImage: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200'
+                                }
+                            }
+                        ]
+                    }
+                }
+            },
+            'fashion-photography': {
+                name: 'Fashion Photography',
+                description: 'Modern fashion photography portfolio',
+                category: 'fashion',
+                pages: {
+                    home: {
+                        title: 'Fashion Photography',
+                        sections: [
+                            {
+                                type: 'hero',
+                                content: {
+                                    title: 'Fashion Forward Photography',
+                                    subtitle: 'Editorial & Commercial Fashion',
+                                    buttonText: 'See Portfolio',
+                                    backgroundImage: 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=1200'
+                                }
+                            }
+                        ]
+                    }
+                }
+            },
+            'newborn-photography': {
+                name: 'Newborn Photography',
+                description: 'Gentle newborn and family photography',
+                category: 'family',
+                pages: {
+                    home: {
+                        title: 'Newborn Photography',
+                        sections: [
+                            {
+                                type: 'hero',
+                                content: {
+                                    title: 'Precious First Moments',
+                                    subtitle: 'Newborn & Maternity Photography',
+                                    buttonText: 'Book Session',
+                                    backgroundImage: 'https://images.unsplash.com/photo-1544726889-8cb8c9b7ee00?w=1200'
+                                }
+                            }
+                        ]
+                    }
+                }
+            },
+            'landscape-photography': {
+                name: 'Landscape Photography',
+                description: 'Nature and landscape photography portfolio',
+                category: 'landscape',
+                pages: {
+                    home: {
+                        title: 'Landscape Photography',
+                        sections: [
+                            {
+                                type: 'hero',
+                                content: {
+                                    title: 'Nature\'s Beauty Captured',
+                                    subtitle: 'Landscape & Travel Photography',
+                                    buttonText: 'Explore Gallery',
+                                    backgroundImage: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200'
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        };
     }
 
     initializeLuxuryComponents() {
@@ -1076,6 +1224,101 @@ class AdvancedVisualEditor {
             
             console.log(`🔄 Reset page: ${this.currentPage}`);
         }
+    }
+
+    // Load a prebuilt template
+    async loadPrebuiltTemplate(templateKey) {
+        const template = this.prebuiltTemplates[templateKey];
+        if (!template) {
+            console.error(`❌ Template not found: ${templateKey}`);
+            return;
+        }
+
+        const previewFrame = document.getElementById('preview-frame');
+        if (!previewFrame) {
+            console.error('❌ Preview frame not found');
+            return;
+        }
+
+        console.log(`🏗️ Loading template: ${template.name}`);
+        
+        // Generate HTML for the template
+        let templateHTML = '';
+        const homePage = template.pages.home;
+        
+        if (homePage && homePage.sections) {
+            homePage.sections.forEach(section => {
+                switch(section.type) {
+                    case 'hero':
+                        templateHTML += `
+                            <div class="hero-section" style="
+                                background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('${section.content.backgroundImage}');
+                                background-size: cover;
+                                background-position: center;
+                                min-height: 100vh;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                text-align: center;
+                                color: white;
+                                padding: 40px 20px;
+                            ">
+                                <div class="hero-content">
+                                    <h1 style="font-size: 3.5rem; font-weight: 300; margin-bottom: 1rem; font-family: 'Cormorant Garamond', serif;">${section.content.title}</h1>
+                                    <p style="font-size: 1.3rem; margin-bottom: 2rem; font-family: 'Quicksand', sans-serif;">${section.content.subtitle}</p>
+                                    <button style="
+                                        background: rgba(196, 150, 45, 0.9);
+                                        color: white;
+                                        border: none;
+                                        padding: 15px 30px;
+                                        font-size: 1.1rem;
+                                        border-radius: 4px;
+                                        cursor: pointer;
+                                        font-family: 'Quicksand', sans-serif;
+                                        font-weight: 600;
+                                        letter-spacing: 1px;
+                                        transition: all 0.3s ease;
+                                    " onmouseover="this.style.background='rgba(196, 150, 45, 1)'" onmouseout="this.style.background='rgba(196, 150, 45, 0.9)'">${section.content.buttonText}</button>
+                                </div>
+                            </div>
+                        `;
+                        break;
+                    case 'about':
+                        templateHTML += `
+                            <div class="about-section" style="
+                                padding: 80px 20px;
+                                background: #F7F3F0;
+                                display: flex;
+                                max-width: 1200px;
+                                margin: 0 auto;
+                                align-items: center;
+                                gap: 40px;
+                            ">
+                                <div class="about-content" style="flex: 1;">
+                                    <h2 style="font-size: 2.5rem; font-weight: 300; margin-bottom: 1.5rem; color: #2C2C2C; font-family: 'Cormorant Garamond', serif;">${section.content.title}</h2>
+                                    <p style="font-size: 1.1rem; line-height: 1.8; color: #5D4E37; font-family: 'Quicksand', sans-serif;">${section.content.text}</p>
+                                </div>
+                                <div class="about-image" style="flex: 1;">
+                                    <img src="${section.content.image}" alt="About" style="width: 100%; height: 400px; object-fit: cover; border-radius: 8px;">
+                                </div>
+                            </div>
+                        `;
+                        break;
+                }
+            });
+        }
+
+        // Apply the template HTML
+        previewFrame.innerHTML = templateHTML;
+        
+        // Update page data
+        this.pageLayouts[this.currentPage] = template.pages.home.sections || [];
+        
+        // Save changes
+        await this.saveToStorage();
+        
+        this.showNotification(`Template "${template.name}" loaded successfully!`, 'success');
+        console.log(`✅ Template loaded: ${template.name}`);
     }
 
     // Initialize with luxury component system
