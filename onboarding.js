@@ -10,11 +10,11 @@ const steps = [
 let currentStep = 0;
 let wizardData = {};
 
-const formContainer = document.getElementById("wizard-form");
-const stepNum = document.getElementById("stepNum");
-const progressFill = document.getElementById("progressFill");
-const nextBtn = document.getElementById("nextBtn");
-const prevBtn = document.getElementById("prevBtn");
+let formContainer;
+let stepNum;
+let progressFill;
+let nextBtn;
+let prevBtn;
 
 function updateProgress() {
   const progress = ((currentStep + 1) / steps.length) * 100;
@@ -270,34 +270,36 @@ function validateStep() {
   return true;
 }
 
-nextBtn.addEventListener("click", () => {
-  console.log(`Next button clicked on step ${currentStep + 1}`);
-  
-  if (!validateStep()) {
-    console.log('Validation failed, staying on current step');
-    return;
-  }
-  
-  saveStepData();
-  console.log('Step data saved:', wizardData);
-  
-  if (currentStep < steps.length - 1) {
-    currentStep++;
-    console.log(`Moving to step ${currentStep + 1}: ${steps[currentStep]}`);
-    renderStep();
-  } else {
-    console.log('Launching portal...');
-    launchPortal();
-  }
-});
+function attachEventListeners() {
+  nextBtn.addEventListener("click", () => {
+    console.log(`Next button clicked on step ${currentStep + 1}`);
+    
+    if (!validateStep()) {
+      console.log('Validation failed, staying on current step');
+      return;
+    }
+    
+    saveStepData();
+    console.log('Step data saved:', wizardData);
+    
+    if (currentStep < steps.length - 1) {
+      currentStep++;
+      console.log(`Moving to step ${currentStep + 1}: ${steps[currentStep]}`);
+      renderStep();
+    } else {
+      console.log('Launching portal...');
+      launchPortal();
+    }
+  });
 
-prevBtn.addEventListener("click", () => {
-  saveStepData();
-  if (currentStep > 0) {
-    currentStep--;
-    renderStep();
-  }
-});
+  prevBtn.addEventListener("click", () => {
+    saveStepData();
+    if (currentStep > 0) {
+      currentStep--;
+      renderStep();
+    }
+  });
+}
 
 function connectStripe() {
   // For now, just show a success message since we have the keys configured
@@ -374,4 +376,19 @@ async function getAuthToken() {
 }
 
 // Initialize wizard
-renderStep();
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('Onboarding wizard initialized');
+  
+  // Get DOM elements
+  formContainer = document.getElementById("wizard-form");
+  stepNum = document.getElementById("stepNum");
+  progressFill = document.getElementById("progressFill");
+  nextBtn = document.getElementById("nextBtn");
+  prevBtn = document.getElementById("prevBtn");
+  
+  // Attach event listeners
+  attachEventListeners();
+  
+  // Render first step
+  renderStep();
+});
