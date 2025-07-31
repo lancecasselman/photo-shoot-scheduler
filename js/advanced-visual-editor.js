@@ -15,7 +15,7 @@ class AdvancedVisualEditor {
         
         // Available themes with preview support (exposed for mobile)
         this.themes = [
-            { id: 'light-airy', name: 'Light + Airy Creative Studio', category: 'elegant' },
+            { id: 'light-airy', name: 'Photography Management System', category: 'elegant' },
             { id: 'bold-editorial', name: 'Bold Editorial', category: 'dramatic' },
             { id: 'earthy-boho', name: 'Earthy Boho', category: 'natural' },
             { id: 'modern-luxe', name: 'Modern Luxe', category: 'minimal' },
@@ -39,7 +39,7 @@ class AdvancedVisualEditor {
         
         // Theme mapping for backward compatibility
         this.themeMap = {
-            'light-airy': { name: 'Light + Airy Creative Studio', category: 'elegant' },
+            'light-airy': { name: 'Photography Management System', category: 'elegant' },
             'bold-editorial': { name: 'Bold Editorial', category: 'dramatic' },
             'earthy-boho': { name: 'Earthy Boho', category: 'natural' },
             'modern-luxe': { name: 'Modern Luxe', category: 'minimal' },
