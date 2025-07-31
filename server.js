@@ -994,14 +994,113 @@ app.get('/preview/:userId', async (req, res) => {
             siteData = result.rows[0].site_data;
         }
         
-        // Generate preview HTML
+        // Check if we have stored HTML from the editor
+        if (siteData.previewHTML) {
+            // Use the generated HTML from the editor
+            res.send(siteData.previewHTML);
+            return;
+        }
+        
+        // Generate preview HTML from stored components
+        let contentHTML = '';
+        const currentPage = siteData.currentPage || 'home';
+        const pageLayouts = siteData.pageLayouts || {};
+        const currentLayout = pageLayouts[currentPage] || [];
+        
+        // Generate HTML for each luxury component
+        currentLayout.forEach(block => {
+            switch(block.type) {
+                case 'hero':
+                    contentHTML += `
+                        <section style="padding: 80px 30px; text-align: center; background: linear-gradient(135deg, var(--beige) 0%, var(--warm-white) 100%);">
+                            <h1 style="font-family: var(--font-serif); font-size: 4em; line-height: 1.1; margin-bottom: 20px; color: var(--deep-charcoal);">${block.content.title}</h1>
+                            <p style="font-size: 1.6em; margin: 30px 0; color: var(--soft-brown);">${block.content.subtitle}</p>
+                            <button style="background: var(--muted-gold); color: white; padding: 20px 40px; border: none; border-radius: 12px; font-size: 1.2em; cursor: pointer; font-weight: 600; transition: all 0.3s ease;">${block.content.buttonText}</button>
+                        </section>
+                    `;
+                    break;
+                case 'text':
+                    contentHTML += `
+                        <section style="padding: 60px 30px; max-width: 800px; margin: 0 auto;">
+                            <h2 style="font-family: var(--font-serif); font-size: 2.8em; margin-bottom: 25px; color: var(--deep-charcoal);">${block.content.title}</h2>
+                            <p style="font-size: 1.3em; line-height: 1.8; color: var(--soft-brown);">${block.content.text}</p>
+                        </section>
+                    `;
+                    break;
+                case 'credentials':
+                    contentHTML += `
+                        <section style="padding: 60px 30px; text-align: center; background: var(--beige);">
+                            <h2 style="font-family: var(--font-serif); font-size: 3em; margin-bottom: 30px; color: var(--deep-charcoal);">${block.content.title}</h2>
+                            <div style="margin: 30px 0; max-width: 600px; margin-left: auto; margin-right: auto;">
+                                ${block.content.awards.map(award => `<p style="margin: 15px 0; font-size: 1.2em; color: var(--soft-brown);"><span style="color: var(--muted-gold);">🏆</span> ${award}</p>`).join('')}
+                            </div>
+                            <p style="font-size: 1.5em; font-weight: 600; margin-top: 30px; color: var(--muted-gold);">${block.content.experience}</p>
+                        </section>
+                    `;
+                    break;
+                case 'destination':
+                    contentHTML += `
+                        <section style="padding: 60px 30px; text-align: center;">
+                            <h2 style="font-family: var(--font-serif); font-size: 3.2em; margin-bottom: 20px; color: var(--deep-charcoal);">${block.content.title}</h2>
+                            <p style="font-size: 1.4em; margin: 25px 0; color: var(--soft-brown);">${block.content.subtitle}</p>
+                            <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin: 30px 0;">
+                                ${block.content.locations.map(location => `<span style="background: var(--sage); color: white; padding: 10px 20px; border-radius: 25px; font-size: 1.1em;">${location}</span>`).join('')}
+                            </div>
+                        </section>
+                    `;
+                    break;
+                case 'products':
+                    contentHTML += `
+                        <section style="padding: 60px 30px; text-align: center;">
+                            <h2 style="font-family: var(--font-serif); font-size: 3.5em; margin-bottom: 40px; color: var(--deep-charcoal);">${block.content.title}</h2>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; max-width: 1000px; margin: 0 auto;">
+                                ${block.content.products ? block.content.products.map(product => `
+                                    <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.1); transition: transform 0.3s ease;">
+                                        <h3 style="font-size: 1.5em; margin-bottom: 15px; color: var(--deep-charcoal);">${product.name}</h3>
+                                        <p style="font-size: 1.8em; font-weight: 600; color: var(--muted-gold);">${product.price}</p>
+                                    </div>
+                                `).join('') : ''}
+                            </div>
+                        </section>
+                    `;
+                    break;
+                default:
+                    contentHTML += `
+                        <section style="padding: 40px 30px; text-align: center;">
+                            <div style="background: var(--beige); padding: 30px; border-radius: 12px; margin: 20px 0;">
+                                <h3 style="color: var(--deep-charcoal); font-size: 1.8em;">Luxury Component</h3>
+                                <p style="color: var(--soft-brown); margin-top: 10px;">Component: ${block.componentKey || block.type}</p>
+                            </div>
+                        </section>
+                    `;
+            }
+        });
+        
+        // If no components, show helpful message
+        if (currentLayout.length === 0) {
+            contentHTML = `
+                <section style="padding: 100px 30px; text-align: center;">
+                    <h1 style="font-family: var(--font-serif); font-size: 3em; margin-bottom: 20px; color: var(--deep-charcoal);">Your Website Preview</h1>
+                    <p style="font-size: 1.4em; color: var(--soft-brown); margin-bottom: 30px;">Go back to the editor and add luxury components to see your preview.</p>
+                    <div style="background: var(--beige); padding: 40px; border-radius: 15px; margin: 30px auto; max-width: 600px;">
+                        <p style="font-size: 1.2em; color: var(--soft-brown);">💎 Add luxury components like:</p>
+                        <ul style="list-style: none; margin: 20px 0; padding: 0;">
+                            <li style="margin: 10px 0; font-size: 1.1em;">🎭 Massive Hero Text</li>
+                            <li style="margin: 10px 0; font-size: 1.1em;">✨ Transformational Experience</li>
+                            <li style="margin: 10px 0; font-size: 1.1em;">🏆 Award-Winning Positioning</li>
+                        </ul>
+                    </div>
+                </section>
+            `;
+        }
+        
         const previewHTML = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Website Preview</title>
+    <title>Website Preview - ${currentPage}</title>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Quicksand:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -1031,16 +1130,29 @@ app.get('/preview/:userId', async (req, res) => {
         .preview-header {
             background: var(--muted-gold);
             color: white;
-            padding: 10px 20px;
+            padding: 15px 20px;
             text-align: center;
-            font-size: 0.9rem;
+            font-size: 1rem;
             position: sticky;
             top: 0;
             z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         
         .preview-content {
-            min-height: calc(100vh - 50px);
+            min-height: calc(100vh - 60px);
+        }
+        
+        @media (max-width: 768px) {
+            section {
+                padding: 40px 20px !important;
+            }
+            h1 {
+                font-size: 2.5em !important;
+            }
+            h2 {
+                font-size: 2.2em !important;
+            }
         }
     </style>
 </head>
@@ -1048,8 +1160,8 @@ app.get('/preview/:userId', async (req, res) => {
     <div class="preview-header">
         📱 Website Preview - This is how your site will look to visitors
     </div>
-    <div class="preview-content" id="preview-content">
-        ${siteData.previewHTML || '<div style="padding: 40px; text-align: center;"><h2>Your website preview will appear here</h2><p>Go back to the editor and add content to see your preview.</p></div>'}
+    <div class="preview-content">
+        ${contentHTML}
     </div>
 </body>
 </html>
@@ -1059,13 +1171,14 @@ app.get('/preview/:userId', async (req, res) => {
         
     } catch (error) {
         console.error('Error loading preview:', error);
-        res.status(500).send(`
+        const errorHTML = `
             <div style="padding: 40px; text-align: center; font-family: Arial, sans-serif;">
                 <h2>Preview Error</h2>
                 <p>Unable to load website preview. Please try again.</p>
                 <button onclick="window.close()" style="margin-top: 20px; padding: 10px 20px; background: #C4962D; color: white; border: none; border-radius: 4px; cursor: pointer;">Close Preview</button>
             </div>
-        `);
+        `;
+        res.status(500).send(errorHTML);
     }
 });
 
