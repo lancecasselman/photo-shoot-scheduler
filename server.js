@@ -3958,7 +3958,7 @@ app.get('/onboarding', (req, res) => {
             return res.redirect('/auth.html?return=/onboarding');
         }
     }
-    res.sendFile(path.join(__dirname, 'onboarding.html'));
+    res.sendFile(path.join(__dirname, 'onboarding-fixed.html'));
 });
 
 // Serve admin dashboard with authentication requirement  
