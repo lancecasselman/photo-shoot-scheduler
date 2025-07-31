@@ -33,6 +33,8 @@ export const users = pgTable("users", {
   subscriptionStatus: varchar("subscription_status").default("trial"),
   subscriptionPlan: varchar("subscription_plan").default("basic"),
   subscriptionExpiresAt: timestamp("subscription_expires_at"),
+  stripeCustomerId: varchar("stripe_customer_id"),
+  stripeSubscriptionId: varchar("stripe_subscription_id"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

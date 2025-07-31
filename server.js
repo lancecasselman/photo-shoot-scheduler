@@ -1,5 +1,5 @@
 // 🔄 TOGGLEABLE AUTH GUARD SYSTEM
-const DEV_MODE = true; // 👉 Set to false to re-enable login protection
+const DEV_MODE = false; // 👉 Set to false to re-enable login protection
 
 // ✅ PREMIUM MODE IMPLEMENTATION
 const PREMIUM_FEATURES = {
@@ -122,6 +122,67 @@ const isAuthenticated = async (req, res, next) => {
 // Get current user info
 const getCurrentUser = (req) => {
     return req.user || null;
+};
+
+// Subscription check middleware
+const requireSubscription = async (req, res, next) => {
+    // DEV_MODE bypass
+    if (DEV_MODE) {
+        return next();
+    }
+
+    const user = getCurrentUser(req);
+    if (!user || !user.email) {
+        return res.status(401).json({ message: 'Authentication required' });
+    }
+
+    // Whitelist your emails
+    const whitelistedEmails = [
+        'lancecasselman@icloud.com',
+        'lancecasselman2011@gmail.com'
+    ];
+
+    if (whitelistedEmails.includes(user.email)) {
+        return next();
+    }
+
+    try {
+        // Check user subscription status in database
+        const result = await pool.query(
+            'SELECT subscription_status, subscription_expires_at FROM users WHERE email = $1',
+            [user.email]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(403).json({ 
+                message: 'No subscription found. Please subscribe to continue.',
+                requiresSubscription: true 
+            });
+        }
+
+        const userRecord = result.rows[0];
+        
+        // Check if subscription is active
+        if (userRecord.subscription_status !== 'active') {
+            return res.status(403).json({ 
+                message: 'Your subscription is not active. Please subscribe to continue.',
+                requiresSubscription: true 
+            });
+        }
+
+        // Check if subscription has expired
+        if (userRecord.subscription_expires_at && new Date(userRecord.subscription_expires_at) < new Date()) {
+            return res.status(403).json({ 
+                message: 'Your subscription has expired. Please renew to continue.',
+                requiresSubscription: true 
+            });
+        }
+
+        next();
+    } catch (error) {
+        console.error('Subscription check error:', error);
+        res.status(500).json({ message: 'Error checking subscription status' });
+    }
 };
 
 // Create professional email transporter with better deliverability
@@ -299,6 +360,112 @@ app.get('/api/status', (req, res) => {
         databaseConnected: !!pool,
         timestamp: new Date().toISOString()
     });
+});
+
+// Get Stripe public key
+app.get('/api/stripe-public-key', (req, res) => {
+    res.json({ publicKey: process.env.VITE_STRIPE_PUBLIC_KEY || '' });
+});
+
+// Subscription success page
+app.get('/subscription-success', isAuthenticated, async (req, res) => {
+    try {
+        // Update user subscription status
+        const now = new Date();
+        const expires = new Date(now);
+        expires.setMonth(expires.getMonth() + 1); // Default to monthly
+        
+        await pool.query(
+            `UPDATE users 
+             SET subscription_status = 'active', 
+                 subscription_expires = $1 
+             WHERE id = $2`,
+            [expires, req.user.id]
+        );
+        
+        // Redirect to main app
+        res.redirect('/');
+    } catch (error) {
+        console.error('Error updating subscription:', error);
+        res.redirect('/');
+    }
+});
+
+// Create subscription endpoint
+app.post('/api/create-subscription', isAuthenticated, async (req, res) => {
+    try {
+        if (!process.env.STRIPE_SECRET_KEY) {
+            throw new Error('Stripe is not configured');
+        }
+
+        const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+        const { plan } = req.body;
+        const user = req.user;
+
+        // Define price IDs for each plan
+        const priceIds = {
+            monthly: 'price_monthly_25',     // $25/month
+            sixmonth: 'price_sixmonth_125',  // $125/6 months
+            yearly: 'price_yearly_200'        // $200/year
+        };
+
+        // Create or retrieve Stripe customer
+        let customerId = user.stripe_customer_id;
+        
+        if (!customerId) {
+            const customer = await stripe.customers.create({
+                email: user.email,
+                metadata: {
+                    userId: user.id
+                }
+            });
+            customerId = customer.id;
+            
+            // Save customer ID to database
+            await pool.query(
+                'UPDATE users SET stripe_customer_id = $1 WHERE id = $2',
+                [customerId, user.id]
+            );
+        }
+
+        // Create payment intent for subscription
+        const session = await stripe.checkout.sessions.create({
+            customer: customerId,
+            payment_method_types: ['card'],
+            line_items: [{
+                price_data: {
+                    currency: 'usd',
+                    product_data: {
+                        name: 'Photography Management System Subscription',
+                        description: plan === 'monthly' ? 'Monthly Plan' : 
+                                   plan === 'sixmonth' ? '6 Month Plan (1 month free)' : 
+                                   'Annual Plan (2 months free)'
+                    },
+                    unit_amount: plan === 'monthly' ? 2500 : 
+                               plan === 'sixmonth' ? 12500 : 
+                               20000,
+                    recurring: {
+                        interval: plan === 'monthly' ? 'month' : 
+                                plan === 'sixmonth' ? 'month' : 
+                                'year',
+                        interval_count: plan === 'sixmonth' ? 6 : 1
+                    }
+                },
+                quantity: 1
+            }],
+            mode: 'subscription',
+            success_url: `${req.protocol}://${req.get('host')}/subscription-success`,
+            cancel_url: `${req.protocol}://${req.get('host')}/`
+        });
+
+        res.json({ checkoutUrl: session.url });
+    } catch (error) {
+        console.error('Subscription creation error:', error);
+        res.status(500).json({ 
+            message: 'Failed to create subscription', 
+            error: error.message 
+        });
+    }
 });
 
 app.post('/api/auth/logout', (req, res) => {
@@ -685,7 +852,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Get all sessions
 // This endpoint is defined earlier in the file - removing duplicate
 
-app.get('/api/sessions', isAuthenticated, async (req, res) => {
+app.get('/api/sessions', isAuthenticated, requireSubscription, async (req, res) => {
     try {
         const userId = req.user.uid;
         
@@ -718,7 +885,7 @@ app.get('/api/sessions', isAuthenticated, async (req, res) => {
 });
 
 // Create new session
-app.post('/api/sessions', isAuthenticated, async (req, res) => {
+app.post('/api/sessions', isAuthenticated, requireSubscription, async (req, res) => {
     const { clientName, sessionType, dateTime, location, phoneNumber, email, price, duration, notes } = req.body;
     
     // Validate required fields
@@ -2801,6 +2968,167 @@ app.post('/api/sessions/:id/send-invoice', async (req, res) => {
     } catch (error) {
         console.error('Error sending invoice:', error);
         res.status(500).json({ error: 'Failed to send invoice' });
+    }
+});
+
+// Stripe Subscription Routes
+app.post('/api/create-subscription', isAuthenticated, async (req, res) => {
+    try {
+        const user = getCurrentUser(req);
+        const { plan } = req.body; // 'monthly', 'sixmonth', 'yearly'
+        
+        if (!user || !user.email) {
+            return res.status(401).json({ message: 'User not authenticated' });
+        }
+        
+        // Check if user already has subscription
+        const userRecord = await pool.query(
+            'SELECT * FROM users WHERE email = $1',
+            [user.email]
+        );
+        
+        let customer;
+        if (userRecord.rows.length > 0 && userRecord.rows[0].stripe_customer_id) {
+            customer = await stripe.customers.retrieve(userRecord.rows[0].stripe_customer_id);
+        } else {
+            // Create new customer
+            customer = await stripe.customers.create({
+                email: user.email,
+                name: user.displayName || user.email,
+                metadata: {
+                    uid: user.uid
+                }
+            });
+            
+            // Update user record with customer ID
+            await pool.query(
+                'UPDATE users SET stripe_customer_id = $1 WHERE email = $2',
+                [customer.id, user.email]
+            );
+        }
+        
+        // Define price IDs based on plan
+        const priceIds = {
+            monthly: 'price_monthly_25', // You'll need to create these in Stripe
+            sixmonth: 'price_sixmonth_125',
+            yearly: 'price_yearly_200'
+        };
+        
+        // Create subscription
+        const subscription = await stripe.subscriptions.create({
+            customer: customer.id,
+            items: [{
+                price: priceIds[plan] || priceIds.monthly
+            }],
+            payment_behavior: 'default_incomplete',
+            payment_settings: { save_default_payment_method: 'on_subscription' },
+            expand: ['latest_invoice.payment_intent']
+        });
+        
+        // Update user subscription in database
+        await pool.query(
+            'UPDATE users SET stripe_subscription_id = $1, subscription_status = $2 WHERE email = $3',
+            [subscription.id, 'pending', user.email]
+        );
+        
+        res.json({
+            subscriptionId: subscription.id,
+            clientSecret: subscription.latest_invoice.payment_intent.client_secret
+        });
+        
+    } catch (error) {
+        console.error('Subscription creation error:', error);
+        res.status(500).json({ error: 'Failed to create subscription' });
+    }
+});
+
+// Check subscription status
+app.get('/api/subscription-status', isAuthenticated, async (req, res) => {
+    try {
+        const user = getCurrentUser(req);
+        
+        if (!user || !user.email) {
+            return res.status(401).json({ message: 'User not authenticated' });
+        }
+        
+        const result = await pool.query(
+            'SELECT subscription_status, subscription_expires_at, stripe_subscription_id FROM users WHERE email = $1',
+            [user.email]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.json({ hasSubscription: false });
+        }
+        
+        const userRecord = result.rows[0];
+        
+        // Check with Stripe for current status
+        if (userRecord.stripe_subscription_id) {
+            try {
+                const subscription = await stripe.subscriptions.retrieve(userRecord.stripe_subscription_id);
+                
+                // Update local database with Stripe status
+                await pool.query(
+                    'UPDATE users SET subscription_status = $1, subscription_expires_at = $2 WHERE email = $3',
+                    [subscription.status, new Date(subscription.current_period_end * 1000), user.email]
+                );
+                
+                res.json({
+                    hasSubscription: subscription.status === 'active',
+                    status: subscription.status,
+                    expiresAt: new Date(subscription.current_period_end * 1000)
+                });
+            } catch (stripeError) {
+                // Stripe subscription not found or error
+                res.json({
+                    hasSubscription: false,
+                    status: 'inactive'
+                });
+            }
+        } else {
+            res.json({
+                hasSubscription: false,
+                status: userRecord.subscription_status || 'inactive'
+            });
+        }
+        
+    } catch (error) {
+        console.error('Subscription status error:', error);
+        res.status(500).json({ error: 'Failed to check subscription status' });
+    }
+});
+
+// Stripe webhook for subscription updates
+app.post('/api/stripe-webhook', express.raw({type: 'application/json'}), async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    
+    try {
+        const event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+        
+        switch (event.type) {
+            case 'customer.subscription.created':
+            case 'customer.subscription.updated':
+                const subscription = event.data.object;
+                await pool.query(
+                    'UPDATE users SET subscription_status = $1, subscription_expires_at = $2 WHERE stripe_customer_id = $3',
+                    [subscription.status, new Date(subscription.current_period_end * 1000), subscription.customer]
+                );
+                break;
+                
+            case 'customer.subscription.deleted':
+                const deletedSub = event.data.object;
+                await pool.query(
+                    'UPDATE users SET subscription_status = $1 WHERE stripe_customer_id = $2',
+                    ['canceled', deletedSub.customer]
+                );
+                break;
+        }
+        
+        res.json({ received: true });
+    } catch (error) {
+        console.error('Webhook error:', error);
+        res.status(400).send(`Webhook Error: ${error.message}`);
     }
 });
 

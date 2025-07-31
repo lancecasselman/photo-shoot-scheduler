@@ -87,7 +87,31 @@ export class DatabaseStorage implements IStorage {
       : eq(photographySessions.id, sessionId);
     
     const result = await db.delete(photographySessions).where(conditions);
-    return result.rowCount > 0;
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async updateUserStripeInfo(userId: string, stripeInfo: { stripeCustomerId?: string; stripeSubscriptionId?: string }): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ ...stripeInfo, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    return updatedUser;
+  }
+
+  async updateUserSubscription(userId: string, subscriptionData: { 
+    subscriptionStatus?: string; 
+    subscriptionPlan?: string; 
+    subscriptionExpiresAt?: Date;
+  }): Promise<User | undefined> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ ...subscriptionData, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    return updatedUser;
   }
 }
 
