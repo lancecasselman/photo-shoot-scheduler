@@ -1568,10 +1568,10 @@
                 to { opacity: 1; transform: translateY(0); }
             }
             
-            /* Enhanced Preview Container */
+            /* Enhanced Preview Container - Mobile Fix */
             .preview-container {
-                order: 2;
-                height: calc(100vh - var(--header-height) - 60px);
+                order: 3;
+                flex: 1;
                 background: var(--deep-charcoal);
                 border-radius: 0;
                 position: relative;
@@ -1579,18 +1579,33 @@
                 z-index: 1;
                 display: flex;
                 flex-direction: column;
+                min-height: 0;
             }
             
             .preview-header {
                 background: var(--warm-white);
                 border-bottom: 1px solid var(--beige);
-                padding: var(--spacing-md);
+                padding: var(--spacing-sm);
                 flex-shrink: 0;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            
+            .preview-header h3 {
+                font-size: 1rem;
+                margin: 0;
+                color: var(--deep-charcoal);
+            }
+            
+            .device-controls {
+                display: none; /* Hide on mobile */
             }
             
             .single-preview-layout {
                 flex: 1;
                 overflow: hidden;
+                min-height: 0;
             }
             
             .preview-panel {
@@ -1599,10 +1614,16 @@
                 flex-direction: column;
             }
             
+            .preview-panel-header {
+                display: none; /* Hide duplicate header on mobile */
+            }
+            
             #preview-frame {
                 flex: 1;
                 overflow-y: auto;
                 background: var(--warm-white);
+                min-height: 200px;
+                padding: var(--spacing-md);
             }
             
             /* Hide desktop sidebar completely on mobile */
@@ -1735,6 +1756,27 @@
             .mobile-tools-panel {
                 display: none !important;
             }
+            
+            /* Restore desktop preview styling */
+            .preview-container {
+                order: initial;
+                height: auto;
+                flex: 1;
+            }
+            
+            .preview-header h3 {
+                font-size: 1.2rem;
+            }
+            
+            .device-controls {
+                display: flex !important;
+                gap: var(--spacing-sm);
+            }
+            
+            .preview-panel-header {
+                display: flex !important;
+            }
+        }
             
             /* Enhanced panel sections for mobile */
             .panel-section {
