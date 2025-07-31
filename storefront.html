@@ -2355,6 +2355,50 @@
     
     <!-- Hamburger Menu JavaScript -->
     <script>
+        // Track current mobile panel
+        let currentMobilePanel = null;
+        
+        // Mobile tool toggle function
+        function toggleMobileTool(tool) {
+            // Close any open panels
+            document.querySelectorAll('.mobile-tool-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            
+            // Remove active state from all buttons
+            document.querySelectorAll('.mobile-tool-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // If clicking the same tool, just close it
+            if (currentMobilePanel === tool) {
+                currentMobilePanel = null;
+                return;
+            }
+            
+            // Open the new panel
+            const panel = document.getElementById(`mobile-panel-${tool}`);
+            if (panel) {
+                panel.classList.add('active');
+                currentMobilePanel = tool;
+                
+                // Add active state to button - find button by tool name
+                const button = document.querySelector(`[onclick*="${tool}"]`);
+                if (button) {
+                    button.classList.add('active');
+                }
+                
+                // Initialize dropdowns if needed
+                if (tool === 'templates' && window.editor) {
+                    populateMobileTemplates();
+                } else if (tool === 'themes' && window.editor) {
+                    populateMobileThemes();
+                } else if (tool === 'luxury' && window.editor) {
+                    populateMobileLuxury();
+                }
+            }
+        }
+        
         function toggleMobileNav() {
             const overlay = document.getElementById('mobileNavOverlay');
             const hamburger = document.querySelector('.hamburger-menu');
@@ -2475,14 +2519,15 @@
         
         function populateMobileThemes() {
             const select = document.getElementById('mobile-theme-select');
-            const themes = window.editor.themes || [];
+            const themes = window.editor.themes || {};
             
             select.innerHTML = '<option value="">Select a theme...</option>' + 
-                themes.map(theme => `<option value="${theme.id}">${theme.name}</option>`).join('');
+                Object.entries(themes).map(([key, theme]) => `<option value="${key}">${theme.name}</option>`).join('');
             
             select.onchange = (e) => {
                 if (e.target.value && window.editor) {
                     window.editor.changeTheme(e.target.value);
+                    select.value = ''; // Reset after applying
                 }
             };
         }
