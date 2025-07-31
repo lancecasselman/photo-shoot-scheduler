@@ -1033,11 +1033,11 @@ app.get('/api/sessions', isAuthenticated, requireSubscription, async (req, res) 
         });
         
         let sessions = await getAllSessions(userId);
-        console.log(`📋 Found ${sessions.length} sessions for user ${userId}`);
+        console.log(`Found ${sessions.length} sessions for user ${userId}`);
         
         // SPECIAL ACCESS: If Lance's accounts, give access to ALL sessions (admin mode)
         if (req.user.email === 'lancecasselman@icloud.com' || req.user.email === 'lancecasselman2011@gmail.com' || req.user.email === 'Lance@thelegacyphotography.com') {
-            console.log('🎯 UNIFIED LANCE ACCOUNT: Loading sessions for unified Lance account');
+            console.log('UNIFIED LANCE ACCOUNT: Loading sessions for unified Lance account');
             
             // Get sessions for the unified Lance account
             const lanceSessionsResult = await pool.query(`
@@ -1070,7 +1070,7 @@ app.get('/api/sessions', isAuthenticated, requireSubscription, async (req, res) 
                 createdAt: row.created_at,
                 updatedAt: row.updated_at
             }));
-            console.log(`📋 UNIFIED ACCOUNT: Found ${sessions.length} sessions for Lance's unified account`);
+            console.log(`UNIFIED ACCOUNT: Found ${sessions.length} sessions for Lance's unified account`);
         }
         
         res.json(sessions);

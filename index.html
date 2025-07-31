@@ -2924,46 +2924,43 @@
             border: 1px solid rgba(212, 175, 55, 0.2);
             border-radius: 8px;
             padding: 15px;
-            margin: 15px 0;
+            margin-top: 15px;
         }
-
+        
         .workflow-status h4 {
-            color: #d4af37;
-            font-size: 1em;
-            margin-bottom: 12px;
-            font-weight: bold;
+            color: #000000 !important;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            font-weight: 600;
         }
-
-        .status-checkboxes {
+        
+        .status-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 10px;
         }
-
+        
         .status-item {
             display: flex;
             align-items: center;
             gap: 8px;
         }
-
+        
         .status-item input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
-            accent-color: #d4af37;
-            cursor: pointer;
+            margin: 0;
         }
-
+        
         .status-item label {
-            color: #f5f5f5;
+            color: #000000 !important;
             font-size: 0.9em;
             cursor: pointer;
-            user-select: none;
+            font-weight: 500;
+        }
+            padding: 15px;
+            margin: 15px 0;
         }
 
-        .status-item input[type="checkbox"]:checked + label {
-            color: #d4af37;
-            font-weight: bold;
-        }
+
 
         /* Dropdown Menu Styles */
         .actions-dropdown {
@@ -4297,37 +4294,37 @@
                         </div>
 
                         <div class="workflow-status">
-                            <h4>📋 Workflow Status</h4>
+                            <h4>Workflow Status</h4>
                             <div class="status-grid">
                                 <div class="status-item">
                                     <input type="checkbox" id="contractSigned_${session.id}" ${session.contractSigned ? 'checked' : ''} 
                                            onchange="toggleWorkflowStatus('${session.id}', 'contractSigned', this.checked); event.stopPropagation();">
-                                    <label for="contractSigned_${session.id}">Document Contract Signed</label>
+                                    <label for="contractSigned_${session.id}">Contract Signed</label>
                                 </div>
                                 <div class="status-item">
                                     <input type="checkbox" id="paid_${session.id}" ${session.paid ? 'checked' : ''} 
                                            onchange="toggleWorkflowStatus('${session.id}', 'paid', this.checked); event.stopPropagation();">
-                                    <label for="paid_${session.id}">Money Paid</label>
+                                    <label for="paid_${session.id}">Paid</label>
                                 </div>
                                 <div class="status-item">
                                     <input type="checkbox" id="edited_${session.id}" ${session.edited ? 'checked' : ''} 
                                            onchange="toggleWorkflowStatus('${session.id}', 'edited', this.checked); event.stopPropagation();">
-                                    <label for="edited_${session.id}"> Edited</label>
+                                    <label for="edited_${session.id}">Edited</label>
                                 </div>
                                 <div class="status-item">
                                     <input type="checkbox" id="delivered_${session.id}" ${session.delivered ? 'checked' : ''} 
                                            onchange="toggleWorkflowStatus('${session.id}', 'delivered', this.checked); event.stopPropagation();">
-                                    <label for="delivered_${session.id}">Package Delivered</label>
+                                    <label for="delivered_${session.id}">Delivered</label>
                                 </div>
                                 <div class="status-item">
                                     <input type="checkbox" id="sendReminder_${session.id}" ${session.sendReminder ? 'checked' : ''} 
                                            onchange="toggleWorkflowStatus('${session.id}', 'sendReminder', this.checked); event.stopPropagation();">
-                                    <label for="sendReminder_${session.id}"> Send Reminder</label>
+                                    <label for="sendReminder_${session.id}">Send Reminder</label>
                                 </div>
                                 <div class="status-item">
                                     <input type="checkbox" id="notifyGalleryReady_${session.id}" ${session.notifyGalleryReady ? 'checked' : ''} 
                                            onchange="toggleWorkflowStatus('${session.id}', 'notifyGalleryReady', this.checked); event.stopPropagation();">
-                                    <label for="notifyGalleryReady_${session.id}">Image Notify Gallery Ready</label>
+                                    <label for="notifyGalleryReady_${session.id}">Gallery Ready</label>
                                 </div>
                             </div>
                         </div>
