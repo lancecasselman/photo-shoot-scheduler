@@ -630,75 +630,11 @@ class AdvancedVisualEditor {
     }
     
     updateLivePreviewWithComponent(newBlock) {
-        const previewFrame = document.getElementById('preview-frame');
-        if (!previewFrame) {
-            console.warn('Preview frame not found');
-            return;
-        }
+        console.log(`🎨 Updating live preview with ${newBlock.type} component:`, newBlock);
         
-        // Generate HTML for the new component
-        let componentHTML = '';
-        const theme = this.themes[this.currentTheme] || this.themes['light-airy'];
-        const themeStyles = this.getThemeStyles(theme);
-        
-        switch(newBlock.type) {
-            case 'hero':
-                componentHTML = `
-                    <div style="${themeStyles.container}; padding: 60px 30px; text-align: center;">
-                        <h1 style="${themeStyles.heading}; font-size: 3.5em; line-height: 1.1;">${newBlock.content.title}</h1>
-                        <p style="${themeStyles.subtitle}; font-size: 1.4em; margin: 20px 0 30px;">${newBlock.content.subtitle}</p>
-                        <button style="background: var(--muted-gold); color: white; padding: 15px 30px; border: none; border-radius: 8px; font-size: 1.1em; cursor: pointer;">${newBlock.content.buttonText}</button>
-                    </div>
-                `;
-                break;
-            case 'text':
-                componentHTML = `
-                    <div style="${themeStyles.content}; margin: 30px 0;">
-                        <h2 style="${themeStyles.heading}; font-size: 2.2em;">${newBlock.content.title}</h2>
-                        <p style="${themeStyles.text}; font-size: 1.2em; line-height: 1.6;">${newBlock.content.text}</p>
-                    </div>
-                `;
-                break;
-            case 'credentials':
-                componentHTML = `
-                    <div style="${themeStyles.content}; margin: 30px 0; text-align: center;">
-                        <h2 style="${themeStyles.heading}; font-size: 2.5em;">${newBlock.content.title}</h2>
-                        <div style="margin: 20px 0;">
-                            ${newBlock.content.awards.map(award => `<p style="${themeStyles.text}; margin: 8px 0;">🏆 ${award}</p>`).join('')}
-                        </div>
-                        <p style="${themeStyles.subtitle}; font-size: 1.3em; margin-top: 20px;">${newBlock.content.experience}</p>
-                    </div>
-                `;
-                break;
-            case 'products':
-                componentHTML = `
-                    <div style="${themeStyles.content}; margin: 30px 0; text-align: center;">
-                        <h2 style="${themeStyles.heading}; font-size: 2.8em; margin-bottom: 30px;">${newBlock.content.title}</h2>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
-                            ${newBlock.content.products ? newBlock.content.products.map(product => `
-                                <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 8px;">
-                                    <h3 style="${themeStyles.text}; font-size: 1.3em;">${product.name}</h3>
-                                    <p style="${themeStyles.text};">${product.price}</p>
-                                </div>
-                            `).join('') : ''}
-                        </div>
-                    </div>
-                `;
-                break;
-            default:
-                componentHTML = `
-                    <div style="${themeStyles.content}; margin: 30px 0; text-align: center;">
-                        <h2 style="${themeStyles.heading};">New Component Added</h2>
-                        <p style="${themeStyles.text};">Luxury component: ${newBlock.componentKey}</p>
-                    </div>
-                `;
-        }
-        
-        // Append the new component to existing content
-        const existingContent = previewFrame.innerHTML;
-        previewFrame.innerHTML = existingContent + componentHTML;
-        
-        console.log(`🎨 Updated preview with ${newBlock.type} component`);
+        // Instead of trying to manipulate iframe content directly,
+        // refresh the entire preview to show all components including the new one
+        this.updateLivePreview();
     }
 
     // Add missing utility functions
@@ -907,7 +843,7 @@ class AdvancedVisualEditor {
         const currentPageInfo = this.pages.find(p => p.id === this.currentPage);
         const pageName = currentPageInfo ? currentPageInfo.name : 'Page';
         
-        // Create enhanced preview content with theme styling
+        // Create enhanced preview content with actual luxury components
         const currentLayout = this.pageLayouts[this.currentPage] || [];
         let previewHTML = `
             <div style="${themeStyles.container}">
@@ -915,15 +851,87 @@ class AdvancedVisualEditor {
                     <h1 style="${themeStyles.heading}">${pageName} - Photography Studio</h1>
                     <p style="${themeStyles.subtitle}">Current Theme: ${theme.name}</p>
                 </div>
-                <div style="${themeStyles.content}">
-                    <p style="${themeStyles.text}">Live preview - click to add luxury components</p>
-                    <div style="${themeStyles.statusBar}">
-                        ${currentLayout.length} components added to ${pageName} page
-                    </div>
-                </div>
-            </div>
         `;
         
+        // Render all luxury components on the current page
+        if (currentLayout.length > 0) {
+            currentLayout.forEach(block => {
+                switch(block.type) {
+                    case 'hero':
+                        previewHTML += `
+                            <div style="padding: 80px 30px; text-align: center; background: linear-gradient(135deg, #F7F3F0, #FEFDFB); margin: 20px 0; border-radius: 12px;">
+                                <h1 style="font-family: 'Cormorant Garamond', serif; font-size: 4em; line-height: 1.1; margin-bottom: 20px; color: #2C2C2C;">${block.content.title}</h1>
+                                <p style="font-size: 1.6em; margin: 30px 0; color: #8B7355;">${block.content.subtitle}</p>
+                                <button style="background: #C4962D; color: white; padding: 20px 40px; border: none; border-radius: 12px; font-size: 1.2em; cursor: pointer; font-weight: 600;">${block.content.buttonText}</button>
+                            </div>
+                        `;
+                        break;
+                    case 'text':
+                        previewHTML += `
+                            <div style="margin: 40px 20px; padding: 30px; background: rgba(255,255,255,0.5); border-radius: 12px;">
+                                <h2 style="font-family: 'Cormorant Garamond', serif; font-size: 2.8em; margin-bottom: 25px; color: #2C2C2C;">${block.content.title}</h2>
+                                <p style="font-size: 1.3em; line-height: 1.8; color: #8B7355;">${block.content.text}</p>
+                            </div>
+                        `;
+                        break;
+                    case 'credentials':
+                        previewHTML += `
+                            <div style="margin: 40px 20px; padding: 40px; text-align: center; background: #F5F1EB; border-radius: 12px;">
+                                <h2 style="font-family: 'Cormorant Garamond', serif; font-size: 3em; margin-bottom: 30px; color: #2C2C2C;">${block.content.title}</h2>
+                                <div style="margin: 30px 0; max-width: 600px; margin-left: auto; margin-right: auto;">
+                                    ${block.content.awards.map(award => `<p style="margin: 15px 0; font-size: 1.2em; color: #8B7355;"><span style="color: #C4962D;">🏆</span> ${award}</p>`).join('')}
+                                </div>
+                                <p style="font-size: 1.5em; font-weight: 600; margin-top: 30px; color: #C4962D;">${block.content.experience}</p>
+                            </div>
+                        `;
+                        break;
+                    case 'destination':
+                        previewHTML += `
+                            <div style="margin: 40px 20px; padding: 40px; text-align: center; border-radius: 12px;">
+                                <h2 style="font-family: 'Cormorant Garamond', serif; font-size: 3.2em; margin-bottom: 20px; color: #2C2C2C;">${block.content.title}</h2>
+                                <p style="font-size: 1.4em; margin: 25px 0; color: #8B7355;">${block.content.subtitle}</p>
+                                <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin: 30px 0;">
+                                    ${block.content.locations.map(location => `<span style="background: #9CAF88; color: white; padding: 10px 20px; border-radius: 25px; font-size: 1.1em;">${location}</span>`).join('')}
+                                </div>
+                            </div>
+                        `;
+                        break;
+                    case 'products':
+                        previewHTML += `
+                            <div style="margin: 40px 20px; padding: 40px; text-align: center; border-radius: 12px;">
+                                <h2 style="font-family: 'Cormorant Garamond', serif; font-size: 3.5em; margin-bottom: 40px; color: #2C2C2C;">${block.content.title}</h2>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; max-width: 1000px; margin: 0 auto;">
+                                    ${block.content.products ? block.content.products.map(product => `
+                                        <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.1);">
+                                            <h3 style="font-size: 1.5em; margin-bottom: 15px; color: #2C2C2C;">${product.name}</h3>
+                                            <p style="font-size: 1.8em; font-weight: 600; color: #C4962D;">${product.price}</p>
+                                        </div>
+                                    `).join('') : ''}
+                                </div>
+                            </div>
+                        `;
+                        break;
+                    default:
+                        previewHTML += `
+                            <div style="margin: 40px 20px; padding: 30px; text-align: center; background: #F5F1EB; border-radius: 12px;">
+                                <h3 style="color: #2C2C2C; font-size: 1.8em; margin-bottom: 10px;">Luxury Component</h3>
+                                <p style="color: #8B7355;">Component: ${block.componentKey || block.type}</p>
+                            </div>
+                        `;
+                }
+            });
+        } else {
+            previewHTML += `
+                <div style="${themeStyles.content}">
+                    <p style="${themeStyles.text}">No components added yet - use the luxury components dropdown to add professional elements</p>
+                    <div style="${themeStyles.statusBar}">
+                        Ready to build your luxury photography website
+                    </div>
+                </div>
+            `;
+        }
+        
+        previewHTML += '</div>';
         previewFrame.innerHTML = previewHTML;
     }
     
