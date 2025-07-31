@@ -1586,16 +1586,19 @@
             }
             
             .preview-container {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100vw;
-                height: calc(100vh - 80px);
-                background: #000;
-                z-index: 1;
-                margin: 0;
-                padding: 0;
-                border-radius: 0;
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100vw !important;
+                height: calc(100vh - 80px) !important;
+                background: white !important;
+                z-index: 1 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                border-radius: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+                overflow: hidden !important;
             }
             
             .preview-frame {
@@ -1603,6 +1606,32 @@
                 height: 100% !important;
                 border: none !important;
                 border-radius: 0 !important;
+            }
+            
+            /* Force full screen preview on mobile */
+            .single-preview-layout {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100vw !important;
+                height: calc(100vh - 80px) !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            
+            .preview-panel {
+                width: 100% !important;
+                height: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                border: none !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                background: transparent !important;
+            }
+            
+            .preview-panel-header {
+                display: none !important;
             }
             
             /* Hide desktop sidebar content on mobile */
