@@ -1077,69 +1077,8 @@ class AdvancedVisualEditor {
             return;
         }
         
-        // Apply theme colors to the preview
-        const previewFrame = document.getElementById('preview-frame');
-        if (previewFrame) {
-            // Apply theme-specific styling based on category
-            let themeCSS = '';
-            
-            switch(theme.category) {
-                case 'elegant':
-                    themeCSS = `
-                        background: linear-gradient(135deg, #F7F3F0, #FEFDFB);
-                        color: #2C2C2C;
-                        font-family: 'Cormorant Garamond', serif;
-                    `;
-                    break;
-                case 'dramatic':
-                    themeCSS = `
-                        background: linear-gradient(135deg, #1a1a1a, #2C2C2C);
-                        color: #F7F3F0;
-                        font-family: 'Playfair Display', serif;
-                    `;
-                    break;
-                case 'natural':
-                    themeCSS = `
-                        background: linear-gradient(135deg, #8B7355, #9CAF88);
-                        color: #FEFDFB;
-                        font-family: 'Lora', serif;
-                    `;
-                    break;
-                case 'minimal':
-                    themeCSS = `
-                        background: #FEFDFB;
-                        color: #2C2C2C;
-                        font-family: 'Quicksand', sans-serif;
-                    `;
-                    break;
-                case 'modern':
-                    themeCSS = `
-                        background: linear-gradient(135deg, #2C2C2C, #C4962D);
-                        color: #FEFDFB;
-                        font-family: 'Montserrat', sans-serif;
-                    `;
-                    break;
-                default:
-                    themeCSS = `
-                        background: #F7F3F0;
-                        color: #2C2C2C;
-                        font-family: 'Quicksand', sans-serif;
-                    `;
-            }
-            
-            // Apply the theme styling
-            previewFrame.style.cssText += themeCSS;
-            
-            // Update all elements in preview with theme styling
-            const allElements = previewFrame.querySelectorAll('*');
-            allElements.forEach(el => {
-                if (el.tagName === 'H1' || el.tagName === 'H2' || el.tagName === 'H3') {
-                    el.style.fontFamily = themeCSS.includes('serif') ? 
-                        themeCSS.match(/font-family: '([^']+)'/)[1] : 
-                        "'Cormorant Garamond', serif";
-                }
-            });
-        }
+        // Update the preview with new theme
+        this.updateLivePreview();
         
         this.showNotification(`Theme changed to ${theme.name}`, 'success');
         
@@ -1753,8 +1692,27 @@ class AdvancedVisualEditor {
             });
         }
 
-        // Apply the template HTML
-        previewFrame.innerHTML = templateHTML;
+        // Apply the template HTML to iframe properly
+        const iframeDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+        iframeDoc.open();
+        iframeDoc.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <style>
+                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                    body { font-family: 'Quicksand', sans-serif; }
+                    .hero-section, .about-section { width: 100%; }
+                </style>
+            </head>
+            <body>
+                ${templateHTML}
+            </body>
+            </html>
+        `);
+        iframeDoc.close();
         
         // Make all text elements editable after loading template
         setTimeout(() => {
@@ -1846,9 +1804,14 @@ class AdvancedVisualEditor {
         const previewFrame = document.getElementById('preview-frame');
         if (!previewFrame) return;
 
-        // Add click event listener to preview frame for text editing
-        previewFrame.addEventListener('click', (e) => {
-            this.handlePreviewClick(e);
+        // Wait for iframe to load then add event listener
+        previewFrame.addEventListener('load', () => {
+            const iframeDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+            if (iframeDoc) {
+                iframeDoc.addEventListener('click', (e) => {
+                    this.handlePreviewClick(e);
+                });
+            }
         });
 
         // Make all text elements editable when clicked
@@ -1920,8 +1883,12 @@ class AdvancedVisualEditor {
         const previewFrame = document.getElementById('preview-frame');
         if (!previewFrame) return;
 
+        // Access iframe document
+        const iframeDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+        if (!iframeDoc) return;
+
         // Find all text elements and make them clickable
-        const textElements = previewFrame.querySelectorAll('h1, h2, h3, h4, h5, h6, p, span, button');
+        const textElements = iframeDoc.querySelectorAll('h1, h2, h3, h4, h5, h6, p, span, button');
         
         textElements.forEach(element => {
             element.style.cursor = 'pointer';

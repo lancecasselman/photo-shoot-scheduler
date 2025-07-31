@@ -1580,12 +1580,13 @@
             
             .preview-container {
                 order: 1;
-                height: 45vh;
+                height: calc(100vh - 80px); /* Full height minus mobile toolbar */
                 min-height: 320px;
                 flex-shrink: 0;
                 width: 100%;
-                background: var(--deep-charcoal);
+                background: #000; /* Pure black background for mobile */
                 border-radius: 0;
+                position: relative;
             }
             
             /* Enhanced panel sections for mobile */
