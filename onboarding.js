@@ -27,9 +27,18 @@ function updateProgress() {
 
 function renderStep() {
   const step = steps[currentStep];
+  console.log(`Rendering step ${currentStep + 1}: ${step}`);
   formContainer.innerHTML = getStepHTML(step);
   updateProgress();
   preloadStepData();
+  
+  // Fix for file input change event
+  const fileInput = document.getElementById('logoUpload');
+  if (fileInput) {
+    fileInput.addEventListener('change', (e) => {
+      console.log('Logo file selected:', e.target.files[0]?.name || 'No file');
+    });
+  }
 }
 
 function getStepHTML(step) {
@@ -243,8 +252,12 @@ function preloadStepData() {
 function validateStep() {
   const requiredInputs = document.querySelectorAll("#wizard-form input[required], #wizard-form select[required]");
   
+  console.log(`Validating step ${currentStep + 1}: ${steps[currentStep]}`);
+  console.log(`Found ${requiredInputs.length} required inputs`);
+  
   for (let input of requiredInputs) {
     if (!input.value.trim()) {
+      console.log(`Validation failed for: ${input.id || input.name}`);
       input.focus();
       input.style.borderColor = '#ff6b6b';
       setTimeout(() => {
@@ -253,18 +266,27 @@ function validateStep() {
       return false;
     }
   }
+  console.log('Validation passed');
   return true;
 }
 
 nextBtn.addEventListener("click", () => {
-  if (!validateStep()) return;
+  console.log(`Next button clicked on step ${currentStep + 1}`);
+  
+  if (!validateStep()) {
+    console.log('Validation failed, staying on current step');
+    return;
+  }
   
   saveStepData();
+  console.log('Step data saved:', wizardData);
   
   if (currentStep < steps.length - 1) {
     currentStep++;
+    console.log(`Moving to step ${currentStep + 1}: ${steps[currentStep]}`);
     renderStep();
   } else {
+    console.log('Launching portal...');
     launchPortal();
   }
 });
