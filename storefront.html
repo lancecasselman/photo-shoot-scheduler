@@ -2630,19 +2630,19 @@
             <!-- Action Tools Group -->
             <div class="tool-group">
                 <div class="group-label">Actions</div>
-                <div class="tool-item" onclick="previewWebsite()">
+                <div class="tool-item" onclick="previewWebsiteMobile()">
                     <div class="tool-icon">👁️</div>
                     <div class="tool-label">Preview</div>
                 </div>
-                <div class="tool-item" onclick="saveChanges()">
+                <div class="tool-item" onclick="saveChangesMobile()">
                     <div class="tool-icon">💾</div>
                     <div class="tool-label">Save</div>
                 </div>
-                <div class="tool-item" onclick="undoAction()">
+                <div class="tool-item" onclick="undoActionMobile()">
                     <div class="tool-icon">↩️</div>
                     <div class="tool-label">Undo</div>
                 </div>
-                <div class="tool-item" onclick="redoAction()">
+                <div class="tool-item" onclick="redoActionMobile()">
                     <div class="tool-icon">↪️</div>
                     <div class="tool-label">Redo</div>
                 </div>
@@ -2891,65 +2891,130 @@
         }
 
         function openMobileTemplateSelector() {
-            if (window.editor) {
-                const templateDropdown = document.getElementById('template-selector');
+            if (window.visualEditor) {
+                const templateDropdown = document.getElementById('template-dropdown');
                 if (templateDropdown) {
+                    templateDropdown.focus();
                     templateDropdown.click();
                 }
                 markToolActive('templates');
             }
         }
 
-        function addComponentMobile(componentType) {
-            if (window.editor) {
-                // Map component types to existing luxury components
-                const componentMap = {
-                    'hero': 'massive-hero-text',
-                    'gallery': 'full-width-gallery', 
-                    'text': 'transformational-experience',
-                    'pricing': 'luxury-pricing',
-                    'testimonial': 'award-winning-positioning'
-                };
-                
-                const luxuryType = componentMap[componentType] || componentType;
-                window.editor.addLuxuryComponent(luxuryType);
-                markToolActive('add-' + componentType);
-            }
-        }
-
         function openBackgroundPicker() {
-            if (window.editor) {
-                const bgColorPicker = document.getElementById('page-bg-color');
-                if (bgColorPicker) {
-                    bgColorPicker.click();
+            if (window.visualEditor) {
+                const bgPicker = document.getElementById('page-bg-color');
+                if (bgPicker) {
+                    bgPicker.focus();
+                    bgPicker.click();
                 }
                 markToolActive('background');
             }
         }
 
         function openFontPicker() {
-            if (window.editor) {
+            if (window.visualEditor) {
                 const fontDropdown = document.getElementById('heading-font');
                 if (fontDropdown) {
                     fontDropdown.focus();
+                    fontDropdown.click();
                 }
                 markToolActive('fonts');
             }
         }
 
-        function undoAction() {
-            if (window.editor && window.editor.undo) {
-                window.editor.undo();
+        function addComponentMobile(componentType) {
+            if (window.visualEditor) {
+                switch(componentType) {
+                    case 'hero':
+                        window.visualEditor.addLuxuryComponent('massive-hero-text');
+                        break;
+                    case 'gallery':
+                        window.visualEditor.addLuxuryComponent('full-width-gallery');
+                        break;
+                    case 'text':
+                        window.visualEditor.addLuxuryComponent('transformational-experience');
+                        break;
+                    case 'pricing':
+                        window.visualEditor.addLuxuryComponent('luxury-pricing');
+                        break;
+                    case 'testimonial':
+                        window.visualEditor.addLuxuryComponent('award-winning-positioning');
+                        break;
+                    default:
+                        console.log('Unknown component type:', componentType);
+                }
+                markToolActive(componentType);
+            }
+        }
+
+        function saveChangesMobile() {
+            if (window.visualEditor) {
+                window.visualEditor.saveToFirebase();
+                markToolActive('save');
+            }
+        }
+
+        function previewWebsiteMobile() {
+            if (window.visualEditor) {
+                window.visualEditor.previewSite();
+                markToolActive('preview');
+            }
+        }
+
+        function undoActionMobile() {
+            if (window.visualEditor && window.visualEditor.undo) {
+                window.visualEditor.undo();
                 markToolActive('undo');
             }
         }
 
-        function redoAction() {
-            if (window.editor && window.editor.redo) {
-                window.editor.redo();
+        function redoActionMobile() {
+            if (window.visualEditor && window.visualEditor.redo) {
+                window.visualEditor.redo();
                 markToolActive('redo');
             }
         }
+
+        function switchPageMobile(page) {
+            if (window.visualEditor) {
+                window.visualEditor.switchPage(page);
+                markToolActive('page-' + page);
+            }
+
+        // Update existing CapCut toolbar with proper onclick handlers
+        function updateCapCutToolbar() {
+            // Action Tools Group - Add these buttons to the CapCut toolbar
+            const actionsHTML = `
+            <div class="tool-group">
+                <div class="group-label">Actions</div>
+                <div class="tool-item" onclick="saveChangesMobile()">
+                    <div class="tool-icon">💾</div>
+                    <div class="tool-label">Save</div>
+                </div>
+                <div class="tool-item" onclick="previewWebsiteMobile()">
+                    <div class="tool-icon">👁️</div>
+                    <div class="tool-label">Preview</div>
+                </div>
+                <div class="tool-item" onclick="undoActionMobile()">
+                    <div class="tool-icon">↶</div>
+                    <div class="tool-label">Undo</div>
+                </div>
+                <div class="tool-item" onclick="redoActionMobile()">
+                    <div class="tool-icon">↷</div>
+                    <div class="tool-label">Redo</div>
+                </div>
+            </div>`;
+            
+            // Find the CapCut toolbar and add actions group if not exists
+            const toolbar = document.querySelector('.capcut-tools-scroll');
+            if (toolbar && !toolbar.querySelector('.group-label:contains("Actions")')) {
+                toolbar.insertAdjacentHTML('beforeend', actionsHTML);
+            }
+        }
+
+        // Auto-update toolbar when page loads  
+        document.addEventListener('DOMContentLoaded', updateCapCutToolbar);
 
         function markToolActive(toolId) {
             // Remove active class from all tools
