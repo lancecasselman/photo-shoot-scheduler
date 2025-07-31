@@ -2037,7 +2037,8 @@
                     await window.editor.saveToStorage();
                     
                     // Open preview in new tab
-                    const previewUrl = `/preview/${window.editor.userId}`;
+                    const userId = window.editor.userId || 'dev-user-123';
+                    const previewUrl = `/preview/${userId}`;
                     const previewWindow = window.open(previewUrl, '_blank');
                     
                     if (previewWindow) {
