@@ -1589,7 +1589,7 @@
             
             /* Enhanced Preview Container - Mobile Fix */
             .preview-container {
-                order: 3;
+                order: 2; /* Place preview in center between top toolbar and bottom nav */
                 flex: 1;
                 background: var(--deep-charcoal);
                 border-radius: 0;
@@ -1599,6 +1599,7 @@
                 display: flex;
                 flex-direction: column;
                 min-height: 0;
+                height: calc(100vh - 140px); /* Maximize height between toolbars */
             }
             
             .preview-header {
@@ -1641,8 +1642,11 @@
                 flex: 1;
                 overflow-y: auto;
                 background: var(--warm-white);
-                min-height: 200px;
+                min-height: calc(100vh - 200px); /* Large preview taking most of screen */
+                height: calc(100vh - 200px);
                 padding: var(--spacing-md);
+                border-radius: 8px;
+                margin: var(--spacing-sm);
             }
             
             /* Hide desktop sidebar completely on mobile */
