@@ -50,7 +50,7 @@ This is a comprehensive photography business management platform designed to rev
   - Subscription modal UI with responsive pricing grid
   - Stripe Checkout Sessions for secure payment processing
   - Automatic user status updates after successful payment
-  - Free access for owner accounts (lancecasselman@icloud.com, lancecasselman2011@gmail.com)
+  - Free access for owner accounts (lancecasselman@icloud.com, lancecasselman2011@gmail.com, Lance@thelegacyphotography.com)
   - Subscription middleware protecting all main application routes
 - **Photo Management**: Unlimited photo upload system (any file size/quantity) with sequential processing, real-time progress tracking, individual photo deletion, and lightbox viewing.
 - **Session Management**: CRUD operations for client sessions, including detailed information, workflow status tracking (contract signed, paid, edited, delivered) with real-time database updates.

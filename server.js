@@ -139,7 +139,8 @@ const requireSubscription = async (req, res, next) => {
     // Whitelist your emails
     const whitelistedEmails = [
         'lancecasselman@icloud.com',
-        'lancecasselman2011@gmail.com'
+        'lancecasselman2011@gmail.com',
+        'Lance@thelegacyphotography.com'
     ];
 
     if (whitelistedEmails.includes(user.email)) {
@@ -1012,7 +1013,7 @@ app.get('/api/sessions', isAuthenticated, requireSubscription, async (req, res) 
         console.log(`📋 Found ${sessions.length} sessions for user ${userId}`);
         
         // SPECIAL ACCESS: If Lance's accounts, give access to ALL sessions
-        if (req.user.email === 'lancecasselman@icloud.com' || req.user.email === 'lancecasselman2011@gmail.com') {
+        if (req.user.email === 'lancecasselman@icloud.com' || req.user.email === 'lancecasselman2011@gmail.com' || req.user.email === 'Lance@thelegacyphotography.com') {
             console.log('🎯 ADMIN ACCESS: Loading all sessions for Lance');
             const allSessionsResult = await pool.query(`
                 SELECT * FROM photography_sessions 
