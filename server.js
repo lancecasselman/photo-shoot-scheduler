@@ -3952,12 +3952,86 @@ app.get('/api/onboarding-status', isAuthenticated, async (req, res) => {
 
 // Serve onboarding wizard
 app.get('/onboarding', (req, res) => {
-    res.sendFile(path.join(__dirname, 'test-onboarding.html'));
+    res.sendFile(path.join(__dirname, 'no-js-onboarding.html'));
 });
 
 // JavaScript test page
 app.get('/js-test', (req, res) => {
     res.sendFile(path.join(__dirname, 'simple-test.html'));
+});
+
+// Handle onboarding form submission
+app.post('/api/complete-onboarding', express.urlencoded({ extended: true }), async (req, res) => {
+    try {
+        const { businessName, ownerName, email, phone, location, specialties, experience } = req.body;
+        
+        // Validate location format (City, State)
+        const locationPattern = /^[a-zA-Z\s]+,\s*[a-zA-Z\s]+$/;
+        if (!locationPattern.test(location)) {
+            return res.status(400).send(`
+                <html><body style="font-family: Arial; padding: 40px; text-align: center;">
+                    <h2 style="color: #e74c3c;">Invalid Location Format</h2>
+                    <p>Please use format: City, State (e.g., "Charleston, SC")</p>
+                    <button onclick="history.back()" style="padding: 10px 20px; margin-top: 20px; cursor: pointer;">Go Back</button>
+                </body></html>
+            `);
+        }
+        
+        // Store onboarding data in database
+        const result = await pool.query(`
+            INSERT INTO onboarding_data (
+                business_name, owner_name, email, phone, location, 
+                specialties, experience, completed_at, user_id
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), $8)
+            ON CONFLICT (user_id) 
+            DO UPDATE SET 
+                business_name = $1, owner_name = $2, email = $3, 
+                phone = $4, location = $5, specialties = $6, 
+                experience = $7, completed_at = NOW()
+            RETURNING *
+        `, [
+            businessName, ownerName, email, phone, location,
+            Array.isArray(specialties) ? specialties.join(',') : specialties || '',
+            experience || 'not_specified',
+            req.user?.uid || 'anonymous'
+        ]);
+        
+        console.log('✅ Onboarding completed:', result.rows[0]);
+        
+        // Success page
+        res.send(`
+            <html>
+            <head>
+                <title>Setup Complete</title>
+                <style>
+                    body { font-family: 'Quicksand', sans-serif; background: linear-gradient(135deg, #f5f1eb 0%, #e8ddd4 100%); padding: 40px; text-align: center; }
+                    .success-container { max-width: 500px; margin: 0 auto; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+                    .success-icon { font-size: 48px; color: #27ae60; margin-bottom: 20px; }
+                    h1 { color: #5d4e37; margin-bottom: 20px; }
+                    .btn { background: linear-gradient(135deg, #d4b08a 0%, #c19a6b 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; margin-top: 20px; }
+                </style>
+            </head>
+            <body>
+                <div class="success-container">
+                    <div class="success-icon">✓</div>
+                    <h1>Welcome, ${ownerName}!</h1>
+                    <p>Your photography business setup is complete. You can now access all features of the Photography Management System.</p>
+                    <a href="/" class="btn">Go to Dashboard</a>
+                </div>
+            </body>
+            </html>
+        `);
+        
+    } catch (error) {
+        console.error('Onboarding error:', error);
+        res.status(500).send(`
+            <html><body style="font-family: Arial; padding: 40px; text-align: center;">
+                <h2 style="color: #e74c3c;">Setup Error</h2>
+                <p>There was an issue completing your setup. Please try again.</p>
+                <button onclick="history.back()" style="padding: 10px 20px; margin-top: 20px; cursor: pointer;">Go Back</button>
+            </body></html>
+        `);
+    }
 });
 
 // Serve original onboarding for reference
