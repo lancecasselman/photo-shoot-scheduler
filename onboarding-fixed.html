@@ -415,14 +415,19 @@
       window.location.href = '/';
     }
 
+    alert('JavaScript is loading!');
+    
     // Initialize
     document.addEventListener('DOMContentLoaded', function() {
+      alert('DOM loaded - wizard starting');
       console.log('Wizard initialized');
       
       document.getElementById('nextBtn').addEventListener('click', nextStep);
       document.getElementById('prevBtn').addEventListener('click', prevStep);
       
       renderStep();
+      
+      alert('First step rendered - buttons should work now');
     });
   </script>
 </body>
