@@ -105,7 +105,7 @@ class AdvancedVisualEditor {
             await this.initializeFirebase();
             
             // Load user content and settings
-            await this.loadUserContent();
+            await this.loadUserContentAndSettings();
             
             // Setup all UI components
             this.setupUI();
@@ -113,15 +113,17 @@ class AdvancedVisualEditor {
             // Load initial theme and page
             await this.loadCurrentPage();
             
-            // Setup real-time auto-save
-            this.setupAutoSave();
+            // Setup real-time auto-save (if exists)
+            if (typeof this.setupAutoSave === 'function') {
+                this.setupAutoSave();
+            }
             
             console.log('✅ Advanced Visual Editor initialized successfully');
-            this.showSuccess('Editor ready - click any text or image to edit!');
+            this.showNotification('Editor ready - click any text or image to edit!', 'success');
             
         } catch (error) {
             console.error('❌ Failed to initialize editor:', error);
-            this.showError('Failed to initialize editor');
+            this.showNotification('Failed to initialize editor', 'error');
         }
     }
 
@@ -133,7 +135,7 @@ class AdvancedVisualEditor {
                     firebase.initializeApp(firebaseConfig);
                 }
                 this.firebaseInitialized = true;
-                this.showSuccess('Firebase connected');
+                this.showNotification('Firebase connected', 'success');
                 console.log('🔥 Firebase initialized for visual editor');
             } else {
                 throw new Error('Firebase not available');
@@ -522,6 +524,68 @@ class AdvancedVisualEditor {
         if (typeof triggerCelebration === 'function') {
             triggerCelebration('component_added', 'Luxury Component');
         }
+    }
+
+    // Add missing functions for proper initialization
+    async loadUserContentAndSettings() {
+        console.log('📖 Loading user content and settings...');
+        
+        try {
+            // Try to load from localStorage first
+            const savedState = localStorage.getItem('visualEditorState');
+            if (savedState) {
+                const state = JSON.parse(savedState);
+                this.currentPage = state.currentPage || 'home';
+                this.currentTheme = state.currentTheme || 'light-airy';
+                this.pageLayouts = state.pageLayouts || this.pageLayouts;
+                this.pageSettings = state.pageSettings || this.pageSettings;
+                this.fontSettings = state.fontSettings || this.fontSettings;
+                console.log('✅ Loaded state from localStorage');
+            }
+        } catch (error) {
+            console.log('⚠️ No saved state found, using defaults');
+        }
+    }
+
+    async loadCurrentPage() {
+        console.log(`📄 Loading current page: ${this.currentPage}`);
+        
+        // Create basic page content if none exists
+        if (!this.pageLayouts[this.currentPage] || this.pageLayouts[this.currentPage].length === 0) {
+            this.pageLayouts[this.currentPage] = [
+                {
+                    id: 'default_hero',
+                    type: 'hero',
+                    content: {
+                        title: 'Welcome to Your Photography Studio',
+                        subtitle: 'Capturing life\'s precious moments',
+                        buttonText: 'View Portfolio'
+                    }
+                }
+            ];
+        }
+        
+        this.updateLivePreview();
+    }
+
+    updateLivePreview() {
+        const previewFrame = document.getElementById('preview-frame');
+        if (!previewFrame) {
+            console.warn('Preview frame not found');
+            return;
+        }
+        
+        // Create simple preview content
+        const currentLayout = this.pageLayouts[this.currentPage] || [];
+        let previewHTML = `
+            <div style="min-height: 400px; padding: 20px; background: #F7F3F0; font-family: 'Cormorant Garamond', serif;">
+                <h1 style="color: #C4962D; margin-bottom: 10px;">Photography Studio</h1>
+                <p style="color: #8B7355;">Live preview - click to add luxury components</p>
+                ${currentLayout.length} components added
+            </div>
+        `;
+        
+        previewFrame.innerHTML = previewHTML;
     }
 
     // Initialize with luxury component system
