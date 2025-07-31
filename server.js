@@ -859,10 +859,19 @@ async function updateSession(id, updates) {
     try {
         const setClause = [];
         const values = [];
+        const usedColumns = new Set();
         let paramCount = 1;
         
         Object.keys(updates).forEach(key => {
             const dbKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+            
+            // Skip duplicate columns
+            if (usedColumns.has(dbKey)) {
+                console.warn(`Skipping duplicate column: ${dbKey}`);
+                return;
+            }
+            
+            usedColumns.add(dbKey);
             setClause.push(`${dbKey} = $${paramCount}`);
             
             // Handle JSON fields
@@ -876,7 +885,9 @@ async function updateSession(id, updates) {
         
         if (setClause.length === 0) return null;
         
-        setClause.push(`updated_at = CURRENT_TIMESTAMP`);
+        if (!usedColumns.has('updated_at')) {
+            setClause.push(`updated_at = CURRENT_TIMESTAMP`);
+        }
         values.push(id);
         
         const result = await pool.query(`
