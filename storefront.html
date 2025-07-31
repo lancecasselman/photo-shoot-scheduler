@@ -1421,63 +1421,119 @@
                 gap: 0;
                 overflow: hidden;
                 position: relative;
-                padding-bottom: 80px; /* Space for bottom nav */
+                padding-bottom: 90px; /* Space for CapCut toolbar */
             }
             
-            /* Bottom Navigation Bar - Professional Mobile Pattern */
-            .mobile-bottom-nav {
+            /* CapCut-Style Horizontal Scrolling Toolbar */
+            .mobile-capcut-toolbar {
                 position: fixed;
                 bottom: 0;
                 left: 0;
                 right: 0;
-                height: 80px;
-                background: var(--warm-white);
-                border-top: 1px solid var(--beige);
-                display: flex;
-                align-items: center;
-                justify-content: space-around;
+                background: linear-gradient(135deg, var(--warm-white), #F5F0EA);
+                border-top: 2px solid var(--muted-gold);
                 z-index: 1000;
                 box-shadow: 0 -4px 20px rgba(44, 44, 44, 0.15);
-                padding: var(--spacing-sm) var(--spacing-md);
+                height: 90px;
+                padding: var(--spacing-xs) 0;
             }
             
-            .mobile-nav-item {
+            .capcut-tools-scroll {
+                display: flex;
+                overflow-x: auto;
+                overflow-y: hidden;
+                height: 100%;
+                padding: 0 var(--spacing-sm);
+                gap: var(--spacing-lg);
+                scroll-behavior: smooth;
+                scrollbar-width: none; /* Firefox */
+                -ms-overflow-style: none; /* IE/Edge */
+            }
+            
+            .capcut-tools-scroll::-webkit-scrollbar {
+                display: none; /* Chrome/Safari */
+            }
+            
+            .tool-group {
+                display: flex;
+                flex-direction: row;
+                gap: var(--spacing-xs);
+                min-width: fit-content;
+                align-items: flex-end;
+                padding: var(--spacing-xs);
+                border-radius: 12px;
+                background: rgba(255, 255, 255, 0.7);
+                border: 1px solid rgba(196, 150, 45, 0.2);
+            }
+            
+            .group-label {
+                position: absolute;
+                top: -15px;
+                left: 50%;
+                transform: translateX(-50%);
+                font-size: 0.6rem;
+                color: var(--muted-gold);
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                background: var(--warm-white);
+                padding: 2px 6px;
+                border-radius: 4px;
+                white-space: nowrap;
+                border: 1px solid var(--muted-gold);
+            }
+            
+            .tool-group {
+                position: relative;
+                margin-top: 15px; /* Space for group label */
+            }
+            
+            .tool-item {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                gap: 4px;
+                gap: 2px;
                 padding: var(--spacing-xs);
                 border-radius: 8px;
                 cursor: pointer;
                 transition: all 0.3s ease;
-                min-width: 60px;
-                position: relative;
+                min-width: 45px;
+                background: transparent;
+                border: 1px solid transparent;
             }
             
-            .mobile-nav-item.active {
+            .tool-item:hover {
                 background: rgba(196, 150, 45, 0.1);
+                border-color: var(--muted-gold);
+                transform: translateY(-2px);
             }
             
-            .mobile-nav-icon {
-                font-size: 1.4rem;
-                color: var(--soft-brown);
+            .tool-item.active {
+                background: var(--muted-gold);
+                color: var(--warm-white);
+            }
+            
+            .tool-icon {
+                font-size: 1.1rem;
                 transition: all 0.3s ease;
             }
             
-            .mobile-nav-item.active .mobile-nav-icon {
-                color: var(--muted-gold);
-                transform: scale(1.1);
-            }
-            
-            .mobile-nav-label {
-                font-size: 0.7rem;
-                color: var(--soft-brown);
+            .tool-label {
+                font-size: 0.6rem;
                 font-weight: 500;
+                color: var(--deep-charcoal);
                 transition: all 0.3s ease;
+                text-align: center;
+                white-space: nowrap;
             }
             
-            .mobile-nav-item.active .mobile-nav-label {
+            .tool-item:hover .tool-label {
                 color: var(--muted-gold);
+                font-weight: 600;
+            }
+            
+            .tool-item.active .tool-label {
+                color: var(--warm-white);
                 font-weight: 600;
             }
             
@@ -1772,7 +1828,7 @@
         
         /* Desktop-only elements */
         @media (min-width: 769px) {
-            .mobile-bottom-nav {
+            .mobile-capcut-toolbar {
                 display: none !important;
             }
             
@@ -2504,27 +2560,96 @@
         </div>
     </div>
     
-    <!-- Mobile Bottom Navigation -->
-    <div class="mobile-bottom-nav">
-        <div class="mobile-nav-item" onclick="showMobilePanel('pages')">
-            <div class="mobile-nav-icon">📄</div>
-            <div class="mobile-nav-label">Pages</div>
-        </div>
-        <div class="mobile-nav-item" onclick="showMobilePanel('themes')">
-            <div class="mobile-nav-icon">🎨</div>
-            <div class="mobile-nav-label">Themes</div>
-        </div>
-        <div class="mobile-nav-item" onclick="showMobilePanel('components')">
-            <div class="mobile-nav-icon">🧩</div>
-            <div class="mobile-nav-label">Add</div>
-        </div>
-        <div class="mobile-nav-item" onclick="showMobilePanel('customize')">
-            <div class="mobile-nav-icon">✏️</div>
-            <div class="mobile-nav-label">Edit</div>
-        </div>
-        <div class="mobile-nav-item" onclick="showMobilePanel('preview')">
-            <div class="mobile-nav-icon">👁️</div>
-            <div class="mobile-nav-label">Preview</div>
+    <!-- Mobile CapCut-Style Horizontal Scrolling Tools -->
+    <div class="mobile-capcut-toolbar">
+        <div class="capcut-tools-scroll">
+            <!-- Page Tools Group -->
+            <div class="tool-group">
+                <div class="group-label">Pages</div>
+                <div class="tool-item" onclick="switchPageMobile('home')">
+                    <div class="tool-icon">🏠</div>
+                    <div class="tool-label">Home</div>
+                </div>
+                <div class="tool-item" onclick="switchPageMobile('about')">
+                    <div class="tool-icon">👤</div>
+                    <div class="tool-label">About</div>
+                </div>
+                <div class="tool-item" onclick="switchPageMobile('portfolio')">
+                    <div class="tool-icon">📸</div>
+                    <div class="tool-label">Portfolio</div>
+                </div>
+                <div class="tool-item" onclick="switchPageMobile('contact')">
+                    <div class="tool-icon">📞</div>
+                    <div class="tool-label">Contact</div>
+                </div>
+            </div>
+            
+            <!-- Theme Tools Group -->
+            <div class="tool-group">
+                <div class="group-label">Design</div>
+                <div class="tool-item" onclick="openMobileThemeSelector()">
+                    <div class="tool-icon">🎨</div>
+                    <div class="tool-label">Themes</div>
+                </div>
+                <div class="tool-item" onclick="openMobileTemplateSelector()">
+                    <div class="tool-icon">📋</div>
+                    <div class="tool-label">Templates</div>
+                </div>
+                <div class="tool-item" onclick="openBackgroundPicker()">
+                    <div class="tool-icon">🌈</div>
+                    <div class="tool-label">Background</div>
+                </div>
+                <div class="tool-item" onclick="openFontPicker()">
+                    <div class="tool-icon">🔤</div>
+                    <div class="tool-label">Fonts</div>
+                </div>
+            </div>
+            
+            <!-- Component Tools Group -->
+            <div class="tool-group">
+                <div class="group-label">Add</div>
+                <div class="tool-item" onclick="addComponentMobile('hero')">
+                    <div class="tool-icon">🦸</div>
+                    <div class="tool-label">Hero</div>
+                </div>
+                <div class="tool-item" onclick="addComponentMobile('gallery')">
+                    <div class="tool-icon">🖼️</div>
+                    <div class="tool-label">Gallery</div>
+                </div>
+                <div class="tool-item" onclick="addComponentMobile('text')">
+                    <div class="tool-icon">📝</div>
+                    <div class="tool-label">Text</div>
+                </div>
+                <div class="tool-item" onclick="addComponentMobile('pricing')">
+                    <div class="tool-icon">💰</div>
+                    <div class="tool-label">Pricing</div>
+                </div>
+                <div class="tool-item" onclick="addComponentMobile('testimonial')">
+                    <div class="tool-icon">💬</div>
+                    <div class="tool-label">Review</div>
+                </div>
+            </div>
+            
+            <!-- Action Tools Group -->
+            <div class="tool-group">
+                <div class="group-label">Actions</div>
+                <div class="tool-item" onclick="previewWebsite()">
+                    <div class="tool-icon">👁️</div>
+                    <div class="tool-label">Preview</div>
+                </div>
+                <div class="tool-item" onclick="saveChanges()">
+                    <div class="tool-icon">💾</div>
+                    <div class="tool-label">Save</div>
+                </div>
+                <div class="tool-item" onclick="undoAction()">
+                    <div class="tool-icon">↩️</div>
+                    <div class="tool-label">Undo</div>
+                </div>
+                <div class="tool-item" onclick="redoAction()">
+                    <div class="tool-icon">↪️</div>
+                    <div class="tool-label">Redo</div>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -2764,8 +2889,103 @@
         function switchPageMobile(page) {
             if (window.editor) {
                 window.editor.switchPage(page);
-                closeMobilePanel();
+                markToolActive('page-' + page);
             }
+        }
+
+        // CapCut-Style Mobile Interface Functions
+        function openMobileThemeSelector() {
+            if (window.editor) {
+                const themeDropdown = document.getElementById('theme-selector');
+                if (themeDropdown) {
+                    themeDropdown.click();
+                }
+                markToolActive('themes');
+            }
+        }
+
+        function openMobileTemplateSelector() {
+            if (window.editor) {
+                const templateDropdown = document.getElementById('template-selector');
+                if (templateDropdown) {
+                    templateDropdown.click();
+                }
+                markToolActive('templates');
+            }
+        }
+
+        function addComponentMobile(componentType) {
+            if (window.editor) {
+                // Map component types to existing luxury components
+                const componentMap = {
+                    'hero': 'massive-hero-text',
+                    'gallery': 'full-width-gallery', 
+                    'text': 'transformational-experience',
+                    'pricing': 'luxury-pricing',
+                    'testimonial': 'award-winning-positioning'
+                };
+                
+                const luxuryType = componentMap[componentType] || componentType;
+                window.editor.addLuxuryComponent(luxuryType);
+                markToolActive('add-' + componentType);
+            }
+        }
+
+        function openBackgroundPicker() {
+            if (window.editor) {
+                const bgColorPicker = document.getElementById('page-bg-color');
+                if (bgColorPicker) {
+                    bgColorPicker.click();
+                }
+                markToolActive('background');
+            }
+        }
+
+        function openFontPicker() {
+            if (window.editor) {
+                const fontDropdown = document.getElementById('heading-font');
+                if (fontDropdown) {
+                    fontDropdown.focus();
+                }
+                markToolActive('fonts');
+            }
+        }
+
+        function undoAction() {
+            if (window.editor && window.editor.undo) {
+                window.editor.undo();
+                markToolActive('undo');
+            }
+        }
+
+        function redoAction() {
+            if (window.editor && window.editor.redo) {
+                window.editor.redo();
+                markToolActive('redo');
+            }
+        }
+
+        function markToolActive(toolId) {
+            // Remove active class from all tools
+            document.querySelectorAll('.tool-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Add active class to current tool (search by onclick content)
+            const toolElements = document.querySelectorAll('.tool-item');
+            toolElements.forEach(item => {
+                const onclick = item.getAttribute('onclick');
+                if (onclick && onclick.includes(toolId)) {
+                    item.classList.add('active');
+                }
+            });
+            
+            // Auto-remove active state after 2 seconds
+            setTimeout(() => {
+                document.querySelectorAll('.tool-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+            }, 2000);
         }
         
         function changeThemeMobile(theme) {
