@@ -124,6 +124,26 @@ const getCurrentUser = (req) => {
     return req.user || null;
 };
 
+// Helper function to normalize Lance's emails to a single user ID
+const normalizeUserForLance = (user) => {
+    const lanceEmails = [
+        'lancecasselman@icloud.com',
+        'lancecasselman2011@gmail.com',
+        'Lance@thelegacyphotography.com'
+    ];
+    
+    if (user && lanceEmails.includes(user.email)) {
+        // Always use the existing account ID "44735007" for Lance's unified account
+        return {
+            ...user,
+            uid: '44735007',
+            canonical_email: 'lancecasselman@icloud.com'
+        };
+    }
+    
+    return user;
+};
+
 // Subscription check middleware
 const requireSubscription = async (req, res, next) => {
     // DEV_MODE bypass
@@ -1000,11 +1020,14 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.get('/api/sessions', isAuthenticated, requireSubscription, async (req, res) => {
     try {
-        const userId = req.user.uid;
+        // Normalize user for Lance's multiple emails
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
         
         // Debug logging to see what user is requesting sessions
         console.log(' Sessions requested by user:', {
-            uid: userId,
+            original_uid: req.user.uid,
+            normalized_uid: userId,
             email: req.user.email,
             displayName: req.user.displayName
         });
@@ -1012,15 +1035,42 @@ app.get('/api/sessions', isAuthenticated, requireSubscription, async (req, res) 
         let sessions = await getAllSessions(userId);
         console.log(`📋 Found ${sessions.length} sessions for user ${userId}`);
         
-        // SPECIAL ACCESS: If Lance's accounts, give access to ALL sessions
+        // SPECIAL ACCESS: If Lance's accounts, give access to ALL sessions (admin mode)
         if (req.user.email === 'lancecasselman@icloud.com' || req.user.email === 'lancecasselman2011@gmail.com' || req.user.email === 'Lance@thelegacyphotography.com') {
-            console.log('🎯 ADMIN ACCESS: Loading all sessions for Lance');
-            const allSessionsResult = await pool.query(`
+            console.log('🎯 UNIFIED LANCE ACCOUNT: Loading sessions for unified Lance account');
+            
+            // Get sessions for the unified Lance account
+            const lanceSessionsResult = await pool.query(`
                 SELECT * FROM photography_sessions 
+                WHERE user_id = '44735007'
                 ORDER BY created_at DESC
             `);
-            sessions = allSessionsResult.rows;
-            console.log(`📋 ADMIN ACCESS: Found ${sessions.length} total sessions`);
+            sessions = lanceSessionsResult.rows.map(row => ({
+                id: row.id,
+                clientName: row.client_name,
+                sessionType: row.session_type,
+                dateTime: row.date_time,
+                location: row.location,
+                phoneNumber: row.phone_number,
+                email: row.email,
+                price: parseFloat(row.price),
+                duration: row.duration,
+                notes: row.notes,
+                contractSigned: row.contract_signed,
+                paid: row.paid,
+                edited: row.edited,
+                delivered: row.delivered,
+                sendReminder: row.send_reminder,
+                notifyGalleryReady: row.notify_gallery_ready,
+                photos: row.photos || [],
+                galleryAccessToken: row.gallery_access_token,
+                galleryCreatedAt: row.gallery_created_at,
+                galleryExpiresAt: row.gallery_expires_at,
+                galleryReadyNotified: row.gallery_ready_notified,
+                createdAt: row.created_at,
+                updatedAt: row.updated_at
+            }));
+            console.log(`📋 UNIFIED ACCOUNT: Found ${sessions.length} sessions for Lance's unified account`);
         }
         
         res.json(sessions);
@@ -1060,7 +1110,9 @@ app.post('/api/sessions', isAuthenticated, requireSubscription, async (req, res)
             galleryReadyNotified: false
         };
         
-        const userId = req.user.uid;
+        // Normalize user for Lance's multiple emails
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
         const savedSession = await createSession(newSession, userId);
         console.log(`Created session in database: ${savedSession.clientName} (${savedSession.id}) for user: ${userId}`);
         res.status(201).json(savedSession);
