@@ -118,6 +118,9 @@ class AdvancedVisualEditor {
                 this.setupAutoSave();
             }
             
+            // Setup preview editing functionality
+            this.setupPreviewEditing();
+            
             console.log('✅ Advanced Visual Editor initialized successfully');
             this.showNotification('Editor ready - click any text or image to edit!', 'success');
             
@@ -933,6 +936,11 @@ class AdvancedVisualEditor {
         
         previewHTML += '</div>';
         previewFrame.innerHTML = previewHTML;
+        
+        // Make all text elements editable after updating preview
+        setTimeout(() => {
+            this.makeTextElementsEditable();
+        }, 100);
     }
     
     getThemeStyles(theme) {
@@ -1689,6 +1697,11 @@ class AdvancedVisualEditor {
         // Apply the template HTML
         previewFrame.innerHTML = templateHTML;
         
+        // Make all text elements editable after loading template
+        setTimeout(() => {
+            this.makeTextElementsEditable();
+        }, 100);
+        
         // Update page data
         this.pageLayouts[this.currentPage] = template.pages.home.sections || [];
         
@@ -1702,5 +1715,235 @@ class AdvancedVisualEditor {
     // Initialize with luxury component system
     async initializeSystem() {
         await this.init();
+    }
+
+    // Missing mobile functions to fix console errors
+    switchPageMobile(pageId) {
+        console.log(`📱 Mobile page switch to: ${pageId}`);
+        this.currentPage = pageId;
+        this.loadCurrentPage();
+        
+        // Update active state for mobile navigation
+        const mobileNavItems = document.querySelectorAll('.page-nav-item');
+        mobileNavItems.forEach(item => {
+            item.classList.remove('active');
+            if (item.dataset.page === pageId) {
+                item.classList.add('active');
+            }
+        });
+    }
+
+    openMobileThemeSelector() {
+        console.log('📱 Opening mobile theme selector');
+        const themeDropdown = document.querySelector('.theme-dropdown');
+        if (themeDropdown) {
+            themeDropdown.focus();
+            themeDropdown.click();
+        }
+    }
+
+    showDeletePageModal(pageId) {
+        console.log(`🗑️ Delete page modal for: ${pageId}`);
+        
+        // Prevent deletion of default pages
+        const defaultPages = ['home', 'about', 'gallery', 'store', 'contact'];
+        if (defaultPages.includes(pageId)) {
+            this.showNotification('Cannot delete default pages', 'error');
+            return;
+        }
+
+        const confirmed = confirm(`Are you sure you want to delete the "${pageId}" page? This action cannot be undone.`);
+        if (confirmed) {
+            this.deletePage(pageId);
+        }
+    }
+
+    deletePage(pageId) {
+        // Remove from pages array
+        this.pages = this.pages.filter(page => page.id !== pageId);
+        
+        // Remove page layout and settings
+        delete this.pageLayouts[pageId];
+        delete this.pageSettings[pageId];
+        
+        // Switch to home if currently viewing deleted page
+        if (this.currentPage === pageId) {
+            this.currentPage = 'home';
+            this.loadCurrentPage();
+        }
+        
+        // Update navigation
+        this.setupPageNavigation();
+        this.saveToStorage();
+        
+        this.showNotification(`Page "${pageId}" deleted`, 'success');
+        console.log(`🗑️ Deleted page: ${pageId}`);
+    }
+
+    // Enhanced text editing setup for live preview
+    setupPreviewEditing() {
+        console.log('✏️ Preview editing setup completed');
+        
+        const previewFrame = document.getElementById('preview-frame');
+        if (!previewFrame) return;
+
+        // Add click event listener to preview frame for text editing
+        previewFrame.addEventListener('click', (e) => {
+            this.handlePreviewClick(e);
+        });
+
+        // Make all text elements editable when clicked
+        this.makeTextElementsEditable();
+    }
+
+    handlePreviewClick(e) {
+        const target = e.target;
+        
+        // Check if clicked element contains text
+        const isTextElement = target.tagName.match(/^(H[1-6]|P|SPAN|DIV|BUTTON)$/i);
+        
+        if (isTextElement && target.textContent.trim()) {
+            console.log('🖱️ Preview clicked - editable text element');
+            this.selectElement(target);
+            this.makeElementEditable(target);
+        } else {
+            console.log('🖱️ Preview clicked - no editable element');
+            this.showNotification('Click on text or images to edit them', 'info');
+        }
+    }
+
+    selectElement(element) {
+        // Remove previous selection
+        if (this.selectedElement) {
+            this.selectedElement.style.outline = '';
+            this.selectedElement.contentEditable = 'false';
+        }
+
+        // Select new element
+        this.selectedElement = element;
+        element.style.outline = '2px solid #C4962D';
+        element.style.outlineOffset = '2px';
+        
+        console.log('✅ Element selected for editing');
+        this.showEditingControls();
+    }
+
+    makeElementEditable(element) {
+        element.contentEditable = 'true';
+        element.focus();
+        
+        // Select all text for easy editing
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+
+        // Add editing event listeners
+        element.addEventListener('blur', () => {
+            element.contentEditable = 'false';
+            element.style.outline = '';
+            console.log('💾 Text editing completed');
+            this.saveToStorage();
+        });
+
+        element.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                element.blur();
+            }
+        });
+
+        console.log('✏️ Element made editable');
+    }
+
+    makeTextElementsEditable() {
+        const previewFrame = document.getElementById('preview-frame');
+        if (!previewFrame) return;
+
+        // Find all text elements and make them clickable
+        const textElements = previewFrame.querySelectorAll('h1, h2, h3, h4, h5, h6, p, span, button');
+        
+        textElements.forEach(element => {
+            element.style.cursor = 'pointer';
+            element.title = 'Click to edit text';
+            
+            // Add hover effect for better UX
+            element.addEventListener('mouseenter', () => {
+                if (element !== this.selectedElement) {
+                    element.style.outline = '1px dashed rgba(196, 150, 45, 0.5)';
+                }
+            });
+            
+            element.addEventListener('mouseleave', () => {
+                if (element !== this.selectedElement) {
+                    element.style.outline = '';
+                }
+            });
+        });
+
+        console.log(`✅ Made ${textElements.length} text elements editable`);
+    }
+
+    showEditingControls() {
+        // Show text editing panel in sidebar
+        const textControls = document.querySelector('.text-controls');
+        if (textControls) {
+            textControls.style.display = 'block';
+        }
+
+        // Update controls with current element styles
+        this.updateEditingControls();
+    }
+
+    updateEditingControls() {
+        if (!this.selectedElement) return;
+
+        const computedStyle = window.getComputedStyle(this.selectedElement);
+        
+        // Update color picker
+        const colorPicker = document.getElementById('text-color');
+        if (colorPicker) {
+            colorPicker.value = this.rgbToHex(computedStyle.color);
+        }
+
+        // Update font size
+        const sizeControl = document.getElementById('text-size');
+        if (sizeControl) {
+            const fontSize = parseInt(computedStyle.fontSize);
+            sizeControl.value = fontSize;
+            const sizeDisplay = document.querySelector('#text-size + .slider-value');
+            if (sizeDisplay) sizeDisplay.textContent = fontSize + 'px';
+        }
+
+        // Update alignment buttons
+        const alignButtons = document.querySelectorAll('.align-btn');
+        alignButtons.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.align === computedStyle.textAlign) {
+                btn.classList.add('active');
+            }
+        });
+
+        console.log('🎛️ Updated editing controls');
+    }
+}
+
+// Global functions for mobile interface compatibility
+function switchPageMobile(pageId) {
+    if (window.editor) {
+        window.editor.switchPageMobile(pageId);
+    }
+}
+
+function openMobileThemeSelector() {
+    if (window.editor) {
+        window.editor.openMobileThemeSelector();
+    }
+}
+
+function showDeletePageModal(pageId) {
+    if (window.editor) {
+        window.editor.showDeletePageModal(pageId);
     }
 }
