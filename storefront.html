@@ -236,41 +236,7 @@
             justify-content: center;
         }
         
-        /* Buttons */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: var(--spacing-xs);
-            padding: var(--spacing-sm) var(--spacing-md);
-            border: none;
-            border-radius: 8px;
-            font-family: var(--font-sans);
-            font-weight: 500;
-            text-decoration: none;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-size: 0.9rem;
-        }
-        
-        .btn-primary {
-            background: var(--muted-gold);
-            color: var(--warm-white);
-        }
-        
-        .btn-primary:hover {
-            background: #B8862A;
-            transform: translateY(-1px);
-        }
-        
-        .btn-secondary {
-            background: var(--sage);
-            color: var(--warm-white);
-        }
-        
-        .btn-secondary:hover {
-            background: #8A9B8F;
-            transform: translateY(-1px);
-        }
+        /* Buttons - First duplicate set removed to prevent CSS conflicts */
         
         /* Main Layout */
         .editor-container {
@@ -477,7 +443,7 @@
         }
 
         /* Enhanced Theme & Template Dropdown Styling */
-        #theme-dropdown, #template-dropdown {
+        #theme-dropdown, #template-dropdown, .theme-dropdown, .template-dropdown, .luxury-dropdown {
             appearance: none;
             background: var(--warm-white);
             border: 2px solid var(--beige);
@@ -496,14 +462,14 @@
             width: 100%;
         }
         
-        #theme-dropdown:hover, #template-dropdown:hover {
+        #theme-dropdown:hover, #template-dropdown:hover, .theme-dropdown:hover, .template-dropdown:hover, .luxury-dropdown:hover {
             border-color: var(--sage);
             background-color: var(--cream);
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(156, 175, 163, 0.15);
         }
         
-        #theme-dropdown:focus, #template-dropdown:focus {
+        #theme-dropdown:focus, #template-dropdown:focus, .theme-dropdown:focus, .template-dropdown:focus, .luxury-dropdown:focus {
             outline: none;
             border-color: var(--muted-gold);
             box-shadow: 0 0 0 3px rgba(196, 150, 45, 0.1);
@@ -1325,14 +1291,7 @@
             transition: all 0.2s ease;
         }
 
-        .btn-danger {
-            background: #dc3545;
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #c82333;
-        }
+        /* Duplicate .btn-danger definition removed - consolidated above */
 
         /* Background and Font Control Styles */
         .background-controls-section,
