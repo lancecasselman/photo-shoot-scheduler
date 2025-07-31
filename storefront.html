@@ -2566,6 +2566,11 @@
                         <button class="btn btn-sm style-btn" data-style="underline">U</button>
                     </div>
                 </div>
+                <div class="control-group">
+                    <label>Background Transparency</label>
+                    <input type="range" class="slider" id="bg-transparency" min="0" max="100" value="80" oninput="window.editor.updateBackgroundTransparency(this.value)">
+                    <span class="slider-value" id="bg-transparency-value">80%</span>
+                </div>
             </div>
             
             <!-- Layout Controls -->

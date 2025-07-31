@@ -1216,6 +1216,7 @@ class AdvancedVisualEditor {
             fontSettings: this.fontSettings,
             pages: this.pages,
             contentData: this.contentData,
+            siteSettings: this.siteSettings,
             previewHTML: this.generatePreviewHTML()
         };
 
@@ -1397,6 +1398,7 @@ class AdvancedVisualEditor {
                 this.pageLayouts = state.pageLayouts || this.pageLayouts;
                 this.pageSettings = state.pageSettings || this.pageSettings;
                 this.fontSettings = state.fontSettings || this.fontSettings;
+                this.siteSettings = state.siteSettings || this.siteSettings;
                 console.log('✅ Loaded state from localStorage');
             }
         } catch (error) {
@@ -2928,6 +2930,45 @@ class AdvancedVisualEditor {
             previewFrame.contentDocument.body.style.backgroundSize = 'cover';
             previewFrame.contentDocument.body.style.backgroundPosition = 'center';
             previewFrame.contentDocument.body.style.backgroundAttachment = 'fixed';
+        }
+    }
+    
+    updateBackgroundTransparency(value) {
+        document.getElementById('bg-transparency-value').textContent = value + '%';
+        
+        if (!this.selectedElement) {
+            this.showNotification('Select a text block first', 'info');
+            return;
+        }
+        
+        // Get the parent container of the selected element
+        let container = this.selectedElement;
+        while (container && !container.classList.contains('hero-section') && 
+               !container.classList.contains('about-section') && 
+               !container.classList.contains('text-section') &&
+               !container.style.padding) {
+            container = container.parentElement;
+        }
+        
+        if (container) {
+            // Apply transparency to the background
+            const opacity = value / 100;
+            const currentBg = window.getComputedStyle(container).backgroundColor;
+            
+            // If it has a background color, update with transparency
+            if (currentBg && currentBg !== 'rgba(0, 0, 0, 0)') {
+                // Parse RGB values and apply new alpha
+                const rgb = currentBg.match(/\d+/g);
+                if (rgb) {
+                    container.style.backgroundColor = `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${opacity})`;
+                }
+            } else {
+                // Apply default semi-transparent background
+                container.style.backgroundColor = `rgba(255, 255, 255, ${opacity})`;
+            }
+            
+            // Save the transparency setting
+            this.saveToStorage();
         }
     }
 }
