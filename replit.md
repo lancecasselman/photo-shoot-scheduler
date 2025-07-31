@@ -7,12 +7,12 @@ This is a comprehensive photography business management platform designed to rev
 ## User Preferences
 
 ### Communication Style
-- **Innovative Shit-Talking Mode**: User explicitly wants the direct, no-bullshit, innovative approach - NOT polite corporate speak
-- **Cut the Formalities**: Straight to technical implementation, skip pleasantries and over-politeness
-- **Bold Solutions**: Focus on cutting-edge, innovative approaches rather than safe, conventional methods
-- **Real Talk**: Be direct about what works, what doesn't, and why certain approaches are better
-- **No Corporate Bullshit**: Avoid formal, overly polite responses - user wants authentic, direct communication
-- **Technical Innovation Focus**: Emphasize innovative solutions and call out when something is actually good vs when it's shit
+- **Foul Mouth Innovative Mode - PERMANENTLY LOCKED**: User STRONGLY prefers direct, no-bullshit communication with creative cursing when appropriate
+- **Cut the Corporate Crap**: Skip formal pleasantries, dive straight into fixing shit
+- **Real Talk Only**: Call out what's broken, what sucks, and what actually works
+- **Technical Badassery**: Focus on innovative solutions that actually kick ass
+- **Zero Tolerance for Polite BS**: User explicitly rejects overly polite, formal responses
+- **Honest Assessment**: If something's fucked up, say it's fucked up and fix it
 
 ### General Working Preferences
 - Business email: lance@thelegacyphotography.com

@@ -2526,6 +2526,208 @@ class AdvancedVisualEditor {
 
         console.log('🎛️ Updated editing controls');
     }
+
+    // Add block method - supports different block types with image layouts
+    addBlock(type, options = {}) {
+        console.log(`🚀 Adding block of type: ${type}`, options);
+        
+        const blockId = `block_${Date.now()}`;
+        let blockContent;
+        
+        switch(type) {
+            case 'hero':
+                blockContent = this.createHeroBlock(blockId, options);
+                break;
+            case 'text':
+                blockContent = this.createTextBlock(blockId, options);
+                break;
+            case 'image':
+                // Support 1, 2, or 3 image layouts
+                blockContent = this.createImageBlock(blockId, options);
+                break;
+            case 'gallery':
+                blockContent = this.createGalleryBlock(blockId, options);
+                break;
+            case 'cta':
+                blockContent = this.createCTABlock(blockId, options);
+                break;
+            case 'testimonial':
+                blockContent = this.createTestimonialBlock(blockId, options);
+                break;
+            case 'pricing':
+                blockContent = this.createPricingBlock(blockId, options);
+                break;
+            default:
+                console.error(`Unknown block type: ${type}`);
+                return;
+        }
+        
+        // Add to current page layout
+        const block = {
+            id: blockId,
+            type: type,
+            content: blockContent,
+            options: options
+        };
+        
+        this.pageLayouts[this.currentPage].push(block);
+        this.updatePreview();
+        this.saveChanges();
+        
+        this.showSuccess(`Added ${type} block!`);
+    }
+    
+    // Create different block types
+    createHeroBlock(id, options = {}) {
+        return {
+            backgroundImage: options.backgroundImage || '',
+            title: options.title || 'Welcome to Our Studio',
+            subtitle: options.subtitle || 'Capturing moments that last forever',
+            buttonText: options.buttonText || 'Book Now',
+            buttonLink: options.buttonLink || '#contact'
+        };
+    }
+    
+    createTextBlock(id, options = {}) {
+        return {
+            heading: options.heading || 'About Our Work',
+            text: options.text || 'Add your story here...',
+            alignment: options.alignment || 'center'
+        };
+    }
+    
+    createImageBlock(id, options = {}) {
+        const layout = options.layout || 1; // 1, 2, or 3 images
+        const images = [];
+        
+        for (let i = 0; i < layout; i++) {
+            images.push({
+                src: options.images?.[i] || '',
+                alt: options.alts?.[i] || `Image ${i + 1}`,
+                caption: options.captions?.[i] || ''
+            });
+        }
+        
+        return {
+            layout: layout,
+            images: images,
+            spacing: options.spacing || 'medium'
+        };
+    }
+    
+    createGalleryBlock(id, options = {}) {
+        return {
+            title: options.title || 'Portfolio',
+            columns: options.columns || 3,
+            images: options.images || []
+        };
+    }
+    
+    createCTABlock(id, options = {}) {
+        return {
+            heading: options.heading || 'Ready to Book?',
+            text: options.text || 'Let\'s create something beautiful together',
+            buttonText: options.buttonText || 'Contact Us',
+            buttonLink: options.buttonLink || '#contact'
+        };
+    }
+    
+    createTestimonialBlock(id, options = {}) {
+        return {
+            quote: options.quote || 'Add a client testimonial here',
+            author: options.author || 'Client Name',
+            role: options.role || 'Event Type'
+        };
+    }
+    
+    createPricingBlock(id, options = {}) {
+        return {
+            title: options.title || 'Investment',
+            packages: options.packages || [
+                {
+                    name: 'Essential',
+                    price: '$500',
+                    features: ['2 Hour Session', '50 Edited Photos', 'Online Gallery']
+                },
+                {
+                    name: 'Premium',
+                    price: '$1000',
+                    features: ['4 Hour Session', '100 Edited Photos', 'Online Gallery', 'Print Credits']
+                },
+                {
+                    name: 'Luxury',
+                    price: '$2000',
+                    features: ['Full Day Coverage', 'Unlimited Photos', 'Online Gallery', 'Album Included']
+                }
+            ]
+        };
+    }
+    
+    // Show add page modal
+    showAddPageModal() {
+        const modal = document.createElement('div');
+        modal.className = 'add-page-modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h3>Add New Page</h3>
+                <input type="text" id="new-page-name" placeholder="Page Name" class="page-name-input">
+                <input type="text" id="new-page-icon" placeholder="Icon (emoji)" class="page-icon-input" maxlength="2">
+                <div class="modal-buttons">
+                    <button class="btn btn-secondary" onclick="window.editor.closeModal(this)">Cancel</button>
+                    <button class="btn btn-primary" onclick="window.editor.addNewPage()">Add Page</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        // Focus on input
+        setTimeout(() => {
+            document.getElementById('new-page-name').focus();
+        }, 100);
+    }
+    
+    // Add new page
+    addNewPage() {
+        const name = document.getElementById('new-page-name').value.trim();
+        const icon = document.getElementById('new-page-icon').value.trim() || '📄';
+        
+        if (!name) {
+            this.showError('Please enter a page name');
+            return;
+        }
+        
+        const pageId = name.toLowerCase().replace(/\s+/g, '-');
+        
+        // Check if page already exists
+        if (this.pages.find(p => p.id === pageId)) {
+            this.showError('Page already exists');
+            return;
+        }
+        
+        // Add page
+        this.pages.push({ id: pageId, name: name, icon: icon });
+        this.pageLayouts[pageId] = [];
+        this.pageSettings[pageId] = { backgroundColor: '#F7F3F0', pageTitle: name };
+        
+        // Update navigation
+        this.updatePageNavigation();
+        
+        // Switch to new page
+        this.switchPage(pageId);
+        
+        // Save changes
+        this.saveChanges();
+        
+        // Close modal
+        document.querySelector('.add-page-modal').remove();
+        
+        this.showSuccess(`Added new page: ${name}`);
+    }
+    
+    // Close modal
+    closeModal(button) {
+        button.closest('.add-page-modal').remove();
+    }
 }
 
 // Global functions for mobile interface compatibility

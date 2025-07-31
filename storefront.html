@@ -421,6 +421,120 @@
             letter-spacing: 0.5px;
         }
         
+        /* Block Buttons */
+        .block-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .block-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: var(--spacing-md);
+            background: var(--warm-white);
+            border: 2px solid var(--beige);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            gap: var(--spacing-xs);
+            font-family: var(--font-sans);
+        }
+        
+        .block-btn:hover {
+            border-color: var(--muted-gold);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+        
+        .block-btn:active {
+            transform: translateY(0);
+        }
+        
+        .block-icon {
+            font-size: 1.5rem;
+        }
+        
+        .block-btn span:last-child {
+            font-family: var(--font-sans);
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--deep-charcoal);
+        }
+        
+        /* Modal Styles */
+        .add-page-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        
+        .modal-content {
+            background: var(--cream);
+            padding: var(--spacing-2xl);
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: var(--shadow-large);
+        }
+        
+        .modal-content h3 {
+            font-family: var(--font-serif);
+            color: var(--deep-charcoal);
+            margin-bottom: var(--spacing-lg);
+            text-align: center;
+        }
+        
+        /* Image Layout Options */
+        .image-layout-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--spacing-md);
+            margin: var(--spacing-lg) 0;
+        }
+        
+        .layout-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: var(--spacing-md);
+            background: var(--warm-white);
+            border: 2px solid var(--beige);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            gap: var(--spacing-sm);
+        }
+        
+        .layout-option:hover {
+            border-color: var(--muted-gold);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+        
+        .layout-preview {
+            font-size: 2rem;
+            color: var(--sage);
+            display: flex;
+            gap: 4px;
+        }
+        
+        .layout-option span {
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            color: var(--deep-charcoal);
+        }
+        
         /* Editing Sections */
         .editing-section {
             margin-bottom: var(--spacing-lg);
@@ -2314,6 +2428,38 @@
                 </select>
             </div>
             
+            <h3>🧱 Add Blocks</h3>
+            <div class="block-buttons">
+                <button class="block-btn" onclick="window.editor.addBlock('hero')">
+                    <span class="block-icon">🏔️</span>
+                    <span>Hero Section</span>
+                </button>
+                <button class="block-btn" onclick="window.editor.addBlock('text')">
+                    <span class="block-icon">📝</span>
+                    <span>Text Block</span>
+                </button>
+                <button class="block-btn" onclick="showImageLayoutModal()">
+                    <span class="block-icon">🖼️</span>
+                    <span>Image Block</span>
+                </button>
+                <button class="block-btn" onclick="window.editor.addBlock('gallery')">
+                    <span class="block-icon">📸</span>
+                    <span>Gallery</span>
+                </button>
+                <button class="block-btn" onclick="window.editor.addBlock('cta')">
+                    <span class="block-icon">🎯</span>
+                    <span>Call to Action</span>
+                </button>
+                <button class="block-btn" onclick="window.editor.addBlock('testimonial')">
+                    <span class="block-icon">💬</span>
+                    <span>Testimonial</span>
+                </button>
+                <button class="block-btn" onclick="window.editor.addBlock('pricing')">
+                    <span class="block-icon">💰</span>
+                    <span>Pricing</span>
+                </button>
+            </div>
+            
             <!-- Typography Controls -->
             <h3>🔤 Typography</h3>
             <div class="editing-section">
@@ -2633,6 +2779,37 @@
                 }
             }
         });
+        
+        // Show image layout modal
+        function showImageLayoutModal() {
+            const modal = document.createElement('div');
+            modal.className = 'add-page-modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h3>Choose Image Layout</h3>
+                    <div class="image-layout-options">
+                        <button class="layout-option" onclick="window.editor.addBlock('image', {layout: 1}); closeLayoutModal()">
+                            <div class="layout-preview single">□</div>
+                            <span>Single Image</span>
+                        </button>
+                        <button class="layout-option" onclick="window.editor.addBlock('image', {layout: 2}); closeLayoutModal()">
+                            <div class="layout-preview double">□ □</div>
+                            <span>Two Images</span>
+                        </button>
+                        <button class="layout-option" onclick="window.editor.addBlock('image', {layout: 3}); closeLayoutModal()">
+                            <div class="layout-preview triple">□ □ □</div>
+                            <span>Three Images</span>
+                        </button>
+                    </div>
+                    <button class="btn btn-secondary full-width" onclick="closeLayoutModal()">Cancel</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        
+        function closeLayoutModal() {
+            document.querySelector('.add-page-modal').remove();
+        }
 
         // Mobile toolbar functions
         
