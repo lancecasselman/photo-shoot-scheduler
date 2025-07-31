@@ -55,10 +55,10 @@ This is a comprehensive photography business management platform designed to rev
 - **Photo Management**: Unlimited photo upload system (any file size/quantity) with sequential processing, real-time progress tracking, individual photo deletion, and lightbox viewing.
 - **Session Management**: CRUD operations for client sessions, including detailed information, workflow status tracking (contract signed, paid, edited, delivered) with real-time database updates.
 - **Payment Processing**: Integration with Stripe for deposit invoices, full invoicing, and an optional tipping system.
-- **Notification System**: Professional email (SendGrid) and SMS (Twilio) notifications for subscriber management, welcome messages, billing notices, and feature updates.
+- **Notification System**: Native device integration using mailto: and sms: links for seamless client communication through user's default email and messaging apps. No external API setup required.
 - **Calendar Integration**: iPhone Calendar integration for session scheduling, and a Sunrise/Sunset Photography Calendar for optimal shoot planning.
 - **Authentication**: Multi-user authentication system using Firebase Authentication (v8 legacy SDK) with Google Sign-in and Email/Password options, integrated with PostgreSQL for user management.
-- **Onboarding Wizard**: A 6-step professional onboarding process for new users covering business info, branding, Stripe setup, and session types.
+- **Subscriber Onboarding**: Streamlined 2-step setup process for new subscribers focusing on Stripe payment integration and business profile configuration. Uses native device email/SMS capabilities instead of requiring external API services.
 - **Core Features**: Session scheduling, client information tracking, workflow management, pricing, and notes system.
 
 ### System Design Choices

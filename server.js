@@ -3950,31 +3950,150 @@ app.get('/api/onboarding-status', isAuthenticated, async (req, res) => {
     }
 });
 
-// SKIP ALL SETUP BULLSHIT - STRAIGHT TO APP
+// NEW SUBSCRIBER SETUP FLOW
 app.get('/setup', (req, res) => {
+    res.sendFile(path.resolve(__dirname, 'subscriber-setup.html'));
+});
+
+// REDIRECT OLD ONBOARDING TO NEW SETUP
+app.get('/onboarding', (req, res) => {
+    res.redirect('/setup');
+});
+
+// BUSINESS PROFILE SETUP ROUTE
+app.get('/business-profile', (req, res) => {
     res.send(`
         <!DOCTYPE html>
         <html>
-        <head><title>Skip Setup</title>
+        <head><title>Business Profile Setup</title>
         <style>
-            body { font-family: Arial; text-align: center; margin: 100px auto; max-width: 400px; }
-            .skip { background: #dc3545; color: white; padding: 20px 40px; border: none; border-radius: 8px; font-size: 20px; font-weight: bold; text-decoration: none; display: inline-block; }
-            .skip:hover { background: #c82333; }
-            h2 { margin-bottom: 30px; }
+            body { font-family: 'Quicksand', Arial; background: #f5f4f0; padding: 20px; }
+            .container { max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); }
+            h2 { color: #8B7355; margin-bottom: 30px; text-align: center; }
+            .form-group { margin-bottom: 20px; }
+            label { display: block; font-weight: 600; margin-bottom: 8px; color: #333; }
+            input, select, textarea { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; }
+            input:focus, select:focus, textarea:focus { border-color: #8B7355; outline: none; }
+            .submit-btn { background: #8B7355; color: white; padding: 15px 30px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; }
+            .submit-btn:hover { background: #6B5A47; }
+            .skip-link { text-align: center; margin-top: 20px; }
+            .skip-link a { color: #8B7355; text-decoration: none; }
         </style>
+        <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
         </head>
         <body>
-            <h2>Setup Not Required</h2>
-            <p>Your authentication is working and you have access to all sessions.</p>
-            <a href="/" class="skip">SKIP SETUP - GO TO APP</a>
+            <div class="container">
+                <h2>📋 Business Profile Setup</h2>
+                <form action="/api/save-business-profile" method="POST">
+                    <div class="form-group">
+                        <label>Business Name</label>
+                        <input type="text" name="businessName" required placeholder="Your Photography Business">
+                    </div>
+                    <div class="form-group">
+                        <label>Your Name</label>
+                        <input type="text" name="ownerName" required placeholder="Your Full Name">
+                    </div>
+                    <div class="form-group">
+                        <label>Business Email</label>
+                        <input type="email" name="email" required placeholder="business@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Phone Number</label>
+                        <input type="tel" name="phone" required placeholder="(555) 123-4567">
+                    </div>
+                    <div class="form-group">
+                        <label>Location (City, State)</label>
+                        <input type="text" name="location" required placeholder="City, State">
+                    </div>
+                    <div class="form-group">
+                        <label>Photography Specialties</label>
+                        <select name="specialties" required>
+                            <option value="">Select Primary Specialty</option>
+                            <option value="wedding">Wedding Photography</option>
+                            <option value="portrait">Portrait Photography</option>
+                            <option value="family">Family Photography</option>
+                            <option value="maternity">Maternity Photography</option>
+                            <option value="newborn">Newborn Photography</option>
+                            <option value="commercial">Commercial Photography</option>
+                            <option value="fashion">Fashion Photography</option>
+                            <option value="events">Event Photography</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Experience Level</label>
+                        <select name="experience" required>
+                            <option value="">Select Experience Level</option>
+                            <option value="professional">Professional (10+ years)</option>
+                            <option value="experienced">Experienced (5-10 years)</option>
+                            <option value="intermediate">Intermediate (3-5 years)</option>
+                            <option value="beginner">Starting Out (1-3 years)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Base Session Price (USD)</label>
+                        <input type="number" name="basePrice" placeholder="500" min="0" step="50">
+                    </div>
+                    <button type="submit" class="submit-btn">Save Business Profile</button>
+                </form>
+                <div class="skip-link">
+                    <a href="/">Skip for now - I'll set this up later</a>
+                </div>
+            </div>
         </body>
         </html>
     `);
 });
 
-// NUKE ALL ONBOARDING ROUTES
-app.get('/onboarding', (req, res) => {
-    res.redirect('/');
+// SAVE BUSINESS PROFILE API
+app.post('/api/save-business-profile', express.urlencoded({ extended: true }), async (req, res) => {
+    try {
+        const { businessName, ownerName, email, phone, location, specialties, experience, basePrice } = req.body;
+        
+        // Validate location format (City, State)
+        const locationPattern = /^[a-zA-Z\s]+,\s*[a-zA-Z\s]+$/;
+        if (location && !locationPattern.test(location)) {
+            return res.status(400).send(`
+                <html><body style="font-family: Arial; padding: 40px; text-align: center;">
+                    <h2 style="color: #e74c3c;">Invalid Location Format</h2>
+                    <p>Please use format: City, State (e.g., "Charleston, SC")</p>
+                    <button onclick="history.back()" style="padding: 10px 20px; margin-top: 20px; cursor: pointer;">Go Back</button>
+                </body></html>
+            `);
+        }
+        
+        console.log('🏢 Business Profile Saved:', {
+            businessName, ownerName, email, phone, location, specialties, experience, basePrice
+        });
+        
+        // Success page
+        res.send(`
+            <html>
+            <head><title>Profile Saved!</title>
+            <style>
+                body { font-family: 'Quicksand', Arial; background: #f5f4f0; padding: 20px; }
+                .success { max-width: 500px; margin: 100px auto; background: white; padding: 40px; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); text-align: center; }
+                .success h1 { color: #28a745; margin-bottom: 20px; }
+                .btn { background: #8B7355; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; margin-top: 20px; }
+            </style>
+            <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+            </head>
+            <body>
+                <div class="success">
+                    <h1>✅ Business Profile Saved!</h1>
+                    <h2>Welcome, ${ownerName}!</h2>
+                    <p><strong>${businessName}</strong> profile is complete.</p>
+                    ${location ? `<p>📍 ${location}</p>` : ''}
+                    ${specialties ? `<p>📸 ${specialties}</p>` : ''}
+                    <a href="/" class="btn">Start Managing Sessions</a>
+                </div>
+            </body>
+            </html>
+        `);
+        
+    } catch (error) {
+        console.error('❌ Error saving business profile:', error);
+        res.status(500).send('Profile save failed. Please try again.');
+    }
 });
 
 // JavaScript test page
