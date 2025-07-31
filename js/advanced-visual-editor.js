@@ -1462,6 +1462,60 @@ class AdvancedVisualEditor {
                             </div>
                         `;
                         break;
+                    // Additional template section types
+                    case 'about':
+                        previewHTML += `
+                            <div style="margin: 40px 20px; padding: 40px; background: #FEFDFB; border-radius: 12px; display: flex; gap: 40px; align-items: center; flex-wrap: wrap;">
+                                ${block.content.image ? `<img src="${block.content.image}" style="width: 300px; height: 400px; object-fit: cover; border-radius: 8px; flex-shrink: 0;">` : ''}
+                                <div style="flex: 1; min-width: 300px;">
+                                    <h2 style="font-family: 'Cormorant Garamond', serif; font-size: 2.8em; margin-bottom: 20px; color: #2C2C2C;">${block.content.title}</h2>
+                                    <p style="font-size: 1.3em; line-height: 1.8; color: #8B7355;">${block.content.text}</p>
+                                    ${block.content.awards ? `
+                                        <div style="margin-top: 20px;">
+                                            ${block.content.awards.map(award => `<p style="margin: 8px 0; color: #C4962D;">✓ ${award}</p>`).join('')}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `;
+                        break;
+                    
+                    case 'gallery':
+                        const galleryStyle = block.content.style || 'grid';
+                        previewHTML += `
+                            <div style="margin: 40px 20px;">
+                                ${block.content.title ? `<h2 style="font-family: 'Cormorant Garamond', serif; font-size: 2.8em; text-align: center; margin-bottom: 40px; color: #2C2C2C;">${block.content.title}</h2>` : ''}
+                                <div style="display: ${galleryStyle === 'horizontal-scroll' ? 'flex; overflow-x: auto; gap: 20px; padding-bottom: 20px;' : 'grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;'}">
+                                    ${[1,2,3,4,5,6].map(i => `
+                                        <div style="background: #F0EDE8; height: 300px; ${galleryStyle === 'horizontal-scroll' ? 'min-width: 400px; flex-shrink: 0;' : ''} display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                                            <span style="color: #8B7355;">Gallery Image ${i}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `;
+                        break;
+                    
+                    case 'pricing':
+                        previewHTML += `
+                            <div style="margin: 60px 20px; text-align: center;">
+                                <h2 style="font-family: 'Cormorant Garamond', serif; font-size: 3em; margin-bottom: 40px; color: #2C2C2C;">${block.content.title}</h2>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; margin: 0 auto; max-width: 1200px;">
+                                    ${block.content.packages.map(pkg => `
+                                        <div style="background: white; padding: 40px 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); border: 2px solid #F0EDE8;">
+                                            <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 2em; margin-bottom: 10px; color: #2C2C2C;">${pkg.name}</h3>
+                                            <p style="font-size: 2.5em; color: #C4962D; margin: 20px 0; font-weight: 600;">${pkg.price}</p>
+                                            <ul style="list-style: none; padding: 0; margin: 30px 0;">
+                                                ${pkg.features.map(feature => `<li style="margin: 15px 0; color: #8B7355;">✓ ${feature}</li>`).join('')}
+                                            </ul>
+                                            <button style="background: #C4962D; color: white; padding: 15px 30px; border: none; border-radius: 8px; font-size: 1.1em; cursor: pointer; width: 100%;">Select Package</button>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `;
+                        break;
+                    
                     default:
                         previewHTML += `
                             <div style="margin: 40px 20px; padding: 30px; text-align: center; background: #F5F1EB; border-radius: 12px;">
