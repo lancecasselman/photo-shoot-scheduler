@@ -52,7 +52,7 @@ This is a comprehensive photography business management platform designed to rev
   - Automatic user status updates after successful payment
   - Free access for owner accounts (lancecasselman@icloud.com, lancecasselman2011@gmail.com, Lance@thelegacyphotography.com)
   - Subscription middleware protecting all main application routes
-- **Photo Management**: Unlimited photo upload system (any file size/quantity) with sequential processing, real-time progress tracking, individual photo deletion, and lightbox viewing.
+- **Photo Management**: Unlimited photo upload system (any file size/quantity) with dual storage architecture - original full-size files uploaded to Firebase Storage for client downloads, optimized versions (1920x2560 max, 85% quality) stored locally for fast app display. Features sequential processing, real-time progress tracking, individual photo deletion, and lightbox viewing.
 - **Session Management**: CRUD operations for client sessions, including detailed information, workflow status tracking (contract signed, paid, edited, delivered) with real-time database updates.
 - **Payment Processing**: Integration with Stripe for deposit invoices, full invoicing, and an optional tipping system.
 - **Notification System**: Native device integration using mailto: and sms: links for seamless client communication through user's default email and messaging apps. No external API setup required.
@@ -66,7 +66,7 @@ This is a comprehensive photography business management platform designed to rev
 - **Cloud Database**: PostgreSQL as the primary persistent data storage, with Firebase Firestore as an alternative/fallback for certain data.
 - **API-First Architecture**: RESTful API design for all core functionalities, with secure endpoints protected by authentication middleware.
 - **Firebase Storage**: Utilized for cloud photo storage, organized by session ID.
-- **Performance Optimization**: Focus on zero page reloads for real-time updates, optimized large file uploads, and robust error handling.
+- **Performance Optimization**: Focus on zero page reloads for real-time updates, dual storage system for optimal performance (Sharp library for image optimization), and robust error handling. Client downloads serve original full-size files while app displays use optimized versions for speed.
 - **Security**: Measures include secure DOM manipulation (preventing XSS), authentication for all features, and secure token-based access for galleries.
 - **Development Mode**: Toggleable `DEV_MODE` for easy testing without authentication barriers.
 
