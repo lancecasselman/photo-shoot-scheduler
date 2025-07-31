@@ -666,12 +666,44 @@ class AdvancedVisualEditor {
     }
 
     setupBackgroundControls() {
-        // Background control setup
+        // Background control setup with event listeners
+        const bgColor = document.getElementById('bg-color');
+        const bgImage = document.getElementById('bg-image');
+        
+        if (bgColor) {
+            bgColor.addEventListener('change', (e) => {
+                this.updateBackgroundColor(e.target.value);
+            });
+        }
+        
+        if (bgImage) {
+            bgImage.addEventListener('change', (e) => {
+                if (e.target.files[0]) {
+                    this.updateBackgroundImage(e.target.files[0]);
+                }
+            });
+        }
+        
         console.log('🎨 Background controls setup completed');
     }
 
     setupFontControls() {
-        // Font control setup
+        // Font control setup with event listeners
+        const headingFont = document.getElementById('heading-font');
+        const bodyFont = document.getElementById('body-font');
+        
+        if (headingFont) {
+            headingFont.addEventListener('change', (e) => {
+                this.updateFont('heading', e.target.value);
+            });
+        }
+        
+        if (bodyFont) {
+            bodyFont.addEventListener('change', (e) => {
+                this.updateFont('body', e.target.value);
+            });
+        }
+        
         console.log('🔤 Font controls setup completed');
     }
 
@@ -717,10 +749,13 @@ class AdvancedVisualEditor {
         const previewFrame = document.getElementById('preview-frame');
         if (previewFrame) {
             previewFrame.addEventListener('click', (e) => {
-                console.log('🖱️ Preview clicked - enabling edit mode');
-                this.showNotification('Click any text or image to edit', 'info');
+                this.handleElementEdit(e);
             });
         }
+        
+        // Setup element editing controls
+        this.setupElementControls();
+        
         console.log('✏️ Preview editing setup completed');
     }
 
@@ -743,6 +778,304 @@ class AdvancedVisualEditor {
         await this.loadCurrentPage();
         
         this.showNotification(`Switched to ${pageId} page`, 'success');
+    }
+
+    // Handle element editing when clicked in preview
+    handleElementEdit(event) {
+        const target = event.target;
+        
+        // Check if clicked element is editable (text, image, etc.)
+        if (target.tagName === 'H1' || target.tagName === 'H2' || target.tagName === 'H3' || 
+            target.tagName === 'P' || target.tagName === 'SPAN' || target.tagName === 'A') {
+            
+            this.selectElement(target);
+            console.log('🖱️ Text element selected for editing');
+            this.showNotification('Text element selected - use controls to edit', 'info');
+        } else if (target.tagName === 'IMG') {
+            this.selectElement(target);
+            console.log('🖼️ Image element selected for editing');
+            this.showNotification('Image element selected - use controls to edit', 'info');
+        } else {
+            console.log('🖱️ Preview clicked - no editable element');
+            this.showNotification('Click on text or images to edit them', 'info');
+        }
+    }
+
+    // Select an element for editing
+    selectElement(element) {
+        // Remove previous selection
+        const previousSelected = document.querySelector('.selected-element');
+        if (previousSelected) {
+            previousSelected.classList.remove('selected-element');
+        }
+
+        // Add selection class
+        element.classList.add('selected-element');
+        this.selectedElement = element;
+
+        // Update controls with element's current properties
+        this.updateControlsFromElement(element);
+    }
+
+    // Update control panels based on selected element
+    updateControlsFromElement(element) {
+        const computedStyle = window.getComputedStyle(element);
+        
+        // Update text controls
+        const textColor = document.getElementById('text-color');
+        const textSize = document.getElementById('text-size');
+        const textSizeValue = document.querySelector('#text-size + .slider-value');
+        
+        if (textColor) {
+            textColor.value = this.rgbToHex(computedStyle.color) || '#2C2C2C';
+        }
+        
+        if (textSize && textSizeValue) {
+            const fontSize = parseInt(computedStyle.fontSize) || 16;
+            textSize.value = fontSize;
+            textSizeValue.textContent = fontSize + 'px';
+        }
+
+        // Update layout controls
+        const padding = document.getElementById('element-padding');
+        const paddingValue = document.querySelector('#element-padding + .slider-value');
+        
+        if (padding && paddingValue) {
+            const paddingVal = parseInt(computedStyle.padding) || 20;
+            padding.value = paddingVal;
+            paddingValue.textContent = paddingVal + 'px';
+        }
+    }
+
+    // Setup element editing controls
+    setupElementControls() {
+        // Text styling controls
+        const textColor = document.getElementById('text-color');
+        const textSize = document.getElementById('text-size');
+        const alignButtons = document.querySelectorAll('.align-btn');
+        const styleButtons = document.querySelectorAll('.style-btn');
+        
+        // Layout controls
+        const padding = document.getElementById('element-padding');
+        const margin = document.getElementById('element-margin');
+        const borderRadius = document.getElementById('border-radius');
+
+        // Text color control
+        if (textColor) {
+            textColor.addEventListener('change', (e) => {
+                this.applyTextColor(e.target.value);
+            });
+        }
+
+        // Text size control
+        if (textSize) {
+            textSize.addEventListener('input', (e) => {
+                const value = e.target.value;
+                const valueSpan = document.querySelector('#text-size + .slider-value');
+                if (valueSpan) valueSpan.textContent = value + 'px';
+                this.applyTextSize(value);
+            });
+        }
+
+        // Text alignment controls
+        alignButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                alignButtons.forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                this.applyTextAlign(e.target.dataset.align);
+            });
+        });
+
+        // Text style controls
+        styleButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.target.classList.toggle('active');
+                this.applyTextStyle(e.target.dataset.style, e.target.classList.contains('active'));
+            });
+        });
+
+        // Layout controls
+        if (padding) {
+            padding.addEventListener('input', (e) => {
+                const value = e.target.value;
+                const valueSpan = document.querySelector('#element-padding + .slider-value');
+                if (valueSpan) valueSpan.textContent = value + 'px';
+                this.applyPadding(value);
+            });
+        }
+
+        if (margin) {
+            margin.addEventListener('input', (e) => {
+                const value = e.target.value;
+                const valueSpan = document.querySelector('#element-margin + .slider-value');
+                if (valueSpan) valueSpan.textContent = value + 'px';
+                this.applyMargin(value);
+            });
+        }
+
+        if (borderRadius) {
+            borderRadius.addEventListener('input', (e) => {
+                const value = e.target.value;
+                const valueSpan = document.querySelector('#border-radius + .slider-value');
+                if (valueSpan) valueSpan.textContent = value + 'px';
+                this.applyBorderRadius(value);
+            });
+        }
+    }
+
+    // Apply font changes
+    updateFont(type, fontFamily) {
+        const previewFrame = document.getElementById('preview-frame');
+        if (!previewFrame) return;
+
+        const selector = type === 'heading' ? 'h1, h2, h3' : 'p, span, div';
+        const elements = previewFrame.querySelectorAll(selector);
+        
+        elements.forEach(el => {
+            el.style.fontFamily = fontFamily;
+        });
+
+        console.log(`🔤 Updated ${type} font to: ${fontFamily}`);
+        this.showNotification(`${type} font updated`, 'success');
+        this.saveToStorage();
+    }
+
+    // Apply background color
+    updateBackgroundColor(color) {
+        const previewFrame = document.getElementById('preview-frame');
+        if (previewFrame) {
+            previewFrame.style.backgroundColor = color;
+            console.log(`🎨 Background color updated to: ${color}`);
+            this.showNotification('Background color updated', 'success');
+            this.saveToStorage();
+        }
+    }
+
+    // Apply background image
+    updateBackgroundImage(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const previewFrame = document.getElementById('preview-frame');
+            if (previewFrame) {
+                previewFrame.style.backgroundImage = `url('${e.target.result}')`;
+                previewFrame.style.backgroundSize = 'cover';
+                previewFrame.style.backgroundPosition = 'center';
+                console.log('🎨 Background image updated');
+                this.showNotification('Background image updated', 'success');
+                this.saveToStorage();
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // Apply text color to selected element
+    applyTextColor(color) {
+        if (this.selectedElement) {
+            this.selectedElement.style.color = color;
+            this.showNotification('Text color updated', 'success');
+            this.saveToStorage();
+        }
+    }
+
+    // Apply text size to selected element
+    applyTextSize(size) {
+        if (this.selectedElement) {
+            this.selectedElement.style.fontSize = size + 'px';
+            this.showNotification('Text size updated', 'success');
+            this.saveToStorage();
+        }
+    }
+
+    // Apply text alignment to selected element
+    applyTextAlign(align) {
+        if (this.selectedElement) {
+            this.selectedElement.style.textAlign = align;
+            this.showNotification('Text alignment updated', 'success');
+            this.saveToStorage();
+        }
+    }
+
+    // Apply text style to selected element
+    applyTextStyle(style, active) {
+        if (this.selectedElement) {
+            switch(style) {
+                case 'bold':
+                    this.selectedElement.style.fontWeight = active ? 'bold' : 'normal';
+                    break;
+                case 'italic':
+                    this.selectedElement.style.fontStyle = active ? 'italic' : 'normal';
+                    break;
+                case 'underline':
+                    this.selectedElement.style.textDecoration = active ? 'underline' : 'none';
+                    break;
+            }
+            this.showNotification(`Text ${style} ${active ? 'applied' : 'removed'}`, 'success');
+            this.saveToStorage();
+        }
+    }
+
+    // Apply padding to selected element
+    applyPadding(padding) {
+        if (this.selectedElement) {
+            this.selectedElement.style.padding = padding + 'px';
+            this.showNotification('Padding updated', 'success');
+            this.saveToStorage();
+        }
+    }
+
+    // Apply margin to selected element
+    applyMargin(margin) {
+        if (this.selectedElement) {
+            this.selectedElement.style.margin = margin + 'px';
+            this.showNotification('Margin updated', 'success');
+            this.saveToStorage();
+        }
+    }
+
+    // Apply border radius to selected element
+    applyBorderRadius(radius) {
+        if (this.selectedElement) {
+            this.selectedElement.style.borderRadius = radius + 'px';
+            this.showNotification('Border radius updated', 'success');
+            this.saveToStorage();
+        }
+    }
+
+    // Helper function to convert RGB to Hex
+    rgbToHex(rgb) {
+        if (!rgb || rgb === 'rgba(0, 0, 0, 0)') return '#000000';
+        
+        const result = rgb.match(/\d+/g);
+        if (!result || result.length < 3) return '#000000';
+        
+        const hex = '#' + result.slice(0, 3).map(x => {
+            const hex = parseInt(x).toString(16);
+            return hex.length === 1 ? '0' + hex : hex;
+        }).join('');
+        
+        return hex;
+    }
+
+    // Reset current page to empty state
+    resetCurrentPage() {
+        const previewFrame = document.getElementById('preview-frame');
+        if (previewFrame) {
+            previewFrame.innerHTML = '<div style="padding: 40px; text-align: center; color: var(--soft-brown);"><h2>Page Reset</h2><p>Add luxury components to build your page</p></div>';
+            
+            // Clear page data
+            if (this.pageLayouts[this.currentPage]) {
+                this.pageLayouts[this.currentPage] = [];
+            }
+            
+            // Clear selected element
+            this.selectedElement = null;
+            
+            // Reset background
+            previewFrame.style.backgroundColor = '';
+            previewFrame.style.backgroundImage = '';
+            
+            console.log(`🔄 Reset page: ${this.currentPage}`);
+        }
     }
 
     // Initialize with luxury component system

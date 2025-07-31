@@ -415,6 +415,166 @@
             letter-spacing: 0.5px;
         }
         
+        /* Editing Sections */
+        .editing-section {
+            margin-bottom: var(--spacing-lg);
+            padding: var(--spacing-md);
+            background: var(--warm-white);
+            border: 1px solid var(--beige);
+            border-radius: 8px;
+        }
+
+        .control-group {
+            margin-bottom: var(--spacing-md);
+        }
+
+        .control-group label {
+            display: block;
+            font-weight: 600;
+            color: var(--deep-charcoal);
+            margin-bottom: var(--spacing-xs);
+            font-size: 0.9rem;
+        }
+
+        .font-dropdown, .color-picker, .file-input {
+            width: 100%;
+            padding: var(--spacing-sm);
+            border: 2px solid var(--beige);
+            border-radius: 6px;
+            background: var(--warm-white);
+            color: var(--deep-charcoal);
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .font-dropdown:hover, .color-picker:hover, .file-input:hover {
+            border-color: var(--muted-gold);
+        }
+
+        .font-dropdown:focus, .color-picker:focus, .file-input:focus {
+            outline: none;
+            border-color: var(--muted-gold);
+            box-shadow: 0 0 0 3px rgba(196, 150, 45, 0.1);
+        }
+
+        .slider {
+            width: 70%;
+            margin-right: var(--spacing-sm);
+        }
+
+        .slider-value {
+            font-size: 0.8rem;
+            color: var(--soft-brown);
+            font-weight: 600;
+            min-width: 50px;
+            display: inline-block;
+        }
+
+        .button-group {
+            display: flex;
+            gap: var(--spacing-xs);
+        }
+
+        .btn {
+            padding: var(--spacing-sm) var(--spacing-md);
+            border: 2px solid var(--beige);
+            border-radius: 6px;
+            background: var(--warm-white);
+            color: var(--deep-charcoal);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: var(--font-sans);
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn:hover {
+            border-color: var(--muted-gold);
+            background: var(--beige);
+        }
+
+        .btn-primary {
+            background: var(--sage);
+            color: var(--warm-white);
+            border-color: var(--sage);
+        }
+
+        .btn-primary:hover {
+            background: var(--soft-brown);
+            border-color: var(--soft-brown);
+        }
+
+        .btn-secondary {
+            background: var(--muted-gold);
+            color: var(--warm-white);
+            border-color: var(--muted-gold);
+        }
+
+        .btn-secondary:hover {
+            background: var(--deep-charcoal);
+            border-color: var(--deep-charcoal);
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: var(--warm-white);
+            border-color: #e74c3c;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+            border-color: #c0392b;
+        }
+
+        .btn-sm {
+            padding: var(--spacing-xs) var(--spacing-sm);
+            font-size: 0.8rem;
+        }
+
+        .full-width {
+            width: 100%;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .align-btn, .style-btn {
+            width: 40px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .align-btn.active, .style-btn.active {
+            background: var(--sage);
+            color: var(--warm-white);
+            border-color: var(--sage);
+        }
+
+        /* Selected element highlighting */
+        .selected-element {
+            outline: 3px solid var(--muted-gold) !important;
+            outline-offset: 2px;
+            box-shadow: 0 0 10px rgba(196, 150, 45, 0.3) !important;
+            position: relative;
+        }
+
+        .selected-element::after {
+            content: "✏️ Selected";
+            position: absolute;
+            top: -25px;
+            left: 0;
+            background: var(--muted-gold);
+            color: var(--warm-white);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            z-index: 1000;
+        }
+
         /* Old Theme Grid (keeping for backward compatibility) */
         .theme-grid {
             display: none;
@@ -1386,6 +1546,102 @@
             <div id="luxury-components">
                 <!-- Populated by JavaScript with luxury components -->
             </div>
+            
+            <!-- Typography Controls -->
+            <h3>🔤 Typography</h3>
+            <div class="editing-section">
+                <div class="control-group">
+                    <label>Heading Font</label>
+                    <select class="font-dropdown" id="heading-font">
+                        <option value="Cormorant Garamond">Cormorant Garamond</option>
+                        <option value="Playfair Display">Playfair Display</option>
+                        <option value="Lora">Lora</option>
+                        <option value="Merriweather">Merriweather</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Body Font</label>
+                    <select class="font-dropdown" id="body-font">
+                        <option value="Quicksand">Quicksand</option>
+                        <option value="Open Sans">Open Sans</option>
+                        <option value="Poppins">Poppins</option>
+                        <option value="Source Sans Pro">Source Sans Pro</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Background Controls -->
+            <h3>🎨 Background</h3>
+            <div class="editing-section">
+                <div class="control-group">
+                    <label>Background Color</label>
+                    <input type="color" class="color-picker" id="bg-color" value="#F7F3F0">
+                </div>
+                <div class="control-group">
+                    <label>Background Image</label>
+                    <input type="file" class="file-input" id="bg-image" accept="image/*">
+                    <button class="btn btn-sm" onclick="clearBackground()">Clear</button>
+                </div>
+            </div>
+            
+            <!-- Element Controls -->
+            <h3>✏️ Element Editor</h3>
+            <div class="editing-section" id="element-controls">
+                <div class="control-group">
+                    <label>Text Color</label>
+                    <input type="color" class="color-picker" id="text-color" value="#2C2C2C">
+                </div>
+                <div class="control-group">
+                    <label>Text Size</label>
+                    <input type="range" class="slider" id="text-size" min="12" max="72" value="16">
+                    <span class="slider-value">16px</span>
+                </div>
+                <div class="control-group">
+                    <label>Text Align</label>
+                    <div class="button-group">
+                        <button class="btn btn-sm align-btn" data-align="left">◀</button>
+                        <button class="btn btn-sm align-btn" data-align="center">●</button>
+                        <button class="btn btn-sm align-btn" data-align="right">▶</button>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label>Text Style</label>
+                    <div class="button-group">
+                        <button class="btn btn-sm style-btn" data-style="bold">B</button>
+                        <button class="btn btn-sm style-btn" data-style="italic">I</button>
+                        <button class="btn btn-sm style-btn" data-style="underline">U</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Layout Controls -->
+            <h3>📐 Layout</h3>
+            <div class="editing-section">
+                <div class="control-group">
+                    <label>Padding</label>
+                    <input type="range" class="slider" id="element-padding" min="0" max="100" value="20">
+                    <span class="slider-value">20px</span>
+                </div>
+                <div class="control-group">
+                    <label>Margin</label>
+                    <input type="range" class="slider" id="element-margin" min="0" max="100" value="10">
+                    <span class="slider-value">10px</span>
+                </div>
+                <div class="control-group">
+                    <label>Border Radius</label>
+                    <input type="range" class="slider" id="border-radius" min="0" max="50" value="8">
+                    <span class="slider-value">8px</span>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <h3>🛠️ Actions</h3>
+            <div class="editing-section">
+                <button class="btn btn-primary full-width" onclick="saveChanges()">💾 Save Changes</button>
+                <button class="btn btn-secondary full-width" onclick="previewWebsite()">👁️ Preview Website</button>
+                <button class="btn btn-secondary full-width" onclick="exportCode()">📤 Export Code</button>
+                <button class="btn btn-danger full-width" onclick="resetPage()">🔄 Reset Page</button>
+            </div>
         </div>
         
         <!-- Center - Single Live Preview -->
@@ -1426,6 +1682,53 @@
             window.editor = new AdvancedVisualEditor();
             console.log('🚀 Advanced Visual Editor initialized');
         });
+
+        // Global action functions for buttons
+        function saveChanges() {
+            if (window.editor) {
+                window.editor.saveToStorage();
+                window.editor.showNotification('Changes saved successfully!', 'success');
+            }
+        }
+
+        function previewWebsite() {
+            if (window.editor) {
+                window.open('/preview/' + window.editor.userId, '_blank');
+                window.editor.showNotification('Opening preview in new tab', 'info');
+            }
+        }
+
+        function exportCode() {
+            if (window.editor) {
+                window.editor.showNotification('Export feature coming soon!', 'info');
+            }
+        }
+
+        function resetPage() {
+            if (window.editor && confirm('Are you sure you want to reset this page? This action cannot be undone.')) {
+                window.editor.resetCurrentPage();
+                window.editor.showNotification('Page reset successfully', 'success');
+            }
+        }
+
+        function clearBackground() {
+            if (window.editor) {
+                const previewFrame = document.getElementById('preview-frame');
+                if (previewFrame) {
+                    previewFrame.style.backgroundColor = '';
+                    previewFrame.style.backgroundImage = '';
+                    window.editor.showNotification('Background cleared', 'success');
+                    window.editor.saveToStorage();
+                }
+            }
+        }
+
+        function publishSite() {
+            if (window.editor) {
+                window.editor.showNotification('Publishing site...', 'info');
+                // Publishing functionality would be implemented here
+            }
+        }
     </script>
     
     <!-- Hamburger Menu JavaScript -->
