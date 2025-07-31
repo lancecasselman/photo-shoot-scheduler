@@ -10624,7 +10624,10 @@ I'm so grateful to work with clients like ${clientName} who trust me to capture 
                     }
                     
                     // Update the UI
-                displaySharedPoses();
+                    displaySharedPoses();
+                } else {
+                    showMessage('Failed to update favorites', 'error');
+                }
                 
             } catch (error) {
                 console.error('Error toggling favorite:', error);
