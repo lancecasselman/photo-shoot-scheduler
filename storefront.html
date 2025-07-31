@@ -2605,23 +2605,23 @@
             <!-- Component Tools Group -->
             <div class="tool-group">
                 <div class="group-label">Add</div>
-                <div class="tool-item" onclick="addComponentMobile('hero')">
+                <div class="tool-item" onclick="addLuxuryComponent('massive-hero-text')">
                     <div class="tool-icon">🦸</div>
                     <div class="tool-label">Hero</div>
                 </div>
-                <div class="tool-item" onclick="addComponentMobile('gallery')">
+                <div class="tool-item" onclick="addLuxuryComponent('full-width-gallery')">
                     <div class="tool-icon">🖼️</div>
                     <div class="tool-label">Gallery</div>
                 </div>
-                <div class="tool-item" onclick="addComponentMobile('text')">
+                <div class="tool-item" onclick="addLuxuryComponent('transformational-experience')">
                     <div class="tool-icon">📝</div>
                     <div class="tool-label">Text</div>
                 </div>
-                <div class="tool-item" onclick="addComponentMobile('pricing')">
+                <div class="tool-item" onclick="addLuxuryComponent('luxury-pricing')">
                     <div class="tool-icon">💰</div>
                     <div class="tool-label">Pricing</div>
                 </div>
-                <div class="tool-item" onclick="addComponentMobile('testimonial')">
+                <div class="tool-item" onclick="addLuxuryComponent('award-winning-positioning')">
                     <div class="tool-icon">💬</div>
                     <div class="tool-label">Review</div>
                 </div>
@@ -2630,19 +2630,19 @@
             <!-- Action Tools Group -->
             <div class="tool-group">
                 <div class="group-label">Actions</div>
-                <div class="tool-item" onclick="previewWebsiteMobile()">
+                <div class="tool-item" onclick="previewWebsite()">
                     <div class="tool-icon">👁️</div>
                     <div class="tool-label">Preview</div>
                 </div>
-                <div class="tool-item" onclick="saveChangesMobile()">
+                <div class="tool-item" onclick="saveChanges()">
                     <div class="tool-icon">💾</div>
                     <div class="tool-label">Save</div>
                 </div>
-                <div class="tool-item" onclick="undoActionMobile()">
+                <div class="tool-item" onclick="undoAction()">
                     <div class="tool-icon">↩️</div>
                     <div class="tool-label">Undo</div>
                 </div>
-                <div class="tool-item" onclick="redoActionMobile()">
+                <div class="tool-item" onclick="redoAction()">
                     <div class="tool-icon">↪️</div>
                     <div class="tool-label">Redo</div>
                 </div>
@@ -2955,199 +2955,25 @@
             }
         }
 
-        function previewWebsiteMobile() {
-            if (window.visualEditor) {
-                window.visualEditor.previewSite();
-                markToolActive('preview');
+        // Desktop editor functions - clean and functional
+        function addLuxuryComponent(componentType) {
+            if (window.editor && window.editor.addLuxuryComponent) {
+                window.editor.addLuxuryComponent(componentType);
+                window.editor.showNotification(`Added ${componentType} component`, 'success');
             }
         }
 
-        function undoActionMobile() {
-            if (window.visualEditor && window.visualEditor.undo) {
-                window.visualEditor.undo();
-                markToolActive('undo');
+        function undoAction() {
+            if (window.editor && window.editor.undo) {
+                window.editor.undo();
+                window.editor.showNotification('Undone', 'info');
             }
         }
 
-        function redoActionMobile() {
-            if (window.visualEditor && window.visualEditor.redo) {
-                window.visualEditor.redo();
-                markToolActive('redo');
-            }
-        }
-
-        function switchPageMobile(page) {
-            if (window.visualEditor) {
-                window.visualEditor.switchPage(page);
-                markToolActive('page-' + page);
-            }
-        }
-
-        // Update existing CapCut toolbar with proper onclick handlers
-        function updateCapCutToolbar() {
-            // Action Tools Group - Add these buttons to the CapCut toolbar
-            const actionsHTML = `
-            <div class="tool-group">
-                <div class="group-label">Actions</div>
-                <div class="tool-item" onclick="saveChangesMobile()">
-                    <div class="tool-icon">💾</div>
-                    <div class="tool-label">Save</div>
-                </div>
-                <div class="tool-item" onclick="previewWebsiteMobile()">
-                    <div class="tool-icon">👁️</div>
-                    <div class="tool-label">Preview</div>
-                </div>
-                <div class="tool-item" onclick="undoActionMobile()">
-                    <div class="tool-icon">↶</div>
-                    <div class="tool-label">Undo</div>
-                </div>
-                <div class="tool-item" onclick="redoActionMobile()">
-                    <div class="tool-icon">↷</div>
-                    <div class="tool-label">Redo</div>
-                </div>
-            </div>`;
-            
-            // Find the CapCut toolbar and add actions group if not exists
-            const toolbar = document.querySelector('.capcut-tools-scroll');
-            if (toolbar && !toolbar.querySelector('.group-label:contains("Actions")')) {
-                toolbar.insertAdjacentHTML('beforeend', actionsHTML);
-            }
-        }
-
-        // Auto-update toolbar when page loads  
-        document.addEventListener('DOMContentLoaded', updateCapCutToolbar);
-
-        function markToolActive(toolId) {
-            // Remove active class from all tools
-            document.querySelectorAll('.tool-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            
-            // Add active class to current tool (search by onclick content)
-            const toolElements = document.querySelectorAll('.tool-item');
-            toolElements.forEach(item => {
-                const onclick = item.getAttribute('onclick');
-                if (onclick && onclick.includes(toolId)) {
-                    item.classList.add('active');
-                }
-            });
-            
-            // Auto-remove active state after 2 seconds
-            setTimeout(() => {
-                document.querySelectorAll('.tool-item').forEach(item => {
-                    item.classList.remove('active');
-                });
-            }, 2000);
-        }
-        
-        function changeThemeMobile(theme) {
-            if (window.editor && theme) {
-                window.editor.changeTheme(theme);
-                closeMobilePanel();
-            }
-        }
-
-        function openMobileThemeSelector() {
-            if (window.editor) {
-                // Open theme dropdown in mobile interface
-                const themeDropdown = document.querySelector('#theme-selector, .theme-dropdown');
-                if (themeDropdown) {
-                    themeDropdown.focus();
-                    themeDropdown.click();
-                }
-                markToolActive('themes');
-            }
-        }
-
-        function openMobileTemplateSelector() {
-            if (window.editor) {
-                // Open template dropdown in mobile interface
-                const templateDropdown = document.querySelector('#prebuilt-template-selector, .template-dropdown');
-                if (templateDropdown) {
-                    templateDropdown.focus();
-                    templateDropdown.click();
-                }
-                markToolActive('templates');
-            }
-        }
-        
-        function applyTemplateMobile(template) {
-            if (window.editor && template) {
-                window.editor.applyTemplate(template);
-                closeMobilePanel();
-            }
-        }
-        
-        function addLuxuryComponentMobile(component) {
-            if (window.editor && component) {
-                window.editor.addLuxuryComponent(component);
-                closeMobilePanel();
-            }
-        }
-        
-        function showPageCreationModal() {
-            if (window.editor) {
-                window.editor.showPageCreationModal();
-                closeMobilePanel();
-            }
-        }
-        
-        // Populate mobile dropdowns when panels open
-        function populateMobileDropdowns() {
-            // Populate themes dropdown in mobile panel
-            const mobileThemeSelector = document.getElementById('mobile-theme-selector');
-            if (mobileThemeSelector && window.editor && window.editor.themes) {
-                mobileThemeSelector.innerHTML = '<option value="">Select Theme...</option>';
-                Object.keys(window.editor.themes).forEach(themeKey => {
-                    const theme = window.editor.themes[themeKey];
-                    const option = document.createElement('option');
-                    option.value = themeKey;
-                    option.textContent = theme.name;
-                    mobileThemeSelector.appendChild(option);
-                });
-            }
-            
-            // Populate templates dropdown from desktop dropdown
-            const mobileTemplateSelector = document.getElementById('mobile-template-selector');
-            const desktopTemplateSelector = document.getElementById('prebuilt-template-selector');
-            if (mobileTemplateSelector && desktopTemplateSelector) {
-                mobileTemplateSelector.innerHTML = desktopTemplateSelector.innerHTML;
-            }
-            
-            // Populate luxury components dropdown from desktop dropdown
-            const mobileLuxurySelector = document.getElementById('mobile-luxury-component-selector');
-            const desktopLuxurySelector = document.getElementById('luxury-component-selector');
-            if (mobileLuxurySelector && desktopLuxurySelector) {
-                mobileLuxurySelector.innerHTML = desktopLuxurySelector.innerHTML;
-            }
-            
-            // Populate font dropdowns in mobile panel
-            const fonts = [
-                'Cormorant Garamond', 'Quicksand', 'Playfair Display', 'Open Sans', 
-                'Lora', 'Poppins', 'Montserrat', 'Raleway', 'Source Sans Pro', 'Merriweather'
-            ];
-            
-            const mobileHeadingFont = document.getElementById('heading-font');
-            const mobileBodyFont = document.getElementById('body-font');
-            
-            if (mobileHeadingFont) {
-                mobileHeadingFont.innerHTML = '<option value="">Select Heading Font...</option>';
-                fonts.forEach(font => {
-                    const option = document.createElement('option');
-                    option.value = font;
-                    option.textContent = font;
-                    mobileHeadingFont.appendChild(option);
-                });
-            }
-            
-            if (mobileBodyFont) {
-                mobileBodyFont.innerHTML = '<option value="">Select Body Font...</option>';
-                fonts.forEach(font => {
-                    const option = document.createElement('option');
-                    option.value = font;
-                    option.textContent = font;
-                    mobileBodyFont.appendChild(option);
-                });
+        function redoAction() {
+            if (window.editor && window.editor.redo) {
+                window.editor.redo();
+                window.editor.showNotification('Redone', 'info');
             }
         }
     </script>
