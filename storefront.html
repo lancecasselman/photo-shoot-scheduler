@@ -2807,28 +2807,18 @@
                 });
             }
             
-            // Populate templates dropdown in mobile panel  
+            // Populate templates dropdown from desktop dropdown
             const mobileTemplateSelector = document.getElementById('mobile-template-selector');
-            if (mobileTemplateSelector && window.editor && window.editor.prebuiltTemplates) {
-                mobileTemplateSelector.innerHTML = '<option value="">Apply Template...</option>';
-                window.editor.prebuiltTemplates.forEach(template => {
-                    const option = document.createElement('option');
-                    option.value = template.id;
-                    option.textContent = template.name;
-                    mobileTemplateSelector.appendChild(option);
-                });
+            const desktopTemplateSelector = document.getElementById('prebuilt-template-selector');
+            if (mobileTemplateSelector && desktopTemplateSelector) {
+                mobileTemplateSelector.innerHTML = desktopTemplateSelector.innerHTML;
             }
             
-            // Populate luxury components dropdown in mobile panel
+            // Populate luxury components dropdown from desktop dropdown
             const mobileLuxurySelector = document.getElementById('mobile-luxury-component-selector');
-            if (mobileLuxurySelector && window.editor && window.editor.luxuryComponents) {
-                mobileLuxurySelector.innerHTML = '<option value="">Add Luxury Component...</option>';
-                window.editor.luxuryComponents.forEach(component => {
-                    const option = document.createElement('option');
-                    option.value = component.id;
-                    option.textContent = component.name;
-                    mobileLuxurySelector.appendChild(option);
-                });
+            const desktopLuxurySelector = document.getElementById('luxury-component-selector');
+            if (mobileLuxurySelector && desktopLuxurySelector) {
+                mobileLuxurySelector.innerHTML = desktopLuxurySelector.innerHTML;
             }
             
             // Populate font dropdowns in mobile panel
