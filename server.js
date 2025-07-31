@@ -3950,9 +3950,9 @@ app.get('/api/onboarding-status', isAuthenticated, async (req, res) => {
     }
 });
 
-// Serve onboarding wizard
+// Serve onboarding wizard - BULLETPROOF NO-JS VERSION
 app.get('/onboarding', (req, res) => {
-    res.sendFile(path.join(__dirname, 'no-js-onboarding.html'));
+    res.sendFile(path.join(__dirname, 'bulletproof-onboarding.html'));
 });
 
 // JavaScript test page
