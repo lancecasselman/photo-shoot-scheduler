@@ -3603,19 +3603,19 @@
         }
 
         .session-notes {
-            background: var(--cream-warm);
-            padding: var(--spacing-md);
-            border-radius: var(--border-radius);
-            margin-top: var(--spacing-md);
-            border: 2px solid var(--accent-beige);
-            box-shadow: var(--shadow-soft);
+            background: #ffffff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 2px solid #d4af37;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
         .session-notes h4 {
-            color: var(--gold-muted);
-            margin-bottom: var(--spacing-sm);
+            color: #000000;
+            margin-bottom: 10px;
             font-size: 1em;
-            font-family: var(--font-heading);
+            font-weight: 600;
         }
 
         .notes-checklist {
@@ -3628,19 +3628,31 @@
         .notes-checklist label {
             display: flex;
             align-items: center;
-            gap: var(--spacing-xs);
-            color: var(--text-primary);
+            gap: 8px;
+            color: #000000;
             font-size: 0.9em;
             cursor: pointer;
-            font-family: var(--font-body);
+            font-weight: 500;
         }
 
         .notes-textarea {
             width: 100%;
-            padding: 8px;
+            padding: 12px;
             border-radius: 6px;
             border: 1px solid #d4af37;
-            background: #1a1a1a;
+            background: #ffffff;
+            color: #000000;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .notes-textarea:focus {
+            outline: none;
+            border-color: #b8860b;
+            box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
+        }: #1a1a1a;
             color: #f5f5f5;
             font-family: inherit;
             resize: vertical;
@@ -4331,29 +4343,29 @@
 
                         <div class="session-actions">
                             <div class="action-buttons">
-                                <button onclick="editSession('${session.id}'); event.stopPropagation();" class="action-btn edit-btn"> Edit</button>
-                                <button onclick="openUploadModal('${session.id}'); event.stopPropagation();" class="action-btn upload-btn">Photo Upload${session.photos && session.photos.length ? ` (${session.photos.length})` : ''}</button>
-                                <button onclick="viewSessionGallery('${session.id}'); event.stopPropagation();" class="action-btn gallery-btn">Image Gallery</button>
-                                <button onclick="copyGalleryUrl('${session.id}'); event.stopPropagation();" class="action-btn copy-btn"> Copy URL</button>
-                                <button onclick="addToCalendar('${session.id}'); event.stopPropagation();" class="action-btn calendar-btn">Calendar Calendar</button>
-                                <button onclick="openEmailClient('${session.id}'); event.stopPropagation();" class="action-btn email-btn">Email Email</button>
-                                <button onclick="openContractModal('${session.id}'); event.stopPropagation();" class="action-btn contract-btn">Document Contract</button>
+                                <button onclick="editSession('${session.id}'); event.stopPropagation();" class="btn btn-secondary">Edit</button>
+                                <button onclick="openUploadModal('${session.id}'); event.stopPropagation();" class="btn btn-secondary">Upload${session.photos && session.photos.length ? ` (${session.photos.length})` : ''}</button>
+                                <button onclick="viewSessionGallery('${session.id}'); event.stopPropagation();" class="btn btn-secondary">Gallery</button>
+                                <button onclick="copyGalleryUrl('${session.id}'); event.stopPropagation();" class="btn btn-secondary">Copy URL</button>
+                                <button onclick="addToCalendar('${session.id}'); event.stopPropagation();" class="btn btn-secondary">Calendar</button>
+                                <button onclick="openEmailClient('${session.id}'); event.stopPropagation();" class="btn btn-secondary">Email</button>
+                                <button onclick="openContractModal('${session.id}'); event.stopPropagation();" class="btn btn-secondary">Contract</button>
                                 ${session.hasPaymentPlan ? `
-                                    <button onclick="viewPaymentPlan('${session.id}'); event.stopPropagation();" class="action-btn payment-btn">Payment Payment Plan</button>
+                                    <button onclick="viewPaymentPlan('${session.id}'); event.stopPropagation();" class="btn btn-secondary">Payment Plan</button>
                                 ` : `
-                                    <button onclick="sendInvoice('${session.id}'); event.stopPropagation();" class="action-btn invoice-btn">Payment Invoice</button>
-                                    <button onclick="sendDepositInvoice('${session.id}'); event.stopPropagation();" class="action-btn deposit-btn">Money Deposit</button>
-                                    <button onclick="openPaymentPlanModal('${session.id}'); event.stopPropagation();" class="action-btn plan-btn">Chart Payment Plan</button>
+                                    <button onclick="sendInvoice('${session.id}'); event.stopPropagation();" class="btn btn-secondary">Invoice</button>
+                                    <button onclick="sendDepositInvoice('${session.id}'); event.stopPropagation();" class="btn btn-secondary">Deposit</button>
+                                    <button onclick="openPaymentPlanModal('${session.id}'); event.stopPropagation();" class="btn btn-secondary">Payment Plan</button>
                                 `}
-                                <button onclick="exportSessionPDF('${session.id}'); event.stopPropagation();" class="export-btn"> Export PDF</button>
-                                <button onclick="toggleArchiveSession('${session.id}'); event.stopPropagation();" class="archive-btn">${session.archived ? ' Unarchive' : ' Archive'}</button>
-                                <button onclick="deleteSession('${session.id}'); event.stopPropagation();" class="action-btn delete-btn"> Delete</button>
+                                <button onclick="exportSessionPDF('${session.id}'); event.stopPropagation();" class="btn btn-secondary">Export PDF</button>
+                                <button onclick="toggleArchiveSession('${session.id}'); event.stopPropagation();" class="btn btn-secondary">${session.archived ? 'Unarchive' : 'Archive'}</button>
+                                <button onclick="deleteSession('${session.id}'); event.stopPropagation();" class="btn btn-danger">Delete</button>
                             </div>
                         </div>
 
                         <!-- Enhanced Notes & Checklist Section -->
                         <div class="session-notes">
-                            <h4>Document Session Notes & Checklist</h4>
+                            <h4>Session Notes & Checklist</h4>
                             <div class="notes-checklist">
                                 <label><input type="checkbox" ${session.printsOrdered ? 'checked' : ''} onchange="updateSessionNotes('${session.id}', 'printsOrdered', this.checked); event.stopPropagation();"> Prints Ordered?</label>
                                 <label><input type="checkbox" ${session.specialEdits ? 'checked' : ''} onchange="updateSessionNotes('${session.id}', 'specialEdits', this.checked); event.stopPropagation();"> Special Edits?</label>
