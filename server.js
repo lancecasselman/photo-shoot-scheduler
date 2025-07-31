@@ -60,6 +60,67 @@ try {
     console.log('WARNING: Firebase Admin SDK initialization failed:', error.message);
 }
 
+// Background Firebase upload function
+async function uploadPhotosToFirebase(sessionId, photos) {
+    if (!admin || !admin.storage) {
+        console.log('Firebase Admin not available, skipping Firebase upload');
+        return;
+    }
+    
+    try {
+        const bucket = admin.storage().bucket();
+        
+        for (const photo of photos) {
+            if (!photo.needsFirebaseUpload || !photo.originalPath) continue;
+            
+            try {
+                console.log(`Uploading ${photo.originalName} to Firebase Storage...`);
+                
+                const firebaseFileName = `sessions/${sessionId}/${photo.filename}`;
+                const file = bucket.file(firebaseFileName);
+                
+                // Upload original file to Firebase
+                await bucket.upload(photo.originalPath, {
+                    destination: firebaseFileName,
+                    metadata: {
+                        contentType: 'image/jpeg',
+                        metadata: {
+                            originalName: photo.originalName,
+                            sessionId: sessionId,
+                            uploadDate: photo.uploadDate,
+                            originalSize: photo.originalSize.toString()
+                        }
+                    }
+                });
+                
+                // Get download URL
+                const [downloadURL] = await file.getSignedUrl({
+                    action: 'read',
+                    expires: '03-09-2491' // Far future expiry
+                });
+                
+                // Update photo record with Firebase URL
+                const session = await getSessionById(sessionId);
+                if (session && session.photos) {
+                    const updatedPhotos = session.photos.map(p => {
+                        if (p.filename === photo.filename) {
+                            return { ...p, firebaseUrl: downloadURL, needsFirebaseUpload: false };
+                        }
+                        return p;
+                    });
+                    await updateSession(sessionId, { photos: updatedPhotos });
+                    console.log(`Firebase upload complete: ${photo.originalName}`);
+                }
+                
+            } catch (uploadError) {
+                console.error(`Firebase upload failed for ${photo.originalName}:`, uploadError);
+            }
+        }
+    } catch (error) {
+        console.error('Firebase batch upload error:', error);
+    }
+}
+
 // Firebase Authentication middleware
 const isAuthenticated = async (req, res, next) => {
     // DEV_MODE bypass for development
@@ -1011,7 +1072,20 @@ const upload = multer({
 // Body parsing middleware moved to top of file
 // Move static file serving after route definitions to ensure authentication checks run first
 // Static files will be served at the bottom of the file
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Smart uploads serving - optimized for app display, original for downloads
+app.use('/uploads', (req, res, next) => {
+    const filename = req.path.substring(1); // Remove leading slash
+    const optimizedPath = path.join(__dirname, 'uploads', `optimized_${filename}`);
+    
+    // If requesting optimized version directly or it exists and not requesting original
+    if (filename.startsWith('optimized_') || (fs.existsSync(optimizedPath) && !req.query.original)) {
+        if (!filename.startsWith('optimized_')) {
+            req.url = `/optimized_${filename}`;
+        }
+    }
+    
+    express.static(path.join(__dirname, 'uploads'))(req, res, next);
+});
 
 // API Routes
 
@@ -1192,17 +1266,52 @@ app.post('/api/sessions/:id/upload-photos', isAuthenticated, (req, res) => {
         
         console.log(` Processing ${req.files.length} files for session ${sessionId}`);
 
-        // Process files with detailed logging
+        // Process files with detailed logging and dual storage
         for (let i = 0; i < req.files.length; i++) {
             const file = req.files[i];
             try {
                 console.log(`File: Processing file: ${file.originalname} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
                 
+                // Store original file metadata for Firebase upload
+                const originalPath = file.path;
+                const originalSize = file.size;
+                
+                // Create optimized version for app display if file is large
+                let displayPath = originalPath;
+                let optimizedSize = originalSize;
+                
+                if (file.size > 2 * 1024 * 1024) { // 2MB threshold
+                    try {
+                        const sharp = require('sharp');
+                        const optimizedFilename = `optimized_${file.filename}`;
+                        const optimizedPath = path.join(uploadsDir, optimizedFilename);
+                        
+                        await sharp(originalPath)
+                            .resize(1920, 2560, { 
+                                fit: 'inside', 
+                                withoutEnlargement: true 
+                            })
+                            .jpeg({ quality: 85 })
+                            .toFile(optimizedPath);
+                        
+                        displayPath = optimizedPath;
+                        optimizedSize = fs.statSync(optimizedPath).size;
+                        
+                        console.log(`File optimized: ${(originalSize / 1024 / 1024).toFixed(1)}MB → ${(optimizedSize / 1024 / 1024).toFixed(1)}MB`);
+                    } catch (optimizeError) {
+                        console.log(`Optimization failed, using original: ${optimizeError.message}`);
+                    }
+                }
+                
                 const photoData = {
                     filename: file.filename,
                     originalName: file.originalname,
-                    size: file.size,
-                    uploadDate: new Date().toISOString()
+                    originalSize: originalSize,
+                    optimizedSize: optimizedSize,
+                    originalPath: originalPath,
+                    displayPath: displayPath,
+                    uploadDate: new Date().toISOString(),
+                    needsFirebaseUpload: true // Flag for background Firebase upload
                 };
                 
                 uploadedPhotos.push(photoData);
@@ -1235,6 +1344,9 @@ app.post('/api/sessions/:id/upload-photos', isAuthenticated, (req, res) => {
                 const updatedPhotos = [...existingPhotos, ...uploadedPhotos];
                 await updateSession(sessionId, { photos: updatedPhotos });
                 console.log(`SUCCESS: Background database update completed: ${uploadedPhotos.length} new photos`);
+                
+                // Start Firebase upload process in background
+                uploadPhotosToFirebase(sessionId, uploadedPhotos);
             } else {
                 console.error(` Session ${sessionId} not found for background database update`);
             }
@@ -2453,17 +2565,24 @@ app.get('/gallery/:id', async (req, res) => {
                     </div>
                     
                     <div class="photo-grid" id="photoGrid">
-                        ${photos.map((photo, index) => `
+                        ${photos.map((photo, index) => {
+                            // Use optimized version for display, Firebase URL for download
+                            const displayUrl = photo.displayPath ? `/uploads/optimized_${photo.filename}` : `/uploads/${photo.filename}`;
+                            const downloadUrl = photo.firebaseUrl || `/uploads/${photo.filename}`;
+                            const originalSizeMB = photo.originalSize ? (photo.originalSize / 1024 / 1024).toFixed(1) : 'Unknown';
+                            
+                            return `
                             <div class="photo-item">
-                                <img src="/uploads/${photo.filename}" alt="Photo ${index + 1}" onclick="openLightbox('/uploads/${photo.filename}')">
+                                <img src="${displayUrl}" alt="Photo ${index + 1}" onclick="openLightbox('${displayUrl}')">
                                 <div class="photo-controls">
-                                    <span class="photo-number">📷 Photo ${index + 1}</span>
-                                    <button class="download-btn" onclick="downloadPhoto('/uploads/${photo.filename}', '${photo.filename}')">
-                                        💾 Download
+                                    <span class="photo-number">Photo ${index + 1} (${originalSizeMB}MB)</span>
+                                    <button class="download-btn" onclick="downloadPhoto('${downloadUrl}', '${photo.originalName || photo.filename}')">
+                                        Download Original
                                     </button>
                                 </div>
                             </div>
-                        `).join('')}
+                            `;
+                        }).join('')}
                     </div>
                     
                     <div class="bulk-actions">
@@ -2509,15 +2628,17 @@ app.get('/gallery/:id', async (req, res) => {
                         try {
                             for (let i = 0; i < photos.length; i++) {
                                 const photo = photos[i];
-                                const response = await fetch('/uploads/' + photo.filename);
+                                // Use Firebase URL for original quality, fallback to local
+                                const downloadUrl = photo.firebaseUrl || '/uploads/' + photo.filename;
+                                const response = await fetch(downloadUrl);
                                 const blob = await response.blob();
-                                folder.file(photo.filename, blob);
+                                folder.file(photo.originalName || photo.filename, blob);
                             }
                             
                             const content = await zip.generateAsync({type: 'blob'});
                             const link = document.createElement('a');
                             link.href = URL.createObjectURL(content);
-                            link.download = '${session.clientName}_Photos.zip';
+                            link.download = '${session.clientName}_Original_Photos.zip';
                             document.body.appendChild(link);
                             link.click();
                             document.body.removeChild(link);
