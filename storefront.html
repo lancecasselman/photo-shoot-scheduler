@@ -1580,13 +1580,15 @@
             
             .preview-container {
                 order: 1;
-                height: calc(100vh - 80px); /* Full height minus mobile toolbar */
-                min-height: 320px;
-                flex-shrink: 0;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 80px; /* Only leave space for toolbar */
                 width: 100%;
-                background: #000; /* Pure black background for mobile */
-                border-radius: 0;
-                position: relative;
+                height: calc(100vh - 80px);
+                background: #000;
+                z-index: 1;
             }
             
             /* Enhanced panel sections for mobile */

@@ -355,119 +355,638 @@ class AdvancedVisualEditor {
     }
 
     initializePrebuiltTemplates() {
-        // Define prebuilt website templates
+        // 15 KILLER PHOTOGRAPHER WEBSITE TEMPLATES
         this.prebuiltTemplates = {
-            'luxury-portrait': {
-                name: 'Luxury Portrait Studio',
-                description: 'High-end portrait photography website with elegant design',
-                category: 'portrait',
+            // 1. LUXURY WEDDING EMPIRE
+            'luxury-wedding-empire': {
+                name: 'Luxury Wedding Empire',
+                description: 'Ultra-premium wedding photography with split hero & floating CTAs',
+                category: 'wedding',
                 pages: {
                     home: {
-                        title: 'Luxury Portrait Studio',
                         sections: [
                             {
                                 type: 'hero',
                                 content: {
-                                    title: 'Capturing Your Most Beautiful Self',
-                                    subtitle: 'Professional Portrait Photography',
-                                    buttonText: 'Book Your Session',
-                                    backgroundImage: 'https://images.unsplash.com/photo-1554844013-894a9d3f2e13?w=1200'
+                                    title: 'Where Love Stories Become Legends',
+                                    subtitle: 'Capturing Once-in-a-Lifetime Moments with Timeless Elegance',
+                                    buttonText: 'Begin Your Journey',
+                                    buttonSecondary: 'View Our Portfolio',
+                                    backgroundImage: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200'
                                 }
                             },
                             {
                                 type: 'about',
                                 content: {
-                                    title: 'Award-Winning Photography',
-                                    text: 'With over 10 years of experience, we specialize in creating stunning portraits that capture your unique personality and style.',
+                                    title: 'Master of Light & Emotion',
+                                    text: 'With 15+ years crafting visual poetry, we transform your wedding day into an heirloom collection that speaks to generations.',
+                                    awards: ['International Wedding Photographer of the Year', 'Fearless Photographers Award Winner', 'Published in Vogue & Harper\'s Bazaar'],
                                     image: 'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=600'
                                 }
-                            }
-                        ]
-                    }
-                }
-            },
-            'wedding-photography': {
-                name: 'Wedding Photography Studio',
-                description: 'Romantic wedding photography website template',
-                category: 'wedding',
-                pages: {
-                    home: {
-                        title: 'Wedding Photography',
-                        sections: [
+                            },
                             {
-                                type: 'hero',
+                                type: 'gallery',
                                 content: {
-                                    title: 'Your Love Story Beautifully Told',
-                                    subtitle: 'Wedding Photography & Cinematography',
-                                    buttonText: 'View Our Work',
-                                    backgroundImage: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200'
+                                    title: 'Featured Collections',
+                                    style: 'masonry'
+                                }
+                            },
+                            {
+                                type: 'pricing',
+                                content: {
+                                    title: 'Investment Collections',
+                                    packages: [
+                                        { name: 'Intimate Celebration', price: '$4,500', features: ['6 Hours Coverage', 'Second Photographer', 'Online Gallery'] },
+                                        { name: 'Luxury Experience', price: '$7,500', features: ['Full Day Coverage', 'Two Photographers', 'Premium Album', 'Engagement Session'] },
+                                        { name: 'Ultimate Collection', price: '$12,000+', features: ['Multi-Day Coverage', 'Three Photographers', 'Multiple Albums', 'Worldwide Travel'] }
+                                    ]
                                 }
                             }
                         ]
-                    }
+                    },
+                    about: { sections: [] },
+                    portfolio: { sections: [] },
+                    contact: { sections: [] }
                 }
             },
-            'fashion-photography': {
-                name: 'Fashion Photography',
-                description: 'Modern fashion photography portfolio',
+
+            // 2. EDITORIAL FASHION HOUSE
+            'editorial-fashion-house': {
+                name: 'Editorial Fashion House',
+                description: 'High-fashion photography with edge-to-edge galleries & minimalist navigation',
                 category: 'fashion',
                 pages: {
                     home: {
-                        title: 'Fashion Photography',
                         sections: [
                             {
                                 type: 'hero',
                                 content: {
-                                    title: 'Fashion Forward Photography',
-                                    subtitle: 'Editorial & Commercial Fashion',
-                                    buttonText: 'See Portfolio',
-                                    backgroundImage: 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=1200'
+                                    title: 'FASHION. REDEFINED.',
+                                    subtitle: 'Where Haute Couture Meets Visual Artistry',
+                                    buttonText: 'Latest Editorial',
+                                    backgroundImage: 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?w=1200',
+                                    style: 'fullscreen-video'
+                                }
+                            },
+                            {
+                                type: 'gallery',
+                                content: {
+                                    title: '',
+                                    style: 'edge-to-edge-grid',
+                                    columns: 4
+                                }
+                            },
+                            {
+                                type: 'clients',
+                                content: {
+                                    title: 'Featured In',
+                                    logos: ['Vogue', 'Elle', 'Harper\'s Bazaar', 'Marie Claire', 'W Magazine']
                                 }
                             }
                         ]
-                    }
+                    },
+                    about: { sections: [] },
+                    portfolio: { sections: [] },
+                    contact: { sections: [] }
                 }
             },
-            'newborn-photography': {
-                name: 'Newborn Photography',
-                description: 'Gentle newborn and family photography',
+
+            // 3. DOCUMENTARY LIFESTYLE
+            'documentary-lifestyle': {
+                name: 'Documentary Lifestyle',
+                description: 'Authentic storytelling with full-width imagery & journal-style blog',
+                category: 'lifestyle',
+                pages: {
+                    home: {
+                        sections: [
+                            {
+                                type: 'hero',
+                                content: {
+                                    title: 'Real Moments. Real Stories. Real Life.',
+                                    subtitle: 'Documentary Photography That Captures the Beauty of Everyday',
+                                    buttonText: 'Start Your Story',
+                                    backgroundImage: 'https://images.unsplash.com/photo-1516627145497-ae6968895b74?w=1200'
+                                }
+                            },
+                            {
+                                type: 'blog-preview',
+                                content: {
+                                    title: 'Recent Stories',
+                                    style: 'journal-cards',
+                                    posts: 3
+                                }
+                            },
+                            {
+                                type: 'testimonial',
+                                content: {
+                                    quote: 'They captured our family exactly as we are - chaotic, loving, and perfectly imperfect.',
+                                    author: 'Sarah M.',
+                                    image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100'
+                                }
+                            }
+                        ]
+                    },
+                    about: { sections: [] },
+                    portfolio: { sections: [] },
+                    contact: { sections: [] }
+                }
+            },
+
+            // 4. FINE ART PORTRAIT ATELIER
+            'fine-art-portrait': {
+                name: 'Fine Art Portrait Atelier',
+                description: 'Museum-quality portraiture with sophisticated gallery presentation',
+                category: 'portrait',
+                pages: {
+                    home: {
+                        sections: [
+                            {
+                                type: 'hero',
+                                content: {
+                                    title: 'Portraits as Fine Art',
+                                    subtitle: 'Creating Timeless Images That Transcend Photography',
+                                    buttonText: 'Commission a Portrait',
+                                    backgroundImage: 'https://images.unsplash.com/photo-1554844013-894a9d3f2e13?w=1200',
+                                    style: 'split-screen'
+                                }
+                            },
+                            {
+                                type: 'philosophy',
+                                content: {
+                                    title: 'The Art of Portraiture',
+                                    text: 'Each portrait is a collaborative journey, revealing the essence of who you are through careful composition, masterful lighting, and artistic vision.',
+                                    signature: 'Master Photographer'
+                                }
+                            },
+                            {
+                                type: 'gallery',
+                                content: {
+                                    title: 'Portrait Collections',
+                                    style: 'museum-grid',
+                                    spacing: 'wide'
+                                }
+                            }
+                        ]
+                    },
+                    about: { sections: [] },
+                    portfolio: { sections: [] },
+                    contact: { sections: [] }
+                }
+            },
+
+            // 5. ADVENTURE WEDDING COLLECTIVE
+            'adventure-wedding': {
+                name: 'Adventure Wedding Collective',
+                description: 'Epic destination weddings with parallax scrolling & immersive galleries',
+                category: 'wedding',
+                pages: {
+                    home: {
+                        sections: [
+                            {
+                                type: 'hero',
+                                content: {
+                                    title: 'Say "I Do" to Adventure',
+                                    subtitle: 'Elopements & Weddings in Earth\'s Most Spectacular Places',
+                                    buttonText: 'Plan Your Adventure',
+                                    backgroundImage: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200',
+                                    style: 'parallax'
+                                }
+                            },
+                            {
+                                type: 'destinations',
+                                content: {
+                                    title: 'Where Will Love Take You?',
+                                    locations: ['Iceland', 'Patagonia', 'New Zealand', 'Norway', 'Yosemite', 'Dolomites']
+                                }
+                            },
+                            {
+                                type: 'gallery',
+                                content: {
+                                    title: 'Epic Love Stories',
+                                    style: 'horizontal-scroll'
+                                }
+                            }
+                        ]
+                    },
+                    about: { sections: [] },
+                    portfolio: { sections: [] },
+                    contact: { sections: [] }
+                }
+            },
+
+            // 6. CELEBRITY PORTRAIT STUDIO
+            'celebrity-portrait': {
+                name: 'Celebrity Portrait Studio',
+                description: 'A-list photography with dramatic lighting & magazine-style layouts',
+                category: 'portrait',
+                pages: {
+                    home: {
+                        sections: [
+                            {
+                                type: 'hero',
+                                content: {
+                                    title: 'ICONS CAPTURED',
+                                    subtitle: 'Celebrity Portrait Photography at Its Finest',
+                                    buttonText: 'Book Studio Time',
+                                    backgroundImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1200',
+                                    style: 'cinematic-fade'
+                                }
+                            },
+                            {
+                                type: 'client-logos',
+                                content: {
+                                    title: 'Trusted By',
+                                    style: 'scrolling-marquee'
+                                }
+                            },
+                            {
+                                type: 'featured-work',
+                                content: {
+                                    title: 'Recent Sessions',
+                                    style: 'magazine-spread'
+                                }
+                            }
+                        ]
+                    },
+                    about: { sections: [] },
+                    portfolio: { sections: [] },
+                    contact: { sections: [] }
+                }
+            },
+
+            // 7. MATERNITY & NEWBORN SANCTUARY
+            'maternity-newborn': {
+                name: 'Maternity & Newborn Sanctuary',
+                description: 'Soft, dreamy photography celebrating new life with gentle aesthetics',
                 category: 'family',
                 pages: {
                     home: {
-                        title: 'Newborn Photography',
                         sections: [
                             {
                                 type: 'hero',
                                 content: {
-                                    title: 'Precious First Moments',
-                                    subtitle: 'Newborn & Maternity Photography',
-                                    buttonText: 'Book Session',
-                                    backgroundImage: 'https://images.unsplash.com/photo-1544726889-8cb8c9b7ee00?w=1200'
+                                    title: 'Celebrating Life\'s Sweetest Beginnings',
+                                    subtitle: 'Maternity, Newborn & Baby Photography',
+                                    buttonText: 'Book Your Session',
+                                    backgroundImage: 'https://images.unsplash.com/photo-1544726889-8cb8c9b7ee00?w=1200',
+                                    style: 'soft-fade'
+                                }
+                            },
+                            {
+                                type: 'services',
+                                content: {
+                                    title: 'Photography Experiences',
+                                    services: [
+                                        { name: 'Maternity', description: 'Celebrating your beautiful journey' },
+                                        { name: 'Fresh 48', description: 'First moments in the hospital' },
+                                        { name: 'Newborn', description: 'Artistic portraits in our cozy studio' },
+                                        { name: 'Milestone', description: 'Capturing growth at 6 & 12 months' }
+                                    ]
+                                }
+                            },
+                            {
+                                type: 'testimonial-carousel',
+                                content: {
+                                    title: 'Happy Families',
+                                    style: 'cards-with-images'
                                 }
                             }
                         ]
-                    }
+                    },
+                    about: { sections: [] },
+                    portfolio: { sections: [] },
+                    contact: { sections: [] }
                 }
             },
-            'landscape-photography': {
-                name: 'Landscape Photography',
-                description: 'Nature and landscape photography portfolio',
-                category: 'landscape',
+
+            // 8. COMMERCIAL BRAND STUDIO
+            'commercial-brand': {
+                name: 'Commercial Brand Studio',
+                description: 'Product & brand photography with case studies & ROI focus',
+                category: 'commercial',
                 pages: {
                     home: {
-                        title: 'Landscape Photography',
                         sections: [
                             {
                                 type: 'hero',
                                 content: {
-                                    title: 'Nature\'s Beauty Captured',
-                                    subtitle: 'Landscape & Travel Photography',
-                                    buttonText: 'Explore Gallery',
-                                    backgroundImage: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200'
+                                    title: 'Elevate Your Brand Vision',
+                                    subtitle: 'Commercial Photography That Drives Results',
+                                    buttonText: 'Get a Quote',
+                                    buttonSecondary: 'View Case Studies',
+                                    backgroundImage: 'https://images.unsplash.com/photo-1565849904461-04a58ad377e0?w=1200'
+                                }
+                            },
+                            {
+                                type: 'case-studies',
+                                content: {
+                                    title: 'Success Stories',
+                                    style: 'before-after-slider'
+                                }
+                            },
+                            {
+                                type: 'services-grid',
+                                content: {
+                                    title: 'Full-Service Solutions',
+                                    services: ['Product Photography', 'Lifestyle Campaigns', 'Executive Portraits', 'Event Coverage']
                                 }
                             }
                         ]
-                    }
+                    },
+                    about: { sections: [] },
+                    portfolio: { sections: [] },
+                    contact: { sections: [] }
+                }
+            },
+
+            // 9. STREET PHOTOGRAPHY JOURNAL
+            'street-photography': {
+                name: 'Street Photography Journal',
+                description: 'Raw urban photography with blog integration & photo essays',
+                category: 'documentary',
+                pages: {
+                    home: {
+                        sections: [
+                            {
+                                type: 'hero',
+                                content: {
+                                    title: 'STREETS SPEAK',
+                                    subtitle: 'Documenting Urban Life, One Frame at a Time',
+                                    buttonText: 'Latest Essay',
+                                    backgroundImage: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1200',
+                                    style: 'grainy-film'
+                                }
+                            },
+                            {
+                                type: 'photo-essay',
+                                content: {
+                                    title: 'Current Project',
+                                    style: 'scrollytelling'
+                                }
+                            },
+                            {
+                                type: 'instagram-feed',
+                                content: {
+                                    title: 'Daily Captures',
+                                    columns: 6
+                                }
+                            }
+                        ]
+                    },
+                    about: { sections: [] },
+                    portfolio: { sections: [] },
+                    contact: { sections: [] }
+                }
+            },
+
+            // 10. BOUDOIR CONFIDENCE STUDIO
+            'boudoir-confidence': {
+                name: 'Boudoir Confidence Studio',
+                description: 'Empowering intimate portraiture with privacy-focused design',
+                category: 'portrait',
+                pages: {
+                    home: {
+                        sections: [
+                            {
+                                type: 'hero',
+                                content: {
+                                    title: 'Celebrate Your Confidence',
+                                    subtitle: 'Luxury Boudoir Photography in a Safe, Empowering Space',
+                                    buttonText: 'Start Your Journey',
+                                    backgroundImage: 'https://images.unsplash.com/photo-1516726817505-f5ed825624d8?w=1200',
+                                    style: 'elegant-overlay'
+                                }
+                            },
+                            {
+                                type: 'experience',
+                                content: {
+                                    title: 'The Experience',
+                                    steps: ['Consultation', 'Professional Styling', 'Guided Session', 'Private Reveal']
+                                }
+                            },
+                            {
+                                type: 'testimonials',
+                                content: {
+                                    title: 'Empowered Women',
+                                    style: 'anonymous-quotes'
+                                }
+                            }
+                        ]
+                    },
+                    about: { sections: [] },
+                    portfolio: { sections: [] },
+                    contact: { sections: [] }
+                }
+            },
+
+            // 11. SPORTS ACTION PHOTOGRAPHY
+            'sports-action': {
+                name: 'Sports Action Photography',
+                description: 'High-speed sports photography with dynamic galleries & athlete profiles',
+                category: 'sports',
+                pages: {
+                    home: {
+                        sections: [
+                            {
+                                type: 'hero',
+                                content: {
+                                    title: 'CAPTURE THE MOMENT OF VICTORY',
+                                    subtitle: 'Professional Sports & Action Photography',
+                                    buttonText: 'Book Coverage',
+                                    backgroundImage: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=1200',
+                                    style: 'motion-blur'
+                                }
+                            },
+                            {
+                                type: 'sports-covered',
+                                content: {
+                                    title: 'Sports We Cover',
+                                    sports: ['Football', 'Basketball', 'Soccer', 'Track & Field', 'Swimming', 'Extreme Sports']
+                                }
+                            },
+                            {
+                                type: 'athlete-spotlight',
+                                content: {
+                                    title: 'Athlete Spotlights',
+                                    style: 'trading-cards'
+                                }
+                            }
+                        ]
+                    },
+                    about: { sections: [] },
+                    portfolio: { sections: [] },
+                    contact: { sections: [] }
+                }
+            },
+
+            // 12. FOOD PHOTOGRAPHY DELUXE
+            'food-photography': {
+                name: 'Food Photography Deluxe',
+                description: 'Mouth-watering culinary photography for restaurants & brands',
+                category: 'commercial',
+                pages: {
+                    home: {
+                        sections: [
+                            {
+                                type: 'hero',
+                                content: {
+                                    title: 'Food That Tells a Story',
+                                    subtitle: 'Culinary Photography for Restaurants & Brands',
+                                    buttonText: 'See Menu Work',
+                                    backgroundImage: 'https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?w=1200',
+                                    style: 'appetizing'
+                                }
+                            },
+                            {
+                                type: 'portfolio-categories',
+                                content: {
+                                    title: 'Specialties',
+                                    categories: ['Restaurant Menus', 'Cookbook Photography', 'Social Media Content', 'Food Packaging']
+                                }
+                            },
+                            {
+                                type: 'process',
+                                content: {
+                                    title: 'From Kitchen to Camera',
+                                    steps: ['Styling', 'Lighting', 'Capture', 'Post-Production']
+                                }
+                            }
+                        ]
+                    },
+                    about: { sections: [] },
+                    portfolio: { sections: [] },
+                    contact: { sections: [] }
+                }
+            },
+
+            // 13. ARCHITECTURE & INTERIORS
+            'architecture-interiors': {
+                name: 'Architecture & Interiors',
+                description: 'Stunning architectural photography with project showcases',
+                category: 'architecture',
+                pages: {
+                    home: {
+                        sections: [
+                            {
+                                type: 'hero',
+                                content: {
+                                    title: 'Spaces That Inspire',
+                                    subtitle: 'Architectural & Interior Photography',
+                                    buttonText: 'View Projects',
+                                    backgroundImage: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200',
+                                    style: 'geometric'
+                                }
+                            },
+                            {
+                                type: 'project-showcase',
+                                content: {
+                                    title: 'Featured Projects',
+                                    style: 'case-study-cards'
+                                }
+                            },
+                            {
+                                type: 'clients',
+                                content: {
+                                    title: 'Trusted By Leading Firms',
+                                    style: 'logo-grid'
+                                }
+                            }
+                        ]
+                    },
+                    about: { sections: [] },
+                    portfolio: { sections: [] },
+                    contact: { sections: [] }
+                }
+            },
+
+            // 14. PET PORTRAIT PARADISE
+            'pet-portrait': {
+                name: 'Pet Portrait Paradise',
+                description: 'Playful pet photography with personality-driven portraits',
+                category: 'pet',
+                pages: {
+                    home: {
+                        sections: [
+                            {
+                                type: 'hero',
+                                content: {
+                                    title: 'Every Pet Has a Story',
+                                    subtitle: 'Professional Pet Photography That Captures Their Personality',
+                                    buttonText: 'Book a Session',
+                                    backgroundImage: 'https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=1200',
+                                    style: 'playful'
+                                }
+                            },
+                            {
+                                type: 'pet-gallery',
+                                content: {
+                                    title: 'Recent Furry Friends',
+                                    style: 'polaroid-grid'
+                                }
+                            },
+                            {
+                                type: 'packages',
+                                content: {
+                                    title: 'Session Packages',
+                                    packages: [
+                                        { name: 'Quick Paws', price: '$250', time: '30 minutes' },
+                                        { name: 'Full Portrait', price: '$450', time: '1 hour' },
+                                        { name: 'Multi-Pet Family', price: '$650', time: '2 hours' }
+                                    ]
+                                }
+                            }
+                        ]
+                    },
+                    about: { sections: [] },
+                    portfolio: { sections: [] },
+                    contact: { sections: [] }
+                }
+            },
+
+            // 15. TRAVEL & DESTINATION
+            'travel-destination': {
+                name: 'Travel & Destination Photography',
+                description: 'Wanderlust-inducing travel photography with location guides',
+                category: 'travel',
+                pages: {
+                    home: {
+                        sections: [
+                            {
+                                type: 'hero',
+                                content: {
+                                    title: 'Wanderlust Captured',
+                                    subtitle: 'Travel & Destination Photography Around the Globe',
+                                    buttonText: 'Explore Destinations',
+                                    backgroundImage: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1200',
+                                    style: 'world-map-overlay'
+                                }
+                            },
+                            {
+                                type: 'destination-grid',
+                                content: {
+                                    title: 'Recent Adventures',
+                                    style: 'location-cards'
+                                }
+                            },
+                            {
+                                type: 'travel-blog',
+                                content: {
+                                    title: 'Travel Stories & Guides',
+                                    style: 'photo-journal'
+                                }
+                            },
+                            {
+                                type: 'booking',
+                                content: {
+                                    title: 'Hire Me for Your Next Project',
+                                    services: ['Tourism Boards', 'Hotels & Resorts', 'Travel Magazines', 'Adventure Brands']
+                                }
+                            }
+                        ]
+                    },
+                    about: { sections: [] },
+                    portfolio: { sections: [] },
+                    contact: { sections: [] }
                 }
             }
         };

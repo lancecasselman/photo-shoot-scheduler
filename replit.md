@@ -37,7 +37,7 @@ This is a comprehensive photography business management platform designed to rev
 - **Dynamic Content Editing**: Inline content editing (`contenteditable="true"`) for text and click-to-upload for images, with real-time auto-save.
 - **Block-Based Visual Editor**: Advanced drag-and-drop system for building websites using predefined blocks (Hero, About, Image Grid, Text, CTA, Testimonial, Pricing, Blog, etc.).
 - **Dynamic Page Management**: System for creating, deleting, and managing custom pages with user-defined names and icons.
-- **Comprehensive Theme/Template System**: Extensive library of 20+ professional photography website templates inspired by photography legends, with category filtering and one-click application.
+- **Comprehensive Theme/Template System**: Extensive library of 20+ professional photography website templates inspired by photography legends, with category filtering and one-click application. Now featuring 15 premium multi-page photographer website templates with specialized layouts for different photography niches (wedding, fashion, documentary, portrait, adventure, celebrity, maternity, commercial, street, boudoir, sports, food, architecture, pet, and travel photography).
 - **Photo Management**: Unlimited photo upload system (any file size/quantity) with sequential processing, real-time progress tracking, individual photo deletion, and lightbox viewing.
 - **Session Management**: CRUD operations for client sessions, including detailed information, workflow status tracking (contract signed, paid, edited, delivered) with real-time database updates.
 - **Payment Processing**: Integration with Stripe for deposit invoices, full invoicing, and an optional tipping system.
