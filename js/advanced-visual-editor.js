@@ -964,7 +964,27 @@ class AdvancedVisualEditor {
         }
         
         previewHTML += '</div>';
-        previewFrame.innerHTML = previewHTML;
+        
+        // Write content to iframe properly
+        const iframeDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+        iframeDoc.open();
+        iframeDoc.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <style>
+                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                    body { font-family: 'Quicksand', sans-serif; }
+                </style>
+            </head>
+            <body>
+                ${previewHTML}
+            </body>
+            </html>
+        `);
+        iframeDoc.close();
         
         // Make all text elements editable after updating preview
         setTimeout(() => {
