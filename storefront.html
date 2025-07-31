@@ -310,19 +310,35 @@
             margin-bottom: var(--spacing-xs);
             border-radius: 8px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
             border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
         }
         
         .page-nav-item:hover {
             background: var(--beige);
             border-color: var(--sage);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(196, 150, 45, 0.15);
         }
         
         .page-nav-item.active {
-            background: var(--sage);
-            color: var(--warm-white);
-            font-weight: 600;
+            background: var(--sage) !important;
+            color: var(--warm-white) !important;
+            font-weight: 600 !important;
+            border-color: var(--muted-gold) !important;
+            box-shadow: 0 2px 8px rgba(156, 175, 163, 0.4) !important;
+        }
+        
+        .page-nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background: var(--muted-gold);
         }
         
         /* Dropdown Containers */
@@ -460,6 +476,39 @@
             font-size: 0.9rem;
         }
 
+        /* Enhanced Theme & Template Dropdown Styling */
+        #theme-dropdown, #template-dropdown {
+            appearance: none;
+            background: var(--warm-white);
+            border: 2px solid var(--beige);
+            border-radius: 8px;
+            padding: var(--spacing-sm) var(--spacing-md);
+            font-family: var(--font-sans);
+            font-size: 0.9rem;
+            color: var(--deep-charcoal);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23C4962D' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 10px center;
+            background-repeat: no-repeat;
+            background-size: 16px;
+            padding-right: 40px;
+            width: 100%;
+        }
+        
+        #theme-dropdown:hover, #template-dropdown:hover {
+            border-color: var(--sage);
+            background-color: var(--cream);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(156, 175, 163, 0.15);
+        }
+        
+        #theme-dropdown:focus, #template-dropdown:focus {
+            outline: none;
+            border-color: var(--muted-gold);
+            box-shadow: 0 0 0 3px rgba(196, 150, 45, 0.1);
+        }
+        
         .font-dropdown, .color-picker, .file-input {
             width: 100%;
             padding: var(--spacing-sm);

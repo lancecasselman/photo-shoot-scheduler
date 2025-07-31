@@ -724,17 +724,97 @@ class AdvancedVisualEditor {
             return;
         }
         
-        // Create simple preview content
+        // Get current theme styling
+        const theme = this.themes[this.currentTheme] || this.themes['light-airy'];
+        let themeStyles = this.getThemeStyles(theme);
+        
+        // Get current page info
+        const currentPageInfo = this.pages.find(p => p.id === this.currentPage);
+        const pageName = currentPageInfo ? currentPageInfo.name : 'Page';
+        
+        // Create enhanced preview content with theme styling
         const currentLayout = this.pageLayouts[this.currentPage] || [];
         let previewHTML = `
-            <div style="min-height: 400px; padding: 20px; background: #F7F3F0; font-family: 'Cormorant Garamond', serif;">
-                <h1 style="color: #C4962D; margin-bottom: 10px;">Photography Studio</h1>
-                <p style="color: #8B7355;">Live preview - click to add luxury components</p>
-                ${currentLayout.length} components added
+            <div style="${themeStyles.container}">
+                <div style="${themeStyles.header}">
+                    <h1 style="${themeStyles.heading}">${pageName} - Photography Studio</h1>
+                    <p style="${themeStyles.subtitle}">Current Theme: ${theme.name}</p>
+                </div>
+                <div style="${themeStyles.content}">
+                    <p style="${themeStyles.text}">Live preview - click to add luxury components</p>
+                    <div style="${themeStyles.statusBar}">
+                        ${currentLayout.length} components added to ${pageName} page
+                    </div>
+                </div>
             </div>
         `;
         
         previewFrame.innerHTML = previewHTML;
+    }
+    
+    getThemeStyles(theme) {
+        switch(theme.category) {
+            case 'elegant':
+                return {
+                    container: 'min-height: 400px; padding: 30px; background: linear-gradient(135deg, #F7F3F0, #FEFDFB); font-family: "Cormorant Garamond", serif;',
+                    header: 'margin-bottom: 20px; text-align: center;',
+                    heading: 'color: #C4962D; font-size: 2.5em; margin-bottom: 10px; font-weight: 400;',
+                    subtitle: 'color: #8B7355; font-size: 1.1em; font-style: italic;',
+                    content: 'padding: 20px; background: rgba(255,255,255,0.3); border-radius: 8px;',
+                    text: 'color: #2C2C2C; font-size: 1.2em; margin-bottom: 15px;',
+                    statusBar: 'color: #9CAF88; font-size: 0.9em; padding: 10px; background: rgba(156,175,163,0.1); border-radius: 4px;'
+                };
+            case 'dramatic':
+                return {
+                    container: 'min-height: 400px; padding: 30px; background: linear-gradient(135deg, #1a1a1a, #2C2C2C); font-family: "Playfair Display", serif;',
+                    header: 'margin-bottom: 20px; text-align: center;',
+                    heading: 'color: #C4962D; font-size: 2.5em; margin-bottom: 10px; font-weight: 700;',
+                    subtitle: 'color: #F7F3F0; font-size: 1.1em; font-style: italic;',
+                    content: 'padding: 20px; background: rgba(255,255,255,0.05); border: 1px solid rgba(196,150,45,0.3); border-radius: 8px;',
+                    text: 'color: #F7F3F0; font-size: 1.2em; margin-bottom: 15px;',
+                    statusBar: 'color: #C4962D; font-size: 0.9em; padding: 10px; background: rgba(196,150,45,0.1); border-radius: 4px;'
+                };
+            case 'natural':
+                return {
+                    container: 'min-height: 400px; padding: 30px; background: linear-gradient(135deg, #8B7355, #9CAF88); font-family: "Lora", serif;',
+                    header: 'margin-bottom: 20px; text-align: center;',
+                    heading: 'color: #FEFDFB; font-size: 2.5em; margin-bottom: 10px; font-weight: 600; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);',
+                    subtitle: 'color: #F7F3F0; font-size: 1.1em; font-style: italic;',
+                    content: 'padding: 20px; background: rgba(255,255,255,0.2); border-radius: 8px;',
+                    text: 'color: #FEFDFB; font-size: 1.2em; margin-bottom: 15px;',
+                    statusBar: 'color: #FEFDFB; font-size: 0.9em; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 4px;'
+                };
+            case 'minimal':
+                return {
+                    container: 'min-height: 400px; padding: 40px; background: #FEFDFB; font-family: "Quicksand", sans-serif;',
+                    header: 'margin-bottom: 30px; text-align: left; border-bottom: 2px solid #E8DDD4; padding-bottom: 15px;',
+                    heading: 'color: #2C2C2C; font-size: 2.2em; margin-bottom: 5px; font-weight: 300;',
+                    subtitle: 'color: #8B7355; font-size: 1em; font-weight: 400;',
+                    content: 'padding: 0;',
+                    text: 'color: #2C2C2C; font-size: 1.1em; margin-bottom: 20px; font-weight: 400;',
+                    statusBar: 'color: #9CAF88; font-size: 0.9em; padding: 15px; background: #F7F3F0; border-left: 4px solid #C4962D;'
+                };
+            case 'modern':
+                return {
+                    container: 'min-height: 400px; padding: 25px; background: linear-gradient(135deg, #2C2C2C, #C4962D); font-family: "Montserrat", sans-serif;',
+                    header: 'margin-bottom: 25px; text-align: center;',
+                    heading: 'color: #FEFDFB; font-size: 2.8em; margin-bottom: 8px; font-weight: 700; letter-spacing: -1px;',
+                    subtitle: 'color: #F7F3F0; font-size: 1em; font-weight: 400; text-transform: uppercase; letter-spacing: 2px;',
+                    content: 'padding: 25px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 12px;',
+                    text: 'color: #FEFDFB; font-size: 1.1em; margin-bottom: 20px; font-weight: 400;',
+                    statusBar: 'color: #2C2C2C; font-size: 0.9em; padding: 12px; background: rgba(255,255,255,0.9); border-radius: 6px; font-weight: 600;'
+                };
+            default:
+                return {
+                    container: 'min-height: 400px; padding: 30px; background: #F7F3F0; font-family: "Quicksand", sans-serif;',
+                    header: 'margin-bottom: 20px; text-align: center;',
+                    heading: 'color: #C4962D; font-size: 2.5em; margin-bottom: 10px; font-weight: 600;',
+                    subtitle: 'color: #8B7355; font-size: 1.1em;',
+                    content: 'padding: 20px; background: rgba(255,255,255,0.5); border-radius: 8px;',
+                    text: 'color: #2C2C2C; font-size: 1.2em; margin-bottom: 15px;',
+                    statusBar: 'color: #9CAF88; font-size: 0.9em; padding: 10px; background: rgba(156,175,163,0.2); border-radius: 4px;'
+                };
+        }
     }
 
     // Theme change handler
@@ -742,10 +822,77 @@ class AdvancedVisualEditor {
         console.log(`🎨 Changing theme to: ${themeKey}`);
         this.currentTheme = themeKey;
         
-        // Update the theme in the UI
-        if (this.themes[themeKey]) {
-            this.showNotification(`Theme changed to ${this.themes[themeKey].name}`, 'success');
+        const theme = this.themes[themeKey];
+        if (!theme) {
+            console.error(`❌ Theme not found: ${themeKey}`);
+            return;
         }
+        
+        // Apply theme colors to the preview
+        const previewFrame = document.getElementById('preview-frame');
+        if (previewFrame) {
+            // Apply theme-specific styling based on category
+            let themeCSS = '';
+            
+            switch(theme.category) {
+                case 'elegant':
+                    themeCSS = `
+                        background: linear-gradient(135deg, #F7F3F0, #FEFDFB);
+                        color: #2C2C2C;
+                        font-family: 'Cormorant Garamond', serif;
+                    `;
+                    break;
+                case 'dramatic':
+                    themeCSS = `
+                        background: linear-gradient(135deg, #1a1a1a, #2C2C2C);
+                        color: #F7F3F0;
+                        font-family: 'Playfair Display', serif;
+                    `;
+                    break;
+                case 'natural':
+                    themeCSS = `
+                        background: linear-gradient(135deg, #8B7355, #9CAF88);
+                        color: #FEFDFB;
+                        font-family: 'Lora', serif;
+                    `;
+                    break;
+                case 'minimal':
+                    themeCSS = `
+                        background: #FEFDFB;
+                        color: #2C2C2C;
+                        font-family: 'Quicksand', sans-serif;
+                    `;
+                    break;
+                case 'modern':
+                    themeCSS = `
+                        background: linear-gradient(135deg, #2C2C2C, #C4962D);
+                        color: #FEFDFB;
+                        font-family: 'Montserrat', sans-serif;
+                    `;
+                    break;
+                default:
+                    themeCSS = `
+                        background: #F7F3F0;
+                        color: #2C2C2C;
+                        font-family: 'Quicksand', sans-serif;
+                    `;
+            }
+            
+            // Apply the theme styling
+            previewFrame.style.cssText += themeCSS;
+            
+            // Update all elements in preview with theme styling
+            const allElements = previewFrame.querySelectorAll('*');
+            allElements.forEach(el => {
+                if (el.tagName === 'H1' || el.tagName === 'H2' || el.tagName === 'H3') {
+                    el.style.fontFamily = themeCSS.includes('serif') ? 
+                        themeCSS.match(/font-family: '([^']+)'/)[1] : 
+                        "'Cormorant Garamond', serif";
+                }
+            });
+        }
+        
+        this.showNotification(`Theme changed to ${theme.name}`, 'success');
         
         // Update the preview
         this.updateLivePreview();
@@ -929,22 +1076,51 @@ class AdvancedVisualEditor {
     // Switch between pages
     async switchPage(pageId) {
         console.log(`📄 Switching to page: ${pageId}`);
+        
+        // Find the page name for better feedback
+        const page = this.pages.find(p => p.id === pageId);
+        const pageName = page ? page.name : pageId;
+        
         this.currentPage = pageId;
         
-        // Update active page indicator
+        // Update active page indicator with visual feedback
         document.querySelectorAll('.page-nav-item').forEach(item => {
             item.classList.remove('active');
+            item.style.background = '';
+            item.style.color = '';
         });
         
         const activeItem = document.querySelector(`[data-page="${pageId}"]`);
         if (activeItem) {
             activeItem.classList.add('active');
+            activeItem.style.background = 'var(--sage)';
+            activeItem.style.color = 'var(--warm-white)';
+            activeItem.style.fontWeight = '600';
         }
         
-        // Load the page content
+        // Load the page content and update preview
         await this.loadCurrentPage();
+        this.updateLivePreview();
         
-        this.showNotification(`Switched to ${pageId} page`, 'success');
+        // Clear any selected element when switching pages
+        if (this.selectedElement) {
+            this.selectedElement.classList.remove('selected-element');
+            this.selectedElement = null;
+        }
+        
+        // Update page title in preview if needed
+        const previewFrame = document.getElementById('preview-frame');
+        if (previewFrame && previewFrame.querySelector('h1')) {
+            const heading = previewFrame.querySelector('h1');
+            if (heading.textContent.includes('Photography Studio')) {
+                heading.textContent = `${pageName} - Photography Studio`;
+            }
+        }
+        
+        this.showNotification(`Switched to ${pageName} page`, 'success');
+        
+        // Save the current page state
+        await this.saveToStorage();
     }
 
     // Handle element editing when clicked in preview
