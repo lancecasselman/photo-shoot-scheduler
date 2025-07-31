@@ -1404,7 +1404,7 @@
             border-top: 1px solid var(--beige);
         }
 
-        /* Enhanced Mobile Optimizations */
+        /* Mobile Layout Redesign - Clean & Organized */
         @media (max-width: 768px) {
             .hamburger-menu {
                 display: flex;
@@ -1416,34 +1416,291 @@
             
             .editor-container {
                 flex-direction: column;
-                height: auto;
-                min-height: 100vh;
+                height: 100vh;
                 padding-top: var(--header-height);
                 gap: 0;
+                overflow: hidden;
             }
             
-            .editor-sidebar {
-                width: 100%;
-                height: auto;
-                min-height: 45vh;
-                order: 2;
-                border-right: none;
-                border-top: 2px solid var(--muted-gold);
-                padding: var(--spacing-lg);
-                overflow-y: auto;
-                max-height: 55vh;
+            /* Mobile Toolbar */
+            .mobile-toolbar {
+                display: flex;
                 background: var(--warm-white);
-                box-shadow: 0 -4px 20px rgba(44, 44, 44, 0.08);
+                border-bottom: 1px solid var(--beige);
+                padding: var(--spacing-sm);
+                box-shadow: 0 2px 8px rgba(44, 44, 44, 0.1);
+                z-index: 50;
+                order: 1;
             }
             
+            .mobile-tools-btn {
+                flex: 1;
+                padding: 0.8rem;
+                background: var(--muted-gold);
+                color: var(--warm-white);
+                border: none;
+                border-radius: 8px;
+                font-weight: 600;
+                font-size: 1rem;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: var(--spacing-xs);
+            }
+            
+            .mobile-tools-btn:hover {
+                background: #B8851A;
+                transform: translateY(-1px);
+            }
+            
+            .mobile-tools-btn.active {
+                background: var(--sage);
+            }
+            
+            /* Mobile Tools Panel - Collapsible */
+            .mobile-tools-panel {
+                position: fixed;
+                top: calc(var(--header-height) + 60px);
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: var(--warm-white);
+                transform: translateY(100%);
+                transition: transform 0.4s ease;
+                z-index: 40;
+                overflow-y: auto;
+                padding: var(--spacing-lg);
+                border-top: 2px solid var(--muted-gold);
+                box-shadow: 0 -4px 20px rgba(44, 44, 44, 0.15);
+            }
+            
+            .mobile-tools-panel.open {
+                transform: translateY(0);
+            }
+            
+            .tools-panel-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: var(--spacing-xl);
+                padding-bottom: var(--spacing-md);
+                border-bottom: 1px solid var(--beige);
+            }
+            
+            .tools-panel-title {
+                font-family: var(--font-serif);
+                font-size: 1.5rem;
+                color: var(--muted-gold);
+                font-weight: 600;
+            }
+            
+            .close-tools-btn {
+                width: 40px;
+                height: 40px;
+                border: none;
+                background: var(--sage);
+                color: var(--warm-white);
+                border-radius: 50%;
+                font-size: 1.2rem;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.3s ease;
+            }
+            
+            .close-tools-btn:hover {
+                background: #8A9E7D;
+                transform: rotate(90deg);
+            }
+            
+            /* Tabbed Tools Interface */
+            .tools-tabs {
+                display: flex;
+                gap: var(--spacing-xs);
+                margin-bottom: var(--spacing-xl);
+                background: var(--cream);
+                padding: var(--spacing-xs);
+                border-radius: 8px;
+            }
+            
+            .tool-tab {
+                flex: 1;
+                padding: 0.8rem 0.5rem;
+                background: transparent;
+                border: none;
+                border-radius: 6px;
+                font-size: 0.9rem;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                color: var(--deep-charcoal);
+                text-align: center;
+            }
+            
+            .tool-tab.active {
+                background: var(--muted-gold);
+                color: var(--warm-white);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(196, 150, 45, 0.3);
+            }
+            
+            .tool-tab:hover:not(.active) {
+                background: var(--beige);
+            }
+            
+            /* Tool Content Sections */
+            .tool-content {
+                display: none;
+            }
+            
+            .tool-content.active {
+                display: block;
+                animation: fadeIn 0.3s ease;
+            }
+            
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            
+            /* Enhanced Preview Container */
             .preview-container {
-                order: 1;
-                height: 45vh;
-                min-height: 320px;
-                flex-shrink: 0;
-                width: 100%;
+                order: 2;
+                flex: 1;
                 background: var(--deep-charcoal);
                 border-radius: 0;
+                position: relative;
+                overflow: hidden;
+            }
+            
+            /* Hide desktop sidebar completely on mobile */
+            .editor-sidebar {
+                display: none;
+            }
+            
+            /* Mobile-specific styling */
+            .mobile-toolbar {
+                display: flex;
+            }
+            
+            .mobile-tools-panel {
+                display: block;
+            }
+            
+            /* Enhanced mobile form styling */
+            .font-controls .font-group {
+                margin-bottom: var(--spacing-lg);
+            }
+            
+            .font-controls label {
+                display: block;
+                margin-bottom: var(--spacing-xs);
+                font-weight: 600;
+                color: var(--deep-charcoal);
+                font-size: 0.9rem;
+            }
+            
+            .background-controls {
+                display: flex;
+                flex-direction: column;
+                gap: var(--spacing-md);
+            }
+            
+            .background-controls label {
+                font-weight: 600;
+                color: var(--deep-charcoal);
+                font-size: 0.9rem;
+            }
+            
+            .background-controls input {
+                padding: 0.8rem;
+                border: 2px solid var(--beige);
+                border-radius: 8px;
+                font-size: 1rem;
+            }
+            
+            .btn-reset {
+                padding: 0.8rem 1.2rem;
+                background: var(--sage);
+                color: var(--warm-white);
+                border: none;
+                border-radius: 8px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+            
+            .btn-reset:hover {
+                background: #8A9E7D;
+                transform: translateY(-1px);
+            }
+            
+            /* Enhanced dropdown styling for mobile */
+            .dropdown-container {
+                margin-bottom: var(--spacing-lg);
+            }
+            
+            .dropdown-container select {
+                width: 100%;
+                padding: 1rem;
+                border: 2px solid var(--beige);
+                border-radius: 8px;
+                background: var(--warm-white);
+                font-size: 1rem;
+                color: var(--deep-charcoal);
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+            
+            .dropdown-container select:focus {
+                border-color: var(--muted-gold);
+                outline: none;
+                box-shadow: 0 0 0 3px rgba(196, 150, 45, 0.1);
+            }
+            
+            /* Mobile page navigation styling */
+            #mobile-page-navigation {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+                gap: var(--spacing-sm);
+                margin-top: var(--spacing-md);
+            }
+            
+            #mobile-page-navigation .page-nav-item {
+                padding: 1rem;
+                background: var(--cream);
+                border: 2px solid var(--beige);
+                border-radius: 8px;
+                text-align: center;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                font-weight: 500;
+            }
+            
+            #mobile-page-navigation .page-nav-item:hover {
+                background: var(--beige);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(44, 44, 44, 0.1);
+            }
+            
+            #mobile-page-navigation .page-nav-item.active {
+                background: var(--muted-gold);
+                color: var(--warm-white);
+                border-color: var(--muted-gold);
+            }
+        }
+        
+        /* Desktop-only elements */
+        @media (min-width: 769px) {
+            .mobile-toolbar {
+                display: none;
+            }
+            
+            .mobile-tools-panel {
+                display: none;
             }
             
             /* Enhanced panel sections for mobile */
@@ -1896,7 +2153,97 @@
     
     <!-- Visual Editor Interface -->
     <div class="editor-container">
-        <!-- Left Sidebar - Themes & Pages -->
+        <!-- Mobile Toolbar -->
+        <div class="mobile-toolbar">
+            <button class="mobile-tools-btn" id="mobileToolsBtn" onclick="toggleMobileTools()">
+                <span>🛠️</span>
+                <span>Edit Tools</span>
+            </button>
+        </div>
+
+        <!-- Mobile Tools Panel -->
+        <div class="mobile-tools-panel" id="mobileToolsPanel">
+            <div class="tools-panel-header">
+                <h2 class="tools-panel-title">Website Editor</h2>
+                <button class="close-tools-btn" onclick="toggleMobileTools()">×</button>
+            </div>
+            
+            <!-- Tabbed Tools Interface -->
+            <div class="tools-tabs">
+                <button class="tool-tab active" data-tab="pages">📄 Pages</button>
+                <button class="tool-tab" data-tab="themes">🎨 Style</button>
+                <button class="tool-tab" data-tab="components">💎 Add</button>
+                <button class="tool-tab" data-tab="customize">⚙️ Custom</button>
+            </div>
+            
+            <!-- Tool Content Sections -->
+            <div class="tool-content active" id="pages-content">
+                <h4>📋 Page Navigation</h4>
+                <div class="page-navigation" id="mobile-page-navigation">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+            
+            <div class="tool-content" id="themes-content">
+                <h4>🎨 Choose Theme</h4>
+                <div class="dropdown-container">
+                    <select class="theme-dropdown" id="mobile-theme-dropdown">
+                        <option value="">Select a theme...</option>
+                    </select>
+                </div>
+                
+                <h4>🏗️ Website Templates</h4>
+                <div class="dropdown-container">
+                    <select class="template-dropdown" id="mobile-template-dropdown">
+                        <option value="">Choose template...</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="tool-content" id="components-content">
+                <h4>💎 Luxury Components</h4>
+                <div class="dropdown-container">
+                    <select class="luxury-dropdown" id="mobile-luxury-dropdown">
+                        <option value="">Add luxury element...</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="tool-content" id="customize-content">
+                <h4>🔤 Typography</h4>
+                <div class="font-controls">
+                    <div class="font-group">
+                        <label>Heading Font</label>
+                        <select class="font-dropdown" id="mobile-heading-font">
+                            <option value="Cormorant Garamond">Cormorant Garamond</option>
+                            <option value="Playfair Display">Playfair Display</option>
+                            <option value="Lora">Lora</option>
+                            <option value="Merriweather">Merriweather</option>
+                        </select>
+                    </div>
+                    <div class="font-group">
+                        <label>Body Font</label>
+                        <select class="font-dropdown" id="mobile-body-font">
+                            <option value="Quicksand">Quicksand</option>
+                            <option value="Open Sans">Open Sans</option>
+                            <option value="Poppins">Poppins</option>
+                            <option value="Source Sans Pro">Source Sans Pro</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <h4>🎨 Background</h4>
+                <div class="background-controls">
+                    <label>Background Color</label>
+                    <input type="color" class="color-picker" id="mobile-bg-color" value="#F7F3F0">
+                    <label>Page Title</label>
+                    <input type="text" id="mobile-page-title" placeholder="Enter page title">
+                    <button class="btn-reset" onclick="resetPageBackground()">Reset Background</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Left Sidebar - Desktop Only -->
         <div class="editor-sidebar">
             <h3>📋 Pages</h3>
             <div class="page-navigation" id="page-navigation">
@@ -2185,15 +2532,153 @@
             }
         }
 
-        // Close mobile nav when clicking outside or pressing escape
+        // Mobile Tools Panel Functions
+        function toggleMobileTools() {
+            const panel = document.getElementById('mobileToolsPanel');
+            const btn = document.getElementById('mobileToolsBtn');
+            
+            panel.classList.toggle('open');
+            btn.classList.toggle('active');
+        }
+
+        // Tool Tab Switching
+        document.addEventListener('DOMContentLoaded', function() {
+            const toolTabs = document.querySelectorAll('.tool-tab');
+            const toolContents = document.querySelectorAll('.tool-content');
+            
+            toolTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const targetTab = this.dataset.tab;
+                    
+                    // Remove active class from all tabs and contents
+                    toolTabs.forEach(t => t.classList.remove('active'));
+                    toolContents.forEach(c => c.classList.remove('active'));
+                    
+                    // Add active class to clicked tab and corresponding content
+                    this.classList.add('active');
+                    document.getElementById(targetTab + '-content').classList.add('active');
+                });
+            });
+            
+            // Sync mobile controls with desktop controls
+            syncMobileControls();
+        });
+
+        function syncMobileControls() {
+            // Sync theme dropdowns
+            const desktopTheme = document.getElementById('theme-dropdown');
+            const mobileTheme = document.getElementById('mobile-theme-dropdown');
+            
+            if (desktopTheme && mobileTheme) {
+                mobileTheme.innerHTML = desktopTheme.innerHTML;
+                mobileTheme.value = desktopTheme.value;
+                
+                mobileTheme.addEventListener('change', function() {
+                    desktopTheme.value = this.value;
+                    desktopTheme.dispatchEvent(new Event('change'));
+                });
+            }
+            
+            // Sync template dropdowns
+            const desktopTemplate = document.getElementById('template-dropdown');
+            const mobileTemplate = document.getElementById('mobile-template-dropdown');
+            
+            if (desktopTemplate && mobileTemplate) {
+                mobileTemplate.innerHTML = desktopTemplate.innerHTML;
+                mobileTemplate.value = desktopTemplate.value;
+                
+                mobileTemplate.addEventListener('change', function() {
+                    desktopTemplate.value = this.value;
+                    desktopTemplate.dispatchEvent(new Event('change'));
+                });
+            }
+            
+            // Sync luxury dropdowns
+            const desktopLuxury = document.getElementById('luxury-dropdown');
+            const mobileLuxury = document.getElementById('mobile-luxury-dropdown');
+            
+            if (desktopLuxury && mobileLuxury) {
+                mobileLuxury.innerHTML = desktopLuxury.innerHTML;
+                mobileLuxury.value = desktopLuxury.value;
+                
+                mobileLuxury.addEventListener('change', function() {
+                    desktopLuxury.value = this.value;
+                    desktopLuxury.dispatchEvent(new Event('change'));
+                });
+            }
+            
+            // Sync page navigation
+            const desktopPages = document.getElementById('page-navigation');
+            const mobilePages = document.getElementById('mobile-page-navigation');
+            
+            if (desktopPages && mobilePages) {
+                mobilePages.innerHTML = desktopPages.innerHTML;
+            }
+            
+            // Sync font controls
+            syncFontControls();
+            syncBackgroundControls();
+        }
+
+        function syncFontControls() {
+            const mobileHeadingFont = document.getElementById('mobile-heading-font');
+            const mobileBodyFont = document.getElementById('mobile-body-font');
+            
+            if (mobileHeadingFont && window.visualEditor) {
+                mobileHeadingFont.addEventListener('change', function() {
+                    window.visualEditor.updateFont('heading', this.value);
+                });
+            }
+            
+            if (mobileBodyFont && window.visualEditor) {
+                mobileBodyFont.addEventListener('change', function() {
+                    window.visualEditor.updateFont('body', this.value);
+                });
+            }
+        }
+
+        function syncBackgroundControls() {
+            const mobileBgColor = document.getElementById('mobile-bg-color');
+            const mobilePageTitle = document.getElementById('mobile-page-title');
+            
+            if (mobileBgColor && window.visualEditor) {
+                mobileBgColor.addEventListener('change', function() {
+                    window.visualEditor.updateBackground(this.value);
+                });
+            }
+            
+            if (mobilePageTitle && window.visualEditor) {
+                mobilePageTitle.addEventListener('input', function() {
+                    window.visualEditor.updatePageTitle(this.value);
+                });
+            }
+        }
+
+        // Close mobile tools when clicking outside or pressing escape
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 const overlay = document.getElementById('mobileNavOverlay');
+                const toolsPanel = document.getElementById('mobileToolsPanel');
+                
                 if (overlay.classList.contains('active')) {
                     toggleMobileNav();
                 }
+                
+                if (toolsPanel.classList.contains('open')) {
+                    toggleMobileTools();
+                }
             }
         });
+
+        // Auto-close tools panel when adding components
+        function autoCloseMobileTools() {
+            const toolsPanel = document.getElementById('mobileToolsPanel');
+            if (toolsPanel && toolsPanel.classList.contains('open')) {
+                setTimeout(() => {
+                    toggleMobileTools();
+                }, 1000); // Close after 1 second
+            }
+        }
     </script>
 </body>
 </html>
