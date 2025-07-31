@@ -1558,37 +1558,100 @@
             
             .editor-container {
                 flex-direction: column;
-                height: auto;
-                min-height: 100vh;
-                padding-top: var(--header-height);
+                height: 100vh;
+                width: 100vw;
+                position: fixed;
+                top: 0;
+                left: 0;
+                padding: 0;
+                margin: 0;
                 gap: 0;
             }
             
             .editor-sidebar {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
                 width: 100%;
-                height: auto;
-                min-height: 45vh;
-                order: 2;
-                border-right: none;
-                border-top: 2px solid var(--muted-gold);
-                padding: var(--spacing-lg);
-                overflow-y: auto;
-                max-height: 55vh;
+                height: 80px;
+                border: none;
+                padding: 0;
                 background: var(--warm-white);
                 box-shadow: 0 -4px 20px rgba(44, 44, 44, 0.08);
+                z-index: 10;
+                display: flex;
+                align-items: center;
+                justify-content: space-around;
             }
             
             .preview-container {
-                order: 1;
                 position: fixed;
                 top: 0;
                 left: 0;
-                right: 0;
-                bottom: 80px; /* Only leave space for toolbar */
-                width: 100%;
+                width: 100vw;
                 height: calc(100vh - 80px);
                 background: #000;
                 z-index: 1;
+                margin: 0;
+                padding: 0;
+                border-radius: 0;
+            }
+            
+            .preview-frame {
+                width: 100% !important;
+                height: 100% !important;
+                border: none !important;
+                border-radius: 0 !important;
+            }
+            
+            /* Hide desktop sidebar content on mobile */
+            .editor-sidebar h3,
+            .editor-sidebar .page-navigation,
+            .editor-sidebar .dropdown-container,
+            .editor-sidebar .editing-section,
+            .editor-sidebar .background-controls,
+            .editor-sidebar .device-controls,
+            .editor-sidebar .action-buttons {
+                display: none !important;
+            }
+            
+            /* Mobile toolbar icons */
+            .mobile-toolbar {
+                display: flex !important;
+                width: 100%;
+                height: 100%;
+                align-items: center;
+                justify-content: space-around;
+                padding: 0 10px;
+            }
+            
+            .mobile-tool-icon {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 8px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                border-radius: 12px;
+                min-width: 60px;
+            }
+            
+            .mobile-tool-icon:active {
+                background: rgba(196, 150, 45, 0.1);
+                transform: scale(0.95);
+            }
+            
+            .tool-emoji {
+                font-size: 24px;
+                margin-bottom: 4px;
+            }
+            
+            .tool-label {
+                font-size: 11px;
+                color: var(--deep-charcoal);
+                font-weight: 500;
             }
             
             /* Enhanced panel sections for mobile */
@@ -2127,6 +2190,34 @@
     <div class="editor-container">
         <!-- Left Sidebar - Themes & Pages -->
         <div class="editor-sidebar">
+            <!-- Mobile Toolbar (only visible on mobile) -->
+            <div class="mobile-toolbar mobile-only">
+                <div class="mobile-tool-icon" onclick="toggleMobileTool('pages')" data-tool="pages">
+                    <span class="tool-emoji">📄</span>
+                    <span class="tool-label">Pages</span>
+                </div>
+                <div class="mobile-tool-icon" onclick="toggleMobileTool('theme')" data-tool="theme">
+                    <span class="tool-emoji">🎨</span>
+                    <span class="tool-label">Theme</span>
+                </div>
+                <div class="mobile-tool-icon" onclick="toggleMobileTool('template')" data-tool="template">
+                    <span class="tool-emoji">🏗️</span>
+                    <span class="tool-label">Template</span>
+                </div>
+                <div class="mobile-tool-icon" onclick="toggleMobileTool('luxury')" data-tool="luxury">
+                    <span class="tool-emoji">💎</span>
+                    <span class="tool-label">Luxury</span>
+                </div>
+                <div class="mobile-tool-icon" onclick="toggleMobileTool('background')" data-tool="background">
+                    <span class="tool-emoji">🖼️</span>
+                    <span class="tool-label">Background</span>
+                </div>
+                <div class="mobile-tool-icon" onclick="toggleMobileTool('fonts')" data-tool="fonts">
+                    <span class="tool-emoji">📝</span>
+                    <span class="tool-label">Fonts</span>
+                </div>
+            </div>
+            
             <h3>📋 Pages</h3>
             <div class="page-navigation" id="page-navigation">
                 <!-- Populated by JavaScript -->
