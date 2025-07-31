@@ -2483,6 +2483,47 @@
                 </div>
             </div>
             
+            <!-- Site Settings -->
+            <h3>⚙️ Site Settings</h3>
+            <div class="editing-section">
+                <div class="control-group">
+                    <label>📷 Logo</label>
+                    <div class="logo-upload-container">
+                        <img id="logo-preview" src="/api/placeholder/200/80" alt="Logo preview" style="max-width: 150px; margin-bottom: 10px; display: block; background: rgba(0,0,0,0.05); padding: 10px; border-radius: 4px;">
+                        <input type="file" id="logo-upload" accept="image/*" style="display: none;" onchange="window.editor.uploadLogo(this)">
+                        <button class="btn btn-secondary" onclick="document.getElementById('logo-upload').click()">Upload Logo</button>
+                        <button class="btn btn-secondary" onclick="window.editor.clearLogo()">Clear Logo</button>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label>🍔 Menu Style</label>
+                    <select class="font-dropdown" id="menu-style" onchange="window.editor.updateMenuStyle(this.value)">
+                        <option value="horizontal">Horizontal Menu</option>
+                        <option value="centered">Centered Logo + Menu</option>
+                        <option value="minimal">Minimal (Logo Left, Menu Right)</option>
+                        <option value="split">Split Navigation</option>
+                        <option value="transparent">Transparent Overlay</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label>🎨 Primary Color</label>
+                    <input type="color" class="color-picker" id="primary-color" value="#C4962D" onchange="window.editor.updatePrimaryColor(this.value)">
+                </div>
+                
+                <div class="control-group">
+                    <label>🎨 Secondary Color</label>
+                    <input type="color" class="color-picker" id="secondary-color" value="#8B7355" onchange="window.editor.updateSecondaryColor(this.value)">
+                </div>
+                
+                <div class="control-group">
+                    <label>🖼️ Default Background</label>
+                    <input type="file" id="default-bg-upload" accept="image/*" style="display: none;" onchange="window.editor.uploadDefaultBackground(this)">
+                    <button class="btn btn-secondary" onclick="document.getElementById('default-bg-upload').click()">Upload Background</button>
+                </div>
+            </div>
+            
             <!-- Background Controls -->
             <h3>🎨 Background</h3>
             <div class="editing-section">

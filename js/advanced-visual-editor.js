@@ -115,6 +115,15 @@ class AdvancedVisualEditor {
         // Content storage for all blocks
         this.contentData = {};
         
+        // Site-wide settings (logo, menu style, colors, etc)
+        this.siteSettings = {
+            logo: null,
+            menuStyle: 'horizontal',
+            primaryColor: '#C4962D',
+            secondaryColor: '#8B7355',
+            defaultBackground: null
+        };
+        
         // Initialize luxury components early
         this.initializeLuxuryComponents();
         
@@ -1246,35 +1255,78 @@ class AdvancedVisualEditor {
     }
     
     generatePreviewHTML() {
+        // Try to get the actual content from the iframe
+        const previewFrame = document.getElementById('preview-frame');
+        if (previewFrame && previewFrame.contentDocument) {
+            const iframeBody = previewFrame.contentDocument.body;
+            if (iframeBody) {
+                // Return just the body content for the preview
+                return iframeBody.innerHTML;
+            }
+        }
+        
+        // Fallback to generating from page layout data
         const theme = this.themes.find(t => t.id === this.currentTheme) || this.themes.find(t => t.id === 'light-airy');
         const themeStyles = this.getThemeStyles(theme);
         const currentLayout = this.pageLayouts[this.currentPage] || [];
         
-        let html = `
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Photography Studio - ${this.currentPage}</title>
-                <style>
-                    body { margin: 0; padding: 0; font-family: ${themeStyles.container.includes('serif') ? '"Cormorant Garamond", serif' : '"Quicksand", sans-serif'}; }
-                    .preview-container { ${themeStyles.container} }
-                </style>
-            </head>
-            <body>
-                <div class="preview-container">
-        `;
+        let html = '';
         
         // Add all components from current page
         currentLayout.forEach(block => {
             switch(block.type) {
                 case 'hero':
                     html += `
-                        <div style="padding: 60px 30px; text-align: center;">
-                            <h1 style="font-size: 3.5em; line-height: 1.1; margin-bottom: 20px;">${block.content.title}</h1>
-                            <p style="font-size: 1.4em; margin: 20px 0 30px;">${block.content.subtitle}</p>
-                            <button style="background: #C4962D; color: white; padding: 15px 30px; border: none; border-radius: 8px; font-size: 1.1em; cursor: pointer;">${block.content.buttonText}</button>
+                        <div class="hero-section" style="
+                            background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('${block.content.backgroundImage || '/api/placeholder/1920/1080'}');
+                            background-size: cover;
+                            background-position: center;
+                            min-height: 100vh;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            text-align: center;
+                            color: white;
+                            padding: 40px 20px;
+                        ">
+                            <div class="hero-content">
+                                <h1 style="font-size: 3.5rem; font-weight: 300; margin-bottom: 1rem; font-family: 'Cormorant Garamond', serif;">${block.content.title}</h1>
+                                <p style="font-size: 1.3rem; margin-bottom: 2rem; font-family: 'Quicksand', sans-serif;">${block.content.subtitle}</p>
+                                <button style="
+                                    background: rgba(196, 150, 45, 0.9);
+                                    color: white;
+                                    border: none;
+                                    padding: 15px 30px;
+                                    font-size: 1.1rem;
+                                    border-radius: 4px;
+                                    cursor: pointer;
+                                    font-family: 'Quicksand', sans-serif;
+                                    font-weight: 600;
+                                    letter-spacing: 1px;
+                                    transition: all 0.3s ease;
+                                ">${block.content.buttonText}</button>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 'about':
+                    html += `
+                        <div class="about-section" style="
+                            padding: 80px 20px;
+                            background: #F7F3F0;
+                            display: flex;
+                            max-width: 1200px;
+                            margin: 0 auto;
+                            align-items: center;
+                            gap: 40px;
+                        ">
+                            <div class="about-content" style="flex: 1;">
+                                <h2 style="font-size: 2.5rem; font-weight: 300; margin-bottom: 1.5rem; color: #2C2C2C; font-family: 'Cormorant Garamond', serif;">${block.content.title}</h2>
+                                <p style="font-size: 1.1rem; line-height: 1.8; color: #5D4E37; font-family: 'Quicksand', sans-serif;">${block.content.text}</p>
+                            </div>
+                            <div class="about-image" style="flex: 1;">
+                                <img src="${block.content.image || '/api/placeholder/600/400'}" alt="About" style="width: 100%; height: 400px; object-fit: cover; border-radius: 8px;">
+                            </div>
                         </div>
                     `;
                     break;
@@ -1305,12 +1357,6 @@ class AdvancedVisualEditor {
                     `;
             }
         });
-        
-        html += `
-                </div>
-            </body>
-            </html>
-        `;
         
         return html;
     }
@@ -2295,6 +2341,9 @@ class AdvancedVisualEditor {
         // Update page data
         this.pageLayouts[this.currentPage] = template.pages.home.sections || [];
         
+        // Save the template HTML as previewHTML for the preview route
+        this.previewHTML = templateHTML;
+        
         // Save changes
         await this.saveToStorage();
         
@@ -2727,6 +2776,159 @@ class AdvancedVisualEditor {
     // Close modal
     closeModal(button) {
         button.closest('.add-page-modal').remove();
+    }
+    
+    // Logo upload functionality
+    async uploadLogo(input) {
+        const file = input.files[0];
+        if (!file) return;
+        
+        try {
+            // Convert to base64 for storage
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                this.siteSettings.logo = e.target.result;
+                document.getElementById('logo-preview').src = e.target.result;
+                
+                // Update all logo instances in preview
+                this.updateLogosInPreview();
+                await this.saveToStorage();
+                this.showNotification('Logo uploaded successfully!', 'success');
+            };
+            reader.readAsDataURL(file);
+        } catch (error) {
+            console.error('Logo upload error:', error);
+            this.showNotification('Failed to upload logo', 'error');
+        }
+    }
+    
+    clearLogo() {
+        this.siteSettings.logo = null;
+        document.getElementById('logo-preview').src = '/api/placeholder/200/80';
+        this.updateLogosInPreview();
+        this.saveToStorage();
+        this.showNotification('Logo cleared', 'success');
+    }
+    
+    updateLogosInPreview() {
+        const previewFrame = document.getElementById('preview-frame');
+        if (!previewFrame || !previewFrame.contentDocument) return;
+        
+        const logos = previewFrame.contentDocument.querySelectorAll('.site-logo, .website-logo');
+        logos.forEach(logo => {
+            if (this.siteSettings.logo) {
+                if (logo.tagName === 'IMG') {
+                    logo.src = this.siteSettings.logo;
+                } else {
+                    logo.innerHTML = `<img src="${this.siteSettings.logo}" alt="Logo" style="max-height: 50px;">`;
+                }
+            } else {
+                logo.textContent = 'Photography Studio';
+            }
+        });
+    }
+    
+    updateMenuStyle(style) {
+        this.siteSettings.menuStyle = style;
+        this.applyMenuStyle();
+        this.saveToStorage();
+        this.showNotification(`Menu style updated to: ${style}`, 'success');
+    }
+    
+    applyMenuStyle() {
+        const previewFrame = document.getElementById('preview-frame');
+        if (!previewFrame || !previewFrame.contentDocument) return;
+        
+        const header = previewFrame.contentDocument.querySelector('.website-header, .site-header');
+        if (!header) return;
+        
+        // Apply different menu styles
+        switch(this.siteSettings.menuStyle) {
+            case 'centered':
+                header.style.textAlign = 'center';
+                break;
+            case 'minimal':
+                header.style.padding = '10px 20px';
+                break;
+            case 'transparent':
+                header.style.background = 'transparent';
+                header.style.position = 'absolute';
+                header.style.width = '100%';
+                header.style.zIndex = '1000';
+                break;
+            default:
+                header.style.textAlign = 'left';
+                header.style.background = 'white';
+        }
+    }
+    
+    updatePrimaryColor(color) {
+        this.siteSettings.primaryColor = color;
+        this.applySiteColors();
+        this.saveToStorage();
+    }
+    
+    updateSecondaryColor(color) {
+        this.siteSettings.secondaryColor = color;
+        this.applySiteColors();
+        this.saveToStorage();
+    }
+    
+    applySiteColors() {
+        const previewFrame = document.getElementById('preview-frame');
+        if (!previewFrame || !previewFrame.contentDocument) return;
+        
+        const doc = previewFrame.contentDocument;
+        
+        // Update CSS variables or inline styles
+        const style = doc.createElement('style');
+        style.textContent = `
+            :root {
+                --primary-color: ${this.siteSettings.primaryColor};
+                --secondary-color: ${this.siteSettings.secondaryColor};
+            }
+            .btn-primary, button {
+                background-color: ${this.siteSettings.primaryColor} !important;
+            }
+            a {
+                color: ${this.siteSettings.primaryColor};
+            }
+            h1, h2, h3, h4, h5, h6 {
+                color: ${this.siteSettings.secondaryColor};
+            }
+        `;
+        doc.head.appendChild(style);
+    }
+    
+    async uploadDefaultBackground(input) {
+        const file = input.files[0];
+        if (!file) return;
+        
+        try {
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                this.siteSettings.defaultBackground = e.target.result;
+                this.applyDefaultBackground();
+                await this.saveToStorage();
+                this.showNotification('Default background uploaded!', 'success');
+            };
+            reader.readAsDataURL(file);
+        } catch (error) {
+            console.error('Background upload error:', error);
+            this.showNotification('Failed to upload background', 'error');
+        }
+    }
+    
+    applyDefaultBackground() {
+        const previewFrame = document.getElementById('preview-frame');
+        if (!previewFrame || !previewFrame.contentDocument) return;
+        
+        if (this.siteSettings.defaultBackground) {
+            previewFrame.contentDocument.body.style.backgroundImage = `url(${this.siteSettings.defaultBackground})`;
+            previewFrame.contentDocument.body.style.backgroundSize = 'cover';
+            previewFrame.contentDocument.body.style.backgroundPosition = 'center';
+            previewFrame.contentDocument.body.style.backgroundAttachment = 'fixed';
+        }
     }
 }
 
