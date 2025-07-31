@@ -997,18 +997,18 @@ app.get('/api/sessions', isAuthenticated, requireSubscription, async (req, res) 
             displayName: req.user.displayName
         });
         
-        const sessions = await getAllSessions(userId);
+        let sessions = await getAllSessions(userId);
         console.log(`📋 Found ${sessions.length} sessions for user ${userId}`);
         
-        if (sessions.length === 0) {
-            console.log('WARNING: No sessions found. Checking if user should have access to existing sessions...');
-            
-            // Check if this user should have access to the lancecasselman@icloud.com sessions
-            if (req.user.email === 'lancecasselman@icloud.com' || req.user.email === 'lancecasselman2011@gmail.com') {
-                console.log('🔧 User should have access to sessions. Checking raw database...');
-                const debugResult = await pool.query('SELECT user_id, client_name FROM photography_sessions LIMIT 5');
-                console.log('📋 Sample sessions in database:', debugResult.rows);
-            }
+        // SPECIAL ACCESS: If Lance's accounts, give access to ALL sessions
+        if (req.user.email === 'lancecasselman@icloud.com' || req.user.email === 'lancecasselman2011@gmail.com') {
+            console.log('🎯 ADMIN ACCESS: Loading all sessions for Lance');
+            const allSessionsResult = await pool.query(`
+                SELECT * FROM photography_sessions 
+                ORDER BY created_at DESC
+            `);
+            sessions = allSessionsResult.rows;
+            console.log(`📋 ADMIN ACCESS: Found ${sessions.length} total sessions`);
         }
         
         res.json(sessions);
