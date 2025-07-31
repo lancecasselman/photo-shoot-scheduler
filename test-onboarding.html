@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Onboarding</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #222; color: white; }
+        .container { max-width: 500px; margin: 0 auto; }
+        .step { margin: 20px 0; }
+        input, select, button { padding: 10px; margin: 5px; width: 100%; }
+        button { background: #d4af37; color: black; border: none; cursor: pointer; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Business Setup - Step <span id="stepNum">1</span> of 3</h1>
+        
+        <div id="step1" class="step">
+            <h2>Step 1: Business Info</h2>
+            <input type="text" id="bizName" placeholder="Business Name" required>
+            <input type="text" id="bizLocation" placeholder="City, State (e.g. Charleston, SC)" required>
+            <input type="email" id="bizEmail" placeholder="Business Email" required>
+        </div>
+        
+        <div id="step2" class="step hidden">
+            <h2>Step 2: Branding</h2>
+            <input type="text" id="tagline" placeholder="Business Tagline">
+            <select id="style">
+                <option>Wedding Photography</option>
+                <option>Portrait Photography</option>
+                <option>Family Photography</option>
+            </select>
+        </div>
+        
+        <div id="step3" class="step hidden">
+            <h2>Step 3: Complete</h2>
+            <p>Setup complete! Click finish to continue.</p>
+        </div>
+        
+        <button id="nextBtn" onclick="nextStep()">Next</button>
+        <button id="prevBtn" onclick="prevStep()" style="display:none;">Back</button>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        
+        function showStep(step) {
+            document.getElementById('step1').classList.add('hidden');
+            document.getElementById('step2').classList.add('hidden');
+            document.getElementById('step3').classList.add('hidden');
+            document.getElementById('step' + step).classList.remove('hidden');
+            document.getElementById('stepNum').textContent = step;
+            
+            document.getElementById('prevBtn').style.display = step > 1 ? 'inline-block' : 'none';
+            document.getElementById('nextBtn').textContent = step === 3 ? 'Finish' : 'Next';
+        }
+        
+        function nextStep() {
+            if (currentStep === 1) {
+                // Validate step 1
+                const name = document.getElementById('bizName').value;
+                const location = document.getElementById('bizLocation').value;
+                const email = document.getElementById('bizEmail').value;
+                
+                if (!name || !location || !email) {
+                    alert('Please fill in all required fields');
+                    return;
+                }
+                
+                if (!location.match(/^[A-Za-z\s]+,\s*[A-Za-z]{2}$/)) {
+                    alert('Location must be in format: City, State (e.g. Charleston, SC)');
+                    return;
+                }
+            }
+            
+            if (currentStep < 3) {
+                currentStep++;
+                showStep(currentStep);
+            } else {
+                alert('Setup complete! Redirecting to dashboard...');
+                window.location.href = '/';
+            }
+        }
+        
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                showStep(currentStep);
+            }
+        }
+        
+        // Initialize
+        showStep(1);
+        console.log('Simple onboarding loaded');
+    </script>
+</body>
+</html>

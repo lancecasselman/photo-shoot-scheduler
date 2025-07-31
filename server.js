@@ -3952,10 +3952,15 @@ app.get('/api/onboarding-status', isAuthenticated, async (req, res) => {
 
 // Serve onboarding wizard
 app.get('/onboarding', (req, res) => {
+    res.sendFile(path.join(__dirname, 'test-onboarding.html'));
+});
+
+// Serve original onboarding for reference
+app.get('/onboarding-old', (req, res) => {
     if (!DEV_MODE) {
         // Check authentication in production mode
         if (!req.session || !req.session.user) {
-            return res.redirect('/auth.html?return=/onboarding');
+            return res.redirect('/auth.html?return=/onboarding-old');
         }
     }
     res.sendFile(path.join(__dirname, 'onboarding-fixed.html'));
