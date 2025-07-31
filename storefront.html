@@ -1404,7 +1404,7 @@
             border-top: 1px solid var(--beige);
         }
 
-        /* Mobile Layout Redesign - Clean & Organized */
+        /* Mobile Layout - Bottom Navigation Pattern Like Wix/Figma */
         @media (max-width: 768px) {
             .hamburger-menu {
                 display: flex;
@@ -1421,64 +1421,83 @@
                 gap: 0;
                 overflow: hidden;
                 position: relative;
+                padding-bottom: 80px; /* Space for bottom nav */
             }
             
-            /* Mobile Toolbar */
-            .mobile-toolbar {
-                display: flex;
+            /* Bottom Navigation Bar - Professional Mobile Pattern */
+            .mobile-bottom-nav {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 80px;
                 background: var(--warm-white);
-                border-bottom: 1px solid var(--beige);
-                padding: var(--spacing-sm);
-                box-shadow: 0 2px 8px rgba(44, 44, 44, 0.1);
-                z-index: 100;
-                order: 1;
+                border-top: 1px solid var(--beige);
+                display: flex;
+                align-items: center;
+                justify-content: space-around;
+                z-index: 1000;
+                box-shadow: 0 -4px 20px rgba(44, 44, 44, 0.15);
+                padding: var(--spacing-sm) var(--spacing-md);
+            }
+            
+            .mobile-nav-item {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 4px;
+                padding: var(--spacing-xs);
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                min-width: 60px;
                 position: relative;
             }
             
-            .mobile-tools-btn {
-                flex: 1;
-                padding: 0.8rem;
-                background: var(--muted-gold);
-                color: var(--warm-white);
-                border: none;
-                border-radius: 8px;
-                font-weight: 600;
-                font-size: 1rem;
-                cursor: pointer;
+            .mobile-nav-item.active {
+                background: rgba(196, 150, 45, 0.1);
+            }
+            
+            .mobile-nav-icon {
+                font-size: 1.4rem;
+                color: var(--soft-brown);
                 transition: all 0.3s ease;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: var(--spacing-xs);
             }
             
-            .mobile-tools-btn:hover {
-                background: #B8851A;
-                transform: translateY(-1px);
+            .mobile-nav-item.active .mobile-nav-icon {
+                color: var(--muted-gold);
+                transform: scale(1.1);
             }
             
-            .mobile-tools-btn.active {
-                background: var(--sage);
+            .mobile-nav-label {
+                font-size: 0.7rem;
+                color: var(--soft-brown);
+                font-weight: 500;
+                transition: all 0.3s ease;
             }
             
-            /* Mobile Tools Panel - Collapsible */
-            .mobile-tools-panel {
+            .mobile-nav-item.active .mobile-nav-label {
+                color: var(--muted-gold);
+                font-weight: 600;
+            }
+            
+            /* Contextual Tool Panel - Slides up from bottom */
+            .mobile-context-panel {
                 position: fixed;
-                top: calc(var(--header-height) + 60px);
+                bottom: 80px;
                 left: 0;
                 right: 0;
-                bottom: 0;
                 background: var(--warm-white);
+                border-top: 1px solid var(--beige);
                 transform: translateY(100%);
-                transition: transform 0.4s ease;
-                z-index: 1000;
+                transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                z-index: 999;
+                max-height: 60vh;
                 overflow-y: auto;
-                padding: var(--spacing-lg);
-                border-top: 2px solid var(--muted-gold);
                 box-shadow: 0 -4px 20px rgba(44, 44, 44, 0.15);
             }
             
-            .mobile-tools-panel.open {
+            .mobile-context-panel.open {
                 transform: translateY(0);
             }
             
@@ -1749,11 +1768,11 @@
         
         /* Desktop-only elements */
         @media (min-width: 769px) {
-            .mobile-toolbar {
+            .mobile-bottom-nav {
                 display: none !important;
             }
             
-            .mobile-tools-panel {
+            .mobile-context-panel {
                 display: none !important;
             }
             
@@ -2470,6 +2489,43 @@
         </div>
     </div>
     
+    <!-- Mobile Bottom Navigation -->
+    <div class="mobile-bottom-nav">
+        <div class="mobile-nav-item" onclick="showMobilePanel('pages')">
+            <div class="mobile-nav-icon">📄</div>
+            <div class="mobile-nav-label">Pages</div>
+        </div>
+        <div class="mobile-nav-item" onclick="showMobilePanel('themes')">
+            <div class="mobile-nav-icon">🎨</div>
+            <div class="mobile-nav-label">Themes</div>
+        </div>
+        <div class="mobile-nav-item" onclick="showMobilePanel('components')">
+            <div class="mobile-nav-icon">🧩</div>
+            <div class="mobile-nav-label">Add</div>
+        </div>
+        <div class="mobile-nav-item" onclick="showMobilePanel('customize')">
+            <div class="mobile-nav-icon">✏️</div>
+            <div class="mobile-nav-label">Edit</div>
+        </div>
+        <div class="mobile-nav-item" onclick="showMobilePanel('preview')">
+            <div class="mobile-nav-icon">👁️</div>
+            <div class="mobile-nav-label">Preview</div>
+        </div>
+    </div>
+    
+    <!-- Mobile Context Panel -->
+    <div class="mobile-context-panel" id="mobile-context-panel">
+        <div class="context-panel-content">
+            <div class="context-panel-header">
+                <h3 class="context-panel-title" id="context-panel-title">Tools</h3>
+                <button class="context-close-btn" onclick="closeMobilePanel()">×</button>
+            </div>
+            <div id="context-panel-body">
+                <!-- Dynamic content loads here based on selected tool -->
+            </div>
+        </div>
+    </div>
+    
     <!-- Firebase Configuration -->
     <script src="firebase-config.js"></script>
     
@@ -2548,6 +2604,137 @@
                 window.editor.showNotification('Publishing site...', 'info');
                 // Publishing functionality would be implemented here
             }
+        }
+
+        // Mobile Navigation Functions - Bottom Nav Pattern
+        function showMobilePanel(panelType) {
+            const panel = document.getElementById('mobile-context-panel');
+            const title = document.getElementById('context-panel-title');
+            const body = document.getElementById('context-panel-body');
+            
+            // Update active navigation item
+            document.querySelectorAll('.mobile-nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.closest('.mobile-nav-item').classList.add('active');
+            
+            // Set panel content based on type
+            switch(panelType) {
+                case 'pages':
+                    title.textContent = 'Pages';
+                    body.innerHTML = createPagesContent();
+                    break;
+                case 'themes':
+                    title.textContent = 'Themes';
+                    body.innerHTML = createThemesContent();
+                    break;
+                case 'components':
+                    title.textContent = 'Add Components';
+                    body.innerHTML = createComponentsContent();
+                    break;
+                case 'customize':
+                    title.textContent = 'Customize';
+                    body.innerHTML = createCustomizeContent();
+                    break;
+                case 'preview':
+                    title.textContent = 'Preview';
+                    body.innerHTML = createPreviewContent();
+                    break;
+            }
+            
+            // Show panel
+            panel.classList.add('open');
+        }
+        
+        function closeMobilePanel() {
+            const panel = document.getElementById('mobile-context-panel');
+            panel.classList.remove('open');
+            
+            // Remove active states
+            document.querySelectorAll('.mobile-nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+        }
+        
+        // Content creation functions for mobile panels
+        function createPagesContent() {
+            return `
+                <div class="mobile-pages-content">
+                    <div class="page-selector-container">
+                        <select id="page-selector" class="page-selector" onchange="window.editor && window.editor.switchPage(this.value)">
+                            <option value="home">🏠 Home</option>
+                            <option value="about">👤 About</option>
+                            <option value="portfolio">📸 Portfolio</option>
+                            <option value="contact">📞 Contact</option>
+                        </select>
+                    </div>
+                    <div class="page-management">
+                        <button class="btn btn-primary full-width" onclick="window.editor && window.editor.showPageCreationModal()">➕ Add New Page</button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function createThemesContent() {
+            return `
+                <div class="mobile-themes-content">
+                    <div class="theme-selector-container">
+                        <select id="theme-selector" class="theme-selector" onchange="window.editor && window.editor.changeTheme(this.value)">
+                            <option value="">Select Theme...</option>
+                        </select>
+                    </div>
+                    <div class="template-container">
+                        <select id="template-selector" class="template-selector" onchange="window.editor && window.editor.applyTemplate(this.value)">
+                            <option value="">Apply Template...</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function createComponentsContent() {
+            return `
+                <div class="mobile-components-content">
+                    <div class="luxury-components">
+                        <select id="luxury-component-selector" class="luxury-selector" onchange="window.editor && window.editor.addLuxuryComponent(this.value)">
+                            <option value="">Add Luxury Component...</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function createCustomizeContent() {
+            return `
+                <div class="mobile-customize-content">
+                    <div class="background-controls">
+                        <h4>Background</h4>
+                        <input type="color" id="bg-color" class="color-picker" onchange="window.editor && window.editor.updatePageBackground(this.value)">
+                        <button class="btn btn-sm" onclick="window.editor && window.editor.resetPageBackground()">Reset</button>
+                    </div>
+                    <div class="font-controls">
+                        <h4>Typography</h4>
+                        <select id="heading-font" class="font-selector" onchange="window.editor && window.editor.updateHeadingFont(this.value)">
+                            <option value="">Select Heading Font...</option>
+                        </select>
+                        <select id="body-font" class="font-selector" onchange="window.editor && window.editor.updateBodyFont(this.value)">
+                            <option value="">Select Body Font...</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function createPreviewContent() {
+            return `
+                <div class="mobile-preview-content">
+                    <div class="preview-actions">
+                        <button class="btn btn-primary full-width" onclick="previewWebsite()">👁️ Open Full Preview</button>
+                        <button class="btn btn-secondary full-width" onclick="saveChanges()">💾 Save Changes</button>
+                        <button class="btn btn-secondary full-width" onclick="exportCode()">📤 Export Code</button>
+                    </div>
+                </div>
+            `;
         }
     </script>
     
