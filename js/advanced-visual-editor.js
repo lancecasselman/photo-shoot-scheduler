@@ -233,20 +233,26 @@ class AdvancedVisualEditor {
     }
 
     setupLuxuryComponents() {
+        console.log('🔍 Setting up luxury components...');
         const luxuryContainer = document.getElementById('luxury-components');
         if (!luxuryContainer) {
-            console.warn('Luxury components container not found');
+            console.error('❌ Luxury components container not found - #luxury-components element missing!');
             return;
         }
 
         // Initialize luxury components if not already done
         if (!this.luxuryComponents) {
+            console.log('📦 Initializing luxury components...');
             this.initializeLuxuryComponents();
         }
+
+        console.log(`🎨 Found ${Object.keys(this.luxuryComponents).length} luxury components to display`);
 
         // Create luxury components title
         const title = document.createElement('h3');
         title.textContent = '💎 Luxury Design Components';
+        title.style.color = '#C4962D';
+        title.style.marginBottom = '16px';
         luxuryContainer.innerHTML = '';
         luxuryContainer.appendChild(title);
 
@@ -267,6 +273,7 @@ class AdvancedVisualEditor {
             `;
             
             card.addEventListener('click', () => {
+                console.log(`🚀 Adding luxury component: ${component.name}`);
                 this.addLuxuryComponent(key);
             });
             
@@ -275,7 +282,7 @@ class AdvancedVisualEditor {
         
         luxuryContainer.appendChild(componentGrid);
         
-        console.log(`✅ Loaded ${Object.keys(this.luxuryComponents).length} luxury components`);
+        console.log(`✅ Successfully displayed ${Object.keys(this.luxuryComponents).length} luxury components in sidebar`);
     }
 
     initializePrebuiltTemplates() {
