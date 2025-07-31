@@ -2036,9 +2036,10 @@
                     // Save current state first
                     await window.editor.saveToStorage();
                     
-                    // Open preview in new tab
+                    // Open preview in new tab - show the current page being edited
                     const userId = window.editor.userId || 'dev-user-123';
-                    const previewUrl = `/preview/${userId}`;
+                    const currentPage = window.editor.currentPage || 'home';
+                    const previewUrl = `/preview/${userId}?page=${currentPage}`;
                     const previewWindow = window.open(previewUrl, '_blank');
                     
                     if (previewWindow) {

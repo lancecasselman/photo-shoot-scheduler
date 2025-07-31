@@ -983,6 +983,7 @@ app.get('/storefront-preview/:page', async (req, res) => {
 // User storefront preview endpoint
 app.get('/preview/:userId', async (req, res) => {
     const { userId } = req.params;
+    const { page } = req.query; // Get page from query parameter
     
     try {
         // Load user's storefront data from database or localStorage equivalent
@@ -994,9 +995,21 @@ app.get('/preview/:userId', async (req, res) => {
             siteData = result.rows[0].site_data;
         }
         
-        // Check if we have stored HTML from the editor
-        if (siteData.previewHTML) {
+        // Get the requested page from query parameter
+        const requestedPage = req.query.page || siteData.currentPage || 'home';
+        
+        // Get pages from site data
+        const pages = siteData.pages || [
+            { id: 'home', name: 'Home', icon: '🏠' },
+            { id: 'about', name: 'About', icon: '👤' },
+            { id: 'portfolio', name: 'Portfolio', icon: '📸' },
+            { id: 'contact', name: 'Contact', icon: '📧' }
+        ];
+        
+        // For the currently edited page in the editor, use the stored preview HTML
+        if (siteData.previewHTML && requestedPage === (siteData.currentPage || 'home')) {
             // Create full preview page with the stored HTML
+            
             const fullPreviewHTML = `
 <!DOCTYPE html>
 <html lang="en">
@@ -1042,8 +1055,130 @@ app.get('/preview/:userId', async (req, res) => {
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         
+        /* Website navigation header */
+        .website-header {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 60px;
+            z-index: 999;
+        }
+        
+        .website-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .website-logo {
+            font-family: var(--font-serif);
+            font-size: 1.8em;
+            font-weight: 600;
+            color: var(--deep-charcoal);
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+        
+        .nav-links a {
+            color: var(--deep-charcoal);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        
+        .nav-links a:hover {
+            color: var(--muted-gold);
+        }
+        
+        .hamburger-menu {
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            cursor: pointer;
+        }
+        
+        .hamburger-menu span {
+            width: 25px;
+            height: 3px;
+            background: var(--deep-charcoal);
+            transition: all 0.3s ease;
+        }
+        
+        .mobile-nav {
+            display: none;
+            position: fixed;
+            top: 0;
+            right: -300px;
+            width: 300px;
+            height: 100vh;
+            background: white;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            transition: right 0.3s ease;
+            z-index: 1001;
+        }
+        
+        .mobile-nav.active {
+            right: 0;
+        }
+        
+        .mobile-nav-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--beige);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .close-menu {
+            font-size: 2em;
+            cursor: pointer;
+            color: var(--deep-charcoal);
+        }
+        
+        .mobile-nav-links {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .mobile-nav-links a {
+            color: var(--deep-charcoal);
+            text-decoration: none;
+            font-size: 1.2em;
+            font-weight: 500;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--beige);
+        }
+        
         .preview-content {
-            min-height: calc(100vh - 60px);
+            min-height: calc(100vh - 140px);
+            margin-top: 80px;
+        }
+        
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            
+            .hamburger-menu {
+                display: flex;
+            }
+            
+            .website-nav {
+                padding: 15px 20px;
+            }
+            
+            .preview-content {
+                margin-top: 60px;
+            }
         }
     </style>
 </head>
@@ -1051,9 +1186,51 @@ app.get('/preview/:userId', async (req, res) => {
     <div class="preview-header">
         📱 Website Preview - This is how your site will look to visitors
     </div>
+    
+    <header class="website-header">
+        <nav class="website-nav">
+            <div class="website-logo">Photography Studio</div>
+            <div class="nav-links">
+                ${pages.map(page => `<a href="#${page.id}">${page.name}</a>`).join('')}
+            </div>
+            <div class="hamburger-menu" onclick="toggleMobileNav()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </nav>
+    </header>
+    
+    <div class="mobile-nav" id="mobileNav">
+        <div class="mobile-nav-header">
+            <div class="website-logo">Photography Studio</div>
+            <span class="close-menu" onclick="toggleMobileNav()">&times;</span>
+        </div>
+        <div class="mobile-nav-links">
+            ${pages.map(page => `<a href="#${page.id}" onclick="toggleMobileNav()">${page.icon} ${page.name}</a>`).join('')}
+        </div>
+    </div>
+    
     <div class="preview-content">
         ${siteData.previewHTML}
     </div>
+    
+    <script>
+        function toggleMobileNav() {
+            const mobileNav = document.getElementById('mobileNav');
+            mobileNav.classList.toggle('active');
+        }
+        
+        // Close mobile nav when clicking outside
+        document.addEventListener('click', function(event) {
+            const mobileNav = document.getElementById('mobileNav');
+            const hamburger = document.querySelector('.hamburger-menu');
+            
+            if (!mobileNav.contains(event.target) && !hamburger.contains(event.target)) {
+                mobileNav.classList.remove('active');
+            }
+        });
+    </script>
 </body>
 </html>`;
             res.send(fullPreviewHTML);
@@ -1066,8 +1243,11 @@ app.get('/preview/:userId', async (req, res) => {
         const pageLayouts = siteData.pageLayouts || {};
         const currentLayout = pageLayouts[currentPage] || [];
         
+        // Use requestedPage that was already declared above
+        const layoutToShow = pageLayouts[requestedPage] || [];
+        
         // Generate HTML for each luxury component
-        currentLayout.forEach(block => {
+        layoutToShow.forEach(block => {
             switch(block.type) {
                 case 'hero':
                     contentHTML += `
@@ -1135,8 +1315,8 @@ app.get('/preview/:userId', async (req, res) => {
             }
         });
         
-        // If no components, show helpful message
-        if (currentLayout.length === 0) {
+        // If no components for the requested page, show helpful message
+        if (layoutToShow.length === 0) {
             contentHTML = `
                 <section style="padding: 100px 30px; text-align: center;">
                     <h1 style="font-family: var(--font-serif); font-size: 3em; margin-bottom: 20px; color: var(--deep-charcoal);">Your Website Preview</h1>
@@ -1198,8 +1378,112 @@ app.get('/preview/:userId', async (req, res) => {
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         
+        /* Website navigation header */
+        .website-header {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 60px;
+            z-index: 999;
+        }
+        
+        .website-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .website-logo {
+            font-family: var(--font-serif);
+            font-size: 1.8em;
+            font-weight: 600;
+            color: var(--deep-charcoal);
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+        
+        .nav-links a {
+            color: var(--deep-charcoal);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        
+        .nav-links a:hover {
+            color: var(--muted-gold);
+        }
+        
+        .hamburger-menu {
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            cursor: pointer;
+        }
+        
+        .hamburger-menu span {
+            width: 25px;
+            height: 3px;
+            background: var(--deep-charcoal);
+            transition: all 0.3s ease;
+        }
+        
+        .mobile-nav {
+            display: none;
+            position: fixed;
+            top: 0;
+            right: -300px;
+            width: 300px;
+            height: 100vh;
+            background: white;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            transition: right 0.3s ease;
+            z-index: 1001;
+        }
+        
+        .mobile-nav.active {
+            right: 0;
+        }
+        
+        .mobile-nav-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--beige);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .close-menu {
+            font-size: 2em;
+            cursor: pointer;
+            color: var(--deep-charcoal);
+        }
+        
+        .mobile-nav-links {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .mobile-nav-links a {
+            color: var(--deep-charcoal);
+            text-decoration: none;
+            font-size: 1.2em;
+            font-weight: 500;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--beige);
+        }
+        
         .preview-content {
-            min-height: calc(100vh - 60px);
+            min-height: calc(100vh - 140px);
+            margin-top: 80px;
         }
         
         @media (max-width: 768px) {
@@ -1212,6 +1496,18 @@ app.get('/preview/:userId', async (req, res) => {
             h2 {
                 font-size: 2.2em !important;
             }
+            .nav-links {
+                display: none;
+            }
+            .hamburger-menu {
+                display: flex;
+            }
+            .website-nav {
+                padding: 15px 20px;
+            }
+            .preview-content {
+                margin-top: 60px;
+            }
         }
     </style>
 </head>
@@ -1219,9 +1515,51 @@ app.get('/preview/:userId', async (req, res) => {
     <div class="preview-header">
         📱 Website Preview - This is how your site will look to visitors
     </div>
+    
+    <header class="website-header">
+        <nav class="website-nav">
+            <div class="website-logo">Photography Studio</div>
+            <div class="nav-links">
+                ${pages.map(page => `<a href="#${page.id}">${page.name}</a>`).join('')}
+            </div>
+            <div class="hamburger-menu" onclick="toggleMobileNav()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </nav>
+    </header>
+    
+    <div class="mobile-nav" id="mobileNav">
+        <div class="mobile-nav-header">
+            <div class="website-logo">Photography Studio</div>
+            <span class="close-menu" onclick="toggleMobileNav()">&times;</span>
+        </div>
+        <div class="mobile-nav-links">
+            ${pages.map(page => `<a href="#${page.id}" onclick="toggleMobileNav()">${page.icon} ${page.name}</a>`).join('')}
+        </div>
+    </div>
+    
     <div class="preview-content">
         ${contentHTML}
     </div>
+    
+    <script>
+        function toggleMobileNav() {
+            const mobileNav = document.getElementById('mobileNav');
+            mobileNav.classList.toggle('active');
+        }
+        
+        // Close mobile nav when clicking outside
+        document.addEventListener('click', function(event) {
+            const mobileNav = document.getElementById('mobileNav');
+            const hamburger = document.querySelector('.hamburger-menu');
+            
+            if (!mobileNav.contains(event.target) && !hamburger.contains(event.target)) {
+                mobileNav.classList.remove('active');
+            }
+        });
+    </script>
 </body>
 </html>
         `;
