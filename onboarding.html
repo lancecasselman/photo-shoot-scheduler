@@ -28,6 +28,26 @@
     </div>
   </div>
 
+  <script>
+    console.log('Inline script executing - testing basic functionality');
+    
+    // Test if we can access DOM elements
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('DOM loaded - testing element access');
+      const nextBtn = document.getElementById('nextBtn');
+      const prevBtn = document.getElementById('prevBtn');
+      
+      if (nextBtn && prevBtn) {
+        console.log('Buttons found - adding basic click handler');
+        nextBtn.onclick = () => {
+          console.log('Next button clicked - functionality working');
+          alert('Button click detected! JavaScript is working.');
+        };
+      } else {
+        console.error('Buttons not found:', { nextBtn: !!nextBtn, prevBtn: !!prevBtn });
+      }
+    });
+  </script>
   <script src="onboarding.js"></script>
 </body>
 </html>
