@@ -13,8 +13,32 @@ class AdvancedVisualEditor {
         this.undoStack = [];
         this.redoStack = [];
         
-        // Available themes with preview support
-        this.themes = {
+        // Available themes with preview support (exposed for mobile)
+        this.themes = [
+            { id: 'light-airy', name: 'Light + Airy Creative Studio', category: 'elegant' },
+            { id: 'bold-editorial', name: 'Bold Editorial', category: 'dramatic' },
+            { id: 'earthy-boho', name: 'Earthy Boho', category: 'natural' },
+            { id: 'modern-luxe', name: 'Modern Luxe', category: 'minimal' },
+            { id: 'coastal-lifestyle', name: 'Coastal Lifestyle', category: 'lifestyle' },
+            { id: 'minimal-portfolio', name: 'Minimal Portfolio', category: 'minimal' },
+            { id: 'monochrome-studio', name: 'Monochrome Studio', category: 'classic' },
+            { id: 'dark-moody-wedding', name: 'Dark Moody Wedding', category: 'dramatic' },
+            { id: 'romantic-serif', name: 'Romantic Serif', category: 'elegant' },
+            { id: 'fashion-forward', name: 'Fashion Forward', category: 'modern' },
+            { id: 'commercial-grid', name: 'Commercial Grid', category: 'business' },
+            { id: 'film-vibe', name: 'Film Vibe', category: 'vintage' },
+            { id: 'urban-black-gold', name: 'Urban Black Gold', category: 'modern' },
+            { id: 'cottagecore-vibes', name: 'Cottagecore Vibes', category: 'natural' },
+            { id: 'rustic-barn', name: 'Rustic Barn', category: 'rustic' },
+            { id: 'luxury-fine-art', name: 'Luxury Fine Art', category: 'elegant' },
+            { id: 'street-photography', name: 'Street Photography', category: 'urban' },
+            { id: 'scenic-landscapes', name: 'Scenic Landscapes', category: 'nature' },
+            { id: 'scrolling-story', name: 'Scrolling Story', category: 'narrative' },
+            { id: 'storybook-magazine', name: 'Storybook Magazine', category: 'editorial' }
+        ];
+        
+        // Theme mapping for backward compatibility
+        this.themeMap = {
             'light-airy': { name: 'Light + Airy Creative Studio', category: 'elegant' },
             'bold-editorial': { name: 'Bold Editorial', category: 'dramatic' },
             'earthy-boho': { name: 'Earthy Boho', category: 'natural' },
@@ -123,6 +147,11 @@ class AdvancedVisualEditor {
             
             console.log('✅ Advanced Visual Editor initialized successfully');
             this.showNotification('Editor ready - click any text or image to edit!', 'success');
+            
+            // Check if mobile view needs initialization
+            if (typeof checkMobileView === 'function') {
+                checkMobileView();
+            }
             
         } catch (error) {
             console.error('❌ Failed to initialize editor:', error);
@@ -698,7 +727,7 @@ class AdvancedVisualEditor {
     }
     
     generatePreviewHTML() {
-        const theme = this.themes[this.currentTheme] || this.themes['light-airy'];
+        const theme = this.themes.find(t => t.id === this.currentTheme) || this.themes.find(t => t.id === 'light-airy');
         const themeStyles = this.getThemeStyles(theme);
         const currentLayout = this.pageLayouts[this.currentPage] || [];
         
@@ -839,7 +868,7 @@ class AdvancedVisualEditor {
         }
         
         // Get current theme styling
-        const theme = this.themes[this.currentTheme] || this.themes['light-airy'];
+        const theme = this.themes.find(t => t.id === this.currentTheme) || this.themes.find(t => t.id === 'light-airy');
         let themeStyles = this.getThemeStyles(theme);
         
         // Get current page info
@@ -944,7 +973,16 @@ class AdvancedVisualEditor {
     }
     
     getThemeStyles(theme) {
-        switch(theme.category) {
+        // Handle both string IDs and theme objects
+        let themeCategory;
+        if (typeof theme === 'string') {
+            const themeObj = this.themeMap[theme] || this.themes.find(t => t.id === theme);
+            themeCategory = themeObj ? themeObj.category : 'elegant';
+        } else {
+            themeCategory = theme.category || 'elegant';
+        }
+        
+        switch(themeCategory) {
             case 'elegant':
                 return {
                     container: 'min-height: 400px; padding: 30px; background: linear-gradient(135deg, #F7F3F0, #FEFDFB); font-family: "Cormorant Garamond", serif;',
