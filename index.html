@@ -10742,6 +10742,12 @@ I'm so grateful to work with clients like ${clientName} who trust me to capture 
                 return;
             }
             
+            // Validate file size (5MB limit)
+            if (imageFile.size > 5 * 1024 * 1024) {
+                showMessage('Image size must be less than 5MB', 'error');
+                return;
+            }
+            
             const formData = new FormData();
             formData.append('poseImage', imageFile);
             formData.append('category', category);
@@ -10764,65 +10770,15 @@ I'm so grateful to work with clients like ${clientName} who trust me to capture 
                     
                     // Reload poses gallery
                     await loadPosesFromAPI();
+                    
+                    // Celebrate
+                    celebrateMilestone('photos_uploaded', 'Pose Submitted');
                 } else {
                     throw new Error('Failed to submit pose');
                 }
             } catch (error) {
                 console.error('Error submitting pose:', error);
                 showMessage('Failed to submit pose. Please try again.', 'error');
-            }
-            
-            if (!imageFile) {
-                showMessage('Please select an image to upload', 'error');
-                return;
-            }
-            
-            // Validate file size (5MB limit)
-            if (imageFile.size > 5 * 1024 * 1024) {
-                showMessage('Image size must be less than 5MB', 'error');
-                return;
-            }
-            
-            try {
-                showMessage('Uploading pose for review...', 'info');
-                
-                // Parse tags
-                const tags = tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag);
-                
-                // Simulate upload delay
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                
-                // Show success message
-                const resultDiv = document.getElementById('submitResult');
-                resultDiv.className = 'submit-result success';
-                resultDiv.style.display = 'block';
-                resultDiv.innerHTML = `
-                    <h4>Success Submission Successful!</h4>
-                    <p>Your pose has been submitted for review. It will appear in the shared gallery once approved by our moderators.</p>
-                    <p><strong>Category:</strong> ${category}</p>
-                    <p><strong>Tags:</strong> ${tags.join(', ')}</p>
-                `;
-                
-                // Clear form
-                resetPoseForm();
-                
-                // Celebrate
-                celebrateMilestone('photos_uploaded', 'Pose Submitted');
-                showMessage('Pose submitted successfully! Pending approval.', 'success');
-                
-            } catch (error) {
-                console.error('Error submitting pose:', error);
-                
-                const resultDiv = document.getElementById('submitResult');
-                resultDiv.className = 'submit-result error';
-                resultDiv.style.display = 'block';
-                resultDiv.innerHTML = `
-                    <h4>Error Submission Failed</h4>
-                    <p>There was an error submitting your pose. Please try again.</p>
-                    <p><small>Error: ${error.message}</small></p>
-                `;
-                
-                showMessage('Error submitting pose. Please try again.', 'error');
             }
         }
 
