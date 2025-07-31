@@ -272,11 +272,12 @@
             transform: translateY(-1px);
         }
         
-        /* Main Layout */
+        /* Main Layout - FORCE DESKTOP GRID */
         .editor-container {
             margin-top: var(--header-height);
-            display: grid;
-            grid-template-columns: 240px 1fr;
+            display: grid !important;
+            grid-template-columns: 240px 1fr !important;
+            grid-template-rows: unset !important;
             height: calc(100vh - var(--header-height));
         }
         
@@ -788,9 +789,10 @@
         }
         
         /* Responsive Design */
-        @media (max-width: 1200px) {
+        @media (max-width: 1200px) and (min-width: 769px) {
             .editor-container {
-                grid-template-columns: 220px 1fr;
+                grid-template-columns: 200px 1fr !important;
+                grid-template-rows: unset !important;
             }
             
             .theme-grid {
@@ -1416,8 +1418,8 @@
             
             .editor-container {
                 display: grid !important;
-                grid-template-columns: 1fr !important;
-                grid-template-rows: auto 1fr;
+                grid-template-columns: 180px 1fr !important;
+                grid-template-rows: unset !important;
                 height: calc(100vh - var(--header-height)) !important;
                 margin-top: var(--header-height) !important;
                 padding: 0;
