@@ -2387,9 +2387,10 @@ Examples:
                                 stripeScript.onload = resolve;
                             });
                             
-                            // Get publishable key from the environment secrets
-                            const stripePublicKey = 'pk_test_51QPtbhKLfMBw3L2qsWvp8K7qGQnT6jODx8iOfO5fQVCL4V8BwgUCT9xDvZaJafaHckMPv5Xa0fSLGGZ8GvgtYUZI00hQb0iMwf'; // Use VITE_STRIPE_PUBLIC_KEY from environment
-                            window.stripe = Stripe(stripePublicKey);
+                            // Get the Stripe public key from the server
+                            const keyResponse = await fetch('/api/stripe/public-key');
+                            const keyData = await keyResponse.json();
+                            window.stripe = Stripe(keyData.publicKey);
                         }
                         
                         // Redirect to Stripe Checkout

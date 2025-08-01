@@ -1817,6 +1817,11 @@ app.get('/api/ai/credits', async (req, res) => {
     }
 });
 
+// Stripe public key endpoint
+app.get('/api/stripe/public-key', (req, res) => {
+    res.json({ publicKey: process.env.VITE_STRIPE_PUBLIC_KEY });
+});
+
 // AI Credits Purchase Endpoint
 app.post('/api/ai/purchase-credits', async (req, res) => {
     try {
