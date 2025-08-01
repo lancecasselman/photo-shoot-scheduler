@@ -42,6 +42,158 @@
             height: 100vh;
         }
         
+        /* Mobile Responsive - CapCut Style */
+        @media (max-width: 768px) {
+            .builder-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: 60px 50px 1fr 60px;
+            }
+            
+            .toolbar {
+                order: 2;
+                grid-column: 1;
+                display: flex;
+                flex-direction: row;
+                overflow-x: auto;
+                height: 50px;
+                padding: 8px;
+                gap: 8px;
+                background: var(--bg-secondary);
+                border-bottom: 1px solid var(--border-color);
+            }
+            
+            .toolbar-btn {
+                flex-shrink: 0;
+                padding: 8px 12px;
+                font-size: 12px;
+                white-space: nowrap;
+                min-width: auto;
+            }
+            
+            .preview-area {
+                order: 3;
+                grid-column: 1;
+            }
+            
+            .properties-panel {
+                order: 4;
+                grid-column: 1;
+                height: 60px;
+                display: flex;
+                overflow-x: auto;
+                padding: 8px;
+                background: var(--bg-secondary);
+                border-top: 1px solid var(--border-color);
+            }
+            
+            .property-section {
+                flex-shrink: 0;
+                min-width: 200px;
+                margin-right: 16px;
+            }
+            
+            .mobile-preview-toggle {
+                display: block;
+            }
+            
+            .ai-panel {
+                width: 100%;
+                right: -100%;
+                top: 0;
+                height: 100vh;
+            }
+            
+            .text-toolbar {
+                max-width: 90vw;
+                position: fixed;
+                bottom: 80px;
+                left: 50%;
+                transform: translateX(-50%);
+                top: auto;
+            }
+            
+            .top-bar {
+                padding: 0 15px;
+            }
+            
+            .project-name {
+                font-size: 14px;
+                padding: 6px 10px;
+            }
+            
+            .controls .btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+        }
+        
+        /* Mobile Preview Toggle */
+        .mobile-preview-toggle {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--accent-gold);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 1001;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        /* Full Screen Preview Mode - CapCut Style */
+        .fullscreen-preview {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-primary);
+            z-index: 1000;
+            display: none;
+        }
+        
+        .fullscreen-preview.active {
+            display: block;
+        }
+        
+        .fullscreen-header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .fullscreen-title {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .fullscreen-close {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        
+        .fullscreen-close:hover {
+            background: var(--bg-tertiary);
+        }
+        
+        .fullscreen-content {
+            height: calc(100% - 70px);
+            overflow: auto;
+        }
+        
         /* Top Bar */
         .top-bar {
             grid-column: 1 / -1;
@@ -908,6 +1060,26 @@ Examples:
                     <textarea class="property-input" rows="3" placeholder="Capturing your most precious moments with artistic vision and technical excellence..."></textarea>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Mobile Preview Toggle Button -->
+    <button class="mobile-preview-toggle" onclick="toggleFullscreenPreview()">
+        <i class="fas fa-expand"></i>
+    </button>
+
+    <!-- Fullscreen Preview Mode - CapCut Style -->
+    <div class="fullscreen-preview" id="fullscreenPreview">
+        <div class="fullscreen-header">
+            <div class="fullscreen-title">
+                <i class="fas fa-mobile-alt"></i> Full Preview
+            </div>
+            <button class="fullscreen-close" onclick="closeFullscreenPreview()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="fullscreen-content">
+            <iframe id="fullscreenCanvas" style="width: 100%; height: 100%; border: none; background: white;"></iframe>
         </div>
     </div>
 
@@ -1780,6 +1952,47 @@ Examples:
             }
         }
         
+        // Mobile Fullscreen Preview Functions - CapCut Style
+        function toggleFullscreenPreview() {
+            const fullscreen = document.getElementById('fullscreenPreview');
+            const canvas = document.getElementById('mainCanvas');
+            const fullscreenCanvas = document.getElementById('fullscreenCanvas');
+            
+            // Copy current canvas content to fullscreen iframe
+            const canvasContent = canvas.innerHTML;
+            fullscreenCanvas.srcdoc = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <style>
+                        body { margin: 0; padding: 20px; font-family: Inter, sans-serif; background: white; }
+                        * { box-sizing: border-box; }
+                    </style>
+                </head>
+                <body>
+                    ${canvasContent}
+                </body>
+                </html>
+            `;
+            
+            fullscreen.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeFullscreenPreview() {
+            const fullscreen = document.getElementById('fullscreenPreview');
+            fullscreen.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+        
+        // Handle escape key to close fullscreen
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeFullscreenPreview();
+            }
+        });
+
         // AI Assistant Functions
         let userAiCredits = 0;
         
