@@ -1832,10 +1832,15 @@ Examples:
         }
         
         function hideLoading() {
-            const overlay = document.querySelector('.loading-overlay');
-            if (overlay) {
-                overlay.remove();
-            }
+            const overlays = document.querySelectorAll('.loading-overlay');
+            overlays.forEach(overlay => {
+                if (overlay && overlay.parentNode) {
+                    overlay.remove();
+                }
+            });
+            
+            // Also clean up any other stuck modals
+            cleanupModals();
         }
         
         function showNotification(message, type) {
@@ -2941,7 +2946,44 @@ Examples:
         }
         
         // Initialize drag functionality when page loads
-        document.addEventListener('DOMContentLoaded', initializeDraggableElements);
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDraggableElements();
+            
+            // Clean up any lingering modals on page load
+            cleanupModals();
+        });
+        
+        // Function to clean up any stuck modals
+        function cleanupModals() {
+            const modals = document.querySelectorAll('.color-picker-modal, .typography-modal, .loading-overlay');
+            modals.forEach(modal => {
+                if (modal && modal.parentNode) {
+                    modal.remove();
+                }
+            });
+        }
+        
+        // Add escape key handler to close stuck modals
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                cleanupModals();
+            }
+        });
+        
+        // Add click handler to clean up modals when clicking outside
+        document.addEventListener('click', function(e) {
+            // If clicked element has the modal background styles, remove it
+            if (e.target.style.background && e.target.style.background.includes('rgba(0,0,0,0.8)')) {
+                e.target.remove();
+            }
+            
+            // Also check for any elements with high z-index that might be stuck overlays
+            const style = window.getComputedStyle(e.target);
+            if (style.position === 'fixed' && parseInt(style.zIndex) >= 10000 && 
+                style.background && style.background.includes('rgba(0, 0, 0, 0.8)')) {
+                e.target.remove();
+            }
+        });
         
         // Add missing updateCanvas function
         function updateCanvas() {
