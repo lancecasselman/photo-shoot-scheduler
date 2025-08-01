@@ -1884,12 +1884,17 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), (req, r
             const priceUsd = paymentIntent.amount / 100; // Convert from cents
             
             // Add credits to user account
-            storage.addAiCredits(userId, creditsAmount, priceUsd, paymentIntent.id)
+            pool.query('UPDATE users SET ai_credits = ai_credits + $1 WHERE id = $2', [creditsAmount, userId])
                 .then(() => {
-                    console.log(`Added ${creditsAmount} AI credits to user ${userId}`);
+                    console.log(`✅ Added ${creditsAmount} AI credits to user ${userId} via Stripe payment`);
+                    // Log the transaction
+                    return pool.query(`
+                        INSERT INTO ai_credit_transactions (user_id, amount, operation, details, created_at)
+                        VALUES ($1, $2, $3, $4, NOW())
+                    `, [userId, creditsAmount, 'purchase', `Stripe payment: ${paymentIntent.id} - $${priceUsd}`]);
                 })
                 .catch(error => {
-                    console.error('Failed to add AI credits:', error);
+                    console.error('❌ Failed to add AI credits:', error);
                 });
         }
     }

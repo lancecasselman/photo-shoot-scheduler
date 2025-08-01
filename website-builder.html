@@ -2361,7 +2361,12 @@ Examples:
             window.purchaseCredits = async function() {
                 if (!window.selectedPackage) return;
                 
+                const purchaseBtn = document.getElementById('purchaseBtn');
+                purchaseBtn.disabled = true;
+                purchaseBtn.textContent = 'Processing...';
+                
                 try {
+                    // Create payment intent
                     const response = await fetch('/api/ai/purchase-credits', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -2370,14 +2375,46 @@ Examples:
                     
                     const data = await response.json();
                     
-                    if (data.success) {
-                        showNotification(`Payment initiated for ${data.credits} credits ($${data.price})`, 'success');
-                        modal.remove();
+                    if (data.success && data.clientSecret) {
+                        // Initialize Stripe if not already done
+                        if (!window.stripe) {
+                            // Load Stripe dynamically
+                            const stripeScript = document.createElement('script');
+                            stripeScript.src = 'https://js.stripe.com/v3/';
+                            document.head.appendChild(stripeScript);
+                            
+                            await new Promise(resolve => {
+                                stripeScript.onload = resolve;
+                            });
+                            
+                            // Get publishable key from the environment secrets
+                            const stripePublicKey = 'pk_test_51QPtbhKLfMBw3L2qsWvp8K7qGQnT6jODx8iOfO5fQVCL4V8BwgUCT9xDvZaJafaHckMPv5Xa0fSLGGZ8GvgtYUZI00hQb0iMwf'; // Use VITE_STRIPE_PUBLIC_KEY from environment
+                            window.stripe = Stripe(stripePublicKey);
+                        }
+                        
+                        // Redirect to Stripe Checkout
+                        const { error } = await window.stripe.confirmPayment({
+                            clientSecret: data.clientSecret,
+                            confirmParams: {
+                                return_url: window.location.origin + '/website-builder.html?payment=success'
+                            }
+                        });
+                        
+                        if (error) {
+                            showNotification('Payment failed: ' + error.message, 'error');
+                            purchaseBtn.disabled = false;
+                            purchaseBtn.textContent = 'Purchase Credits';
+                        }
                     } else {
                         showNotification('Payment setup failed. Please try again.', 'error');
+                        purchaseBtn.disabled = false;
+                        purchaseBtn.textContent = 'Purchase Credits';
                     }
                 } catch (error) {
+                    console.error('Payment error:', error);
                     showNotification('Payment error. Please try again.', 'error');
+                    purchaseBtn.disabled = false;
+                    purchaseBtn.textContent = 'Purchase Credits';
                 }
             };
         }
@@ -3329,6 +3366,20 @@ Examples:
             
             return templates[templateType]?.[pageType] || '<div style="padding: 80px 20px; text-align: center;"><h1>Page Content</h1><p>This page is ready for your content.</p></div>';
         }
+        
+        // Check for payment success on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('payment') === 'success') {
+                setTimeout(() => {
+                    showNotification('🎉 AI Credits purchased successfully! Your credits have been added to your account.', 'success');
+                    // Remove the payment parameter from URL
+                    window.history.replaceState({}, document.title, '/website-builder.html');
+                    // Refresh credits display
+                    updateCreditsDisplay();
+                }, 1000);
+            }
+        });
     </script>
 </body>
 </html>
