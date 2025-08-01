@@ -165,6 +165,41 @@ export const subscribers = pgTable("subscribers", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// RAW backup storage tracking for $20/TB service
+export const rawBackups = pgTable("raw_backups", {
+  id: varchar("id").primaryKey().notNull(),
+  sessionId: varchar("session_id").notNull().references(() => photographySessions.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  status: varchar("status").notNull().default("pending"), // pending, uploading, completed, failed
+  fileCount: integer("file_count").notNull().default(0),
+  totalSizeBytes: varchar("total_size_bytes").notNull().default("0"), // Using varchar for large numbers
+  totalSizeTB: decimal("total_size_tb", { precision: 10, scale: 6 }).notNull().default("0"),
+  monthlyCharge: decimal("monthly_charge", { precision: 10, scale: 2 }).notNull().default("0"),
+  r2Prefix: varchar("r2_prefix").notNull(), // photographer-{id}/session-{id}/raw/
+  backupStartedAt: timestamp("backup_started_at"),
+  backupCompletedAt: timestamp("backup_completed_at"),
+  lastBillingDate: timestamp("last_billing_date"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// RAW storage billing tracking per photographer
+export const rawStorageBilling = pgTable("raw_storage_billing", {
+  id: varchar("id").primaryKey().notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  billingMonth: varchar("billing_month").notNull(), // YYYY-MM format
+  totalStorageTB: decimal("total_storage_tb", { precision: 10, scale: 6 }).notNull().default("0"),
+  monthlyCharge: decimal("monthly_charge", { precision: 10, scale: 2 }).notNull().default("0"),
+  sessionCount: integer("session_count").notNull().default(0),
+  fileCount: integer("file_count").notNull().default(0),
+  billingStatus: varchar("billing_status").notNull().default("pending"), // pending, invoiced, paid
+  stripeInvoiceId: varchar("stripe_invoice_id"),
+  invoicedAt: timestamp("invoiced_at"),
+  paidAt: timestamp("paid_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type InsertPhotographySession = typeof photographySessions.$inferInsert;
@@ -175,3 +210,7 @@ export type InsertPaymentRecord = typeof paymentRecords.$inferInsert;
 export type PaymentRecord = typeof paymentRecords.$inferSelect;
 export type InsertSubscriber = typeof subscribers.$inferInsert;
 export type Subscriber = typeof subscribers.$inferSelect;
+export type InsertRawBackup = typeof rawBackups.$inferInsert;
+export type RawBackup = typeof rawBackups.$inferSelect;
+export type InsertRawStorageBilling = typeof rawStorageBilling.$inferInsert;
+export type RawStorageBilling = typeof rawStorageBilling.$inferSelect;

@@ -35,6 +35,12 @@ const PaymentScheduler = require('./server/paymentScheduler');
 // Import contract management
 const ContractManager = require('./server/contracts');
 
+// Import R2 RAW backup service
+const R2BackupService = require('./server/r2-backup');
+
+// Initialize R2 backup service
+const r2BackupService = new R2BackupService();
+
 // PostgreSQL database connection
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -58,6 +64,107 @@ try {
     }
 } catch (error) {
     console.log('WARNING: Firebase Admin SDK initialization failed:', error.message);
+}
+
+// RAW file detection function
+function isRAWFile(filename, mimetype) {
+    const rawExtensions = [
+        '.cr2', '.cr3', '.crw',     // Canon RAW
+        '.nef', '.nrw',             // Nikon RAW
+        '.arw', '.srf', '.sr2',     // Sony RAW
+        '.raf',                     // Fujifilm RAW
+        '.orf',                     // Olympus RAW
+        '.pef', '.ptx',             // Pentax RAW
+        '.rw2',                     // Panasonic RAW
+        '.dng',                     // Adobe Digital Negative
+        '.3fr',                     // Hasselblad RAW
+        '.dcr', '.k25', '.kdc',     // Kodak RAW
+        '.erf',                     // Epson RAW
+        '.fff',                     // Imacon RAW
+        '.iiq',                     // Phase One RAW
+        '.mos',                     // Leaf RAW
+        '.mrw',                     // Minolta RAW
+        '.raw', '.rwz',             // Generic RAW
+        '.x3f'                      // Sigma RAW
+    ];
+    
+    const lowerFilename = filename.toLowerCase();
+    const isRawExtension = rawExtensions.some(ext => lowerFilename.endsWith(ext));
+    
+    // Also check MIME type for additional validation
+    const rawMimeTypes = [
+        'image/x-canon-cr2',
+        'image/x-canon-crw', 
+        'image/x-nikon-nef',
+        'image/x-sony-arw',
+        'image/x-fuji-raf',
+        'image/x-olympus-orf',
+        'image/x-pentax-pef',
+        'image/x-panasonic-rw2',
+        'image/x-adobe-dng',
+        'image/tiff' // Sometimes RAW files are detected as TIFF
+    ];
+    
+    const isRawMime = rawMimeTypes.includes(mimetype);
+    
+    return isRawExtension || isRawMime;
+}
+
+// Process RAW files for R2 backup
+async function processRAWBackups(sessionId, rawFiles, userId) {
+    console.log(`💾 Starting RAW backup process for ${rawFiles.length} files`);
+    
+    for (const photo of rawFiles) {
+        try {
+            // Record backup request in database
+            const backupRecord = await pool.query(`
+                INSERT INTO raw_backups (
+                    user_id, session_id, filename, original_name, 
+                    file_size, mime_type, r2_object_key, r2_bucket, 
+                    backup_status, backup_started_at
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                RETURNING id
+            `, [
+                userId,
+                sessionId,
+                photo.filename,
+                photo.originalName,
+                photo.originalSize,
+                photo.mimeType,
+                `${userId}/${sessionId}/${photo.filename}`, // R2 object key
+                'photography-raw-backups',
+                'pending',
+                new Date()
+            ]);
+            
+            console.log(`📝 RAW backup record created for ${photo.originalName}`);
+            
+            // Queue for background R2 upload (async)
+            setImmediate(async () => {
+                try {
+                    await r2BackupService.uploadFile({
+                        filePath: photo.originalPath,
+                        fileName: photo.originalName,
+                        userId: userId,
+                        sessionId: sessionId,
+                        backupId: backupRecord.rows[0].id
+                    });
+                } catch (uploadError) {
+                    console.error(`❌ RAW backup failed for ${photo.originalName}:`, uploadError);
+                    
+                    // Update backup record with error
+                    await pool.query(`
+                        UPDATE raw_backups 
+                        SET backup_status = 'failed', backup_error = $1
+                        WHERE id = $2
+                    `, [uploadError.message, backupRecord.rows[0].id]);
+                }
+            });
+            
+        } catch (error) {
+            console.error(`❌ Failed to process RAW backup for ${photo.originalName}:`, error);
+        }
+    }
 }
 
 // Background Firebase upload function
@@ -781,6 +888,43 @@ async function initializeDatabase() {
             )
         `);
 
+        // Create raw_backups table for R2 RAW backup tracking
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS raw_backups (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                user_id VARCHAR(255) NOT NULL,
+                session_id VARCHAR(255) NOT NULL,
+                filename VARCHAR(255) NOT NULL,
+                original_name VARCHAR(255) NOT NULL,
+                file_size BIGINT NOT NULL,
+                mime_type VARCHAR(100) NOT NULL,
+                r2_object_key VARCHAR(500) NOT NULL,
+                r2_bucket VARCHAR(255) NOT NULL,
+                backup_status VARCHAR(50) DEFAULT 'pending',
+                backup_started_at TIMESTAMP,
+                backup_completed_at TIMESTAMP,
+                backup_error TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // Create raw_storage_billing table for tracking R2 storage costs
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS raw_storage_billing (
+                id SERIAL PRIMARY KEY,
+                user_id VARCHAR(255) NOT NULL,
+                billing_month VARCHAR(7) NOT NULL, -- YYYY-MM format
+                total_storage_bytes BIGINT DEFAULT 0,
+                total_storage_tb DECIMAL(10,3) DEFAULT 0,
+                monthly_cost_usd DECIMAL(10,2) DEFAULT 0,
+                status VARCHAR(50) DEFAULT 'active',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(user_id, billing_month)
+            )
+        `);
+
         console.log('Database tables initialized successfully');
     } catch (error) {
         console.error('Database initialization error:', error);
@@ -1303,6 +1447,10 @@ app.post('/api/sessions/:id/upload-photos', isAuthenticated, (req, res) => {
                     }
                 }
                 
+                // Detect RAW files for R2 backup
+                const isRawFile = isRAWFile(file.originalname, file.mimetype);
+                const userId = req.user?.uid || req.user?.id || 'unknown';
+                
                 const photoData = {
                     filename: file.filename,
                     originalName: file.originalname,
@@ -1311,7 +1459,10 @@ app.post('/api/sessions/:id/upload-photos', isAuthenticated, (req, res) => {
                     originalPath: originalPath,
                     displayPath: displayPath,
                     uploadDate: new Date().toISOString(),
-                    needsFirebaseUpload: true // Flag for background Firebase upload
+                    needsFirebaseUpload: true, // Flag for background Firebase upload
+                    isRawFile: isRawFile,
+                    mimeType: file.mimetype,
+                    userId: userId
                 };
                 
                 uploadedPhotos.push(photoData);
@@ -1347,6 +1498,13 @@ app.post('/api/sessions/:id/upload-photos', isAuthenticated, (req, res) => {
                 
                 // Start Firebase upload process in background
                 uploadPhotosToFirebase(sessionId, uploadedPhotos);
+                
+                // Start RAW backup process for eligible files
+                const rawFiles = uploadedPhotos.filter(photo => photo.isRawFile);
+                if (rawFiles.length > 0) {
+                    console.log(`🔥 Detected ${rawFiles.length} RAW files for R2 backup`);
+                    processRAWBackups(sessionId, rawFiles, userId);
+                }
             } else {
                 console.error(` Session ${sessionId} not found for background database update`);
             }
@@ -1360,6 +1518,60 @@ app.post('/api/sessions/:id/upload-photos', isAuthenticated, (req, res) => {
 });
 
 // DEAD CODE BLOCK REMOVED - was unreachable after return statement
+
+// Get RAW backup status for user
+app.get('/api/raw-backups/status', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.user?.uid || req.user?.id || 'unknown';
+        
+        // Get backup summary
+        const backupStats = await pool.query(`
+            SELECT 
+                backup_status,
+                COUNT(*) as count,
+                SUM(file_size) as total_size
+            FROM raw_backups 
+            WHERE user_id = $1 
+            GROUP BY backup_status
+        `, [userId]);
+        
+        // Get recent backups
+        const recentBackups = await pool.query(`
+            SELECT 
+                original_name, file_size, backup_status,
+                backup_started_at, backup_completed_at, backup_error,
+                session_id
+            FROM raw_backups 
+            WHERE user_id = $1 
+            ORDER BY backup_started_at DESC 
+            LIMIT 20
+        `, [userId]);
+        
+        // Calculate storage costs
+        const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+        const storageQuery = await pool.query(`
+            SELECT total_storage_tb, monthly_cost_usd
+            FROM raw_storage_billing 
+            WHERE user_id = $1 AND billing_month = $2
+        `, [userId, currentMonth]);
+        
+        const storage = storageQuery.rows[0] || { total_storage_tb: 0, monthly_cost_usd: 0 };
+        
+        res.json({
+            stats: backupStats.rows,
+            recentBackups: recentBackups.rows,
+            storage: storage,
+            pricing: {
+                perTB: 20,
+                currentMonth: currentMonth
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error fetching RAW backup status:', error);
+        res.status(500).json({ error: 'Failed to fetch backup status' });
+    }
+});
 
 // Delete photo from session
 app.delete('/api/sessions/:sessionId/photos/:filename', isAuthenticated, async (req, res) => {
