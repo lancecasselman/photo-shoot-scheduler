@@ -1275,19 +1275,13 @@ Examples:
         // Initialize Builder
         document.addEventListener('DOMContentLoaded', function() {
             setupEventListeners();
+            setupTemplateSelection();
             loadProject();
             console.log('AI Website Builder: Ready');
         });
         
         function setupEventListeners() {
-            // Template selection
-            document.querySelectorAll('.template-card').forEach(card => {
-                card.addEventListener('click', function() {
-                    document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
-                    this.classList.add('selected');
-                    selectedTemplate = this.dataset.template;
-                });
-            });
+            // Template selection is now handled by setupTemplateSelection()
             
             // Viewport controls
             document.querySelectorAll('.viewport-btn').forEach(btn => {
@@ -2923,77 +2917,7 @@ Examples:
             });
         }
         
-        // Enhanced applyTemplate function for mobile
-        function applyTemplate() {
-            const selectedTemplate = document.querySelector('.template-card.selected');
-            if (!selectedTemplate) {
-                // If no template selected, show template options
-                const templates = document.querySelectorAll('.template-card');
-                templates.forEach(card => {
-                    card.addEventListener('click', function() {
-                        // Remove previous selection
-                        templates.forEach(c => c.classList.remove('selected'));
-                        // Add selection to clicked template
-                        this.classList.add('selected');
-                        this.style.background = 'var(--accent-gold)';
-                        this.style.color = 'var(--bg-primary)';
-                    });
-                });
-                showNotification('Please select a template first by clicking on it, then try again.', 'warning');
-                return;
-            }
-            
-            const templateType = selectedTemplate.dataset.template;
-            
-            // Use the template system from the other function
-            const templates = {
-                wedding: {
-                    home: generateEditableContent('wedding', 'home'),
-                    about: generateEditableContent('wedding', 'about'),
-                    portfolio: generateEditableContent('wedding', 'portfolio'),
-                    contact: generateEditableContent('wedding', 'contact')
-                },
-                portrait: {
-                    home: generateEditableContent('portrait', 'home'),
-                    about: generateEditableContent('portrait', 'about'),
-                    portfolio: generateEditableContent('portrait', 'portfolio'),
-                    contact: generateEditableContent('portrait', 'contact')
-                },
-                fashion: {
-                    home: generateEditableContent('fashion', 'home'),
-                    about: generateEditableContent('fashion', 'about'),
-                    portfolio: generateEditableContent('fashion', 'portfolio'),
-                    contact: generateEditableContent('fashion', 'contact')
-                },
-                commercial: {
-                    home: generateEditableContent('commercial', 'home'),
-                    about: generateEditableContent('commercial', 'about'),
-                    portfolio: generateEditableContent('commercial', 'portfolio'),
-                    contact: generateEditableContent('commercial', 'contact')
-                }
-            };
-            
-            if (templateType && templates[templateType]) {
-                currentProject.pageData = templates[templateType];
-                
-                // Apply the template to the live canvas immediately
-                const currentPage = getCurrentPageType();
-                const pageContent = templates[templateType][currentPage];
-                if (pageContent) {
-                    const canvas = document.querySelector('.canvas-content');
-                    if (canvas) {
-                        canvas.innerHTML = pageContent;
-                        makeAllTextEditable();
-                        initializeDraggableElements();
-                    }
-                }
-                
-                showNotification(`${templateType.charAt(0).toUpperCase() + templateType.slice(1)} template applied successfully!`, 'success');
-                console.log(`Applied ${templateType} template`);
-            } else {
-                showNotification('Template not found. Please try another template.', 'error');
-            }
-        }
+        // Template selection improved - duplicate function removed, using consolidated version below
         
         // Drag and Drop Functionality
         let draggedElement = null;
@@ -3473,20 +3397,131 @@ Examples:
         }
         
         function applyTemplate() {
-            if (!selectedTemplate) {
-                showNotification('Please select a template first', 'error');
+            // Check if template is selected via click
+            const selectedCard = document.querySelector('.template-card.selected');
+            let templateType = selectedTemplate;
+            
+            if (selectedCard) {
+                templateType = selectedCard.dataset.template;
+            }
+            
+            if (!templateType) {
+                showNotification('Please click on a template first to select it, then apply', 'warning');
                 return;
             }
-            console.log('Applying template:', selectedTemplate);
             
-            // Apply template to current page
+            console.log('Applying template:', templateType);
+            
+            // Get canvas
             const canvas = document.getElementById('mainCanvas');
-            const templateContent = getTemplateContent(selectedTemplate, currentProject.currentPage);
-            
-            if (canvas) {
-                canvas.innerHTML = `<div class="canvas-content">${templateContent}</div>`;
-                showNotification(`${selectedTemplate} template applied!`, 'success');
+            if (!canvas) {
+                showNotification('Canvas not found', 'error');
+                return;
             }
+            
+            // Generate template content based on type
+            const templateContent = generateFullTemplateContent(templateType);
+            
+            // Apply to canvas
+            canvas.innerHTML = `<div class="canvas-content">${templateContent}</div>`;
+            
+            showNotification(`${templateType.charAt(0).toUpperCase() + templateType.slice(1)} template applied successfully!`, 'success');
+        }
+        
+        function generateFullTemplateContent(templateType) {
+            const templates = {
+                wedding: `
+                    <div style="background: linear-gradient(135deg, #f5f0e8 0%, #faf7f2 100%); padding: 80px 20px; text-align: center;">
+                        <h1 style="font-size: 4rem; color: #8b4513; font-family: Playfair Display, serif; margin-bottom: 20px;">Sarah & Michael</h1>
+                        <p style="font-size: 1.4rem; color: #6b4423; margin-bottom: 40px;">Capturing your love story with timeless elegance</p>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin: 60px 0;">
+                            <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+                                <h3 style="color: #8b4513; margin-bottom: 15px;">Wedding Day</h3>
+                                <p>From getting ready to the last dance, every moment beautifully captured</p>
+                            </div>
+                            <div style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+                                <h3 style="color: #8b4513; margin-bottom: 15px;">Engagement</h3>
+                                <p>Celebrate your love with romantic engagement portraits</p>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                portrait: `
+                    <div style="background: #f8f9fa; padding: 80px 20px; text-align: center;">
+                        <h1 style="font-size: 3.5rem; color: #343a40; font-family: Inter, sans-serif; margin-bottom: 20px;">Professional Portraits</h1>
+                        <p style="font-size: 1.2rem; color: #6c757d; margin-bottom: 40px;">Bringing out your authentic self through photography</p>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin: 40px 0;">
+                            <div style="background: white; padding: 25px; border-radius: 10px; border-left: 4px solid #007bff;">
+                                <h4 style="color: #007bff;">Executive Headshots</h4>
+                                <p>Professional portraits for business professionals</p>
+                            </div>
+                            <div style="background: white; padding: 25px; border-radius: 10px; border-left: 4px solid #28a745;">
+                                <h4 style="color: #28a745;">Creative Portraits</h4>
+                                <p>Artistic and personal portrait sessions</p>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                fashion: `
+                    <div style="background: linear-gradient(45deg, #000 0%, #333 100%); color: white; padding: 100px 20px; text-align: center;">
+                        <h1 style="font-size: 4.5rem; color: #fff; font-family: 'Helvetica Neue', sans-serif; font-weight: 100; margin-bottom: 20px;">EDITORIAL</h1>
+                        <p style="font-size: 1.3rem; color: #ccc; margin-bottom: 50px; letter-spacing: 2px;">FASHION • BEAUTY • COMMERCIAL</p>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1px; margin: 60px 0;">
+                            <div style="background: #111; padding: 40px 20px; text-align: center;">
+                                <h3 style="color: #fff; font-size: 1.1rem; letter-spacing: 1px;">RUNWAY</h3>
+                            </div>
+                            <div style="background: #222; padding: 40px 20px; text-align: center;">
+                                <h3 style="color: #fff; font-size: 1.1rem; letter-spacing: 1px;">EDITORIAL</h3>
+                            </div>
+                            <div style="background: #111; padding: 40px 20px; text-align: center;">
+                                <h3 style="color: #fff; font-size: 1.1rem; letter-spacing: 1px;">BEAUTY</h3>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                commercial: `
+                    <div style="background: #ffffff; padding: 80px 20px; text-align: center;">
+                        <h1 style="font-size: 3rem; color: #2c3e50; font-family: 'Roboto', sans-serif; margin-bottom: 20px;">Commercial Photography</h1>
+                        <p style="font-size: 1.2rem; color: #7f8c8d; margin-bottom: 40px;">Professional imagery that drives business results</p>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin: 50px 0;">
+                            <div style="background: #ecf0f1; padding: 30px; border-radius: 8px;">
+                                <h3 style="color: #27ae60; margin-bottom: 15px;">Product Photography</h3>
+                                <p>High-quality product images for e-commerce and marketing</p>
+                            </div>
+                            <div style="background: #ecf0f1; padding: 30px; border-radius: 8px;">
+                                <h3 style="color: #3498db; margin-bottom: 15px;">Corporate Events</h3>
+                                <p>Professional coverage of conferences and business events</p>
+                            </div>
+                        </div>
+                    </div>
+                `
+            };
+            
+            return templates[templateType] || templates.portrait;
+        }
+        
+        // Fix template selection click handlers
+        function setupTemplateSelection() {
+            document.querySelectorAll('.template-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    // Remove previous selections
+                    document.querySelectorAll('.template-card').forEach(c => {
+                        c.classList.remove('selected');
+                        c.style.background = '';
+                        c.style.color = '';
+                    });
+                    
+                    // Add selection to clicked template
+                    this.classList.add('selected');
+                    this.style.background = '#d4af37';
+                    this.style.color = 'white';
+                    
+                    selectedTemplate = this.dataset.template;
+                    console.log('Template selected:', selectedTemplate);
+                    
+                    showNotification(`${selectedTemplate} template selected. Click "Apply Selected Template" to use it.`, 'success');
+                });
+            });
         }
         
         function generateWebsite() {
