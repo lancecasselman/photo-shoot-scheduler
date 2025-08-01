@@ -2,12 +2,12 @@ const OpenAI = require('openai');
 
 // Initialize OpenAI client
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
+    apiKey: process.env.OPENAI_API_KEY_NEW || process.env.OPENAI_API_KEY
 });
 
 class AIServices {
     constructor() {
-        this.initialized = !!process.env.OPENAI_API_KEY;
+        this.initialized = !!(process.env.OPENAI_API_KEY_NEW || process.env.OPENAI_API_KEY);
         if (!this.initialized) {
             console.warn('AI Services: OpenAI API key not found - AI features disabled');
         } else {
