@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Website Builder - Photography Management System</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="firebase-config.js"></script>
+<style>
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #1a1a1a;
+            --bg-tertiary: #2a2a2a;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --accent-gold: #d4af37;
+            --accent-blue: #007acc;
+            --border-color: #333;
+            --success: #00ff88;
+            --warning: #ffaa00;
+            --danger: #ff3366;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+
+        .builder-container {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            grid-template-rows: 60px 1fr;
+            height: 100vh;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .builder-container {
+                grid-template-columns: 1fr !important;
+                grid-template-rows: 60px 1fr 60px !important;
+                height: 100vh;
+            }
+
+            .left-sidebar {
+                display: none !important;
+            }
+
+            .preview-area {
+                grid-column: 1;
+                background: var(--bg-primary);
+                overflow: auto;
+            }
+
+            .mobile-preview-toggle {
+                display: block !important;
+            }
+
+            .text-toolbar {
+                max-width: 90vw;
+                position: fixed;
+                bottom: 80px;
+                left: 50%;
+                transform: translateX(-50%);
+                top: auto;
+            }
+
+            .top-bar {
+                padding: 0 10px !important;
+                flex-wrap: wrap;
+                gap: 5px;
+            }
+
+            .project-info {
+                gap: 10px;
+            }
+
+            .project-name {
+                font-size: 12px !important;
+                padding: 4px 8px !important;
+                max-width: 120px;
+            }
+
+            .actions {
+                gap: 5px !important;
+                flex-wrap: wrap;
+            }
+
+            .actions .btn {
+                padding: 6px 8px !important;
+                font-size: 11px !important;
+                min-width: auto;
+            }
+
+            .actions .btn i {
+                margin-right: 4px;
+            }
+
+            /* Mobile toolbar at bottom with scrolling */
+            .mobile-toolbar {
+                order: 3;
+                grid-column: 1;
+                background: var(--bg-secondary);
+                border-top: 1px solid var(--border-color);
+                padding: 8px;
+                display: flex !important;
+                overflow-x: auto;
+                overflow-y: hidden;
+                gap: 8px;
+                align-items: center;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+            }
+
+            .mobile-toolbar::-webkit-scrollbar {
+                display: none;
+            }
+
+            .mobile-toolbar .btn {
+                flex-shrink: 0;
+                min-width: 60px;
+                padding: 8px 6px;
+                font-size: 10px;
+                text-align: center;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 2px;
+                white-space: nowrap;
+            }
+
+            .canvas {
+                padding: 10px !important;
+                margin: 0 !important;
+            }
+        }
+
+        /* Mobile Preview Toggle */
+        .mobile-preview-toggle {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--accent-gold);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 1001;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        /* Full Screen Preview Mode - CapCut Style */
+        .fullscreen-preview {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-primary);
+            z-index: 1000;
+            display: none !important; /* Force hide to prevent blocking */
+        }
+
+        .fullscreen-preview.active {
+            display: block;
+        }
+
+        .fullscreen-header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .fullscreen-title {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .fullscreen-close {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+        }
+
+        .fullscreen-close:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .fullscreen-content {
+            height: calc(100% - 70px);
+            overflow: auto;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            grid-column: 1 / -1;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+
+        .project-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .project-name {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 16px;
+            font-weight: 500;
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid transparent;
+        }
+
+        .project-name:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-ai {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+        }
+
+        .btn-ai:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: var(--accent-gold);
+            color: var(--bg-primary);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.1);
+        }
+
+        /* Left Sidebar - AI Tools */
+        .left-sidebar {
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-section {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .ai-prompt {
+            width: 100%;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            color: var(--text-primary);
+            font-size: 14px;
+            resize: vertical;
+            min-height: 80px;
+            margin-bottom: 15px;
+        }
+
+        .ai-prompt:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+        }
+
+        .template-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .template-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .template-card:hover {
+            border-color: var(--accent-gold);
+            background: rgba(212, 175, 55, 0.1);
+        }
+
+        .template-card.selected {
+            border-color: var(--accent-gold);
+            background: rgba(212, 175, 55, 0.2);
+        }
+
+        .template-name {
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .template-desc {
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+
+        .page-manager {
+            flex: 1;
+        }
+
+        .page-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .page-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .page-item:hover {
+            background: rgba(212, 175, 55, 0.1);
+        }
+
+        .page-item.active {
+            background: rgba(212, 175, 55, 0.2);
+            border: 1px solid var(--accent-gold);
+        }
+
+        .page-name {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .add-page {
+            background: var(--bg-tertiary);
+            border: 1px dashed var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            color: var(--text-secondary);
+            margin-top: 10px;
+            transition: all 0.2s;
+        }
+
+        .add-page:hover {
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+        }
+
+        /* Canvas Area */
+        .canvas-area {
+            background: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .canvas-toolbar {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .viewport-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .viewport-btn {
+            padding: 6px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .viewport-btn.active {
+            background: var(--accent-gold);
+            color: var(--bg-primary);
+            border-color: var(--accent-gold);
+        }
+
+        .canvas-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 40px;
+            overflow: auto;
+            background: #f0f0f0;
+        }
+
+        .canvas {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            min-height: 600px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+
+        /* Draggable Elements */
+        .draggable-element {
+            position: relative;
+            cursor: move;
+            border: 2px dashed transparent;
+            transition: all 0.2s;
+            user-select: none;
+            touch-action: none;
+            margin: 10px 0;
+        }
+
+        .draggable-element:hover {
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.2);
+        }
+
+        .draggable-element.dragging {
+            border-color: var(--accent-gold);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            transform: rotate(1deg) scale(1.02);
+            z-index: 1000;
+            opacity: 0.9;
+        }
+
+        .element-controls {
+            position: absolute;
+            top: -35px;
+            right: 5px;
+            display: none;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            padding: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            gap: 4px;
+            z-index: 100;
+        }
+
+        .draggable-element:hover .element-controls {
+            display: flex;
+        }
+
+        .control-btn {
+            width: 24px;
+            height: 24px;
+            border: none;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .control-btn:hover {
+            background: var(--accent-gold);
+            color: var(--bg-primary);
+        }
+
+        /* Drop zones */
+        .drop-zone {
+            min-height: 60px;
+            border: 2px dashed #ddd;
+            margin: 5px 0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-style: italic;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .drop-zone.drag-over {
+            border-color: var(--accent-gold);
+            background: rgba(212, 175, 55, 0.1);
+            color: var(--accent-gold);
+        }
+
+        .drag-handle {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            width: 20px;
+            height: 20px;
+            background: var(--accent-gold);
+            border-radius: 3px;
+            cursor: grab;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 10px;
+        }
+
+        .draggable-element:hover .drag-handle {
+            display: flex;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        .canvas.desktop {
+            width: 1200px;
+            max-width: 100%;
+        }
+
+        .canvas.tablet {
+            width: 768px;
+            max-width: 100%;
+        }
+
+        .canvas.mobile {
+            width: 375px;
+        }
+
+        .canvas-content {
+            width: 100%;
+            height: 100%;
+            min-height: 600px;
+        }
+
+        .empty-canvas {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #666;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .empty-canvas i {
+            font-size: 48px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        /* Right Sidebar - Properties */
+        .right-sidebar {
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border-color);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .property-section {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .property-group {
+            margin-bottom: 20px;
+        }
+
+        .property-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .property-input {
+            width: 100%;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 8px 12px;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .property-input:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+        }
+
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .color-swatch {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .color-swatch:hover {
+            transform: scale(1.1);
+            border-color: var(--accent-gold);
+        }
+
+        /* Loading and Status */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: none; /* Initially hidden */
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        .loading-content {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            max-width: 400px;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--accent-gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status-message {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        .status-detail {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* Text Editing Toolbar */
+        .text-toolbar {
+            position: fixed;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            gap: 8px;
+            flex-wrap: wrap;
+            max-width: 500px;
+        }
+
+        .text-toolbar.active {
+            display: flex;
+        }
+
+        .toolbar-btn {
+            padding: 6px 10px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .toolbar-btn:hover,
+        .toolbar-btn.active {
+            background: var(--accent-gold);
+            color: var(--bg-primary);
+        }
+
+        .toolbar-select {
+            padding: 4px 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+
+
+        /* Mobile-First Responsive Design */
+        @media (max-width: 1024px) {
+            .builder-container {
+                grid-template-columns: 280px 1fr;
+            }
+        }
+    </style>
+<style>
+  .builder-ui-sandbox * {
+    all: unset;
+    box-sizing: border-box;
+    font-family: system-ui, sans-serif;
+  }
+  .builder-ui-sandbox {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+    background: #111;
+    color: #eee;
+  }
+  #site-preview {
+    width: 100%;
+    height: 600px;
+    border: 1px solid #444;
+    background: #000;
+  }
+</style></head>
+<body><div style="background: darkred; color: white; padding: 1rem; text-align: center; font-weight: bold;">🔥 CLEAN VERSION LOADED 🔥</div><div class="builder-ui-sandbox" id="builder-ui"><div class="builder-container">
+<!-- Top Bar -->
+<div class="top-bar">
+<div class="project-info">
+<input class="project-name" placeholder="Project Name" type="text" value="My Photography Website"/>
+<span class="status-indicator">Ready</span>
+</div>
+<div class="actions">
+<button class="btn btn-secondary" onclick="addTextElement()">
+<i class="fas fa-font"></i> Add Text
+                </button>
+<button class="btn btn-secondary" onclick="triggerPhotoUpload()">
+<i class="fas fa-camera"></i> Add Photo
+                </button>
+<button class="btn btn-secondary" onclick="addLogoElement()">
+<i class="fas fa-image"></i> Add Logo
+                </button>
+<button class="btn btn-secondary" onclick="saveDraft()">
+<i class="fas fa-save"></i> Save
+                </button>
+<button class="btn btn-secondary" onclick="previewSite()">
+<i class="fas fa-eye"></i> Preview
+                </button>
+<button class="btn btn-primary" onclick="publishSite()">
+<i class="fas fa-rocket"></i> Publish
+                </button>
+</div>
+</div>
+<!-- Left Sidebar - AI Tools -->
+<div class="left-sidebar">
+<div class="sidebar-section">
+<div class="section-title">AI Website Generator</div>
+<textarea class="ai-prompt" placeholder="Describe your dream website... 
+
+Examples:
+• A luxury wedding photography site with elegant galleries
+• Modern portrait studio with booking system
+• Editorial fashion photographer portfolio
+• Family photography with pricing packages"></textarea>
+<button class="btn btn-primary" onclick="generateWebsite()" style="width: 100%;">
+<i class="fas fa-magic"></i> Generate Website
+                </button>
+</div>
+<div class="sidebar-section">
+<div class="section-title">Quick Templates</div>
+<div class="template-grid">
+<div class="template-card" data-template="wedding">
+<div class="template-name">Wedding</div>
+<div class="template-desc">Elegant &amp; Romantic</div>
+</div>
+<div class="template-card" data-template="portrait">
+<div class="template-name">Portrait</div>
+<div class="template-desc">Professional &amp; Clean</div>
+</div>
+<div class="template-card" data-template="fashion">
+<div class="template-name">Fashion</div>
+<div class="template-desc">Bold &amp; Editorial</div>
+</div>
+<div class="template-card" data-template="commercial">
+<div class="template-name">Commercial</div>
+<div class="template-desc">Corporate &amp; Modern</div>
+</div>
+</div>
+<button class="btn btn-secondary" onclick="applyTemplate()" style="width: 100%;">
+                    Apply Selected Template
+                </button>
+</div>
+<div class="sidebar-section page-manager">
+<div class="section-title">Page Manager</div>
+<div class="page-list" id="pageList">
+<div class="page-item active" data-page="home" onclick="switchToPage('home')">
+<span class="page-name">Home</span>
+<i class="fas fa-ellipsis-v"></i>
+</div>
+<div class="page-item" data-page="about" onclick="switchToPage('about')">
+<span class="page-name">About</span>
+<i class="fas fa-ellipsis-v"></i>
+</div>
+<div class="page-item" data-page="portfolio" onclick="switchToPage('portfolio')">
+<span class="page-name">Portfolio</span>
+<i class="fas fa-ellipsis-v"></i>
+</div>
+<div class="page-item" data-page="contact" onclick="switchToPage('contact')">
+<span class="page-name">Contact</span>
+<i class="fas fa-ellipsis-v"></i>
+</div>
+</div>
+<div class="add-page" onclick="addNewPage()">
+<i class="fas fa-plus"></i> Add New Page
+                </div>
+</div>
+</div>
+<!-- Text Editing Toolbar -->
+<div class="text-toolbar" id="textToolbar">
+<select class="toolbar-select" onchange="changeFontFamily(this.value)">
+<option value="Arial">Arial</option>
+<option value="Georgia">Georgia</option>
+<option value="Times New Roman">Times New Roman</option>
+<option value="Helvetica">Helvetica</option>
+<option value="Playfair Display">Playfair Display</option>
+<option value="Montserrat">Montserrat</option>
+<option value="Inter">Inter</option>
+</select>
+<select class="toolbar-select" onchange="changeFontSize(this.value)">
+<option value="12px">12px</option>
+<option value="14px">14px</option>
+<option value="16px">16px</option>
+<option value="18px">18px</option>
+<option value="20px">20px</option>
+<option value="24px">24px</option>
+<option value="32px">32px</option>
+<option value="48px">48px</option>
+<option value="64px">64px</option>
+</select>
+<button class="toolbar-btn" onclick="toggleBold()"><b>B</b></button>
+<button class="toolbar-btn" onclick="toggleItalic()"><i>I</i></button>
+<button class="toolbar-btn" onclick="toggleUnderline()"><u>U</u></button>
+<input class="toolbar-select" onchange="changeTextColor(this.value)" type="color" value="#000000"/>
+<button class="toolbar-btn" onclick="alignText('left')">◧</button>
+<button class="toolbar-btn" onclick="alignText('center')">▣</button>
+<button class="toolbar-btn" onclick="alignText('right')">◨</button>
+</div>
+<!-- AI Assistant Panel -->
+<div class="ai-panel" id="aiPanel">
+<div class="ai-panel-header">
+<h3>🤖 AI Assistant</h3>
+<button class="btn btn-secondary" onclick="toggleAIAssistant()">
+<i class="fas fa-times"></i>
+</button>
+</div>
+<div class="ai-panel-content">
+<!-- AI Credits Display -->
+<div class="ai-credits-display" style="
+                    background: var(--bg-tertiary);
+                    border: 1px solid var(--border-color);
+                    border-radius: 8px;
+                    padding: 12px;
+                    margin-bottom: 20px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                ">
+<div>
+<span style="color: var(--text-secondary); font-size: 12px;">AI Credits:</span>
+<span id="aiCreditsCount" style="
+                            color: var(--accent-gold);
+                            font-weight: bold;
+                            font-size: 16px;
+                            margin-left: 8px;
+                        ">Loading...</span>
+</div>
+<button id="buyCreditsBtn" onclick="showCreditsPurchase()" style="
+                        background: var(--accent-gold);
+                        color: var(--bg-primary);
+                        border: none;
+                        padding: 6px 12px;
+                        border-radius: 4px;
+                        font-size: 11px;
+                        cursor: pointer;
+                        font-weight: 500;
+                    ">Buy More</button>
+</div>
+<div class="section-title">Ask AI to modify your page:</div>
+<textarea class="ai-prompt-input" placeholder="Tell the AI what you want to change...
+
+Examples:
+• Make the hero section more dramatic with dark colors
+• Add a pricing section with 3 packages
+• Change the about section to be more professional
+• Add a testimonials gallery
+• Make the contact form more elegant"></textarea>
+<button class="btn btn-primary" onclick="processAIRequest()" style="width: 100%;">
+<i class="fas fa-magic"></i> Apply AI Changes
+                </button>
+<div class="ai-suggestions">
+<div class="section-title">Quick AI Actions:</div>
+<div class="suggestion-item" onclick="quickAIAction('luxury')">
+                        ✨ Make it more luxury &amp; elegant
+                    </div>
+<div class="suggestion-item" onclick="quickAIAction('modern')">
+                        🎯 Make it modern &amp; minimal
+                    </div>
+<div class="suggestion-item" onclick="quickAIAction('gallery')">
+                        🖼️ Add a stunning photo gallery
+                    </div>
+<div class="suggestion-item" onclick="quickAIAction('pricing')">
+                        💰 Add pricing packages
+                    </div>
+<div class="suggestion-item" onclick="quickAIAction('testimonials')">
+                        ⭐ Add client testimonials
+                    </div>
+<div class="suggestion-item" onclick="quickAIAction('contact')">
+                        📞 Enhance contact section
+                    </div>
+</div>
+</div>
+</div>
+<!-- Canvas Area -->
+<div class="canvas-area">
+<div class="canvas-toolbar">
+<div class="viewport-controls">
+<button class="viewport-btn active" data-viewport="desktop">
+<i class="fas fa-desktop"></i> Desktop
+                    </button>
+<button class="viewport-btn" data-viewport="tablet">
+<i class="fas fa-tablet"></i> Tablet
+                    </button>
+<button class="viewport-btn" data-viewport="mobile">
+<i class="fas fa-mobile"></i> Mobile
+                    </button>
+</div>
+<div class="canvas-info">
+<span id="currentPage">Home Page</span>
+</div>
+</div>
+<div class="canvas-wrapper">
+<div class="canvas desktop" id="mainCanvas">
+<div class="canvas-content">
+<div class="empty-canvas">
+<i class="fas fa-wand-magic-sparkles"></i>
+<h3>Start Building Your Dream Website</h3>
+<p>Use the AI generator on the left to describe your vision, or choose a template to get started quickly.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Sidebar - Properties -->
+<div class="right-sidebar">
+<div class="property-section">
+<div class="section-title">Site Settings</div>
+<div class="property-group">
+<label class="property-label">Site Title</label>
+<input class="property-input" placeholder="Your Site Title" type="text" value="Photography Studio"/>
+</div>
+<div class="property-group">
+<label class="property-label">Primary Color</label>
+<input class="property-input" type="color" value="#d4af37"/>
+<div class="color-grid">
+<div class="color-swatch" data-color="#d4af37" style="background: #d4af37;"></div>
+<div class="color-swatch" data-color="#2c3e50" style="background: #2c3e50;"></div>
+<div class="color-swatch" data-color="#e74c3c" style="background: #e74c3c;"></div>
+<div class="color-swatch" data-color="#3498db" style="background: #3498db;"></div>
+<div class="color-swatch" data-color="#2ecc71" style="background: #2ecc71;"></div>
+<div class="color-swatch" data-color="#9b59b6" style="background: #9b59b6;"></div>
+</div>
+</div>
+<div class="property-group">
+<label class="property-label">Typography</label>
+<select class="property-input">
+<option value="inter">Inter (Modern)</option>
+<option value="playfair">Playfair Display (Elegant)</option>
+<option value="roboto">Roboto (Clean)</option>
+<option value="montserrat">Montserrat (Versatile)</option>
+</select>
+</div>
+</div>
+<div class="property-section">
+<div class="section-title">Page Properties</div>
+<div class="property-group">
+<label class="property-label">Page Background</label>
+<input class="property-input" type="color" value="#ffffff"/>
+</div>
+<div class="property-group">
+<label class="property-label">Content Width</label>
+<select class="property-input">
+<option value="full">Full Width</option>
+<option value="contained">Contained</option>
+<option value="narrow">Narrow</option>
+</select>
+</div>
+</div>
+<div class="property-section">
+<div class="section-title">SEO Settings</div>
+<div class="property-group">
+<label class="property-label">Meta Title</label>
+<input class="property-input" placeholder="Professional Photography Services" type="text"/>
+</div>
+<div class="property-group">
+<label class="property-label">Meta Description</label>
+<textarea class="property-input" placeholder="Capturing your most precious moments with artistic vision and technical excellence..." rows="3"></textarea>
+</div>
+</div>
+</div>
+<!-- Mobile Toolbar (only visible on mobile) - Scrollable -->
+<div class="mobile-toolbar" style="display: none;">
+<button class="btn btn-secondary" onclick="addTextElement()">
+<i class="fas fa-font"></i>
+<span>Text</span>
+</button>
+<button class="btn btn-secondary" onclick="triggerPhotoUpload()">
+<i class="fas fa-camera"></i>
+<span>Photo</span>
+</button>
+<button class="btn btn-secondary" onclick="addLogoElement()">
+<i class="fas fa-image"></i>
+<span>Logo</span>
+</button>
+<button class="btn btn-ai" onclick="toggleAIAssistant()">
+<i class="fas fa-robot"></i>
+<span>AI</span>
+</button>
+<button class="btn btn-secondary" onclick="applyTemplate()">
+<i class="fas fa-th-large"></i>
+<span>Templates</span>
+</button>
+<button class="btn btn-secondary" onclick="openColorPicker()">
+<i class="fas fa-palette"></i>
+<span>Colors</span>
+</button>
+<button class="btn btn-secondary" onclick="openTypography()">
+<i class="fas fa-text-height"></i>
+<span>Fonts</span>
+</button>
+<button class="btn btn-secondary" onclick="saveDraft()">
+<i class="fas fa-save"></i>
+<span>Save</span>
+</button>
+<button class="btn btn-secondary" onclick="toggleFullscreenPreview()">
+<i class="fas fa-expand"></i>
+<span>Preview</span>
+</button>
+<button class="btn btn-primary" onclick="publishSite()">
+<i class="fas fa-rocket"></i>
+<span>Publish</span>
+</button>
+</div>
+</div><button class="mobile-preview-toggle" onclick="toggleFullscreenPreview()">
+<i class="fas fa-expand"></i>
+</button><div class="fullscreen-preview" id="fullscreenPreview">
+<div class="fullscreen-header">
+<div class="fullscreen-title">
+<i class="fas fa-mobile-alt"></i> Full Preview
+            </div>
+<button class="fullscreen-close" onclick="closeFullscreenPreview()">
+<i class="fas fa-times"></i>
+</button>
+</div>
+<div class="fullscreen-content">
+<iframe id="fullscreenCanvas" style="width: 100%; height: 100%; border: none; background: white;"></iframe>
+</div>
+</div></div><iframe class="preview-frame" id="site-preview" src="/preview.html"></iframe><footer style="text-align: center; color: gray; margin-top: 2rem;">layout-version: repaired-clean-v1</footer></body>
+</html>
+            `;
+
+            // Write content to preview window
+            previewWindow.document.write(previewHTML);
+            previewWindow.document.close();
+
+            // Focus the preview window
+            previewWindow.focus();
+
+            showNotification('Preview opened in new window!', 'success');
+        }
+
+        function publishSite() {
+            console.log('Publishing site...');
+            showNotification('Site published successfully! (Demo mode)', 'success');
+        }
+
+        function addImageElement(imageUrl) {
+            const canvas = document.getElementById('mainCanvas');
+            if (!canvas) {
+                showNotification('Canvas not found', 'error');
+                return;
+            }
+
+            const imageElement = document.createElement('div');
+            imageElement.className = 'draggable-element';
+            imageElement.innerHTML = `
+                <div class="drag-handle"><i class="fas fa-grip-vertical"></i></div>
+<div class="element-controls">
+<button class="control-btn" onclick="duplicateElement(this)" title="Duplicate"><i class="fas fa-copy"></i></button>
+<button class="control-btn" onclick="deleteElement(this)" title="Delete"><i class="fas fa-trash"></i></button>
+</div>
+<img onclick="selectImage(this)" src="${imageUrl}" style="width: 100%; height: auto; border-radius: 10px; display: block;"/>
+            `;
+            imageElement.style.cssText = 'margin: 20px 0; cursor: pointer; position: relative; z-index: 10;';
+
+            const canvasContent = canvas.querySelector('.canvas-content') || canvas;
+            canvasContent.appendChild(imageElement);
+
+            if (typeof makeDraggable === 'function') {
+                makeDraggable(imageElement);
+            }
+
+            showNotification('Image added! Drag to reposition.', 'success');
+        }
+
+        function selectImage(imgElement) {
+            // Simple image selection feedback
+            imgElement.style.border = '3px solid #d4af37';
+            setTimeout(() =&gt; {
+                imgElement.style.border = 'none';
+            }, 1500);
+        }
+
+        // Add missing deletePage function
+        function deletePage(pageName) {
+            if (confirm(`Delete the "${pageName}" page? This cannot be undone.`)) {
+                // Remove from currentProject.pages array
+                const index = currentProject.pages.indexOf(pageName);
+                if (index &gt; -1) {
+                    currentProject.pages.splice(index, 1);
+                }
+
+                // Remove page data
+                if (currentProject.pageData &amp;&amp; currentProject.pageData[pageName]) {
+                    delete currentProject.pageData[pageName];
+                }
+
+                // Remove from UI
+                const pageItem = document.querySelector(`[data-page="${pageName}"]`);
+                if (pageItem) {
+                    pageItem.remove();
+                }
+
+                // Switch to home page if deleted page was active
+                if (currentProject.currentPage === pageName) {
+                    switchToPage('home');
+                }
+
+                showNotification(`Page "${pageName}" deleted`, 'success');
+            }
+        }
+
+        // Add missing openTypographyModal function
+        function openTypographyModal() {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+            `;
+
+            modal.innerHTML = `
+                <div style="background: var(--bg-secondary); border-radius: 12px; padding: 30px; max-width: 500px; width: 90%;">
+<h3 style="margin-bottom: 20px; color: var(--text-primary);">Choose Typography</h3>
+<div style="display: grid; gap: 15px;">
+<div class="font-option" data-font="inter" style="padding: 15px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; font-family: Inter;">
+<h4>Inter</h4>
+<p>Modern &amp; clean sans-serif</p>
+</div>
+<div class="font-option" data-font="playfair" style="padding: 15px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; font-family: 'Playfair Display';">
+<h4>Playfair Display</h4>
+<p>Elegant serif for luxury brands</p>
+</div>
+<div class="font-option" data-font="montserrat" style="padding: 15px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; font-family: Montserrat;">
+<h4>Montserrat</h4>
+<p>Versatile sans-serif</p>
+</div>
+</div>
+<button class="btn btn-primary" id="applyFontBtn" style="width: 100%; margin-top: 20px;">Apply Font</button>
+</div>
+            `;
+
+            document.body.appendChild(modal);
+
+            // Handle font selection
+            modal.querySelectorAll('.font-option').forEach(option =&gt; {
+                option.addEventListener('click', function() {
+                    modal.querySelectorAll('.font-option').forEach(opt =&gt; opt.style.border = '2px solid #ddd');
+                    this.style.border = '2px solid #d4af37';
+                });
+            });
+
+            // Handle apply button
+            modal.querySelector('#applyFontBtn').addEventListener('click', function() {
+                const selected = modal.querySelector('.font-option[style*="border: 2px solid rgb(212, 175, 55)"]');
+                if (selected) {
+                    const fontFamily = selected.dataset.font;
+                    updateCanvasTypography(fontFamily);
+                    showNotification('Typography updated!', 'success');
+                }
+                modal.remove();
+            });
+
+            // Close on background click
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        }
+
+        // Make ALL functions globally available for onclick handlers
+        window.addTextElement = addTextElement;
+        window.addLogoElement = addLogoElement;
+        window.triggerPhotoUpload = triggerPhotoUpload;
+        window.toggleAIAssistant = toggleAIAssistant;
+        window.saveDraft = saveDraft;
+        window.previewSite = previewSite;
+        window.publishSite = publishSite;
+        window.showCreditsPurchase = showCreditsPurchase;
+        window.processAIRequest = processAIRequest;
+        window.quickAIAction = quickAIAction;
+        window.deleteElement = deleteElement;
+        window.duplicateElement = duplicateElement;
+        window.generateWebsite = generateWebsite;
+        window.applyTemplate = applyTemplate;
+        window.switchToPage = switchToPage;
+        window.addNewPage = addNewPage;
+        window.deletePage = deletePage;
+        window.initializeDraggableElements = initializeDraggableElements;
+        window.makeDraggable = makeDraggable;
+        window.makeAllTextEditable = makeAllTextEditable;
+        window.showTextToolbar = showTextToolbar;
+        window.openTypographyModal = openTypographyModal;
+
+        // Initialize page functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Website builder loaded successfully');
+            console.log('Functions available:', {
+                addTextElement: typeof window.addTextElement,
+                toggleAIAssistant: typeof window.toggleAIAssistant,
+                saveDraft: typeof window.saveDraft
+            });
+
+            // Remove any blocking elements but keep notifications and ai-panel
+            setTimeout(() =&gt; {
+                // Only hide loading overlays specifically
+                const loadingOverlays = document.querySelectorAll('.loading-overlay');
+                loadingOverlays.forEach(overlay =&gt; {
+                    overlay.style.display = 'none';
+                });
+
+                // Remove any modal backgrounds that might be left over
+                const modalBackdrops = document.querySelectorAll('.modal-backdrop');
+                modalBackdrops.forEach(backdrop =&gt; backdrop.remove());
+            }, 100);
+
+            // Initialize drag and drop
+            if (typeof initializeDraggableElements === 'function') {
+                initializeDraggableElements();
+            }
+
+            // Check for payment success
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('payment') === 'success') {
+                setTimeout(() =&gt; {
+                    showNotification('AI Credits purchased successfully!', 'success');
+                    window.history.replaceState({}, document.title, '/website-builder.html');
+                    if (typeof loadAiCredits === 'function') {
+                        loadAiCredits();
+                    }
+                }, 1000);
+            }
+        });
