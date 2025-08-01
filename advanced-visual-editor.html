@@ -326,6 +326,119 @@
             color: var(--primary-gold);
         }
         
+        /* CRITICAL FIX - MAKE BLOCKS ACTUALLY VISIBLE */
+        .block-content {
+            width: 100%;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .editor-block {
+            margin: 20px 0;
+            position: relative;
+            width: 100%;
+            min-height: 60px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .editor-block .block-content > div {
+            width: 100%;
+            display: block;
+        }
+        
+        /* Make sure text blocks are visible */
+        .text-content h2 {
+            color: #333 !important;
+            font-size: 2rem !important;
+            margin-bottom: 15px !important;
+            font-weight: 600 !important;
+        }
+        
+        .text-content p {
+            color: #666 !important;
+            font-size: 1rem !important;
+            line-height: 1.6 !important;
+            margin-bottom: 15px !important;
+        }
+        
+        /* Make sure gallery grids show properly */
+        .gallery-grid {
+            width: 100%;
+            display: grid !important;
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 15px !important;
+            padding: 20px !important;
+        }
+        
+        .gallery-item {
+            aspect-ratio: 4/3 !important;
+            background-size: cover !important;
+            background-position: center !important;
+            border-radius: 8px !important;
+            min-height: 150px !important;
+        }
+        
+        /* Make sure hero blocks are visible */
+        .hero-block {
+            width: 100% !important;
+            padding: 60px 20px !important;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            color: white !important;
+            text-align: center !important;
+            border-radius: 8px !important;
+        }
+        
+        .hero-title {
+            font-size: 2.5rem !important;
+            font-weight: 700 !important;
+            margin-bottom: 15px !important;
+            color: white !important;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.1rem !important;
+            opacity: 0.9 !important;
+            margin-bottom: 20px !important;
+            color: white !important;
+        }
+        
+        /* Contact forms */
+        .block-content form {
+            max-width: 100% !important;
+            padding: 20px !important;
+        }
+        
+        .block-content input,
+        .block-content textarea {
+            width: 100% !important;
+            padding: 10px !important;
+            margin-bottom: 15px !important;
+            border: 1px solid #ddd !important;
+            border-radius: 4px !important;
+            box-sizing: border-box !important;
+        }
+        
+        /* Buttons */
+        .btn {
+            padding: 12px 24px !important;
+            background: var(--primary-gold) !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 6px !important;
+            font-weight: 500 !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+        }
+        
+        .btn:hover {
+            background: #b8941f !important;
+            transform: translateY(-1px) !important;
+        }
+        
         /* Responsive View Controls */
         .viewport-controls {
             display: flex;
