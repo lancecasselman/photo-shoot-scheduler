@@ -1940,24 +1940,44 @@ Examples:
         
         // Add Text Element
         function addTextElement() {
-            const canvas = document.getElementById('mainCanvas');
-            const textElement = document.createElement('div');
-            textElement.className = 'draggable-element';
-            textElement.innerHTML = `
-                <div class="drag-handle"><i class="fas fa-grip-vertical"></i></div>
-                <div class="element-controls">
-                    <button class="control-btn" onclick="duplicateElement(this)" title="Duplicate"><i class="fas fa-copy"></i></button>
-                    <button class="control-btn" onclick="deleteElement(this)" title="Delete"><i class="fas fa-trash"></i></button>
-                </div>
-                <h2 contenteditable="true" style="padding: 20px; font-size: 2rem; color: #333; text-align: center; outline: none; border: 2px dashed transparent;" onclick="showTextToolbar(this)">Click to edit this text</h2>
-            `;
-            textElement.style.cssText = 'margin: 20px 0; cursor: pointer;';
-            
-            const canvasContent = canvas.querySelector('.canvas-content') || canvas;
-            canvasContent.appendChild(textElement);
-            makeDraggable(textElement);
-            
-            showNotification('Text element added! Drag to reposition.', 'success');
+            console.log('addTextElement called!');
+            try {
+                const canvas = document.getElementById('mainCanvas');
+                if (!canvas) {
+                    console.error('Canvas not found!');
+                    alert('Error: Canvas not found');
+                    return;
+                }
+                
+                const textElement = document.createElement('div');
+                textElement.className = 'draggable-element';
+                textElement.innerHTML = `
+                    <div class="drag-handle"><i class="fas fa-grip-vertical"></i></div>
+                    <div class="element-controls">
+                        <button class="control-btn" onclick="duplicateElement(this)" title="Duplicate"><i class="fas fa-copy"></i></button>
+                        <button class="control-btn" onclick="deleteElement(this)" title="Delete"><i class="fas fa-trash"></i></button>
+                    </div>
+                    <h2 contenteditable="true" style="padding: 20px; font-size: 2rem; color: #fff; text-align: center; outline: none; border: 2px dashed transparent;" onclick="showTextToolbar(this)">Click to edit this text</h2>
+                `;
+                textElement.style.cssText = 'margin: 20px 0; cursor: pointer; position: relative; z-index: 10;';
+                
+                const canvasContent = canvas.querySelector('.canvas-content') || canvas;
+                canvasContent.appendChild(textElement);
+                
+                if (typeof makeDraggable === 'function') {
+                    makeDraggable(textElement);
+                }
+                
+                console.log('Text element added successfully!');
+                alert('SUCCESS: Text element added!');
+                
+                if (typeof showNotification === 'function') {
+                    showNotification('Text element added! Drag to reposition.', 'success');
+                }
+            } catch (error) {
+                console.error('Error in addTextElement:', error);
+                alert('Error adding text element: ' + error.message);
+            }
         }
         
         // Add Logo Element
@@ -3604,10 +3624,19 @@ Examples:
                     // Test direct function call
                     console.log('TESTING: Direct function call...');
                     try {
+                        console.log('Canvas element exists:', !!document.getElementById('mainCanvas'));
                         window.addTextElement();
                         console.log('SUCCESS: Function executed!');
                     } catch (error) {
                         console.error('ERROR:', error);
+                    }
+                    
+                    // Test button click programmatically
+                    console.log('TESTING: Programmatic button click...');
+                    const firstBtn = buttons[0];
+                    if (firstBtn) {
+                        firstBtn.click();
+                        console.log('Button clicked programmatically');
                     }
                 }
             }, 1000);
