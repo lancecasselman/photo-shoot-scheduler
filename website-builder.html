@@ -702,7 +702,7 @@
             right: 0;
             bottom: 0;
             background: rgba(0,0,0,0.8);
-            display: flex;
+            display: none; /* Initially hidden */
             align-items: center;
             justify-content: center;
             z-index: 10000;
@@ -1828,6 +1828,11 @@ Examples:
                 </div>
             `;
             document.body.appendChild(overlay);
+            
+            // Auto-hide after 3 seconds to prevent permanent blocking
+            setTimeout(() => {
+                hideLoading();
+            }, 3000);
         }
         
         function hideLoading() {
@@ -1837,6 +1842,20 @@ Examples:
                     overlay.remove();
                 }
             });
+        }
+        
+        // Force remove any blocking overlays on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                hideLoading();
+                // Remove any stray overlays or modals
+                const blockers = document.querySelectorAll('.loading-overlay, .modal-backdrop, [style*="position: fixed"][style*="z-index"]');
+                blockers.forEach(blocker => {
+                    if (!blocker.classList.contains('notification') && !blocker.classList.contains('ai-panel')) {
+                        blocker.remove();
+                    }
+                });
+            }, 500);
             
             // Also clean up any other stuck modals
             cleanupModals();
@@ -4392,18 +4411,18 @@ Examples:
                 saveDraft: typeof window.saveDraft
             });
             
-            // Auto-hide any blocking overlays that might interfere with buttons
+            // Remove any blocking elements but keep notifications and ai-panel
             setTimeout(() => {
-                const overlays = document.querySelectorAll('[style*="position: fixed"]:not(.notification)');
-                overlays.forEach(overlay => {
-                    const computedStyle = window.getComputedStyle(overlay);
-                    const rect = overlay.getBoundingClientRect();
-                    if (computedStyle.display !== 'none' && rect.width > 0 && rect.height > 0 && 
-                        !overlay.classList.contains('notification') && !overlay.classList.contains('ai-panel')) {
-                        overlay.style.display = 'none';
-                    }
+                // Only hide loading overlays specifically
+                const loadingOverlays = document.querySelectorAll('.loading-overlay');
+                loadingOverlays.forEach(overlay => {
+                    overlay.style.display = 'none';
                 });
-            }, 500);
+                
+                // Remove any modal backgrounds that might be left over
+                const modalBackdrops = document.querySelectorAll('.modal-backdrop');
+                modalBackdrops.forEach(backdrop => backdrop.remove());
+            }, 100);
             
             // Initialize drag and drop
             if (typeof initializeDraggableElements === 'function') {
