@@ -8,6 +8,7 @@ import {
   boolean,
   integer,
   decimal,
+  serial,
 } from "drizzle-orm/pg-core";
 
 // Session storage table.

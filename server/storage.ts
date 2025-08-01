@@ -135,7 +135,7 @@ export class DatabaseStorage implements IStorage {
       // Check if user has enough credits
       const [user] = await tx.select({ aiCredits: users.aiCredits }).from(users).where(eq(users.id, userId));
       
-      if (!user || user.aiCredits < credits) {
+      if (!user || (user.aiCredits || 0) < credits) {
         return false;
       }
 
@@ -182,7 +182,7 @@ export class DatabaseStorage implements IStorage {
         id: crypto.randomUUID(),
         userId,
         creditsAmount: credits,
-        priceUsd,
+        priceUsd: priceUsd.toString(),
         stripePaymentIntentId,
         status: 'completed',
       });
