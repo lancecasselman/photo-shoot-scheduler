@@ -3565,6 +3565,48 @@ Examples:
                 saveDraft: typeof window.saveDraft
             });
             
+            // COMPREHENSIVE BUTTON DEBUGGING
+            console.log('BUTTON TEST: Testing if buttons respond to clicks...');
+            setTimeout(() => {
+                // Test multiple buttons
+                const buttons = document.querySelectorAll('button[onclick]');
+                console.log(`BUTTON TEST: Found ${buttons.length} buttons with onclick handlers`);
+                
+                buttons.forEach((btn, index) => {
+                    const onclick = btn.getAttribute('onclick');
+                    console.log(`Button ${index}: ${onclick}`);
+                    
+                    // Check if button is clickable
+                    const rect = btn.getBoundingClientRect();
+                    const computedStyle = window.getComputedStyle(btn);
+                    console.log(`Button ${index} - Position: ${rect.x}, ${rect.y}, Size: ${rect.width}x${rect.height}`);
+                    console.log(`Button ${index} - z-index: ${computedStyle.zIndex}, pointer-events: ${computedStyle.pointerEvents}`);
+                    
+                    // Add visual indicator
+                    if (index === 0) {
+                        btn.style.border = '3px solid red';
+                        btn.style.background = 'yellow';
+                    }
+                });
+                
+                // Test if onclick functions exist
+                console.log('Function existence check:');
+                console.log('addTextElement:', typeof window.addTextElement);
+                console.log('toggleAIAssistant:', typeof window.toggleAIAssistant);
+                console.log('saveDraft:', typeof window.saveDraft);
+                
+                // Try calling a function directly
+                try {
+                    if (typeof window.addTextElement === 'function') {
+                        console.log('TESTING: Calling addTextElement directly...');
+                        window.addTextElement();
+                        console.log('SUCCESS: addTextElement executed!');
+                    }
+                } catch (error) {
+                    console.error('ERROR calling addTextElement:', error);
+                }
+            }, 1000);
+            
             // Initialize drag and drop
             if (typeof initializeDraggableElements === 'function') {
                 initializeDraggableElements();
