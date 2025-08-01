@@ -7,6 +7,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    
     <style>
         :root {
             --bg-primary: #0a0a0a;
@@ -2180,7 +2185,19 @@ Examples:
         
         async function loadAiCredits() {
             try {
-                const response = await fetch('/api/ai/credits');
+                const auth = firebase.auth();
+                if (!auth.currentUser) {
+                    document.getElementById('aiCreditsCount').textContent = '0';
+                    return;
+                }
+                
+                const idToken = await auth.currentUser.getIdToken();
+                const response = await fetch('/api/ai/credits', {
+                    headers: {
+                        'Authorization': `Bearer ${idToken}`
+                    }
+                });
+                
                 if (response.ok) {
                     const data = await response.json();
                     userAiCredits = data.credits;
@@ -2366,10 +2383,20 @@ Examples:
                 purchaseBtn.textContent = 'Processing...';
                 
                 try {
+                    // Get Firebase token for authentication
+                    const auth = firebase.auth();
+                    if (!auth.currentUser) {
+                        throw new Error('Please log in to purchase credits');
+                    }
+                    const idToken = await auth.currentUser.getIdToken();
+                    
                     // Create payment intent
                     const response = await fetch('/api/ai/purchase-credits', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${idToken}`
+                        },
                         body: JSON.stringify({ creditsPackage: window.selectedPackage })
                     });
                     
@@ -2449,9 +2476,18 @@ Examples:
             showLoading('AI is processing your request...');
             
             try {
+                const auth = firebase.auth();
+                if (!auth.currentUser) {
+                    throw new Error('Please log in to use AI features');
+                }
+                const idToken = await auth.currentUser.getIdToken();
+                
                 const response = await fetch('/api/ai/process-page-request', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${idToken}`
+                    },
                     body: JSON.stringify({
                         prompt: prompt,
                         currentPage: getCurrentPageContent(),
@@ -3380,6 +3416,25 @@ Examples:
             
             return templates[templateType]?.[pageType] || '<div style="padding: 80px 20px; text-align: center;"><h1>Page Content</h1><p>This page is ready for your content.</p></div>';
         }
+        
+        // Initialize Firebase Auth and load user data
+        let currentUser = null;
+        let userAiCredits = 0;
+        
+        firebase.auth().onAuthStateChanged(function(user) {
+            if (user) {
+                currentUser = user;
+                loadAiCredits();
+                console.log('User signed in:', user.email);
+            } else {
+                currentUser = null;
+                console.log('User not signed in');
+                // Redirect to login if not authenticated
+                if (!window.location.pathname.includes('auth.html')) {
+                    window.location.href = '/auth.html';
+                }
+            }
+        });
         
         // Check for payment success on page load
         document.addEventListener('DOMContentLoaded', function() {
