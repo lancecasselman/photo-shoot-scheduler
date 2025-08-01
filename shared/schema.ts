@@ -35,6 +35,9 @@ export const users = pgTable("users", {
   subscriptionExpiresAt: timestamp("subscription_expires_at"),
   stripeCustomerId: varchar("stripe_customer_id"),
   stripeSubscriptionId: varchar("stripe_subscription_id"),
+  aiCredits: integer("ai_credits").default(0),
+  totalAiCreditsUsed: integer("total_ai_credits_used").default(0),
+  lastAiCreditPurchase: timestamp("last_ai_credit_purchase"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -215,6 +218,29 @@ export type RawBackup = typeof rawBackups.$inferSelect;
 export type InsertRawStorageBilling = typeof rawStorageBilling.$inferInsert;
 export type RawStorageBilling = typeof rawStorageBilling.$inferSelect;
 
+// AI Credits purchase tracking
+export const aiCreditPurchases = pgTable("ai_credit_purchases", {
+  id: varchar("id").primaryKey().notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  creditsAmount: integer("credits_amount").notNull(),
+  priceUsd: decimal("price_usd", { precision: 10, scale: 2 }).notNull(),
+  stripePaymentIntentId: varchar("stripe_payment_intent_id"),
+  status: varchar("status").notNull().default("pending"), // pending, completed, failed
+  purchasedAt: timestamp("purchased_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// AI Credits usage tracking
+export const aiCreditUsage = pgTable("ai_credit_usage", {
+  id: varchar("id").primaryKey().notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  requestType: varchar("request_type").notNull(), // page_generation, content_suggestion, etc.
+  creditsUsed: integer("credits_used").notNull().default(1),
+  prompt: text("prompt"),
+  success: boolean("success").default(true),
+  usedAt: timestamp("used_at").defaultNow(),
+});
+
 // Workflow automation tables
 export const userAutomationSettings = pgTable('user_automation_settings', {
   id: serial('id').primaryKey(),
@@ -240,3 +266,7 @@ export type InsertUserAutomationSettings = typeof userAutomationSettings.$inferI
 export type UserAutomationSettings = typeof userAutomationSettings.$inferSelect;
 export type InsertWorkflowLog = typeof workflowLogs.$inferInsert;
 export type WorkflowLog = typeof workflowLogs.$inferSelect;
+export type InsertAiCreditPurchase = typeof aiCreditPurchases.$inferInsert;
+export type AiCreditPurchase = typeof aiCreditPurchases.$inferSelect;
+export type InsertAiCreditUsage = typeof aiCreditUsage.$inferInsert;
+export type AiCreditUsage = typeof aiCreditUsage.$inferSelect;

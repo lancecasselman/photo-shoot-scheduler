@@ -1693,10 +1693,12 @@ app.get('/api/automation-settings', isAuthenticated, async (req, res) => {
     }
 });
 
-// 🤖 AI WEBSITE BUILDER - Page Processing Endpoint
+// 🤖 AI WEBSITE BUILDER - Page Processing Endpoint (with credits)
 app.post('/api/ai/process-page-request', async (req, res) => {
     try {
         const { prompt, currentPage, pageType } = req.body;
+        // Temporary: Use default user ID until auth is implemented
+        const userId = 1;
         
         if (!prompt || !prompt.trim()) {
             return res.status(400).json({ 
@@ -1705,16 +1707,50 @@ app.post('/api/ai/process-page-request', async (req, res) => {
             });
         }
 
+        // Check if user has enough AI credits (1 credit per request)
+        const creditsNeeded = 1;
+        const availableCredits = await storage.getUserAiCredits(userId);
+        
+        if (availableCredits < creditsNeeded) {
+            return res.status(402).json({
+                success: false,
+                error: 'Insufficient AI credits',
+                creditsNeeded,
+                availableCredits,
+                message: 'You need more AI credits to use this feature. Purchase credits to continue.'
+            });
+        }
+
         console.log(`AI Page Request: ${prompt} for page type: ${pageType}`);
 
-        // Use the ai-services for intelligent content generation
-        const generatedContent = await aiServices.generatePageContent(prompt, currentPage, pageType);
+        // Use AI credits before making the request
+        const creditsUsed = await storage.useAiCredits(userId, creditsNeeded, 'page_generation', prompt);
+        
+        if (!creditsUsed) {
+            return res.status(402).json({
+                success: false,
+                error: 'Failed to deduct AI credits',
+                message: 'Credits could not be deducted. Please try again.'
+            });
+        }
 
-        res.json({
-            success: true,
-            content: generatedContent,
-            message: 'AI page content generated successfully'
-        });
+        try {
+            // Use the ai-services for intelligent content generation
+            const generatedContent = await aiServices.generatePageContent(prompt, currentPage, pageType);
+
+            res.json({
+                success: true,
+                content: generatedContent,
+                message: 'AI page content generated successfully',
+                creditsUsed: creditsNeeded,
+                remainingCredits: availableCredits - creditsNeeded
+            });
+
+        } catch (aiError) {
+            // If AI generation fails, refund the credits
+            await storage.addAiCredits(userId, creditsNeeded, 0); // Refund
+            throw aiError;
+        }
 
     } catch (error) {
         console.error('AI page processing error:', error);
@@ -1723,6 +1759,107 @@ app.post('/api/ai/process-page-request', async (req, res) => {
             error: 'Failed to process AI request: ' + error.message
         });
     }
+});
+
+// 💰 AI CREDITS MANAGEMENT
+app.get('/api/ai/credits', async (req, res) => {
+    try {
+        // Temporary: Use default user ID until auth is implemented
+        const userId = 1;
+        const credits = await storage.getUserAiCredits(userId);
+        
+        res.json({
+            success: true,
+            credits,
+            message: 'AI credits retrieved successfully'
+        });
+    } catch (error) {
+        console.error('AI credits fetch error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch AI credits'
+        });
+    }
+});
+
+// AI Credits Purchase Endpoint
+app.post('/api/ai/purchase-credits', async (req, res) => {
+    try {
+        const { creditsPackage } = req.body; // 'small', 'medium', 'large'
+        // Temporary: Use default user ID until auth is implemented
+        const userId = 1;
+        
+        // Credit packages: $5 = 50 credits, $15 = 150 credits, $30 = 350 credits
+        const packages = {
+            small: { credits: 50, price: 5.00 },
+            medium: { credits: 150, price: 15.00 },
+            large: { credits: 350, price: 30.00 }
+        };
+        
+        const selectedPackage = packages[creditsPackage];
+        if (!selectedPackage) {
+            return res.status(400).json({ error: 'Invalid credits package' });
+        }
+        
+        // Create Stripe Payment Intent
+        const paymentIntent = await stripe.paymentIntents.create({
+            amount: Math.round(selectedPackage.price * 100), // Convert to cents
+            currency: 'usd',
+            metadata: {
+                userId,
+                creditsAmount: selectedPackage.credits.toString(),
+                packageType: creditsPackage
+            }
+        });
+
+        res.json({
+            success: true,
+            clientSecret: paymentIntent.client_secret,
+            credits: selectedPackage.credits,
+            price: selectedPackage.price
+        });
+        
+    } catch (error) {
+        console.error('AI credits purchase error:', error);
+        res.status(500).json({
+            error: 'Failed to create payment for AI credits'
+        });
+    }
+});
+
+// Stripe Webhook for AI Credits (add to existing webhook handler)
+app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    let event;
+
+    try {
+        event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+    } catch (err) {
+        console.log(`Webhook signature verification failed.`, err.message);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    // Handle AI credits payment success
+    if (event.type === 'payment_intent.succeeded') {
+        const paymentIntent = event.data.object;
+        
+        if (paymentIntent.metadata.creditsAmount) {
+            const userId = paymentIntent.metadata.userId;
+            const creditsAmount = parseInt(paymentIntent.metadata.creditsAmount);
+            const priceUsd = paymentIntent.amount / 100; // Convert from cents
+            
+            // Add credits to user account
+            storage.addAiCredits(userId, creditsAmount, priceUsd, paymentIntent.id)
+                .then(() => {
+                    console.log(`Added ${creditsAmount} AI credits to user ${userId}`);
+                })
+                .catch(error => {
+                    console.error('Failed to add AI credits:', error);
+                });
+        }
+    }
+
+    res.json({received: true});
 });
 
 // 🤖 AI-POWERED FEATURES FOR SUBSCRIBERS
