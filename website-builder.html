@@ -480,6 +480,112 @@
             transition: all 0.3s;
             position: relative;
             overflow: hidden;
+            cursor: crosshair;
+        }
+        
+        /* Draggable Elements */
+        .draggable-element {
+            position: relative;
+            cursor: move;
+            border: 2px dashed transparent;
+            transition: all 0.2s;
+            user-select: none;
+            touch-action: none;
+            margin: 10px 0;
+        }
+        
+        .draggable-element:hover {
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.2);
+        }
+        
+        .draggable-element.dragging {
+            border-color: var(--accent-gold);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            transform: rotate(1deg) scale(1.02);
+            z-index: 1000;
+            opacity: 0.9;
+        }
+        
+        .element-controls {
+            position: absolute;
+            top: -35px;
+            right: 5px;
+            display: none;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            padding: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            gap: 4px;
+            z-index: 100;
+        }
+        
+        .draggable-element:hover .element-controls {
+            display: flex;
+        }
+        
+        .control-btn {
+            width: 24px;
+            height: 24px;
+            border: none;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .control-btn:hover {
+            background: var(--accent-gold);
+            color: var(--bg-primary);
+        }
+        
+        /* Drop zones */
+        .drop-zone {
+            min-height: 60px;
+            border: 2px dashed #ddd;
+            margin: 5px 0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-style: italic;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        
+        .drop-zone.drag-over {
+            border-color: var(--accent-gold);
+            background: rgba(212, 175, 55, 0.1);
+            color: var(--accent-gold);
+        }
+        
+        .drag-handle {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            width: 20px;
+            height: 20px;
+            background: var(--accent-gold);
+            border-radius: 3px;
+            cursor: grab;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 10px;
+        }
+        
+        .draggable-element:hover .drag-handle {
+            display: flex;
+        }
+        
+        .drag-handle:active {
+            cursor: grabbing;
         }
         
         .canvas.desktop {
@@ -1839,13 +1945,22 @@ Examples:
         function addTextElement() {
             const canvas = document.getElementById('mainCanvas');
             const textElement = document.createElement('div');
-            textElement.innerHTML = '<h2 contenteditable="true" style="padding: 20px; font-size: 2rem; color: #333; text-align: center; outline: none; border: 2px dashed transparent;" onclick="showTextToolbar(this)">Click to edit this text</h2>';
+            textElement.className = 'draggable-element';
+            textElement.innerHTML = `
+                <div class="drag-handle"><i class="fas fa-grip-vertical"></i></div>
+                <div class="element-controls">
+                    <button class="control-btn" onclick="duplicateElement(this)" title="Duplicate"><i class="fas fa-copy"></i></button>
+                    <button class="control-btn" onclick="deleteElement(this)" title="Delete"><i class="fas fa-trash"></i></button>
+                </div>
+                <h2 contenteditable="true" style="padding: 20px; font-size: 2rem; color: #333; text-align: center; outline: none; border: 2px dashed transparent;" onclick="showTextToolbar(this)">Click to edit this text</h2>
+            `;
             textElement.style.cssText = 'margin: 20px 0; cursor: pointer;';
             
             const canvasContent = canvas.querySelector('.canvas-content') || canvas;
             canvasContent.appendChild(textElement);
+            makeDraggable(textElement);
             
-            showNotification('Text element added! Click to edit.', 'success');
+            showNotification('Text element added! Drag to reposition.', 'success');
         }
         
         // Add Logo Element
@@ -1860,13 +1975,22 @@ Examples:
                     reader.onload = function(e) {
                         const canvas = document.getElementById('mainCanvas');
                         const logoElement = document.createElement('div');
-                        logoElement.innerHTML = `<img src="${e.target.result}" style="max-width: 200px; height: auto; cursor: pointer;" onclick="replaceLogoImage(this)">`;
+                        logoElement.className = 'draggable-element';
+                        logoElement.innerHTML = `
+                            <div class="drag-handle"><i class="fas fa-grip-vertical"></i></div>
+                            <div class="element-controls">
+                                <button class="control-btn" onclick="duplicateElement(this)" title="Duplicate"><i class="fas fa-copy"></i></button>
+                                <button class="control-btn" onclick="deleteElement(this)" title="Delete"><i class="fas fa-trash"></i></button>
+                            </div>
+                            <img src="${e.target.result}" style="max-width: 200px; height: auto; cursor: pointer;" onclick="replaceLogoImage(this)">
+                        `;
                         logoElement.style.cssText = 'text-align: center; padding: 20px; margin: 20px 0;';
                         
                         const canvasContent = canvas.querySelector('.canvas-content') || canvas;
                         canvasContent.appendChild(logoElement);
+                        makeDraggable(logoElement);
                         
-                        showNotification('Logo added successfully!', 'success');
+                        showNotification('Logo added! Drag to reposition.', 'success');
                     };
                     reader.readAsDataURL(file);
                 }
@@ -1886,13 +2010,22 @@ Examples:
                     reader.onload = function(e) {
                         const canvas = document.getElementById('mainCanvas');
                         const photoElement = document.createElement('div');
-                        photoElement.innerHTML = `<img src="${e.target.result}" style="max-width: 100%; height: auto; border-radius: 8px; cursor: pointer;" onclick="replaceImage(this)">`;
+                        photoElement.className = 'draggable-element';
+                        photoElement.innerHTML = `
+                            <div class="drag-handle"><i class="fas fa-grip-vertical"></i></div>
+                            <div class="element-controls">
+                                <button class="control-btn" onclick="duplicateElement(this)" title="Duplicate"><i class="fas fa-copy"></i></button>
+                                <button class="control-btn" onclick="deleteElement(this)" title="Delete"><i class="fas fa-trash"></i></button>
+                            </div>
+                            <img src="${e.target.result}" style="max-width: 100%; height: auto; border-radius: 8px; cursor: pointer;" onclick="replaceImage(this)">
+                        `;
                         photoElement.style.cssText = 'text-align: center; padding: 20px; margin: 20px 0;';
                         
                         const canvasContent = canvas.querySelector('.canvas-content') || canvas;
                         canvasContent.appendChild(photoElement);
+                        makeDraggable(photoElement);
                         
-                        showNotification('Photo added successfully!', 'success');
+                        showNotification('Photo added! Drag to reposition.', 'success');
                     };
                     reader.readAsDataURL(file);
                 }
@@ -2548,6 +2681,109 @@ Examples:
                 console.log(`Applied ${templateType} template`);
             }
         }
+        
+        // Drag and Drop Functionality
+        let draggedElement = null;
+        let dragOffset = { x: 0, y: 0 };
+        
+        function makeDraggable(element) {
+            const dragHandle = element.querySelector('.drag-handle');
+            
+            // Mouse events
+            dragHandle.addEventListener('mousedown', startDrag);
+            
+            // Touch events for mobile
+            dragHandle.addEventListener('touchstart', startDrag, { passive: false });
+            
+            function startDrag(e) {
+                e.preventDefault();
+                draggedElement = element;
+                element.classList.add('dragging');
+                
+                const rect = element.getBoundingClientRect();
+                const clientX = e.clientX || e.touches[0].clientX;
+                const clientY = e.clientY || e.touches[0].clientY;
+                
+                dragOffset.x = clientX - rect.left;
+                dragOffset.y = clientY - rect.top;
+                
+                document.addEventListener('mousemove', handleDrag);
+                document.addEventListener('mouseup', stopDrag);
+                document.addEventListener('touchmove', handleDrag, { passive: false });
+                document.addEventListener('touchend', stopDrag);
+            }
+            
+            function handleDrag(e) {
+                if (!draggedElement) return;
+                e.preventDefault();
+                
+                const clientX = e.clientX || e.touches[0].clientX;
+                const clientY = e.clientY || e.touches[0].clientY;
+                
+                const canvas = document.querySelector('.canvas-content');
+                const canvasRect = canvas.getBoundingClientRect();
+                
+                let newX = clientX - canvasRect.left - dragOffset.x;
+                let newY = clientY - canvasRect.top - dragOffset.y;
+                
+                // Keep within canvas bounds
+                newX = Math.max(0, Math.min(newX, canvasRect.width - draggedElement.offsetWidth));
+                newY = Math.max(0, Math.min(newY, canvasRect.height - draggedElement.offsetHeight));
+                
+                draggedElement.style.position = 'absolute';
+                draggedElement.style.left = newX + 'px';
+                draggedElement.style.top = newY + 'px';
+                draggedElement.style.margin = '0';
+            }
+            
+            function stopDrag() {
+                if (draggedElement) {
+                    draggedElement.classList.remove('dragging');
+                    draggedElement = null;
+                }
+                
+                document.removeEventListener('mousemove', handleDrag);
+                document.removeEventListener('mouseup', stopDrag);
+                document.removeEventListener('touchmove', handleDrag);
+                document.removeEventListener('touchend', stopDrag);
+            }
+        }
+        
+        // Element Control Functions
+        function deleteElement(button) {
+            const element = button.closest('.draggable-element');
+            if (element && confirm('Delete this element?')) {
+                element.remove();
+                showNotification('Element deleted', 'success');
+            }
+        }
+        
+        function duplicateElement(button) {
+            const element = button.closest('.draggable-element');
+            if (element) {
+                const clone = element.cloneNode(true);
+                const rect = element.getBoundingClientRect();
+                
+                // Position slightly offset from original
+                clone.style.position = 'absolute';
+                clone.style.left = (element.offsetLeft + 20) + 'px';
+                clone.style.top = (element.offsetTop + 20) + 'px';
+                
+                element.parentNode.appendChild(clone);
+                makeDraggable(clone);
+                showNotification('Element duplicated', 'success');
+            }
+        }
+        
+        // Make existing elements draggable on page load
+        function initializeDraggableElements() {
+            document.querySelectorAll('.draggable-element').forEach(element => {
+                makeDraggable(element);
+            });
+        }
+        
+        // Initialize drag functionality when page loads
+        document.addEventListener('DOMContentLoaded', initializeDraggableElements);
     </script>
 </body>
 </html>
