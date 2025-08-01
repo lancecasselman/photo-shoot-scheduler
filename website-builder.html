@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Website Builder - Photography Management System</title>
+    <title>Website Builder - Photography Management System</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -42,12 +42,12 @@
         
         .builder-container {
             display: grid;
-            grid-template-columns: 320px 1fr 300px;
+            grid-template-columns: 320px 1fr;
             grid-template-rows: 60px 1fr;
             height: 100vh;
         }
         
-        /* Mobile Responsive - CapCut Style - OVERRIDE ALL PREVIOUS */
+        /* Mobile Responsive */
         @media (max-width: 768px) {
             .builder-container {
                 grid-template-columns: 1fr !important;
@@ -55,8 +55,7 @@
                 height: 100vh;
             }
             
-            .left-sidebar,
-            .right-sidebar {
+            .left-sidebar {
                 display: none !important;
             }
             
@@ -68,13 +67,6 @@
             
             .mobile-preview-toggle {
                 display: block !important;
-            }
-            
-            .ai-panel {
-                width: 100% !important;
-                right: -100% !important;
-                top: 0;
-                height: 100vh;
             }
             
             .text-toolbar {
@@ -787,75 +779,12 @@
             font-size: 12px;
         }
         
-        /* AI Assistant Panel */
-        .ai-panel {
-            position: fixed;
-            top: 60px;
-            right: -400px;
-            width: 380px;
-            height: calc(100vh - 60px);
-            background: var(--bg-secondary);
-            border-left: 1px solid var(--border-color);
-            transition: right 0.3s ease;
-            z-index: 999;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .ai-panel.active {
-            right: 0;
-        }
-        
-        .ai-panel-header {
-            padding: 20px;
-            border-bottom: 1px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .ai-panel-content {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-        }
-        
-        .ai-prompt-input {
-            width: 100%;
-            min-height: 100px;
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 12px;
-            color: var(--text-primary);
-            font-size: 14px;
-            resize: vertical;
-            margin-bottom: 15px;
-        }
-        
-        .ai-suggestions {
-            margin-top: 20px;
-        }
-        
-        .suggestion-item {
-            background: var(--bg-tertiary);
-            border-radius: 6px;
-            padding: 12px;
-            margin-bottom: 10px;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: 1px solid var(--border-color);
-        }
-        
-        .suggestion-item:hover {
-            background: var(--accent-gold);
-            color: var(--bg-primary);
-        }
+
         
         /* Mobile-First Responsive Design */
         @media (max-width: 1024px) {
             .builder-container {
-                grid-template-columns: 280px 1fr 250px;
+                grid-template-columns: 280px 1fr;
             }
         }
     </style>
@@ -879,9 +808,7 @@
                 <button class="btn btn-secondary" onclick="addLogoElement()">
                     <i class="fas fa-image"></i> Add Logo
                 </button>
-                <button class="btn btn-ai" onclick="toggleAIAssistant()">
-                    <i class="fas fa-robot"></i> AI Assistant
-                </button>
+
                 <button class="btn btn-secondary" onclick="saveDraft()">
                     <i class="fas fa-save"></i> Save
                 </button>
