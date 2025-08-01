@@ -1732,7 +1732,8 @@ app.get('/api/automation-settings', isAuthenticated, async (req, res) => {
 app.post('/api/ai/process-page-request', isAuthenticated, async (req, res) => {
     try {
         const { prompt, currentPage, pageType } = req.body;
-        const userId = req.user.uid;
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
         
         if (!prompt || !prompt.trim()) {
             return res.status(400).json({ 
@@ -1798,7 +1799,8 @@ app.post('/api/ai/process-page-request', isAuthenticated, async (req, res) => {
 // 💰 AI CREDITS MANAGEMENT
 app.get('/api/ai/credits', isAuthenticated, async (req, res) => {
     try {
-        const userId = req.user.uid;
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
         const credits = await getUserAiCredits(userId);
         
         res.json({
@@ -1824,7 +1826,8 @@ app.get('/api/stripe/public-key', (req, res) => {
 app.post('/api/ai/purchase-credits', isAuthenticated, async (req, res) => {
     try {
         const { creditsPackage } = req.body; // 'small', 'medium', 'large'
-        const userId = req.user.uid;
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
         
         // Credit packages: $5 = 50 credits, $15 = 150 credits, $30 = 350 credits
         const packages = {
