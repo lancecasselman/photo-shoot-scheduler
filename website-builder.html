@@ -1969,14 +1969,13 @@ Examples:
                 }
                 
                 console.log('Text element added successfully!');
-                alert('SUCCESS: Text element added!');
                 
                 if (typeof showNotification === 'function') {
                     showNotification('Text element added! Drag to reposition.', 'success');
                 }
             } catch (error) {
                 console.error('Error in addTextElement:', error);
-                alert('Error adding text element: ' + error.message);
+                showNotification('Error adding text element: ' + error.message, 'error');
             }
         }
         
@@ -3457,6 +3456,116 @@ Examples:
             }
         });
         
+        // Missing function definitions
+        function switchToPage(pageName) {
+            console.log('Switching to page:', pageName);
+            currentProject.currentPage = pageName;
+            
+            // Update active page in sidebar
+            document.querySelectorAll('.page-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`[data-page="${pageName}"]`)?.classList.add('active');
+            
+            // Load page content
+            loadPageContent(pageName);
+            showNotification(`Switched to ${pageName} page`, 'success');
+        }
+        
+        function applyTemplate() {
+            if (!selectedTemplate) {
+                showNotification('Please select a template first', 'error');
+                return;
+            }
+            console.log('Applying template:', selectedTemplate);
+            
+            // Apply template to current page
+            const canvas = document.getElementById('mainCanvas');
+            const templateContent = getTemplateContent(selectedTemplate, currentProject.currentPage);
+            
+            if (canvas) {
+                canvas.innerHTML = `<div class="canvas-content">${templateContent}</div>`;
+                showNotification(`${selectedTemplate} template applied!`, 'success');
+            }
+        }
+        
+        function generateWebsite() {
+            console.log('Generating website with AI...');
+            toggleAIAssistant();
+        }
+        
+        function triggerPhotoUpload() {
+            console.log('Triggering photo upload...');
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.multiple = true;
+            input.onchange = function(e) {
+                const files = Array.from(e.target.files);
+                files.forEach((file, index) => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        addImageElement(e.target.result);
+                    };
+                    reader.readAsDataURL(file);
+                });
+                showNotification(`${files.length} photos uploaded!`, 'success');
+            };
+            input.click();
+        }
+        
+        function previewSite() {
+            console.log('Previewing site...');
+            showNotification('Opening preview...', 'success');
+            // Toggle to mobile/tablet preview or open in new window
+            const canvas = document.getElementById('mainCanvas');
+            if (canvas) {
+                canvas.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+        
+        function publishSite() {
+            console.log('Publishing site...');
+            showNotification('Site published successfully! (Demo mode)', 'success');
+        }
+        
+        function addImageElement(imageUrl) {
+            const canvas = document.getElementById('mainCanvas');
+            if (!canvas) {
+                showNotification('Canvas not found', 'error');
+                return;
+            }
+            
+            const imageElement = document.createElement('div');
+            imageElement.className = 'draggable-element';
+            imageElement.innerHTML = `
+                <div class="drag-handle"><i class="fas fa-grip-vertical"></i></div>
+                <div class="element-controls">
+                    <button class="control-btn" onclick="duplicateElement(this)" title="Duplicate"><i class="fas fa-copy"></i></button>
+                    <button class="control-btn" onclick="deleteElement(this)" title="Delete"><i class="fas fa-trash"></i></button>
+                </div>
+                <img src="${imageUrl}" style="width: 100%; height: auto; border-radius: 10px; display: block;" onclick="selectImage(this)">
+            `;
+            imageElement.style.cssText = 'margin: 20px 0; cursor: pointer; position: relative; z-index: 10;';
+            
+            const canvasContent = canvas.querySelector('.canvas-content') || canvas;
+            canvasContent.appendChild(imageElement);
+            
+            if (typeof makeDraggable === 'function') {
+                makeDraggable(imageElement);
+            }
+            
+            showNotification('Image added! Drag to reposition.', 'success');
+        }
+        
+        function selectImage(imgElement) {
+            // Simple image selection feedback
+            imgElement.style.border = '3px solid #d4af37';
+            setTimeout(() => {
+                imgElement.style.border = 'none';
+            }, 1500);
+        }
+
         // Add missing deletePage function
         function deletePage(pageName) {
             if (confirm(`Delete the "${pageName}" page? This cannot be undone.`)) {
@@ -3585,61 +3694,18 @@ Examples:
                 saveDraft: typeof window.saveDraft
             });
             
-            // COMPREHENSIVE BUTTON DEBUGGING - FIND THE OVERLAY BLOCKING CLICKS
-            console.log('BUTTON TEST: Testing if buttons respond to clicks...');
+            // Auto-hide any blocking overlays that might interfere with buttons
             setTimeout(() => {
-                // Check for blocking overlays
-                const overlays = document.querySelectorAll('[style*="position: fixed"], .fullscreen-preview, .loading-overlay, .ai-panel');
-                console.log(`OVERLAY CHECK: Found ${overlays.length} potential blocking elements`);
-                
-                overlays.forEach((overlay, index) => {
+                const overlays = document.querySelectorAll('[style*="position: fixed"]:not(.notification)');
+                overlays.forEach(overlay => {
                     const computedStyle = window.getComputedStyle(overlay);
                     const rect = overlay.getBoundingClientRect();
-                    console.log(`Overlay ${index}: ${overlay.className || overlay.tagName}`, {
-                        display: computedStyle.display,
-                        zIndex: computedStyle.zIndex,
-                        position: computedStyle.position,
-                        width: rect.width,
-                        height: rect.height,
-                        visible: rect.width > 0 && rect.height > 0
-                    });
-                    
-                    // Hide any blocking overlays
-                    if (computedStyle.display !== 'none' && rect.width > 0 && rect.height > 0) {
-                        console.log(`FIXING: Hiding blocking overlay ${index}`);
+                    if (computedStyle.display !== 'none' && rect.width > 0 && rect.height > 0 && 
+                        !overlay.classList.contains('notification') && !overlay.classList.contains('ai-panel')) {
                         overlay.style.display = 'none';
                     }
                 });
-                
-                // Test buttons
-                const buttons = document.querySelectorAll('button[onclick]');
-                console.log(`BUTTON TEST: Found ${buttons.length} buttons with onclick handlers`);
-                
-                if (buttons.length > 0) {
-                    const testBtn = buttons[0];
-                    testBtn.style.border = '3px solid red';
-                    testBtn.style.background = 'yellow';
-                    testBtn.style.zIndex = '99999';
-                    
-                    // Test direct function call
-                    console.log('TESTING: Direct function call...');
-                    try {
-                        console.log('Canvas element exists:', !!document.getElementById('mainCanvas'));
-                        window.addTextElement();
-                        console.log('SUCCESS: Function executed!');
-                    } catch (error) {
-                        console.error('ERROR:', error);
-                    }
-                    
-                    // Test button click programmatically
-                    console.log('TESTING: Programmatic button click...');
-                    const firstBtn = buttons[0];
-                    if (firstBtn) {
-                        firstBtn.click();
-                        console.log('Button clicked programmatically');
-                    }
-                }
-            }, 1000);
+            }, 500);
             
             // Initialize drag and drop
             if (typeof initializeDraggableElements === 'function') {
