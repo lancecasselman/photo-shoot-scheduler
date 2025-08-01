@@ -1801,6 +1801,22 @@ app.get('/api/ai/credits', isAuthenticated, async (req, res) => {
     try {
         const normalizedUser = normalizeUserForLance(req.user);
         const userId = normalizedUser.uid;
+        
+        // Give Lance unlimited credits as the owner
+        const lanceEmails = [
+            'lancecasselman@icloud.com',
+            'lancecasselman2011@gmail.com', 
+            'Lance@thelegacyphotography.com'
+        ];
+        
+        if (lanceEmails.includes(req.user.email)) {
+            return res.json({
+                success: true,
+                credits: 999999, // Unlimited credits for owner
+                message: 'Unlimited AI credits (Owner Account)'
+            });
+        }
+        
         const credits = await getUserAiCredits(userId);
         
         res.json({
@@ -6400,6 +6416,28 @@ function ensureStaticSitesDirectory() {
 app.post('/api/ai/generate-complete-website', async (req, res) => {
     try {
         const { prompt, businessType, pages, currentSettings } = req.body;
+        
+        // Give Lance unlimited AI access as the owner
+        const lanceEmails = [
+            'lancecasselman@icloud.com',
+            'lancecasselman2011@gmail.com', 
+            'Lance@thelegacyphotography.com'
+        ];
+        
+        // Bypass credit check for Lance
+        if (!lanceEmails.includes(req.user?.email)) {
+            // Check credits for other users
+            const normalizedUser = normalizeUserForLance(req.user);
+            const userId = normalizedUser.uid;
+            const currentCredits = await getUserAiCredits(userId);
+            
+            if (currentCredits < 1) {
+                return res.status(402).json({ 
+                    error: 'Insufficient AI credits',
+                    credits: currentCredits 
+                });
+            }
+        }
         
         console.log('Generating website for prompt:', prompt);
         
