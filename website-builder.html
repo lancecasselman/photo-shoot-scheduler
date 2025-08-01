@@ -3429,25 +3429,37 @@ Examples:
             } else {
                 currentUser = null;
                 console.log('User not signed in');
-                // Redirect to login if not authenticated
-                if (!window.location.pathname.includes('auth.html')) {
-                    window.location.href = '/auth.html';
+                // Don't redirect - let user work with limited functionality
+                const creditsElement = document.getElementById('aiCreditsCount');
+                if (creditsElement) {
+                    creditsElement.textContent = '0';
                 }
             }
         });
         
-        // Check for payment success on page load
+        // Initialize page functionality
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('Website builder loaded successfully');
+            
+            // Initialize drag and drop
+            initializeDraggableElements();
+            
+            // Check for payment success
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('payment') === 'success') {
                 setTimeout(() => {
                     showNotification('🎉 AI Credits purchased successfully! Your credits have been added to your account.', 'success');
-                    // Remove the payment parameter from URL
                     window.history.replaceState({}, document.title, '/website-builder.html');
-                    // Refresh credits display
-                    updateCreditsDisplay();
+                    loadAiCredits();
                 }, 1000);
             }
+            
+            // Test button functionality
+            console.log('All button functions loaded:', {
+                addTextElement: typeof addTextElement,
+                toggleAIAssistant: typeof toggleAIAssistant,
+                saveDraft: typeof saveDraft
+            });
         });
     </script>
 </body>
