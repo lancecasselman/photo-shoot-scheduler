@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAW Backup Dashboard - Photography Management</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .header h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .stat-card h3 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        .stat-card p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        .backup-list {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        .backup-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .backup-status {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+        .status-completed { background: #d4edda; color: #155724; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-failed { background: #f8d7da; color: #721c24; }
+        .pricing-info {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+            font-size: 1.2em;
+            color: #666;
+        }
+        .test-connection {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 10px;
+            transition: background 0.3s;
+        }
+        .test-connection:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔥 RAW Backup Dashboard</h1>
+            <p>Cloudflare R2 Storage • $20/TB • Automatic RAW Detection</p>
+            <button class="test-connection" onclick="testR2Connection()">Test R2 Connection</button>
+        </div>
+
+        <div id="loading" class="loading">
+            Loading backup data...
+        </div>
+
+        <div id="dashboard" style="display: none;">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3 id="totalFiles">0</h3>
+                    <p>Total RAW Files</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="totalStorage">0 GB</h3>
+                    <p>Storage Used</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="monthlyCost">$0.00</h3>
+                    <p>Monthly Cost</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="successRate">100%</h3>
+                    <p>Success Rate</p>
+                </div>
+            </div>
+
+            <div class="backup-list">
+                <h3 style="margin-bottom: 20px;">Recent Backups</h3>
+                <div id="backupsList">
+                    <!-- Backup items will be loaded here -->
+                </div>
+            </div>
+
+            <div class="pricing-info">
+                <h3>💰 Transparent Pricing</h3>
+                <p>$20/TB/month • No hidden fees • Cancel anytime</p>
+                <p>Current month: <span id="currentMonth"></span></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load backup data
+        async function loadBackupData() {
+            try {
+                const response = await fetch('/api/raw-backups/status');
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        window.location.href = '/auth.html';
+                        return;
+                    }
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                displayBackupData(data);
+                
+            } catch (error) {
+                console.error('Failed to load backup data:', error);
+                document.getElementById('loading').innerHTML = 
+                    `❌ Failed to load backup data: ${error.message}`;
+            }
+        }
+
+        function displayBackupData(data) {
+            // Calculate totals
+            let totalFiles = 0;
+            let totalSize = 0;
+            let completedFiles = 0;
+
+            data.stats.forEach(stat => {
+                totalFiles += parseInt(stat.count);
+                totalSize += parseInt(stat.total_size || 0);
+                if (stat.backup_status === 'completed') {
+                    completedFiles += parseInt(stat.count);
+                }
+            });
+
+            // Update stats
+            document.getElementById('totalFiles').textContent = totalFiles;
+            document.getElementById('totalStorage').textContent = 
+                `${(totalSize / 1024 / 1024 / 1024).toFixed(2)} GB`;
+            document.getElementById('monthlyCost').textContent = 
+                `$${data.storage.monthly_cost_usd || '0.00'}`;
+            document.getElementById('successRate').textContent = 
+                totalFiles > 0 ? `${Math.round((completedFiles / totalFiles) * 100)}%` : '100%';
+            document.getElementById('currentMonth').textContent = data.pricing.currentMonth;
+
+            // Display recent backups
+            const backupsList = document.getElementById('backupsList');
+            backupsList.innerHTML = '';
+
+            if (data.recentBackups.length === 0) {
+                backupsList.innerHTML = '<p style="text-align: center; color: #666;">No RAW backups yet. Upload some RAW files to get started!</p>';
+            } else {
+                data.recentBackups.forEach(backup => {
+                    const item = document.createElement('div');
+                    item.className = 'backup-item';
+                    
+                    const statusClass = `status-${backup.backup_status}`;
+                    const fileSize = backup.file_size ? `${(backup.file_size / 1024 / 1024).toFixed(1)}MB` : 'Unknown';
+                    
+                    item.innerHTML = `
+                        <div>
+                            <strong>${backup.original_name}</strong>
+                            <br>
+                            <small>Session: ${backup.session_id} • ${fileSize}</small>
+                        </div>
+                        <span class="backup-status ${statusClass}">
+                            ${backup.backup_status.toUpperCase()}
+                        </span>
+                    `;
+                    
+                    backupsList.appendChild(item);
+                });
+            }
+
+            // Show dashboard
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+        }
+
+        async function testR2Connection() {
+            const button = event.target;
+            button.textContent = 'Testing...';
+            button.disabled = true;
+
+            try {
+                const response = await fetch('/api/r2-test');
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('✅ R2 Connection Successful!\n\n' + 
+                          `Endpoint: ${result.endpoint}\n` +
+                          `Bucket: ${result.bucket}\n` +
+                          `Pricing: ${result.pricing}`);
+                } else {
+                    alert('❌ R2 Connection Failed:\n' + result.error);
+                }
+            } catch (error) {
+                alert('❌ Connection test failed: ' + error.message);
+            } finally {
+                button.textContent = 'Test R2 Connection';
+                button.disabled = false;
+            }
+        }
+
+        // Load data on page load
+        loadBackupData();
+
+        // Refresh every 30 seconds
+        setInterval(loadBackupData, 30000);
+    </script>
+</body>
+</html>

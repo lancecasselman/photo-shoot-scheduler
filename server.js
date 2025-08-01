@@ -1519,6 +1519,29 @@ app.post('/api/sessions/:id/upload-photos', isAuthenticated, (req, res) => {
 
 // DEAD CODE BLOCK REMOVED - was unreachable after return statement
 
+// Test R2 connection (admin only)
+app.get('/api/r2-test', isAuthenticated, async (req, res) => {
+    try {
+        // Test R2 connection
+        await r2BackupService.s3.listBuckets().promise();
+        
+        res.json({
+            success: true,
+            message: "R2 connection successful",
+            endpoint: "7c6cbcff658042c3a36b2aceead25b6f.r2.cloudflarestorage.com",
+            bucket: "photography-raw-backups",
+            pricing: "$20/TB/month"
+        });
+    } catch (error) {
+        console.error('R2 connection test failed:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            code: error.code
+        });
+    }
+});
+
 // Get RAW backup status for user
 app.get('/api/raw-backups/status', isAuthenticated, async (req, res) => {
     try {

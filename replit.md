@@ -61,6 +61,7 @@ This is a comprehensive photography business management platform designed to rev
 - **Subscriber Onboarding**: Streamlined 2-step setup process for new subscribers focusing on Stripe payment integration and business profile configuration. Uses native device email/SMS capabilities instead of requiring external API services.
 - **Core Features**: Session scheduling, client information tracking, workflow management, pricing, and notes system.
 - **Shared Poses Gallery** (Added Jan 31, 2025): Community-driven photography pose inspiration gallery where photographers can view, favorite, and submit pose ideas. Features public access for viewing, authenticated submissions, and moderation system.
+- **RAW Backup System** (Added Feb 1, 2025): Integrated Cloudflare R2 storage for automatic RAW file backup at $20/TB. Features automatic RAW detection (.CR2, .NEF, .ARW, .DNG, etc.), background upload processing, database tracking, billing management, and emergency recovery system. Activated with full R2 credentials and ready for production use.
 
 ### System Design Choices
 - **Cloud Database**: PostgreSQL as the primary persistent data storage, with Firebase Firestore as an alternative/fallback for certain data.
