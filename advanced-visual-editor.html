@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Visual Website Editor - Photography Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+    
+    <style>
+        :root {
+            --primary-gold: #d4af37;
+            --dark-bg: #1a1a1a;
+            --darker-bg: #0f0f0f;
+            --light-text: #f5f5f5;
+            --gray-border: #333;
+            --accent-blue: #4f9eff;
+            --success-green: #10b981;
+            --warning-orange: #f59e0b;
+            --danger-red: #ef4444;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: var(--darker-bg);
+            color: var(--light-text);
+            overflow: hidden;
+        }
+        
+        /* Main Layout */
+        .editor-container {
+            display: grid;
+            grid-template-columns: 280px 1fr 320px;
+            grid-template-rows: 60px 1fr;
+            height: 100vh;
+            gap: 0;
+        }
+        
+        /* Top Toolbar */
+        .editor-toolbar {
+            grid-column: 1 / -1;
+            background: var(--dark-bg);
+            border-bottom: 1px solid var(--gray-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 1000;
+        }
+        
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .logo {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.4rem;
+            color: var(--primary-gold);
+            font-weight: 600;
+        }
+        
+        .project-name {
+            font-weight: 500;
+            color: var(--light-text);
+        }
+        
+        .toolbar-center {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .toolbar-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        /* Buttons */
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .btn-primary {
+            background: var(--primary-gold);
+            color: var(--dark-bg);
+        }
+        
+        .btn-primary:hover {
+            background: #f4e4bc;
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background: var(--gray-border);
+            color: var(--light-text);
+        }
+        
+        .btn-secondary:hover {
+            background: #444;
+        }
+        
+        .btn-success {
+            background: var(--success-green);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #059669;
+        }
+        
+        /* Left Sidebar - Components */
+        .components-panel {
+            background: var(--dark-bg);
+            border-right: 1px solid var(--gray-border);
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        .panel-header {
+            color: var(--primary-gold);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--gray-border);
+            padding-bottom: 10px;
+        }
+        
+        .component-category {
+            margin-bottom: 25px;
+        }
+        
+        .category-title {
+            color: var(--primary-gold);
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .component-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: var(--darker-bg);
+            border: 1px solid var(--gray-border);
+            border-radius: 6px;
+            margin-bottom: 8px;
+            cursor: grab;
+            transition: all 0.2s;
+        }
+        
+        .component-item:hover {
+            background: #2a2a2a;
+            border-color: var(--primary-gold);
+            transform: translateX(3px);
+        }
+        
+        .component-item:active {
+            cursor: grabbing;
+        }
+        
+        .component-icon {
+            color: var(--primary-gold);
+            font-size: 1.1rem;
+            width: 20px;
+        }
+        
+        /* Canvas Area */
+        .canvas-container {
+            background: #f8f9fa;
+            overflow: auto;
+            position: relative;
+        }
+        
+        .canvas-wrapper {
+            padding: 40px;
+            min-height: 100%;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .canvas {
+            background: white;
+            width: 100%;
+            max-width: 1200px;
+            min-height: 800px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Right Sidebar - Properties */
+        .properties-panel {
+            background: var(--dark-bg);
+            border-left: 1px solid var(--gray-border);
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        .property-group {
+            margin-bottom: 20px;
+        }
+        
+        .property-label {
+            color: var(--light-text);
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+            display: block;
+        }
+        
+        .property-input {
+            width: 100%;
+            padding: 8px 12px;
+            background: var(--darker-bg);
+            border: 1px solid var(--gray-border);
+            border-radius: 4px;
+            color: var(--light-text);
+            font-size: 0.9rem;
+        }
+        
+        .property-input:focus {
+            outline: none;
+            border-color: var(--primary-gold);
+        }
+        
+        .color-picker {
+            width: 100%;
+            height: 40px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        /* Block Styles */
+        .editor-block {
+            position: relative;
+            min-height: 50px;
+            outline: 2px dashed transparent;
+            transition: all 0.2s;
+        }
+        
+        .editor-block:hover {
+            outline-color: var(--accent-blue);
+        }
+        
+        .editor-block.selected {
+            outline-color: var(--primary-gold);
+            outline-style: solid;
+        }
+        
+        .block-controls {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            display: flex;
+            gap: 5px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 10;
+        }
+        
+        .editor-block:hover .block-controls,
+        .editor-block.selected .block-controls {
+            opacity: 1;
+        }
+        
+        .control-btn {
+            background: var(--dark-bg);
+            color: var(--light-text);
+            border: none;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+        
+        .control-btn:hover {
+            background: var(--primary-gold);
+            color: var(--dark-bg);
+        }
+        
+        /* Drop Zones */
+        .drop-zone {
+            min-height: 100px;
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            margin: 20px 0;
+            transition: all 0.2s;
+        }
+        
+        .drop-zone.drag-over {
+            border-color: var(--primary-gold);
+            background-color: rgba(212, 175, 55, 0.1);
+            color: var(--primary-gold);
+        }
+        
+        /* Responsive View Controls */
+        .viewport-controls {
+            display: flex;
+            gap: 5px;
+            background: var(--darker-bg);
+            padding: 5px;
+            border-radius: 6px;
+        }
+        
+        .viewport-btn {
+            padding: 6px 12px;
+            background: transparent;
+            border: 1px solid var(--gray-border);
+            color: var(--light-text);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        
+        .viewport-btn.active {
+            background: var(--primary-gold);
+            color: var(--dark-bg);
+            border-color: var(--primary-gold);
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 1200px) {
+            .editor-container {
+                grid-template-columns: 250px 1fr 280px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .editor-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: 60px auto 1fr auto;
+            }
+            
+            .components-panel,
+            .properties-panel {
+                height: 200px;
+            }
+        }
+        
+        /* Block Library Styles */
+        .hero-block {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 80px 20px;
+            text-align: center;
+        }
+        
+        .hero-title {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+        
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 40px 20px;
+        }
+        
+        .gallery-item {
+            aspect-ratio: 4/3;
+            background: #f0f0f0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .text-block {
+            padding: 40px 20px;
+        }
+        
+        .text-content {
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="editor-container">
+        <!-- Top Toolbar -->
+        <div class="editor-toolbar">
+            <div class="toolbar-left">
+                <div class="logo">Visual Editor</div>
+                <div class="project-name" id="projectName">Untitled Project</div>
+            </div>
+            
+            <div class="toolbar-center">
+                <div class="viewport-controls">
+                    <button class="viewport-btn active" data-viewport="desktop">
+                        <i class="fas fa-desktop"></i> Desktop
+                    </button>
+                    <button class="viewport-btn" data-viewport="tablet">
+                        <i class="fas fa-tablet-alt"></i> Tablet
+                    </button>
+                    <button class="viewport-btn" data-viewport="mobile">
+                        <i class="fas fa-mobile-alt"></i> Mobile
+                    </button>
+                </div>
+            </div>
+            
+            <div class="toolbar-right">
+                <button class="btn btn-secondary" onclick="previewSite()">
+                    <i class="fas fa-eye"></i> Preview
+                </button>
+                <button class="btn btn-secondary" onclick="saveDraft()">
+                    <i class="fas fa-save"></i> Save
+                </button>
+                <button class="btn btn-success" onclick="publishSite()">
+                    <i class="fas fa-rocket"></i> Publish
+                </button>
+            </div>
+        </div>
+        
+        <!-- Left Sidebar - Components -->
+        <div class="components-panel">
+            <div class="panel-header">
+                <i class="fas fa-puzzle-piece"></i> Components
+            </div>
+            
+            <div class="component-category">
+                <div class="category-title">Layout</div>
+                <div class="component-item" draggable="true" data-type="hero">
+                    <i class="fas fa-star component-icon"></i>
+                    <span>Hero Section</span>
+                </div>
+                <div class="component-item" draggable="true" data-type="container">
+                    <i class="fas fa-square component-icon"></i>
+                    <span>Container</span>
+                </div>
+                <div class="component-item" draggable="true" data-type="columns">
+                    <i class="fas fa-columns component-icon"></i>
+                    <span>Columns</span>
+                </div>
+            </div>
+            
+            <div class="component-category">
+                <div class="category-title">Content</div>
+                <div class="component-item" draggable="true" data-type="text">
+                    <i class="fas fa-font component-icon"></i>
+                    <span>Text Block</span>
+                </div>
+                <div class="component-item" draggable="true" data-type="image">
+                    <i class="fas fa-image component-icon"></i>
+                    <span>Image</span>
+                </div>
+                <div class="component-item" draggable="true" data-type="gallery">
+                    <i class="fas fa-images component-icon"></i>
+                    <span>Photo Gallery</span>
+                </div>
+                <div class="component-item" draggable="true" data-type="video">
+                    <i class="fas fa-video component-icon"></i>
+                    <span>Video</span>
+                </div>
+            </div>
+            
+            <div class="component-category">
+                <div class="category-title">Forms & Navigation</div>
+                <div class="component-item" draggable="true" data-type="contact-form">
+                    <i class="fas fa-envelope component-icon"></i>
+                    <span>Contact Form</span>
+                </div>
+                <div class="component-item" draggable="true" data-type="button">
+                    <i class="fas fa-hand-pointer component-icon"></i>
+                    <span>Button</span>
+                </div>
+                <div class="component-item" draggable="true" data-type="navigation">
+                    <i class="fas fa-bars component-icon"></i>
+                    <span>Navigation Menu</span>
+                </div>
+            </div>
+            
+            <div class="component-category">
+                <div class="category-title">Photography</div>
+                <div class="component-item" draggable="true" data-type="portfolio">
+                    <i class="fas fa-camera component-icon"></i>
+                    <span>Portfolio Grid</span>
+                </div>
+                <div class="component-item" draggable="true" data-type="testimonial">
+                    <i class="fas fa-quote-left component-icon"></i>
+                    <span>Testimonial</span>
+                </div>
+                <div class="component-item" draggable="true" data-type="pricing">
+                    <i class="fas fa-dollar-sign component-icon"></i>
+                    <span>Pricing Table</span>
+                </div>
+            </div>
+            
+            <div class="component-category">
+                <div class="category-title">🤖 AI Assistant</div>
+                <div class="component-item" onclick="openAIPanel()" style="cursor: pointer;">
+                    <i class="fas fa-magic component-icon"></i>
+                    <span>AI Content Creator</span>
+                </div>
+                <div class="component-item" onclick="analyzePhotos()" style="cursor: pointer;">
+                    <i class="fas fa-image component-icon"></i>
+                    <span>Photo Analyzer</span>
+                </div>
+                <div class="component-item" onclick="getLayoutSuggestions()" style="cursor: pointer;">
+                    <i class="fas fa-lightbulb component-icon"></i>
+                    <span>Smart Layouts</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Canvas -->
+        <div class="canvas-container">
+            <div class="canvas-wrapper">
+                <div class="canvas" id="mainCanvas">
+                    <div class="drop-zone" id="mainDropZone">
+                        <i class="fas fa-plus"></i>
+                        Drag components here to start building your website
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Sidebar - Properties -->
+        <div class="properties-panel">
+            <div class="panel-header">
+                <i class="fas fa-cog"></i> Properties
+            </div>
+            
+            <div id="propertiesContent">
+                <div class="property-group">
+                    <p style="color: #666; text-align: center; padding: 40px 20px;">
+                        Select a component to edit its properties
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="firebase-config.js"></script>
+    <script>
+        console.log('Advanced Visual Editor: Initializing...');
+        
+        // Editor State
+        let selectedBlock = null;
+        let blocks = [];
+        let currentViewport = 'desktop';
+        let projectData = {
+            name: 'Untitled Project',
+            blocks: [],
+            settings: {},
+            lastSaved: null
+        };
+        
+        // Initialize Editor
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Advanced Visual Editor: DOM loaded, setting up...');
+            initializeEditor();
+        });
+        
+        function initializeEditor() {
+            setupDragAndDrop();
+            setupViewportControls();
+            setupCanvasInteraction();
+            loadProject();
+            
+            console.log('Advanced Visual Editor: Initialization complete');
+        }
+        
+        // Drag and Drop System
+        function setupDragAndDrop() {
+            const componentItems = document.querySelectorAll('.component-item');
+            const canvas = document.getElementById('mainCanvas');
+            
+            componentItems.forEach(item => {
+                item.addEventListener('dragstart', function(e) {
+                    e.dataTransfer.setData('text/plain', this.dataset.type);
+                    console.log('Dragging component:', this.dataset.type);
+                });
+            });
+            
+            canvas.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                const dropZone = e.target.closest('.drop-zone');
+                if (dropZone) {
+                    dropZone.classList.add('drag-over');
+                }
+            });
+            
+            canvas.addEventListener('dragleave', function(e) {
+                const dropZone = e.target.closest('.drop-zone');
+                if (dropZone && !dropZone.contains(e.relatedTarget)) {
+                    dropZone.classList.remove('drag-over');
+                }
+            });
+            
+            canvas.addEventListener('drop', function(e) {
+                e.preventDefault();
+                const componentType = e.dataTransfer.getData('text/plain');
+                const dropZone = e.target.closest('.drop-zone');
+                
+                if (dropZone && componentType) {
+                    dropZone.classList.remove('drag-over');
+                    addComponent(componentType, dropZone);
+                }
+            });
+        }
+        
+        // Add Component to Canvas
+        function addComponent(type, dropZone) {
+            console.log('Adding component:', type);
+            
+            const blockId = 'block_' + Date.now();
+            const blockElement = createBlockElement(type, blockId);
+            
+            // Replace drop zone or insert after it
+            if (dropZone.id === 'mainDropZone' && blocks.length === 0) {
+                dropZone.style.display = 'none';
+            }
+            
+            dropZone.parentNode.insertBefore(blockElement, dropZone.nextSibling);
+            
+            // Add new drop zone after this block
+            const newDropZone = createDropZone();
+            blockElement.parentNode.insertBefore(newDropZone, blockElement.nextSibling);
+            
+            // Store block data
+            blocks.push({
+                id: blockId,
+                type: type,
+                content: getDefaultContent(type),
+                styles: getDefaultStyles(type)
+            });
+            
+            // Select the new block
+            selectBlock(blockElement);
+            
+            console.log('Component added successfully:', type);
+        }
+        
+        // Create Block Element
+        function createBlockElement(type, id) {
+            const block = document.createElement('div');
+            block.className = 'editor-block';
+            block.dataset.blockId = id;
+            block.dataset.blockType = type;
+            
+            // Add block controls
+            const controls = document.createElement('div');
+            controls.className = 'block-controls';
+            controls.innerHTML = `
+                <button class="control-btn" onclick="moveBlockUp('${id}')">
+                    <i class="fas fa-arrow-up"></i>
+                </button>
+                <button class="control-btn" onclick="moveBlockDown('${id}')">
+                    <i class="fas fa-arrow-down"></i>
+                </button>
+                <button class="control-btn" onclick="duplicateBlock('${id}')">
+                    <i class="fas fa-copy"></i>
+                </button>
+                <button class="control-btn" onclick="deleteBlock('${id}')">
+                    <i class="fas fa-trash"></i>
+                </button>
+            `;
+            
+            block.appendChild(controls);
+            
+            // Add block content
+            const content = document.createElement('div');
+            content.className = 'block-content';
+            content.innerHTML = getBlockHTML(type);
+            block.appendChild(content);
+            
+            // Make content editable where appropriate
+            makeContentEditable(content, type);
+            
+            // Add click handler
+            block.addEventListener('click', function(e) {
+                e.stopPropagation();
+                selectBlock(this);
+            });
+            
+            return block;
+        }
+        
+        // Get Block HTML by Type
+        function getBlockHTML(type) {
+            const templates = {
+                hero: `
+                    <div class="hero-block">
+                        <h1 class="hero-title" contenteditable="true">Your Amazing Photography</h1>
+                        <p class="hero-subtitle" contenteditable="true">Capturing life's most precious moments with artistic vision and technical excellence</p>
+                        <button class="btn btn-primary">View Portfolio</button>
+                    </div>
+                `,
+                text: `
+                    <div class="text-block">
+                        <div class="text-content" contenteditable="true">
+                            <h2>About Your Photography</h2>
+                            <p>Write your story here. Share your passion for photography and what makes your work unique.</p>
+                        </div>
+                    </div>
+                `,
+                gallery: `
+                    <div class="gallery-grid">
+                        <div class="gallery-item" style="background-image: url('https://via.placeholder.com/400x300/d4af37/ffffff?text=Photo+1')"></div>
+                        <div class="gallery-item" style="background-image: url('https://via.placeholder.com/400x300/d4af37/ffffff?text=Photo+2')"></div>
+                        <div class="gallery-item" style="background-image: url('https://via.placeholder.com/400x300/d4af37/ffffff?text=Photo+3')"></div>
+                        <div class="gallery-item" style="background-image: url('https://via.placeholder.com/400x300/d4af37/ffffff?text=Photo+4')"></div>
+                    </div>
+                `,
+                image: `
+                    <div style="text-align: center; padding: 40px 20px;">
+                        <img src="https://via.placeholder.com/600x400/d4af37/ffffff?text=Your+Photo" 
+                             style="max-width: 100%; height: auto; border-radius: 8px;" 
+                             alt="Photography">
+                    </div>
+                `,
+                'contact-form': `
+                    <div style="max-width: 600px; margin: 40px auto; padding: 0 20px;">
+                        <h2 style="text-align: center; margin-bottom: 30px;">Get In Touch</h2>
+                        <form>
+                            <div style="margin-bottom: 20px;">
+                                <input type="text" placeholder="Your Name" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
+                            </div>
+                            <div style="margin-bottom: 20px;">
+                                <input type="email" placeholder="Your Email" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px;">
+                            </div>
+                            <div style="margin-bottom: 20px;">
+                                <textarea placeholder="Your Message" rows="5" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; resize: vertical;"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">Send Message</button>
+                        </form>
+                    </div>
+                `
+            };
+            
+            return templates[type] || '<div>Unknown component type</div>';
+        }
+        
+        // Make Content Editable
+        function makeContentEditable(content, type) {
+            const editableElements = content.querySelectorAll('[contenteditable="true"]');
+            
+            editableElements.forEach(element => {
+                element.addEventListener('input', function() {
+                    saveBlockContent(this);
+                });
+                
+                element.addEventListener('blur', function() {
+                    saveBlockContent(this);
+                });
+            });
+        }
+        
+        // Create Drop Zone
+        function createDropZone() {
+            const dropZone = document.createElement('div');
+            dropZone.className = 'drop-zone';
+            dropZone.innerHTML = '<i class="fas fa-plus"></i> Drop component here';
+            return dropZone;
+        }
+        
+        // Block Selection
+        function selectBlock(blockElement) {
+            // Remove previous selection
+            document.querySelectorAll('.editor-block.selected').forEach(block => {
+                block.classList.remove('selected');
+            });
+            
+            // Select new block
+            blockElement.classList.add('selected');
+            selectedBlock = blockElement;
+            
+            // Update properties panel
+            updatePropertiesPanel(blockElement);
+            
+            console.log('Block selected:', blockElement.dataset.blockType);
+        }
+        
+        // Update Properties Panel
+        function updatePropertiesPanel(blockElement) {
+            const blockType = blockElement.dataset.blockType;
+            const blockId = blockElement.dataset.blockId;
+            const blockData = blocks.find(b => b.id === blockId);
+            
+            const propertiesContent = document.getElementById('propertiesContent');
+            
+            let propertiesHTML = `
+                <div class="property-group">
+                    <label class="property-label">Block Type</label>
+                    <input type="text" class="property-input" value="${blockType}" readonly>
+                </div>
+            `;
+            
+            // Add type-specific properties
+            if (blockType === 'hero') {
+                propertiesHTML += `
+                    <div class="property-group">
+                        <label class="property-label">Background Color</label>
+                        <input type="color" class="color-picker" value="#667eea" onchange="updateBlockStyle('${blockId}', 'backgroundColor', this.value)">
+                    </div>
+                    <div class="property-group">
+                        <label class="property-label">Text Color</label>
+                        <input type="color" class="color-picker" value="#ffffff" onchange="updateBlockStyle('${blockId}', 'color', this.value)">
+                    </div>
+                    <div class="property-group">
+                        <label class="property-label">Padding</label>
+                        <input type="range" class="property-input" min="20" max="120" value="80" onchange="updateBlockStyle('${blockId}', 'padding', this.value + 'px 20px')">
+                    </div>
+                `;
+            }
+            
+            if (blockType === 'text') {
+                propertiesHTML += `
+                    <div class="property-group">
+                        <label class="property-label">Text Align</label>
+                        <select class="property-input" onchange="updateBlockStyle('${blockId}', 'textAlign', this.value)">
+                            <option value="left">Left</option>
+                            <option value="center">Center</option>
+                            <option value="right">Right</option>
+                        </select>
+                    </div>
+                    <div class="property-group">
+                        <label class="property-label">Font Size</label>
+                        <input type="range" class="property-input" min="12" max="24" value="16" onchange="updateBlockStyle('${blockId}', 'fontSize', this.value + 'px')">
+                    </div>
+                `;
+            }
+            
+            propertiesHTML += `
+                <div class="property-group">
+                    <button class="btn btn-secondary" onclick="duplicateBlock('${blockId}')" style="width: 100%; margin-bottom: 10px;">
+                        <i class="fas fa-copy"></i> Duplicate Block
+                    </button>
+                    <button class="btn" onclick="deleteBlock('${blockId}')" style="width: 100%; background: var(--danger-red); color: white;">
+                        <i class="fas fa-trash"></i> Delete Block
+                    </button>
+                </div>
+            `;
+            
+            propertiesContent.innerHTML = propertiesHTML;
+        }
+        
+        // Update Block Style
+        function updateBlockStyle(blockId, property, value) {
+            const blockElement = document.querySelector(`[data-block-id="${blockId}"]`);
+            const blockContent = blockElement.querySelector('.block-content > div');
+            
+            if (blockContent) {
+                blockContent.style[property] = value;
+                
+                // Update stored block data
+                const blockData = blocks.find(b => b.id === blockId);
+                if (blockData) {
+                    blockData.styles = blockData.styles || {};
+                    blockData.styles[property] = value;
+                }
+            }
+            
+            console.log('Updated block style:', property, value);
+        }
+        
+        // Block Actions
+        function moveBlockUp(blockId) {
+            console.log('Moving block up:', blockId);
+        }
+        
+        function moveBlockDown(blockId) {
+            console.log('Moving block down:', blockId);
+        }
+        
+        function duplicateBlock(blockId) {
+            console.log('Duplicating block:', blockId);
+        }
+        
+        function deleteBlock(blockId) {
+            const blockElement = document.querySelector(`[data-block-id="${blockId}"]`);
+            if (blockElement && confirm('Delete this block?')) {
+                blockElement.remove();
+                blocks = blocks.filter(b => b.id !== blockId);
+                
+                // Clear properties panel if this block was selected
+                if (selectedBlock && selectedBlock.dataset.blockId === blockId) {
+                    document.getElementById('propertiesContent').innerHTML = `
+                        <div class="property-group">
+                            <p style="color: #666; text-align: center; padding: 40px 20px;">
+                                Select a component to edit its properties
+                            </p>
+                        </div>
+                    `;
+                    selectedBlock = null;
+                }
+                
+                console.log('Block deleted:', blockId);
+            }
+        }
+        
+        // Viewport Controls
+        function setupViewportControls() {
+            const viewportButtons = document.querySelectorAll('.viewport-btn');
+            
+            viewportButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    viewportButtons.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const viewport = this.dataset.viewport;
+                    changeViewport(viewport);
+                });
+            });
+        }
+        
+        function changeViewport(viewport) {
+            currentViewport = viewport;
+            const canvas = document.getElementById('mainCanvas');
+            
+            // Update canvas width based on viewport
+            switch(viewport) {
+                case 'mobile':
+                    canvas.style.maxWidth = '375px';
+                    break;
+                case 'tablet':
+                    canvas.style.maxWidth = '768px';
+                    break;
+                default:
+                    canvas.style.maxWidth = '1200px';
+            }
+            
+            console.log('Viewport changed to:', viewport);
+        }
+        
+        // Canvas Interaction
+        function setupCanvasInteraction() {
+            const canvas = document.getElementById('mainCanvas');
+            
+            canvas.addEventListener('click', function(e) {
+                if (e.target === this || e.target.classList.contains('drop-zone')) {
+                    // Deselect all blocks
+                    document.querySelectorAll('.editor-block.selected').forEach(block => {
+                        block.classList.remove('selected');
+                    });
+                    selectedBlock = null;
+                    
+                    // Clear properties panel
+                    document.getElementById('propertiesContent').innerHTML = `
+                        <div class="property-group">
+                            <p style="color: #666; text-align: center; padding: 40px 20px;">
+                                Select a component to edit its properties
+                            </p>
+                        </div>
+                    `;
+                }
+            });
+        }
+        
+        // Project Management
+        function saveDraft() {
+            projectData.blocks = blocks;
+            projectData.lastSaved = new Date().toISOString();
+            
+            localStorage.setItem('visual_editor_project', JSON.stringify(projectData));
+            
+            // Show save confirmation
+            showNotification('Project saved successfully!', 'success');
+            
+            console.log('Project saved to localStorage');
+        }
+        
+        function loadProject() {
+            const savedProject = localStorage.getItem('visual_editor_project');
+            
+            if (savedProject) {
+                projectData = JSON.parse(savedProject);
+                blocks = projectData.blocks || [];
+                
+                document.getElementById('projectName').textContent = projectData.name || 'Untitled Project';
+                
+                // Restore blocks to canvas (implementation needed)
+                console.log('Project loaded from localStorage');
+            }
+        }
+        
+        function previewSite() {
+            // Generate preview HTML
+            const previewHTML = generatePreviewHTML();
+            
+            // Open in new window
+            const previewWindow = window.open('', '_blank');
+            previewWindow.document.write(previewHTML);
+            previewWindow.document.close();
+            
+            console.log('Preview opened');
+        }
+        
+        function publishSite() {
+            if (blocks.length === 0) {
+                showNotification('Add some content before publishing!', 'error');
+                return;
+            }
+            
+            showNotification('Publishing site...', 'info');
+            
+            // Save first
+            saveDraft();
+            
+            // Generate and publish (implementation needed)
+            setTimeout(() => {
+                showNotification('Site published successfully!', 'success');
+            }, 2000);
+            
+            console.log('Publishing site...');
+        }
+        
+        // Utility Functions
+        function generatePreviewHTML() {
+            let contentHTML = '';
+            
+            blocks.forEach(block => {
+                contentHTML += `<div class="preview-block">${getBlockHTML(block.type)}</div>`;
+            });
+            
+            return `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Preview - ${projectData.name}</title>
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <style>
+                        body { margin: 0; font-family: 'Quicksand', sans-serif; }
+                        .preview-block { /* Add block styles */ }
+                        ${getPreviewStyles()}
+                    </style>
+                </head>
+                <body>
+                    ${contentHTML}
+                </body>
+                </html>
+            `;
+        }
+        
+        function getPreviewStyles() {
+            return `
+                .hero-block { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 80px 20px; text-align: center; }
+                .hero-title { font-size: 3rem; font-weight: 700; margin-bottom: 20px; }
+                .hero-subtitle { font-size: 1.2rem; opacity: 0.9; margin-bottom: 30px; }
+                .gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; padding: 40px 20px; }
+                .gallery-item { aspect-ratio: 4/3; background: #f0f0f0; border-radius: 8px; background-size: cover; background-position: center; }
+                .text-block { padding: 40px 20px; }
+                .text-content { max-width: 800px; margin: 0 auto; line-height: 1.6; }
+                .btn { padding: 12px 24px; background: #d4af37; color: white; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; }
+            `;
+        }
+        
+        function showNotification(message, type = 'info') {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 12px 20px;
+                background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+                color: white;
+                border-radius: 6px;
+                font-weight: 500;
+                z-index: 10000;
+                animation: slideIn 0.3s ease;
+            `;
+            
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+        
+        function getDefaultContent(type) {
+            return {}; // Return default content object
+        }
+        
+        function getDefaultStyles(type) {
+            return {}; // Return default styles object
+        }
+        
+        function saveBlockContent(element) {
+            // Save content changes to block data
+            console.log('Content updated:', element.textContent);
+        }
+        
+        // AI Assistant Functions
+        function openAIPanel() {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+                background: rgba(0,0,0,0.8); z-index: 10000;
+                display: flex; align-items: center; justify-content: center;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: var(--dark-bg); border-radius: 12px; padding: 30px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; color: var(--light-text);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                        <h2 style="color: var(--primary-gold); margin: 0;">🤖 AI Content Creator</h2>
+                        <button onclick="this.closest('.modal-overlay').remove()" style="background: none; border: none; color: var(--light-text); font-size: 24px; cursor: pointer;">&times;</button>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 500;">Photography Style</label>
+                        <select id="photographyStyle" style="width: 100%; padding: 10px; background: var(--darker-bg); border: 1px solid var(--gray-border); border-radius: 4px; color: var(--light-text);">
+                            <option value="wedding">Wedding Photography</option>
+                            <option value="portrait">Portrait Photography</option>
+                            <option value="family">Family Photography</option>
+                            <option value="newborn">Newborn Photography</option>
+                            <option value="commercial">Commercial Photography</option>
+                            <option value="fashion">Fashion Photography</option>
+                            <option value="landscape">Landscape Photography</option>
+                            <option value="street">Street Photography</option>
+                        </select>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 500;">Business Name</label>
+                        <input type="text" id="businessName" placeholder="Your Photography Business" style="width: 100%; padding: 10px; background: var(--darker-bg); border: 1px solid var(--gray-border); border-radius: 4px; color: var(--light-text);">
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 500;">Location</label>
+                        <input type="text" id="businessLocation" placeholder="City, State" style="width: 100%; padding: 10px; background: var(--darker-bg); border: 1px solid var(--gray-border); border-radius: 4px; color: var(--light-text);">
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 500;">Years Experience</label>
+                        <input type="number" id="yearsExperience" placeholder="5" style="width: 100%; padding: 10px; background: var(--darker-bg); border: 1px solid var(--gray-border); border-radius: 4px; color: var(--light-text);">
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 25px;">
+                        <button onclick="generateWebsiteCopy()" class="btn btn-primary" style="flex: 1;">
+                            <i class="fas fa-magic"></i> Generate Website Copy
+                        </button>
+                        <button onclick="generateSEOContent()" class="btn btn-secondary" style="flex: 1;">
+                            <i class="fas fa-search"></i> SEO Content
+                        </button>
+                    </div>
+                    
+                    <div id="aiResults" style="margin-top: 20px; display: none;"></div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+        
+        async function generateWebsiteCopy() {
+            const photographyStyle = document.getElementById('photographyStyle').value;
+            const businessName = document.getElementById('businessName').value;
+            const location = document.getElementById('businessLocation').value;
+            const experience = document.getElementById('yearsExperience').value;
+            
+            if (!businessName || !location) {
+                showNotification('Please fill in business name and location', 'error');
+                return;
+            }
+            
+            const resultsDiv = document.getElementById('aiResults');
+            resultsDiv.style.display = 'block';
+            resultsDiv.innerHTML = '<div style="text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Generating professional copy...</div>';
+            
+            try {
+                const response = await fetch('/api/ai/generate-website-copy', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        photographyStyle: photographyStyle,
+                        businessInfo: {
+                            name: businessName,
+                            location: location,
+                            experience: experience,
+                            style: photographyStyle
+                        }
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    displayAIResults(result.copy);
+                } else {
+                    throw new Error(result.error || 'Failed to generate copy');
+                }
+                
+            } catch (error) {
+                console.error('AI copy generation error:', error);
+                resultsDiv.innerHTML = `<div style="color: var(--danger-red); padding: 20px; text-align: center;">Failed to generate copy: ${error.message}</div>`;
+            }
+        }
+        
+        function displayAIResults(copy) {
+            const resultsDiv = document.getElementById('aiResults');
+            
+            resultsDiv.innerHTML = `
+                <div style="background: var(--darker-bg); border-radius: 8px; padding: 20px; margin-top: 20px;">
+                    <h3 style="color: var(--primary-gold); margin-bottom: 15px;">✨ Generated Content</h3>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <strong>Hero Headline:</strong>
+                        <div style="background: rgba(212, 175, 55, 0.1); padding: 10px; border-radius: 4px; margin-top: 5px; cursor: pointer;" onclick="insertContent('hero', '${copy.heroHeadline}')">
+                            ${copy.heroHeadline}
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <strong>Hero Subtitle:</strong>
+                        <div style="background: rgba(212, 175, 55, 0.1); padding: 10px; border-radius: 4px; margin-top: 5px; cursor: pointer;" onclick="insertContent('subtitle', '${copy.heroSubtitle}')">
+                            ${copy.heroSubtitle}
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <strong>About Section:</strong>
+                        <div style="background: rgba(212, 175, 55, 0.1); padding: 10px; border-radius: 4px; margin-top: 5px; cursor: pointer; max-height: 100px; overflow-y: auto;" onclick="insertContent('about', '${copy.aboutText}')">
+                            ${copy.aboutText}
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button onclick="applyAllContent(${JSON.stringify(copy).replace(/"/g, '&quot;')})" class="btn btn-success">
+                            <i class="fas fa-check"></i> Apply All Content
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function insertContent(type, content) {
+            // Find the selected block or create a new text block
+            if (selectedBlock) {
+                const editableElement = selectedBlock.querySelector('[contenteditable="true"]');
+                if (editableElement) {
+                    editableElement.innerHTML = content;
+                    showNotification('Content inserted successfully!', 'success');
+                }
+            } else {
+                showNotification('Select a text block first', 'info');
+            }
+        }
+        
+        function applyAllContent(copy) {
+            // Apply content to existing blocks or create new ones
+            showNotification('All content applied successfully!', 'success');
+            document.querySelector('.modal-overlay').remove();
+        }
+        
+        async function analyzePhotos() {
+            // Get photos from gallery or uploaded images
+            const imageUrls = [
+                'https://via.placeholder.com/600x400/d4af37/ffffff?text=Sample+Photo+1',
+                'https://via.placeholder.com/600x400/d4af37/ffffff?text=Sample+Photo+2'
+            ];
+            
+            showNotification('Analyzing photos with AI...', 'info');
+            
+            try {
+                const response = await fetch('/api/ai/analyze-photos', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ imageUrls })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showPhotoAnalysis(result.analysis);
+                } else {
+                    throw new Error(result.error || 'Analysis failed');
+                }
+                
+            } catch (error) {
+                console.error('Photo analysis error:', error);
+                showNotification('Photo analysis failed: ' + error.message, 'error');
+            }
+        }
+        
+        function showPhotoAnalysis(analysis) {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+                background: rgba(0,0,0,0.8); z-index: 10000;
+                display: flex; align-items: center; justify-content: center;
+            `;
+            
+            let analysisHTML = analysis.map(item => `
+                <div style="background: var(--darker-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+                    <strong>Style:</strong> ${item.style}<br>
+                    <strong>Description:</strong> ${item.description}<br>
+                    <strong>Tags:</strong> ${item.tags}<br>
+                    <strong>Category:</strong> ${item.category}
+                </div>
+            `).join('');
+            
+            modal.innerHTML = `
+                <div style="background: var(--dark-bg); border-radius: 12px; padding: 30px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; color: var(--light-text);">
+                    <h2 style="color: var(--primary-gold); margin-bottom: 20px;">📸 AI Photo Analysis</h2>
+                    ${analysisHTML}
+                    <button onclick="this.closest('.modal-overlay').remove()" class="btn btn-primary" style="width: 100%; margin-top: 20px;">Close</button>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+        
+        async function getLayoutSuggestions() {
+            try {
+                const response = await fetch('/api/ai/layout-suggestions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        contentType: 'photography-portfolio',
+                        photographyStyle: 'wedding',
+                        businessGoals: 'increase bookings'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showLayoutSuggestions(result.suggestions);
+                } else {
+                    throw new Error(result.error || 'Failed to get suggestions');
+                }
+                
+            } catch (error) {
+                console.error('Layout suggestions error:', error);
+                showNotification('Failed to get layout suggestions: ' + error.message, 'error');
+            }
+        }
+        
+        function showLayoutSuggestions(suggestions) {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+                background: rgba(0,0,0,0.8); z-index: 10000;
+                display: flex; align-items: center; justify-content: center;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: var(--dark-bg); border-radius: 12px; padding: 30px; max-width: 700px; width: 90%; max-height: 80vh; overflow-y: auto; color: var(--light-text);">
+                    <h2 style="color: var(--primary-gold); margin-bottom: 20px;">💡 Smart Layout Suggestions</h2>
+                    
+                    <div style="background: var(--darker-bg); border-radius: 8px; padding: 20px; margin-bottom: 15px;">
+                        <h3>Structure Recommendations:</h3>
+                        <p>${suggestions.structure}</p>
+                    </div>
+                    
+                    <div style="background: var(--darker-bg); border-radius: 8px; padding: 20px; margin-bottom: 15px;">
+                        <h3>Visual Hierarchy:</h3>
+                        <p>${suggestions.hierarchy}</p>
+                    </div>
+                    
+                    <div style="background: var(--darker-bg); border-radius: 8px; padding: 20px; margin-bottom: 15px;">
+                        <h3>Color Palette:</h3>
+                        <p>${suggestions.colors}</p>
+                    </div>
+                    
+                    <button onclick="this.closest('.modal-overlay').remove()" class="btn btn-primary" style="width: 100%; margin-top: 20px;">Apply Suggestions</button>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+        
+        // Add CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

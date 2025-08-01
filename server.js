@@ -38,8 +38,12 @@ const ContractManager = require('./server/contracts');
 // Import R2 RAW backup service
 const R2BackupService = require('./server/r2-backup');
 
-// Initialize R2 backup service
+// Import AI services
+const { AIServices } = require('./server/ai-services');
+
+// Initialize services
 const r2BackupService = new R2BackupService();
+const aiServices = new AIServices();
 
 // PostgreSQL database connection
 const pool = new Pool({
@@ -1686,6 +1690,175 @@ app.get('/api/automation-settings', isAuthenticated, async (req, res) => {
     } catch (error) {
         console.error('Error fetching automation settings:', error);
         res.status(500).json({ error: 'Failed to fetch automation settings' });
+    }
+});
+
+// 🤖 AI-POWERED FEATURES FOR SUBSCRIBERS
+app.post('/api/ai/generate-website-copy', async (req, res) => {
+    try {
+        const { photographyStyle, businessInfo } = req.body;
+        
+        if (!photographyStyle || !businessInfo) {
+            return res.status(400).json({ error: 'Photography style and business info required' });
+        }
+        
+        const generatedCopy = await aiServices.generateWebsiteCopy(photographyStyle, businessInfo);
+        
+        res.json({
+            success: true,
+            copy: generatedCopy
+        });
+        
+    } catch (error) {
+        console.error('AI website copy generation error:', error);
+        res.status(500).json({ 
+            error: 'Failed to generate website copy', 
+            details: error.message 
+        });
+    }
+});
+
+app.post('/api/ai/analyze-photos', async (req, res) => {
+    try {
+        const { imageUrls } = req.body;
+        
+        if (!imageUrls || !Array.isArray(imageUrls)) {
+            return res.status(400).json({ error: 'Image URLs array required' });
+        }
+        
+        const analysis = await aiServices.analyzePhotos(imageUrls);
+        
+        res.json({
+            success: true,
+            analysis: analysis
+        });
+        
+    } catch (error) {
+        console.error('AI photo analysis error:', error);
+        res.status(500).json({ 
+            error: 'Failed to analyze photos', 
+            details: error.message 
+        });
+    }
+});
+
+app.post('/api/ai/layout-suggestions', async (req, res) => {
+    try {
+        const { contentType, photographyStyle, businessGoals } = req.body;
+        
+        if (!contentType || !photographyStyle) {
+            return res.status(400).json({ error: 'Content type and photography style required' });
+        }
+        
+        const suggestions = await aiServices.suggestLayout(contentType, photographyStyle, businessGoals);
+        
+        res.json({
+            success: true,
+            suggestions: suggestions
+        });
+        
+    } catch (error) {
+        console.error('AI layout suggestions error:', error);
+        res.status(500).json({ 
+            error: 'Failed to generate layout suggestions', 
+            details: error.message 
+        });
+    }
+});
+
+app.post('/api/ai/seo-content', async (req, res) => {
+    try {
+        const { businessInfo, targetKeywords, pageType } = req.body;
+        
+        if (!businessInfo || !targetKeywords || !pageType) {
+            return res.status(400).json({ error: 'Business info, target keywords, and page type required' });
+        }
+        
+        const seoContent = await aiServices.generateSEOContent(businessInfo, targetKeywords, pageType);
+        
+        res.json({
+            success: true,
+            seoContent: seoContent
+        });
+        
+    } catch (error) {
+        console.error('AI SEO content generation error:', error);
+        res.status(500).json({ 
+            error: 'Failed to generate SEO content', 
+            details: error.message 
+        });
+    }
+});
+
+app.post('/api/ai/generate-testimonials', async (req, res) => {
+    try {
+        const { photographyStyle, services, clientTypes } = req.body;
+        
+        if (!photographyStyle || !services || !clientTypes) {
+            return res.status(400).json({ error: 'Photography style, services, and client types required' });
+        }
+        
+        const testimonials = await aiServices.generateTestimonials(photographyStyle, services, clientTypes);
+        
+        res.json({
+            success: true,
+            testimonials: testimonials
+        });
+        
+    } catch (error) {
+        console.error('AI testimonials generation error:', error);
+        res.status(500).json({ 
+            error: 'Failed to generate testimonials', 
+            details: error.message 
+        });
+    }
+});
+
+app.post('/api/ai/content-suggestions', async (req, res) => {
+    try {
+        const { currentContent, photographyNiche, targetAudience } = req.body;
+        
+        if (!currentContent || !photographyNiche || !targetAudience) {
+            return res.status(400).json({ error: 'Current content, photography niche, and target audience required' });
+        }
+        
+        const suggestions = await aiServices.getContentSuggestions(currentContent, photographyNiche, targetAudience);
+        
+        res.json({
+            success: true,
+            suggestions: suggestions
+        });
+        
+    } catch (error) {
+        console.error('AI content suggestions error:', error);
+        res.status(500).json({ 
+            error: 'Failed to get content suggestions', 
+            details: error.message 
+        });
+    }
+});
+
+app.post('/api/ai/pricing-copy', async (req, res) => {
+    try {
+        const { services, pricePoints, targetMarket } = req.body;
+        
+        if (!services || !pricePoints || !targetMarket) {
+            return res.status(400).json({ error: 'Services, price points, and target market required' });
+        }
+        
+        const pricingCopy = await aiServices.generatePricingCopy(services, pricePoints, targetMarket);
+        
+        res.json({
+            success: true,
+            pricingCopy: pricingCopy
+        });
+        
+    } catch (error) {
+        console.error('AI pricing copy generation error:', error);
+        res.status(500).json({ 
+            error: 'Failed to generate pricing copy', 
+            details: error.message 
+        });
     }
 });
 

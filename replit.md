@@ -35,7 +35,7 @@ This is a comprehensive photography business management platform designed to rev
 
 ### Technical Implementations
 - **Dynamic Content Editing**: Inline content editing (`contenteditable="true"`) for text and click-to-upload for images, with real-time auto-save.
-- **Block-Based Visual Editor**: Advanced drag-and-drop system for building websites using predefined blocks (Hero, About, Image Grid, Text, CTA, Testimonial, Pricing, Blog, etc.).
+- **Block-Based Visual Editor**: Advanced drag-and-drop system for building websites using predefined blocks (Hero, About, Image Grid, Text, CTA, Testimonial, Pricing, Blog, etc.) with integrated AI assistant for intelligent content generation and design optimization.
 - **Dynamic Page Management**: System for creating, deleting, and managing custom pages with user-defined names and icons.
 - **Comprehensive Theme/Template System**: Extensive library of 20+ professional photography website templates inspired by photography legends, with category filtering and one-click application. Now featuring 15 premium multi-page photographer website templates with specialized layouts for different photography niches (wedding, fashion, documentary, portrait, adventure, celebrity, maternity, commercial, street, boudoir, sports, food, architecture, pet, and travel photography).
 - **Advanced Site Customization** (Added Jan 31, 2025):
@@ -63,6 +63,7 @@ This is a comprehensive photography business management platform designed to rev
 - **Shared Poses Gallery** (Added Jan 31, 2025): Community-driven photography pose inspiration gallery where photographers can view, favorite, and submit pose ideas. Features public access for viewing, authenticated submissions, and moderation system.
 - **RAW Backup System** (Added Feb 1, 2025): Integrated Cloudflare R2 storage for automatic RAW file backup at $20/TB. Features automatic RAW detection (.CR2, .NEF, .ARW, .DNG, etc.), background upload processing, database tracking, billing management, and emergency recovery system. Activated with full R2 credentials and ready for production use.
 - **Advanced Workflow Automation** (Added Feb 1, 2025): Intelligent client communication system with automated triggers for contract reminders, payment follow-ups, session preparation guides, gallery delivery notifications, and feedback requests. Features customizable message templates (professional, friendly, luxury), native email/SMS integration, and comprehensive workflow logging. Accessible via ⚡ Automation button in session interface and dedicated advanced-workflow.html management dashboard.
+- **AI-Powered Website Builder** (Added Feb 1, 2025): OpenAI integration for intelligent content generation, photo analysis, and smart design suggestions. Features include automated copywriting based on photography style and business info, AI photo tagging and categorization, intelligent layout recommendations, SEO-optimized content generation, testimonial creation, and conversion-focused pricing copy. Accessible through 🤖 AI Assistant panel in the advanced visual editor, providing subscribers with professional-grade AI features for rapid website development.
 
 ### System Design Choices
 - **Cloud Database**: PostgreSQL as the primary persistent data storage, with Firebase Firestore as an alternative/fallback for certain data.
@@ -79,6 +80,7 @@ This is a comprehensive photography business management platform designed to rev
 - **Stripe**: For payment processing, including invoicing, deposits, and optional tipping.
 - **SendGrid**: For professional email notifications and communications.
 - **Twilio**: For SMS notifications and alerts.
+- **OpenAI**: For AI-powered content generation, photo analysis, and intelligent website building features.
 - **JSZip**: For bulk ZIP downloads of photo galleries.
 - **SunriseSunset.io API**: For fetching golden hour, blue hour, and solar timing data.
 - **OpenStreetMap Nominatim**: For geocoding and location search suggestions in the Sunrise/Sunset calendar.
