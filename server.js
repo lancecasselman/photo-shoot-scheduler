@@ -1693,6 +1693,38 @@ app.get('/api/automation-settings', isAuthenticated, async (req, res) => {
     }
 });
 
+// 🤖 AI WEBSITE BUILDER - Page Processing Endpoint
+app.post('/api/ai/process-page-request', async (req, res) => {
+    try {
+        const { prompt, currentPage, pageType } = req.body;
+        
+        if (!prompt || !prompt.trim()) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Prompt is required' 
+            });
+        }
+
+        console.log(`AI Page Request: ${prompt} for page type: ${pageType}`);
+
+        // Use the ai-services for intelligent content generation
+        const generatedContent = await aiServices.generatePageContent(prompt, currentPage, pageType);
+
+        res.json({
+            success: true,
+            content: generatedContent,
+            message: 'AI page content generated successfully'
+        });
+
+    } catch (error) {
+        console.error('AI page processing error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to process AI request: ' + error.message
+        });
+    }
+});
+
 // 🤖 AI-POWERED FEATURES FOR SUBSCRIBERS
 app.post('/api/ai/generate-website-copy', async (req, res) => {
     try {

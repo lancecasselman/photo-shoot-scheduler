@@ -327,6 +327,59 @@ Return as JSON with keys: contentGaps, messagingImprovements, ctaOptimization, t
         }
     }
 
+    // Generate page content for website builder AI assistant
+    async generatePageContent(prompt, currentPage, pageType) {
+        if (!this.initialized) {
+            throw new Error('AI services not available - missing API key');
+        }
+
+        try {
+            const aiPrompt = `You are an expert web designer creating beautiful photography websites. 
+            
+            Current page type: ${pageType}
+            Current page content: ${currentPage || 'Empty page'}
+            
+            User request: ${prompt}
+            
+            Create beautiful, professional HTML content for this photography website page that fulfills the user's request. Include:
+            - Modern, elegant styling appropriate for photography
+            - Responsive design elements
+            - Professional typography and spacing
+            - Color schemes that work well for photography (warm, neutral tones)
+            - Interactive elements where appropriate
+            - Make all text elements contenteditable="true" and onclick="showTextToolbar(this)" for editing
+            - Use placeholder images from unsplash for any photos needed
+            - Professional photography-focused design aesthetic
+            
+            Return ONLY the HTML content for the page body (no html, head, or body tags), styled with inline CSS.
+            Focus on premium, luxury aesthetics that photographers would love.
+            
+            Important: All text should be editable by clicking, and images should be replaceable.`;
+
+            const completion = await openai.chat.completions.create({
+                model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+                messages: [
+                    {
+                        role: 'system',
+                        content: 'You are an expert web designer specializing in luxury photography websites. Create beautiful, modern HTML with inline CSS styling.'
+                    },
+                    {
+                        role: 'user',
+                        content: aiPrompt
+                    }
+                ],
+                max_tokens: 3000,
+                temperature: 0.7
+            });
+
+            return completion.choices[0].message.content;
+
+        } catch (error) {
+            console.error('AI Services: Error generating page content:', error);
+            throw new Error('Failed to generate page content: ' + error.message);
+        }
+    }
+
     // Generate pricing copy that converts
     async generatePricingCopy(services, pricePoints, targetMarket) {
         if (!this.initialized) {

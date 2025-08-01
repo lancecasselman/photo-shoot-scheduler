@@ -80,6 +80,16 @@
             gap: 10px;
         }
         
+        .btn-ai {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+        }
+        
+        .btn-ai:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        }
+        
         .btn {
             padding: 8px 16px;
             border: none;
@@ -444,6 +454,116 @@
             color: var(--text-secondary);
         }
         
+        /* Text Editing Toolbar */
+        .text-toolbar {
+            position: fixed;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            gap: 8px;
+            flex-wrap: wrap;
+            max-width: 500px;
+        }
+        
+        .text-toolbar.active {
+            display: flex;
+        }
+        
+        .toolbar-btn {
+            padding: 6px 10px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        
+        .toolbar-btn:hover,
+        .toolbar-btn.active {
+            background: var(--accent-gold);
+            color: var(--bg-primary);
+        }
+        
+        .toolbar-select {
+            padding: 4px 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        /* AI Assistant Panel */
+        .ai-panel {
+            position: fixed;
+            top: 60px;
+            right: -400px;
+            width: 380px;
+            height: calc(100vh - 60px);
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border-color);
+            transition: right 0.3s ease;
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .ai-panel.active {
+            right: 0;
+        }
+        
+        .ai-panel-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .ai-panel-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .ai-prompt-input {
+            width: 100%;
+            min-height: 100px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            color: var(--text-primary);
+            font-size: 14px;
+            resize: vertical;
+            margin-bottom: 15px;
+        }
+        
+        .ai-suggestions {
+            margin-top: 20px;
+        }
+        
+        .suggestion-item {
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid var(--border-color);
+        }
+        
+        .suggestion-item:hover {
+            background: var(--accent-gold);
+            color: var(--bg-primary);
+        }
+        
         /* Responsive */
         @media (max-width: 1024px) {
             .builder-container {
@@ -474,6 +594,18 @@
             </div>
             
             <div class="actions">
+                <button class="btn btn-secondary" onclick="addTextElement()">
+                    <i class="fas fa-font"></i> Add Text
+                </button>
+                <button class="btn btn-secondary" onclick="triggerPhotoUpload()">
+                    <i class="fas fa-camera"></i> Add Photo
+                </button>
+                <button class="btn btn-secondary" onclick="addLogoElement()">
+                    <i class="fas fa-image"></i> Add Logo
+                </button>
+                <button class="btn btn-ai" onclick="toggleAIAssistant()">
+                    <i class="fas fa-robot"></i> AI Assistant
+                </button>
                 <button class="btn btn-secondary" onclick="saveDraft()">
                     <i class="fas fa-save"></i> Save
                 </button>
@@ -552,6 +684,96 @@ Examples:
                 
                 <div class="add-page" onclick="addNewPage()">
                     <i class="fas fa-plus"></i> Add New Page
+                </div>
+            </div>
+        </div>
+        
+        <!-- Text Editing Toolbar -->
+        <div id="textToolbar" class="text-toolbar">
+            <select class="toolbar-select" onchange="changeFontFamily(this.value)">
+                <option value="Arial">Arial</option>
+                <option value="Georgia">Georgia</option>
+                <option value="Times New Roman">Times New Roman</option>
+                <option value="Helvetica">Helvetica</option>
+                <option value="Playfair Display">Playfair Display</option>
+                <option value="Montserrat">Montserrat</option>
+                <option value="Inter">Inter</option>
+            </select>
+            
+            <select class="toolbar-select" onchange="changeFontSize(this.value)">
+                <option value="12px">12px</option>
+                <option value="14px">14px</option>
+                <option value="16px">16px</option>
+                <option value="18px">18px</option>
+                <option value="20px">20px</option>
+                <option value="24px">24px</option>
+                <option value="32px">32px</option>
+                <option value="48px">48px</option>
+                <option value="64px">64px</option>
+            </select>
+            
+            <button class="toolbar-btn" onclick="toggleBold()"><b>B</b></button>
+            <button class="toolbar-btn" onclick="toggleItalic()"><i>I</i></button>
+            <button class="toolbar-btn" onclick="toggleUnderline()"><u>U</u></button>
+            
+            <input type="color" class="toolbar-select" onchange="changeTextColor(this.value)" value="#000000">
+            
+            <button class="toolbar-btn" onclick="alignText('left')">◧</button>
+            <button class="toolbar-btn" onclick="alignText('center')">▣</button>
+            <button class="toolbar-btn" onclick="alignText('right')">◨</button>
+        </div>
+        
+        <!-- AI Assistant Panel -->
+        <div id="aiPanel" class="ai-panel">
+            <div class="ai-panel-header">
+                <h3>🤖 AI Assistant</h3>
+                <button class="btn btn-secondary" onclick="toggleAIAssistant()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="ai-panel-content">
+                <div class="section-title">Ask AI to modify your page:</div>
+                
+                <textarea class="ai-prompt-input" placeholder="Tell the AI what you want to change...
+
+Examples:
+• Make the hero section more dramatic with dark colors
+• Add a pricing section with 3 packages
+• Change the about section to be more professional
+• Add a testimonials gallery
+• Make the contact form more elegant"></textarea>
+                
+                <button class="btn btn-primary" style="width: 100%;" onclick="processAIRequest()">
+                    <i class="fas fa-magic"></i> Apply AI Changes
+                </button>
+                
+                <div class="ai-suggestions">
+                    <div class="section-title">Quick AI Actions:</div>
+                    
+                    <div class="suggestion-item" onclick="quickAIAction('luxury')">
+                        ✨ Make it more luxury & elegant
+                    </div>
+                    
+                    <div class="suggestion-item" onclick="quickAIAction('modern')">
+                        🎯 Make it modern & minimal
+                    </div>
+                    
+                    <div class="suggestion-item" onclick="quickAIAction('gallery')">
+                        🖼️ Add a stunning photo gallery
+                    </div>
+                    
+                    <div class="suggestion-item" onclick="quickAIAction('pricing')">
+                        💰 Add pricing packages
+                    </div>
+                    
+                    <div class="suggestion-item" onclick="quickAIAction('testimonials')">
+                        ⭐ Add client testimonials
+                    </div>
+                    
+                    <div class="suggestion-item" onclick="quickAIAction('contact')">
+                        📞 Enhance contact section
+                    </div>
                 </div>
             </div>
         </div>
@@ -1351,6 +1573,279 @@ Examples:
                 }
             });
         }
+        
+        // Add Text Element
+        function addTextElement() {
+            const canvas = document.getElementById('mainCanvas');
+            const textElement = document.createElement('div');
+            textElement.innerHTML = '<h2 contenteditable="true" style="padding: 20px; font-size: 2rem; color: #333; text-align: center; outline: none; border: 2px dashed transparent;" onclick="showTextToolbar(this)">Click to edit this text</h2>';
+            textElement.style.cssText = 'margin: 20px 0; cursor: pointer;';
+            
+            const canvasContent = canvas.querySelector('.canvas-content') || canvas;
+            canvasContent.appendChild(textElement);
+            
+            showNotification('Text element added! Click to edit.', 'success');
+        }
+        
+        // Add Logo Element
+        function addLogoElement() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const canvas = document.getElementById('mainCanvas');
+                        const logoElement = document.createElement('div');
+                        logoElement.innerHTML = `<img src="${e.target.result}" style="max-width: 200px; height: auto; cursor: pointer;" onclick="replaceLogoImage(this)">`;
+                        logoElement.style.cssText = 'text-align: center; padding: 20px; margin: 20px 0;';
+                        
+                        const canvasContent = canvas.querySelector('.canvas-content') || canvas;
+                        canvasContent.appendChild(logoElement);
+                        
+                        showNotification('Logo added successfully!', 'success');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+            input.click();
+        }
+        
+        // Trigger Photo Upload
+        function triggerPhotoUpload() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const canvas = document.getElementById('mainCanvas');
+                        const photoElement = document.createElement('div');
+                        photoElement.innerHTML = `<img src="${e.target.result}" style="max-width: 100%; height: auto; border-radius: 8px; cursor: pointer;" onclick="replaceImage(this)">`;
+                        photoElement.style.cssText = 'text-align: center; padding: 20px; margin: 20px 0;';
+                        
+                        const canvasContent = canvas.querySelector('.canvas-content') || canvas;
+                        canvasContent.appendChild(photoElement);
+                        
+                        showNotification('Photo added successfully!', 'success');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+            input.click();
+        }
+        
+        // Replace Logo Image
+        function replaceLogoImage(img) {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        img.src = e.target.result;
+                        showNotification('Logo updated!', 'success');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+            input.click();
+        }
+        
+        // Replace Image
+        function replaceImage(img) {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        img.src = e.target.result;
+                        showNotification('Image updated!', 'success');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+            input.click();
+        }
+        
+        // Text Toolbar Functions
+        let currentEditingElement = null;
+        
+        function showTextToolbar(element) {
+            currentEditingElement = element;
+            const toolbar = document.getElementById('textToolbar');
+            const rect = element.getBoundingClientRect();
+            
+            toolbar.style.top = (rect.top - 60) + 'px';
+            toolbar.style.left = Math.min(rect.left, window.innerWidth - 520) + 'px';
+            toolbar.classList.add('active');
+            
+            element.style.border = '2px solid #d4af37';
+            element.focus();
+        }
+        
+        function hideTextToolbar() {
+            const toolbar = document.getElementById('textToolbar');
+            toolbar.classList.remove('active');
+            
+            if (currentEditingElement) {
+                currentEditingElement.style.border = '2px dashed transparent';
+                currentEditingElement = null;
+            }
+        }
+        
+        function changeFontFamily(fontFamily) {
+            if (currentEditingElement) {
+                currentEditingElement.style.fontFamily = fontFamily;
+            }
+        }
+        
+        function changeFontSize(fontSize) {
+            if (currentEditingElement) {
+                currentEditingElement.style.fontSize = fontSize;
+            }
+        }
+        
+        function toggleBold() {
+            if (currentEditingElement) {
+                const current = currentEditingElement.style.fontWeight;
+                currentEditingElement.style.fontWeight = current === 'bold' ? 'normal' : 'bold';
+            }
+        }
+        
+        function toggleItalic() {
+            if (currentEditingElement) {
+                const current = currentEditingElement.style.fontStyle;
+                currentEditingElement.style.fontStyle = current === 'italic' ? 'normal' : 'italic';
+            }
+        }
+        
+        function toggleUnderline() {
+            if (currentEditingElement) {
+                const current = currentEditingElement.style.textDecoration;
+                currentEditingElement.style.textDecoration = current.includes('underline') ? 'none' : 'underline';
+            }
+        }
+        
+        function changeTextColor(color) {
+            if (currentEditingElement) {
+                currentEditingElement.style.color = color;
+            }
+        }
+        
+        function alignText(alignment) {
+            if (currentEditingElement) {
+                currentEditingElement.style.textAlign = alignment;
+            }
+        }
+        
+        // AI Assistant Functions
+        function toggleAIAssistant() {
+            const panel = document.getElementById('aiPanel');
+            panel.classList.toggle('active');
+        }
+        
+        async function processAIRequest() {
+            const prompt = document.querySelector('.ai-prompt-input').value;
+            if (!prompt.trim()) {
+                showNotification('Please enter a request for the AI assistant.', 'warning');
+                return;
+            }
+            
+            showLoading('AI is processing your request...');
+            
+            try {
+                const response = await fetch('/api/ai/process-page-request', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        currentPage: getCurrentPageContent(),
+                        pageType: getCurrentPageType()
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    applyAIChanges(data.content);
+                    showNotification('AI changes applied successfully!', 'success');
+                } else {
+                    showNotification('AI request failed: ' + data.error, 'error');
+                }
+            } catch (error) {
+                console.error('AI request error:', error);
+                showNotification('AI request failed. Please try again.', 'error');
+            }
+            
+            hideLoading();
+        }
+        
+        function quickAIAction(action) {
+            const prompts = {
+                luxury: 'Make this page more luxury and elegant with premium styling, gold accents, and sophisticated typography',
+                modern: 'Transform this page to be modern and minimal with clean lines, plenty of white space, and contemporary design',
+                gallery: 'Add a stunning photo gallery section with grid layout and hover effects',
+                pricing: 'Add a professional pricing section with 3 package tiers and call-to-action buttons',
+                testimonials: 'Add a client testimonials section with quotes and star ratings',
+                contact: 'Enhance the contact section with a professional form and contact information'
+            };
+            
+            document.querySelector('.ai-prompt-input').value = prompts[action];
+            processAIRequest();
+        }
+        
+        function applyAIChanges(content) {
+            const canvas = document.getElementById('mainCanvas');
+            const canvasContent = canvas.querySelector('.canvas-content');
+            canvasContent.innerHTML = content;
+            
+            // Re-enable editing for new content
+            makeAllTextEditable();
+        }
+        
+        function getCurrentPageContent() {
+            const canvas = document.getElementById('mainCanvas');
+            return canvas.innerHTML;
+        }
+        
+        function getCurrentPageType() {
+            const activePageItem = document.querySelector('.page-item.active');
+            return activePageItem ? activePageItem.dataset.page : 'home';
+        }
+        
+        function makeAllTextEditable() {
+            const canvas = document.getElementById('mainCanvas');
+            const textElements = canvas.querySelectorAll('h1, h2, h3, h4, h5, h6, p, span, div');
+            
+            textElements.forEach(element => {
+                if (!element.querySelector('img') && !element.querySelector('button') && !element.querySelector('input')) {
+                    element.setAttribute('contenteditable', 'true');
+                    element.setAttribute('onclick', 'showTextToolbar(this)');
+                    element.style.outline = 'none';
+                    element.style.border = '2px dashed transparent';
+                }
+            });
+        }
+        
+        // Close toolbar when clicking outside
+        document.addEventListener('click', function(e) {
+            const toolbar = document.getElementById('textToolbar');
+            const aiPanel = document.getElementById('aiPanel');
+            
+            if (!toolbar.contains(e.target) && !e.target.matches('[contenteditable="true"]')) {
+                hideTextToolbar();
+            }
+        });
         
         function previewSite() {
             const previewWindow = window.open('', '_blank');
