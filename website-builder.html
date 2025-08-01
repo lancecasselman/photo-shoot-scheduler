@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Website Builder - Photography Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #1a1a1a;
+            --bg-tertiary: #2a2a2a;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --accent-gold: #d4af37;
+            --accent-blue: #007acc;
+            --border-color: #333;
+            --success: #00ff88;
+            --warning: #ffaa00;
+            --danger: #ff3366;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+        
+        .builder-container {
+            display: grid;
+            grid-template-columns: 320px 1fr 300px;
+            grid-template-rows: 60px 1fr;
+            height: 100vh;
+        }
+        
+        /* Top Bar */
+        .top-bar {
+            grid-column: 1 / -1;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+        
+        .project-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .project-name {
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 16px;
+            font-weight: 500;
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid transparent;
+        }
+        
+        .project-name:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+        }
+        
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background: var(--accent-gold);
+            color: var(--bg-primary);
+        }
+        
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+        
+        .btn:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.1);
+        }
+        
+        /* Left Sidebar - AI Tools */
+        .left-sidebar {
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .sidebar-section {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .ai-prompt {
+            width: 100%;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            color: var(--text-primary);
+            font-size: 14px;
+            resize: vertical;
+            min-height: 80px;
+            margin-bottom: 15px;
+        }
+        
+        .ai-prompt:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+        }
+        
+        .template-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .template-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        
+        .template-card:hover {
+            border-color: var(--accent-gold);
+            background: rgba(212, 175, 55, 0.1);
+        }
+        
+        .template-card.selected {
+            border-color: var(--accent-gold);
+            background: rgba(212, 175, 55, 0.2);
+        }
+        
+        .template-name {
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        
+        .template-desc {
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+        
+        .page-manager {
+            flex: 1;
+        }
+        
+        .page-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .page-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .page-item:hover {
+            background: rgba(212, 175, 55, 0.1);
+        }
+        
+        .page-item.active {
+            background: rgba(212, 175, 55, 0.2);
+            border: 1px solid var(--accent-gold);
+        }
+        
+        .page-name {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .add-page {
+            background: var(--bg-tertiary);
+            border: 1px dashed var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            color: var(--text-secondary);
+            margin-top: 10px;
+            transition: all 0.2s;
+        }
+        
+        .add-page:hover {
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+        }
+        
+        /* Canvas Area */
+        .canvas-area {
+            background: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .canvas-toolbar {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .viewport-controls {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .viewport-btn {
+            padding: 6px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .viewport-btn.active {
+            background: var(--accent-gold);
+            color: var(--bg-primary);
+            border-color: var(--accent-gold);
+        }
+        
+        .canvas-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            overflow: auto;
+        }
+        
+        .canvas {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            min-height: 600px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .canvas.desktop {
+            width: 1200px;
+            max-width: 100%;
+        }
+        
+        .canvas.tablet {
+            width: 768px;
+            max-width: 100%;
+        }
+        
+        .canvas.mobile {
+            width: 375px;
+        }
+        
+        .canvas-content {
+            width: 100%;
+            height: 100%;
+            min-height: 600px;
+        }
+        
+        .empty-canvas {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #666;
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .empty-canvas i {
+            font-size: 48px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        /* Right Sidebar - Properties */
+        .right-sidebar {
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border-color);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .property-section {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .property-group {
+            margin-bottom: 20px;
+        }
+        
+        .property-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .property-input {
+            width: 100%;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 8px 12px;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+        
+        .property-input:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+        }
+        
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 6px;
+            margin-top: 10px;
+        }
+        
+        .color-swatch {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .color-swatch:hover {
+            transform: scale(1.1);
+            border-color: var(--accent-gold);
+        }
+        
+        /* Loading and Status */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+        
+        .loading-content {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            max-width: 400px;
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--accent-gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .status-message {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+        
+        .status-detail {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .builder-container {
+                grid-template-columns: 280px 1fr 250px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .builder-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: 60px auto 1fr auto;
+            }
+            
+            .left-sidebar,
+            .right-sidebar {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="builder-container">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="project-info">
+                <input type="text" class="project-name" value="My Photography Website" placeholder="Project Name">
+                <span class="status-indicator">Ready</span>
+            </div>
+            
+            <div class="actions">
+                <button class="btn btn-secondary" onclick="saveDraft()">
+                    <i class="fas fa-save"></i> Save
+                </button>
+                <button class="btn btn-secondary" onclick="previewSite()">
+                    <i class="fas fa-eye"></i> Preview
+                </button>
+                <button class="btn btn-primary" onclick="publishSite()">
+                    <i class="fas fa-rocket"></i> Publish
+                </button>
+            </div>
+        </div>
+        
+        <!-- Left Sidebar - AI Tools -->
+        <div class="left-sidebar">
+            <div class="sidebar-section">
+                <div class="section-title">AI Website Generator</div>
+                <textarea class="ai-prompt" placeholder="Describe your dream website... 
+
+Examples:
+• A luxury wedding photography site with elegant galleries
+• Modern portrait studio with booking system
+• Editorial fashion photographer portfolio
+• Family photography with pricing packages"></textarea>
+                
+                <button class="btn btn-primary" style="width: 100%;" onclick="generateWebsite()">
+                    <i class="fas fa-magic"></i> Generate Website
+                </button>
+            </div>
+            
+            <div class="sidebar-section">
+                <div class="section-title">Quick Templates</div>
+                <div class="template-grid">
+                    <div class="template-card" data-template="wedding">
+                        <div class="template-name">Wedding</div>
+                        <div class="template-desc">Elegant & Romantic</div>
+                    </div>
+                    <div class="template-card" data-template="portrait">
+                        <div class="template-name">Portrait</div>
+                        <div class="template-desc">Professional & Clean</div>
+                    </div>
+                    <div class="template-card" data-template="fashion">
+                        <div class="template-name">Fashion</div>
+                        <div class="template-desc">Bold & Editorial</div>
+                    </div>
+                    <div class="template-card" data-template="commercial">
+                        <div class="template-name">Commercial</div>
+                        <div class="template-desc">Corporate & Modern</div>
+                    </div>
+                </div>
+                
+                <button class="btn btn-secondary" style="width: 100%;" onclick="applyTemplate()">
+                    Apply Selected Template
+                </button>
+            </div>
+            
+            <div class="sidebar-section page-manager">
+                <div class="section-title">Page Manager</div>
+                <div class="page-list" id="pageList">
+                    <div class="page-item active" data-page="home">
+                        <span class="page-name">Home</span>
+                        <i class="fas fa-ellipsis-v"></i>
+                    </div>
+                    <div class="page-item" data-page="about">
+                        <span class="page-name">About</span>
+                        <i class="fas fa-ellipsis-v"></i>
+                    </div>
+                    <div class="page-item" data-page="portfolio">
+                        <span class="page-name">Portfolio</span>
+                        <i class="fas fa-ellipsis-v"></i>
+                    </div>
+                    <div class="page-item" data-page="contact">
+                        <span class="page-name">Contact</span>
+                        <i class="fas fa-ellipsis-v"></i>
+                    </div>
+                </div>
+                
+                <div class="add-page" onclick="addNewPage()">
+                    <i class="fas fa-plus"></i> Add New Page
+                </div>
+            </div>
+        </div>
+        
+        <!-- Canvas Area -->
+        <div class="canvas-area">
+            <div class="canvas-toolbar">
+                <div class="viewport-controls">
+                    <button class="viewport-btn active" data-viewport="desktop">
+                        <i class="fas fa-desktop"></i> Desktop
+                    </button>
+                    <button class="viewport-btn" data-viewport="tablet">
+                        <i class="fas fa-tablet"></i> Tablet
+                    </button>
+                    <button class="viewport-btn" data-viewport="mobile">
+                        <i class="fas fa-mobile"></i> Mobile
+                    </button>
+                </div>
+                
+                <div class="canvas-info">
+                    <span id="currentPage">Home Page</span>
+                </div>
+            </div>
+            
+            <div class="canvas-wrapper">
+                <div class="canvas desktop" id="mainCanvas">
+                    <div class="canvas-content">
+                        <div class="empty-canvas">
+                            <i class="fas fa-wand-magic-sparkles"></i>
+                            <h3>Start Building Your Dream Website</h3>
+                            <p>Use the AI generator on the left to describe your vision, or choose a template to get started quickly.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Sidebar - Properties -->
+        <div class="right-sidebar">
+            <div class="property-section">
+                <div class="section-title">Site Settings</div>
+                
+                <div class="property-group">
+                    <label class="property-label">Site Title</label>
+                    <input type="text" class="property-input" value="Photography Studio" placeholder="Your Site Title">
+                </div>
+                
+                <div class="property-group">
+                    <label class="property-label">Primary Color</label>
+                    <input type="color" class="property-input" value="#d4af37">
+                    <div class="color-grid">
+                        <div class="color-swatch" style="background: #d4af37;" data-color="#d4af37"></div>
+                        <div class="color-swatch" style="background: #2c3e50;" data-color="#2c3e50"></div>
+                        <div class="color-swatch" style="background: #e74c3c;" data-color="#e74c3c"></div>
+                        <div class="color-swatch" style="background: #3498db;" data-color="#3498db"></div>
+                        <div class="color-swatch" style="background: #2ecc71;" data-color="#2ecc71"></div>
+                        <div class="color-swatch" style="background: #9b59b6;" data-color="#9b59b6"></div>
+                    </div>
+                </div>
+                
+                <div class="property-group">
+                    <label class="property-label">Typography</label>
+                    <select class="property-input">
+                        <option value="inter">Inter (Modern)</option>
+                        <option value="playfair">Playfair Display (Elegant)</option>
+                        <option value="roboto">Roboto (Clean)</option>
+                        <option value="montserrat">Montserrat (Versatile)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="property-section">
+                <div class="section-title">Page Properties</div>
+                
+                <div class="property-group">
+                    <label class="property-label">Page Background</label>
+                    <input type="color" class="property-input" value="#ffffff">
+                </div>
+                
+                <div class="property-group">
+                    <label class="property-label">Content Width</label>
+                    <select class="property-input">
+                        <option value="full">Full Width</option>
+                        <option value="contained">Contained</option>
+                        <option value="narrow">Narrow</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="property-section">
+                <div class="section-title">SEO Settings</div>
+                
+                <div class="property-group">
+                    <label class="property-label">Meta Title</label>
+                    <input type="text" class="property-input" placeholder="Professional Photography Services">
+                </div>
+                
+                <div class="property-group">
+                    <label class="property-label">Meta Description</label>
+                    <textarea class="property-input" rows="3" placeholder="Capturing your most precious moments with artistic vision and technical excellence..."></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="firebase-config.js"></script>
+    <script>
+        console.log('AI Website Builder: Initializing...');
+        
+        // Core Builder State
+        let currentProject = {
+            name: 'My Photography Website',
+            pages: ['home', 'about', 'portfolio', 'contact'],
+            currentPage: 'home',
+            settings: {
+                primaryColor: '#d4af37',
+                typography: 'inter',
+                siteTitle: 'Photography Studio'
+            },
+            pageData: {}
+        };
+        
+        let currentViewport = 'desktop';
+        let isGenerating = false;
+        let selectedTemplate = null;
+        
+        // Initialize Builder
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+            loadProject();
+            console.log('AI Website Builder: Ready');
+        });
+        
+        function setupEventListeners() {
+            // Template selection
+            document.querySelectorAll('.template-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
+                    this.classList.add('selected');
+                    selectedTemplate = this.dataset.template;
+                });
+            });
+            
+            // Viewport controls
+            document.querySelectorAll('.viewport-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.viewport-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const viewport = this.dataset.viewport;
+                    const canvas = document.getElementById('mainCanvas');
+                    canvas.className = `canvas ${viewport}`;
+                    currentViewport = viewport;
+                });
+            });
+            
+            // Page switching
+            document.querySelectorAll('.page-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    document.querySelectorAll('.page-item').forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const pageName = this.dataset.page;
+                    switchToPage(pageName);
+                });
+            });
+            
+            // Color swatches
+            document.querySelectorAll('.color-swatch').forEach(swatch => {
+                swatch.addEventListener('click', function() {
+                    const color = this.dataset.color;
+                    document.querySelector('input[type="color"]').value = color;
+                    updateSiteColor(color);
+                });
+            });
+        }
+        
+        async function generateWebsite() {
+            const prompt = document.querySelector('.ai-prompt').value.trim();
+            
+            if (!prompt) {
+                showNotification('Please describe your dream website first', 'warning');
+                return;
+            }
+            
+            if (isGenerating) return;
+            
+            isGenerating = true;
+            showLoading('Generating your dream website...', 'AI is analyzing your requirements and creating a custom design');
+            
+            try {
+                // Call AI generation endpoint
+                const response = await fetch('/api/ai/generate-complete-website', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        businessType: 'photography',
+                        pages: currentProject.pages,
+                        currentSettings: currentProject.settings
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Apply generated website
+                    currentProject = { ...currentProject, ...result.website };
+                    renderWebsite(result.website);
+                    showNotification('Website generated successfully!', 'success');
+                } else {
+                    throw new Error(result.error || 'Generation failed');
+                }
+                
+            } catch (error) {
+                console.error('Website generation error:', error);
+                showNotification('Failed to generate website. Please try again.', 'error');
+            } finally {
+                hideLoading();
+                isGenerating = false;
+            }
+        }
+        
+        function applyTemplate() {
+            if (!selectedTemplate) {
+                showNotification('Please select a template first', 'warning');
+                return;
+            }
+            
+            showLoading('Applying template...', 'Customizing design for your photography business');
+            
+            // Template configurations
+            const templates = {
+                wedding: {
+                    settings: {
+                        primaryColor: '#d4af37',
+                        typography: 'playfair',
+                        style: 'elegant'
+                    },
+                    pages: {
+                        home: generateTemplateContent('wedding', 'home'),
+                        about: generateTemplateContent('wedding', 'about'),
+                        portfolio: generateTemplateContent('wedding', 'portfolio'),
+                        contact: generateTemplateContent('wedding', 'contact')
+                    }
+                },
+                portrait: {
+                    settings: {
+                        primaryColor: '#2c3e50',
+                        typography: 'inter',
+                        style: 'modern'
+                    },
+                    pages: {
+                        home: generateTemplateContent('portrait', 'home'),
+                        about: generateTemplateContent('portrait', 'about'),
+                        portfolio: generateTemplateContent('portrait', 'portfolio'),
+                        contact: generateTemplateContent('portrait', 'contact')
+                    }
+                },
+                fashion: {
+                    settings: {
+                        primaryColor: '#000000',
+                        typography: 'montserrat',
+                        style: 'bold'
+                    },
+                    pages: {
+                        home: generateTemplateContent('fashion', 'home'),
+                        about: generateTemplateContent('fashion', 'about'),
+                        portfolio: generateTemplateContent('fashion', 'portfolio'),
+                        contact: generateTemplateContent('fashion', 'contact')
+                    }
+                },
+                commercial: {
+                    settings: {
+                        primaryColor: '#3498db',
+                        typography: 'roboto',
+                        style: 'corporate'
+                    },
+                    pages: {
+                        home: generateTemplateContent('commercial', 'home'),
+                        about: generateTemplateContent('commercial', 'about'),
+                        portfolio: generateTemplateContent('commercial', 'portfolio'),
+                        contact: generateTemplateContent('commercial', 'contact')
+                    }
+                }
+            };
+            
+            const template = templates[selectedTemplate];
+            if (template) {
+                currentProject.settings = { ...currentProject.settings, ...template.settings };
+                currentProject.pageData = template.pages;
+                
+                setTimeout(() => {
+                    renderCurrentPage();
+                    updateUIFromSettings();
+                    hideLoading();
+                    showNotification(`${selectedTemplate} template applied successfully!`, 'success');
+                }, 1500);
+            }
+        }
+        
+        function generateTemplateContent(templateType, pageType) {
+            const content = {
+                wedding: {
+                    home: `
+                        <div style="background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1519741497674-611481863552?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80'); background-size: cover; background-position: center; height: 100vh; display: flex; align-items: center; justify-content: center; color: white; text-align: center;">
+                            <div>
+                                <h1 style="font-size: 4rem; font-weight: 300; margin-bottom: 20px; font-family: 'Playfair Display', serif;">Eternal Moments</h1>
+                                <p style="font-size: 1.5rem; margin-bottom: 30px; opacity: 0.9;">Capturing the magic of your special day</p>
+                                <button style="padding: 15px 30px; background: #d4af37; color: white; border: none; font-size: 1.1rem; cursor: pointer; border-radius: 4px;">View Our Work</button>
+                            </div>
+                        </div>
+                        
+                        <div style="padding: 100px 50px; text-align: center; background: #f8f8f8;">
+                            <h2 style="font-size: 3rem; margin-bottom: 30px; color: #333; font-family: 'Playfair Display', serif;">Timeless Wedding Photography</h2>
+                            <p style="font-size: 1.2rem; max-width: 800px; margin: 0 auto; line-height: 1.8; color: #666;">We believe every love story deserves to be told beautifully. Our approach combines artistic vision with documentary storytelling to create images that will be treasured for generations.</p>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0;">
+                            <div style="background: url('https://images.unsplash.com/photo-1606216794074-735e91aa2c92?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'); background-size: cover; background-position: center; height: 400px;"></div>
+                            <div style="background: url('https://images.unsplash.com/photo-1583939003579-730e3918a45a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'); background-size: cover; background-position: center; height: 400px;"></div>
+                            <div style="background: url('https://images.unsplash.com/photo-1537633552985-df8429e8048b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'); background-size: cover; background-position: center; height: 400px;"></div>
+                        </div>
+                    `,
+                    about: `
+                        <div style="padding: 100px 50px; max-width: 1200px; margin: 0 auto;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center;">
+                                <div>
+                                    <h1 style="font-size: 3.5rem; margin-bottom: 30px; color: #333; font-family: 'Playfair Display', serif;">Our Story</h1>
+                                    <p style="font-size: 1.2rem; line-height: 1.8; color: #666; margin-bottom: 30px;">With over a decade of experience capturing love stories, we've had the privilege of documenting hundreds of weddings across the country. Our passion lies in creating timeless images that reflect the unique personality and emotion of each couple.</p>
+                                    <p style="font-size: 1.2rem; line-height: 1.8; color: #666;">We believe that your wedding day is one of the most important days of your life, and our goal is to capture every precious moment with artistry and authenticity.</p>
+                                </div>
+                                <div style="background: url('https://images.unsplash.com/photo-1511285560929-80b456fea0bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'); background-size: cover; background-position: center; height: 500px; border-radius: 8px;"></div>
+                            </div>
+                        </div>
+                    `,
+                    portfolio: `
+                        <div style="padding: 100px 50px; text-align: center;">
+                            <h1 style="font-size: 3.5rem; margin-bottom: 50px; color: #333; font-family: 'Playfair Display', serif;">Our Portfolio</h1>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 30px; max-width: 1200px; margin: 0 auto;">
+                                <div style="background: url('https://images.unsplash.com/photo-1519741497674-611481863552?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'); background-size: cover; background-position: center; height: 300px; border-radius: 8px;"></div>
+                                <div style="background: url('https://images.unsplash.com/photo-1606216794074-735e91aa2c92?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'); background-size: cover; background-position: center; height: 300px; border-radius: 8px;"></div>
+                                <div style="background: url('https://images.unsplash.com/photo-1583939003579-730e3918a45a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'); background-size: cover; background-position: center; height: 300px; border-radius: 8px;"></div>
+                                <div style="background: url('https://images.unsplash.com/photo-1537633552985-df8429e8048b?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'); background-size: cover; background-position: center; height: 300px; border-radius: 8px;"></div>
+                            </div>
+                        </div>
+                    `,
+                    contact: `
+                        <div style="padding: 100px 50px; max-width: 800px; margin: 0 auto; text-align: center;">
+                            <h1 style="font-size: 3.5rem; margin-bottom: 30px; color: #333; font-family: 'Playfair Display', serif;">Let's Create Magic Together</h1>
+                            <p style="font-size: 1.2rem; margin-bottom: 50px; color: #666;">Ready to start planning your dream wedding photography? We'd love to hear from you.</p>
+                            
+                            <form style="text-align: left;">
+                                <div style="margin-bottom: 20px;">
+                                    <input type="text" placeholder="Your Names" style="width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                                </div>
+                                <div style="margin-bottom: 20px;">
+                                    <input type="email" placeholder="Email Address" style="width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                                </div>
+                                <div style="margin-bottom: 20px;">
+                                    <input type="date" placeholder="Wedding Date" style="width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                                </div>
+                                <div style="margin-bottom: 30px;">
+                                    <textarea placeholder="Tell us about your vision..." rows="5" style="width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; resize: vertical;"></textarea>
+                                </div>
+                                <button type="submit" style="width: 100%; padding: 15px; background: #d4af37; color: white; border: none; font-size: 1.1rem; cursor: pointer; border-radius: 4px;">Send Message</button>
+                            </form>
+                        </div>
+                    `
+                }
+                // Add other template types here
+            };
+            
+            return content[templateType]?.[pageType] || '<div style="padding: 100px; text-align: center;"><h1>Coming Soon</h1></div>';
+        }
+        
+        function switchToPage(pageName) {
+            currentProject.currentPage = pageName;
+            document.getElementById('currentPage').textContent = pageName.charAt(0).toUpperCase() + pageName.slice(1) + ' Page';
+            renderCurrentPage();
+        }
+        
+        function renderCurrentPage() {
+            const canvas = document.querySelector('.canvas-content');
+            const pageContent = currentProject.pageData?.[currentProject.currentPage];
+            
+            if (pageContent) {
+                canvas.innerHTML = pageContent;
+            } else {
+                canvas.innerHTML = `
+                    <div class="empty-canvas">
+                        <i class="fas fa-wand-magic-sparkles"></i>
+                        <h3>Start Building Your ${currentProject.currentPage.charAt(0).toUpperCase() + currentProject.currentPage.slice(1)} Page</h3>
+                        <p>Use the AI generator to create content for this page, or choose a template to get started.</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function addNewPage() {
+            const pageName = prompt('Enter page name:');
+            if (pageName && !currentProject.pages.includes(pageName.toLowerCase())) {
+                const pageId = pageName.toLowerCase().replace(/\s+/g, '-');
+                currentProject.pages.push(pageId);
+                
+                const pageList = document.getElementById('pageList');
+                const pageItem = document.createElement('div');
+                pageItem.className = 'page-item';
+                pageItem.dataset.page = pageId;
+                pageItem.innerHTML = `
+                    <span class="page-name">${pageName}</span>
+                    <i class="fas fa-ellipsis-v"></i>
+                `;
+                
+                pageItem.addEventListener('click', function() {
+                    document.querySelectorAll('.page-item').forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+                    switchToPage(pageId);
+                });
+                
+                pageList.appendChild(pageItem);
+            }
+        }
+        
+        function updateSiteColor(color) {
+            currentProject.settings.primaryColor = color;
+            // Apply color changes to canvas content
+            const canvas = document.querySelector('.canvas-content');
+            const buttons = canvas.querySelectorAll('button');
+            buttons.forEach(btn => {
+                btn.style.background = color;
+            });
+        }
+        
+        function updateUIFromSettings() {
+            document.querySelector('input[type="color"]').value = currentProject.settings.primaryColor;
+            document.querySelector('.project-name').value = currentProject.name;
+        }
+        
+        function showLoading(message, detail) {
+            const overlay = document.createElement('div');
+            overlay.className = 'loading-overlay';
+            overlay.innerHTML = `
+                <div class="loading-content">
+                    <div class="loading-spinner"></div>
+                    <div class="status-message">${message}</div>
+                    <div class="status-detail">${detail}</div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        }
+        
+        function hideLoading() {
+            const overlay = document.querySelector('.loading-overlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+        
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 12px 20px;
+                background: ${type === 'success' ? 'var(--success)' : type === 'error' ? 'var(--danger)' : 'var(--warning)'};
+                color: white;
+                border-radius: 6px;
+                font-weight: 500;
+                z-index: 10001;
+                animation: slideIn 0.3s ease;
+            `;
+            
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+        
+        function loadProject() {
+            renderCurrentPage();
+            updateUIFromSettings();
+        }
+        
+        function saveDraft() {
+            localStorage.setItem('ai_website_project', JSON.stringify(currentProject));
+            showNotification('Project saved successfully!', 'success');
+        }
+        
+        function previewSite() {
+            const previewWindow = window.open('', '_blank');
+            const previewHTML = generatePreviewHTML();
+            previewWindow.document.write(previewHTML);
+            previewWindow.document.close();
+        }
+        
+        function publishSite() {
+            showLoading('Publishing your website...', 'Optimizing and deploying to production servers');
+            
+            setTimeout(() => {
+                hideLoading();
+                showNotification('Website published successfully!', 'success');
+            }, 3000);
+        }
+        
+        function generatePreviewHTML() {
+            let fullHTML = `
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>${currentProject.settings.siteTitle}</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@300;400;700&display=swap" rel="stylesheet">
+                    <style>
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        body { font-family: 'Inter', sans-serif; }
+                        .page { display: none; }
+                        .page.active { display: block; }
+                    </style>
+                </head>
+                <body>
+            `;
+            
+            currentProject.pages.forEach(page => {
+                const content = currentProject.pageData?.[page] || `<div><h1>${page} Page</h1></div>`;
+                fullHTML += `<div class="page ${page === 'home' ? 'active' : ''}" id="${page}">${content}</div>`;
+            });
+            
+            fullHTML += `
+                </body>
+                </html>
+            `;
+            
+            return fullHTML;
+        }
+        
+        // Add slide animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

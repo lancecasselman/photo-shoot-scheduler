@@ -38,12 +38,14 @@ This is a comprehensive photography business management platform designed to rev
 - **Block-Based Visual Editor**: Advanced drag-and-drop system for building websites using predefined blocks (Hero, About, Image Grid, Text, CTA, Testimonial, Pricing, Blog, etc.) with integrated AI assistant for intelligent content generation and design optimization.
 - **Dynamic Page Management**: System for creating, deleting, and managing custom pages with user-defined names and icons.
 - **Comprehensive Theme/Template System**: Extensive library of 20+ professional photography website templates inspired by photography legends, with category filtering and one-click application. Now featuring 15 premium multi-page photographer website templates with specialized layouts for different photography niches (wedding, fashion, documentary, portrait, adventure, celebrity, maternity, commercial, street, boudoir, sports, food, architecture, pet, and travel photography).
-- **Advanced Site Customization** (Added Jan 31, 2025):
-  - Logo upload and preview functionality
-  - 5 menu style options (horizontal, centered, minimal, split, transparent)
-  - Primary and secondary color customization
-  - Default background image upload
-  - Background transparency controls for text blocks (0-100% opacity)
+- **AI Website Builder** (Completely rebuilt Feb 1, 2025):
+  - Revolutionary AI-powered website generation from natural language descriptions
+  - Multi-page website creation with intelligent content generation
+  - Professional photography-focused templates (wedding, portrait, fashion, commercial)
+  - Real-time visual canvas with desktop/tablet/mobile responsive preview
+  - Advanced site customization: colors, typography, layouts, SEO settings
+  - Intelligent page management with dynamic content creation
+  - Complete website publishing and preview system
 - **Subscription System** (Added Jan 31, 2025):
   - Integrated Stripe payment processing for SaaS subscriptions
   - Three pricing tiers: $25/month, $125/6 months (1 month free), $200/year (2 months free)
