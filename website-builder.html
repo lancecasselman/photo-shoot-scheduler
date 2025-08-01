@@ -2374,6 +2374,11 @@ Examples:
                     });
                     
                     const data = await response.json();
+                    console.log('Purchase response:', data);
+                    
+                    if (!response.ok) {
+                        throw new Error(data.error || data.message || 'Purchase request failed');
+                    }
                     
                     if (data.success && data.clientSecret) {
                         // Initialize Stripe if not already done
@@ -2413,7 +2418,15 @@ Examples:
                     }
                 } catch (error) {
                     console.error('Payment error:', error);
-                    showNotification('Payment error. Please try again.', 'error');
+                    let errorMessage = 'Payment error. Please try again.';
+                    
+                    if (error.message) {
+                        errorMessage = error.message;
+                    } else if (typeof error === 'string') {
+                        errorMessage = error;
+                    }
+                    
+                    showNotification(errorMessage, 'error');
                     purchaseBtn.disabled = false;
                     purchaseBtn.textContent = 'Purchase Credits';
                 }
