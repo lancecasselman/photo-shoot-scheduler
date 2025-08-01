@@ -1508,3 +1508,157 @@ window.addEventListener('load', function() {
     console.log('Page loaded, initializing...');
     initializePage();
 });
+
+// Trigger workflow automation for session
+async function triggerWorkflow(sessionId) {
+    try {
+        // Get session data first
+        const response = await fetch(`/api/sessions/${sessionId}`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to fetch session data');
+        }
+        
+        const session = await response.json();
+        
+        // Show workflow options
+        const workflowTypes = [
+            { id: 'galleryDelivery', name: '📸 Gallery Ready Notification', desc: 'Notify client their photos are ready' },
+            { id: 'contractReminder', name: '📝 Contract Reminder', desc: 'Remind client to sign contract' },
+            { id: 'paymentFollowup', name: '💰 Payment Follow-up', desc: 'Send payment reminder' },
+            { id: 'sessionPrep', name: '📋 Session Preparation', desc: 'Send session prep guide' },
+            { id: 'feedbackRequest', name: '⭐ Feedback Request', desc: 'Request client review' }
+        ];
+        
+        let optionsHTML = workflowTypes.map(workflow => 
+            `<div style="margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer;" 
+                  onclick="executeWorkflow('${sessionId}', '${workflow.id}')">
+                <strong>${workflow.name}</strong><br>
+                <small style="color: #666;">${workflow.desc}</small>
+             </div>`
+        ).join('');
+        
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h3>⚡ Workflow Automation</h3>
+                    <button onclick="this.closest('.modal-overlay').remove()" class="close-button">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>Select an automated workflow to trigger for <strong>${session.clientName}</strong>:</p>
+                    ${optionsHTML}
+                    <div style="margin-top: 20px; text-align: center;">
+                        <button onclick="window.open('/advanced-workflow.html', '_blank')" class="btn btn-secondary">
+                            ⚙️ Manage Automation Settings
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+    } catch (error) {
+        console.error('Error triggering workflow:', error);
+        showMessage('Failed to load workflow options: ' + error.message, 'error');
+    }
+}
+
+// Execute specific workflow
+async function executeWorkflow(sessionId, workflowType) {
+    try {
+        // Get session data for workflow
+        const sessionResponse = await fetch(`/api/sessions/${sessionId}`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        
+        const session = await sessionResponse.json();
+        
+        const clientData = {
+            clientName: session.clientName,
+            email: session.email,
+            phoneNumber: session.phoneNumber,
+            sessionType: session.sessionType,
+            sessionDate: new Date(session.dateTime).toLocaleDateString()
+        };
+        
+        const response = await fetch('/api/trigger-workflow', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({
+                sessionId: sessionId,
+                workflowType: workflowType,
+                clientData: clientData
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to trigger workflow');
+        }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Show success with action options
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 600px;">
+                    <div class="modal-header">
+                        <h3>✅ Workflow Ready</h3>
+                        <button onclick="this.closest('.modal-overlay').remove()" class="close-button">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <p><strong>Template Generated:</strong> ${result.template.subject}</p>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+                            <strong>Message Preview:</strong><br>
+                            ${result.template.message}
+                        </div>
+                        <div style="text-align: center; margin-top: 20px;">
+                            <button onclick="window.open('${result.mailtoLink}')" class="btn btn-primary" style="margin: 5px;">
+                                📧 Open Email Client
+                            </button>
+                            ${result.smsLink ? `
+                                <button onclick="window.open('${result.smsLink}')" class="btn btn-secondary" style="margin: 5px;">
+                                    📱 Send SMS
+                                </button>
+                            ` : ''}
+                            <button onclick="copyToClipboard(\`${result.template.message}\`)" class="btn btn-secondary" style="margin: 5px;">
+                                📋 Copy Message
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Close existing modal and show new one
+            document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
+            document.body.appendChild(modal);
+            
+            showMessage('Workflow executed successfully!', 'success');
+        } else {
+            throw new Error(result.error || 'Workflow execution failed');
+        }
+        
+    } catch (error) {
+        console.error('Error executing workflow:', error);
+        showMessage('Failed to execute workflow: ' + error.message, 'error');
+    }
+}
+
+// Copy text to clipboard
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        showMessage('Message copied to clipboard!', 'success');
+    }).catch(err => {
+        console.error('Failed to copy text: ', err);
+        showMessage('Failed to copy message', 'error');
+    });
+}

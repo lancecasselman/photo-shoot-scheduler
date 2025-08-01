@@ -110,6 +110,85 @@ function isRAWFile(filename, mimetype) {
     return isRawExtension || isRawMime;
 }
 
+// Process workflow automation
+async function processWorkflow(workflowType, clientData, messageTemplate, sessionId) {
+    try {
+        console.log(`🤖 Processing workflow: ${workflowType} for session ${sessionId}`);
+        
+        const templates = {
+            professional: {
+                contractReminder: {
+                    subject: `Contract Signature Required - ${clientData.sessionType} Session`,
+                    message: `Dear ${clientData.clientName}, we need your contract signature to confirm your ${clientData.sessionType} session on ${clientData.sessionDate}. Please sign and return at your earliest convenience.`
+                },
+                paymentFollowup: {
+                    subject: `Payment Reminder - Session in 3 Days`,
+                    message: `Dear ${clientData.clientName}, your ${clientData.sessionType} session is scheduled for ${clientData.sessionDate}. Please complete payment to secure your booking.`
+                },
+                sessionPrep: {
+                    subject: `Preparation Guide for Your Upcoming Session`,
+                    message: `Dear ${clientData.clientName}, your ${clientData.sessionType} session is approaching! Please review the attached preparation guide to ensure a smooth experience.`
+                },
+                galleryDelivery: {
+                    subject: `Your Photos Are Ready! 📸`,
+                    message: `Dear ${clientData.clientName}, we're excited to share that your ${clientData.sessionType} photos are ready for viewing and download. Access your private gallery here: ${process.env.APP_URL}/gallery/${sessionId}`
+                },
+                feedbackRequest: {
+                    subject: `We'd Love Your Feedback`,
+                    message: `Dear ${clientData.clientName}, we hope you love your ${clientData.sessionType} photos! We'd greatly appreciate a review of your experience.`
+                }
+            },
+            friendly: {
+                galleryDelivery: {
+                    subject: `Your amazing photos are ready! 🌟`,
+                    message: `Hey ${clientData.clientName}! Your ${clientData.sessionType} photos turned out absolutely stunning! Can't wait for you to see them: ${process.env.APP_URL}/gallery/${sessionId}`
+                }
+            },
+            luxury: {
+                galleryDelivery: {
+                    subject: `Your Exclusive Gallery Awaits`,
+                    message: `Dear ${clientData.clientName}, it is our pleasure to present your bespoke ${clientData.sessionType} collection. Your private gallery showcases the artistry of your session: ${process.env.APP_URL}/gallery/${sessionId}`
+                }
+            }
+        };
+        
+        const template = templates[messageTemplate]?.[workflowType] || templates.professional[workflowType];
+        
+        if (!template) {
+            throw new Error(`No template found for workflow: ${workflowType}`);
+        }
+        
+        // Create mailto link for native email integration
+        const emailBody = encodeURIComponent(template.message);
+        const emailSubject = encodeURIComponent(template.subject);
+        const mailtoLink = `mailto:${clientData.email}?subject=${emailSubject}&body=${emailBody}`;
+        
+        // For SMS notifications (if phone number provided)
+        let smsLink = null;
+        if (clientData.phoneNumber) {
+            const smsBody = encodeURIComponent(`${template.subject}\n\n${template.message}`);
+            smsLink = `sms:${clientData.phoneNumber}?body=${smsBody}`;
+        }
+        
+        return {
+            success: true,
+            workflowType: workflowType,
+            template: template,
+            mailtoLink: mailtoLink,
+            smsLink: smsLink,
+            executedAt: new Date().toISOString()
+        };
+        
+    } catch (error) {
+        console.error(`❌ Workflow processing failed for ${workflowType}:`, error);
+        return {
+            success: false,
+            error: error.message,
+            workflowType: workflowType
+        };
+    }
+}
+
 // Process RAW files for R2 backup
 async function processRAWBackups(sessionId, rawFiles, userId) {
     console.log(`💾 Starting RAW backup process for ${rawFiles.length} files`);
@@ -1539,6 +1618,116 @@ app.get('/api/r2-test', isAuthenticated, async (req, res) => {
             error: error.message,
             code: error.code
         });
+    }
+});
+
+// Save automation settings
+app.post('/api/automation-settings', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.user?.uid || req.user?.id || 'unknown';
+        const { settings, messageTemplate } = req.body;
+        
+        // Upsert automation settings
+        await pool.query(`
+            INSERT INTO user_automation_settings (
+                user_id, automation_settings, message_template, updated_at
+            ) VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+            ON CONFLICT (user_id)
+            DO UPDATE SET 
+                automation_settings = $2,
+                message_template = $3,
+                updated_at = CURRENT_TIMESTAMP
+        `, [userId, JSON.stringify(settings), messageTemplate]);
+        
+        console.log(`💾 Automation settings saved for user ${userId}`);
+        res.json({ success: true });
+        
+    } catch (error) {
+        console.error('Error saving automation settings:', error);
+        res.status(500).json({ error: 'Failed to save automation settings' });
+    }
+});
+
+// Get automation settings
+app.get('/api/automation-settings', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.user?.uid || req.user?.id || 'unknown';
+        
+        const result = await pool.query(`
+            SELECT automation_settings, message_template
+            FROM user_automation_settings 
+            WHERE user_id = $1
+        `, [userId]);
+        
+        if (result.rows.length > 0) {
+            res.json({
+                settings: result.rows[0].automation_settings,
+                messageTemplate: result.rows[0].message_template
+            });
+        } else {
+            // Return default settings
+            res.json({
+                settings: {
+                    contractReminder: false,
+                    paymentFollowup: false,
+                    sessionPrep: false,
+                    galleryDelivery: true,
+                    feedbackRequest: false,
+                    weatherAlerts: false,
+                    calendarSync: true,
+                    milestones: false,
+                    referralTracking: false,
+                    equipmentReminders: false
+                },
+                messageTemplate: 'professional'
+            });
+        }
+        
+    } catch (error) {
+        console.error('Error fetching automation settings:', error);
+        res.status(500).json({ error: 'Failed to fetch automation settings' });
+    }
+});
+
+// Trigger automated workflows
+app.post('/api/trigger-workflow', isAuthenticated, async (req, res) => {
+    try {
+        const { sessionId, workflowType, clientData } = req.body;
+        const userId = req.user?.uid || req.user?.id || 'unknown';
+        
+        // Get user's automation settings
+        const settingsResult = await pool.query(`
+            SELECT automation_settings, message_template
+            FROM user_automation_settings 
+            WHERE user_id = $1
+        `, [userId]);
+        
+        if (settingsResult.rows.length === 0) {
+            return res.status(400).json({ error: 'No automation settings found' });
+        }
+        
+        const { automation_settings, message_template } = settingsResult.rows[0];
+        
+        if (!automation_settings[workflowType]) {
+            return res.json({ success: true, message: 'Workflow disabled' });
+        }
+        
+        // Process the workflow
+        const result = await processWorkflow(workflowType, clientData, message_template, sessionId);
+        
+        // Log the workflow execution
+        await pool.query(`
+            INSERT INTO workflow_logs (
+                user_id, session_id, workflow_type, 
+                status, executed_at, result_data
+            ) VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP, $5)
+        `, [userId, sessionId, workflowType, result.success ? 'success' : 'failed', JSON.stringify(result)]);
+        
+        res.json(result);
+        
+    } catch (error) {
+        console.error('Error triggering workflow:', error);
+        res.status(500).json({ error: 'Failed to trigger workflow' });
     }
 });
 

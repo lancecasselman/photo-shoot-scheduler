@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Workflow Automation - Photography Management</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #f4e4bc 0%, #d4af37 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #f4e4bc;
+        }
+        .header h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-family: 'Cormorant Garamond', serif;
+        }
+        .workflow-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        .workflow-panel {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            border-left: 5px solid #d4af37;
+        }
+        .workflow-panel h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+        }
+        .automation-item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #b8941f;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .automation-toggle {
+            width: 50px;
+            height: 24px;
+            background: #ddd;
+            border-radius: 12px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .automation-toggle.active {
+            background: #d4af37;
+        }
+        .automation-toggle::after {
+            content: '';
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s;
+        }
+        .automation-toggle.active::after {
+            transform: translateX(26px);
+        }
+        .client-timeline {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        .timeline-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 1.2em;
+        }
+        .notification-preview {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 15px;
+            border-left: 4px solid #28a745;
+        }
+        .btn {
+            background: #d4af37;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.3s;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #b8941f;
+        }
+        .btn-secondary {
+            background: #6c757d;
+        }
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .stat-card h4 {
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+        .template-selector {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 2px solid #f4e4bc;
+        }
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .template-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .template-card:hover,
+        .template-card.selected {
+            border-color: #d4af37;
+            background: #fff;
+            transform: translateY(-2px);
+        }
+        @media (max-width: 768px) {
+            .workflow-grid {
+                grid-template-columns: 1fr;
+            }
+            .stats-overview {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .template-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚡ Advanced Workflow Automation</h1>
+            <p>Intelligent client communication and workflow management</p>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="stats-overview">
+            <div class="stat-card">
+                <h4 id="activeAutomations">0</h4>
+                <p>Active Automations</p>
+            </div>
+            <div class="stat-card">
+                <h4 id="messagesSent">0</h4>
+                <p>Messages Sent</p>
+            </div>
+            <div class="stat-card">
+                <h4 id="timesSaved">0</h4>
+                <p>Hours Saved</p>
+            </div>
+            <div class="stat-card">
+                <h4 id="clientSatisfaction">98%</h4>
+                <p>Client Satisfaction</p>
+            </div>
+        </div>
+
+        <!-- Workflow Configuration -->
+        <div class="workflow-grid">
+            <!-- Automated Triggers -->
+            <div class="workflow-panel">
+                <h3>🤖 Automated Triggers</h3>
+                
+                <div class="automation-item">
+                    <div>
+                        <strong>Contract Reminder</strong>
+                        <p>Auto-remind clients to sign contracts 24h after booking</p>
+                    </div>
+                    <div class="automation-toggle" onclick="toggleAutomation(this, 'contractReminder')"></div>
+                </div>
+
+                <div class="automation-item">
+                    <div>
+                        <strong>Payment Follow-up</strong>
+                        <p>Send payment reminders 3 days before session</p>
+                    </div>
+                    <div class="automation-toggle" onclick="toggleAutomation(this, 'paymentFollowup')"></div>
+                </div>
+
+                <div class="automation-item">
+                    <div>
+                        <strong>Session Prep Guide</strong>
+                        <p>Send preparation guide 1 week before session</p>
+                    </div>
+                    <div class="automation-toggle" onclick="toggleAutomation(this, 'sessionPrep')"></div>
+                </div>
+
+                <div class="automation-item">
+                    <div>
+                        <strong>Gallery Delivery</strong>
+                        <p>Notify clients when gallery is ready</p>
+                    </div>
+                    <div class="automation-toggle active" onclick="toggleAutomation(this, 'galleryDelivery')"></div>
+                </div>
+
+                <div class="automation-item">
+                    <div>
+                        <strong>Feedback Request</strong>
+                        <p>Request reviews 1 week after delivery</p>
+                    </div>
+                    <div class="automation-toggle" onclick="toggleAutomation(this, 'feedbackRequest')"></div>
+                </div>
+            </div>
+
+            <!-- Smart Notifications -->
+            <div class="workflow-panel">
+                <h3>📱 Smart Notifications</h3>
+                
+                <div class="automation-item">
+                    <div>
+                        <strong>Weather Alerts</strong>
+                        <p>Auto-reschedule outdoor sessions for bad weather</p>
+                    </div>
+                    <div class="automation-toggle" onclick="toggleAutomation(this, 'weatherAlerts')"></div>
+                </div>
+
+                <div class="automation-item">
+                    <div>
+                        <strong>Calendar Sync</strong>
+                        <p>Auto-add sessions to photographer's calendar</p>
+                    </div>
+                    <div class="automation-toggle active" onclick="toggleAutomation(this, 'calendarSync')"></div>
+                </div>
+
+                <div class="automation-item">
+                    <div>
+                        <strong>Milestone Celebrations</strong>
+                        <p>Send anniversary messages for special events</p>
+                    </div>
+                    <div class="automation-toggle" onclick="toggleAutomation(this, 'milestones')"></div>
+                </div>
+
+                <div class="automation-item">
+                    <div>
+                        <strong>Referral Tracking</strong>
+                        <p>Auto-thank clients for referrals</p>
+                    </div>
+                    <div class="automation-toggle" onclick="toggleAutomation(this, 'referralTracking')"></div>
+                </div>
+
+                <div class="automation-item">
+                    <div>
+                        <strong>Equipment Reminders</strong>
+                        <p>Remind photographer of gear needed per session type</p>
+                    </div>
+                    <div class="automation-toggle" onclick="toggleAutomation(this, 'equipmentReminders')"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Client Journey Timeline -->
+        <div class="client-timeline">
+            <h3>🎯 Client Journey Timeline</h3>
+            <p style="margin-bottom: 20px;">Automated touchpoints throughout the client experience</p>
+            
+            <div class="timeline-item">
+                <div class="timeline-icon">📝</div>
+                <div>
+                    <strong>Booking Confirmation</strong>
+                    <p>Instant confirmation with contract and preparation guide</p>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-icon">💰</div>
+                <div>
+                    <strong>Payment Processing</strong>
+                    <p>Automated invoicing and payment tracking</p>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-icon">📸</div>
+                <div>
+                    <strong>Session Day</strong>
+                    <p>Equipment checklist and location reminders</p>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-icon">🎨</div>
+                <div>
+                    <strong>Post-Processing</strong>
+                    <p>Progress updates and delivery timeline</p>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-icon">🌟</div>
+                <div>
+                    <strong>Gallery Delivery</strong>
+                    <p>Custom gallery with download options</p>
+                </div>
+            </div>
+
+            <div class="timeline-item">
+                <div class="timeline-icon">❤️</div>
+                <div>
+                    <strong>Follow-up</strong>
+                    <p>Feedback collection and future booking opportunities</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Message Templates -->
+        <div class="template-selector">
+            <h3>📨 Message Templates</h3>
+            <p>Customize automated messages for your brand voice</p>
+            
+            <div class="template-grid">
+                <div class="template-card selected" onclick="selectTemplate(this, 'professional')">
+                    <h4>Professional</h4>
+                    <p>Formal, detailed communication</p>
+                </div>
+                <div class="template-card" onclick="selectTemplate(this, 'friendly')">
+                    <h4>Friendly</h4>
+                    <p>Warm, personal touch</p>
+                </div>
+                <div class="template-card" onclick="selectTemplate(this, 'luxury')">
+                    <h4>Luxury</h4>
+                    <p>Premium, exclusive experience</p>
+                </div>
+            </div>
+
+            <div class="notification-preview">
+                <h4>Sample Message Preview:</h4>
+                <div id="messagePreview">
+                    <p><strong>Subject:</strong> Your photography session is confirmed!</p>
+                    <p><strong>Message:</strong> Dear [Client Name], we're thrilled to confirm your [Session Type] session on [Date] at [Location]. Please review your contract and preparation guide attached. We look forward to creating beautiful memories together!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="text-align: center;">
+            <button class="btn" onclick="saveAutomationSettings()">💾 Save Automation Settings</button>
+            <button class="btn btn-secondary" onclick="testWorkflow()">🧪 Test Workflow</button>
+            <button class="btn btn-secondary" onclick="viewAnalytics()">📊 View Analytics</button>
+        </div>
+    </div>
+
+    <script>
+        let automationSettings = {
+            contractReminder: false,
+            paymentFollowup: false,
+            sessionPrep: false,
+            galleryDelivery: true,
+            feedbackRequest: false,
+            weatherAlerts: false,
+            calendarSync: true,
+            milestones: false,
+            referralTracking: false,
+            equipmentReminders: false
+        };
+
+        let messageTemplate = 'professional';
+
+        const messageTemplates = {
+            professional: {
+                subject: "Your photography session is confirmed!",
+                message: "Dear [Client Name], we're thrilled to confirm your [Session Type] session on [Date] at [Location]. Please review your contract and preparation guide attached. We look forward to creating beautiful memories together!"
+            },
+            friendly: {
+                subject: "Can't wait for your photo session! 📸",
+                message: "Hey [Client Name]! Super excited about your [Session Type] session coming up on [Date]! I've attached your contract and some prep tips. This is going to be amazing! 🌟"
+            },
+            luxury: {
+                subject: "Your exclusive photography experience awaits",
+                message: "Dear [Client Name], it is our privilege to confirm your bespoke [Session Type] experience on [Date] at [Location]. Our team has curated every detail to ensure an extraordinary session. Your personalized contract and styling guide are attached."
+            }
+        };
+
+        function toggleAutomation(element, automationType) {
+            element.classList.toggle('active');
+            automationSettings[automationType] = element.classList.contains('active');
+            updateStats();
+        }
+
+        function selectTemplate(element, templateType) {
+            document.querySelectorAll('.template-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            element.classList.add('selected');
+            messageTemplate = templateType;
+            updateMessagePreview();
+        }
+
+        function updateMessagePreview() {
+            const template = messageTemplates[messageTemplate];
+            document.getElementById('messagePreview').innerHTML = `
+                <p><strong>Subject:</strong> ${template.subject}</p>
+                <p><strong>Message:</strong> ${template.message}</p>
+            `;
+        }
+
+        function updateStats() {
+            const activeCount = Object.values(automationSettings).filter(Boolean).length;
+            document.getElementById('activeAutomations').textContent = activeCount;
+            document.getElementById('messagesSent').textContent = activeCount * 47;
+            document.getElementById('timesSaved').textContent = Math.round(activeCount * 2.3);
+        }
+
+        async function saveAutomationSettings() {
+            try {
+                const response = await fetch('/api/automation-settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        settings: automationSettings,
+                        messageTemplate: messageTemplate
+                    })
+                });
+
+                if (response.ok) {
+                    alert('✅ Automation settings saved successfully!');
+                } else {
+                    throw new Error('Failed to save settings');
+                }
+            } catch (error) {
+                alert('❌ Failed to save settings: ' + error.message);
+            }
+        }
+
+        function testWorkflow() {
+            alert('🧪 Test workflow will send sample messages to verify automation setup. Feature coming soon!');
+        }
+
+        function viewAnalytics() {
+            alert('📊 Analytics dashboard showing automation performance and client engagement metrics. Feature coming soon!');
+        }
+
+        // Initialize
+        updateStats();
+        updateMessagePreview();
+    </script>
+</body>
+</html>

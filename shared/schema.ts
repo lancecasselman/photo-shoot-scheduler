@@ -214,3 +214,29 @@ export type InsertRawBackup = typeof rawBackups.$inferInsert;
 export type RawBackup = typeof rawBackups.$inferSelect;
 export type InsertRawStorageBilling = typeof rawStorageBilling.$inferInsert;
 export type RawStorageBilling = typeof rawStorageBilling.$inferSelect;
+
+// Workflow automation tables
+export const userAutomationSettings = pgTable('user_automation_settings', {
+  id: serial('id').primaryKey(),
+  userId: text('user_id').notNull().unique(),
+  automationSettings: jsonb('automation_settings').notNull(),
+  messageTemplate: text('message_template').default('professional'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
+});
+
+export const workflowLogs = pgTable('workflow_logs', {
+  id: serial('id').primaryKey(),
+  userId: text('user_id').notNull(),
+  sessionId: text('session_id'),
+  workflowType: text('workflow_type').notNull(),
+  status: text('status').notNull(), // 'success', 'failed', 'pending'
+  executedAt: timestamp('executed_at').defaultNow(),
+  resultData: jsonb('result_data'),
+  createdAt: timestamp('created_at').defaultNow()
+});
+
+export type InsertUserAutomationSettings = typeof userAutomationSettings.$inferInsert;
+export type UserAutomationSettings = typeof userAutomationSettings.$inferSelect;
+export type InsertWorkflowLog = typeof workflowLogs.$inferInsert;
+export type WorkflowLog = typeof workflowLogs.$inferSelect;
