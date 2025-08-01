@@ -41,6 +41,41 @@ const R2BackupService = require('./server/r2-backup');
 // Import AI services
 const { AIServices } = require('./server/ai-services');
 
+// Database AI Credits Functions
+async function getUserAiCredits(userId) {
+    try {
+        const result = await pool.query('SELECT ai_credits FROM users WHERE id = $1', [userId]);
+        return result.rows[0]?.ai_credits || 0;
+    } catch (error) {
+        console.error('Error getting user AI credits:', error);
+        return 0;
+    }
+}
+
+async function useAiCredits(userId, amount, operation, details) {
+    try {
+        // First check if user has enough credits
+        const currentCredits = await getUserAiCredits(userId);
+        if (currentCredits < amount) {
+            throw new Error('Insufficient AI credits');
+        }
+        
+        // Deduct credits
+        await pool.query('UPDATE users SET ai_credits = ai_credits - $1 WHERE id = $2', [amount, userId]);
+        
+        // Log the usage
+        await pool.query(`
+            INSERT INTO ai_credit_transactions (user_id, amount, operation, details, created_at)
+            VALUES ($1, $2, $3, $4, NOW())
+        `, [userId, -amount, operation, details]);
+        
+        return amount;
+    } catch (error) {
+        console.error('Error using AI credits:', error);
+        throw error;
+    }
+}
+
 // Initialize services
 const r2BackupService = new R2BackupService();
 const aiServices = new AIServices();
@@ -1260,7 +1295,7 @@ async function deleteSession(id, userId) {
 }
 
 // Configure multer for file uploads
-const storage = multer.diskStorage({
+const fileStorage = multer.diskStorage({
     destination: (req, file, cb) => {
         const uploadDir = path.join(__dirname, 'uploads');
         if (!fs.existsSync(uploadDir)) {
@@ -1275,7 +1310,7 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ 
-    storage: storage,
+    storage: fileStorage,
     limits: { 
         fileSize: 100 * 1024 * 1024 * 1024, // 100GB per file (MAXIMUM for mobile)
         files: 50000,                       // 50000 files max per batch
@@ -1698,7 +1733,7 @@ app.post('/api/ai/process-page-request', async (req, res) => {
     try {
         const { prompt, currentPage, pageType } = req.body;
         // Temporary: Use default user ID until auth is implemented
-        const userId = 1;
+        const userId = '1';
         
         if (!prompt || !prompt.trim()) {
             return res.status(400).json({ 
@@ -1709,7 +1744,7 @@ app.post('/api/ai/process-page-request', async (req, res) => {
 
         // Check if user has enough AI credits (1 credit per request)
         const creditsNeeded = 1;
-        const availableCredits = await storage.getUserAiCredits(userId);
+        const availableCredits = await getUserAiCredits(userId);
         
         if (availableCredits < creditsNeeded) {
             return res.status(402).json({
@@ -1724,7 +1759,7 @@ app.post('/api/ai/process-page-request', async (req, res) => {
         console.log(`AI Page Request: ${prompt} for page type: ${pageType}`);
 
         // Use AI credits before making the request
-        const creditsUsed = await storage.useAiCredits(userId, creditsNeeded, 'page_generation', prompt);
+        const creditsUsed = await useAiCredits(userId, creditsNeeded, 'page_generation', prompt);
         
         if (!creditsUsed) {
             return res.status(402).json({
@@ -1748,7 +1783,7 @@ app.post('/api/ai/process-page-request', async (req, res) => {
 
         } catch (aiError) {
             // If AI generation fails, refund the credits
-            await storage.addAiCredits(userId, creditsNeeded, 0); // Refund
+            await pool.query('UPDATE users SET ai_credits = ai_credits + $1 WHERE id = $2', [creditsNeeded, userId]);
             throw aiError;
         }
 
@@ -1765,8 +1800,8 @@ app.post('/api/ai/process-page-request', async (req, res) => {
 app.get('/api/ai/credits', async (req, res) => {
     try {
         // Temporary: Use default user ID until auth is implemented
-        const userId = 1;
-        const credits = await storage.getUserAiCredits(userId);
+        const userId = '1';
+        const credits = await getUserAiCredits(userId);
         
         res.json({
             success: true,
@@ -1787,7 +1822,7 @@ app.post('/api/ai/purchase-credits', async (req, res) => {
     try {
         const { creditsPackage } = req.body; // 'small', 'medium', 'large'
         // Temporary: Use default user ID until auth is implemented
-        const userId = 1;
+        const userId = '1';
         
         // Credit packages: $5 = 50 credits, $15 = 150 credits, $30 = 350 credits
         const packages = {
