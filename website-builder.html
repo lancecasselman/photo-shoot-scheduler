@@ -184,7 +184,7 @@
             height: 100%;
             background: var(--bg-primary);
             z-index: 1000;
-            display: none;
+            display: none !important; /* Force hide to prevent blocking */
         }
         
         .fullscreen-preview.active {
@@ -3565,45 +3565,50 @@ Examples:
                 saveDraft: typeof window.saveDraft
             });
             
-            // COMPREHENSIVE BUTTON DEBUGGING
+            // COMPREHENSIVE BUTTON DEBUGGING - FIND THE OVERLAY BLOCKING CLICKS
             console.log('BUTTON TEST: Testing if buttons respond to clicks...');
             setTimeout(() => {
-                // Test multiple buttons
-                const buttons = document.querySelectorAll('button[onclick]');
-                console.log(`BUTTON TEST: Found ${buttons.length} buttons with onclick handlers`);
+                // Check for blocking overlays
+                const overlays = document.querySelectorAll('[style*="position: fixed"], .fullscreen-preview, .loading-overlay, .ai-panel');
+                console.log(`OVERLAY CHECK: Found ${overlays.length} potential blocking elements`);
                 
-                buttons.forEach((btn, index) => {
-                    const onclick = btn.getAttribute('onclick');
-                    console.log(`Button ${index}: ${onclick}`);
+                overlays.forEach((overlay, index) => {
+                    const computedStyle = window.getComputedStyle(overlay);
+                    const rect = overlay.getBoundingClientRect();
+                    console.log(`Overlay ${index}: ${overlay.className || overlay.tagName}`, {
+                        display: computedStyle.display,
+                        zIndex: computedStyle.zIndex,
+                        position: computedStyle.position,
+                        width: rect.width,
+                        height: rect.height,
+                        visible: rect.width > 0 && rect.height > 0
+                    });
                     
-                    // Check if button is clickable
-                    const rect = btn.getBoundingClientRect();
-                    const computedStyle = window.getComputedStyle(btn);
-                    console.log(`Button ${index} - Position: ${rect.x}, ${rect.y}, Size: ${rect.width}x${rect.height}`);
-                    console.log(`Button ${index} - z-index: ${computedStyle.zIndex}, pointer-events: ${computedStyle.pointerEvents}`);
-                    
-                    // Add visual indicator
-                    if (index === 0) {
-                        btn.style.border = '3px solid red';
-                        btn.style.background = 'yellow';
+                    // Hide any blocking overlays
+                    if (computedStyle.display !== 'none' && rect.width > 0 && rect.height > 0) {
+                        console.log(`FIXING: Hiding blocking overlay ${index}`);
+                        overlay.style.display = 'none';
                     }
                 });
                 
-                // Test if onclick functions exist
-                console.log('Function existence check:');
-                console.log('addTextElement:', typeof window.addTextElement);
-                console.log('toggleAIAssistant:', typeof window.toggleAIAssistant);
-                console.log('saveDraft:', typeof window.saveDraft);
+                // Test buttons
+                const buttons = document.querySelectorAll('button[onclick]');
+                console.log(`BUTTON TEST: Found ${buttons.length} buttons with onclick handlers`);
                 
-                // Try calling a function directly
-                try {
-                    if (typeof window.addTextElement === 'function') {
-                        console.log('TESTING: Calling addTextElement directly...');
+                if (buttons.length > 0) {
+                    const testBtn = buttons[0];
+                    testBtn.style.border = '3px solid red';
+                    testBtn.style.background = 'yellow';
+                    testBtn.style.zIndex = '99999';
+                    
+                    // Test direct function call
+                    console.log('TESTING: Direct function call...');
+                    try {
                         window.addTextElement();
-                        console.log('SUCCESS: addTextElement executed!');
+                        console.log('SUCCESS: Function executed!');
+                    } catch (error) {
+                        console.error('ERROR:', error);
                     }
-                } catch (error) {
-                    console.error('ERROR calling addTextElement:', error);
                 }
             }, 1000);
             
