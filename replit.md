@@ -14,6 +14,11 @@ This is a comprehensive photography business management platform designed to rev
 - **Zero Tolerance for Polite BS**: User explicitly rejects overly polite, formal responses
 - **Honest Assessment**: If something's fucked up, say it's fucked up and fix it
 
+### Interface Preferences (Updated Feb 1, 2025)
+- **Navigation Cleanup**: Removed AI Visual Editor and Storefront Builder from main navigation menu
+- **Core Website Builder Preserved**: Keep website-builder.html functionality completely untouched
+- **Streamlined Menu**: Focus on essential photography business tools only
+
 ### General Working Preferences
 - Business email: lance@thelegacyphotography.com
 - Business name: Photography Management System (general platform for all photographers)
