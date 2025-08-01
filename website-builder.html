@@ -3437,17 +3437,124 @@ Examples:
             }
         });
         
-        // Make functions globally available for onclick handlers
+        // Add missing deletePage function
+        function deletePage(pageName) {
+            if (confirm(`Delete the "${pageName}" page? This cannot be undone.`)) {
+                // Remove from currentProject.pages array
+                const index = currentProject.pages.indexOf(pageName);
+                if (index > -1) {
+                    currentProject.pages.splice(index, 1);
+                }
+                
+                // Remove page data
+                if (currentProject.pageData && currentProject.pageData[pageName]) {
+                    delete currentProject.pageData[pageName];
+                }
+                
+                // Remove from UI
+                const pageItem = document.querySelector(`[data-page="${pageName}"]`);
+                if (pageItem) {
+                    pageItem.remove();
+                }
+                
+                // Switch to home page if deleted page was active
+                if (currentProject.currentPage === pageName) {
+                    switchToPage('home');
+                }
+                
+                showNotification(`Page "${pageName}" deleted`, 'success');
+            }
+        }
+
+        // Add missing openTypographyModal function
+        function openTypographyModal() {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: var(--bg-secondary); border-radius: 12px; padding: 30px; max-width: 500px; width: 90%;">
+                    <h3 style="margin-bottom: 20px; color: var(--text-primary);">Choose Typography</h3>
+                    <div style="display: grid; gap: 15px;">
+                        <div class="font-option" data-font="inter" style="padding: 15px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; font-family: Inter;">
+                            <h4>Inter</h4>
+                            <p>Modern & clean sans-serif</p>
+                        </div>
+                        <div class="font-option" data-font="playfair" style="padding: 15px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; font-family: 'Playfair Display';">
+                            <h4>Playfair Display</h4>
+                            <p>Elegant serif for luxury brands</p>
+                        </div>
+                        <div class="font-option" data-font="montserrat" style="padding: 15px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; font-family: Montserrat;">
+                            <h4>Montserrat</h4>
+                            <p>Versatile sans-serif</p>
+                        </div>
+                    </div>
+                    <button id="applyFontBtn" class="btn btn-primary" style="width: 100%; margin-top: 20px;">Apply Font</button>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Handle font selection
+            modal.querySelectorAll('.font-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    modal.querySelectorAll('.font-option').forEach(opt => opt.style.border = '2px solid #ddd');
+                    this.style.border = '2px solid #d4af37';
+                });
+            });
+            
+            // Handle apply button
+            modal.querySelector('#applyFontBtn').addEventListener('click', function() {
+                const selected = modal.querySelector('.font-option[style*="border: 2px solid rgb(212, 175, 55)"]');
+                if (selected) {
+                    const fontFamily = selected.dataset.font;
+                    updateCanvasTypography(fontFamily);
+                    showNotification('Typography updated!', 'success');
+                }
+                modal.remove();
+            });
+            
+            // Close on background click
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        }
+
+        // Make ALL functions globally available for onclick handlers
         window.addTextElement = addTextElement;
         window.addLogoElement = addLogoElement;
         window.triggerPhotoUpload = triggerPhotoUpload;
         window.toggleAIAssistant = toggleAIAssistant;
         window.saveDraft = saveDraft;
+        window.previewSite = previewSite;
+        window.publishSite = publishSite;
         window.showCreditsPurchase = showCreditsPurchase;
         window.processAIRequest = processAIRequest;
         window.quickAIAction = quickAIAction;
         window.deleteElement = deleteElement;
         window.duplicateElement = duplicateElement;
+        window.generateWebsite = generateWebsite;
+        window.applyTemplate = applyTemplate;
+        window.switchToPage = switchToPage;
+        window.addNewPage = addNewPage;
+        window.deletePage = deletePage;
+        window.initializeDraggableElements = initializeDraggableElements;
+        window.makeDraggable = makeDraggable;
+        window.makeAllTextEditable = makeAllTextEditable;
+        window.showTextToolbar = showTextToolbar;
+        window.openTypographyModal = openTypographyModal;
         
         // Initialize page functionality
         document.addEventListener('DOMContentLoaded', function() {
