@@ -2638,20 +2638,147 @@ Examples:
         
         // Mobile Toolbar Functions
         function openColorPicker() {
-            // Show color picker modal for mobile
-            const colorPicker = document.querySelector('.right-sidebar .property-group input[type="color"]');
-            if (colorPicker) {
-                colorPicker.click();
-            }
+            // Create color picker modal
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            `;
+            
+            const currentColor = currentProject.settings.primaryColor || '#d4af37';
+            
+            modal.innerHTML = `
+                <div style="background: white; padding: 30px; border-radius: 12px; max-width: 400px; width: 90%;">
+                    <h3 style="margin: 0 0 20px 0; color: #333;">Choose Primary Color</h3>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px;">
+                        <div class="color-option" data-color="#d4af37" style="width: 60px; height: 60px; background: #d4af37; border-radius: 8px; cursor: pointer; border: 3px solid ${currentColor === '#d4af37' ? '#333' : 'transparent'};"></div>
+                        <div class="color-option" data-color="#2c3e50" style="width: 60px; height: 60px; background: #2c3e50; border-radius: 8px; cursor: pointer; border: 3px solid ${currentColor === '#2c3e50' ? '#333' : 'transparent'};"></div>
+                        <div class="color-option" data-color="#e74c3c" style="width: 60px; height: 60px; background: #e74c3c; border-radius: 8px; cursor: pointer; border: 3px solid ${currentColor === '#e74c3c' ? '#333' : 'transparent'};"></div>
+                        <div class="color-option" data-color="#27ae60" style="width: 60px; height: 60px; background: #27ae60; border-radius: 8px; cursor: pointer; border: 3px solid ${currentColor === '#27ae60' ? '#333' : 'transparent'};"></div>
+                        <div class="color-option" data-color="#8e44ad" style="width: 60px; height: 60px; background: #8e44ad; border-radius: 8px; cursor: pointer; border: 3px solid ${currentColor === '#8e44ad' ? '#333' : 'transparent'};"></div>
+                        <div class="color-option" data-color="#f39c12" style="width: 60px; height: 60px; background: #f39c12; border-radius: 8px; cursor: pointer; border: 3px solid ${currentColor === '#f39c12' ? '#333' : 'transparent'};"></div>
+                        <div class="color-option" data-color="#34495e" style="width: 60px; height: 60px; background: #34495e; border-radius: 8px; cursor: pointer; border: 3px solid ${currentColor === '#34495e' ? '#333' : 'transparent'};"></div>
+                        <div class="color-option" data-color="#95a5a6" style="width: 60px; height: 60px; background: #95a5a6; border-radius: 8px; cursor: pointer; border: 3px solid ${currentColor === '#95a5a6' ? '#333' : 'transparent'};"></div>
+                    </div>
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button onclick="this.closest('.color-picker-modal').remove()" style="padding: 10px 20px; background: #95a5a6; color: white; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>
+                        <button id="applyColorBtn" style="padding: 10px 20px; background: #d4af37; color: white; border: none; border-radius: 6px; cursor: pointer;">Apply</button>
+                    </div>
+                </div>
+            `;
+            
+            modal.className = 'color-picker-modal';
+            document.body.appendChild(modal);
+            
+            let selectedColor = currentColor;
+            
+            // Color selection logic
+            modal.querySelectorAll('.color-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    modal.querySelectorAll('.color-option').forEach(opt => opt.style.border = '3px solid transparent');
+                    this.style.border = '3px solid #333';
+                    selectedColor = this.dataset.color;
+                });
+            });
+            
+            // Apply button logic
+            modal.querySelector('#applyColorBtn').addEventListener('click', function() {
+                currentProject.settings.primaryColor = selectedColor;
+                updateCanvasColors(selectedColor);
+                showNotification('Color scheme updated!', 'success');
+                modal.remove();
+            });
+            
+            // Close on outside click
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
         }
         
         function openTypography() {
-            // Show typography selection for mobile
-            const fontSelect = document.querySelector('.right-sidebar .property-group select');
-            if (fontSelect) {
-                fontSelect.focus();
-                fontSelect.click();
-            }
+            // Create typography modal
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            `;
+            
+            const currentFont = currentProject.settings.typography || 'inter';
+            
+            modal.innerHTML = `
+                <div style="background: white; padding: 30px; border-radius: 12px; max-width: 400px; width: 90%;">
+                    <h3 style="margin: 0 0 20px 0; color: #333;">Choose Typography</h3>
+                    <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px;">
+                        <div class="font-option" data-font="inter" style="padding: 15px; border: 2px solid ${currentFont === 'inter' ? '#d4af37' : '#ddd'}; border-radius: 8px; cursor: pointer; font-family: Inter, sans-serif;">
+                            <div style="font-weight: 600; font-size: 18px;">Inter</div>
+                            <div style="color: #666; font-size: 14px;">Modern & Clean</div>
+                        </div>
+                        <div class="font-option" data-font="playfair" style="padding: 15px; border: 2px solid ${currentFont === 'playfair' ? '#d4af37' : '#ddd'}; border-radius: 8px; cursor: pointer; font-family: 'Playfair Display', serif;">
+                            <div style="font-weight: 600; font-size: 18px;">Playfair Display</div>
+                            <div style="color: #666; font-size: 14px;">Elegant & Sophisticated</div>
+                        </div>
+                        <div class="font-option" data-font="montserrat" style="padding: 15px; border: 2px solid ${currentFont === 'montserrat' ? '#d4af37' : '#ddd'}; border-radius: 8px; cursor: pointer; font-family: Montserrat, sans-serif;">
+                            <div style="font-weight: 600; font-size: 18px;">Montserrat</div>
+                            <div style="color: #666; font-size: 14px;">Bold & Strong</div>
+                        </div>
+                        <div class="font-option" data-font="lora" style="padding: 15px; border: 2px solid ${currentFont === 'lora' ? '#d4af37' : '#ddd'}; border-radius: 8px; cursor: pointer; font-family: Lora, serif;">
+                            <div style="font-weight: 600; font-size: 18px;">Lora</div>
+                            <div style="color: #666; font-size: 14px;">Natural & Warm</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button onclick="this.closest('.typography-modal').remove()" style="padding: 10px 20px; background: #95a5a6; color: white; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>
+                        <button id="applyFontBtn" style="padding: 10px 20px; background: #d4af37; color: white; border: none; border-radius: 6px; cursor: pointer;">Apply</button>
+                    </div>
+                </div>
+            `;
+            
+            modal.className = 'typography-modal';
+            document.body.appendChild(modal);
+            
+            let selectedFont = currentFont;
+            
+            // Font selection logic
+            modal.querySelectorAll('.font-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    modal.querySelectorAll('.font-option').forEach(opt => opt.style.border = '2px solid #ddd');
+                    this.style.border = '2px solid #d4af37';
+                    selectedFont = this.dataset.font;
+                });
+            });
+            
+            // Apply button logic
+            modal.querySelector('#applyFontBtn').addEventListener('click', function() {
+                currentProject.settings.typography = selectedFont;
+                updateCanvasTypography(selectedFont);
+                showNotification('Typography updated!', 'success');
+                modal.remove();
+            });
+            
+            // Close on outside click
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
         }
         
         // Enhanced applyTemplate function for mobile
@@ -2670,15 +2797,47 @@ Examples:
                         this.style.color = 'var(--bg-primary)';
                     });
                 });
-                alert('Please select a template first by clicking on it, then try again.');
+                showNotification('Please select a template first by clicking on it, then try again.', 'warning');
                 return;
             }
             
             const templateType = selectedTemplate.dataset.template;
-            if (templateType && templateData[templateType]) {
-                currentProject.pageData = templateData[templateType];
+            
+            // Use the template system from the other function
+            const templates = {
+                wedding: {
+                    home: generateEditableContent('wedding', 'home'),
+                    about: generateEditableContent('wedding', 'about'),
+                    portfolio: generateEditableContent('wedding', 'portfolio'),
+                    contact: generateEditableContent('wedding', 'contact')
+                },
+                portrait: {
+                    home: generateEditableContent('portrait', 'home'),
+                    about: generateEditableContent('portrait', 'about'),
+                    portfolio: generateEditableContent('portrait', 'portfolio'),
+                    contact: generateEditableContent('portrait', 'contact')
+                },
+                fashion: {
+                    home: generateEditableContent('fashion', 'home'),
+                    about: generateEditableContent('fashion', 'about'),
+                    portfolio: generateEditableContent('fashion', 'portfolio'),
+                    contact: generateEditableContent('fashion', 'contact')
+                },
+                commercial: {
+                    home: generateEditableContent('commercial', 'home'),
+                    about: generateEditableContent('commercial', 'about'),
+                    portfolio: generateEditableContent('commercial', 'portfolio'),
+                    contact: generateEditableContent('commercial', 'contact')
+                }
+            };
+            
+            if (templateType && templates[templateType]) {
+                currentProject.pageData = templates[templateType];
                 updateCanvas();
+                showNotification(`${templateType.charAt(0).toUpperCase() + templateType.slice(1)} template applied successfully!`, 'success');
                 console.log(`Applied ${templateType} template`);
+            } else {
+                showNotification('Template not found. Please try another template.', 'error');
             }
         }
         
@@ -2784,6 +2943,265 @@ Examples:
         
         // Initialize drag functionality when page loads
         document.addEventListener('DOMContentLoaded', initializeDraggableElements);
+        
+        // Additional helper functions for website builder
+        function updateCanvasColors(color) {
+            const canvas = document.querySelector('.canvas-content');
+            if (!canvas) return;
+            
+            // Update button colors
+            const buttons = canvas.querySelectorAll('button');
+            buttons.forEach(btn => {
+                btn.style.backgroundColor = color;
+            });
+            
+            // Update accent elements
+            const accentElements = canvas.querySelectorAll('.accent, .highlight, .primary-color');
+            accentElements.forEach(el => {
+                el.style.color = color;
+            });
+            
+            // Update border colors
+            const borderElements = canvas.querySelectorAll('.border-accent');
+            borderElements.forEach(el => {
+                el.style.borderColor = color;
+            });
+        }
+        
+        function updateCanvasTypography(fontFamily) {
+            const canvas = document.querySelector('.canvas-content');
+            if (!canvas) return;
+            
+            const fontMap = {
+                'inter': 'Inter, system-ui, sans-serif',
+                'playfair': '"Playfair Display", serif',
+                'montserrat': 'Montserrat, sans-serif',
+                'lora': 'Lora, serif',
+                'crimson': '"Crimson Text", serif'
+            };
+            
+            const selectedFont = fontMap[fontFamily] || fontMap.inter;
+            
+            // Apply to headings
+            const headings = canvas.querySelectorAll('h1, h2, h3, h4, h5, h6');
+            headings.forEach(heading => {
+                heading.style.fontFamily = selectedFont;
+            });
+            
+            // Apply to body text
+            const bodyTexts = canvas.querySelectorAll('p, span, div, li');
+            bodyTexts.forEach(text => {
+                if (!text.querySelector('h1, h2, h3, h4, h5, h6')) {
+                    text.style.fontFamily = selectedFont;
+                }
+            });
+        }
+        
+        function generateEditableContent(templateType, pageType) {
+            const templates = {
+                wedding: {
+                    home: `
+                        <div style="text-align: center; padding: 80px 20px; background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);">
+                            <h1 style="font-size: 3.5rem; margin-bottom: 20px; color: #333; font-family: 'Playfair Display', serif;">Capturing Love Stories</h1>
+                            <p style="font-size: 1.2rem; margin-bottom: 30px; color: #666; max-width: 600px; margin-left: auto; margin-right: auto;">Professional wedding photography that preserves your most precious moments with timeless elegance and artistry.</p>
+                            <button style="background: #d4af37; color: white; padding: 15px 30px; border: none; border-radius: 5px; font-size: 1.1rem; cursor: pointer;">View Portfolio</button>
+                        </div>
+                        <div style="padding: 60px 20px; max-width: 1200px; margin: 0 auto;">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; align-items: center;">
+                                <div>
+                                    <h2 style="font-size: 2.5rem; margin-bottom: 20px; color: #333;">Your Perfect Day</h2>
+                                    <p style="font-size: 1.1rem; line-height: 1.6; color: #666; margin-bottom: 20px;">From the intimate moments of preparation to the joyous celebration, we capture every emotion and detail that makes your wedding uniquely yours.</p>
+                                    <ul style="list-style: none; padding: 0;">
+                                        <li style="margin-bottom: 10px; color: #d4af37;">✓ Full day wedding coverage</li>
+                                        <li style="margin-bottom: 10px; color: #d4af37;">✓ Engagement session included</li>
+                                        <li style="margin-bottom: 10px; color: #d4af37;">✓ Professional editing</li>
+                                        <li style="margin-bottom: 10px; color: #d4af37;">✓ Online gallery delivery</li>
+                                    </ul>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="width: 100%; height: 300px; background: #f0f0f0; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #999;">
+                                        Wedding Photo Gallery
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `,
+                    about: `
+                        <div style="padding: 80px 20px; max-width: 1000px; margin: 0 auto; text-align: center;">
+                            <h1 style="font-size: 3rem; margin-bottom: 30px; color: #333;">About Our Studio</h1>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; align-items: center; margin-top: 50px;">
+                                <div style="text-align: center;">
+                                    <div style="width: 250px; height: 250px; background: #f0f0f0; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; color: #999;">
+                                        Studio Photo
+                                    </div>
+                                </div>
+                                <div style="text-align: left;">
+                                    <h2 style="font-size: 2rem; margin-bottom: 20px; color: #333;">Passionate About Love</h2>
+                                    <p style="font-size: 1.1rem; line-height: 1.6; color: #666; margin-bottom: 20px;">With over 10 years of experience capturing love stories, we believe every couple deserves photography that reflects their unique journey together.</p>
+                                    <p style="font-size: 1.1rem; line-height: 1.6; color: #666;">Our approach is natural, emotional, and timeless - creating images you'll treasure for generations to come.</p>
+                                </div>
+                            </div>
+                        </div>
+                    `,
+                    portfolio: `
+                        <div style="padding: 80px 20px; text-align: center;">
+                            <h1 style="font-size: 3rem; margin-bottom: 50px; color: #333;">Wedding Portfolio</h1>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto;">
+                                ${Array.from({length: 6}, (_, i) => `
+                                    <div style="height: 300px; background: #f0f0f0; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #999; cursor: pointer;" onclick="openLightbox(this)">
+                                        Wedding Photo ${i + 1}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `,
+                    contact: `
+                        <div style="padding: 80px 20px; max-width: 800px; margin: 0 auto;">
+                            <h1 style="font-size: 3rem; margin-bottom: 30px; text-align: center; color: #333;">Let's Capture Your Story</h1>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px;">
+                                <div>
+                                    <h3 style="font-size: 1.5rem; margin-bottom: 20px; color: #333;">Get In Touch</h3>
+                                    <div style="margin-bottom: 15px;">
+                                        <strong>Email:</strong> hello@weddingphotography.com
+                                    </div>
+                                    <div style="margin-bottom: 15px;">
+                                        <strong>Phone:</strong> (555) 123-4567
+                                    </div>
+                                    <div style="margin-bottom: 15px;">
+                                        <strong>Studio:</strong> Downtown Photography District
+                                    </div>
+                                </div>
+                                <div>
+                                    <form style="display: flex; flex-direction: column; gap: 15px;">
+                                        <input type="text" placeholder="Your Name" style="padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
+                                        <input type="email" placeholder="Your Email" style="padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
+                                        <input type="date" placeholder="Wedding Date" style="padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
+                                        <textarea placeholder="Tell us about your vision..." rows="4" style="padding: 15px; border: 1px solid #ddd; border-radius: 5px; resize: vertical;"></textarea>
+                                        <button type="submit" style="background: #d4af37; color: white; padding: 15px; border: none; border-radius: 5px; cursor: pointer;">Send Message</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    `
+                },
+                portrait: {
+                    home: `
+                        <div style="text-align: center; padding: 80px 20px; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                            <h1 style="font-size: 3.5rem; margin-bottom: 20px; color: #2c3e50; font-family: Inter, sans-serif;">Professional Portraits</h1>
+                            <p style="font-size: 1.2rem; margin-bottom: 30px; color: #6c757d; max-width: 600px; margin-left: auto; margin-right: auto;">Modern portrait photography that captures your authentic self with confidence and style.</p>
+                            <button style="background: #2c3e50; color: white; padding: 15px 30px; border: none; border-radius: 5px; font-size: 1.1rem; cursor: pointer;">Book Session</button>
+                        </div>
+                    `,
+                    about: `
+                        <div style="padding: 80px 20px; max-width: 1000px; margin: 0 auto; text-align: center;">
+                            <h1 style="font-size: 3rem; margin-bottom: 30px; color: #2c3e50;">About the Photographer</h1>
+                            <p style="font-size: 1.2rem; line-height: 1.6; color: #6c757d;">Specializing in contemporary portrait photography with a focus on bringing out the best in every individual.</p>
+                        </div>
+                    `,
+                    portfolio: `
+                        <div style="padding: 80px 20px; text-align: center;">
+                            <h1 style="font-size: 3rem; margin-bottom: 50px; color: #2c3e50;">Portrait Gallery</h1>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; max-width: 1000px; margin: 0 auto;">
+                                ${Array.from({length: 8}, (_, i) => `
+                                    <div style="height: 300px; background: #f8f9fa; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #adb5bd;">
+                                        Portrait ${i + 1}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `,
+                    contact: `
+                        <div style="padding: 80px 20px; max-width: 600px; margin: 0 auto; text-align: center;">
+                            <h1 style="font-size: 3rem; margin-bottom: 30px; color: #2c3e50;">Let's Create</h1>
+                            <p style="margin-bottom: 30px; color: #6c757d;">Ready to capture your professional image? Let's discuss your vision.</p>
+                            <div style="margin-bottom: 20px;">
+                                <strong>Email:</strong> portraits@studio.com
+                            </div>
+                            <div style="margin-bottom: 20px;">
+                                <strong>Phone:</strong> (555) 987-6543
+                            </div>
+                        </div>
+                    `
+                },
+                fashion: {
+                    home: `
+                        <div style="text-align: center; padding: 100px 20px; background: linear-gradient(135deg, #000000 0%, #434343 100%); color: white;">
+                            <h1 style="font-size: 4rem; margin-bottom: 20px; font-family: 'Montserrat', sans-serif; font-weight: 700;">FASHION FORWARD</h1>
+                            <p style="font-size: 1.3rem; margin-bottom: 40px; max-width: 600px; margin-left: auto; margin-right: auto;">Bold, editorial fashion photography that pushes creative boundaries and defines tomorrow's trends.</p>
+                            <button style="background: #e74c3c; color: white; padding: 18px 35px; border: none; border-radius: 0; font-size: 1.1rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">View Collections</button>
+                        </div>
+                    `,
+                    about: `
+                        <div style="padding: 80px 20px; max-width: 1000px; margin: 0 auto;">
+                            <h1 style="font-size: 3.5rem; margin-bottom: 30px; color: #000; text-align: center; font-weight: 700;">EDITORIAL VISION</h1>
+                            <p style="font-size: 1.2rem; line-height: 1.6; color: #333; text-align: center;">Creating striking visual narratives that blur the line between fashion and art.</p>
+                        </div>
+                    `,
+                    portfolio: `
+                        <div style="padding: 80px 20px; background: #000; color: white;">
+                            <h1 style="font-size: 3.5rem; margin-bottom: 50px; text-align: center; font-weight: 700;">COLLECTIONS</h1>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 5px; max-width: 1200px; margin: 0 auto;">
+                                ${Array.from({length: 6}, (_, i) => `
+                                    <div style="height: 400px; background: #333; display: flex; align-items: center; justify-content: center; color: #999;">
+                                        Fashion ${i + 1}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `,
+                    contact: `
+                        <div style="padding: 80px 20px; max-width: 600px; margin: 0 auto; text-align: center; background: #000; color: white;">
+                            <h1 style="font-size: 3rem; margin-bottom: 30px; font-weight: 700;">COLLABORATE</h1>
+                            <p style="margin-bottom: 30px;">Ready to create something extraordinary? Let's push boundaries together.</p>
+                            <div style="margin-bottom: 20px;">
+                                <strong>Email:</strong> fashion@studio.com
+                            </div>
+                        </div>
+                    `
+                },
+                commercial: {
+                    home: `
+                        <div style="text-align: center; padding: 80px 20px; background: #f8f9fa;">
+                            <h1 style="font-size: 3.5rem; margin-bottom: 20px; color: #27ae60; font-family: 'Lora', serif;">Commercial Photography</h1>
+                            <p style="font-size: 1.2rem; margin-bottom: 30px; color: #495057; max-width: 600px; margin-left: auto; margin-right: auto;">Professional commercial photography services that elevate your brand and connect with your audience.</p>
+                            <button style="background: #27ae60; color: white; padding: 15px 30px; border: none; border-radius: 25px; font-size: 1.1rem; cursor: pointer;">Start Project</button>
+                        </div>
+                    `,
+                    about: `
+                        <div style="padding: 80px 20px; max-width: 1000px; margin: 0 auto; text-align: center;">
+                            <h1 style="font-size: 3rem; margin-bottom: 30px; color: #27ae60;">Brand Storytelling</h1>
+                            <p style="font-size: 1.2rem; line-height: 1.6; color: #495057;">We create compelling visual content that brings your brand story to life.</p>
+                        </div>
+                    `,
+                    portfolio: `
+                        <div style="padding: 80px 20px; text-align: center;">
+                            <h1 style="font-size: 3rem; margin-bottom: 50px; color: #27ae60;">Our Work</h1>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; max-width: 1000px; margin: 0 auto;">
+                                ${Array.from({length: 6}, (_, i) => `
+                                    <div style="height: 250px; background: #e9ecef; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #6c757d;">
+                                        Commercial ${i + 1}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `,
+                    contact: `
+                        <div style="padding: 80px 20px; max-width: 600px; margin: 0 auto; text-align: center;">
+                            <h1 style="font-size: 3rem; margin-bottom: 30px; color: #27ae60;">Let's Connect</h1>
+                            <p style="margin-bottom: 30px; color: #495057;">Ready to elevate your brand with professional photography?</p>
+                            <div style="margin-bottom: 20px;">
+                                <strong>Email:</strong> commercial@studio.com
+                            </div>
+                            <div style="margin-bottom: 20px;">
+                                <strong>Phone:</strong> (555) 456-7890
+                            </div>
+                        </div>
+                    `
+                }
+            };
+            
+            return templates[templateType]?.[pageType] || '<div style="padding: 80px 20px; text-align: center;"><h1>Page Content</h1><p>This page is ready for your content.</p></div>';
+        }
     </script>
 </body>
 </html>
