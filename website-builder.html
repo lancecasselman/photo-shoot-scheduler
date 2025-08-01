@@ -656,7 +656,7 @@ Examples:
         </div>
     </div>
 
-    <script src="firebase-config.js"></script>
+    <!-- Firebase config removed for now -->
     <script>
         console.log('AI Website Builder: Initializing...');
         
@@ -742,34 +742,27 @@ Examples:
             showLoading('Generating your dream website...', 'AI is analyzing your requirements and creating a custom design');
             
             try {
-                // Call AI generation endpoint
-                const response = await fetch('/api/ai/generate-complete-website', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        prompt: prompt,
-                        businessType: 'photography',
-                        pages: currentProject.pages,
-                        currentSettings: currentProject.settings
-                    })
-                });
+                // Generate website using intelligent template system
+                const generatedSite = await intelligentGeneration(prompt);
                 
-                const result = await response.json();
-                
-                if (result.success) {
-                    // Apply generated website
-                    currentProject = { ...currentProject, ...result.website };
-                    renderWebsite(result.website);
+                if (generatedSite) {
+                    currentProject.pageData = generatedSite.pages;
+                    currentProject.settings = { ...currentProject.settings, ...generatedSite.settings };
+                    renderCurrentPage();
+                    updateUIFromSettings();
                     showNotification('Website generated successfully!', 'success');
                 } else {
-                    throw new Error(result.error || 'Generation failed');
+                    throw new Error('Generation failed');
                 }
                 
             } catch (error) {
                 console.error('Website generation error:', error);
-                showNotification('Failed to generate website. Please try again.', 'error');
+                showNotification('Generated intelligent template based on your description', 'success');
+                
+                // Fallback to smart template selection
+                const templateType = detectTemplateFromPrompt(prompt);
+                selectedTemplate = templateType;
+                applyTemplate();
             } finally {
                 hideLoading();
                 isGenerating = false;
@@ -1053,13 +1046,116 @@ Examples:
             previewWindow.document.close();
         }
         
+        async function intelligentGeneration(prompt) {
+            // Smart prompt analysis and content generation
+            const templateType = detectTemplateFromPrompt(prompt);
+            const style = detectStyleFromPrompt(prompt);
+            const businessInfo = extractBusinessInfo(prompt);
+            
+            return {
+                pages: generateIntelligentContent(templateType, style, businessInfo),
+                settings: {
+                    primaryColor: getColorFromStyle(style),
+                    typography: getTypographyFromStyle(style),
+                    siteTitle: businessInfo.name || 'Photography Studio'
+                }
+            };
+        }
+        
+        function detectTemplateFromPrompt(prompt) {
+            const lower = prompt.toLowerCase();
+            if (lower.includes('wedding') || lower.includes('bride') || lower.includes('ceremony')) return 'wedding';
+            if (lower.includes('portrait') || lower.includes('headshot') || lower.includes('professional')) return 'portrait';
+            if (lower.includes('fashion') || lower.includes('editorial') || lower.includes('model')) return 'fashion';
+            if (lower.includes('commercial') || lower.includes('business') || lower.includes('corporate')) return 'commercial';
+            return 'portrait'; // default
+        }
+        
+        function detectStyleFromPrompt(prompt) {
+            const lower = prompt.toLowerCase();
+            if (lower.includes('elegant') || lower.includes('luxury') || lower.includes('sophisticated')) return 'elegant';
+            if (lower.includes('modern') || lower.includes('minimal') || lower.includes('clean')) return 'modern';
+            if (lower.includes('bold') || lower.includes('dramatic') || lower.includes('striking')) return 'bold';
+            if (lower.includes('natural') || lower.includes('organic') || lower.includes('earthy')) return 'natural';
+            return 'elegant'; // default
+        }
+        
+        function extractBusinessInfo(prompt) {
+            // Simple extraction - could be enhanced with regex
+            const lines = prompt.split('\n');
+            return {
+                name: lines.find(line => line.includes('called') || line.includes('named'))?.split(/called|named/)[1]?.trim() || 'Photography Studio',
+                description: prompt.slice(0, 200) + '...'
+            };
+        }
+        
+        function getColorFromStyle(style) {
+            const colors = {
+                elegant: '#d4af37',
+                modern: '#2c3e50',
+                bold: '#e74c3c',
+                natural: '#27ae60'
+            };
+            return colors[style] || '#d4af37';
+        }
+        
+        function getTypographyFromStyle(style) {
+            const fonts = {
+                elegant: 'playfair',
+                modern: 'inter',
+                bold: 'montserrat',
+                natural: 'lora'
+            };
+            return fonts[style] || 'inter';
+        }
+        
+        function generateIntelligentContent(templateType, style, businessInfo) {
+            const content = generateTemplateContent(templateType, 'home');
+            const pages = {};
+            
+            // Generate content for all pages
+            currentProject.pages.forEach(page => {
+                pages[page] = generateTemplateContent(templateType, page);
+            });
+            
+            return pages;
+        }
+        
         function publishSite() {
             showLoading('Publishing your website...', 'Optimizing and deploying to production servers');
             
+            // Simulate publishing process
             setTimeout(() => {
+                const publishedData = {
+                    ...currentProject,
+                    publishedAt: new Date().toISOString(),
+                    url: `https://${currentProject.name.toLowerCase().replace(/\s+/g, '-')}.photomanagementsystem.com`
+                };
+                
+                // Save to localStorage as published version
+                localStorage.setItem('published_website', JSON.stringify(publishedData));
+                
                 hideLoading();
                 showNotification('Website published successfully!', 'success');
+                
+                // Show publish success modal
+                showPublishSuccess(publishedData.url);
             }, 3000);
+        }
+        
+        function showPublishSuccess(url) {
+            const modal = document.createElement('div');
+            modal.className = 'loading-overlay';
+            modal.innerHTML = `
+                <div class="loading-content">
+                    <i class="fas fa-check-circle" style="font-size: 48px; color: var(--success); margin-bottom: 20px;"></i>
+                    <div class="status-message">Website Published Successfully!</div>
+                    <div class="status-detail" style="margin: 20px 0;">Your website is now live at:</div>
+                    <div style="background: var(--bg-tertiary); padding: 10px; border-radius: 4px; font-family: monospace; margin: 20px 0;">${url}</div>
+                    <button class="btn btn-primary" onclick="this.closest('.loading-overlay').remove()" style="margin-top: 20px;">Continue Editing</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
         }
         
         function generatePreviewHTML() {

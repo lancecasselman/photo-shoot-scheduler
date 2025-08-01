@@ -6182,6 +6182,107 @@ function ensureStaticSitesDirectory() {
     }
 }
 
+// Website Builder AI Generation Endpoint
+app.post('/api/ai/generate-complete-website', async (req, res) => {
+    try {
+        const { prompt, businessType, pages, currentSettings } = req.body;
+        
+        console.log('Generating website for prompt:', prompt);
+        
+        // Intelligent template detection
+        const templateType = detectTemplateFromPrompt(prompt);
+        const style = detectStyleFromPrompt(prompt);
+        const businessInfo = extractBusinessInfo(prompt);
+        
+        const website = {
+            pages: generateIntelligentContent(templateType, style, businessInfo, pages),
+            settings: {
+                ...currentSettings,
+                primaryColor: getColorFromStyle(style),
+                typography: getTypographyFromStyle(style),
+                siteTitle: businessInfo.name || 'Photography Studio'
+            }
+        };
+        
+        res.json({ success: true, website });
+        
+    } catch (error) {
+        console.error('Website generation error:', error);
+        res.json({ success: false, error: error.message });
+    }
+});
+
+function detectTemplateFromPrompt(prompt) {
+    const lower = prompt.toLowerCase();
+    if (lower.includes('wedding') || lower.includes('bride')) return 'wedding';
+    if (lower.includes('portrait') || lower.includes('headshot')) return 'portrait';
+    if (lower.includes('fashion') || lower.includes('editorial')) return 'fashion';
+    if (lower.includes('commercial') || lower.includes('business')) return 'commercial';
+    return 'portrait';
+}
+
+function detectStyleFromPrompt(prompt) {
+    const lower = prompt.toLowerCase();
+    if (lower.includes('elegant') || lower.includes('luxury')) return 'elegant';
+    if (lower.includes('modern') || lower.includes('minimal')) return 'modern';
+    if (lower.includes('bold') || lower.includes('dramatic')) return 'bold';
+    return 'elegant';
+}
+
+function extractBusinessInfo(prompt) {
+    return {
+        name: 'Photography Studio',
+        description: prompt.slice(0, 200)
+    };
+}
+
+function getColorFromStyle(style) {
+    const colors = {
+        elegant: '#d4af37',
+        modern: '#2c3e50',
+        bold: '#e74c3c'
+    };
+    return colors[style] || '#d4af37';
+}
+
+function getTypographyFromStyle(style) {
+    const fonts = {
+        elegant: 'playfair',
+        modern: 'inter',
+        bold: 'montserrat'
+    };
+    return fonts[style] || 'inter';
+}
+
+function generateIntelligentContent(templateType, style, businessInfo, pages) {
+    const pageData = {};
+    
+    pages.forEach(page => {
+        pageData[page] = generatePageContent(templateType, page);
+    });
+    
+    return pageData;
+}
+
+function generatePageContent(templateType, pageType) {
+    const templates = {
+        wedding: {
+            home: `<div style="background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1519741497674-611481863552?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80'); background-size: cover; background-position: center; height: 100vh; display: flex; align-items: center; justify-content: center; color: white; text-align: center;"><div><h1 style="font-size: 4rem; font-weight: 300; margin-bottom: 20px;">Eternal Moments</h1><p style="font-size: 1.5rem; margin-bottom: 30px; opacity: 0.9;">Capturing the magic of your special day</p><button style="padding: 15px 30px; background: #d4af37; color: white; border: none; font-size: 1.1rem; cursor: pointer; border-radius: 4px;">View Our Work</button></div></div>`,
+            about: `<div style="padding: 100px 50px; max-width: 1200px; margin: 0 auto;"><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center;"><div><h1 style="font-size: 3.5rem; margin-bottom: 30px; color: #333;">Our Story</h1><p style="font-size: 1.2rem; line-height: 1.8; color: #666;">With over a decade of experience capturing love stories, we create timeless images that reflect your unique story.</p></div><div style="background: url('https://images.unsplash.com/photo-1511285560929-80b456fea0bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'); background-size: cover; background-position: center; height: 500px; border-radius: 8px;"></div></div></div>`,
+            portfolio: `<div style="padding: 100px 50px; text-align: center;"><h1 style="font-size: 3.5rem; margin-bottom: 50px; color: #333;">Wedding Portfolio</h1><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 30px; max-width: 1200px; margin: 0 auto;"><div style="background: url('https://images.unsplash.com/photo-1519741497674-611481863552?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'); background-size: cover; background-position: center; height: 300px; border-radius: 8px;"></div><div style="background: url('https://images.unsplash.com/photo-1606216794074-735e91aa2c92?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'); background-size: cover; background-position: center; height: 300px; border-radius: 8px;"></div><div style="background: url('https://images.unsplash.com/photo-1583939003579-730e3918a45a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'); background-size: cover; background-position: center; height: 300px; border-radius: 8px;"></div></div></div>`,
+            contact: `<div style="padding: 100px 50px; max-width: 800px; margin: 0 auto; text-align: center;"><h1 style="font-size: 3.5rem; margin-bottom: 30px; color: #333;">Let's Create Magic Together</h1><p style="font-size: 1.2rem; margin-bottom: 50px; color: #666;">Ready to start planning your dream wedding photography?</p><form style="text-align: left;"><div style="margin-bottom: 20px;"><input type="text" placeholder="Your Names" style="width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;"></div><div style="margin-bottom: 20px;"><input type="email" placeholder="Email Address" style="width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;"></div><div style="margin-bottom: 20px;"><input type="date" placeholder="Wedding Date" style="width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;"></div><div style="margin-bottom: 30px;"><textarea placeholder="Tell us about your vision..." rows="5" style="width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; resize: vertical;"></textarea></div><button type="submit" style="width: 100%; padding: 15px; background: #d4af37; color: white; border: none; font-size: 1.1rem; cursor: pointer; border-radius: 4px;">Send Message</button></form></div>`
+        },
+        portrait: {
+            home: `<div style="background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80'); background-size: cover; background-position: center; height: 100vh; display: flex; align-items: center; justify-content: center; color: white; text-align: center;"><div><h1 style="font-size: 4rem; font-weight: 400; margin-bottom: 20px;">Professional Portraits</h1><p style="font-size: 1.5rem; margin-bottom: 30px; opacity: 0.9;">Capturing your authentic self</p><button style="padding: 15px 30px; background: #2c3e50; color: white; border: none; font-size: 1.1rem; cursor: pointer; border-radius: 4px;">Book a Session</button></div></div>`,
+            about: `<div style="padding: 100px 50px; max-width: 1200px; margin: 0 auto;"><div style="display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center;"><div><h1 style="font-size: 3.5rem; margin-bottom: 30px; color: #333;">Professional Portrait Photography</h1><p style="font-size: 1.2rem; line-height: 1.8; color: #666;">Specializing in professional headshots and personal branding photography.</p></div><div style="background: url('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'); background-size: cover; background-position: center; height: 500px; border-radius: 8px;"></div></div></div>`,
+            portfolio: `<div style="padding: 100px 50px; text-align: center;"><h1 style="font-size: 3.5rem; margin-bottom: 50px; color: #333;">Portrait Gallery</h1><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 30px; max-width: 1200px; margin: 0 auto;"><div style="background: url('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'); background-size: cover; background-position: center; height: 400px; border-radius: 8px;"></div><div style="background: url('https://images.unsplash.com/photo-1494790108755-2616b612b647?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'); background-size: cover; background-position: center; height: 400px; border-radius: 8px;"></div><div style="background: url('https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'); background-size: cover; background-position: center; height: 400px; border-radius: 8px;"></div></div></div>`,
+            contact: `<div style="padding: 100px 50px; max-width: 800px; margin: 0 auto; text-align: center;"><h1 style="font-size: 3.5rem; margin-bottom: 30px; color: #333;">Book Your Portrait Session</h1><p style="font-size: 1.2rem; margin-bottom: 50px; color: #666;">Professional headshots that make an impact.</p><form style="text-align: left;"><div style="margin-bottom: 20px;"><input type="text" placeholder="Full Name" style="width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;"></div><div style="margin-bottom: 20px;"><input type="email" placeholder="Email Address" style="width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;"></div><div style="margin-bottom: 20px;"><select style="width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;"><option>Headshots</option><option>Personal Branding</option><option>Corporate</option><option>Creative Portraits</option></select></div><div style="margin-bottom: 30px;"><textarea placeholder="Tell us about your goals..." rows="5" style="width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; resize: vertical;"></textarea></div><button type="submit" style="width: 100%; padding: 15px; background: #2c3e50; color: white; border: none; font-size: 1.1rem; cursor: pointer; border-radius: 4px;">Schedule Consultation</button></form></div>`
+        }
+    };
+    
+    return templates[templateType]?.[pageType] || `<div style="padding: 100px; text-align: center;"><h1>${pageType.charAt(0).toUpperCase() + pageType.slice(1)} Page</h1><p>Professional ${templateType} photography content coming soon.</p></div>`;
+}
+
 // Initialize database and start server
 async function startServer() {
     await initializeDatabase();
