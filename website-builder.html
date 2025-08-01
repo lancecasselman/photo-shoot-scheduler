@@ -3437,29 +3437,43 @@ Examples:
             }
         });
         
+        // Make functions globally available for onclick handlers
+        window.addTextElement = addTextElement;
+        window.addLogoElement = addLogoElement;
+        window.triggerPhotoUpload = triggerPhotoUpload;
+        window.toggleAIAssistant = toggleAIAssistant;
+        window.saveDraft = saveDraft;
+        window.showCreditsPurchase = showCreditsPurchase;
+        window.processAIRequest = processAIRequest;
+        window.quickAIAction = quickAIAction;
+        window.deleteElement = deleteElement;
+        window.duplicateElement = duplicateElement;
+        
         // Initialize page functionality
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Website builder loaded successfully');
+            console.log('Functions available:', {
+                addTextElement: typeof window.addTextElement,
+                toggleAIAssistant: typeof window.toggleAIAssistant,
+                saveDraft: typeof window.saveDraft
+            });
             
             // Initialize drag and drop
-            initializeDraggableElements();
+            if (typeof initializeDraggableElements === 'function') {
+                initializeDraggableElements();
+            }
             
             // Check for payment success
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('payment') === 'success') {
                 setTimeout(() => {
-                    showNotification('🎉 AI Credits purchased successfully! Your credits have been added to your account.', 'success');
+                    showNotification('AI Credits purchased successfully!', 'success');
                     window.history.replaceState({}, document.title, '/website-builder.html');
-                    loadAiCredits();
+                    if (typeof loadAiCredits === 'function') {
+                        loadAiCredits();
+                    }
                 }, 1000);
             }
-            
-            // Test button functionality
-            console.log('All button functions loaded:', {
-                addTextElement: typeof addTextElement,
-                toggleAIAssistant: typeof toggleAIAssistant,
-                saveDraft: typeof saveDraft
-            });
         });
     </script>
 </body>
