@@ -1729,11 +1729,10 @@ app.get('/api/automation-settings', isAuthenticated, async (req, res) => {
 });
 
 // 🤖 AI WEBSITE BUILDER - Page Processing Endpoint (with credits)
-app.post('/api/ai/process-page-request', async (req, res) => {
+app.post('/api/ai/process-page-request', isAuthenticated, async (req, res) => {
     try {
         const { prompt, currentPage, pageType } = req.body;
-        // Temporary: Use default user ID until auth is implemented
-        const userId = '1';
+        const userId = req.user.uid;
         
         if (!prompt || !prompt.trim()) {
             return res.status(400).json({ 
@@ -1797,10 +1796,9 @@ app.post('/api/ai/process-page-request', async (req, res) => {
 });
 
 // 💰 AI CREDITS MANAGEMENT
-app.get('/api/ai/credits', async (req, res) => {
+app.get('/api/ai/credits', isAuthenticated, async (req, res) => {
     try {
-        // Temporary: Use default user ID until auth is implemented
-        const userId = '1';
+        const userId = req.user.uid;
         const credits = await getUserAiCredits(userId);
         
         res.json({
@@ -1823,11 +1821,10 @@ app.get('/api/stripe/public-key', (req, res) => {
 });
 
 // AI Credits Purchase Endpoint
-app.post('/api/ai/purchase-credits', async (req, res) => {
+app.post('/api/ai/purchase-credits', isAuthenticated, async (req, res) => {
     try {
         const { creditsPackage } = req.body; // 'small', 'medium', 'large'
-        // Temporary: Use default user ID until auth is implemented
-        const userId = '1';
+        const userId = req.user.uid;
         
         // Credit packages: $5 = 50 credits, $15 = 150 credits, $30 = 350 credits
         const packages = {
