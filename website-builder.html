@@ -42,63 +42,32 @@
             height: 100vh;
         }
         
-        /* Mobile Responsive - CapCut Style */
+        /* Mobile Responsive - CapCut Style - OVERRIDE ALL PREVIOUS */
         @media (max-width: 768px) {
             .builder-container {
-                grid-template-columns: 1fr;
-                grid-template-rows: 60px 50px 1fr 60px;
+                grid-template-columns: 1fr !important;
+                grid-template-rows: 60px 1fr 60px !important;
+                height: 100vh;
             }
             
-            .toolbar {
-                order: 2;
-                grid-column: 1;
-                display: flex;
-                flex-direction: row;
-                overflow-x: auto;
-                height: 50px;
-                padding: 8px;
-                gap: 8px;
-                background: var(--bg-secondary);
-                border-bottom: 1px solid var(--border-color);
-            }
-            
-            .toolbar-btn {
-                flex-shrink: 0;
-                padding: 8px 12px;
-                font-size: 12px;
-                white-space: nowrap;
-                min-width: auto;
+            .left-sidebar,
+            .right-sidebar {
+                display: none !important;
             }
             
             .preview-area {
-                order: 3;
                 grid-column: 1;
-            }
-            
-            .properties-panel {
-                order: 4;
-                grid-column: 1;
-                height: 60px;
-                display: flex;
-                overflow-x: auto;
-                padding: 8px;
-                background: var(--bg-secondary);
-                border-top: 1px solid var(--border-color);
-            }
-            
-            .property-section {
-                flex-shrink: 0;
-                min-width: 200px;
-                margin-right: 16px;
+                background: var(--bg-primary);
+                overflow: auto;
             }
             
             .mobile-preview-toggle {
-                display: block;
+                display: block !important;
             }
             
             .ai-panel {
-                width: 100%;
-                right: -100%;
+                width: 100% !important;
+                right: -100% !important;
                 top: 0;
                 height: 100vh;
             }
@@ -113,17 +82,63 @@
             }
             
             .top-bar {
-                padding: 0 15px;
+                padding: 0 10px !important;
+                flex-wrap: wrap;
+                gap: 5px;
+            }
+            
+            .project-info {
+                gap: 10px;
             }
             
             .project-name {
-                font-size: 14px;
-                padding: 6px 10px;
+                font-size: 12px !important;
+                padding: 4px 8px !important;
+                max-width: 120px;
             }
             
-            .controls .btn {
-                padding: 6px 12px;
-                font-size: 12px;
+            .actions {
+                gap: 5px !important;
+                flex-wrap: wrap;
+            }
+            
+            .actions .btn {
+                padding: 6px 8px !important;
+                font-size: 11px !important;
+                min-width: auto;
+            }
+            
+            .actions .btn i {
+                margin-right: 4px;
+            }
+            
+            /* Mobile toolbar at bottom */
+            .mobile-toolbar {
+                order: 3;
+                grid-column: 1;
+                background: var(--bg-secondary);
+                border-top: 1px solid var(--border-color);
+                padding: 8px;
+                display: flex !important;
+                justify-content: space-around;
+                align-items: center;
+            }
+            
+            .mobile-toolbar .btn {
+                flex: 1;
+                margin: 0 2px;
+                padding: 8px 4px;
+                font-size: 10px;
+                text-align: center;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 2px;
+            }
+            
+            .canvas {
+                padding: 10px !important;
+                margin: 0 !important;
             }
         }
         
@@ -716,22 +731,10 @@
             color: var(--bg-primary);
         }
         
-        /* Responsive */
+        /* Mobile-First Responsive Design */
         @media (max-width: 1024px) {
             .builder-container {
                 grid-template-columns: 280px 1fr 250px;
-            }
-        }
-        
-        @media (max-width: 768px) {
-            .builder-container {
-                grid-template-columns: 1fr;
-                grid-template-rows: 60px auto 1fr auto;
-            }
-            
-            .left-sidebar,
-            .right-sidebar {
-                display: none;
             }
         }
     </style>
@@ -1060,6 +1063,30 @@ Examples:
                     <textarea class="property-input" rows="3" placeholder="Capturing your most precious moments with artistic vision and technical excellence..."></textarea>
                 </div>
             </div>
+        </div>
+        
+        <!-- Mobile Toolbar (only visible on mobile) -->
+        <div class="mobile-toolbar" style="display: none;">
+            <button class="btn btn-secondary" onclick="addTextElement()">
+                <i class="fas fa-font"></i>
+                <span>Text</span>
+            </button>
+            <button class="btn btn-secondary" onclick="triggerPhotoUpload()">
+                <i class="fas fa-camera"></i>
+                <span>Photo</span>
+            </button>
+            <button class="btn btn-secondary" onclick="addLogoElement()">
+                <i class="fas fa-image"></i>
+                <span>Logo</span>
+            </button>
+            <button class="btn btn-ai" onclick="toggleAIAssistant()">
+                <i class="fas fa-robot"></i>
+                <span>AI</span>
+            </button>
+            <button class="btn btn-secondary" onclick="toggleFullscreenPreview()">
+                <i class="fas fa-expand"></i>
+                <span>Preview</span>
+            </button>
         </div>
     </div>
 
