@@ -935,19 +935,19 @@ Examples:
             <div class="sidebar-section page-manager">
                 <div class="section-title">Page Manager</div>
                 <div class="page-list" id="pageList">
-                    <div class="page-item active" data-page="home">
+                    <div class="page-item active" data-page="home" onclick="switchToPage('home')">
                         <span class="page-name">Home</span>
                         <i class="fas fa-ellipsis-v"></i>
                     </div>
-                    <div class="page-item" data-page="about">
+                    <div class="page-item" data-page="about" onclick="switchToPage('about')">
                         <span class="page-name">About</span>
                         <i class="fas fa-ellipsis-v"></i>
                     </div>
-                    <div class="page-item" data-page="portfolio">
+                    <div class="page-item" data-page="portfolio" onclick="switchToPage('portfolio')">
                         <span class="page-name">Portfolio</span>
                         <i class="fas fa-ellipsis-v"></i>
                     </div>
-                    <div class="page-item" data-page="contact">
+                    <div class="page-item" data-page="contact" onclick="switchToPage('contact')">
                         <span class="page-name">Contact</span>
                         <i class="fas fa-ellipsis-v"></i>
                     </div>
@@ -1297,16 +1297,7 @@ Examples:
                 });
             });
             
-            // Page switching
-            document.querySelectorAll('.page-item').forEach(item => {
-                item.addEventListener('click', function() {
-                    document.querySelectorAll('.page-item').forEach(i => i.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    const pageName = this.dataset.page;
-                    switchToPage(pageName);
-                });
-            });
+            // Page switching - remove since we're using onclick in HTML
             
             // Color swatches
             document.querySelectorAll('.color-swatch').forEach(swatch => {
@@ -1806,11 +1797,7 @@ Examples:
                     <i class="fas fa-ellipsis-v"></i>
                 `;
                 
-                pageItem.addEventListener('click', function() {
-                    document.querySelectorAll('.page-item').forEach(i => i.classList.remove('active'));
-                    this.classList.add('active');
-                    switchToPage(pageId);
-                });
+                pageItem.onclick = () => switchToPage(pageId);
                 
                 pageList.appendChild(pageItem);
             }
@@ -2833,7 +2820,19 @@ Examples:
             
             if (templateType && templates[templateType]) {
                 currentProject.pageData = templates[templateType];
-                updateCanvas();
+                
+                // Apply the template to the live canvas immediately
+                const currentPage = getCurrentPageType();
+                const pageContent = templates[templateType][currentPage];
+                if (pageContent) {
+                    const canvas = document.querySelector('.canvas-content');
+                    if (canvas) {
+                        canvas.innerHTML = pageContent;
+                        makeAllTextEditable();
+                        initializeDraggableElements();
+                    }
+                }
+                
                 showNotification(`${templateType.charAt(0).toUpperCase() + templateType.slice(1)} template applied successfully!`, 'success');
                 console.log(`Applied ${templateType} template`);
             } else {
@@ -2943,6 +2942,48 @@ Examples:
         
         // Initialize drag functionality when page loads
         document.addEventListener('DOMContentLoaded', initializeDraggableElements);
+        
+        // Add missing updateCanvas function
+        function updateCanvas() {
+            const currentPage = getCurrentPageType();
+            const canvas = document.querySelector('.canvas-content');
+            
+            if (currentProject.pageData && currentProject.pageData[currentPage] && canvas) {
+                canvas.innerHTML = currentProject.pageData[currentPage];
+                makeAllTextEditable();
+                initializeDraggableElements();
+            }
+        }
+        
+        // Add page switching functionality
+        function switchToPage(pageType) {
+            // Save current page content
+            const currentPage = getCurrentPageType();
+            const canvas = document.querySelector('.canvas-content');
+            if (canvas && currentProject.pageData) {
+                currentProject.pageData[currentPage] = canvas.innerHTML;
+            }
+            
+            // Update active page
+            document.querySelectorAll('.page-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.page === pageType) {
+                    item.classList.add('active');
+                }
+            });
+            
+            // Load new page content
+            if (currentProject.pageData && currentProject.pageData[pageType] && canvas) {
+                canvas.innerHTML = currentProject.pageData[pageType];
+                makeAllTextEditable();
+                initializeDraggableElements();
+            } else {
+                // Create default content if page doesn't exist
+                canvas.innerHTML = generateEditableContent('default', pageType);
+                makeAllTextEditable();
+                initializeDraggableElements();
+            }
+        }
         
         // Additional helper functions for website builder
         function updateCanvasColors(color) {
