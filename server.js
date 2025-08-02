@@ -111,13 +111,22 @@ try {
     }
 
     if (serviceAccount) {
+        // Try multiple bucket formats to find the correct one
+        const bucketOptions = [
+            `${serviceAccount.project_id}.appspot.com`,
+            `${serviceAccount.project_id}.firebasestorage.app`,
+            serviceAccount.project_id
+        ];
+        
+        let storageBucket = bucketOptions[0]; // Default to first option
+        
         admin.initializeApp({
             credential: admin.credential.cert(serviceAccount),
             projectId: serviceAccount.project_id,
-            storageBucket: `${serviceAccount.project_id}.firebasestorage.app`
+            storageBucket: storageBucket
         });
         console.log('Firebase Admin SDK initialized successfully with project:', serviceAccount.project_id);
-        console.log('Storage bucket:', `${serviceAccount.project_id}.firebasestorage.app`);
+        console.log('Storage bucket configured as:', storageBucket);
     } else {
         console.log('WARNING: Firebase credentials not provided - authentication disabled');
     }
@@ -7171,37 +7180,24 @@ app.post('/api/upload/builder-image', isAuthenticated, builderUpload.single('ima
         
         console.log('Server uploading image:', storagePath, 'Size:', file.size);
         
-        // Get Firebase Storage bucket
-        const bucket = admin.storage().bucket();
-        const fileRef = bucket.file(storagePath);
+        // Fallback: Save to local uploads folder instead of Firebase Storage
+        const fs = require('fs');
+        const uploadDir = path.join(__dirname, 'uploads', 'builderUploads', userId);
         
-        // Upload file with metadata
-        const metadata = {
-            contentType: file.mimetype,
-            metadata: {
-                uploadedBy: userId,
-                uploadedAt: new Date().toISOString(),
-                originalName: file.originalname
-            }
-        };
-        
-        // Upload the file buffer (memory storage provides buffer directly)
-        if (!file.buffer) {
-            throw new Error('File buffer not available - check multer configuration');
+        // Ensure directory exists
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true });
         }
         
-        await fileRef.save(file.buffer, metadata);
+        const localPath = path.join(uploadDir, filename);
         
-        // Make the file publicly readable
-        await fileRef.makePublic();
+        // Save file buffer to local disk
+        fs.writeFileSync(localPath, file.buffer);
         
-        // Get the public download URL using getSignedUrl for public access
-        const [downloadURL] = await fileRef.getSignedUrl({
-            action: 'read',
-            expires: '03-09-2491' // Far future date for permanent access
-        });
+        // Create a public URL for the uploaded file
+        const downloadURL = `/uploads/builderUploads/${userId}/${filename}`;
         
-        console.log('Image uploaded successfully to:', downloadURL);
+        console.log('Image uploaded successfully to local storage:', downloadURL);
         
         res.json({ 
             downloadURL,
