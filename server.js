@@ -6684,29 +6684,45 @@ app.get('/api/layouts', isAuthenticated, async (req, res) => {
         }
 
         // Get all layouts for this user from Firestore
+        // Remove orderBy to avoid index requirement, we'll sort in memory
         const layoutsSnapshot = await admin.firestore()
             .collection('builderPages')
             .where('userId', '==', userId)
-            .orderBy('createdAt', 'desc')
+            .limit(50)
             .get();
 
-        const layouts = [];
-        layoutsSnapshot.forEach(doc => {
+        // Handle empty snapshot
+        if (layoutsSnapshot.empty) {
+            console.log(`No layouts found for user ${userId}`);
+            return res.json([]);
+        }
+
+        // Map through docs safely
+        const layouts = layoutsSnapshot.docs.map(doc => {
             const data = doc.data();
-            layouts.push({
+            return {
                 id: doc.id,
                 title: data.title || 'Untitled Layout',
                 createdAt: data.createdAt?.toDate?.() || new Date(),
-                layoutPreview: Array.isArray(data.layout) ? data.layout.length : 0
-            });
+                layoutPreview: Array.isArray(data.layout) ? data.layout.length : 0,
+                ...data
+            };
         });
+
+        // Sort by createdAt in memory (descending - newest first)
+        layouts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
         console.log(`Retrieved ${layouts.length} layouts for user ${userId}`);
         res.json(layouts);
 
     } catch (error) {
-        console.error('Error fetching layouts:', error);
-        res.status(500).json({ error: 'Failed to fetch layouts' });
+        console.error('Error fetching layouts:', error.message);
+        console.error('Error stack:', error.stack);
+        res.status(500).json({ 
+            error: 'Failed to fetch layouts',
+            details: error.message,
+            code: error.code || 'UNKNOWN_ERROR'
+        });
     }
 });
 
