@@ -49,6 +49,28 @@ h1 {
     transform: translateY(1px);
 }
 
+#addFromLibrary {
+    background: #9b59b6;
+}
+
+#addFromLibrary:hover {
+    background: #8e44ad;
+}
+
+#uploadImage {
+    background: #e67e22;
+    color: white;
+}
+
+#uploadImage:hover {
+    background: #d35400;
+}
+
+#uploadImage:disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
+}
+
 #controls input {
     padding: 10px;
     border: 2px solid #ddd;
@@ -221,6 +243,61 @@ body.dark-mode .block {
     background: #2d2d2d;
     color: #e0e0e0;
     border-color: #555;
+}
+
+/* Image block specific styles */
+.image-block {
+    text-align: center;
+    padding: 10px;
+}
+
+.image-block img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease;
+}
+
+.image-block img:hover {
+    transform: scale(1.02);
+}
+
+.image-block:hover {
+    border-color: #e67e22;
+    background: #fdf4e8;
+}
+
+body.dark-mode .image-block:hover {
+    border-color: #e67e22;
+    background: #3a2a1a;
+}
+
+/* Upload area styling */
+.upload-drop-zone {
+    border: 2px dashed #bdc3c7;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    color: #7f8c8d;
+    transition: all 0.3s ease;
+}
+
+.upload-drop-zone.drag-over {
+    border-color: #e67e22;
+    background: #fdf4e8;
+    color: #e67e22;
+}
+
+body.dark-mode .upload-drop-zone {
+    border-color: #555;
+    color: #bdc3c7;
+}
+
+body.dark-mode .upload-drop-zone.drag-over {
+    border-color: #e67e22;
+    background: #3a2a1a;
+    color: #e67e22;
 }
 
 body.dark h1 {

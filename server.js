@@ -7096,3 +7096,63 @@ app.get('/preview/:layoutId', async (req, res) => {
 app.get('/website-builder', isAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'website-builder.html'));
 });
+
+// Image upload API for Website Builder
+app.post('/api/upload/image', isAuthenticated, upload.single('file'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No file uploaded' });
+        }
+
+        const file = req.file;
+        const userId = req.session.user.uid;
+        const storagePath = req.body.path || `builderUploads/${userId}/${Date.now()}_${file.originalname}`;
+
+        // Upload to Firebase Storage
+        const bucket = admin.storage().bucket();
+        const fileUpload = bucket.file(storagePath);
+
+        const stream = fileUpload.createWriteStream({
+            metadata: {
+                contentType: file.mimetype,
+                metadata: {
+                    uploadedBy: userId,
+                    uploadedAt: new Date().toISOString()
+                }
+            }
+        });
+
+        stream.on('error', (error) => {
+            console.error('Firebase upload error:', error);
+            res.status(500).json({ error: 'Failed to upload to Firebase Storage' });
+        });
+
+        stream.on('finish', async () => {
+            try {
+                // Make the file public
+                await fileUpload.makePublic();
+                
+                // Get public URL
+                const downloadURL = `https://storage.googleapis.com/${bucket.name}/${storagePath}`;
+                
+                console.log(`Image uploaded successfully: ${downloadURL}`);
+                res.json({ 
+                    success: true,
+                    downloadURL: downloadURL,
+                    fileName: file.originalname,
+                    storagePath: storagePath
+                });
+            } catch (urlError) {
+                console.error('Error getting download URL:', urlError);
+                res.status(500).json({ error: 'Failed to get download URL' });
+            }
+        });
+
+        // Pipe the file buffer to Firebase Storage
+        stream.end(file.buffer);
+
+    } catch (error) {
+        console.error('Image upload error:', error);
+        res.status(500).json({ error: 'Image upload failed' });
+    }
+});
