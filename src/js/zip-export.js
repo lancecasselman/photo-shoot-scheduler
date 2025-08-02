@@ -8,6 +8,11 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function exportAsZip() {
+    // Check if we're in multi-page mode
+    if (typeof window.exportMultiPageZip === 'function' && window.pages && Object.keys(window.pages).length > 1) {
+        return window.exportMultiPageZip();
+    }
+    
     const exportBtn = document.getElementById('exportZip');
     const originalText = exportBtn.textContent;
     

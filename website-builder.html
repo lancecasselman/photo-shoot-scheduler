@@ -117,6 +117,85 @@
       opacity: 0.5;
       cursor: not-allowed;
     }
+    
+    /* Multi-page manager styles */
+    .page-nav-panel {
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+    
+    .page-nav-panel h3 {
+      margin: 0 0 10px 0;
+      font-size: 14px;
+      color: #495057;
+      font-weight: 600;
+    }
+    
+    .page-list, .nav-list {
+      margin-bottom: 10px;
+    }
+    
+    .page-item, .nav-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      margin-bottom: 5px;
+      background: white;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    .page-item.active {
+      background: #e3f2fd;
+      border-color: #2196f3;
+    }
+    
+    .page-item:hover, .nav-item:hover {
+      background: #f5f5f5;
+    }
+    
+    .page-name, .nav-label {
+      font-size: 13px;
+      flex: 1;
+    }
+    
+    .page-actions, .nav-actions {
+      display: flex;
+      gap: 4px;
+    }
+    
+    .page-actions button, .nav-actions button {
+      background: none;
+      border: none;
+      padding: 2px 6px;
+      font-size: 12px;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+    
+    .page-actions button:hover, .nav-actions button:hover {
+      background: #e0e0e0;
+    }
+    
+    .add-page-btn, .add-nav-btn {
+      width: 100%;
+      padding: 8px;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    
+    .add-page-btn:hover, .add-nav-btn:hover {
+      background: #218838;
+    }
   </style>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -130,6 +209,36 @@
 </head>
 <body>
   <h1>Website Builder Interface</h1>
+
+  <!-- Multi-page Manager -->
+  <div class="page-nav-panel">
+    <h3>Pages</h3>
+    <div class="page-list" id="pageList">
+      <div class="page-item active" data-page-id="home">
+        <span class="page-name">Home</span>
+        <div class="page-actions">
+          <button class="edit-page" title="Edit Page">Edit</button>
+          <button class="delete-page" title="Delete Page">×</button>
+        </div>
+      </div>
+    </div>
+    <button class="add-page-btn" id="addPageBtn">Add Page</button>
+  </div>
+  
+  <div class="page-nav-panel">
+    <h3>Navigation</h3>
+    <div class="nav-list" id="navList">
+      <div class="nav-item" data-page-id="home" draggable="true">
+        <span class="nav-label">Home</span>
+        <div class="nav-actions">
+          <button class="edit-nav" title="Edit Label">Edit</button>
+          <button class="move-up" title="Move Up">↑</button>
+          <button class="move-down" title="Move Down">↓</button>
+        </div>
+      </div>
+    </div>
+    <button class="add-nav-btn" id="addNavBtn">Add Nav Item</button>
+  </div>
 
   <div id="controls">
     <button id="undoBtn" title="Undo (Ctrl+Z)">Undo</button>
@@ -188,5 +297,6 @@
   <script src="/src/js/auth-bridge.js"></script>
   <script src="/src/js/image-upload.js"></script>
   <script src="/src/js/zip-export.js"></script>
+  <script src="/src/js/multi-page.js"></script>
 </body>
 </html>

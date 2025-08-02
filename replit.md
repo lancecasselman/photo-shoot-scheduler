@@ -48,7 +48,12 @@ This is a comprehensive photography business management platform designed to rev
   - Completely rebuilt layout with scoped container isolation (layout-version: repaired-clean-v1)
   - Iframe sandboxing for preview content to prevent CSS interference
   - Template-based website creation with professional photography themes
-  - Multi-page support (Home, About, Portfolio, Contact) with page switching
+  - **Multi-Page Website Support**: Full multi-page website creation with page manager and customizable navigation
+    - Add, delete, and rename pages (Home, About, Gallery, Contact, etc.)
+    - Each page has independent content and layout
+    - Customizable navigation menu with drag-and-drop reordering
+    - Per-page content editing with seamless page switching
+    - Complete multi-page ZIP export with working navigation
   - Visual canvas editor with inline content editing capabilities
   - Professional photography-focused templates (wedding, portrait, fashion, commercial)
   - Real-time preview functionality with new window display
@@ -60,6 +65,7 @@ This is a comprehensive photography business management platform designed to rev
   - **Light/Dark Mode Toggle**: Professional dark theme with proper contrast and styling
   - **Enhanced HTML Export**: Full document export with selected fonts, CSS resets, and responsive design
   - **Image Upload Integration**: Client-side Firebase Storage upload system with drag-and-drop support, proper authentication bridge between backend session and Firebase client, automatic image block insertion, and secure user-specific storage paths (builderUploads/{userId}/)
+  - **ZIP Export System**: Single-page and multi-page website export with all images, styles, and fonts included
 - **Subscription System** (Added Jan 31, 2025):
   - Integrated Stripe payment processing for SaaS subscriptions
   - Three pricing tiers: $25/month, $125/6 months (1 month free), $200/year (2 months free)

@@ -7415,3 +7415,302 @@ body.dark h4, body.dark h5, body.dark h6 {
 }
 ` : ''}`;
 }
+
+// Multi-page ZIP Export endpoint
+app.post('/api/export/multi-page-zip', isAuthenticated, async (req, res) => {
+    try {
+        const { pages, navigationOrder, navigationLabels, selectedFont, isDarkTheme } = req.body;
+        const userId = req.session.user.uid;
+        
+        console.log('Starting multi-page ZIP export for user:', userId);
+        
+        // Create ZIP archive
+        const archive = archiver('zip', {
+            zlib: { level: 9 }
+        });
+        
+        // Set response headers
+        res.setHeader('Content-Type', 'application/zip');
+        res.setHeader('Content-Disposition', 'attachment; filename="multi-page-website.zip"');
+        
+        // Pipe archive to response
+        archive.pipe(res);
+        
+        // Generate shared styles.css
+        const stylesCSS = generateMultiPageStylesCSS(selectedFont, isDarkTheme);
+        archive.append(stylesCSS, { name: 'styles.css' });
+        
+        // Generate navigation HTML
+        const navHTML = generateNavigationHTML(navigationOrder, navigationLabels);
+        
+        // Process each page
+        const allImageUrls = new Set();
+        
+        for (const pageId of Object.keys(pages)) {
+            const page = pages[pageId];
+            
+            // Extract images from this page
+            const pageImageUrls = extractImageUrlsFromHTML(page.content);
+            pageImageUrls.forEach(url => allImageUrls.add(url));
+            
+            // Process HTML and update image paths
+            let processedHTML = page.content;
+            
+            // Generate complete HTML file for this page
+            const fileName = pageId === 'home' ? 'index.html' : `${pageId}.html`;
+            const pageHTML = generateMultiPageHTML(processedHTML, navHTML, selectedFont, isDarkTheme, page.name);
+            
+            archive.append(pageHTML, { name: fileName });
+            console.log(`Generated page: ${fileName}`);
+        }
+        
+        // Copy all images to ZIP
+        for (const imageUrl of allImageUrls) {
+            try {
+                if (imageUrl.startsWith('/uploads/')) {
+                    const localPath = path.join(__dirname, imageUrl);
+                    
+                    if (fs.existsSync(localPath)) {
+                        const fileName = path.basename(imageUrl);
+                        const imageBuffer = fs.readFileSync(localPath);
+                        
+                        archive.append(imageBuffer, { name: `images/${fileName}` });
+                        console.log(`Added image: ${fileName}`);
+                    }
+                }
+            } catch (imageError) {
+                console.error(`Failed to process image ${imageUrl}:`, imageError);
+            }
+        }
+        
+        // Update all HTML files to use relative image paths
+        const finalPages = {};
+        for (const pageId of Object.keys(pages)) {
+            const page = pages[pageId];
+            let processedHTML = page.content;
+            
+            // Update image paths
+            for (const imageUrl of allImageUrls) {
+                if (imageUrl.startsWith('/uploads/')) {
+                    const fileName = path.basename(imageUrl);
+                    const escapedUrl = imageUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    processedHTML = processedHTML.replace(
+                        new RegExp(`src="${escapedUrl}"`, 'g'),
+                        `src="images/${fileName}"`
+                    );
+                }
+            }
+            
+            const fileName = pageId === 'home' ? 'index.html' : `${pageId}.html`;
+            const pageHTML = generateMultiPageHTML(processedHTML, navHTML, selectedFont, isDarkTheme, page.name);
+            
+            archive.append(pageHTML, { name: fileName });
+        }
+        
+        // Finalize archive
+        await archive.finalize();
+        
+        console.log('Multi-page ZIP export completed');
+        
+    } catch (error) {
+        console.error('Multi-page ZIP export error:', error);
+        res.status(500).json({ error: 'Failed to generate multi-page ZIP export' });
+    }
+});
+
+function generateNavigationHTML(navigationOrder, navigationLabels) {
+    const navItems = navigationOrder.map(pageId => {
+        const label = navigationLabels[pageId] || pageId;
+        const href = pageId === 'home' ? 'index.html' : `${pageId}.html`;
+        return `<a href="${href}" class="nav-link">${label}</a>`;
+    }).join('\n        ');
+    
+    return `<nav class="main-navigation">
+        ${navItems}
+    </nav>`;
+}
+
+function generateMultiPageHTML(content, navHTML, selectedFont, isDarkTheme, pageTitle) {
+    const fontLinks = {
+        'Inter': 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap',
+        'Playfair Display': 'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap',
+        'Lato': 'https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap',
+        'Roboto': 'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap',
+        'Open Sans': 'https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap',
+        'Montserrat': 'https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap'
+    };
+    
+    const fontLink = fontLinks[selectedFont] || fontLinks['Inter'];
+    const themeClass = isDarkTheme ? ' class="dark"' : '';
+    
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${pageTitle} - My Website</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="${fontLink}" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body${themeClass}>
+    ${navHTML}
+    <div class="website-container">
+        ${content}
+    </div>
+</body>
+</html>`;
+}
+
+function generateMultiPageStylesCSS(selectedFont, isDarkTheme) {
+    return `/* Multi-page Website Builder Export Styles */
+
+/* CSS Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Base styles */
+body {
+    font-family: '${selectedFont}', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+    color: ${isDarkTheme ? '#f0f0f0' : '#333'};
+    background-color: ${isDarkTheme ? '#1a1a1a' : '#ffffff'};
+}
+
+/* Navigation */
+.main-navigation {
+    background: ${isDarkTheme ? '#2a2a2a' : '#ffffff'};
+    padding: 15px 0;
+    border-bottom: 1px solid ${isDarkTheme ? '#3a3a3a' : '#e0e0e0'};
+    box-shadow: 0 2px 4px rgba(0, 0, 0, ${isDarkTheme ? '0.3' : '0.1'});
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.nav-link {
+    display: inline-block;
+    padding: 10px 20px;
+    margin: 0 5px;
+    text-decoration: none;
+    color: ${isDarkTheme ? '#f0f0f0' : '#333'};
+    border-radius: 5px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.nav-link:hover {
+    background: ${isDarkTheme ? '#3a3a3a' : '#f5f5f5'};
+    color: ${isDarkTheme ? '#ffffff' : '#2c3e50'};
+}
+
+.website-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Block styles */
+.block {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: ${isDarkTheme ? '#2a2a2a' : '#ffffff'};
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, ${isDarkTheme ? '0.3' : '0.1'});
+}
+
+.block h1, .block h2, .block h3, .block h4, .block h5, .block h6 {
+    margin-bottom: 15px;
+    color: ${isDarkTheme ? '#ffffff' : '#2c3e50'};
+}
+
+.block p {
+    margin-bottom: 15px;
+    line-height: 1.7;
+}
+
+/* Image block styles */
+.image-block {
+    text-align: center;
+    padding: 10px;
+}
+
+.image-block img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, ${isDarkTheme ? '0.4' : '0.1'});
+}
+
+.image-caption {
+    font-size: 14px;
+    color: ${isDarkTheme ? '#ccc' : '#666'};
+    text-align: center;
+    margin-top: 8px;
+    font-style: italic;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .main-navigation {
+        padding: 10px 0;
+    }
+    
+    .nav-link {
+        display: block;
+        margin: 5px 10px;
+    }
+    
+    .website-container {
+        padding: 10px;
+    }
+    
+    .block {
+        margin-bottom: 20px;
+        padding: 15px;
+    }
+}
+
+/* Dark theme overrides */
+${isDarkTheme ? `
+body.dark {
+    background-color: #1a1a1a;
+    color: #f0f0f0;
+}
+
+body.dark .main-navigation {
+    background: #2a2a2a;
+    border-bottom-color: #3a3a3a;
+}
+
+body.dark .block {
+    background: #2a2a2a;
+    border: 1px solid #3a3a3a;
+}
+
+body.dark h1, body.dark h2, body.dark h3, 
+body.dark h4, body.dark h5, body.dark h6 {
+    color: #ffffff;
+}
+` : ''}`;
+}
+
+function extractImageUrlsFromHTML(html) {
+    const { JSDOM } = require('jsdom');
+    const dom = new JSDOM(html);
+    const images = dom.window.document.querySelectorAll('img');
+    const imageUrls = [];
+    
+    images.forEach(img => {
+        if (img.src && img.src.includes('/uploads/')) {
+            // Convert to relative path if it's a full URL
+            const src = img.src.includes('http') ? new URL(img.src).pathname : img.src;
+            imageUrls.push(src);
+        }
+    });
+    
+    return imageUrls;
+}
