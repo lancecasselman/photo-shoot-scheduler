@@ -89,8 +89,12 @@ async function uploadAndInsertImage(file) {
         console.log('Image uploaded and inserted successfully:', imageUrl);
         
     } catch (error) {
-        console.error('Upload failed:', error);
-        alert('Image upload failed. Please try again.');
+        console.error('Upload failed with details:', {
+            message: error.message,
+            stack: error.stack,
+            type: typeof error
+        });
+        alert(`Image upload failed: ${error.message}`);
     } finally {
         // Re-enable upload button
         uploadBtn.disabled = false;
@@ -154,8 +158,13 @@ async function uploadToFirebaseStorage(file) {
         return downloadURL;
         
     } catch (error) {
-        console.error('Firebase upload error:', error);
-        throw new Error('Failed to upload image to storage');
+        console.error('Firebase upload error details:', {
+            message: error.message,
+            code: error.code,
+            serverResponse: error.serverResponse,
+            stack: error.stack
+        });
+        throw new Error(`Upload failed: ${error.message || 'Unknown error'}`);
     }
 }
 
