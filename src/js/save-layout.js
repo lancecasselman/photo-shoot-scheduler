@@ -50,17 +50,7 @@ document.getElementById("saveLayout").addEventListener("click", async () => {
   }
 });
 
-document.getElementById("addBlock").addEventListener("click", () => {
-  const div = document.createElement("div");
-  div.className = "block";
-  div.contentEditable = "true";
-  div.innerHTML = "<h2>New Section</h2><p>Click to edit...</p>";
-  document.getElementById("blocks").appendChild(div);
-});
-
-document.getElementById("toggleTheme").addEventListener("click", () => {
-  document.body.classList.toggle("dark");
-});
+// Add block and theme toggle handlers moved to dragdrop.js to avoid duplicates
 
 document.getElementById("exportHtml").addEventListener("click", () => {
   const blocks = document.querySelectorAll(".block");
