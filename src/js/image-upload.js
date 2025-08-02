@@ -90,7 +90,7 @@ async function uploadAndInsertImage(file) {
         
     } catch (error) {
         console.error('Upload failed:', error);
-        alert('Upload failed: ' + error.message);
+        alert('Image upload failed. Please try again.');
     } finally {
         // Re-enable upload button
         uploadBtn.disabled = false;
@@ -98,40 +98,48 @@ async function uploadAndInsertImage(file) {
     }
 }
 
-// Upload file to Firebase Storage
+// Upload file to Firebase Storage using client-side Firebase SDK
 async function uploadToFirebaseStorage(file) {
     try {
-        // Get current user info
-        const response = await fetch('/api/auth/user');
-        if (!response.ok) {
+        // Check if Firebase is available and user is authenticated
+        if (typeof firebase === 'undefined' || !firebase.auth().currentUser) {
             throw new Error('User not authenticated');
         }
         
-        const userData = await response.json();
-        const userId = userData.uid;
+        const user = firebase.auth().currentUser;
+        const userId = user.uid;
         
         // Create unique filename
         const timestamp = Date.now();
         const filename = `${timestamp}_${file.name}`;
         const storagePath = `builderUploads/${userId}/${filename}`;
         
-        // Upload using FormData
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('path', storagePath);
+        // Get Firebase Storage reference
+        const storage = firebase.storage();
+        const storageRef = storage.ref();
+        const fileRef = storageRef.child(storagePath);
         
-        const uploadResponse = await fetch('/api/upload/image', {
-            method: 'POST',
-            body: formData
-        });
+        // Upload file with metadata
+        const metadata = {
+            contentType: file.type,
+            customMetadata: {
+                uploadedBy: userId,
+                uploadedAt: new Date().toISOString(),
+                originalName: file.name
+            }
+        };
         
-        if (!uploadResponse.ok) {
-            const errorData = await uploadResponse.text();
-            throw new Error(`Upload failed: ${errorData}`);
-        }
+        // Upload the file
+        const uploadTask = fileRef.put(file, metadata);
         
-        const result = await uploadResponse.json();
-        return result.downloadURL;
+        // Wait for upload to complete
+        await uploadTask;
+        
+        // Get download URL
+        const downloadURL = await fileRef.getDownloadURL();
+        
+        console.log('Image uploaded successfully to:', downloadURL);
+        return downloadURL;
         
     } catch (error) {
         console.error('Firebase upload error:', error);
