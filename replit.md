@@ -59,7 +59,7 @@ This is a comprehensive photography business management platform designed to rev
   - **Font Picker System**: 6 professional Google Fonts (Inter, Playfair Display, Lato, Roboto, Open Sans, Montserrat) with live preview
   - **Light/Dark Mode Toggle**: Professional dark theme with proper contrast and styling
   - **Enhanced HTML Export**: Full document export with selected fonts, CSS resets, and responsive design
-  - **Image Upload Integration**: Client-side Firebase Storage upload system with drag-and-drop support, proper authentication, and automatic image block insertion
+  - **Image Upload Integration**: Client-side Firebase Storage upload system with drag-and-drop support, proper authentication bridge between backend session and Firebase client, automatic image block insertion, and secure user-specific storage paths (builderUploads/{userId}/)
 - **Subscription System** (Added Jan 31, 2025):
   - Integrated Stripe payment processing for SaaS subscriptions
   - Three pricing tiers: $25/month, $125/6 months (1 month free), $200/year (2 months free)
