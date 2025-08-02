@@ -114,10 +114,10 @@ try {
         admin.initializeApp({
             credential: admin.credential.cert(serviceAccount),
             projectId: serviceAccount.project_id,
-            storageBucket: `${serviceAccount.project_id}.appspot.com`
+            storageBucket: `${serviceAccount.project_id}.firebasestorage.app`
         });
         console.log('Firebase Admin SDK initialized successfully with project:', serviceAccount.project_id);
-        console.log('Storage bucket:', `${serviceAccount.project_id}.appspot.com`);
+        console.log('Storage bucket:', `${serviceAccount.project_id}.firebasestorage.app`);
     } else {
         console.log('WARNING: Firebase credentials not provided - authentication disabled');
     }
@@ -7195,8 +7195,11 @@ app.post('/api/upload/builder-image', isAuthenticated, builderUpload.single('ima
         // Make the file publicly readable
         await fileRef.makePublic();
         
-        // Get the public URL
-        const downloadURL = `https://storage.googleapis.com/${bucket.name}/${storagePath}`;
+        // Get the public download URL using getSignedUrl for public access
+        const [downloadURL] = await fileRef.getSignedUrl({
+            action: 'read',
+            expires: '03-09-2491' // Far future date for permanent access
+        });
         
         console.log('Image uploaded successfully to:', downloadURL);
         
