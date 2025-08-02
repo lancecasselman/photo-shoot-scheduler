@@ -1,7 +1,9 @@
 // Autosave and Version History functionality
 let autosaveInterval = null;
+let countdownInterval = null;
 let currentLayoutId = null;
 let autosaveEnabled = false;
+let countdownSeconds = 30;
 
 // Initialize autosave functionality
 document.addEventListener('DOMContentLoaded', () => {
@@ -15,9 +17,12 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (autosaveEnabled) {
             startAutosave();
+            startCountdown();
             console.log('Autosave enabled - saving every 30 seconds');
         } else {
             stopAutosave();
+            stopCountdown();
+            resetAutosaveText();
             console.log('Autosave disabled');
         }
     });
@@ -52,6 +57,49 @@ function stopAutosave() {
     if (autosaveInterval) {
         clearInterval(autosaveInterval);
         autosaveInterval = null;
+    }
+}
+
+// Start countdown timer
+function startCountdown() {
+    stopCountdown(); // Clear any existing countdown
+    countdownSeconds = 30;
+    
+    countdownInterval = setInterval(() => {
+        countdownSeconds--;
+        updateCountdownDisplay();
+        
+        if (countdownSeconds <= 0) {
+            countdownSeconds = 30; // Reset for next cycle
+        }
+    }, 1000); // Update every second
+}
+
+// Stop countdown timer
+function stopCountdown() {
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+    }
+}
+
+// Update countdown display
+function updateCountdownDisplay() {
+    const autosaveText = document.getElementById('autosaveText');
+    if (autosaveText && autosaveEnabled) {
+        if (countdownSeconds > 0) {
+            autosaveText.textContent = `Autosave (${countdownSeconds}s)`;
+        } else {
+            autosaveText.textContent = 'Saving...';
+        }
+    }
+}
+
+// Reset autosave text to default
+function resetAutosaveText() {
+    const autosaveText = document.getElementById('autosaveText');
+    if (autosaveText) {
+        autosaveText.textContent = 'Autosave (30s)';
     }
 }
 
@@ -95,6 +143,9 @@ async function performAutosave() {
         // Visual indicator of autosave
         showAutosaveIndicator();
         
+        // Reset countdown
+        countdownSeconds = 30;
+        
     } catch (error) {
         console.error('Autosave failed:', error);
     }
@@ -102,17 +153,21 @@ async function performAutosave() {
 
 // Show visual autosave indicator
 function showAutosaveIndicator() {
-    const toggle = document.getElementById('autosaveToggle');
-    const label = toggle.parentElement;
-    const originalText = label.textContent;
+    const autosaveText = document.getElementById('autosaveText');
+    const autosaveLabel = document.getElementById('autosaveLabel');
     
-    label.style.color = '#27ae60';
-    label.textContent = '✓ Auto-saved';
-    
-    setTimeout(() => {
-        label.style.color = '';
-        label.textContent = originalText;
-    }, 2000);
+    if (autosaveText && autosaveLabel) {
+        const originalColor = autosaveLabel.style.color;
+        
+        autosaveLabel.style.color = '#27ae60';
+        autosaveText.textContent = '✓ Auto-saved';
+        
+        setTimeout(() => {
+            autosaveLabel.style.color = originalColor;
+            countdownSeconds = 30; // Reset countdown
+            updateCountdownDisplay();
+        }, 2000);
+    }
 }
 
 // Set current layout ID (called from save-layout.js)
