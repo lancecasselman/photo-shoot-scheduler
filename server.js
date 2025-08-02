@@ -95,7 +95,8 @@ try {
     if (serviceAccount) {
         admin.initializeApp({
             credential: admin.credential.cert(serviceAccount),
-            projectId: serviceAccount.project_id
+            projectId: serviceAccount.project_id,
+            storageBucket: `${serviceAccount.project_id}.firebasestorage.app`
         });
         console.log('Firebase Admin SDK initialized successfully');
     } else {
