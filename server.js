@@ -6612,7 +6612,8 @@ app.post('/api/save-layout', isAuthenticated, async (req, res) => {
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
             userId: userId,
             userEmail: req.user.email,
-            title: title || 'Untitled Layout'
+            title: title || 'Untitled Layout',
+            published: req.body.published || false
         };
 
         await admin.firestore()
@@ -6665,7 +6666,8 @@ app.get('/api/load-layout/:id', isAuthenticated, async (req, res) => {
             success: true, 
             layout: layoutData.layout,
             title: layoutData.title,
-            createdAt: layoutData.createdAt
+            createdAt: layoutData.createdAt,
+            published: layoutData.published
         });
 
     } catch (error) {
@@ -6880,6 +6882,184 @@ app.get('/api/version/:versionId', isAuthenticated, async (req, res) => {
     } catch (error) {
         console.error('Error loading version:', error);
         res.status(500).json({ error: 'Failed to load version' });
+    }
+});
+
+// Preview route with access control
+app.get('/preview/:layoutId', async (req, res) => {
+    try {
+        const layoutId = req.params.layoutId;
+
+        if (!layoutId) {
+            return res.status(400).send('Layout ID is required');
+        }
+
+        // Check if Firebase is available
+        if (!admin.apps.length) {
+            return res.status(500).send('Firebase not configured');
+        }
+
+        // Load layout from Firestore
+        const layoutDoc = await admin.firestore()
+            .collection('builderPages')
+            .doc(layoutId)
+            .get();
+
+        if (!layoutDoc.exists) {
+            return res.status(404).send('Layout not found');
+        }
+
+        const layoutData = layoutDoc.data();
+
+        // Check access permissions
+        if (!layoutData.published) {
+            // Private layout - requires authentication
+            if (!req.session || !req.session.user) {
+                return res.status(401).send(`
+                    <!DOCTYPE html>
+                    <html lang="en">
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>Authentication Required</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                            .container { max-width: 400px; margin: 0 auto; }
+                            .btn { background: #3498db; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="container">
+                            <h2>Authentication Required</h2>
+                            <p>This layout is private and requires authentication to view.</p>
+                            <a href="/auth.html" class="btn">Sign In</a>
+                        </div>
+                    </body>
+                    </html>
+                `);
+            }
+
+            // Check if user owns this layout
+            if (layoutData.userId !== req.session.user.uid) {
+                return res.status(403).send(`
+                    <!DOCTYPE html>
+                    <html lang="en">
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>Access Denied</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                            .container { max-width: 400px; margin: 0 auto; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="container">
+                            <h2>Access Denied</h2>
+                            <p>You don't have permission to view this private layout.</p>
+                        </div>
+                    </body>
+                    </html>
+                `);
+            }
+        }
+
+        // Render the layout
+        const previewHtml = `
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>${layoutData.title || 'Layout Preview'}</title>
+                <link rel="stylesheet" href="/css/style.css">
+                <style>
+                    body {
+                        margin: 0;
+                        padding: 20px;
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                        line-height: 1.6;
+                        color: #333;
+                        background: white;
+                    }
+                    .preview-header {
+                        background: #f8f9fa;
+                        padding: 15px;
+                        margin: -20px -20px 20px -20px;
+                        border-bottom: 1px solid #ddd;
+                        text-align: center;
+                        font-size: 14px;
+                        color: #666;
+                    }
+                    .preview-content {
+                        max-width: 1200px;
+                        margin: 0 auto;
+                    }
+                    .block {
+                        margin: 15px 0;
+                        padding: 15px;
+                        border-radius: 6px;
+                        min-height: 50px;
+                    }
+                    .published-badge {
+                        display: inline-block;
+                        background: #27ae60;
+                        color: white;
+                        padding: 4px 8px;
+                        border-radius: 4px;
+                        font-size: 12px;
+                        margin-left: 10px;
+                    }
+                    .private-badge {
+                        display: inline-block;
+                        background: #e74c3c;
+                        color: white;
+                        padding: 4px 8px;
+                        border-radius: 4px;
+                        font-size: 12px;
+                        margin-left: 10px;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="preview-header">
+                    Layout Preview: ${layoutData.title || 'Untitled Layout'}
+                    ${layoutData.published ? '<span class="published-badge">Public</span>' : '<span class="private-badge">Private</span>'}
+                    <br>
+                    <small>Created: ${layoutData.createdAt?.toDate?.()?.toLocaleString() || 'Unknown'}</small>
+                </div>
+                <div class="preview-content">
+                    ${layoutData.layout || '<p>No content available</p>'}
+                </div>
+            </body>
+            </html>
+        `;
+
+        console.log(`Preview accessed: ${layoutId} (${layoutData.published ? 'public' : 'private'})`);
+        res.send(previewHtml);
+
+    } catch (error) {
+        console.error('Error loading preview:', error);
+        res.status(500).send(`
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Error</title>
+                <style>
+                    body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                    .container { max-width: 400px; margin: 0 auto; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h2>Preview Error</h2>
+                    <p>Failed to load layout preview. Please try again.</p>
+                </div>
+            </body>
+            </html>
+        `);
     }
 });
 

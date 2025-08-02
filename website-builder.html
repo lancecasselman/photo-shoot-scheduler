@@ -10,17 +10,21 @@
   <h1>Website Builder Interface</h1>
 
   <div id="controls">
-    <button id="addBlock">➕ Add Block</button>
-    <button id="saveLayout">💾 Save Page Layout</button>
+    <button id="addBlock">Add Block</button>
+    <button id="saveLayout">Save Layout</button>
+    <label>
+      <input type="checkbox" id="publishToggle"> Publish Publicly
+    </label>
+    <button id="previewLayout" style="display: none;">Preview</button>
     <label id="autosaveLabel">
       <input type="checkbox" id="autosaveToggle"> <span id="autosaveText">Autosave (30s)</span>
     </label>
     <input id="layoutIdInput" placeholder="Layout ID to Load" />
-    <button id="loadLayout">📥 Load Layout</button>
-    <button id="viewVersions">🕐 View Versions</button>
-    <button id="exportHtml">📤 Export HTML</button>
-    <button id="toggleTheme">🌓 Toggle Theme</button>
-    <button id="listLayouts">📚 View Saved Layouts</button>
+    <button id="loadLayout">Load Layout</button>
+    <button id="viewVersions">View Versions</button>
+    <button id="exportHtml">Export HTML</button>
+    <button id="toggleTheme">Toggle Theme</button>
+    <button id="listLayouts">View Saved Layouts</button>
   </div>
 
   <div id="blocks"></div>

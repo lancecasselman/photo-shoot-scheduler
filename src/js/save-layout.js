@@ -10,11 +10,16 @@ document.getElementById("saveLayout").addEventListener("click", async () => {
   // Get the complete live HTML including all user edits
   const layout = builderContainer.innerHTML;
   
+  // Get publish status
+  const publishToggle = document.getElementById("publishToggle");
+  const isPublished = publishToggle ? publishToggle.checked : false;
+
   // Create the payload with layout content, title, and timestamp
   const payload = {
     layout: layout,
     title: 'Untitled Layout',
-    createdAt: new Date()
+    createdAt: new Date(),
+    published: isPublished
   };
 
   try {
@@ -36,6 +41,9 @@ document.getElementById("saveLayout").addEventListener("click", async () => {
     if (typeof setCurrentLayoutId === 'function') {
       setCurrentLayoutId(result.id);
     }
+    
+    // Show preview button now that layout is saved
+    showPreviewButton(result.id);
   } catch (err) {
     alert("Failed to save layout.");
     console.error("Save error:", err);
@@ -66,4 +74,34 @@ document.getElementById("exportHtml").addEventListener("click", () => {
   link.href = URL.createObjectURL(blob);
   link.download = 'page.html';
   link.click();
+});
+
+// Preview functionality
+function showPreviewButton(layoutId) {
+  const previewBtn = document.getElementById("previewLayout");
+  if (previewBtn) {
+    previewBtn.style.display = "inline-block";
+    previewBtn.onclick = () => openPreview(layoutId);
+  }
+}
+
+function openPreview(layoutId) {
+  if (layoutId) {
+    window.open(`/preview/${layoutId}`, '_blank');
+  }
+}
+
+// Initialize preview button if layout ID is already set
+document.addEventListener('DOMContentLoaded', () => {
+  const previewBtn = document.getElementById("previewLayout");
+  if (previewBtn) {
+    previewBtn.addEventListener('click', () => {
+      // Get current layout ID from autosave functionality
+      if (typeof currentLayoutId !== 'undefined' && currentLayoutId) {
+        openPreview(currentLayoutId);
+      } else {
+        alert("Please save the layout first to enable preview.");
+      }
+    });
+  }
 });

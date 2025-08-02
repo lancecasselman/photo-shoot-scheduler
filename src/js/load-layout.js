@@ -51,6 +51,20 @@ function loadLayout(layoutId) {
 
       alert(`Layout ${layoutId} loaded successfully!`);
       console.log("Loaded layout data:", data);
+      
+      // Update publish toggle based on loaded layout
+      const publishToggle = document.getElementById("publishToggle");
+      if (publishToggle && data.published !== undefined) {
+        publishToggle.checked = data.published;
+      }
+      
+      // Show preview button for loaded layout
+      showPreviewButton(layoutId);
+      
+      // Set current layout ID for autosave
+      if (typeof setCurrentLayoutId === 'function') {
+        setCurrentLayoutId(layoutId);
+      }
     })
     .catch(err => {
       alert("Failed to load layout.");
