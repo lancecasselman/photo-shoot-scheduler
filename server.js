@@ -41,6 +41,10 @@ const R2BackupService = require('./server/r2-backup');
 // Import AI services
 const { AIServices } = require('./server/ai-services');
 
+// ZIP export dependencies
+const archiver = require('archiver');
+const { JSDOM } = require('jsdom');
+
 // Database AI Credits Functions
 async function getUserAiCredits(userId) {
     try {
@@ -7215,3 +7219,199 @@ app.post('/api/upload/builder-image', isAuthenticated, builderUpload.single('ima
         res.status(500).json({ error: 'Failed to upload image' });
     }
 });
+
+// ZIP Export endpoint for Website Builder
+app.post('/api/export/zip', isAuthenticated, async (req, res) => {
+    try {
+        const { html, selectedFont, imageUrls, isDarkTheme } = req.body;
+        const userId = req.session.user.uid;
+        
+        console.log('Starting ZIP export for user:', userId);
+        
+        // Create ZIP archive
+        const archive = archiver('zip', {
+            zlib: { level: 9 } // Maximum compression
+        });
+        
+        // Set response headers for download
+        res.setHeader('Content-Type', 'application/zip');
+        res.setHeader('Content-Disposition', 'attachment; filename="website-export.zip"');
+        
+        // Pipe archive to response
+        archive.pipe(res);
+        
+        // Generate styles.css content
+        const stylesCSS = generateStylesCSS(selectedFont, isDarkTheme);
+        archive.append(stylesCSS, { name: 'styles.css' });
+        
+        // Process HTML and copy images
+        let processedHtml = html;
+        
+        for (const imageUrl of imageUrls) {
+            try {
+                if (imageUrl.startsWith('/uploads/')) {
+                    const localPath = path.join(__dirname, imageUrl);
+                    
+                    if (fs.existsSync(localPath)) {
+                        const fileName = path.basename(imageUrl);
+                        const imageBuffer = fs.readFileSync(localPath);
+                        
+                        // Add image to ZIP in images folder
+                        archive.append(imageBuffer, { name: `images/${fileName}` });
+                        
+                        // Update HTML to use relative path
+                        const escapedUrl = imageUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                        processedHtml = processedHtml.replace(
+                            new RegExp(`src="${escapedUrl}"`, 'g'),
+                            `src="images/${fileName}"`
+                        );
+                        
+                        console.log(`Added image to ZIP: ${fileName}`);
+                    }
+                }
+            } catch (imageError) {
+                console.error(`Failed to process image ${imageUrl}:`, imageError);
+            }
+        }
+        
+        // Generate index.html content with processed HTML
+        const indexHtml = generateIndexHtml(processedHtml, selectedFont, isDarkTheme);
+        archive.append(indexHtml, { name: 'index.html' });
+        
+        // Finalize the archive
+        await archive.finalize();
+        
+        console.log('ZIP export completed successfully');
+        
+    } catch (error) {
+        console.error('ZIP export error:', error);
+        res.status(500).json({ error: 'Failed to generate ZIP export' });
+    }
+});
+
+function generateIndexHtml(layoutHtml, selectedFont, isDarkTheme) {
+    const fontLinks = {
+        'Inter': 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap',
+        'Playfair Display': 'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap',
+        'Lato': 'https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap',
+        'Roboto': 'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap',
+        'Open Sans': 'https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap',
+        'Montserrat': 'https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap'
+    };
+    
+    const fontLink = fontLinks[selectedFont] || fontLinks['Inter'];
+    const themeClass = isDarkTheme ? ' class="dark"' : '';
+    
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Website</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="${fontLink}" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body${themeClass}>
+    <div class="website-container">
+        ${layoutHtml}
+    </div>
+</body>
+</html>`;
+}
+
+function generateStylesCSS(selectedFont, isDarkTheme) {
+    return `/* Website Builder Export Styles */
+
+/* CSS Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Base styles */
+body {
+    font-family: '${selectedFont}', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+    color: ${isDarkTheme ? '#f0f0f0' : '#333'};
+    background-color: ${isDarkTheme ? '#1a1a1a' : '#ffffff'};
+}
+
+.website-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Block styles */
+.block {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: ${isDarkTheme ? '#2a2a2a' : '#ffffff'};
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, ${isDarkTheme ? '0.3' : '0.1'});
+}
+
+.block h1, .block h2, .block h3, .block h4, .block h5, .block h6 {
+    margin-bottom: 15px;
+    color: ${isDarkTheme ? '#ffffff' : '#2c3e50'};
+}
+
+.block p {
+    margin-bottom: 15px;
+    line-height: 1.7;
+}
+
+/* Image block styles */
+.image-block {
+    text-align: center;
+    padding: 10px;
+}
+
+.image-block img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, ${isDarkTheme ? '0.4' : '0.1'});
+}
+
+.image-caption {
+    font-size: 14px;
+    color: ${isDarkTheme ? '#ccc' : '#666'};
+    text-align: center;
+    margin-top: 8px;
+    font-style: italic;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .website-container {
+        padding: 10px;
+    }
+    
+    .block {
+        margin-bottom: 20px;
+        padding: 15px;
+    }
+}
+
+/* Dark theme overrides */
+${isDarkTheme ? `
+body.dark {
+    background-color: #1a1a1a;
+    color: #f0f0f0;
+}
+
+body.dark .block {
+    background: #2a2a2a;
+    border: 1px solid #3a3a3a;
+}
+
+body.dark h1, body.dark h2, body.dark h3, 
+body.dark h4, body.dark h5, body.dark h6 {
+    color: #ffffff;
+}
+` : ''}`;
+}
