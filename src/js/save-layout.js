@@ -1,25 +1,39 @@
 document.getElementById("saveLayout").addEventListener("click", async () => {
-  const blocks = document.querySelectorAll(".block");
-  const layout = [];
+  // Capture the complete HTML content from the blocks container
+  const builderContainer = document.getElementById("blocks");
+  
+  if (!builderContainer) {
+    alert("Builder container not found!");
+    return;
+  }
 
-  blocks.forEach(block => {
-    layout.push({
-      type: block.dataset.type || "custom",
-      html: block.innerHTML.trim()
-    });
-  });
+  // Get the complete live HTML including all user edits
+  const layout = builderContainer.innerHTML;
+  
+  // Create the payload with layout content, title, and timestamp
+  const payload = {
+    layout: layout,
+    title: 'Untitled Layout',
+    createdAt: new Date()
+  };
 
   try {
     const response = await fetch("/api/save-layout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ layout })
+      body: JSON.stringify(payload)
     });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
     const result = await response.json();
     alert("Layout saved! ID: " + result.id);
+    console.log("Saved layout:", payload);
   } catch (err) {
     alert("Failed to save layout.");
-    console.error(err);
+    console.error("Save error:", err);
   }
 });
 

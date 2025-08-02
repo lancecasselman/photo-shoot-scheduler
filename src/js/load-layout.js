@@ -8,23 +8,53 @@ function loadLayout(layoutId) {
   if (!layoutId) return alert("Please provide a layout ID.");
 
   fetch("/api/load-layout/" + layoutId)
-    .then(response => response.json())
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
     .then(data => {
       const blocksContainer = document.getElementById("blocks");
-      blocksContainer.innerHTML = "";
-      data.layout.forEach(block => {
-        const div = document.createElement("div");
-        div.className = "block";
-        div.contentEditable = "true";
-        div.dataset.type = block.type;
-        div.innerHTML = block.html;
-        blocksContainer.appendChild(div);
+      
+      if (!blocksContainer) {
+        alert("Builder container not found!");
+        return;
+      }
+
+      // Check if layout is HTML string (new format) or array (old format)
+      if (typeof data.layout === 'string') {
+        // New format: Direct HTML content
+        blocksContainer.innerHTML = data.layout;
+      } else if (Array.isArray(data.layout)) {
+        // Old format: Array of block objects (for backward compatibility)
+        blocksContainer.innerHTML = "";
+        data.layout.forEach(block => {
+          const div = document.createElement("div");
+          div.className = "block";
+          div.contentEditable = "true";
+          div.dataset.type = block.type;
+          div.innerHTML = block.html;
+          blocksContainer.appendChild(div);
+        });
+      } else {
+        throw new Error("Invalid layout format");
+      }
+
+      // Ensure all loaded blocks are editable
+      const loadedBlocks = blocksContainer.querySelectorAll('.block');
+      loadedBlocks.forEach(block => {
+        if (!block.hasAttribute('contenteditable')) {
+          block.contentEditable = "true";
+        }
       });
+
       alert(`Layout ${layoutId} loaded successfully!`);
+      console.log("Loaded layout data:", data);
     })
     .catch(err => {
       alert("Failed to load layout.");
-      console.error(err);
+      console.error("Load error:", err);
     });
 }
 
