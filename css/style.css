@@ -1,0 +1,258 @@
+/* Website Builder Styles */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background: #f8f9fa;
+}
+
+h1 {
+    text-align: center;
+    margin: 20px 0;
+    color: #2c3e50;
+}
+
+#controls {
+    background: white;
+    padding: 20px;
+    margin: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+#controls button {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s ease;
+}
+
+#controls button:hover {
+    background: #2980b9;
+}
+
+#controls button:active {
+    transform: translateY(1px);
+}
+
+#controls input {
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    min-width: 200px;
+}
+
+#controls input:focus {
+    outline: none;
+    border-color: #3498db;
+}
+
+#blocks {
+    margin: 20px;
+    min-height: 400px;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.block {
+    margin: 15px 0;
+    padding: 15px;
+    border: 2px dashed #ddd;
+    border-radius: 6px;
+    min-height: 50px;
+    transition: all 0.2s ease;
+    background: #fafafa;
+}
+
+.block:hover {
+    border-color: #3498db;
+    background: #f0f8ff;
+}
+
+.block:focus {
+    outline: none;
+    border-color: #e74c3c;
+    border-style: solid;
+    background: white;
+}
+
+.block[contenteditable="true"]:focus {
+    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2);
+}
+
+.block h1, .block h2, .block h3 {
+    margin: 10px 0;
+}
+
+.block p {
+    margin: 10px 0;
+    line-height: 1.6;
+}
+
+#layoutList {
+    margin: 20px;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    list-style: none;
+}
+
+#layoutList li {
+    padding: 12px;
+    margin: 8px 0;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background: #f9f9f9;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#layoutList li:hover {
+    background: #e6f3ff;
+    border-color: #3498db;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+#layoutList li strong {
+    color: #2c3e50;
+}
+
+#layoutList li small {
+    color: #7f8c8d;
+}
+
+/* Dark theme */
+body.dark {
+    background: #2c3e50;
+    color: #ecf0f1;
+}
+
+body.dark h1 {
+    color: #ecf0f1;
+}
+
+body.dark #controls {
+    background: #34495e;
+}
+
+body.dark #blocks {
+    background: #34495e;
+}
+
+body.dark .block {
+    background: #3a526b;
+    border-color: #5a6c7d;
+    color: #ecf0f1;
+}
+
+body.dark .block:hover {
+    border-color: #3498db;
+    background: #2c3e50;
+}
+
+body.dark #layoutList {
+    background: #34495e;
+}
+
+body.dark #layoutList li {
+    background: #3a526b;
+    border-color: #5a6c7d;
+    color: #ecf0f1;
+}
+
+body.dark #layoutList li:hover {
+    background: #2c3e50;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    #controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    #controls button,
+    #controls input {
+        width: 100%;
+        margin: 5px 0;
+    }
+    
+    h1 {
+        font-size: 24px;
+    }
+    
+    #blocks, #controls, #layoutList {
+        margin: 10px;
+        padding: 15px;
+    }
+}
+
+/* Loading states */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.saving {
+    background: #f39c12 !important;
+}
+
+.saved {
+    background: #27ae60 !important;
+}
+
+/* Success/Error messages */
+.message {
+    padding: 10px 15px;
+    margin: 10px 20px;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: 500;
+}
+
+.message.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.message.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Animation for new blocks */
+@keyframes blockAdded {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.block.new {
+    animation: blockAdded 0.3s ease-out;
+}

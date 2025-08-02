@@ -6587,6 +6587,129 @@ app.use((error, req, res, next) => {
     console.error('Server error:', error);
     res.status(500).json({ error: 'Internal server error during upload. Please try uploading fewer files at once.' });
 });
+
+// Website Builder API Routes
+app.post('/api/save-layout', isAuthenticated, async (req, res) => {
+    try {
+        const { layout, title } = req.body;
+        const userId = req.user.uid;
+
+        if (!layout) {
+            return res.status(400).json({ error: 'Layout data is required' });
+        }
+
+        // Check if Firebase is available
+        if (!admin.apps.length) {
+            return res.status(500).json({ error: 'Firebase not configured' });
+        }
+
+        // Generate unique ID for the layout
+        const layoutId = `layout_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        // Save to Firestore builderPages collection
+        const layoutData = {
+            layout: layout,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            userId: userId,
+            userEmail: req.user.email,
+            title: title || 'Untitled Layout'
+        };
+
+        await admin.firestore()
+            .collection('builderPages')
+            .doc(layoutId)
+            .set(layoutData);
+
+        console.log(`Layout saved for user ${userId}: ${layoutId}`);
+        res.json({ success: true, id: layoutId });
+
+    } catch (error) {
+        console.error('Error saving layout:', error);
+        res.status(500).json({ error: 'Failed to save layout' });
+    }
+});
+
+app.get('/api/load-layout/:id', isAuthenticated, async (req, res) => {
+    try {
+        const layoutId = req.params.id;
+        const userId = req.user.uid;
+
+        if (!layoutId) {
+            return res.status(400).json({ error: 'Layout ID is required' });
+        }
+
+        // Check if Firebase is available
+        if (!admin.apps.length) {
+            return res.status(500).json({ error: 'Firebase not configured' });
+        }
+
+        // Load from Firestore builderPages collection
+        const layoutDoc = await admin.firestore()
+            .collection('builderPages')
+            .doc(layoutId)
+            .get();
+
+        if (!layoutDoc.exists) {
+            return res.status(404).json({ error: 'Layout not found' });
+        }
+
+        const layoutData = layoutDoc.data();
+        
+        // Check if user owns this layout or if it's public
+        if (layoutData.userId !== userId && !layoutData.public) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        console.log(`Layout loaded for user ${userId}: ${layoutId}`);
+        res.json({ 
+            success: true, 
+            layout: layoutData.layout,
+            title: layoutData.title,
+            createdAt: layoutData.createdAt
+        });
+
+    } catch (error) {
+        console.error('Error loading layout:', error);
+        res.status(500).json({ error: 'Failed to load layout' });
+    }
+});
+
+app.get('/api/layouts', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.user.uid;
+
+        // Check if Firebase is available
+        if (!admin.apps.length) {
+            return res.status(500).json({ error: 'Firebase not configured' });
+        }
+
+        // Get all layouts for this user from Firestore
+        const layoutsSnapshot = await admin.firestore()
+            .collection('builderPages')
+            .where('userId', '==', userId)
+            .orderBy('createdAt', 'desc')
+            .get();
+
+        const layouts = [];
+        layoutsSnapshot.forEach(doc => {
+            const data = doc.data();
+            layouts.push({
+                id: doc.id,
+                title: data.title || 'Untitled Layout',
+                createdAt: data.createdAt?.toDate?.() || new Date(),
+                layoutPreview: Array.isArray(data.layout) ? data.layout.length : 0
+            });
+        });
+
+        console.log(`Retrieved ${layouts.length} layouts for user ${userId}`);
+        res.json(layouts);
+
+    } catch (error) {
+        console.error('Error fetching layouts:', error);
+        res.status(500).json({ error: 'Failed to fetch layouts' });
+    }
+});
+
 app.get('/website-builder', isAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'website-builder.html'));
 });
