@@ -197,6 +197,11 @@ function insertBlock(block) {
     blockElement.classList.add('new');
     setTimeout(() => blockElement.classList.remove('new'), 300);
     
+    // Save state for undo/redo
+    if (typeof saveUndoState === 'function') {
+        setTimeout(() => saveUndoState(), 200);
+    }
+    
     console.log('Inserted block:', block.name);
 }
 
@@ -286,6 +291,11 @@ function handleDragEnd(e) {
     
     // Remove drop indicators
     document.querySelectorAll('.drop-indicator').forEach(el => el.remove());
+    
+    // Save state for undo/redo after drag operation
+    if (typeof saveUndoState === 'function') {
+        setTimeout(() => saveUndoState(), 100);
+    }
 }
 
 // Update drag indicator position

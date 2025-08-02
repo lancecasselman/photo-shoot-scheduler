@@ -26,6 +26,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Focus on the new block
         newBlock.focus();
         
+        // Save state for undo/redo
+        if (typeof saveUndoState === 'function') {
+            setTimeout(() => saveUndoState(), 200);
+        }
+        
         console.log('New block added with drag-and-drop support');
     });
 

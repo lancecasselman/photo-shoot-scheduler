@@ -38,6 +38,85 @@
     .image-block[draggable="true"]:active {
       transform: scale(0.98);
     }
+    
+    /* Image resize handles */
+    .image-block {
+      position: relative;
+    }
+    
+    .image-block.selected {
+      outline: 2px solid #3498db;
+      outline-offset: 2px;
+    }
+    
+    .resize-handle {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: #3498db;
+      border: 2px solid white;
+      cursor: nw-resize;
+      display: none;
+    }
+    
+    .image-block.selected .resize-handle {
+      display: block;
+    }
+    
+    .resize-handle.se {
+      bottom: -5px;
+      right: -5px;
+      cursor: se-resize;
+    }
+    
+    .resize-handle.sw {
+      bottom: -5px;
+      left: -5px;
+      cursor: sw-resize;
+    }
+    
+    .resize-handle.ne {
+      top: -5px;
+      right: -5px;
+      cursor: ne-resize;
+    }
+    
+    .resize-handle.nw {
+      top: -5px;
+      left: -5px;
+      cursor: nw-resize;
+    }
+    
+    /* Image caption */
+    .image-caption {
+      font-size: 14px;
+      color: #666;
+      text-align: center;
+      margin-top: 8px;
+      font-style: italic;
+    }
+    
+    .image-caption[contenteditable="true"] {
+      outline: 1px dashed #ccc;
+      padding: 4px;
+    }
+    
+    /* Multi-selection */
+    .block.multi-selected {
+      outline: 2px solid #e74c3c;
+      outline-offset: 2px;
+    }
+    
+    /* Undo/Redo buttons */
+    #undoBtn, #redoBtn {
+      background: #95a5a6;
+      margin-right: 10px;
+    }
+    
+    #undoBtn:disabled, #redoBtn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   </style>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -53,6 +132,8 @@
   <h1>Website Builder Interface</h1>
 
   <div id="controls">
+    <button id="undoBtn" title="Undo (Ctrl+Z)">Undo</button>
+    <button id="redoBtn" title="Redo (Ctrl+Y)">Redo</button>
     <button id="addBlock">Add Block</button>
     <button id="addFromLibrary">Add from Library</button>
     <button id="uploadImage">Upload Image</button>
@@ -94,6 +175,9 @@
     </div>
   </div>
 
+  <script src="/src/js/undo-redo.js"></script>
+  <script src="/src/js/image-resize.js"></script>
+  <script src="/src/js/multi-select.js"></script>
   <script src="/src/js/dragdrop.js"></script>
   <script src="/src/js/save-layout.js"></script>
   <script src="/src/js/load-layout.js"></script>

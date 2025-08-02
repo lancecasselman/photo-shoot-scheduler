@@ -177,6 +177,11 @@ function insertImageIntoBuilder(imageUrl, altText) {
         setupBlockDragEvents(imageBlock);
     }
     
+    // Add resize handles if function available
+    if (typeof addResizeHandles === 'function') {
+        setTimeout(() => addResizeHandles(imageBlock), 100);
+    }
+    
     // Append to blocks container
     blocksContainer.appendChild(imageBlock);
     
@@ -185,6 +190,11 @@ function insertImageIntoBuilder(imageUrl, altText) {
     setTimeout(() => imageBlock.classList.remove('new'), 300);
     
     console.log('Image block inserted into builder');
+    
+    // Save state for undo/redo
+    if (typeof saveUndoState === 'function') {
+        setTimeout(() => saveUndoState(), 200);
+    }
     
     // Return the block element for further optimization
     return imageBlock;
