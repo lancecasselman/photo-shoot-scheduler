@@ -1,0 +1,1 @@
+// Drag and drop placeholder (not used in this example)
