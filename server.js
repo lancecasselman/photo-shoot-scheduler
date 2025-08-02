@@ -7138,8 +7138,24 @@ app.post('/api/auth/firebase-token', isAuthenticated, async (req, res) => {
     }
 });
 
+// Memory-based multer for builder images (to get buffer directly)
+const builderUpload = multer({ 
+    storage: multer.memoryStorage(),
+    limits: { 
+        fileSize: 50 * 1024 * 1024, // 50MB limit for builder images
+    },
+    fileFilter: (req, file, cb) => {
+        console.log(` Builder image filter: ${file.originalname} (${file.mimetype})`);
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only image files are allowed!'), false);
+        }
+    }
+});
+
 // Server-side image upload endpoint (bypasses CORS issues)
-app.post('/api/upload/builder-image', isAuthenticated, upload.single('image'), async (req, res) => {
+app.post('/api/upload/builder-image', isAuthenticated, builderUpload.single('image'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'No image file provided' });
@@ -7169,7 +7185,11 @@ app.post('/api/upload/builder-image', isAuthenticated, upload.single('image'), a
             }
         };
         
-        // Upload the file buffer
+        // Upload the file buffer (memory storage provides buffer directly)
+        if (!file.buffer) {
+            throw new Error('File buffer not available - check multer configuration');
+        }
+        
         await fileRef.save(file.buffer, metadata);
         
         // Make the file publicly readable
