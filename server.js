@@ -6587,6 +6587,6 @@ app.use((error, req, res, next) => {
     console.error('Server error:', error);
     res.status(500).json({ error: 'Internal server error during upload. Please try uploading fewer files at once.' });
 });
-app.get('/website-builder', isLoggedIn, (req, res) => {
+app.get('/website-builder', isAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'website-builder.html'));
 });
