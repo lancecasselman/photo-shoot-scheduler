@@ -44,7 +44,9 @@ This is a comprehensive photography business management platform designed to rev
 
 - **Dynamic Page Management**: System for creating, deleting, and managing custom pages with user-defined names and icons.
 - **Comprehensive Theme/Template System**: Extensive library of 20+ professional photography website templates inspired by photography legends, with category filtering and one-click application. Now featuring 15 premium multi-page photographer website templates with specialized layouts for different photography niches (wedding, fashion, documentary, portrait, adventure, celebrity, maternity, commercial, street, boudoir, sports, food, architecture, pet, and travel photography).
-- **Website Builder** (Current system as of Feb 1, 2025):
+- **Website Builder** (Updated Feb 1, 2025):
+  - Completely rebuilt layout with scoped container isolation (layout-version: repaired-clean-v1)
+  - Iframe sandboxing for preview content to prevent CSS interference
   - Template-based website creation with professional photography themes
   - Multi-page support (Home, About, Portfolio, Contact) with page switching
   - Visual canvas editor with inline content editing capabilities
@@ -52,6 +54,8 @@ This is a comprehensive photography business management platform designed to rev
   - Real-time preview functionality with new window display
   - Template selection and content customization system
   - Complete website preview and editing workflow
+  - Mobile/desktop/tablet responsive device switching
+  - Fixed button clipping and panel overflow issues
 - **Subscription System** (Added Jan 31, 2025):
   - Integrated Stripe payment processing for SaaS subscriptions
   - Three pricing tiers: $25/month, $125/6 months (1 month free), $200/year (2 months free)
@@ -84,6 +88,7 @@ This is a comprehensive photography business management platform designed to rev
 
 - **PostgreSQL**: Primary database for persistent data storage.
 - **Firebase (v8 Legacy SDK)**: Used for user authentication (Authentication), real-time data storage (Firestore), and cloud file storage (Storage).
+  - **Firebase Admin SDK** (Feb 1, 2025): Updated to use FIREBASE_SERVICE_ACCOUNT environment secret for secure service account initialization across all server components.
 - **Stripe**: For payment processing, including invoicing, deposits, and optional tipping.
 - **SendGrid**: For professional email notifications and communications.
 - **Twilio**: For SMS notifications and alerts.

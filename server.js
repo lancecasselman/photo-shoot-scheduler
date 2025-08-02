@@ -1,26 +1,9 @@
 const express = require('express');
 const app = express();
 const path = require('path');
-const admin = require('firebase-admin');
 
-// Parse Firebase service account from environment secret
-let serviceAccount;
-try {
-    const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT;
-    if (!serviceAccountJson) {
-        throw new Error('FIREBASE_SERVICE_ACCOUNT environment variable not found');
-    }
-    serviceAccount = JSON.parse(serviceAccountJson);
-    console.log('Firebase service account loaded successfully');
-} catch (error) {
-    console.error('Error parsing Firebase service account:', error.message);
-    process.exit(1);
-}
-
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
-const db = admin.firestore();
+// Import Firebase Admin from the centralized module
+const { admin, db } = require('./server/firebase-admin.js');
 
 app.use(express.json());
 app.use('/js', express.static(path.join(__dirname, 'src/js')));
@@ -68,7 +51,7 @@ app.get('/api/layouts', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
 });
