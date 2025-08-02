@@ -52,18 +52,77 @@ document.getElementById("saveLayout").addEventListener("click", async () => {
 
 // Add block and theme toggle handlers moved to dragdrop.js to avoid duplicates
 
+// Global variables for export functionality
+let currentFont = 'Inter';
+
+// Font picker functionality
+document.getElementById("fontPicker").addEventListener("change", (e) => {
+  currentFont = e.target.value;
+  const blocksContainer = document.getElementById("blocks");
+  if (blocksContainer) {
+    blocksContainer.style.fontFamily = `'${currentFont}', sans-serif`;
+  }
+  console.log('Font changed to:', currentFont);
+});
+
+// Light/Dark mode toggle
+document.getElementById("toggleLightDark").addEventListener("click", () => {
+  document.body.classList.toggle('dark-mode');
+  console.log('Light/Dark mode toggled');
+});
+
+// Enhanced Export HTML functionality
 document.getElementById("exportHtml").addEventListener("click", () => {
   const blocks = document.querySelectorAll(".block");
   let html = '';
-  blocks.forEach(block => {
-    html += block.outerHTML + '\n';
-  });
+  blocks.forEach(block => html += block.outerHTML);
+  
+  const fontUrl = `https://fonts.googleapis.com/css2?family=${currentFont.replace(' ', '+')}:wght@300;400;500;600;700&display=swap`;
+  
+  const fullHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Website</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="${fontUrl}" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: '${currentFont}', sans-serif; 
+      line-height: 1.6; 
+      color: #333; 
+      background: #fff;
+    }
+    .block { 
+      margin: 20px 0; 
+      padding: 20px; 
+      min-height: 50px;
+    }
+    h1, h2, h3, h4, h5, h6 { 
+      font-family: '${currentFont}', sans-serif; 
+      margin-bottom: 10px; 
+    }
+    p { margin-bottom: 15px; }
+    img { max-width: 100%; height: auto; }
+  </style>
+</head>
+<body>
+  ${html}
+</body>
+</html>`;
 
-  const blob = new Blob([html], { type: 'text/html' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = 'page.html';
-  link.click();
+  const blob = new Blob([fullHtml], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'layout.html';
+  a.click();
+  URL.revokeObjectURL(url);
+  
+  console.log('HTML exported with font:', currentFont);
 });
 
 // Preview functionality

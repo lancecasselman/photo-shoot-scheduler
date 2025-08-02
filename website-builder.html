@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Website Builder</title>
   <link rel="stylesheet" href="/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link id="googleFonts" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Lato:wght@300;400;700&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <h1>Website Builder Interface</h1>
@@ -23,6 +26,17 @@
     <input id="layoutIdInput" placeholder="Layout ID to Load" />
     <button id="loadLayout">Load Layout</button>
     <button id="viewVersions">View Versions</button>
+    <label>
+      Font: <select id="fontPicker">
+        <option value="Inter">Inter</option>
+        <option value="Playfair Display">Playfair Display</option>
+        <option value="Lato">Lato</option>
+        <option value="Roboto">Roboto</option>
+        <option value="Open Sans">Open Sans</option>
+        <option value="Montserrat">Montserrat</option>
+      </select>
+    </label>
+    <button id="toggleLightDark">Toggle Light/Dark</button>
     <button id="exportHtml">Export HTML</button>
     <button id="toggleTheme">Toggle Theme</button>
     <button id="listLayouts">View Saved Layouts</button>
