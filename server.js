@@ -86,19 +86,38 @@ const pool = new Pool({
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
-// Initialize Firebase Admin SDK
+// Initialize Firebase Admin SDK with latest service account
 try {
-    const serviceAccount = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON 
-        ? JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON)
-        : null;
+    let serviceAccount = null;
+    
+    // Try new FIREBASE_SERVICE_ACCOUNT secret first
+    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+        try {
+            serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+            console.log('Using FIREBASE_SERVICE_ACCOUNT credentials');
+        } catch (parseError) {
+            console.log('Failed to parse FIREBASE_SERVICE_ACCOUNT:', parseError.message);
+        }
+    }
+    
+    // Fallback to old credentials if new ones don't work
+    if (!serviceAccount && process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
+        try {
+            serviceAccount = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
+            console.log('Using fallback GOOGLE_APPLICATION_CREDENTIALS_JSON');
+        } catch (parseError) {
+            console.log('Failed to parse GOOGLE_APPLICATION_CREDENTIALS_JSON:', parseError.message);
+        }
+    }
 
     if (serviceAccount) {
         admin.initializeApp({
             credential: admin.credential.cert(serviceAccount),
             projectId: serviceAccount.project_id,
-            storageBucket: `${serviceAccount.project_id}.firebasestorage.app`
+            storageBucket: `${serviceAccount.project_id}.appspot.com`
         });
-        console.log('Firebase Admin SDK initialized successfully');
+        console.log('Firebase Admin SDK initialized successfully with project:', serviceAccount.project_id);
+        console.log('Storage bucket:', `${serviceAccount.project_id}.appspot.com`);
     } else {
         console.log('WARNING: Firebase credentials not provided - authentication disabled');
     }

@@ -1,4 +1,4 @@
-// Firebase Configuration - Updated with new credentials
+// Firebase Configuration - Using latest service account credentials
 const firebaseConfig = {
     apiKey: "AIzaSyDbtboh1bW6xu9Tz9FILkx_0lzGwXQHjyM",
     authDomain: "photoshcheduleapp.firebaseapp.com", 
@@ -10,4 +10,9 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-firebase.initializeApp(firebaseConfig);
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+    console.log('Firebase client initialized with storage bucket:', firebaseConfig.storageBucket);
+} else {
+    console.log('Firebase already initialized');
+}
