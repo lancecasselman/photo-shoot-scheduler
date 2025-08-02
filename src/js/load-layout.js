@@ -1,26 +1,32 @@
 document.getElementById("loadLayout").addEventListener("click", async () => {
   const id = document.getElementById("layoutIdInput").value.trim();
-  if (!id) return alert("Please enter a layout ID.");
-
-  try {
-    const response = await fetch("/api/load-layout/" + id);
-    const data = await response.json();
-
-    const blocksContainer = document.getElementById("blocks");
-    blocksContainer.innerHTML = "";
-    data.layout.forEach(block => {
-      const div = document.createElement("div");
-      div.className = "block";
-      div.contentEditable = "true";
-      div.dataset.type = block.type;
-      div.innerHTML = block.html;
-      blocksContainer.appendChild(div);
-    });
-  } catch (err) {
-    alert("Failed to load layout.");
-    console.error(err);
-  }
+  loadLayout(id);
 });
+
+// Create a reusable function to load a layout by ID
+function loadLayout(layoutId) {
+  if (!layoutId) return alert("Please provide a layout ID.");
+
+  fetch("/api/load-layout/" + layoutId)
+    .then(response => response.json())
+    .then(data => {
+      const blocksContainer = document.getElementById("blocks");
+      blocksContainer.innerHTML = "";
+      data.layout.forEach(block => {
+        const div = document.createElement("div");
+        div.className = "block";
+        div.contentEditable = "true";
+        div.dataset.type = block.type;
+        div.innerHTML = block.html;
+        blocksContainer.appendChild(div);
+      });
+      alert(`Layout ${layoutId} loaded successfully!`);
+    })
+    .catch(err => {
+      alert("Failed to load layout.");
+      console.error(err);
+    });
+}
 
 document.getElementById("listLayouts").addEventListener("click", async () => {
   try {
@@ -28,12 +34,46 @@ document.getElementById("listLayouts").addEventListener("click", async () => {
     const list = await res.json();
     const ul = document.getElementById("layoutList");
     ul.innerHTML = '';
+    
+    if (list.length === 0) {
+      const li = document.createElement("li");
+      li.textContent = "No saved layouts found.";
+      li.style.fontStyle = "italic";
+      ul.appendChild(li);
+      return;
+    }
+    
     list.forEach(item => {
       const li = document.createElement("li");
-      li.textContent = `ID: ${item.id} (${item.createdAt})`;
+      li.style.cursor = "pointer";
+      li.style.padding = "8px";
+      li.style.margin = "4px 0";
+      li.style.border = "1px solid #ddd";
+      li.style.borderRadius = "4px";
+      li.style.backgroundColor = "#f9f9f9";
+      li.innerHTML = `
+        <strong>ID:</strong> ${item.id}<br>
+        <small><strong>Created:</strong> ${new Date(item.createdAt).toLocaleString()}</small>
+      `;
+      
+      li.addEventListener("click", () => {
+        if (confirm(`Load layout ${item.id}? This will replace your current work.`)) {
+          loadLayout(item.id);
+        }
+      });
+      
+      li.addEventListener("mouseenter", () => {
+        li.style.backgroundColor = "#e6f3ff";
+      });
+      
+      li.addEventListener("mouseleave", () => {
+        li.style.backgroundColor = "#f9f9f9";
+      });
+      
       ul.appendChild(li);
     });
   } catch (err) {
     console.error("Could not fetch layouts:", err);
+    alert("Failed to load saved layouts. Please try again.");
   }
 });
