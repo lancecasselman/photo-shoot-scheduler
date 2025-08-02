@@ -2,7 +2,20 @@ const express = require('express');
 const app = express();
 const path = require('path');
 const admin = require('firebase-admin');
-const serviceAccount = require('./path/to/your/firebase-service-account.json');
+
+// Parse Firebase service account from environment secret
+let serviceAccount;
+try {
+    const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT;
+    if (!serviceAccountJson) {
+        throw new Error('FIREBASE_SERVICE_ACCOUNT environment variable not found');
+    }
+    serviceAccount = JSON.parse(serviceAccountJson);
+    console.log('Firebase service account loaded successfully');
+} catch (error) {
+    console.error('Error parsing Firebase service account:', error.message);
+    process.exit(1);
+}
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
