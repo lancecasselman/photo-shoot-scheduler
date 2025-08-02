@@ -44,7 +44,7 @@ This is a comprehensive photography business management platform designed to rev
 
 - **Dynamic Page Management**: System for creating, deleting, and managing custom pages with user-defined names and icons.
 - **Comprehensive Theme/Template System**: Extensive library of 20+ professional photography website templates inspired by photography legends, with category filtering and one-click application. Now featuring 15 premium multi-page photographer website templates with specialized layouts for different photography niches (wedding, fashion, documentary, portrait, adventure, celebrity, maternity, commercial, street, boudoir, sports, food, architecture, pet, and travel photography).
-- **Website Builder** (Updated Feb 1, 2025):
+- **Website Builder** (Updated Feb 2, 2025):
   - Completely rebuilt layout with scoped container isolation (layout-version: repaired-clean-v1)
   - Iframe sandboxing for preview content to prevent CSS interference
   - Template-based website creation with professional photography themes
@@ -56,6 +56,10 @@ This is a comprehensive photography business management platform designed to rev
   - Complete website preview and editing workflow
   - Mobile/desktop/tablet responsive device switching
   - Fixed button clipping and panel overflow issues
+  - **Font Picker System**: 6 professional Google Fonts (Inter, Playfair Display, Lato, Roboto, Open Sans, Montserrat) with live preview
+  - **Light/Dark Mode Toggle**: Professional dark theme with proper contrast and styling
+  - **Enhanced HTML Export**: Full document export with selected fonts, CSS resets, and responsive design
+  - **Image Upload Integration**: Client-side Firebase Storage upload system with drag-and-drop support, proper authentication, and automatic image block insertion
 - **Subscription System** (Added Jan 31, 2025):
   - Integrated Stripe payment processing for SaaS subscriptions
   - Three pricing tiers: $25/month, $125/6 months (1 month free), $200/year (2 months free)

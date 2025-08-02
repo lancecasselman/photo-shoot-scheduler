@@ -102,9 +102,16 @@ async function uploadAndInsertImage(file) {
 async function uploadToFirebaseStorage(file) {
     try {
         // Check if Firebase is available and user is authenticated
-        if (typeof firebase === 'undefined' || !firebase.auth().currentUser) {
+        if (typeof firebase === 'undefined') {
+            throw new Error('Firebase SDK not loaded');
+        }
+        
+        const currentUser = firebase.auth().currentUser;
+        if (!currentUser) {
             throw new Error('User not authenticated');
         }
+        
+        console.log('Authenticated user:', currentUser.email, 'UID:', currentUser.uid);
         
         const user = firebase.auth().currentUser;
         const userId = user.uid;
@@ -116,8 +123,12 @@ async function uploadToFirebaseStorage(file) {
         
         // Get Firebase Storage reference
         const storage = firebase.storage();
+        console.log('Firebase Storage initialized, bucket:', storage.app.options.storageBucket);
+        
         const storageRef = storage.ref();
         const fileRef = storageRef.child(storagePath);
+        
+        console.log('Upload path:', storagePath);
         
         // Upload file with metadata
         const metadata = {
@@ -129,14 +140,15 @@ async function uploadToFirebaseStorage(file) {
             }
         };
         
-        // Upload the file
-        const uploadTask = fileRef.put(file, metadata);
+        console.log('Starting upload with metadata:', metadata);
         
-        // Wait for upload to complete
-        await uploadTask;
+        // Upload the file using uploadBytes instead of put for better error handling
+        const uploadResult = await firebase.storage().ref(storagePath).put(file, metadata);
+        
+        console.log('Upload completed:', uploadResult);
         
         // Get download URL
-        const downloadURL = await fileRef.getDownloadURL();
+        const downloadURL = await uploadResult.ref.getDownloadURL();
         
         console.log('Image uploaded successfully to:', downloadURL);
         return downloadURL;
