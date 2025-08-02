@@ -7117,4 +7117,23 @@ app.get('/website-builder', isAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'website-builder.html'));
 });
 
-// Image upload no longer needed - using client-side Firebase SDK
+// Custom token generation for Firebase client authentication
+app.post('/api/auth/firebase-token', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.session.user.uid;
+        
+        if (!admin.auth) {
+            return res.status(500).json({ error: 'Firebase Admin not available' });
+        }
+        
+        // Generate custom token for Firebase client authentication
+        const customToken = await admin.auth().createCustomToken(userId);
+        
+        console.log('Custom token generated for user:', userId);
+        res.json({ customToken });
+        
+    } catch (error) {
+        console.error('Custom token generation error:', error);
+        res.status(500).json({ error: 'Failed to generate authentication token' });
+    }
+});
