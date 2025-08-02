@@ -1,5 +1,5 @@
 // Block Library - Prebuilt design blocks for the Website Builder
-export const blockLibrary = [
+const blockLibrary = [
     {
         id: 'header-nav',
         name: 'Header with Navigation',
@@ -122,6 +122,4 @@ export const blockLibrary = [
 ];
 
 // Make available globally for the website builder
-if (typeof window !== 'undefined') {
-    window.blockLibrary = blockLibrary;
-}
+window.blockLibrary = blockLibrary;

@@ -6964,7 +6964,31 @@ app.get('/preview/:layoutId', async (req, res) => {
             }
         }
 
-        // Render the layout
+        // Check if layout content exists
+        if (!layoutData.layout) {
+            return res.status(404).send(`
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Layout Not Found</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+                        .container { max-width: 400px; margin: 0 auto; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <h2>Layout Not Found</h2>
+                        <p>The requested layout does not contain any content.</p>
+                    </div>
+                </body>
+                </html>
+            `);
+        }
+
+        // Render the layout using only the layout field from Firestore
         const previewHtml = `
             <!DOCTYPE html>
             <html lang="en">
@@ -7029,7 +7053,7 @@ app.get('/preview/:layoutId', async (req, res) => {
                     <small>Created: ${layoutData.createdAt?.toDate?.()?.toLocaleString() || 'Unknown'}</small>
                 </div>
                 <div class="preview-content">
-                    ${layoutData.layout || '<p>No content available</p>'}
+                    ${layoutData.layout}
                 </div>
             </body>
             </html>
