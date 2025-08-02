@@ -394,6 +394,115 @@ body.dark #controls label {
     animation: blockAdded 0.3s ease-out;
 }
 
+/* Drag and Drop Styles */
+.block[draggable="true"] {
+    cursor: move;
+    position: relative;
+}
+
+.block[draggable="true"]:hover::before {
+    content: "⋮⋮";
+    position: absolute;
+    left: -15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #bdc3c7;
+    font-size: 12px;
+    line-height: 8px;
+}
+
+.block.dragging {
+    opacity: 0.5;
+    transform: rotate(2deg);
+}
+
+.drop-indicator {
+    height: 3px;
+    background: #3498db;
+    margin: 5px 0;
+    border-radius: 2px;
+    opacity: 0.8;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.4; }
+    50% { opacity: 1; }
+    100% { opacity: 0.4; }
+}
+
+/* Block Library Button Styling */
+#addFromLibrary {
+    background: #9b59b6 !important;
+    color: white;
+}
+
+#addFromLibrary:hover {
+    background: #8e44ad !important;
+}
+
+/* Block Library Modal Styles */
+#blockLibraryModal {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+#blockLibraryContent {
+    max-width: 900px !important;
+}
+
+.block-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #f9f9f9;
+    text-align: center;
+}
+
+.block-card:hover {
+    border-color: #3498db;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.block-preview {
+    background: white;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    padding: 10px;
+    font-size: 10px;
+    color: #666;
+    height: 60px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 10px 0;
+}
+
+/* Dark theme for block library */
+body.dark #blockLibraryContent {
+    background: #34495e;
+    color: #ecf0f1;
+}
+
+body.dark .block-card {
+    background: #3a526b;
+    border-color: #5a6c7d;
+    color: #ecf0f1;
+}
+
+body.dark .block-card:hover {
+    background: #2c3e50;
+}
+
+body.dark .block-preview {
+    background: #2c3e50;
+    border-color: #34495e;
+    color: #bdc3c7;
+}
+
 /* Autosave indicator animation */
 @keyframes autosaveFlash {
     0% { background-color: transparent; }
