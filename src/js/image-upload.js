@@ -102,66 +102,34 @@ async function uploadAndInsertImage(file) {
     }
 }
 
-// Upload file to Firebase Storage using client-side Firebase SDK
+// Upload file via server endpoint (bypasses CORS issues)
 async function uploadToFirebaseStorage(file) {
     try {
-        // Check if Firebase is available and user is authenticated
-        if (typeof firebase === 'undefined') {
-            throw new Error('Firebase SDK not loaded');
+        // Create FormData for server upload
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        console.log('Uploading via server endpoint:', file.name, 'Size:', file.size);
+        
+        // Upload to server endpoint which handles Firebase Storage upload
+        const response = await fetch('/api/upload/builder-image', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Server upload failed: ${response.status} - ${errorText}`);
         }
         
-        const currentUser = firebase.auth().currentUser;
-        if (!currentUser) {
-            throw new Error('User not authenticated');
-        }
+        const result = await response.json();
+        console.log('Server upload successful:', result);
         
-        console.log('Authenticated user:', currentUser.email, 'UID:', currentUser.uid);
-        
-        const user = firebase.auth().currentUser;
-        const userId = user.uid;
-        
-        // Create unique filename
-        const timestamp = Date.now();
-        const filename = `${timestamp}_${file.name}`;
-        const storagePath = `builderUploads/${userId}/${filename}`;
-        
-        // Get Firebase Storage reference
-        const storage = firebase.storage();
-        console.log('Firebase Storage initialized, bucket:', storage.app.options.storageBucket);
-        
-        const storageRef = storage.ref();
-        const fileRef = storageRef.child(storagePath);
-        
-        console.log('Upload path:', storagePath);
-        
-        // Upload file with metadata
-        const metadata = {
-            contentType: file.type,
-            customMetadata: {
-                uploadedBy: userId,
-                uploadedAt: new Date().toISOString(),
-                originalName: file.name
-            }
-        };
-        
-        console.log('Starting upload with metadata:', metadata);
-        
-        // Upload the file using uploadBytes instead of put for better error handling
-        const uploadResult = await firebase.storage().ref(storagePath).put(file, metadata);
-        
-        console.log('Upload completed:', uploadResult);
-        
-        // Get download URL
-        const downloadURL = await uploadResult.ref.getDownloadURL();
-        
-        console.log('Image uploaded successfully to:', downloadURL);
-        return downloadURL;
+        return result.downloadURL;
         
     } catch (error) {
-        console.error('Firebase upload error details:', {
+        console.error('Server upload error details:', {
             message: error.message,
-            code: error.code,
-            serverResponse: error.serverResponse,
             stack: error.stack
         });
         throw new Error(`Upload failed: ${error.message || 'Unknown error'}`);

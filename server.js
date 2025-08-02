@@ -7137,3 +7137,57 @@ app.post('/api/auth/firebase-token', isAuthenticated, async (req, res) => {
         res.status(500).json({ error: 'Failed to generate authentication token' });
     }
 });
+
+// Server-side image upload endpoint (bypasses CORS issues)
+app.post('/api/upload/builder-image', isAuthenticated, upload.single('image'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No image file provided' });
+        }
+        
+        const userId = req.session.user.uid;
+        const file = req.file;
+        
+        // Create unique filename
+        const timestamp = Date.now();
+        const filename = `${timestamp}_${file.originalname}`;
+        const storagePath = `builderUploads/${userId}/${filename}`;
+        
+        console.log('Server uploading image:', storagePath, 'Size:', file.size);
+        
+        // Get Firebase Storage bucket
+        const bucket = admin.storage().bucket();
+        const fileRef = bucket.file(storagePath);
+        
+        // Upload file with metadata
+        const metadata = {
+            contentType: file.mimetype,
+            metadata: {
+                uploadedBy: userId,
+                uploadedAt: new Date().toISOString(),
+                originalName: file.originalname
+            }
+        };
+        
+        // Upload the file buffer
+        await fileRef.save(file.buffer, metadata);
+        
+        // Make the file publicly readable
+        await fileRef.makePublic();
+        
+        // Get the public URL
+        const downloadURL = `https://storage.googleapis.com/${bucket.name}/${storagePath}`;
+        
+        console.log('Image uploaded successfully to:', downloadURL);
+        
+        res.json({ 
+            downloadURL,
+            filename: file.originalname,
+            path: storagePath
+        });
+        
+    } catch (error) {
+        console.error('Server image upload error:', error);
+        res.status(500).json({ error: 'Failed to upload image' });
+    }
+});
