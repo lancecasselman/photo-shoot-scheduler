@@ -83,8 +83,24 @@ async function uploadAndInsertImage(file) {
         // Upload to Firebase Storage
         const imageUrl = await uploadToFirebaseStorage(file);
         
-        // Insert image into builder
-        insertImageIntoBuilder(imageUrl, file.name);
+        // Insert image into builder with optimized drag setup
+        const imageBlock = insertImageIntoBuilder(imageUrl, file.name);
+        
+        // Optimize image block for dragging
+        if (imageBlock) {
+            // Add will-change CSS for smooth dragging
+            imageBlock.style.willChange = 'transform';
+            
+            // Pre-load the image for smooth dragging
+            const img = imageBlock.querySelector('img');
+            if (img && img.complete && img.naturalHeight !== 0) {
+                imageBlock.classList.add('image-loaded');
+            } else if (img) {
+                img.addEventListener('load', () => {
+                    imageBlock.classList.add('image-loaded');
+                });
+            }
+        }
         
         console.log('Image uploaded and inserted successfully:', imageUrl);
         
@@ -169,4 +185,7 @@ function insertImageIntoBuilder(imageUrl, altText) {
     setTimeout(() => imageBlock.classList.remove('new'), 300);
     
     console.log('Image block inserted into builder');
+    
+    // Return the block element for further optimization
+    return imageBlock;
 }

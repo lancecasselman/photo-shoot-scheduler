@@ -5,6 +5,40 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Website Builder</title>
   <link rel="stylesheet" href="/css/style.css">
+  <style>
+    /* Optimize image block dragging performance */
+    .image-block {
+      will-change: transform;
+      backface-visibility: hidden;
+      transform: translateZ(0);
+    }
+    
+    .image-block.image-loaded {
+      transition: transform 0.1s ease-out;
+    }
+    
+    .image-block:hover {
+      cursor: grab;
+    }
+    
+    .image-block:active {
+      cursor: grabbing;
+    }
+    
+    .image-block img {
+      pointer-events: none; /* Prevent image interference with drag events */
+      user-select: none;
+    }
+    
+    /* Smooth dragging animations */
+    .image-block[draggable="true"] {
+      transition: opacity 0.2s ease;
+    }
+    
+    .image-block[draggable="true"]:active {
+      transform: scale(0.98);
+    }
+  </style>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link id="googleFonts" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Lato:wght@300;400;700&family=Roboto:wght@300;400;500;700&family=Open+Sans:wght@300;400;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">

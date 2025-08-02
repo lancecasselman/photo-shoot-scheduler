@@ -7173,9 +7173,14 @@ app.post('/api/upload/builder-image', isAuthenticated, builderUpload.single('ima
         const userId = req.session.user.uid;
         const file = req.file;
         
-        // Create unique filename
+        // Create unique filename without duplicating timestamps
         const timestamp = Date.now();
-        const filename = `${timestamp}_${file.originalname}`;
+        let cleanFilename = file.originalname;
+        
+        // Remove any existing timestamp prefixes to prevent accumulation
+        cleanFilename = cleanFilename.replace(/^\d+_+/, '');
+        
+        const filename = `${timestamp}_${cleanFilename}`;
         const storagePath = `builderUploads/${userId}/${filename}`;
         
         console.log('Server uploading image:', storagePath, 'Size:', file.size);

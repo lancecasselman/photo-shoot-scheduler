@@ -230,6 +230,9 @@ function handleDragStart(e) {
     draggedElement = e.target;
     e.target.style.opacity = '0.5';
     
+    // Optimize for image blocks by reducing visual updates
+    const isImageBlock = e.target.querySelector('img') !== null;
+    
     // Create visual indicator
     const indicator = document.createElement('div');
     indicator.id = 'dragIndicator';
@@ -243,11 +246,23 @@ function handleDragStart(e) {
         z-index: 1000;
         font-size: 12px;
     `;
-    indicator.textContent = 'Dragging block...';
+    indicator.textContent = isImageBlock ? 'Moving image block...' : 'Dragging block...';
     document.body.appendChild(indicator);
     
-    // Update indicator position with mouse
-    document.addEventListener('mousemove', updateDragIndicator);
+    // Throttle mousemove updates for better performance with image blocks
+    let lastUpdate = 0;
+    const throttleInterval = isImageBlock ? 16 : 8; // 60fps for images, 120fps for text
+    
+    function throttledUpdateDragIndicator(e) {
+        const now = Date.now();
+        if (now - lastUpdate >= throttleInterval) {
+            updateDragIndicator(e);
+            lastUpdate = now;
+        }
+    }
+    
+    document.addEventListener('mousemove', throttledUpdateDragIndicator);
+    e.target._throttledUpdate = throttledUpdateDragIndicator; // Store reference for cleanup
 }
 
 // Handle drag end
@@ -260,7 +275,14 @@ function handleDragEnd(e) {
     if (indicator) {
         indicator.remove();
     }
-    document.removeEventListener('mousemove', updateDragIndicator);
+    
+    // Remove the throttled event listener
+    if (e.target._throttledUpdate) {
+        document.removeEventListener('mousemove', e.target._throttledUpdate);
+        delete e.target._throttledUpdate;
+    } else {
+        document.removeEventListener('mousemove', updateDragIndicator);
+    }
     
     // Remove drop indicators
     document.querySelectorAll('.drop-indicator').forEach(el => el.remove());
