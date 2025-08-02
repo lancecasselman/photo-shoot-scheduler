@@ -62,9 +62,9 @@ class FirebaseService {
     }
     
     initLocalFallback() {
-        // Fallback to localStorage when Firebase is not available
-        this.user = { uid: 'local-user', email: 'user@example.com' };
-        this.onAuthStateChanged(this.user);
+        // Firebase initialization failed - redirect to auth
+        console.error('Firebase unavailable - redirecting to authentication');
+        window.location.href = '/auth.html';
     }
     
     onAuthStateChanged(user) {
@@ -73,7 +73,7 @@ class FirebaseService {
             this.loadUserSite();
         } else {
             console.log('User not authenticated');
-            // Could redirect to login or use demo mode
+            // Redirect to authentication page
         }
     }
     
