@@ -31,6 +31,11 @@ document.getElementById("saveLayout").addEventListener("click", async () => {
     const result = await response.json();
     alert("Layout saved! ID: " + result.id);
     console.log("Saved layout:", payload);
+    
+    // Set current layout ID for autosave functionality
+    if (typeof setCurrentLayoutId === 'function') {
+      setCurrentLayoutId(result.id);
+    }
   } catch (err) {
     alert("Failed to save layout.");
     console.error("Save error:", err);

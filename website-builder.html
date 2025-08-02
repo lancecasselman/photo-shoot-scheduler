@@ -12,8 +12,12 @@
   <div id="controls">
     <button id="addBlock">➕ Add Block</button>
     <button id="saveLayout">💾 Save Page Layout</button>
+    <label>
+      <input type="checkbox" id="autosaveToggle"> Autosave (30s)
+    </label>
     <input id="layoutIdInput" placeholder="Layout ID to Load" />
     <button id="loadLayout">📥 Load Layout</button>
+    <button id="viewVersions">🕐 View Versions</button>
     <button id="exportHtml">📤 Export HTML</button>
     <button id="toggleTheme">🌓 Toggle Theme</button>
     <button id="listLayouts">📚 View Saved Layouts</button>
@@ -21,11 +25,19 @@
 
   <div id="blocks"></div>
   <ul id="layoutList" style="margin-top: 1rem;"></ul>
+  <div id="versionModal" style="display: none;">
+    <div id="versionContent">
+      <h3>Version History</h3>
+      <ul id="versionList"></ul>
+      <button id="closeVersions">Close</button>
+    </div>
+  </div>
 
   <script src="/src/js/dragdrop.js"></script>
   <script src="/src/js/gallery.js"></script>
   <script src="/src/js/ai.js"></script>
   <script src="/src/js/save-layout.js"></script>
   <script src="/src/js/load-layout.js"></script>
+  <script src="/src/js/autosave-versions.js"></script>
 </body>
 </html>

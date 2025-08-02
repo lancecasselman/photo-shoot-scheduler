@@ -6726,6 +6726,163 @@ app.get('/api/layouts', isAuthenticated, async (req, res) => {
     }
 });
 
+// Version Management API Routes
+app.post('/api/save-version', isAuthenticated, async (req, res) => {
+    try {
+        const { layoutId, layout } = req.body;
+        const userId = req.user.uid;
+
+        if (!layoutId || !layout) {
+            return res.status(400).json({ error: 'Layout ID and layout data are required' });
+        }
+
+        // Check if Firebase is available
+        if (!admin.apps.length) {
+            return res.status(500).json({ error: 'Firebase not configured' });
+        }
+
+        // Generate unique version ID
+        const versionId = `version_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        // Save version to Firestore: builderPages/{layoutId}/versions/{versionId}
+        const versionData = {
+            layout: layout,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            userId: userId,
+            userEmail: req.user.email,
+            layoutId: layoutId
+        };
+
+        await admin.firestore()
+            .collection('builderPages')
+            .doc(layoutId)
+            .collection('versions')
+            .doc(versionId)
+            .set(versionData);
+
+        console.log(`Version saved for layout ${layoutId}: ${versionId}`);
+        res.json({ success: true, versionId: versionId });
+
+    } catch (error) {
+        console.error('Error saving version:', error);
+        res.status(500).json({ error: 'Failed to save version' });
+    }
+});
+
+app.get('/api/versions/:layoutId', isAuthenticated, async (req, res) => {
+    try {
+        const layoutId = req.params.layoutId;
+        const userId = req.user.uid;
+
+        if (!layoutId) {
+            return res.status(400).json({ error: 'Layout ID is required' });
+        }
+
+        // Check if Firebase is available
+        if (!admin.apps.length) {
+            return res.status(500).json({ error: 'Firebase not configured' });
+        }
+
+        // Get last 10 versions for this layout
+        const versionsSnapshot = await admin.firestore()
+            .collection('builderPages')
+            .doc(layoutId)
+            .collection('versions')
+            .where('userId', '==', userId)
+            .limit(10)
+            .get();
+
+        // Handle empty snapshot
+        if (versionsSnapshot.empty) {
+            console.log(`No versions found for layout ${layoutId}`);
+            return res.json([]);
+        }
+
+        // Map through docs and sort by creation time
+        const versions = versionsSnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                createdAt: data.createdAt?.toDate?.() || new Date(),
+                layoutId: data.layoutId
+            };
+        });
+
+        // Sort by createdAt descending (newest first)
+        versions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+        console.log(`Retrieved ${versions.length} versions for layout ${layoutId}`);
+        res.json(versions);
+
+    } catch (error) {
+        console.error('Error fetching versions:', error.message);
+        console.error('Error stack:', error.stack);
+        res.status(500).json({ 
+            error: 'Failed to fetch versions',
+            details: error.message 
+        });
+    }
+});
+
+app.get('/api/version/:versionId', isAuthenticated, async (req, res) => {
+    try {
+        const versionId = req.params.versionId;
+        const userId = req.user.uid;
+
+        if (!versionId) {
+            return res.status(400).json({ error: 'Version ID is required' });
+        }
+
+        // Check if Firebase is available
+        if (!admin.apps.length) {
+            return res.status(500).json({ error: 'Firebase not configured' });
+        }
+
+        // Search for version across all layouts (since we need to find the parent layout)
+        const layoutsSnapshot = await admin.firestore()
+            .collection('builderPages')
+            .where('userId', '==', userId)
+            .get();
+
+        let versionData = null;
+        
+        for (const layoutDoc of layoutsSnapshot.docs) {
+            const versionDoc = await admin.firestore()
+                .collection('builderPages')
+                .doc(layoutDoc.id)
+                .collection('versions')
+                .doc(versionId)
+                .get();
+                
+            if (versionDoc.exists) {
+                versionData = versionDoc.data();
+                break;
+            }
+        }
+
+        if (!versionData) {
+            return res.status(404).json({ error: 'Version not found' });
+        }
+
+        // Check ownership
+        if (versionData.userId !== userId) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        console.log(`Version loaded: ${versionId}`);
+        res.json({ 
+            success: true, 
+            layout: versionData.layout,
+            createdAt: versionData.createdAt,
+            layoutId: versionData.layoutId
+        });
+
+    } catch (error) {
+        console.error('Error loading version:', error);
+        res.status(500).json({ error: 'Failed to load version' });
+    }
+});
+
 app.get('/website-builder', isAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'website-builder.html'));
 });
