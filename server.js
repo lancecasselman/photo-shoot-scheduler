@@ -2285,7 +2285,7 @@ app.get('/storefront-preview/:page', async (req, res) => {
 });
 
 // User storefront preview endpoint
-app.get('/preview/:userId', async (req, res) => {
+app.get('/website-preview/:userId', async (req, res) => {
     const { userId } = req.params;
     const { page } = req.query; // Get page from query parameter
 
@@ -6910,6 +6910,12 @@ app.get('/preview/:layoutId', async (req, res) => {
         }
 
         const layoutData = layoutDoc.data();
+        
+        // Debug log to see what we're getting from Firestore
+        console.log(`Debug - Layout ID: ${layoutId}`);
+        console.log(`Debug - Layout exists: ${layoutDoc.exists}`);
+        console.log(`Debug - Layout data keys:`, Object.keys(layoutData));
+        console.log(`Debug - Layout content preview:`, layoutData.layout ? layoutData.layout.substring(0, 200) + '...' : 'NO LAYOUT CONTENT');
 
         // Check access permissions
         if (!layoutData.published) {
