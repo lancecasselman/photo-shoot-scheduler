@@ -25,7 +25,6 @@ function initializeMultiPage() {
     
     // Update UI
     updatePageList();
-    updateNavList();
     
     console.log('Multi-page system initialized');
 }
@@ -37,11 +36,7 @@ function setupEventListeners() {
         addPageBtn.addEventListener('click', addNewPage);
     }
     
-    // Add nav item button
-    const addNavBtn = document.getElementById('addNavBtn');
-    if (addNavBtn) {
-        addNavBtn.addEventListener('click', addNavItem);
-    }
+
     
     // Page list delegation
     const pageList = document.getElementById('pageList');
@@ -49,11 +44,7 @@ function setupEventListeners() {
         pageList.addEventListener('click', handlePageAction);
     }
     
-    // Nav list delegation
-    const navList = document.getElementById('navList');
-    if (navList) {
-        navList.addEventListener('click', handleNavAction);
-    }
+
     
     // Update save and export functions to handle multi-page
     const originalSave = window.saveLayout;
@@ -86,7 +77,6 @@ function addNewPage() {
     
     // Update UI
     updatePageList();
-    updateNavList();
     
     // Switch to new page
     switchToPage(pageId);
@@ -94,26 +84,7 @@ function addNewPage() {
     console.log('Added new page:', pageName);
 }
 
-function addNavItem() {
-    // Show available pages that aren't in nav yet
-    const availablePages = Object.keys(pages).filter(id => !navigationOrder.includes(id));
-    
-    if (availablePages.length === 0) {
-        alert('All pages are already in navigation');
-        return;
-    }
-    
-    const pageId = availablePages[0]; // For now, add the first available
-    const label = prompt('Enter navigation label:', pages[pageId].name);
-    
-    if (!label || label.trim() === '') return;
-    
-    navigationOrder.push(pageId);
-    navigationLabels[pageId] = label.trim();
-    
-    updateNavList();
-    console.log('Added nav item:', label);
-}
+
 
 function handlePageAction(e) {
     const pageItem = e.target.closest('.page-item');
@@ -135,20 +106,7 @@ function handlePageAction(e) {
     }
 }
 
-function handleNavAction(e) {
-    const navItem = e.target.closest('.nav-item');
-    if (!navItem) return;
-    
-    const pageId = navItem.dataset.pageId;
-    
-    if (e.target.classList.contains('edit-nav')) {
-        editNavLabel(pageId);
-    } else if (e.target.classList.contains('move-up')) {
-        moveNavItem(pageId, -1);
-    } else if (e.target.classList.contains('move-down')) {
-        moveNavItem(pageId, 1);
-    }
-}
+
 
 function switchToPage(pageId) {
     if (!pages[pageId]) return;
@@ -227,7 +185,6 @@ function editPageName(pageId) {
     }
     
     updatePageList();
-    updateNavList();
 }
 
 function deletePage(pageId) {
@@ -254,30 +211,9 @@ function deletePage(pageId) {
     }
     
     updatePageList();
-    updateNavList();
 }
 
-function editNavLabel(pageId) {
-    const newLabel = prompt('Enter navigation label:', navigationLabels[pageId]);
-    if (!newLabel || newLabel.trim() === '') return;
-    
-    navigationLabels[pageId] = newLabel.trim();
-    updateNavList();
-}
 
-function moveNavItem(pageId, direction) {
-    const currentIndex = navigationOrder.indexOf(pageId);
-    if (currentIndex === -1) return;
-    
-    const newIndex = currentIndex + direction;
-    if (newIndex < 0 || newIndex >= navigationOrder.length) return;
-    
-    // Swap items
-    [navigationOrder[currentIndex], navigationOrder[newIndex]] = 
-    [navigationOrder[newIndex], navigationOrder[currentIndex]];
-    
-    updateNavList();
-}
 
 function updatePageList() {
     const pageList = document.getElementById('pageList');
@@ -302,32 +238,7 @@ function updatePageList() {
     });
 }
 
-function updateNavList() {
-    const navList = document.getElementById('navList');
-    if (!navList) return;
-    
-    navList.innerHTML = '';
-    
-    navigationOrder.forEach((pageId, index) => {
-        if (!pages[pageId]) return;
-        
-        const navItem = document.createElement('div');
-        navItem.className = 'nav-item';
-        navItem.dataset.pageId = pageId;
-        navItem.draggable = true;
-        
-        navItem.innerHTML = `
-            <span class="nav-label">${navigationLabels[pageId] || pages[pageId].name}</span>
-            <div class="nav-actions">
-                <button class="edit-nav" title="Edit Label">Edit</button>
-                ${index > 0 ? '<button class="move-up" title="Move Up">↑</button>' : ''}
-                ${index < navigationOrder.length - 1 ? '<button class="move-down" title="Move Down">↓</button>' : ''}
-            </div>
-        `;
-        
-        navList.appendChild(navItem);
-    });
-}
+
 
 function generatePageId(name) {
     return name.toLowerCase()
