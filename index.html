@@ -4368,6 +4368,7 @@
                                 <button onclick="addToCalendar('${session.id}'); event.stopPropagation();" class="btn btn-secondary">Calendar</button>
                                 <button onclick="openEmailClient('${session.id}'); event.stopPropagation();" class="btn btn-secondary">Email</button>
                                 <button onclick="openContractModal('${session.id}'); event.stopPropagation();" class="btn btn-secondary">Contract</button>
+                                <button onclick="openRawBackupDashboard('${session.id}'); event.stopPropagation();" class="btn btn-secondary">RAW Backup</button>
 
                                 ${session.hasPaymentPlan ? `
                                     <button onclick="viewPaymentPlan('${session.id}'); event.stopPropagation();" class="btn btn-secondary">Payment Plan</button>
@@ -6502,6 +6503,16 @@ END:VCALENDAR`;
 
         // Contract Management Functions
         let currentContractSessionId = null;
+
+        // RAW Backup Dashboard Navigation
+        function openRawBackupDashboard(sessionId) {
+            // Open RAW backup dashboard in new tab with session context
+            const url = `/raw-backup-dashboard.html?sessionId=${sessionId}`;
+            window.open(url, '_blank');
+            
+            showMessage('RAW backup dashboard opened in new tab', 'success');
+            console.log(`RAW backup dashboard opened for session: ${sessionId}`);
+        }
 
         async function openContractModal(sessionId) {
             currentContractSessionId = sessionId;

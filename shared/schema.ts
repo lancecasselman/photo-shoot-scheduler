@@ -169,20 +169,40 @@ export const subscribers = pgTable("subscribers", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// RAW backup storage tracking for $20/TB service
-export const rawBackups = pgTable("raw_backups", {
+// Individual RAW files tracking for each session
+export const rawFiles = pgTable("raw_files", {
   id: varchar("id").primaryKey().notNull(),
   sessionId: varchar("session_id").notNull().references(() => photographySessions.id),
   userId: varchar("user_id").notNull().references(() => users.id),
-  status: varchar("status").notNull().default("pending"), // pending, uploading, completed, failed
-  fileCount: integer("file_count").notNull().default(0),
+  filename: varchar("filename").notNull(),
+  originalFilename: varchar("original_filename").notNull(),
+  fileExtension: varchar("file_extension").notNull(), // .NEF, .CR2, .ARW, .DNG, etc.
+  fileSizeBytes: varchar("file_size_bytes").notNull(), // Using varchar for large numbers
+  fileSizeMB: decimal("file_size_mb", { precision: 12, scale: 2 }).notNull(),
+  r2Key: varchar("r2_key").notNull(), // Full path in R2 bucket
+  uploadStatus: varchar("upload_status").notNull().default("pending"), // pending, uploading, completed, failed
+  uploadStartedAt: timestamp("upload_started_at"),
+  uploadCompletedAt: timestamp("upload_completed_at"),
+  lastAccessedAt: timestamp("last_accessed_at"),
+  downloadCount: integer("download_count").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// RAW storage usage tracking per user for billing
+export const rawStorageUsage = pgTable("raw_storage_usage", {
+  id: varchar("id").primaryKey().notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  totalFiles: integer("total_files").notNull().default(0),
   totalSizeBytes: varchar("total_size_bytes").notNull().default("0"), // Using varchar for large numbers
   totalSizeTB: decimal("total_size_tb", { precision: 10, scale: 6 }).notNull().default("0"),
-  monthlyCharge: decimal("monthly_charge", { precision: 10, scale: 2 }).notNull().default("0"),
-  r2Prefix: varchar("r2_prefix").notNull(), // photographer-{id}/session-{id}/raw/
-  backupStartedAt: timestamp("backup_started_at"),
-  backupCompletedAt: timestamp("backup_completed_at"),
-  lastBillingDate: timestamp("last_billing_date"),
+  currentMonthlyCharge: decimal("current_monthly_charge", { precision: 10, scale: 2 }).notNull().default("0"),
+  storageTierTB: integer("storage_tier_tb").notNull().default(1), // 1TB, 2TB, 3TB, etc.
+  maxAllowedTB: decimal("max_allowed_tb", { precision: 10, scale: 2 }).notNull().default("1.00"),
+  storageStatus: varchar("storage_status").notNull().default("active"), // active, overlimit, suspended
+  lastBilledAt: timestamp("last_billed_at"),
+  nextBillingDate: timestamp("next_billing_date"),
+  stripeSubscriptionId: varchar("stripe_subscription_id"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -214,8 +234,10 @@ export type InsertPaymentRecord = typeof paymentRecords.$inferInsert;
 export type PaymentRecord = typeof paymentRecords.$inferSelect;
 export type InsertSubscriber = typeof subscribers.$inferInsert;
 export type Subscriber = typeof subscribers.$inferSelect;
-export type InsertRawBackup = typeof rawBackups.$inferInsert;
-export type RawBackup = typeof rawBackups.$inferSelect;
+export type InsertRawFile = typeof rawFiles.$inferInsert;
+export type RawFile = typeof rawFiles.$inferSelect;
+export type InsertRawStorageUsage = typeof rawStorageUsage.$inferInsert;
+export type RawStorageUsage = typeof rawStorageUsage.$inferSelect;
 export type InsertRawStorageBilling = typeof rawStorageBilling.$inferInsert;
 export type RawStorageBilling = typeof rawStorageBilling.$inferSelect;
 

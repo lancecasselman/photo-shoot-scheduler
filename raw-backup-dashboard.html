@@ -3,275 +3,1008 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RAW Backup Dashboard - Photography Management</title>
+    <title>RAW File Backup Dashboard - Photography Management System</title>
+    
+    <!-- Firebase SDK v8 (Legacy) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="firebase-config.js"></script>
+    
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             min-height: 100vh;
             padding: 20px;
         }
-        .container {
+
+        .dashboard-container {
             max-width: 1200px;
             margin: 0 auto;
             background: white;
-            border-radius: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .dashboard-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
             padding: 30px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-        }
-        .header {
             text-align: center;
-            margin-bottom: 40px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #f0f0f0;
         }
-        .header h1 {
-            color: #333;
-            font-size: 2.5em;
+
+        .dashboard-header h1 {
+            font-size: 2.5rem;
             margin-bottom: 10px;
         }
-        .header p {
-            color: #666;
-            font-size: 1.1em;
+
+        .dashboard-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
         }
-        .stats-grid {
+
+        .dashboard-content {
+            padding: 30px;
+        }
+
+        .storage-overview {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 20px;
-            margin-bottom: 40px;
-        }
-        .stat-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 25px;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-        }
-        .stat-card h3 {
-            font-size: 2em;
-            margin-bottom: 10px;
-        }
-        .stat-card p {
-            opacity: 0.9;
-            font-size: 1.1em;
-        }
-        .backup-list {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 25px;
             margin-bottom: 30px;
         }
-        .backup-item {
+
+        .storage-card {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+            transition: transform 0.3s ease;
+        }
+
+        .storage-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .storage-card h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .storage-card .value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .storage-card .unit {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .usage-bar {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 15px 0;
+            position: relative;
+        }
+
+        .usage-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #ffc107, #dc3545);
+            border-radius: 10px;
+            transition: width 0.8s ease;
+            position: relative;
+        }
+
+        .usage-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+        }
+
+        .session-selector {
+            margin-bottom: 30px;
+        }
+
+        .session-selector select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: white;
+        }
+
+        .session-selector select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .file-list {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .file-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 15px;
-            margin-bottom: 10px;
             background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
-        .backup-status {
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.9em;
-            font-weight: bold;
+
+        .file-info {
+            flex: 1;
         }
-        .status-completed { background: #d4edda; color: #155724; }
-        .status-pending { background: #fff3cd; color: #856404; }
-        .status-failed { background: #f8d7da; color: #721c24; }
-        .pricing-info {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+
+        .file-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .file-meta {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .file-actions .btn {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+        }
+
+        .upload-area {
+            border: 2px dashed #dee2e6;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            background: #fafbfc;
+        }
+
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .upload-area h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .upload-area p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .supported-formats {
+            background: #e7f3ff;
+            border: 1px solid #b8daff;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .supported-formats h4 {
+            color: #004085;
+            margin-bottom: 10px;
+        }
+
+        .format-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .format-tag {
+            background: #667eea;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid transparent;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+
+        .storage-pricing {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             color: white;
             padding: 25px;
-            border-radius: 15px;
+            border-radius: 12px;
+            margin-top: 30px;
             text-align: center;
         }
+
+        .storage-pricing h3 {
+            margin-bottom: 15px;
+        }
+
+        .pricing-tiers {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .pricing-tier {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+        }
+
+        .pricing-tier .tier-size {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .pricing-tier .tier-price {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
         .loading {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 200px;
-            font-size: 1.2em;
+            text-align: center;
+            padding: 40px;
             color: #666;
         }
-        .test-connection {
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1em;
-            margin: 10px;
-            transition: background 0.3s;
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s steps(5, end) infinite;
         }
-        .test-connection:hover {
-            background: #0056b3;
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60% { content: '...'; }
+            80%, 100% { content: ''; }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-content {
+                padding: 20px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .file-item {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .file-actions {
+                justify-content: center;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🔥 RAW Backup Dashboard</h1>
-            <p>Cloudflare R2 Storage • $20/TB • Automatic RAW Detection</p>
-            <button class="test-connection" onclick="testR2Connection()">Test R2 Connection</button>
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <h1>RAW File Backup Dashboard</h1>
+            <p>Secure cloud storage for your RAW photography files</p>
         </div>
 
-        <div id="loading" class="loading">
-            Loading backup data...
-        </div>
+        <div class="dashboard-content">
+            <div id="loadingMessage" class="loading">Loading your RAW storage dashboard</div>
+            
+            <div id="dashboardMain" style="display: none;">
+                <!-- Storage Overview -->
+                <div class="storage-overview">
+                    <div class="storage-card">
+                        <h3>Total Files</h3>
+                        <div class="value" id="totalFiles">0</div>
+                        <div class="unit">RAW files stored</div>
+                    </div>
+                    
+                    <div class="storage-card">
+                        <h3>Storage Used</h3>
+                        <div class="value" id="storageUsed">0</div>
+                        <div class="unit" id="storageUnit">GB</div>
+                    </div>
+                    
+                    <div class="storage-card">
+                        <h3>Monthly Cost</h3>
+                        <div class="value" id="monthlyCost">$0</div>
+                        <div class="unit">per month</div>
+                    </div>
+                    
+                    <div class="storage-card">
+                        <h3>Storage Plan</h3>
+                        <div class="value" id="storagePlan">1</div>
+                        <div class="unit" id="planUnit">TB plan</div>
+                    </div>
+                </div>
 
-        <div id="dashboard" style="display: none;">
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <h3 id="totalFiles">0</h3>
-                    <p>Total RAW Files</p>
+                <!-- Usage Bar -->
+                <div class="usage-bar">
+                    <div class="usage-fill" id="usageFill" style="width: 0%;">
+                        <div class="usage-text" id="usageText">0% used</div>
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <h3 id="totalStorage">0 GB</h3>
-                    <p>Storage Used</p>
-                </div>
-                <div class="stat-card">
-                    <h3 id="monthlyCost">$0.00</h3>
-                    <p>Monthly Cost</p>
-                </div>
-                <div class="stat-card">
-                    <h3 id="successRate">100%</h3>
-                    <p>Success Rate</p>
-                </div>
-            </div>
 
-            <div class="backup-list">
-                <h3 style="margin-bottom: 20px;">Recent Backups</h3>
-                <div id="backupsList">
-                    <!-- Backup items will be loaded here -->
-                </div>
-            </div>
+                <!-- Alerts -->
+                <div id="alertContainer"></div>
 
-            <div class="pricing-info">
-                <h3>💰 Transparent Pricing</h3>
-                <p>$20/TB/month • No hidden fees • Cancel anytime</p>
-                <p>Current month: <span id="currentMonth"></span></p>
+                <!-- Session Selector -->
+                <div class="session-selector">
+                    <select id="sessionSelect">
+                        <option value="">Select a session to manage RAW files...</option>
+                    </select>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button class="btn btn-primary" id="uploadBtn" disabled>
+                        📁 Upload RAW Files
+                    </button>
+                    <button class="btn btn-secondary" id="viewFilesBtn" disabled>
+                        👁️ View RAW Files
+                    </button>
+                    <button class="btn btn-success" id="upgradeBtn">
+                        ⬆️ Upgrade Storage
+                    </button>
+                </div>
+
+                <!-- Upload Area (Hidden by default) -->
+                <div class="upload-area" id="uploadArea" style="display: none;">
+                    <h3>Drop RAW files here or click to browse</h3>
+                    <p>Maximum file size: 500MB per file</p>
+                    <input type="file" id="fileInput" multiple accept=".nef,.cr2,.arw,.dng,.raf,.orf,.pef,.srw,.x3f,.rw2" style="display: none;">
+                    <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                        Choose Files
+                    </button>
+                </div>
+
+                <!-- File List -->
+                <div class="file-list" id="fileList" style="display: none;">
+                    <h3>RAW Files in Selected Session</h3>
+                    <div id="fileListContent"></div>
+                </div>
+
+                <!-- Supported Formats -->
+                <div class="supported-formats">
+                    <h4>Supported RAW Formats</h4>
+                    <div class="format-list">
+                        <span class="format-tag">.NEF</span>
+                        <span class="format-tag">.CR2</span>
+                        <span class="format-tag">.ARW</span>
+                        <span class="format-tag">.DNG</span>
+                        <span class="format-tag">.RAF</span>
+                        <span class="format-tag">.ORF</span>
+                        <span class="format-tag">.PEF</span>
+                        <span class="format-tag">.SRW</span>
+                        <span class="format-tag">.X3F</span>
+                        <span class="format-tag">.RW2</span>
+                    </div>
+                </div>
+
+                <!-- Storage Pricing -->
+                <div class="storage-pricing">
+                    <h3>Storage Pricing - $20 per TB per month</h3>
+                    <p>Secure, redundant storage with instant access to your RAW files</p>
+                    <div class="pricing-tiers">
+                        <div class="pricing-tier">
+                            <div class="tier-size">1TB</div>
+                            <div class="tier-price">$20/month</div>
+                        </div>
+                        <div class="pricing-tier">
+                            <div class="tier-size">2TB</div>
+                            <div class="tier-price">$40/month</div>
+                        </div>
+                        <div class="pricing-tier">
+                            <div class="tier-size">3TB</div>
+                            <div class="tier-price">$60/month</div>
+                        </div>
+                        <div class="pricing-tier">
+                            <div class="tier-size">5TB</div>
+                            <div class="tier-price">$100/month</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Load backup data
-        async function loadBackupData() {
-            try {
-                const response = await fetch('/api/raw-backups/status');
-                
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        window.location.href = '/auth.html';
-                        return;
-                    }
-                    throw new Error(`HTTP ${response.status}`);
-                }
+        let currentUser = null;
+        let authToken = null;
+        let sessions = [];
+        let storageUsage = null;
+        let selectedSessionId = null;
+        let urlSessionId = null;
 
-                const data = await response.json();
-                displayBackupData(data);
+        // Initialize Firebase Authentication
+        firebase.auth().onAuthStateChanged(async (user) => {
+            if (user) {
+                currentUser = user;
+                authToken = await user.getIdToken();
+                console.log('User authenticated:', user.email);
+                await initializeDashboard();
+            } else {
+                window.location.href = '/auth.html';
+            }
+        });
+
+        async function initializeDashboard() {
+            try {
+                // Check for session ID in URL parameters
+                const urlParams = new URLSearchParams(window.location.search);
+                urlSessionId = urlParams.get('sessionId');
+                
+                await Promise.all([
+                    loadStorageUsage(),
+                    loadSessions()
+                ]);
+                
+                document.getElementById('loadingMessage').style.display = 'none';
+                document.getElementById('dashboardMain').style.display = 'block';
+                
+                setupEventListeners();
+                
+                // Auto-select session if provided in URL
+                if (urlSessionId) {
+                    setTimeout(() => {
+                        const sessionSelect = document.getElementById('sessionSelect');
+                        sessionSelect.value = urlSessionId;
+                        selectedSessionId = urlSessionId;
+                        
+                        // Enable buttons
+                        document.getElementById('uploadBtn').disabled = false;
+                        document.getElementById('viewFilesBtn').disabled = false;
+                        
+                        showAlert(`Session selected from link: ${getSessionName(urlSessionId)}`, 'info');
+                    }, 500);
+                }
                 
             } catch (error) {
-                console.error('Failed to load backup data:', error);
-                document.getElementById('loading').innerHTML = 
-                    `❌ Failed to load backup data: ${error.message}`;
+                console.error('Dashboard initialization error:', error);
+                showAlert('Failed to load dashboard', 'danger');
             }
         }
 
-        function displayBackupData(data) {
-            // Calculate totals
-            let totalFiles = 0;
-            let totalSize = 0;
-            let completedFiles = 0;
+        function getSessionName(sessionId) {
+            const session = sessions.find(s => s.id === sessionId);
+            return session ? `${session.clientName} - ${session.sessionType}` : 'Selected Session';
+        }
 
-            data.stats.forEach(stat => {
-                totalFiles += parseInt(stat.count);
-                totalSize += parseInt(stat.total_size || 0);
-                if (stat.backup_status === 'completed') {
-                    completedFiles += parseInt(stat.count);
+        async function loadStorageUsage() {
+            try {
+                const response = await fetch('/api/raw-storage/usage', {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                if (response.ok) {
+                    storageUsage = await response.json();
+                    updateStorageDisplay();
+                } else {
+                    throw new Error('Failed to load storage usage');
+                }
+                
+            } catch (error) {
+                console.error('Error loading storage usage:', error);
+                showAlert('Failed to load storage usage', 'danger');
+            }
+        }
+
+        async function loadSessions() {
+            try {
+                const response = await fetch('/api/sessions', {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                if (response.ok) {
+                    sessions = await response.json();
+                    populateSessionSelector();
+                } else {
+                    throw new Error('Failed to load sessions');
+                }
+                
+            } catch (error) {
+                console.error('Error loading sessions:', error);
+                showAlert('Failed to load sessions', 'danger');
+            }
+        }
+
+        function updateStorageDisplay() {
+            // Update overview cards
+            document.getElementById('totalFiles').textContent = storageUsage.totalFiles || 0;
+            
+            // Convert TB to GB for display if less than 1TB
+            const totalSizeTB = storageUsage.totalSizeTB || 0;
+            if (totalSizeTB < 1) {
+                const totalSizeGB = (totalSizeTB * 1024).toFixed(1);
+                document.getElementById('storageUsed').textContent = totalSizeGB;
+                document.getElementById('storageUnit').textContent = 'GB';
+            } else {
+                document.getElementById('storageUsed').textContent = totalSizeTB.toFixed(2);
+                document.getElementById('storageUnit').textContent = 'TB';
+            }
+            
+            document.getElementById('monthlyCost').textContent = `$${storageUsage.currentMonthlyCharge || 0}`;
+            document.getElementById('storagePlan').textContent = storageUsage.storageTierTB || 1;
+            
+            // Update usage bar
+            const usagePercentage = Math.min(storageUsage.usagePercentage || 0, 100);
+            document.getElementById('usageFill').style.width = `${usagePercentage}%`;
+            document.getElementById('usageText').textContent = `${usagePercentage.toFixed(1)}% used`;
+            
+            // Show alerts for storage status
+            if (storageUsage.isOverLimit) {
+                showAlert('Storage limit exceeded! Please upgrade your plan to continue uploading.', 'danger');
+            } else if (usagePercentage > 80) {
+                showAlert('You are approaching your storage limit. Consider upgrading your plan.', 'warning');
+            }
+        }
+
+        function populateSessionSelector() {
+            const select = document.getElementById('sessionSelect');
+            select.innerHTML = '<option value="">Select a session to manage RAW files...</option>';
+            
+            sessions.forEach(session => {
+                const option = document.createElement('option');
+                option.value = session.id;
+                option.textContent = `${session.clientName} - ${session.sessionType} (${new Date(session.dateTime).toLocaleDateString()})`;
+                select.appendChild(option);
+            });
+        }
+
+        function setupEventListeners() {
+            // Session selection
+            document.getElementById('sessionSelect').addEventListener('change', (e) => {
+                selectedSessionId = e.target.value;
+                const uploadBtn = document.getElementById('uploadBtn');
+                const viewFilesBtn = document.getElementById('viewFilesBtn');
+                
+                if (selectedSessionId) {
+                    uploadBtn.disabled = false;
+                    viewFilesBtn.disabled = false;
+                } else {
+                    uploadBtn.disabled = true;
+                    viewFilesBtn.disabled = true;
+                    document.getElementById('uploadArea').style.display = 'none';
+                    document.getElementById('fileList').style.display = 'none';
                 }
             });
 
-            // Update stats
-            document.getElementById('totalFiles').textContent = totalFiles;
-            document.getElementById('totalStorage').textContent = 
-                `${(totalSize / 1024 / 1024 / 1024).toFixed(2)} GB`;
-            document.getElementById('monthlyCost').textContent = 
-                `$${data.storage.monthly_cost_usd || '0.00'}`;
-            document.getElementById('successRate').textContent = 
-                totalFiles > 0 ? `${Math.round((completedFiles / totalFiles) * 100)}%` : '100%';
-            document.getElementById('currentMonth').textContent = data.pricing.currentMonth;
+            // Upload button
+            document.getElementById('uploadBtn').addEventListener('click', () => {
+                if (storageUsage.isOverLimit) {
+                    showAlert('Storage limit exceeded! Please upgrade your plan first.', 'danger');
+                    return;
+                }
+                
+                const uploadArea = document.getElementById('uploadArea');
+                uploadArea.style.display = uploadArea.style.display === 'none' ? 'block' : 'none';
+            });
 
-            // Display recent backups
-            const backupsList = document.getElementById('backupsList');
-            backupsList.innerHTML = '';
+            // View files button
+            document.getElementById('viewFilesBtn').addEventListener('click', loadSessionFiles);
 
-            if (data.recentBackups.length === 0) {
-                backupsList.innerHTML = '<p style="text-align: center; color: #666;">No RAW backups yet. Upload some RAW files to get started!</p>';
-            } else {
-                data.recentBackups.forEach(backup => {
-                    const item = document.createElement('div');
-                    item.className = 'backup-item';
-                    
-                    const statusClass = `status-${backup.backup_status}`;
-                    const fileSize = backup.file_size ? `${(backup.file_size / 1024 / 1024).toFixed(1)}MB` : 'Unknown';
-                    
-                    item.innerHTML = `
-                        <div>
-                            <strong>${backup.original_name}</strong>
-                            <br>
-                            <small>Session: ${backup.session_id} • ${fileSize}</small>
-                        </div>
-                        <span class="backup-status ${statusClass}">
-                            ${backup.backup_status.toUpperCase()}
-                        </span>
-                    `;
-                    
-                    backupsList.appendChild(item);
-                });
-            }
+            // Upgrade button
+            document.getElementById('upgradeBtn').addEventListener('click', showUpgradeOptions);
 
-            // Show dashboard
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('dashboard').style.display = 'block';
+            // File input
+            document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+
+            // Drag and drop
+            const uploadArea = document.getElementById('uploadArea');
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                
+                const files = Array.from(e.dataTransfer.files);
+                uploadFiles(files);
+            });
         }
 
-        async function testR2Connection() {
-            const button = event.target;
-            button.textContent = 'Testing...';
-            button.disabled = true;
+        function handleFileSelect(e) {
+            const files = Array.from(e.target.files);
+            uploadFiles(files);
+        }
+
+        async function uploadFiles(files) {
+            if (!selectedSessionId) {
+                showAlert('Please select a session first', 'warning');
+                return;
+            }
+
+            if (files.length === 0) {
+                showAlert('No files selected', 'warning');
+                return;
+            }
+
+            // Filter for RAW files only
+            const rawFiles = files.filter(file => {
+                const ext = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+                return ['.nef', '.cr2', '.arw', '.dng', '.raf', '.orf', '.pef', '.srw', '.x3f', '.rw2'].includes(ext);
+            });
+
+            if (rawFiles.length === 0) {
+                showAlert('No supported RAW files found', 'warning');
+                return;
+            }
+
+            if (rawFiles.length !== files.length) {
+                showAlert(`Only ${rawFiles.length} of ${files.length} files are supported RAW formats`, 'warning');
+            }
 
             try {
-                const response = await fetch('/api/r2-test');
-                const result = await response.json();
+                showAlert(`Uploading ${rawFiles.length} RAW files...`, 'info');
                 
-                if (result.success) {
-                    alert('✅ R2 Connection Successful!\n\n' + 
-                          `Endpoint: ${result.endpoint}\n` +
-                          `Bucket: ${result.bucket}\n` +
-                          `Pricing: ${result.pricing}`);
+                const formData = new FormData();
+                rawFiles.forEach(file => {
+                    formData.append('rawFiles', file);
+                });
+
+                const response = await fetch(`/api/raw-storage/upload/${selectedSessionId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        const successCount = result.totalFiles;
+                        const failedCount = result.failedFiles;
+                        
+                        if (failedCount > 0) {
+                            showAlert(`Upload completed: ${successCount} successful, ${failedCount} failed`, 'warning');
+                        } else {
+                            showAlert(`Successfully uploaded ${successCount} RAW files (${result.totalSizeMB.toFixed(1)}MB)`, 'success');
+                        }
+                        
+                        // Refresh storage usage and file list
+                        await loadStorageUsage();
+                        if (document.getElementById('fileList').style.display !== 'none') {
+                            await loadSessionFiles();
+                        }
+                    } else {
+                        showAlert('Upload failed', 'danger');
+                    }
                 } else {
-                    alert('❌ R2 Connection Failed:\n' + result.error);
+                    const error = await response.json();
+                    showAlert(error.error || 'Upload failed', 'danger');
                 }
+
             } catch (error) {
-                alert('❌ Connection test failed: ' + error.message);
-            } finally {
-                button.textContent = 'Test R2 Connection';
-                button.disabled = false;
+                console.error('Upload error:', error);
+                showAlert('Upload failed: ' + error.message, 'danger');
+            }
+
+            // Reset file input
+            document.getElementById('fileInput').value = '';
+        }
+
+        async function loadSessionFiles() {
+            if (!selectedSessionId) return;
+
+            try {
+                const response = await fetch(`/api/raw-storage/files/${selectedSessionId}`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    displaySessionFiles(result.files);
+                } else {
+                    throw new Error('Failed to load session files');
+                }
+
+            } catch (error) {
+                console.error('Error loading session files:', error);
+                showAlert('Failed to load session files', 'danger');
             }
         }
 
-        // Load data on page load
-        loadBackupData();
+        function displaySessionFiles(files) {
+            const fileList = document.getElementById('fileList');
+            const fileListContent = document.getElementById('fileListContent');
+            
+            if (files.length === 0) {
+                fileListContent.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No RAW files found for this session</p>';
+            } else {
+                fileListContent.innerHTML = files.map(file => `
+                    <div class="file-item">
+                        <div class="file-info">
+                            <div class="file-name">${file.originalFilename}</div>
+                            <div class="file-meta">
+                                ${file.fileSizeMB.toFixed(1)}MB • 
+                                Uploaded: ${new Date(file.uploadedAt).toLocaleDateString()} • 
+                                Downloads: ${file.downloadCount}
+                            </div>
+                        </div>
+                        <div class="file-actions">
+                            <button class="btn btn-primary" onclick="downloadFile('${file.id}', '${file.originalFilename}')">
+                                ⬇️ Download
+                            </button>
+                            <button class="btn btn-danger" onclick="deleteFile('${file.id}', '${file.originalFilename}', ${file.fileSizeMB})">
+                                🗑️ Delete
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            fileList.style.display = 'block';
+        }
 
-        // Refresh every 30 seconds
-        setInterval(loadBackupData, 30000);
+        async function downloadFile(fileId, filename) {
+            try {
+                const response = await fetch(`/api/raw-storage/download/${fileId}`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    showAlert(`Downloaded: ${filename}`, 'success');
+                } else {
+                    throw new Error('Download failed');
+                }
+
+            } catch (error) {
+                console.error('Download error:', error);
+                showAlert('Failed to download file', 'danger');
+            }
+        }
+
+        async function deleteFile(fileId, filename, fileSizeMB) {
+            if (!confirm(`Are you sure you want to permanently delete ${filename}? This action cannot be undone.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/raw-storage/delete/${fileId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                if (response.ok) {
+                    showAlert(`Deleted: ${filename} (${fileSizeMB.toFixed(1)}MB recovered)`, 'success');
+                    
+                    // Refresh storage usage and file list
+                    await loadStorageUsage();
+                    await loadSessionFiles();
+                } else {
+                    throw new Error('Delete failed');
+                }
+
+            } catch (error) {
+                console.error('Delete error:', error);
+                showAlert('Failed to delete file', 'danger');
+            }
+        }
+
+        function showUpgradeOptions() {
+            const currentTier = storageUsage.storageTierTB || 1;
+            const options = [1, 2, 3, 5, 10].filter(tier => tier > currentTier);
+            
+            if (options.length === 0) {
+                showAlert('You are already on the maximum storage plan', 'info');
+                return;
+            }
+            
+            const tierOptions = options.map(tier => 
+                `<button class="btn btn-primary" onclick="upgradeStorage(${tier})" style="margin: 5px;">
+                    ${tier}TB - $${tier * 20}/month
+                </button>`
+            ).join('');
+            
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-info';
+            alertDiv.innerHTML = `
+                <h4>Upgrade Your Storage Plan</h4>
+                <p>Current plan: ${currentTier}TB ($${currentTier * 20}/month)</p>
+                <p>Choose your new storage tier:</p>
+                <div style="margin-top: 15px;">
+                    ${tierOptions}
+                </div>
+            `;
+            
+            const alertContainer = document.getElementById('alertContainer');
+            alertContainer.innerHTML = '';
+            alertContainer.appendChild(alertDiv);
+        }
+
+        async function upgradeStorage(tierTB) {
+            try {
+                const response = await fetch('/api/raw-storage/upgrade', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: JSON.stringify({ tierTB })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    
+                    // Redirect to Stripe checkout
+                    window.location.href = result.checkoutUrl;
+                } else {
+                    throw new Error('Failed to create upgrade checkout');
+                }
+
+            } catch (error) {
+                console.error('Upgrade error:', error);
+                showAlert('Failed to process storage upgrade', 'danger');
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            
+            alertContainer.innerHTML = '';
+            alertContainer.appendChild(alertDiv);
+            
+            // Auto-hide success and info alerts
+            if (type === 'success' || type === 'info') {
+                setTimeout(() => {
+                    if (alertDiv.parentNode) {
+                        alertDiv.remove();
+                    }
+                }, 5000);
+            }
+        }
+
+        // Check for upgrade success/failure on page load
+        window.addEventListener('load', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const upgrade = urlParams.get('upgrade');
+            const tier = urlParams.get('tier');
+            
+            if (upgrade === 'success' && tier) {
+                setTimeout(() => {
+                    showAlert(`Storage successfully upgraded to ${tier}TB plan!`, 'success');
+                }, 1000);
+            } else if (upgrade === 'cancelled') {
+                setTimeout(() => {
+                    showAlert('Storage upgrade cancelled', 'warning');
+                }, 1000);
+            }
+        });
     </script>
 </body>
 </html>

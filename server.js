@@ -35,8 +35,8 @@ const PaymentScheduler = require('./server/paymentScheduler');
 // Import contract management
 const ContractManager = require('./server/contracts');
 
-// Import R2 RAW backup service
-const R2BackupService = require('./server/r2-backup');
+// Import R2 RAW storage service
+const R2StorageService = require('./server/r2-storage');
 
 // Import AI services
 const { AIServices } = require('./server/ai-services');
@@ -83,7 +83,7 @@ async function useAiCredits(userId, amount, operation, details) {
 }
 
 // Initialize services
-const r2BackupService = new R2BackupService();
+const r2StorageService = new R2StorageService();
 const aiServices = new AIServices();
 
 // PostgreSQL database connection
@@ -7422,12 +7422,440 @@ app.post('/api/export/zip', isAuthenticated, async (req, res) => {
         
         // Finalize the archive
         await archive.finalize();
-        
-        console.log('ZIP export completed successfully');
-        
+
     } catch (error) {
         console.error('ZIP export error:', error);
-        res.status(500).json({ error: 'Failed to generate ZIP export' });
+        res.status(500).json({ error: 'Failed to create ZIP export' });
+    }
+});
+
+// RAW File Storage Endpoints
+
+// Test R2 connection
+app.get('/api/raw-storage/test', isAuthenticated, async (req, res) => {
+    try {
+        const isConnected = await r2StorageService.testConnection();
+        res.json({ connected: isConnected });
+    } catch (error) {
+        console.error('R2 connection test error:', error);
+        res.status(500).json({ error: 'Failed to test R2 connection' });
+    }
+});
+
+// Get user's current RAW storage usage and billing info
+app.get('/api/raw-storage/usage', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.session.user.uid;
+        
+        // Get storage usage from database
+        const usageResult = await pool.query(`
+            SELECT total_files, total_size_bytes, total_size_tb, current_monthly_charge,
+                   storage_tier_tb, max_allowed_tb, storage_status, next_billing_date
+            FROM raw_storage_usage 
+            WHERE user_id = $1
+        `, [userId]);
+        
+        let usage = null;
+        if (usageResult.rows.length === 0) {
+            // Create default usage record for new user
+            await pool.query(`
+                INSERT INTO raw_storage_usage (id, user_id, total_files, total_size_bytes, 
+                                             total_size_tb, current_monthly_charge, storage_tier_tb, 
+                                             max_allowed_tb, storage_status)
+                VALUES ($1, $2, 0, '0', 0, 0, 1, 1.00, 'active')
+            `, [uuidv4(), userId]);
+            
+            usage = {
+                totalFiles: 0,
+                totalSizeBytes: '0',
+                totalSizeTB: 0,
+                currentMonthlyCharge: 0,
+                storageTierTB: 1,
+                maxAllowedTB: 1.00,
+                storageStatus: 'active',
+                nextBillingDate: null
+            };
+        } else {
+            const row = usageResult.rows[0];
+            usage = {
+                totalFiles: row.total_files,
+                totalSizeBytes: row.total_size_bytes,
+                totalSizeTB: parseFloat(row.total_size_tb),
+                currentMonthlyCharge: parseFloat(row.current_monthly_charge),
+                storageTierTB: row.storage_tier_tb,
+                maxAllowedTB: parseFloat(row.max_allowed_tb),
+                storageStatus: row.storage_status,
+                nextBillingDate: row.next_billing_date
+            };
+        }
+        
+        // Calculate usage percentage
+        const usagePercentage = (usage.totalSizeTB / usage.maxAllowedTB) * 100;
+        
+        res.json({
+            ...usage,
+            usagePercentage: Math.min(usagePercentage, 100),
+            isOverLimit: usage.totalSizeTB > usage.maxAllowedTB,
+            supportedFormats: ['.NEF', '.CR2', '.ARW', '.DNG', '.RAF', '.ORF', '.PEF', '.SRW', '.X3F', '.RW2']
+        });
+        
+    } catch (error) {
+        console.error('Error getting RAW storage usage:', error);
+        res.status(500).json({ error: 'Failed to get storage usage' });
+    }
+});
+
+// Memory-based multer for RAW files
+const rawFileUpload = multer({ 
+    storage: multer.memoryStorage(),
+    limits: { 
+        fileSize: 500 * 1024 * 1024, // 500MB limit per RAW file
+    },
+    fileFilter: (req, file, cb) => {
+        console.log(`RAW file filter: ${file.originalname} (${file.mimetype})`);
+        
+        // Check file extension for RAW formats
+        const ext = file.originalname.toLowerCase().substring(file.originalname.lastIndexOf('.'));
+        const supportedExtensions = ['.nef', '.cr2', '.arw', '.dng', '.raf', '.orf', '.pef', '.srw', '.x3f', '.rw2'];
+        
+        if (supportedExtensions.includes(ext)) {
+            cb(null, true);
+        } else {
+            cb(new Error(`Unsupported RAW format. Supported: ${supportedExtensions.join(', ')}`), false);
+        }
+    }
+});
+
+// Upload RAW files to session
+app.post('/api/raw-storage/upload/:sessionId', isAuthenticated, rawFileUpload.array('rawFiles', 50), async (req, res) => {
+    try {
+        const userId = req.session.user.uid;
+        const sessionId = req.params.sessionId;
+        const files = req.files;
+        
+        if (!files || files.length === 0) {
+            return res.status(400).json({ error: 'No RAW files provided' });
+        }
+        
+        console.log(`Starting RAW upload: ${files.length} files for session ${sessionId}`);
+        
+        // Check if user has reached storage limit
+        const usageResult = await pool.query(`
+            SELECT total_size_tb, max_allowed_tb, storage_status 
+            FROM raw_storage_usage 
+            WHERE user_id = $1
+        `, [userId]);
+        
+        if (usageResult.rows.length > 0) {
+            const { total_size_tb, max_allowed_tb, storage_status } = usageResult.rows[0];
+            if (storage_status === 'suspended' || parseFloat(total_size_tb) > parseFloat(max_allowed_tb)) {
+                return res.status(403).json({ 
+                    error: 'Storage limit exceeded. Please upgrade your storage plan.',
+                    storageStatus: storage_status
+                });
+            }
+        }
+        
+        const uploadResults = [];
+        let totalUploadSize = 0;
+        
+        // Process each file
+        for (const file of files) {
+            try {
+                // Upload to R2
+                const uploadResult = await r2StorageService.uploadRawFile(
+                    file.buffer, 
+                    file.originalname, 
+                    userId, 
+                    sessionId
+                );
+                
+                if (uploadResult.success) {
+                    // Save file record to database
+                    const fileId = uuidv4();
+                    const fileExtension = file.originalname.substring(file.originalname.lastIndexOf('.'));
+                    
+                    await pool.query(`
+                        INSERT INTO raw_files (id, session_id, user_id, filename, original_filename, 
+                                             file_extension, file_size_bytes, file_size_mb, r2_key, 
+                                             upload_status, upload_started_at, upload_completed_at)
+                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                    `, [
+                        fileId, sessionId, userId, uploadResult.r2Key.split('/').pop(),
+                        file.originalname, fileExtension, uploadResult.fileSizeBytes.toString(),
+                        uploadResult.fileSizeMB, uploadResult.r2Key, 'completed',
+                        uploadResult.uploadedAt, uploadResult.uploadedAt
+                    ]);
+                    
+                    totalUploadSize += uploadResult.fileSizeMB;
+                    
+                    uploadResults.push({
+                        filename: file.originalname,
+                        fileId: fileId,
+                        sizeMB: uploadResult.fileSizeMB,
+                        status: 'success'
+                    });
+                    
+                    console.log(`RAW file uploaded successfully: ${file.originalname} (${uploadResult.fileSizeMB}MB)`);
+                }
+                
+            } catch (fileError) {
+                console.error(`Failed to upload ${file.originalname}:`, fileError);
+                uploadResults.push({
+                    filename: file.originalname,
+                    status: 'failed',
+                    error: fileError.message
+                });
+            }
+        }
+        
+        // Update user's storage usage
+        if (totalUploadSize > 0) {
+            await pool.query(`
+                UPDATE raw_storage_usage 
+                SET total_files = total_files + $1,
+                    total_size_bytes = (total_size_bytes::bigint + $2)::text,
+                    total_size_tb = total_size_tb + $3,
+                    current_monthly_charge = $4 * 20,
+                    updated_at = NOW()
+                WHERE user_id = $5
+            `, [
+                uploadResults.filter(r => r.status === 'success').length,
+                Math.round(totalUploadSize * 1024 * 1024), // Convert MB to bytes
+                totalUploadSize / (1024 * 1024), // Convert MB to TB
+                Math.ceil((totalUploadSize / (1024 * 1024)) + (usageResult.rows[0]?.total_size_tb || 0)),
+                userId
+            ]);
+        }
+        
+        res.json({
+            success: true,
+            uploadResults,
+            totalFiles: uploadResults.filter(r => r.status === 'success').length,
+            totalSizeMB: totalUploadSize,
+            failedFiles: uploadResults.filter(r => r.status === 'failed').length
+        });
+        
+    } catch (error) {
+        console.error('RAW upload error:', error);
+        res.status(500).json({ error: 'Failed to upload RAW files' });
+    }
+});
+
+// Get RAW files for a session
+app.get('/api/raw-storage/files/:sessionId', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.session.user.uid;
+        const sessionId = req.params.sessionId;
+        
+        const result = await pool.query(`
+            SELECT id, filename, original_filename, file_extension, file_size_bytes, 
+                   file_size_mb, upload_status, upload_completed_at, download_count,
+                   last_accessed_at
+            FROM raw_files 
+            WHERE session_id = $1 AND user_id = $2 
+            ORDER BY upload_completed_at DESC
+        `, [sessionId, userId]);
+        
+        const files = result.rows.map(row => ({
+            id: row.id,
+            filename: row.filename,
+            originalFilename: row.original_filename,
+            fileExtension: row.file_extension,
+            fileSizeBytes: row.file_size_bytes,
+            fileSizeMB: parseFloat(row.file_size_mb),
+            uploadStatus: row.upload_status,
+            uploadedAt: row.upload_completed_at,
+            downloadCount: row.download_count,
+            lastAccessedAt: row.last_accessed_at
+        }));
+        
+        res.json({
+            sessionId,
+            files,
+            totalFiles: files.length,
+            totalSizeMB: files.reduce((sum, file) => sum + file.fileSizeMB, 0)
+        });
+        
+    } catch (error) {
+        console.error('Error getting RAW files:', error);
+        res.status(500).json({ error: 'Failed to get RAW files' });
+    }
+});
+
+// Download RAW file
+app.get('/api/raw-storage/download/:fileId', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.session.user.uid;
+        const fileId = req.params.fileId;
+        
+        // Get file info from database
+        const result = await pool.query(`
+            SELECT r2_key, original_filename, file_size_bytes 
+            FROM raw_files 
+            WHERE id = $1 AND user_id = $2
+        `, [fileId, userId]);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'RAW file not found' });
+        }
+        
+        const { r2_key, original_filename, file_size_bytes } = result.rows[0];
+        
+        // Download from R2
+        const downloadResult = await r2StorageService.downloadRawFile(r2_key);
+        
+        if (downloadResult.success) {
+            // Update download count and last accessed
+            await pool.query(`
+                UPDATE raw_files 
+                SET download_count = download_count + 1, 
+                    last_accessed_at = NOW(),
+                    updated_at = NOW()
+                WHERE id = $1
+            `, [fileId]);
+            
+            // Set download headers
+            res.setHeader('Content-Type', downloadResult.contentType);
+            res.setHeader('Content-Length', downloadResult.contentLength);
+            res.setHeader('Content-Disposition', `attachment; filename="${original_filename}"`);
+            
+            // Stream the file data
+            res.send(downloadResult.data);
+            
+            console.log(`RAW file downloaded: ${original_filename} by user ${userId}`);
+        } else {
+            res.status(500).json({ error: 'Failed to download RAW file from storage' });
+        }
+        
+    } catch (error) {
+        console.error('RAW download error:', error);
+        res.status(500).json({ error: 'Failed to download RAW file' });
+    }
+});
+
+// Delete RAW file
+app.delete('/api/raw-storage/delete/:fileId', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.session.user.uid;
+        const fileId = req.params.fileId;
+        
+        // Get file info from database
+        const result = await pool.query(`
+            SELECT r2_key, file_size_mb 
+            FROM raw_files 
+            WHERE id = $1 AND user_id = $2
+        `, [fileId, userId]);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'RAW file not found' });
+        }
+        
+        const { r2_key, file_size_mb } = result.rows[0];
+        const fileSizeMB = parseFloat(file_size_mb);
+        
+        // Delete from R2
+        const deleteSuccess = await r2StorageService.deleteRawFile(r2_key);
+        
+        if (deleteSuccess) {
+            // Delete from database
+            await pool.query('DELETE FROM raw_files WHERE id = $1', [fileId]);
+            
+            // Update user's storage usage
+            await pool.query(`
+                UPDATE raw_storage_usage 
+                SET total_files = total_files - 1,
+                    total_size_bytes = (total_size_bytes::bigint - $1)::text,
+                    total_size_tb = total_size_tb - $2,
+                    updated_at = NOW()
+                WHERE user_id = $3
+            `, [
+                Math.round(fileSizeMB * 1024 * 1024), // Convert MB to bytes
+                fileSizeMB / (1024 * 1024), // Convert MB to TB
+                userId
+            ]);
+            
+            // Recalculate monthly charge
+            const usageResult = await pool.query(`
+                SELECT total_size_tb FROM raw_storage_usage WHERE user_id = $1
+            `, [userId]);
+            
+            if (usageResult.rows.length > 0) {
+                const totalSizeTB = parseFloat(usageResult.rows[0].total_size_tb);
+                const monthlyCharge = r2StorageService.calculateMonthlyCost(totalSizeTB);
+                
+                await pool.query(`
+                    UPDATE raw_storage_usage 
+                    SET current_monthly_charge = $1
+                    WHERE user_id = $2
+                `, [monthlyCharge, userId]);
+            }
+            
+            res.json({ success: true, fileSizeMB });
+            console.log(`RAW file deleted: ${r2_key} (${fileSizeMB}MB)`);
+        } else {
+            res.status(500).json({ error: 'Failed to delete RAW file from storage' });
+        }
+        
+    } catch (error) {
+        console.error('RAW delete error:', error);
+        res.status(500).json({ error: 'Failed to delete RAW file' });
+    }
+});
+
+// Upgrade storage plan
+app.post('/api/raw-storage/upgrade', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.session.user.uid;
+        const { tierTB } = req.body; // New storage tier (1, 2, 3, etc.)
+        
+        if (!tierTB || tierTB < 1 || tierTB > 100) {
+            return res.status(400).json({ error: 'Invalid storage tier' });
+        }
+        
+        const monthlyPrice = tierTB * 20; // $20 per TB
+        
+        // Create Stripe checkout session for storage upgrade
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            line_items: [{
+                price_data: {
+                    currency: 'usd',
+                    product_data: {
+                        name: `RAW Storage - ${tierTB}TB Plan`,
+                        description: `${tierTB}TB of secure RAW file storage for photography sessions`
+                    },
+                    unit_amount: monthlyPrice * 100, // Stripe uses cents
+                    recurring: {
+                        interval: 'month'
+                    }
+                },
+                quantity: 1,
+            }],
+            mode: 'subscription',
+            success_url: `${req.get('origin')}/raw-backup-dashboard.html?upgrade=success&tier=${tierTB}`,
+            cancel_url: `${req.get('origin')}/raw-backup-dashboard.html?upgrade=cancelled`,
+            client_reference_id: userId,
+            metadata: {
+                userId: userId,
+                storageType: 'raw_backup',
+                storageTierTB: tierTB.toString(),
+                monthlyCharge: monthlyPrice.toString()
+            }
+        });
+        
+        res.json({ 
+            checkoutUrl: session.url,
+            sessionId: session.id,
+            tierTB,
+            monthlyPrice
+        });
+        
+        console.log(`Storage upgrade checkout created for user ${userId}: ${tierTB}TB at $${monthlyPrice}/month`);
+        
+    } catch (error) {
+        console.error('Storage upgrade error:', error);
+        res.status(500).json({ error: 'Failed to create storage upgrade checkout' });
     }
 });
 

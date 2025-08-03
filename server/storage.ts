@@ -3,12 +3,18 @@ import {
   photographySessions,
   aiCreditPurchases,
   aiCreditUsage,
+  rawFiles,
+  rawStorageUsage,
   type User,
   type UpsertUser,
   type PhotographySession,
   type InsertPhotographySession,
   type InsertAiCreditPurchase,
   type InsertAiCreditUsage,
+  type RawFile,
+  type InsertRawFile,
+  type RawStorageUsage,
+  type InsertRawStorageUsage,
 } from "../shared/schema";
 import { db } from "./db";
 import { eq, and, sql } from "drizzle-orm";
@@ -31,6 +37,17 @@ export interface IStorage {
   getUserAiCredits(userId: string): Promise<number>;
   useAiCredits(userId: string, credits: number, requestType: string, prompt?: string): Promise<boolean>;
   addAiCredits(userId: string, credits: number, priceUsd: number, stripePaymentIntentId?: string): Promise<void>;
+  
+  // RAW Storage operations
+  createRawFile(rawFile: InsertRawFile): Promise<RawFile>;
+  getRawFilesBySession(sessionId: string, userId: string): Promise<RawFile[]>;
+  getRawFileById(fileId: string, userId: string): Promise<RawFile | undefined>;
+  deleteRawFile(fileId: string, userId: string): Promise<boolean>;
+  updateRawFileStatus(fileId: string, status: string, uploadCompletedAt?: Date): Promise<boolean>;
+  
+  getUserRawStorageUsage(userId: string): Promise<RawStorageUsage | undefined>;
+  updateRawStorageUsage(userId: string, updates: Partial<RawStorageUsage>): Promise<RawStorageUsage>;
+  createRawStorageUsage(usage: InsertRawStorageUsage): Promise<RawStorageUsage>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -187,6 +204,60 @@ export class DatabaseStorage implements IStorage {
         status: 'completed',
       });
     });
+  }
+
+  // RAW Storage operations
+  async createRawFile(rawFile: InsertRawFile): Promise<RawFile> {
+    const [newRawFile] = await db.insert(rawFiles).values(rawFile).returning();
+    return newRawFile;
+  }
+
+  async getRawFilesBySession(sessionId: string, userId: string): Promise<RawFile[]> {
+    return await db.select().from(rawFiles)
+      .where(and(eq(rawFiles.sessionId, sessionId), eq(rawFiles.userId, userId)));
+  }
+
+  async getRawFileById(fileId: string, userId: string): Promise<RawFile | undefined> {
+    const [rawFile] = await db.select().from(rawFiles)
+      .where(and(eq(rawFiles.id, fileId), eq(rawFiles.userId, userId)));
+    return rawFile;
+  }
+
+  async deleteRawFile(fileId: string, userId: string): Promise<boolean> {
+    const result = await db.delete(rawFiles)
+      .where(and(eq(rawFiles.id, fileId), eq(rawFiles.userId, userId)));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async updateRawFileStatus(fileId: string, status: string, uploadCompletedAt?: Date): Promise<boolean> {
+    const updates: any = { uploadStatus: status, updatedAt: new Date() };
+    if (uploadCompletedAt) {
+      updates.uploadCompletedAt = uploadCompletedAt;
+    }
+    
+    const result = await db.update(rawFiles)
+      .set(updates)
+      .where(eq(rawFiles.id, fileId));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async getUserRawStorageUsage(userId: string): Promise<RawStorageUsage | undefined> {
+    const [usage] = await db.select().from(rawStorageUsage)
+      .where(eq(rawStorageUsage.userId, userId));
+    return usage;
+  }
+
+  async updateRawStorageUsage(userId: string, updates: Partial<RawStorageUsage>): Promise<RawStorageUsage> {
+    const [updatedUsage] = await db.update(rawStorageUsage)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(rawStorageUsage.userId, userId))
+      .returning();
+    return updatedUsage;
+  }
+
+  async createRawStorageUsage(usage: InsertRawStorageUsage): Promise<RawStorageUsage> {
+    const [newUsage] = await db.insert(rawStorageUsage).values(usage).returning();
+    return newUsage;
   }
 }
 
