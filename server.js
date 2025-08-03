@@ -4061,6 +4061,10 @@ app.get('/api/ai/credit-bundles', isAuthenticated, async (req, res) => {
 
 app.post('/api/ai/purchase-credits', isAuthenticated, async (req, res) => {
     try {
+        console.log('=== AI CREDITS PURCHASE REQUEST START ===');
+        console.log('Request body:', req.body);
+        console.log('User:', req.user);
+        
         const { credits, priceUsd } = req.body;
         const normalizedUser = normalizeUserForLance(req.user);
         const userId = normalizedUser.uid;
@@ -4140,13 +4144,18 @@ app.post('/api/ai/purchase-credits', isAuthenticated, async (req, res) => {
 
         console.log('✅ Stripe session created:', session.id);
 
+        console.log('Stripe session created successfully:', session.id);
+        console.log('=== AI CREDITS PURCHASE REQUEST END ===');
+        
         res.json({
             success: true,
             checkoutUrl: session.url,
             sessionId: session.id
         });
     } catch (error) {
-        console.error('Error creating AI credits purchase:', error);
+        console.error('=== ERROR creating AI credits purchase ===');
+        console.error('Error details:', error);
+        console.error('Stack trace:', error.stack);
         res.status(500).json({ error: 'Failed to create purchase session' });
     }
 });
