@@ -1,4 +1,4 @@
-const AWS = require('aws-sdk');
+const { S3Client, HeadBucketCommand, CreateBucketCommand, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, ListObjectsV2Command } = require('@aws-sdk/client-s3');
 
 /**
  * Cloudflare R2 Storage Service for RAW file backup
@@ -7,16 +7,17 @@ const AWS = require('aws-sdk');
  */
 class R2StorageService {
   constructor() {
-    // Try alternative R2 endpoint format without bucket name in hostname
+    // Use AWS SDK v3 for better R2 compatibility
     const endpoint = `https://${process.env.CLOUDFLARE_R2_ACCOUNT_ID}.r2.cloudflarestorage.com`;
     
-    this.s3 = new AWS.S3({
+    this.s3Client = new S3Client({
+      region: 'auto',
       endpoint: endpoint,
-      accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID,
-      secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY,
-      region: 'wnam',
-      signatureVersion: 'v4',
-      s3ForcePathStyle: false,
+      credentials: {
+        accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID,
+        secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY,
+      },
+      forcePathStyle: true,
     });
     
     console.log(`R2 endpoint: ${endpoint}`);
@@ -28,17 +29,32 @@ class R2StorageService {
   }
 
   /**
-   * Test R2 connection by listing bucket contents
+   * Test R2 connection by checking bucket exists
    * @returns {Promise<boolean>} - Connection status
    */
   async testConnection() {
     try {
       console.log(`Testing R2 connection to bucket: ${this.bucketName}`);
-      await this.s3.headBucket({ Bucket: this.bucketName }).promise();
+      const command = new HeadBucketCommand({ Bucket: this.bucketName });
+      await this.s3Client.send(command);
       console.log('R2 connection successful');
       return true;
     } catch (error) {
       console.error('R2 connection test failed:', error.message);
+      
+      // Try to create bucket if it doesn't exist
+      if (error.name === 'NotFound' || error.$metadata?.httpStatusCode === 404) {
+        console.log('Bucket not found, attempting to create...');
+        try {
+          const createCommand = new CreateBucketCommand({ Bucket: this.bucketName });
+          await this.s3Client.send(createCommand);
+          console.log('✓ Bucket created successfully');
+          return true;
+        } catch (createError) {
+          console.error('Failed to create bucket:', createError.message);
+          return false;
+        }
+      }
       return false;
     }
   }
@@ -101,12 +117,13 @@ class R2StorageService {
         }
       };
 
-      const result = await this.s3.upload(uploadParams).promise();
+      const command = new PutObjectCommand(uploadParams);
+      const result = await this.s3Client.send(command);
 
       return {
         success: true,
         r2Key: r2Key,
-        location: result.Location,
+        location: `https://${this.bucketName}.${process.env.CLOUDFLARE_R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${r2Key}`,
         etag: result.ETag,
         fileSizeBytes: fileSizeBytes,
         fileSizeMB: parseFloat(fileSizeMB),
@@ -131,7 +148,8 @@ class R2StorageService {
         Key: r2Key
       };
 
-      const result = await this.s3.getObject(downloadParams).promise();
+      const command = new GetObjectCommand(downloadParams);
+      const result = await this.s3Client.send(command);
       
       return {
         success: true,
@@ -160,7 +178,8 @@ class R2StorageService {
         Key: r2Key
       };
 
-      await this.s3.deleteObject(deleteParams).promise();
+      const command = new DeleteObjectCommand(deleteParams);
+      await this.s3Client.send(command);
       console.log(`Deleted RAW file from R2: ${r2Key}`);
       
       return true;
