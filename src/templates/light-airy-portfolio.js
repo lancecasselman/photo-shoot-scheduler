@@ -19,7 +19,13 @@ const lightAiryPortfolioTemplate = {
                 <div class="block about-preview-block" contenteditable="false" style="padding: 80px 20px; background: #fafafa;">
                     <div style="max-width: 1000px; margin: 0 auto; display: flex; align-items: center; gap: 60px;">
                         <div style="flex: 1;">
-                            <img contenteditable="false" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='500' height='600' viewBox='0 0 500 600'><rect width='500' height='600' fill='%23f8f8f8' stroke='%23ddd' stroke-width='2'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='18'>About Photo</text></svg>" style="width: 100%; height: auto; border-radius: 8px;" alt="About Image">
+                            <div class="image-placeholder-container" style="position: relative; width: 100%; background: #f8f8f8; border: 2px dashed #ddd; border-radius: 8px; min-height: 400px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease;" onclick="triggerImageUpload(this)">
+                        <div class="placeholder-content" style="text-align: center; color: #999;">
+                            <div style="font-size: 24px; margin-bottom: 10px; color: #999; font-weight: bold;">+</div>
+                            <div style="font-size: 16px;">Click to Add Photo</div>
+                        </div>
+                        <img class="uploaded-image" src="" style="width: 100%; height: auto; border-radius: 8px; display: none;" alt="About Image">
+                    </div>
                         </div>
                         <div style="flex: 1;">
                             <h2 contenteditable="true" style="font-size: 36px; margin-bottom: 30px; color: #333; font-family: 'Playfair Display', serif; font-weight: 400;">Hello, I'm John</h2>
@@ -33,9 +39,27 @@ const lightAiryPortfolioTemplate = {
                     <div style="max-width: 1200px; margin: 0 auto; text-align: center;">
                         <h2 contenteditable="true" style="font-size: 42px; margin-bottom: 60px; color: #333; font-family: 'Playfair Display', serif; font-weight: 400;">Recent Work</h2>
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 30px; margin-bottom: 50px;">
-                            <img contenteditable="false" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='500' viewBox='0 0 400 500'><rect width='400' height='500' fill='%23f8f8f8' stroke='%23ddd' stroke-width='2'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='16'>Portfolio Image 1</text></svg>" style="width: 100%; height: 400px; object-fit: cover; border-radius: 8px;" alt="Portfolio Image 1">
-                            <img contenteditable="false" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='500' viewBox='0 0 400 500'><rect width='400' height='500' fill='%23f8f8f8' stroke='%23ddd' stroke-width='2'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='16'>Portfolio Image 2</text></svg>" style="width: 100%; height: 400px; object-fit: cover; border-radius: 8px;" alt="Portfolio Image 2">
-                            <img contenteditable="false" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='500' viewBox='0 0 400 500'><rect width='400' height='500' fill='%23f8f8f8' stroke='%23ddd' stroke-width='2'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='16'>Portfolio Image 3</text></svg>" style="width: 100%; height: 400px; object-fit: cover; border-radius: 8px;" alt="Portfolio Image 3">
+                            <div class="image-placeholder-container" style="position: relative; width: 100%; height: 400px; background: #f8f8f8; border: 2px dashed #ddd; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease;" onclick="triggerImageUpload(this)">
+                                <div class="placeholder-content" style="text-align: center; color: #999;">
+                                    <div style="font-size: 24px; margin-bottom: 8px; color: #999; font-weight: bold;">+</div>
+                                    <div style="font-size: 14px;">Portfolio Image 1</div>
+                                </div>
+                                <img class="uploaded-image" src="" style="width: 100%; height: 400px; object-fit: cover; border-radius: 8px; display: none;" alt="Portfolio Image 1">
+                            </div>
+                            <div class="image-placeholder-container" style="position: relative; width: 100%; height: 400px; background: #f8f8f8; border: 2px dashed #ddd; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease;" onclick="triggerImageUpload(this)">
+                                <div class="placeholder-content" style="text-align: center; color: #999;">
+                                    <div style="font-size: 24px; margin-bottom: 8px; color: #999; font-weight: bold;">+</div>
+                                    <div style="font-size: 14px;">Portfolio Image 2</div>
+                                </div>
+                                <img class="uploaded-image" src="" style="width: 100%; height: 400px; object-fit: cover; border-radius: 8px; display: none;" alt="Portfolio Image 2">
+                            </div>
+                            <div class="image-placeholder-container" style="position: relative; width: 100%; height: 400px; background: #f8f8f8; border: 2px dashed #ddd; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease;" onclick="triggerImageUpload(this)">
+                                <div class="placeholder-content" style="text-align: center; color: #999;">
+                                    <div style="font-size: 24px; margin-bottom: 8px; color: #999; font-weight: bold;">+</div>
+                                    <div style="font-size: 14px;">Portfolio Image 3</div>
+                                </div>
+                                <img class="uploaded-image" src="" style="width: 100%; height: 400px; object-fit: cover; border-radius: 8px; display: none;" alt="Portfolio Image 3">
+                            </div>
                         </div>
                         <button contenteditable="true" style="background: #333; color: white; border: none; padding: 15px 40px; font-size: 16px; letter-spacing: 1px; cursor: pointer; border-radius: 4px;">View Full Portfolio</button>
                     </div>
@@ -91,7 +115,13 @@ const lightAiryPortfolioTemplate = {
                 <div class="block about-hero-block" contenteditable="false" style="padding: 80px 20px; background: white;">
                     <div style="max-width: 1000px; margin: 0 auto; display: flex; align-items: center; gap: 60px;">
                         <div style="flex: 1;">
-                            <img contenteditable="false" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='500' height='600' viewBox='0 0 500 600'><rect width='500' height='600' fill='%23f8f8f8' stroke='%23ddd' stroke-width='2'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23999' font-size='18'>Photographer Portrait</text></svg>" style="width: 100%; height: auto; border-radius: 8px;" alt="About Image">
+                            <div class="image-placeholder-container" style="position: relative; width: 100%; background: #f8f8f8; border: 2px dashed #ddd; border-radius: 8px; min-height: 500px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease;" onclick="triggerImageUpload(this)">
+                                <div class="placeholder-content" style="text-align: center; color: #999;">
+                                    <div style="font-size: 24px; margin-bottom: 10px; color: #999; font-weight: bold;">+</div>
+                                    <div style="font-size: 16px;">Photographer Portrait</div>
+                                </div>
+                                <img class="uploaded-image" src="" style="width: 100%; height: auto; border-radius: 8px; display: none;" alt="About Image">
+                            </div>
                         </div>
                         <div style="flex: 1;">
                             <h1 contenteditable="true" style="font-size: 48px; margin-bottom: 30px; color: #333; font-family: 'Playfair Display', serif; font-weight: 400;">Hi! I'm John</h1>

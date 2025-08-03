@@ -365,6 +365,18 @@ function loadTemplateIntoBuilder(template) {
             setupPageClickHandlers();
         }
         
+        // Initialize image placeholder editing for new template
+        if (typeof window.imagePlaceholderAPI !== 'undefined') {
+            window.imagePlaceholderAPI.updateImagePlaceholderHandlers();
+        }
+        
+        // Initialize draggable toolbars for new template
+        if (typeof window.draggableToolbarsAPI !== 'undefined') {
+            setTimeout(() => {
+                window.draggableToolbarsAPI.initializeDraggableToolbars();
+            }, 200);
+        }
+        
         // Reinitialize all block functionality
         reinitializeAllBlocks();
         

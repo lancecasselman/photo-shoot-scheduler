@@ -1,0 +1,47 @@
+Task:
+
+Ensure every image placeholder in every block of the prebuilt template is fully editable. The user must be able to click any placeholder image (or empty spot) to upload or select their own photo for that exact location.
+
+Update the block formatting/editor tool that pops up (for text, images, etc.) to be draggable by the user. The user should be able to click and drag this floating panel so it never blocks text or important content while editing.
+
+Keep all other previous instructions (multi-page prebuilt site, full editability, confirmation before replacing site, no emojis, clear code comments, and thorough testing).
+
+Example: Image Placeholder Editing
+Every image block, hero image, gallery photo, profile/about photo, badge, etc., should display an “Add Photo” or “Edit Photo” button or icon when hovered/clicked.
+
+If no image is set, show a clear, unobtrusive placeholder (like a light gray box with “Add Photo”).
+
+Clicking the area should trigger the builder’s image upload/select dialog, letting users upload from their device or select from their gallery/library.
+
+After an image is added, it should be shown live in the block, and remain editable.
+
+Example: Draggable Block Format Tool
+The floating block editing/formatting toolbar (for editing text, images, block settings, etc.) should:
+
+Have a visible “drag handle” (usually a row of dots or a bar at the top).
+
+Be draggable by clicking and dragging this handle.
+
+Remember its new position (at least for the current editing session).
+
+Never block or overlap the text or elements the user is working on.
+
+If your builder uses modals or panels, all of these should be draggable the same way.
+
+Step-by-Step for the Agent:
+Review all blocks and ensure every image location is an editable placeholder, with “Add Photo” capability.
+
+Implement a draggable formatting/editor tool for all block types. Add a drag handle and ensure smooth drag behavior.
+
+Test these features:
+
+Can every image placeholder be changed?
+
+Can the formatting tool be dragged out of the way while editing?
+
+Do not use emojis.
+
+Comment all code and explain any changes.
+
+Confirm with the user before replacing their site when loading the prebuilt template.
+
