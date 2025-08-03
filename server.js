@@ -35,9 +35,8 @@ const PaymentScheduler = require('./server/paymentScheduler');
 // Import contract management
 const ContractManager = require('./server/contracts');
 
-// Import RAW storage services
+// Import R2 RAW storage service
 const R2StorageService = require('./server/r2-storage');
-const LocalRawStorageService = require('./server/local-raw-storage');
 
 // Import AI services
 const { AIServices } = require('./server/ai-services');
@@ -84,31 +83,8 @@ async function useAiCredits(userId, amount, operation, details) {
 }
 
 // Initialize services
-let rawStorageService;
+const r2StorageService = new R2StorageService();
 const aiServices = new AIServices();
-
-// Initialize RAW storage with R2 fallback to local
-async function initializeRawStorage() {
-  try {
-    console.log('Initializing RAW storage service...');
-    const r2Service = new R2StorageService();
-    const r2Connected = await r2Service.testConnection();
-    
-    if (r2Connected) {
-      rawStorageService = r2Service;
-      console.log('✓ Using Cloudflare R2 for RAW storage');
-    } else {
-      rawStorageService = new LocalRawStorageService();
-      console.log('⚠ Using local storage for RAW files (R2 unavailable)');
-    }
-  } catch (error) {
-    console.error('R2 initialization failed, using local storage:', error.message);
-    rawStorageService = new LocalRawStorageService();
-  }
-}
-
-// Initialize storage immediately
-initializeRawStorage();
 
 // PostgreSQL database connection
 const pool = new Pool({
@@ -7458,7 +7434,7 @@ app.post('/api/export/zip', isAuthenticated, async (req, res) => {
 // Test R2 connection
 app.get('/api/raw-storage/test', isAuthenticated, async (req, res) => {
     try {
-        const isConnected = await rawStorageService.testConnection();
+        const isConnected = await r2StorageService.testConnection();
         res.json({ connected: isConnected });
     } catch (error) {
         console.error('R2 connection test error:', error);
@@ -7589,7 +7565,7 @@ app.post('/api/raw-storage/upload/:sessionId', isAuthenticated, rawFileUpload.ar
         for (const file of files) {
             try {
                 // Upload to R2
-                const uploadResult = await rawStorageService.uploadRawFile(
+                const uploadResult = await r2StorageService.uploadRawFile(
                     file.buffer, 
                     file.originalname, 
                     userId, 
@@ -7729,7 +7705,7 @@ app.get('/api/raw-storage/download/:fileId', isAuthenticated, async (req, res) =
         const { r2_key, original_filename, file_size_bytes } = result.rows[0];
         
         // Download from R2
-        const downloadResult = await rawStorageService.downloadRawFile(r2_key);
+        const downloadResult = await r2StorageService.downloadRawFile(r2_key);
         
         if (downloadResult.success) {
             // Update download count and last accessed
@@ -7781,7 +7757,7 @@ app.delete('/api/raw-storage/delete/:fileId', isAuthenticated, async (req, res) 
         const fileSizeMB = parseFloat(file_size_mb);
         
         // Delete from R2
-        const deleteSuccess = await rawStorageService.deleteRawFile(r2_key);
+        const deleteSuccess = await r2StorageService.deleteRawFile(r2_key);
         
         if (deleteSuccess) {
             // Delete from database
@@ -7808,7 +7784,7 @@ app.delete('/api/raw-storage/delete/:fileId', isAuthenticated, async (req, res) 
             
             if (usageResult.rows.length > 0) {
                 const totalSizeTB = parseFloat(usageResult.rows[0].total_size_tb);
-                const monthlyCharge = rawStorageService.calculateMonthlyCost(totalSizeTB);
+                const monthlyCharge = r2StorageService.calculateMonthlyCost(totalSizeTB);
                 
                 await pool.query(`
                     UPDATE raw_storage_usage 
