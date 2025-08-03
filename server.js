@@ -4064,14 +4064,26 @@ app.post('/api/ai/purchase-credits', isAuthenticated, async (req, res) => {
         const normalizedUser = normalizeUserForLance(req.user);
         const userId = normalizedUser.uid;
         
-        console.log('AI Credits purchase request:', { credits, priceUsd, userId });
+        console.log('🤖 AI Credits purchase request:', { 
+            credits, 
+            priceUsd, 
+            userId,
+            creditsType: typeof credits,
+            priceType: typeof priceUsd
+        });
         
-        if (!credits || !priceUsd || typeof credits !== 'number' || typeof priceUsd !== 'number') {
-            console.log('Invalid purchase data:', { credits, priceUsd, creditsType: typeof credits, priceType: typeof priceUsd });
+        // Convert strings to numbers if needed
+        const creditsNum = parseInt(credits);
+        const priceNum = parseFloat(priceUsd);
+        
+        console.log('🔢 Converted values:', { creditsNum, priceNum });
+        
+        if (!creditsNum || !priceNum || creditsNum <= 0 || priceNum <= 0) {
+            console.log('❌ Invalid purchase data after conversion');
             return res.status(400).json({ error: 'Valid credits amount and price required' });
         }
 
-        // Validate against available bundles
+        // Validate against available bundles with tolerance
         const validBundles = [
             { credits: 1000, price: 1.00 },
             { credits: 5000, price: 4.99 },
@@ -4080,26 +4092,36 @@ app.post('/api/ai/purchase-credits', isAuthenticated, async (req, res) => {
             { credits: 50000, price: 34.99 }
         ];
 
-        const isValidBundle = validBundles.some(bundle => 
-            bundle.credits === credits && Math.abs(bundle.price - priceUsd) < 0.01
+        const matchingBundle = validBundles.find(bundle => 
+            bundle.credits === creditsNum && Math.abs(bundle.price - priceNum) < 0.02
         );
 
-        if (!isValidBundle) {
-            console.log('Invalid credits package:', { credits, priceUsd, validBundles });
-            return res.status(400).json({ error: 'Invalid credits package' });
+        if (!matchingBundle) {
+            console.log('❌ No matching bundle found:', { 
+                creditsNum, 
+                priceNum, 
+                availableBundles: validBundles
+            });
+            return res.status(400).json({ 
+                error: 'Invalid credits package',
+                debug: { creditsNum, priceNum, validBundles }
+            });
         }
 
+        console.log('✅ Valid bundle found:', matchingBundle);
+
         // Create Stripe payment session for AI credits
+        console.log('💳 Creating Stripe session...');
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: [{
                 price_data: {
                     currency: 'usd',
                     product_data: {
-                        name: `AI Credits - ${credits.toLocaleString()} tokens`,
+                        name: `AI Credits - ${creditsNum.toLocaleString()} tokens`,
                         description: 'AI-powered website building assistance'
                     },
-                    unit_amount: Math.round(priceUsd * 100) // Convert to cents
+                    unit_amount: Math.round(priceNum * 100) // Convert to cents
                 },
                 quantity: 1
             }],
@@ -4108,11 +4130,13 @@ app.post('/api/ai/purchase-credits', isAuthenticated, async (req, res) => {
             cancel_url: `${req.protocol}://${req.get('host')}/website-builder`,
             metadata: {
                 userId: userId,
-                credits: credits.toString(),
-                priceUsd: priceUsd.toString(),
+                credits: creditsNum.toString(),
+                priceUsd: priceNum.toString(),
                 type: 'ai_credits'
             }
         });
+
+        console.log('✅ Stripe session created:', session.id);
 
         res.json({
             success: true,
