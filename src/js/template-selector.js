@@ -527,25 +527,63 @@ function loadTemplateDirect(templateData) {
             canvas.innerHTML = firstPage.content;
         }
         
-        // Handle multi-page system
-        if (typeof window.pages !== 'undefined') {
-            // Clear and rebuild pages
-            window.pages = {};
+        // Handle multi-page system properly
+        if (typeof window.pages !== 'undefined' || typeof pages !== 'undefined') {
+            // Clear and rebuild pages from template data
+            if (typeof window.pages !== 'undefined') {
+                window.pages = {};
+            }
+            if (typeof pages !== 'undefined') {
+                pages = {};
+            }
+            
+            // Build pages structure from template
             Object.entries(templateData.pages).forEach(([slug, page]) => {
-                window.pages[slug] = {
-                    title: page.title,
-                    content: page.content
+                const pageData = {
+                    id: slug,
+                    name: page.title,
+                    content: page.content,
+                    lastModified: new Date().toISOString()
                 };
+                
+                if (typeof window.pages !== 'undefined') {
+                    window.pages[slug] = pageData;
+                }
+                if (typeof pages !== 'undefined') {
+                    pages[slug] = pageData;
+                }
             });
+            
+            // Update navigation order and labels
+            if (typeof navigationOrder !== 'undefined' && typeof navigationLabels !== 'undefined') {
+                navigationOrder = Object.keys(templateData.pages);
+                navigationLabels = {};
+                Object.entries(templateData.pages).forEach(([slug, page]) => {
+                    navigationLabels[slug] = page.title;
+                });
+            }
+            
+            // Update current page tracking
+            if (typeof window.currentPage !== 'undefined') {
+                window.currentPage = firstPageSlug;
+            }
+            if (typeof currentPageId !== 'undefined') {
+                currentPageId = firstPageSlug;
+            }
+            
+            // Update page list UI
+            if (typeof updatePageList === 'function') {
+                updatePageList();
+            }
+            
+            // Update navigation UI
+            if (typeof updateNavList === 'function') {
+                updateNavList();
+            }
             
             // Update page navigation
             if (typeof updatePageNavigation === 'function') {
                 updatePageNavigation();
-            }
-            
-            // Set current page
-            if (typeof window.currentPage !== 'undefined') {
-                window.currentPage = firstPageSlug;
             }
             
             // Update page tabs

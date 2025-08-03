@@ -154,18 +154,22 @@ function switchToPage(pageId) {
 
 function saveCurrentPageContent() {
     if (pages[currentPageId]) {
-        const blocksContainer = document.getElementById('blocks');
-        pages[currentPageId].content = blocksContainer ? blocksContainer.innerHTML : '';
-        pages[currentPageId].lastModified = new Date().toISOString();
+        // Find the correct container - could be "blocks" or "canvas"
+        let container = document.getElementById('canvas') || document.getElementById('blocks');
+        if (container) {
+            pages[currentPageId].content = container.innerHTML;
+            pages[currentPageId].lastModified = new Date().toISOString();
+        }
     }
 }
 
 function loadPageContent(pageId) {
     if (!pages[pageId]) return;
     
-    const blocksContainer = document.getElementById('blocks');
-    if (blocksContainer) {
-        blocksContainer.innerHTML = pages[pageId].content || '';
+    // Find the correct container - could be "blocks" or "canvas"
+    let container = document.getElementById('canvas') || document.getElementById('blocks');
+    if (container) {
+        container.innerHTML = pages[pageId].content || '';
         
         // Reinitialize any dynamic functionality for loaded content
         if (typeof reinitializeBlocks === 'function') {
@@ -173,10 +177,26 @@ function loadPageContent(pageId) {
         }
         
         // Setup image placeholders for loaded blocks
-        if (typeof setupImagePlaceholders === 'function') {
-            const blocks = blocksContainer.querySelectorAll('.block');
-            blocks.forEach(block => setupImagePlaceholders(block));
+        if (typeof updateImagePlaceholderHandlers === 'function') {
+            updateImagePlaceholderHandlers();
         }
+        
+        // Reinitialize draggable toolbars  
+        if (typeof initializeDraggableToolbars === 'function') {
+            initializeDraggableToolbars();
+        }
+        
+        // Apply current font
+        if (typeof currentFont !== 'undefined' && currentFont) {
+            container.style.fontFamily = `'${currentFont}', sans-serif`;
+            container.querySelectorAll('[contenteditable="true"]').forEach(element => {
+                if (!element.style.fontFamily || element.style.fontFamily.includes('inherit')) {
+                    element.style.fontFamily = `'${currentFont}', sans-serif`;
+                }
+            });
+        }
+        
+        console.log(`Switched to page: ${pages[pageId].name}`);
     }
 }
 

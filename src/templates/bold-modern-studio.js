@@ -54,34 +54,6 @@ const boldModernStudioTemplate = {
                         <button contenteditable="true" style="background: transparent; color: #f39c12; border: 3px solid #f39c12; padding: 18px 45px; font-size: 16px; font-weight: 700; letter-spacing: 2px; cursor: pointer; text-transform: uppercase;">View Complete Portfolio</button>
                     </div>
                 </div>
-                
-                <div class="block packages-block" contenteditable="false" style="padding: 100px 20px; background: linear-gradient(135deg, #192a56 0%, #273c75 100%);">
-                    <div style="max-width: 1200px; margin: 0 auto; text-align: center;">
-                        <h2 contenteditable="true" style="font-size: 48px; margin-bottom: 80px; color: white; font-family: 'Montserrat', sans-serif; font-weight: 800; text-transform: uppercase; letter-spacing: 3px;">Photography Packages</h2>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 40px;">
-                            <div style="background: rgba(255,255,255,0.05); border: 2px solid #f39c12; padding: 50px 30px; text-align: center; transition: all 0.3s ease;">
-                                <h3 contenteditable="true" style="font-size: 32px; color: #f39c12; margin-bottom: 20px; font-weight: 800; text-transform: uppercase;">Studio Mini</h3>
-                                <div contenteditable="true" style="font-size: 48px; color: white; margin-bottom: 30px; font-weight: 900;">$350</div>
-                                <ul style="list-style: none; padding: 0; margin-bottom: 40px;">
-                                    <li contenteditable="true" style="color: white; margin-bottom: 15px; font-size: 18px;">45 minute session</li>
-                                    <li contenteditable="true" style="color: white; margin-bottom: 15px; font-size: 18px;">15 edited images</li>
-                                    <li contenteditable="true" style="color: white; margin-bottom: 15px; font-size: 18px;">Signature bold editing</li>
-                                </ul>
-                                <button contenteditable="true" style="background: #f39c12; color: #192a56; border: none; padding: 15px 35px; font-weight: 700; text-transform: uppercase;">Choose Package</button>
-                            </div>
-                            <div style="background: rgba(255,255,255,0.05); border: 2px solid #f39c12; padding: 50px 30px; text-align: center; transition: all 0.3s ease;">
-                                <h3 contenteditable="true" style="font-size: 32px; color: #f39c12; margin-bottom: 20px; font-weight: 800; text-transform: uppercase;">Studio Pro</h3>
-                                <div contenteditable="true" style="font-size: 48px; color: white; margin-bottom: 30px; font-weight: 900;">$600</div>
-                                <ul style="list-style: none; padding: 0; margin-bottom: 40px;">
-                                    <li contenteditable="true" style="color: white; margin-bottom: 15px; font-size: 18px;">2 hour session</li>
-                                    <li contenteditable="true" style="color: white; margin-bottom: 15px; font-size: 18px;">40 edited images</li>
-                                    <li contenteditable="true" style="color: white; margin-bottom: 15px; font-size: 18px;">Creative direction</li>
-                                </ul>
-                                <button contenteditable="true" style="background: #f39c12; color: #192a56; border: none; padding: 15px 35px; font-weight: 700; text-transform: uppercase;">Choose Package</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             `
         },
         "portfolio": {
