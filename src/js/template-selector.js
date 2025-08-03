@@ -246,6 +246,13 @@ function createTemplateSelectorModal() {
     // Define available templates
     const templates = [
         {
+            name: 'Light & Airy Portfolio',
+            description: 'Soft, elegant photography with cream and sage tones',
+            variable: 'lightAiryPortfolioTemplate',
+            color: '#8b7d6b', 
+            accent: '#d4af37'
+        },
+        {
             name: 'Bold Modern Studio',
             description: 'Bold modern design with deep blues and gold accents',
             variable: 'boldModernStudioTemplate',
@@ -460,6 +467,9 @@ function loadSelectedTemplate(template) {
         let templateData;
         
         switch (template.variable) {
+            case 'lightAiryPortfolioTemplate':
+                templateData = (typeof lightAiryPortfolioTemplate !== 'undefined') ? lightAiryPortfolioTemplate : window.lightAiryPortfolioTemplate;
+                break;
             case 'boldModernStudioTemplate':
                 templateData = (typeof boldModernStudioTemplate !== 'undefined') ? boldModernStudioTemplate : window.boldModernStudioTemplate;
                 break;
@@ -477,18 +487,9 @@ function loadSelectedTemplate(template) {
             throw new Error(`Template data for "${template.name}" is not available`);
         }
         
-        // Use the existing prebuilt template loading function if available
-        if (typeof loadPrebuiltTemplate === 'function') {
-            loadPrebuiltTemplate(templateData);
-            console.log(`Successfully loaded template: ${template.name}`);
-        } else if (typeof window.prebuiltTemplatesAPI !== 'undefined' && window.prebuiltTemplatesAPI.loadTemplate) {
-            window.prebuiltTemplatesAPI.loadTemplate(templateData);
-            console.log(`Successfully loaded template: ${template.name}`);
-        } else {
-            // Fallback: load template directly
-            loadTemplateDirect(templateData);
-            console.log(`Template loaded via fallback method: ${template.name}`);
-        }
+        // Use the direct loading method to avoid compatibility issues
+        loadTemplateDirect(templateData);
+        console.log(`Successfully loaded template: ${template.name}`);
         
     } catch (error) {
         console.error('Error loading template:', error);
@@ -502,16 +503,23 @@ function loadSelectedTemplate(template) {
  */
 function loadTemplateDirect(templateData) {
     try {
-        // Use the same approach as the existing prebuilt template system
-        const canvas = document.getElementById('canvas');
+        // Find the correct container for blocks
+        let canvas = document.getElementById('canvas');
         if (!canvas) {
-            throw new Error('Canvas container not found');
+            canvas = document.getElementById('blocks');
+            if (!canvas) {
+                // Create canvas if it doesn't exist
+                canvas = document.createElement('div');
+                canvas.id = 'canvas';
+                const blocksContainer = document.body;
+                blocksContainer.appendChild(canvas);
+            }
         }
         
         // Clear existing content
         canvas.innerHTML = '';
         
-        // Load first page content
+        // Get first page data
         const firstPageSlug = Object.keys(templateData.pages)[0];
         const firstPage = templateData.pages[firstPageSlug];
         
@@ -519,48 +527,75 @@ function loadTemplateDirect(templateData) {
             canvas.innerHTML = firstPage.content;
         }
         
-        // Update page navigation if multi-page system exists
-        if (typeof updatePageNavigation === 'function') {
-            // Clear existing pages and add template pages
-            const pageData = {};
+        // Handle multi-page system
+        if (typeof window.pages !== 'undefined') {
+            // Clear and rebuild pages
+            window.pages = {};
             Object.entries(templateData.pages).forEach(([slug, page]) => {
-                pageData[slug] = {
+                window.pages[slug] = {
                     title: page.title,
                     content: page.content
                 };
             });
             
-            // Update the global pages object
-            if (typeof window.pages !== 'undefined') {
-                window.pages = pageData;
+            // Update page navigation
+            if (typeof updatePageNavigation === 'function') {
                 updatePageNavigation();
-                
-                // Switch to first page
-                if (typeof switchToPage === 'function') {
-                    switchToPage(firstPageSlug);
-                }
             }
+            
+            // Set current page
+            if (typeof window.currentPage !== 'undefined') {
+                window.currentPage = firstPageSlug;
+            }
+            
+            // Update page tabs
+            const pageTabs = document.querySelectorAll('.page-tab');
+            pageTabs.forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.dataset.page === firstPageSlug) {
+                    tab.classList.add('active');
+                }
+            });
         }
         
-        // Reinitialize all systems
+        // Reinitialize all systems after a short delay
         setTimeout(() => {
-            // Reinitialize all blocks
-            if (typeof reinitializeAllBlocks === 'function') {
-                reinitializeAllBlocks();
+            try {
+                // Reinitialize image placeholder handlers
+                if (typeof updateImagePlaceholderHandlers === 'function') {
+                    updateImagePlaceholderHandlers();
+                }
+                
+                // Reinitialize draggable toolbars  
+                if (typeof initializeDraggableToolbars === 'function') {
+                    initializeDraggableToolbars();
+                }
+                
+                // Make all blocks editable
+                const blocks = canvas.querySelectorAll('.block');
+                blocks.forEach(block => {
+                    // Add block editing capabilities
+                    if (!block.hasAttribute('data-block-initialized')) {
+                        block.setAttribute('data-block-initialized', 'true');
+                        
+                        // Add click handler for block selection
+                        block.addEventListener('click', function(e) {
+                            // Remove selection from other blocks
+                            document.querySelectorAll('.block.selected').forEach(b => {
+                                b.classList.remove('selected');
+                            });
+                            // Select this block
+                            this.classList.add('selected');
+                            e.stopPropagation();
+                        });
+                    }
+                });
+                
+                console.log('Template loaded and all systems reinitialized');
+            } catch (reinitError) {
+                console.warn('Some systems failed to reinitialize:', reinitError);
             }
-            
-            // Reinitialize image placeholder system
-            if (typeof updateImagePlaceholderHandlers === 'function') {
-                updateImagePlaceholderHandlers();
-            }
-            
-            // Reinitialize draggable toolbars
-            if (typeof initializeDraggableToolbars === 'function') {
-                initializeDraggableToolbars();
-            }
-            
-            console.log('Template loaded and systems reinitialized');
-        }, 100);
+        }, 200);
         
     } catch (error) {
         console.error('Error in direct template loading:', error);
