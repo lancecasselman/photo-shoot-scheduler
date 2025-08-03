@@ -66,6 +66,8 @@ This is a comprehensive photography business management platform designed to rev
   - **Enhanced HTML Export**: Full document export with selected fonts, CSS resets, and responsive design
   - **Image Upload Integration**: Client-side Firebase Storage upload system with drag-and-drop support, proper authentication bridge between backend session and Firebase client, automatic image block insertion, and secure user-specific storage paths (builderUploads/{userId}/)
   - **ZIP Export System**: Single-page and multi-page website export with all images, styles, and fonts included
+  - **Floating Text Toolbar** (Added Feb 2, 2025): Inline text formatting toolbar that appears when selecting text in editable blocks, featuring font controls, formatting options, and color pickers
+  - **Floating Block Toolbar** (Added Feb 2, 2025): Block styling toolbar that appears when selecting blocks, providing controls for background, borders, spacing, opacity, layering, and block management (duplicate/delete)
 - **Subscription System** (Added Jan 31, 2025):
   - Integrated Stripe payment processing for SaaS subscriptions
   - Three pricing tiers: $25/month, $125/6 months (1 month free), $200/year (2 months free)
