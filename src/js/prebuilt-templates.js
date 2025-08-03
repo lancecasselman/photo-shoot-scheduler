@@ -5,41 +5,29 @@ let prebuiltModal = null;
 
 // Initialize prebuilt templates functionality
 document.addEventListener('DOMContentLoaded', () => {
-    createPrebuiltButton();
+    setupPrebuiltButton();
     createPrebuiltModal();
 });
 
 /**
- * Creates the "Prebuilt" button in the website builder interface
- * Positions it alongside existing template and style controls
+ * Sets up the prebuilt templates button functionality
+ * Connects to the existing button in the controls section
  */
-function createPrebuiltButton() {
-    // Find the template chooser area in the website builder
-    const templateChooser = document.querySelector('.template-chooser');
-    if (!templateChooser) {
-        console.warn('Template chooser not found, will create prebuilt button in sidebar');
-        return createPrebuiltButtonInSidebar();
+function setupPrebuiltButton() {
+    const prebuiltButton = document.getElementById('prebuiltTemplates');
+    if (!prebuiltButton) {
+        console.error('Prebuilt templates button not found in HTML');
+        return;
     }
     
-    // Create prebuilt button container
-    const prebuiltContainer = document.createElement('div');
-    prebuiltContainer.style.cssText = `
-        margin-top: 15px;
-        padding-top: 15px;
-        border-top: 1px solid #eee;
-    `;
-    
-    // Create the prebuilt button
-    const prebuiltButton = document.createElement('button');
-    prebuiltButton.id = 'prebuiltTemplateBtn';
-    prebuiltButton.textContent = 'Prebuilt Templates';
+    // Style the button to match other controls
     prebuiltButton.style.cssText = `
-        width: 100%;
-        padding: 12px 20px;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         border: none;
-        border-radius: 6px;
+        padding: 8px 16px;
+        margin: 4px;
+        border-radius: 4px;
         font-size: 14px;
         font-weight: 600;
         cursor: pointer;
@@ -63,60 +51,7 @@ function createPrebuiltButton() {
         showPrebuiltModal();
     });
     
-    prebuiltContainer.appendChild(prebuiltButton);
-    templateChooser.appendChild(prebuiltContainer);
-    
-    console.log('Prebuilt template button added to template chooser');
-}
-
-/**
- * Fallback: Creates prebuilt button in sidebar if template chooser not found
- */
-function createPrebuiltButtonInSidebar() {
-    const sidebar = document.querySelector('.sidebar');
-    if (!sidebar) {
-        console.error('Cannot find suitable location for prebuilt button');
-        return;
-    }
-    
-    // Create button section in sidebar
-    const buttonSection = document.createElement('div');
-    buttonSection.style.cssText = `
-        margin: 20px 0;
-        padding: 15px;
-        background: #f8f9fa;
-        border-radius: 8px;
-    `;
-    
-    const sectionTitle = document.createElement('h4');
-    sectionTitle.textContent = 'Quick Start';
-    sectionTitle.style.cssText = `
-        margin: 0 0 10px 0;
-        font-size: 14px;
-        color: #333;
-        font-weight: 600;
-    `;
-    
-    const prebuiltButton = document.createElement('button');
-    prebuiltButton.id = 'prebuiltTemplateBtn';
-    prebuiltButton.textContent = 'Load Prebuilt Template';
-    prebuiltButton.style.cssText = `
-        width: 100%;
-        padding: 10px 15px;
-        background: #667eea;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        font-size: 13px;
-        cursor: pointer;
-        transition: background 0.3s ease;
-    `;
-    
-    prebuiltButton.addEventListener('click', showPrebuiltModal);
-    
-    buttonSection.appendChild(sectionTitle);
-    buttonSection.appendChild(prebuiltButton);
-    sidebar.prepend(buttonSection);
+    console.log('Prebuilt templates button functionality added');
 }
 
 /**
@@ -349,38 +284,85 @@ function loadTemplateIntoBuilder(template) {
             window.pages = {};
         }
         
+        // Clear the page list UI
+        const pageList = document.getElementById('pageList');
+        if (pageList) {
+            pageList.innerHTML = '';
+        }
+        
+        // Clear the navigation list UI
+        const navList = document.getElementById('navList');
+        if (navList) {
+            navList.innerHTML = '';
+        }
+        
         // Load each page from the template
-        Object.entries(template.pages).forEach(([pageSlug, pageData]) => {
-            // Create page in multi-page system
-            if (typeof addPage === 'function') {
-                addPage(pageData.title, pageSlug);
-            } else {
-                // Fallback: directly add to pages object
-                if (typeof window.pages === 'undefined') {
-                    window.pages = {};
-                }
-                window.pages[pageSlug] = {
-                    title: pageData.title,
-                    content: pageData.content
-                };
+        Object.entries(template.pages).forEach(([pageSlug, pageData], index) => {
+            // Initialize pages object if not exists
+            if (typeof window.pages === 'undefined') {
+                window.pages = {};
+            }
+            
+            // Add page to pages object
+            window.pages[pageSlug] = {
+                title: pageData.title,
+                content: pageData.content
+            };
+            
+            // Add page to UI
+            if (pageList) {
+                const pageItem = document.createElement('div');
+                pageItem.className = `page-item${index === 0 ? ' active' : ''}`;
+                pageItem.setAttribute('data-page-id', pageSlug);
+                pageItem.innerHTML = `
+                    <span class="page-name">${pageData.title}</span>
+                    <div class="page-actions">
+                        <button class="edit-page" title="Edit Page">Edit</button>
+                        <button class="delete-page" title="Delete Page">×</button>
+                    </div>
+                `;
+                pageList.appendChild(pageItem);
+            }
+            
+            // Add navigation item
+            if (navList) {
+                const navItem = document.createElement('div');
+                navItem.className = 'nav-item';
+                navItem.setAttribute('data-page-id', pageSlug);
+                navItem.setAttribute('draggable', 'true');
+                navItem.innerHTML = `
+                    <span class="nav-label">${pageData.title}</span>
+                    <div class="nav-actions">
+                        <button class="edit-nav" title="Edit Label">Edit</button>
+                        <button class="move-up" title="Move Up">↑</button>
+                        <button class="move-down" title="Move Down">↓</button>
+                    </div>
+                `;
+                navList.appendChild(navItem);
             }
         });
         
-        // Set the first page as active
+        // Set the first page as active and load its content
         const firstPageSlug = Object.keys(template.pages)[0];
-        if (firstPageSlug && typeof switchToPage === 'function') {
-            switchToPage(firstPageSlug);
-        } else {
-            // Fallback: manually load first page content
+        if (firstPageSlug) {
+            // Set global current page
+            if (typeof window.currentPageId !== 'undefined') {
+                window.currentPageId = firstPageSlug;
+            }
+            
+            // Load first page content into blocks container
             const blocksContainer = document.getElementById('blocks');
             if (blocksContainer && template.pages[firstPageSlug]) {
                 blocksContainer.innerHTML = template.pages[firstPageSlug].content;
             }
         }
         
-        // Update page navigation if it exists
-        if (typeof updatePageNavigation === 'function') {
-            updatePageNavigation();
+        // Reinitialize multi-page system event listeners
+        if (typeof initializeMultiPageSystem === 'function') {
+            initializeMultiPageSystem();
+        } else {
+            // Fallback: manually set up page click handlers
+            setupPageClickHandlers();
         }
         
         // Reinitialize all block functionality
@@ -481,10 +463,45 @@ function showSuccessMessage(message) {
     }, 3000);
 }
 
+/**
+ * Sets up page click handlers for template-loaded pages
+ * Fallback function when multi-page system needs reinitialization
+ */
+function setupPageClickHandlers() {
+    const pageItems = document.querySelectorAll('.page-item');
+    pageItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            if (e.target.closest('.page-actions')) return;
+            
+            const pageId = item.getAttribute('data-page-id');
+            if (pageId && window.pages && window.pages[pageId]) {
+                // Remove active class from all pages
+                document.querySelectorAll('.page-item').forEach(p => p.classList.remove('active'));
+                
+                // Add active class to clicked page
+                item.classList.add('active');
+                
+                // Load page content
+                const blocksContainer = document.getElementById('blocks');
+                if (blocksContainer) {
+                    blocksContainer.innerHTML = window.pages[pageId].content;
+                    window.currentPageId = pageId;
+                    
+                    // Reinitialize blocks after content change
+                    reinitializeAllBlocks();
+                }
+            }
+        });
+    });
+    
+    console.log('Page click handlers set up for template pages');
+}
+
 // Make functions available globally for debugging and integration
 window.prebuiltTemplatesAPI = {
     showModal: showPrebuiltModal,
     hideModal: hidePrebuiltModal,
     loadTemplate: loadPrebuiltTemplate,
-    reinitializeBlocks: reinitializeAllBlocks
+    reinitializeBlocks: reinitializeAllBlocks,
+    setupPageHandlers: setupPageClickHandlers
 };
