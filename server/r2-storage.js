@@ -7,18 +7,40 @@ const AWS = require('aws-sdk');
  */
 class R2StorageService {
   constructor() {
+    // Try alternative R2 endpoint format without bucket name in hostname
+    const endpoint = `https://${process.env.CLOUDFLARE_R2_ACCOUNT_ID}.r2.cloudflarestorage.com`;
+    
     this.s3 = new AWS.S3({
-      endpoint: `https://${process.env.CLOUDFLARE_R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+      endpoint: endpoint,
       accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID,
       secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY,
-      region: 'auto',
+      region: 'wnam',
       signatureVersion: 'v4',
+      s3ForcePathStyle: false,
     });
+    
+    console.log(`R2 endpoint: ${endpoint}`);
     
     this.bucketName = process.env.CLOUDFLARE_R2_BUCKET_NAME;
     this.supportedExtensions = ['.nef', '.cr2', '.arw', '.dng', '.raf', '.orf', '.pef', '.srw', '.x3f', '.rw2'];
     
     console.log('R2 Storage Service initialized with bucket:', this.bucketName);
+  }
+
+  /**
+   * Test R2 connection by listing bucket contents
+   * @returns {Promise<boolean>} - Connection status
+   */
+  async testConnection() {
+    try {
+      console.log(`Testing R2 connection to bucket: ${this.bucketName}`);
+      await this.s3.headBucket({ Bucket: this.bucketName }).promise();
+      console.log('R2 connection successful');
+      return true;
+    } catch (error) {
+      console.error('R2 connection test failed:', error.message);
+      return false;
+    }
   }
 
   /**
