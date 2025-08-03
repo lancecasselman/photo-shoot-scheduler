@@ -4064,8 +4064,29 @@ app.post('/api/ai/purchase-credits', isAuthenticated, async (req, res) => {
         const normalizedUser = normalizeUserForLance(req.user);
         const userId = normalizedUser.uid;
         
-        if (!credits || !priceUsd) {
-            return res.status(400).json({ error: 'Credits amount and price required' });
+        console.log('AI Credits purchase request:', { credits, priceUsd, userId });
+        
+        if (!credits || !priceUsd || typeof credits !== 'number' || typeof priceUsd !== 'number') {
+            console.log('Invalid purchase data:', { credits, priceUsd, creditsType: typeof credits, priceType: typeof priceUsd });
+            return res.status(400).json({ error: 'Valid credits amount and price required' });
+        }
+
+        // Validate against available bundles
+        const validBundles = [
+            { credits: 1000, price: 1.00 },
+            { credits: 5000, price: 4.99 },
+            { credits: 10000, price: 8.99 },
+            { credits: 25000, price: 19.99 },
+            { credits: 50000, price: 34.99 }
+        ];
+
+        const isValidBundle = validBundles.some(bundle => 
+            bundle.credits === credits && Math.abs(bundle.price - priceUsd) < 0.01
+        );
+
+        if (!isValidBundle) {
+            console.log('Invalid credits package:', { credits, priceUsd, validBundles });
+            return res.status(400).json({ error: 'Invalid credits package' });
         }
 
         // Create Stripe payment session for AI credits
