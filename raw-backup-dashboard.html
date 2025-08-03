@@ -685,7 +685,7 @@
 
             // Upload button
             document.getElementById('uploadBtn').addEventListener('click', () => {
-                if (storageUsage.isOverLimit) {
+                if (storageUsage && storageUsage.isOverLimit) {
                     showAlert('Storage limit exceeded! Please upgrade your plan first.', 'danger');
                     return;
                 }
@@ -914,7 +914,7 @@
         }
 
         function showUpgradeOptions() {
-            const currentTier = storageUsage.storageTierTB || 1;
+            const currentTier = (storageUsage && storageUsage.storageTierTB) || 1;
             const options = [1, 2, 3, 5, 10].filter(tier => tier > currentTier);
             
             if (options.length === 0) {

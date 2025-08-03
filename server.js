@@ -7449,7 +7449,7 @@ app.get('/api/raw-storage/usage', isAuthenticated, async (req, res) => {
         
         // Get storage usage from database
         const usageResult = await pool.query(`
-            SELECT total_files, total_size_bytes, total_size_tb, current_monthly_charge,
+            SELECT total_files, total_bytes, total_size_tb, current_monthly_charge,
                    storage_tier_tb, max_allowed_tb, storage_status, next_billing_date
             FROM raw_storage_usage 
             WHERE user_id = $1
@@ -7459,32 +7459,34 @@ app.get('/api/raw-storage/usage', isAuthenticated, async (req, res) => {
         if (usageResult.rows.length === 0) {
             // Create default usage record for new user
             await pool.query(`
-                INSERT INTO raw_storage_usage (id, user_id, total_files, total_size_bytes, 
+                INSERT INTO raw_storage_usage (id, user_id, total_files, total_bytes, 
                                              total_size_tb, current_monthly_charge, storage_tier_tb, 
                                              max_allowed_tb, storage_status)
-                VALUES ($1, $2, 0, '0', 0, 0, 1, 1.00, 'active')
+                VALUES ($1, $2, 0, 0, 0, 0, 1, 1.00, 'active')
             `, [uuidv4(), userId]);
             
             usage = {
                 totalFiles: 0,
-                totalSizeBytes: '0',
+                totalSizeBytes: 0,
                 totalSizeTB: 0,
                 currentMonthlyCharge: 0,
                 storageTierTB: 1,
                 maxAllowedTB: 1.00,
                 storageStatus: 'active',
-                nextBillingDate: null
+                nextBillingDate: null,
+                usagePercentage: 0,
+                isOverLimit: false
             };
         } else {
             const row = usageResult.rows[0];
             usage = {
-                totalFiles: row.total_files,
-                totalSizeBytes: row.total_size_bytes,
-                totalSizeTB: parseFloat(row.total_size_tb),
-                currentMonthlyCharge: parseFloat(row.current_monthly_charge),
-                storageTierTB: row.storage_tier_tb,
-                maxAllowedTB: parseFloat(row.max_allowed_tb),
-                storageStatus: row.storage_status,
+                totalFiles: row.total_files || 0,
+                totalSizeBytes: row.total_bytes || 0,
+                totalSizeTB: parseFloat(row.total_size_tb) || 0,
+                currentMonthlyCharge: parseFloat(row.current_monthly_charge) || 0,
+                storageTierTB: row.storage_tier_tb || 1,
+                maxAllowedTB: parseFloat(row.max_allowed_tb) || 1.00,
+                storageStatus: row.storage_status || 'active',
                 nextBillingDate: row.next_billing_date
             };
         }
@@ -7651,10 +7653,10 @@ app.get('/api/raw-storage/files/:sessionId', isAuthenticated, async (req, res) =
         const result = await pool.query(`
             SELECT id, filename, original_filename, file_extension, file_size_bytes, 
                    file_size_mb, upload_status, upload_completed_at, download_count,
-                   last_accessed_at
+                   last_accessed_at, file_type
             FROM raw_files 
             WHERE session_id = $1 AND user_id = $2 
-            ORDER BY upload_completed_at DESC
+            ORDER BY upload_date DESC
         `, [sessionId, userId]);
         
         const files = result.rows.map(row => ({
