@@ -11250,7 +11250,11 @@ I'm so grateful to work with clients like ${clientName} who trust me to capture 
         // Firebase logout function
         async function firebaseLogout() {
             try {
-                await firebase.auth().signOut();
+                // Use the auth object from auth.js (Firebase v10)
+                if (window.firebaseAuth) {
+                    const { signOut } = await import("https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js");
+                    await signOut(window.firebaseAuth);
+                }
                 
                 // Also clear server session
                 await fetch('/api/auth/logout', { 
