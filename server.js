@@ -412,6 +412,7 @@ const isAuthenticated = async (req, res, next) => {
     // Check session first
     if (req.session && req.session.user) {
         req.user = req.session.user;
+        console.log('Authentication via session successful for:', req.session.user.email);
         return next();
     }
 
@@ -437,6 +438,7 @@ const isAuthenticated = async (req, res, next) => {
     }
 
     // No valid authentication found
+    console.log('Authentication failed for:', req.url, 'Session exists:', !!req.session, 'User in session:', !!req.session?.user);
     res.status(401).json({ message: 'Authentication required. Please log in.' });
 };
 
@@ -1871,51 +1873,6 @@ app.get('/api/ai/credits', isAuthenticated, async (req, res) => {
 // Stripe public key endpoint
 app.get('/api/stripe/public-key', (req, res) => {
     res.json({ publicKey: process.env.VITE_STRIPE_PUBLIC_KEY });
-});
-
-// AI Credits Purchase Endpoint
-app.post('/api/ai/purchase-credits', isAuthenticated, async (req, res) => {
-    try {
-        const { creditsPackage } = req.body; // 'small', 'medium', 'large'
-        const normalizedUser = normalizeUserForLance(req.user);
-        const userId = normalizedUser.uid;
-
-        // Credit packages: $5 = 50 credits, $15 = 150 credits, $30 = 350 credits
-        const packages = {
-            small: { credits: 50, price: 5.00 },
-            medium: { credits: 150, price: 15.00 },
-            large: { credits: 350, price: 30.00 }
-        };
-
-        const selectedPackage = packages[creditsPackage];
-        if (!selectedPackage) {
-            return res.status(400).json({ error: 'Invalid credits package' });
-        }
-
-        // Create Stripe Payment Intent
-        const paymentIntent = await stripe.paymentIntents.create({
-            amount: Math.round(selectedPackage.price * 100), // Convert to cents
-            currency: 'usd',
-            metadata: {
-                userId,
-                creditsAmount: selectedPackage.credits.toString(),
-                packageType: creditsPackage
-            }
-        });
-
-        res.json({
-            success: true,
-            clientSecret: paymentIntent.client_secret,
-            credits: selectedPackage.credits,
-            price: selectedPackage.price
-        });
-
-    } catch (error) {
-        console.error('AI credits purchase error:', error);
-        res.status(500).json({
-            error: 'Failed to create payment for AI credits'
-        });
-    }
 });
 
 // Stripe Webhook for AI Credits and Subscriptions
@@ -4059,7 +4016,14 @@ app.get('/api/ai/credit-bundles', isAuthenticated, async (req, res) => {
     }
 });
 
-app.post('/api/ai/purchase-credits', isAuthenticated, async (req, res) => {
+app.post('/api/ai/purchase-credits', (req, res, next) => {
+    console.log('=== PURCHASE CREDITS ENDPOINT HIT ===');
+    console.log('Request URL:', req.url);
+    console.log('Request method:', req.method);
+    console.log('Session exists:', !!req.session);
+    console.log('User in session:', !!req.session?.user);
+    next();
+}, isAuthenticated, async (req, res) => {
     try {
         console.log('=== AI CREDITS PURCHASE REQUEST START ===');
         console.log('Request body:', req.body);
