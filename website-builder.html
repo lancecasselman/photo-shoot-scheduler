@@ -134,11 +134,11 @@
       font-weight: 600;
     }
     
-    .page-list, .nav-list {
+    .page-list {
       margin-bottom: 10px;
     }
     
-    .page-item, .nav-item {
+    .page-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -155,21 +155,21 @@
       border-color: #2196f3;
     }
     
-    .page-item:hover, .nav-item:hover {
+    .page-item:hover {
       background: #f5f5f5;
     }
     
-    .page-name, .nav-label {
+    .page-name {
       font-size: 13px;
       flex: 1;
     }
     
-    .page-actions, .nav-actions {
+    .page-actions {
       display: flex;
       gap: 4px;
     }
     
-    .page-actions button, .nav-actions button {
+    .page-actions button {
       background: none;
       border: none;
       padding: 2px 6px;
@@ -178,11 +178,11 @@
       border-radius: 3px;
     }
     
-    .page-actions button:hover, .nav-actions button:hover {
+    .page-actions button:hover {
       background: #e0e0e0;
     }
     
-    .add-page-btn, .add-nav-btn {
+    .add-page-btn {
       width: 100%;
       padding: 8px;
       background: #28a745;
@@ -193,7 +193,7 @@
       cursor: pointer;
     }
     
-    .add-page-btn:hover, .add-nav-btn:hover {
+    .add-page-btn:hover {
       background: #218838;
     }
   </style>
@@ -225,20 +225,7 @@
     <button class="add-page-btn" id="addPageBtn">Add Page</button>
   </div>
   
-  <div class="page-nav-panel">
-    <h3>Navigation</h3>
-    <div class="nav-list" id="navList">
-      <div class="nav-item" data-page-id="home" draggable="true">
-        <span class="nav-label">Home</span>
-        <div class="nav-actions">
-          <button class="edit-nav" title="Edit Label">Edit</button>
-          <button class="move-up" title="Move Up">↑</button>
-          <button class="move-down" title="Move Down">↓</button>
-        </div>
-      </div>
-    </div>
-    <button class="add-nav-btn" id="addNavBtn">Add Nav Item</button>
-  </div>
+
 
   <div id="controls" class="builder-controls">
     <button id="undoBtn" title="Undo (Ctrl+Z)">Undo</button>
