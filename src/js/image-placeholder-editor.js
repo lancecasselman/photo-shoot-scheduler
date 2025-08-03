@@ -298,6 +298,16 @@ function setPlaceholderImage(placeholder, imageUrl) {
         placeholder.style.border = 'none';
         placeholder.style.background = 'transparent';
         
+        // Special handling for hero background images
+        if (uploadedImage.classList.contains('hero-bg-image')) {
+            const heroBlock = placeholder.closest('.hero-block');
+            if (heroBlock) {
+                heroBlock.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('${imageUrl}')`;
+                heroBlock.style.backgroundSize = 'cover';
+                heroBlock.style.backgroundPosition = 'center';
+            }
+        }
+        
         // Add edit overlay on hover
         addImageEditOverlay(placeholder);
         

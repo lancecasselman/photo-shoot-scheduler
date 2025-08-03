@@ -8,10 +8,19 @@ const lightAiryPortfolioTemplate = {
         "home": {
             title: "Home",
             content: `
-                <div class="block hero-block" contenteditable="false" style="background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1200\" height=\"600\" viewBox=\"0 0 1200 600\"><rect width=\"1200\" height=\"600\" fill=\"%23f5f5f0\"/><text x=\"50%\" y=\"50%\" dominant-baseline=\"middle\" text-anchor=\"middle\" fill=\"%23666\" font-size=\"24\">Click to upload hero image</text></svg>'); background-size: cover; background-position: center; color: white; text-align: center; padding: 120px 20px; min-height: 60vh;">
-                    <div style="max-width: 800px; margin: 0 auto;">
-                        <h1 contenteditable="true" style="font-size: 56px; margin-bottom: 20px; font-weight: 300; letter-spacing: 2px; font-family: 'Playfair Display', serif;">Photos That Stand Out</h1>
-                        <p contenteditable="true" style="font-size: 22px; margin-bottom: 40px; font-weight: 300; opacity: 0.9;">Timeless photography for life's boldest moments.</p>
+                <div class="block hero-block" contenteditable="false" style="position: relative; background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)); background-size: cover; background-position: center; color: white; text-align: center; padding: 120px 20px; min-height: 60vh;">
+                    <div class="hero-background-container" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1;">
+                        <div class="image-placeholder-container" style="position: relative; width: 100%; height: 100%; background: #f8f8f8; border: 2px dashed #ddd; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease;" onclick="triggerImageUpload(this)">
+                            <div class="placeholder-content" style="text-align: center; color: #999;">
+                                <div style="font-size: 24px; margin-bottom: 10px; color: #999; font-weight: bold;">+</div>
+                                <div style="font-size: 16px;">Click to Add Hero Background</div>
+                            </div>
+                            <img class="uploaded-image hero-bg-image" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;" alt="Hero Background">
+                        </div>
+                    </div>
+                    <div style="position: relative; z-index: 2; max-width: 800px; margin: 0 auto;">
+                        <h1 contenteditable="true" style="font-size: 56px; margin-bottom: 20px; font-weight: 300; letter-spacing: 2px; font-family: 'Playfair Display', serif; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">Photos That Stand Out</h1>
+                        <p contenteditable="true" style="font-size: 22px; margin-bottom: 40px; font-weight: 300; opacity: 0.9; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">Timeless photography for life's boldest moments.</p>
                         <button contenteditable="true" style="background: transparent; color: white; border: 2px solid white; padding: 15px 40px; font-size: 16px; letter-spacing: 1px; cursor: pointer; transition: all 0.3s ease;">View My Work</button>
                     </div>
                 </div>
