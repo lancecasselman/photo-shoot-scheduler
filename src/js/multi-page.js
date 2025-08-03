@@ -32,16 +32,28 @@ function initializeMultiPage() {
 
 function setupEventListeners() {
     // Add page button
-    document.getElementById('addPageBtn').addEventListener('click', addNewPage);
+    const addPageBtn = document.getElementById('addPageBtn');
+    if (addPageBtn) {
+        addPageBtn.addEventListener('click', addNewPage);
+    }
     
     // Add nav item button
-    document.getElementById('addNavBtn').addEventListener('click', addNavItem);
+    const addNavBtn = document.getElementById('addNavBtn');
+    if (addNavBtn) {
+        addNavBtn.addEventListener('click', addNavItem);
+    }
     
     // Page list delegation
-    document.getElementById('pageList').addEventListener('click', handlePageAction);
+    const pageList = document.getElementById('pageList');
+    if (pageList) {
+        pageList.addEventListener('click', handlePageAction);
+    }
     
     // Nav list delegation
-    document.getElementById('navList').addEventListener('click', handleNavAction);
+    const navList = document.getElementById('navList');
+    if (navList) {
+        navList.addEventListener('click', handleNavAction);
+    }
     
     // Update save and export functions to handle multi-page
     const originalSave = window.saveLayout;
