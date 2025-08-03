@@ -54,15 +54,63 @@ document.getElementById("saveLayout").addEventListener("click", async () => {
 
 // Global variables for export functionality
 let currentFont = 'Inter';
+let currentFontSize = '16px';
 
 // Font picker functionality
 document.getElementById("fontPicker").addEventListener("change", (e) => {
   currentFont = e.target.value;
-  const blocksContainer = document.getElementById("blocks");
-  if (blocksContainer) {
-    blocksContainer.style.fontFamily = `'${currentFont}', sans-serif`;
-  }
+  
+  // Apply font to multiple possible containers
+  const containers = [
+    document.getElementById("blocks"),
+    document.getElementById("canvas"),
+    document.querySelector(".canvas-container"),
+    document.body
+  ];
+  
+  containers.forEach(container => {
+    if (container) {
+      container.style.fontFamily = `'${currentFont}', sans-serif`;
+    }
+  });
+  
+  // Apply to all contenteditable elements that don't have specific fonts
+  document.querySelectorAll('[contenteditable="true"]').forEach(element => {
+    if (!element.style.fontFamily || element.style.fontFamily.includes('inherit')) {
+      element.style.fontFamily = `'${currentFont}', sans-serif`;
+    }
+  });
+  
   console.log('Font changed to:', currentFont);
+});
+
+// Font size picker functionality
+document.addEventListener('DOMContentLoaded', function() {
+  const fontSizePicker = document.getElementById("fontSizePicker");
+  if (fontSizePicker) {
+    fontSizePicker.addEventListener("change", (e) => {
+      currentFontSize = e.target.value;
+      
+      // Apply font size to selected elements or all contenteditable elements
+      const selectedElements = document.querySelectorAll('[contenteditable="true"].selected, .selected [contenteditable="true"]');
+      
+      if (selectedElements.length > 0) {
+        // Apply to selected elements
+        selectedElements.forEach(element => {
+          element.style.fontSize = currentFontSize;
+        });
+      } else {
+        // Apply to all body text elements
+        document.querySelectorAll('[contenteditable="true"]:not(h1):not(h2):not(h3):not(h4):not(h5):not(h6)').forEach(element => {
+          if (!element.style.fontSize || element.style.fontSize === 'inherit') {
+            element.style.fontSize = currentFontSize;
+          }
+        });
+      }
+      
+      console.log('Font size changed to:', currentFontSize);
+    });
+  }
 });
 
 // Light/Dark mode toggle

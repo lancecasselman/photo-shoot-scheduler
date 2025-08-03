@@ -561,6 +561,24 @@ function loadTemplateDirect(templateData) {
         // Reinitialize all systems after a short delay
         setTimeout(() => {
             try {
+                // Apply current font to the loaded template
+                if (typeof currentFont !== 'undefined' && currentFont) {
+                    canvas.style.fontFamily = `'${currentFont}', sans-serif`;
+                    
+                    // Apply to contenteditable elements that don't have specific fonts
+                    canvas.querySelectorAll('[contenteditable="true"]').forEach(element => {
+                        if (!element.style.fontFamily || element.style.fontFamily.includes('inherit')) {
+                            element.style.fontFamily = `'${currentFont}', sans-serif`;
+                        }
+                    });
+                }
+                
+                // Update font picker to reflect current font
+                const fontPicker = document.getElementById('fontPicker');
+                if (fontPicker && typeof currentFont !== 'undefined') {
+                    fontPicker.value = currentFont;
+                }
+                
                 // Reinitialize image placeholder handlers
                 if (typeof updateImagePlaceholderHandlers === 'function') {
                     updateImagePlaceholderHandlers();
