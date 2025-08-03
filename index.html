@@ -4368,7 +4368,7 @@
                                 <button onclick="addToCalendar('${session.id}'); event.stopPropagation();" class="btn btn-secondary">Calendar</button>
                                 <button onclick="openEmailClient('${session.id}'); event.stopPropagation();" class="btn btn-secondary">Email</button>
                                 <button onclick="openContractModal('${session.id}'); event.stopPropagation();" class="btn btn-secondary">Contract</button>
-                                <button onclick="triggerWorkflow('${session.id}'); event.stopPropagation();" class="btn btn-secondary">⚡ Automation</button>
+
                                 ${session.hasPaymentPlan ? `
                                     <button onclick="viewPaymentPlan('${session.id}'); event.stopPropagation();" class="btn btn-secondary">Payment Plan</button>
                                 ` : `

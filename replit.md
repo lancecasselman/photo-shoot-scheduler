@@ -14,11 +14,12 @@ This is a comprehensive photography business management platform designed to rev
 - **Zero Tolerance for Polite BS**: User explicitly rejects overly polite, formal responses
 - **Honest Assessment**: If something's fucked up, say it's fucked up and fix it
 
-### Interface Preferences (Updated Feb 1, 2025)
+### Interface Preferences (Updated Feb 3, 2025)
 - **Navigation Cleanup**: Removed AI Visual Editor and Storefront Builder components entirely from codebase
 - **Core Website Builder Preserved**: Keep website-builder.html functionality completely untouched  
 - **Streamlined Codebase**: Removed advanced-visual-editor.html, storefront.html, and all associated templates/JS files
 - **Focused Tools**: Menu and codebase now focus on essential photography business tools only
+- **Automation Button Removed**: Removed ⚡ Automation button from session interface per user request (Feb 3, 2025)
 
 ### General Working Preferences
 - Business email: lance@thelegacyphotography.com
@@ -89,7 +90,7 @@ This is a comprehensive photography business management platform designed to rev
 - **Core Features**: Session scheduling, client information tracking, workflow management, pricing, and notes system.
 - **Shared Poses Gallery** (Added Jan 31, 2025): Community-driven photography pose inspiration gallery where photographers can view, favorite, and submit pose ideas. Features public access for viewing, authenticated submissions, and moderation system.
 - **RAW Backup System** (Added Feb 1, 2025): Integrated Cloudflare R2 storage for automatic RAW file backup at $20/TB. Features automatic RAW detection (.CR2, .NEF, .ARW, .DNG, etc.), background upload processing, database tracking, billing management, and emergency recovery system. Activated with full R2 credentials and ready for production use.
-- **Advanced Workflow Automation** (Added Feb 1, 2025): Intelligent client communication system with automated triggers for contract reminders, payment follow-ups, session preparation guides, gallery delivery notifications, and feedback requests. Features customizable message templates (professional, friendly, luxury), native email/SMS integration, and comprehensive workflow logging. Accessible via ⚡ Automation button in session interface and dedicated advanced-workflow.html management dashboard.
+- **Advanced Workflow Automation** (Added Feb 1, 2025): Intelligent client communication system with automated triggers for contract reminders, payment follow-ups, session preparation guides, gallery delivery notifications, and feedback requests. Features customizable message templates (professional, friendly, luxury), native email/SMS integration, and comprehensive workflow logging. Accessible via dedicated advanced-workflow.html management dashboard.
 - **AI Assistant Integration** (Added Feb 3, 2025): OpenAI-powered assistant integrated into website builder with comprehensive credit system. Features token-based usage tracking, 5 pricing tiers (1K-50K credits, $1.00-$34.99), Stripe payment integration with live checkout sessions, shared bundle definitions between frontend/backend, and full content generation capabilities for website building assistance.
 
 ### System Design Choices
