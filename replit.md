@@ -68,6 +68,7 @@ This is a comprehensive photography business management platform designed to rev
   - **ZIP Export System**: Single-page and multi-page website export with all images, styles, and fonts included
   - **Floating Text Toolbar** (Added Feb 2, 2025): Inline text formatting toolbar that appears when selecting text in editable blocks, featuring font controls, formatting options, and color pickers
   - **Floating Block Toolbar** (Added Feb 2, 2025): Block styling toolbar that appears when selecting blocks, providing controls for background, borders, spacing, opacity, layering, and block management (duplicate/delete)
+  - **Prebuilt Templates System** (Added Feb 2, 2025): One-click template loading with "Light & Airy Portfolio" professional photography website template featuring 5 complete pages (Home, Portfolio, About, Contact, Pricing) with fully editable content, clickable image placeholders, and proper multi-page integration
 - **Subscription System** (Added Jan 31, 2025):
   - Integrated Stripe payment processing for SaaS subscriptions
   - Three pricing tiers: $25/month, $125/6 months (1 month free), $200/year (2 months free)

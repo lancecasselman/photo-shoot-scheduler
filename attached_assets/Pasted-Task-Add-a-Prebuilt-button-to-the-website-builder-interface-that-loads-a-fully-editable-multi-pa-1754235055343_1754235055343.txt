@@ -1,0 +1,135 @@
+Task:
+Add a “Prebuilt” button to the website builder interface that loads a fully editable, multi-page website template called “Light & Airy Portfolio.”
+
+Details:
+
+The template should include Home, Portfolio, About, Contact, and Pricing pages.
+
+Each page should be made up of standard blocks (hero, gallery, about, testimonial, packages, forms, etc.) as described in the JSON example below.
+
+All text, images, and settings must be fully editable by the user within the builder.
+
+The user can click the “Prebuilt” button at any time to create a new site using this template.
+
+Ensure the implementation is safe and does not overwrite the user’s existing website without confirmation.
+
+Do not use any emojis in code, comments, or user interface elements.
+
+Test thoroughly to ensure all blocks render correctly and all fields are editable.
+
+Provide documentation/comments in the code explaining each step for future maintainability.
+
+Sample Template JSON:
+(Copy/paste or import this structure for the template’s initial content. Adapt to your builder’s format if needed.)
+
+json
+Copy
+Edit
+{
+  "name": "Light & Airy Portfolio",
+  "pages": [
+    {
+      "slug": "home",
+      "title": "Home",
+      "blocks": [
+        {
+          "type": "hero",
+          "headline": "Photos That Stand Out",
+          "subtext": "Timeless photography for life’s boldest moments.",
+          "backgroundImage": "/img/hero.jpg",
+          "cta": { "text": "View My Work", "link": "/portfolio" }
+        },
+        {
+          "type": "about",
+          "image": "/img/about.jpg",
+          "text": "I’m John, a South Carolina photographer making bold moments timeless."
+        },
+        {
+          "type": "gallery-preview",
+          "images": ["/img/gal1.jpg", "/img/gal2.jpg", "/img/gal3.jpg"]
+        },
+        {
+          "type": "testimonial",
+          "quote": "We love our photos!",
+          "client": "Mary & James"
+        }
+      ]
+    },
+    {
+      "slug": "portfolio",
+      "title": "Portfolio",
+      "blocks": [
+        {
+          "type": "gallery",
+          "categories": ["Weddings", "Families", "Seniors"],
+          "images": [
+            { "url": "/img/wedding1.jpg", "category": "Weddings", "caption": "First look" },
+            { "url": "/img/family1.jpg", "category": "Families", "caption": "Family beach day" },
+            { "url": "/img/senior1.jpg", "category": "Seniors", "caption": "Graduation" }
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "about",
+      "title": "About",
+      "blocks": [
+        {
+          "type": "profile",
+          "image": "/img/about.jpg",
+          "bio": "Hi! I’m John. I’ve spent 10+ years capturing the big and small moments that matter most."
+        },
+        {
+          "type": "awards",
+          "badges": ["/img/badge1.png", "/img/badge2.png"]
+        }
+      ]
+    },
+    {
+      "slug": "contact",
+      "title": "Contact",
+      "blocks": [
+        {
+          "type": "form",
+          "fields": [
+            { "name": "Name", "type": "text" },
+            { "name": "Email", "type": "email" },
+            { "name": "Message", "type": "textarea" }
+          ],
+          "submitText": "Send"
+        },
+        {
+          "type": "info",
+          "phone": "(555) 123-4567",
+          "email": "info@legacy.com"
+        }
+      ]
+    },
+    {
+      "slug": "pricing",
+      "title": "Packages",
+      "blocks": [
+        {
+          "type": "packages",
+          "list": [
+            { "title": "Mini Session", "price": "$295", "features": ["30 min", "20 photos", "Online gallery"] },
+            { "title": "Full Session", "price": "$400", "features": ["1 hour", "50 photos", "Online gallery"] }
+          ]
+        }
+      ]
+    }
+  ]
+}
+Instructions Recap for the Agent:
+Integrate the “Prebuilt” button in the template chooser area.
+
+On click, load the above multi-page template, but only after confirming with the user that their current work will be replaced.
+
+Make every content field editable by the user.
+
+Do not use emojis in any part of the implementation.
+
+Comment your code and explain any important steps.
+
+Test all features to ensure reliability.
+
