@@ -409,6 +409,8 @@
 
         // Attach login behavior after DOM is ready
         document.addEventListener("DOMContentLoaded", function () {
+            // Clear logout flag when arriving at auth page
+            sessionStorage.removeItem('loggingOut');
             // Google Sign-in with redirect fallback
             const googleLoginBtn = document.getElementById("google-login");
             if (googleLoginBtn) {

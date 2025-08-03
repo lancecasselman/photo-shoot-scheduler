@@ -11250,23 +11250,42 @@ I'm so grateful to work with clients like ${clientName} who trust me to capture 
         // Firebase logout function
         async function firebaseLogout() {
             try {
-                // Use the auth object from auth.js (Firebase v10)
+                console.log('Starting logout process...');
+                
+                // First, clear server session
+                const logoutResponse = await fetch('/api/auth/logout', { 
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('Server logout response:', logoutResponse.status);
+                
+                // Then clear Firebase auth
                 if (window.firebaseAuth) {
                     const { signOut } = await import("https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js");
                     await signOut(window.firebaseAuth);
+                    console.log('Firebase logout successful');
                 }
                 
-                // Also clear server session
-                await fetch('/api/auth/logout', { 
-                    method: 'POST',
-                    credentials: 'include'
-                });
+                // Clear any local user data
+                if (typeof currentUser !== 'undefined') {
+                    currentUser = null;
+                }
                 
-                // Redirect to auth page
-                window.location.href = '/auth.html';
+                // Set a flag to prevent auth checks during logout
+                sessionStorage.setItem('loggingOut', 'true');
+                
+                // Force redirect to auth page
+                console.log('Redirecting to auth page...');
+                window.location.replace('/auth.html');
+                
             } catch (error) {
                 console.error('Logout error:', error);
-                showMessage('Error logging out', 'error');
+                // Force redirect even on error
+                window.location.replace('/auth.html');
             }
         }
 

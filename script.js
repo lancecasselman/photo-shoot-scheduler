@@ -8,6 +8,12 @@ let currentUser = null;
 
 // Firebase Authentication functions
 async function checkAuth() {
+    // Skip auth check if we're in the middle of logging out
+    if (sessionStorage.getItem('loggingOut') === 'true') {
+        console.log('Skipping auth check - logout in progress');
+        return false;
+    }
+    
     try {
         const response = await fetch('/api/auth/user');
         if (response.ok) {
