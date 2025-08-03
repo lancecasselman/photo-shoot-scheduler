@@ -110,11 +110,15 @@ function handlePageAction(e) {
     const pageId = pageItem.dataset.pageId;
     
     if (e.target.classList.contains('edit-page')) {
+        e.stopPropagation();
         editPageName(pageId);
     } else if (e.target.classList.contains('delete-page')) {
+        e.stopPropagation();
         deletePage(pageId);
-    } else {
-        // Click on page item - switch to page
+    } else if (e.target.classList.contains('page-name') || e.target === pageItem) {
+        // Click on page name or page item itself - switch to page
+        e.stopPropagation();
+        console.log('Page tab clicked:', pageId);
         switchToPage(pageId);
     }
 }
@@ -276,7 +280,7 @@ function updatePageList() {
         pageItem.dataset.pageId = page.id;
         
         pageItem.innerHTML = `
-            <span class="page-name">${page.name}</span>
+            <span class="page-name" style="cursor: pointer; flex: 1; padding: 8px;">${page.name}</span>
             <div class="page-actions">
                 <button class="edit-page" title="Edit Page">Edit</button>
                 ${page.id !== 'home' ? '<button class="delete-page" title="Delete Page">×</button>' : ''}
