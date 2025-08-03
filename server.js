@@ -40,6 +40,7 @@ const R2BackupService = require('./server/r2-backup');
 
 // Import AI services
 const { AIServices } = require('./server/ai-services');
+const { aiService } = require('./server/ai-service');
 
 // ZIP export dependencies
 const archiver = require('archiver');
@@ -1916,8 +1917,8 @@ app.post('/api/ai/purchase-credits', isAuthenticated, async (req, res) => {
     }
 });
 
-// Stripe Webhook for AI Credits (add to existing webhook handler)
-app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), (req, res) => {
+// Stripe Webhook for AI Credits and Subscriptions
+app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (req, res) => {
     const sig = req.headers['stripe-signature'];
     let event;
 
@@ -1928,32 +1929,48 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), (req, r
         return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    // Handle AI credits payment success
-    if (event.type === 'payment_intent.succeeded') {
-        const paymentIntent = event.data.object;
+    try {
+        // Handle AI credits payment success
+        if (event.type === 'checkout.session.completed') {
+            const session = event.data.object;
+            
+            // Check if this is an AI credits purchase
+            if (session.metadata && session.metadata.type === 'ai_credits') {
+                const userId = session.metadata.userId;
+                const creditsAmount = parseInt(session.metadata.credits);
+                const priceUsd = parseFloat(session.metadata.priceUsd);
 
-        if (paymentIntent.metadata.creditsAmount) {
-            const userId = paymentIntent.metadata.userId;
-            const creditsAmount = parseInt(paymentIntent.metadata.creditsAmount);
-            const priceUsd = paymentIntent.amount / 100; // Convert from cents
+                // Add credits to user account using storage layer
+                await pool.query('UPDATE users SET ai_credits = ai_credits + $1, last_ai_credit_purchase = NOW() WHERE id = $2', [creditsAmount, userId]);
+                
+                // Log the purchase
+                await pool.query(`
+                    INSERT INTO ai_credit_purchases (id, user_id, credits_amount, price_usd, stripe_payment_intent_id, status, purchased_at)
+                    VALUES ($1, $2, $3, $4, $5, $6, NOW())
+                `, [
+                    require('crypto').randomUUID(),
+                    userId, 
+                    creditsAmount, 
+                    priceUsd.toString(),
+                    session.payment_intent,
+                    'completed'
+                ]);
 
-            // Add credits to user account
-            pool.query('UPDATE users SET ai_credits = ai_credits + $1 WHERE id = $2', [creditsAmount, userId])
-                .then(() => {
-                    console.log(`✅ Added ${creditsAmount} AI credits to user ${userId} via Stripe payment`);
-                    // Log the transaction
-                    return pool.query(`
-                        INSERT INTO ai_credit_transactions (user_id, amount, operation, details, created_at)
-                        VALUES ($1, $2, $3, $4, NOW())
-                    `, [userId, creditsAmount, 'purchase', `Stripe payment: ${paymentIntent.id} - $${priceUsd}`]);
-                })
-                .catch(error => {
-                    console.error('❌ Failed to add AI credits:', error);
-                });
+                console.log(`✅ Added ${creditsAmount} AI credits to user ${userId} via Stripe payment (${session.id})`);
+            }
         }
-    }
 
-    res.json({received: true});
+        // Handle payment success for existing functionality
+        if (event.type === 'payment_intent.succeeded') {
+            const paymentIntent = event.data.object;
+            console.log('Payment succeeded:', paymentIntent.id);
+        }
+
+        res.json({received: true});
+    } catch (error) {
+        console.error('Webhook processing error:', error);
+        res.status(500).json({ error: 'Webhook processing failed' });
+    }
 });
 
 // 🤖 AI-POWERED FEATURES FOR SUBSCRIBERS
@@ -4006,6 +4023,160 @@ app.post('/api/create-invoice', isAuthenticated, async (req, res) => {
     } catch (error) {
         console.error('Error creating invoice:', error);
         res.status(500).json({ error: 'Failed to create invoice: ' + error.message });
+    }
+});
+
+// AI Assistant API Routes
+app.get('/api/ai/credits', isAuthenticated, async (req, res) => {
+    try {
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
+        
+        const credits = await getUserAiCredits(userId);
+        
+        res.json({
+            success: true,
+            credits: credits,
+            userId: userId
+        });
+    } catch (error) {
+        console.error('Error fetching AI credits:', error);
+        res.status(500).json({ error: 'Failed to fetch AI credits' });
+    }
+});
+
+app.get('/api/ai/credit-bundles', isAuthenticated, async (req, res) => {
+    try {
+        const bundles = await aiService.getCreditBundles();
+        res.json({
+            success: true,
+            bundles: bundles
+        });
+    } catch (error) {
+        console.error('Error fetching credit bundles:', error);
+        res.status(500).json({ error: 'Failed to fetch credit bundles' });
+    }
+});
+
+app.post('/api/ai/purchase-credits', isAuthenticated, async (req, res) => {
+    try {
+        const { credits, priceUsd } = req.body;
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
+        
+        if (!credits || !priceUsd) {
+            return res.status(400).json({ error: 'Credits amount and price required' });
+        }
+
+        // Create Stripe payment session for AI credits
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            line_items: [{
+                price_data: {
+                    currency: 'usd',
+                    product_data: {
+                        name: `AI Credits - ${credits.toLocaleString()} tokens`,
+                        description: 'AI-powered website building assistance'
+                    },
+                    unit_amount: Math.round(priceUsd * 100) // Convert to cents
+                },
+                quantity: 1
+            }],
+            mode: 'payment',
+            success_url: `${req.protocol}://${req.get('host')}/website-builder?credits_purchased=true`,
+            cancel_url: `${req.protocol}://${req.get('host')}/website-builder`,
+            metadata: {
+                userId: userId,
+                credits: credits.toString(),
+                priceUsd: priceUsd.toString(),
+                type: 'ai_credits'
+            }
+        });
+
+        res.json({
+            success: true,
+            checkoutUrl: session.url,
+            sessionId: session.id
+        });
+    } catch (error) {
+        console.error('Error creating AI credits purchase:', error);
+        res.status(500).json({ error: 'Failed to create purchase session' });
+    }
+});
+
+app.post('/api/ai/generate-content', isAuthenticated, async (req, res) => {
+    try {
+        const { prompt, requestType = 'content_generation' } = req.body;
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
+        
+        if (!prompt) {
+            return res.status(400).json({ error: 'Prompt is required' });
+        }
+
+        const result = await aiService.generateContent(userId, prompt, requestType);
+        
+        res.json(result);
+    } catch (error) {
+        console.error('Error generating AI content:', error);
+        res.status(500).json({ error: 'Failed to generate content' });
+    }
+});
+
+app.post('/api/ai/generate-page-content', isAuthenticated, async (req, res) => {
+    try {
+        const { businessInfo } = req.body;
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
+        
+        if (!businessInfo) {
+            return res.status(400).json({ error: 'Business information is required' });
+        }
+
+        const result = await aiService.generatePageContent(userId, businessInfo);
+        
+        res.json(result);
+    } catch (error) {
+        console.error('Error generating page content:', error);
+        res.status(500).json({ error: 'Failed to generate page content' });
+    }
+});
+
+app.post('/api/ai/improve-seo', isAuthenticated, async (req, res) => {
+    try {
+        const { currentContent, targetKeywords = [] } = req.body;
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
+        
+        if (!currentContent) {
+            return res.status(400).json({ error: 'Current content is required' });
+        }
+
+        const result = await aiService.improveSEO(userId, currentContent, targetKeywords);
+        
+        res.json(result);
+    } catch (error) {
+        console.error('Error improving SEO:', error);
+        res.status(500).json({ error: 'Failed to improve SEO' });
+    }
+});
+
+app.post('/api/ai/generate-alt-text', isAuthenticated, async (req, res) => {
+    try {
+        const { imageDescription, context } = req.body;
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
+        
+        if (!imageDescription) {
+            return res.status(400).json({ error: 'Image description is required' });
+        }
+
+        const result = await aiService.generateImageAltText(userId, imageDescription, context || '');
+        
+        res.json(result);
+    } catch (error) {
+        console.error('Error generating alt text:', error);
+        res.status(500).json({ error: 'Failed to generate alt text' });
     }
 });
 
