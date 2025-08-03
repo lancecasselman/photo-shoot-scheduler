@@ -159,7 +159,17 @@ function isRAWFile(filename, mimetype) {
         '.mos',                     // Leaf RAW
         '.mrw',                     // Minolta RAW
         '.raw', '.rwz',             // Generic RAW
-        '.x3f'                      // Sigma RAW
+        '.x3f',                     // Sigma RAW
+        // Video formats that photographers use
+        '.mov', '.mp4', '.avi', '.mkv', '.wmv', '.m4v',
+        // High-quality video formats  
+        '.mxf', '.r3d', '.braw', '.prores',
+        // Audio formats for audio recording
+        '.wav', '.flac', '.aiff', '.m4a', '.mp3',
+        // Document formats for contracts, releases, etc.
+        '.pdf', '.doc', '.docx', '.txt',
+        // Adobe files
+        '.psd', '.ai', '.indd', '.eps'
     ];
 
     const lowerFilename = filename.toLowerCase();
@@ -176,7 +186,26 @@ function isRAWFile(filename, mimetype) {
         'image/x-pentax-pef',
         'image/x-panasonic-rw2',
         'image/x-adobe-dng',
-        'image/tiff' // Sometimes RAW files are detected as TIFF
+        'image/tiff', // Sometimes RAW files are detected as TIFF
+        // Video mime types
+        'video/quicktime',
+        'video/mp4',
+        'video/x-msvideo',
+        'video/x-matroska',
+        // Audio mime types
+        'audio/wav',
+        'audio/flac',
+        'audio/aiff',
+        'audio/x-m4a',
+        'audio/mpeg',
+        // Document mime types
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'text/plain',
+        // Adobe mime types
+        'image/vnd.adobe.photoshop',
+        'application/postscript'
     ];
 
     const isRawMime = rawMimeTypes.includes(mimetype);
@@ -1359,11 +1388,8 @@ const upload = multer({
     },
     fileFilter: (req, file, cb) => {
         console.log(` File filter check: ${file.originalname} (${file.mimetype})`);
-        if (file.mimetype.startsWith('image/')) {
-            cb(null, true);
-        } else {
-            cb(new Error('Only image files are allowed!'), false);
-        }
+        // Accept all file types - photographers need to store RAW files, videos, documents, etc.
+        cb(null, true);
     }
 });
 
@@ -1575,11 +1601,26 @@ app.post('/api/sessions/:id/upload-photos', isAuthenticated, (req, res) => {
                 const originalPath = file.path;
                 const originalSize = file.size;
 
-                // Create optimized version for app display if file is large
+                // Create optimized version for app display if file is an image and large
                 let displayPath = originalPath;
                 let optimizedSize = originalSize;
+                let fileType = 'other';
 
-                if (file.size > 2 * 1024 * 1024) { // 2MB threshold
+                // Determine file type
+                if (file.mimetype.startsWith('image/')) {
+                    fileType = 'image';
+                } else if (file.mimetype.startsWith('video/')) {
+                    fileType = 'video';
+                } else if (file.mimetype.startsWith('audio/')) {
+                    fileType = 'audio';
+                } else if (file.mimetype === 'application/pdf') {
+                    fileType = 'pdf';
+                } else if (file.mimetype.includes('document') || file.mimetype.includes('text')) {
+                    fileType = 'document';
+                }
+
+                // Only optimize images that are large
+                if (fileType === 'image' && file.size > 2 * 1024 * 1024) { // 2MB threshold
                     try {
                         const sharp = require('sharp');
                         const optimizedFilename = `optimized_${file.filename}`;
@@ -1596,10 +1637,12 @@ app.post('/api/sessions/:id/upload-photos', isAuthenticated, (req, res) => {
                         displayPath = optimizedPath;
                         optimizedSize = fs.statSync(optimizedPath).size;
 
-                        console.log(`File optimized: ${(originalSize / 1024 / 1024).toFixed(1)}MB → ${(optimizedSize / 1024 / 1024).toFixed(1)}MB`);
+                        console.log(`Image optimized: ${(originalSize / 1024 / 1024).toFixed(1)}MB → ${(optimizedSize / 1024 / 1024).toFixed(1)}MB`);
                     } catch (optimizeError) {
-                        console.log(`Optimization failed, using original: ${optimizeError.message}`);
+                        console.log(`Image optimization failed, using original: ${optimizeError.message}`);
                     }
+                } else {
+                    console.log(`File type: ${fileType} - no optimization needed`);
                 }
 
                 // Detect RAW files for R2 backup
@@ -1617,6 +1660,7 @@ app.post('/api/sessions/:id/upload-photos', isAuthenticated, (req, res) => {
                     needsFirebaseUpload: true, // Flag for background Firebase upload
                     isRawFile: isRawFile,
                     mimeType: file.mimetype,
+                    fileType: fileType,
                     userId: userId
                 };
 

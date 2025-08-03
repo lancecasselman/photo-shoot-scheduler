@@ -1120,6 +1120,30 @@
             align-items: center;
             justify-content: center;
         }
+
+        .file-icon {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            background: #f1f3f4;
+            border-radius: 4px;
+        }
+
+        .file-type-badge {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: rgba(212, 175, 55, 0.9);
+            color: white;
+            font-size: 0.6rem;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 4px;
+            z-index: 10;
+        }
         
         .file-progress-item {
             display: flex;
@@ -3960,10 +3984,10 @@
             </div>
             
             <div class="upload-area" id="uploadArea">
-                <p>Click here or drag photos to upload</p>
-                <p style="font-size: 0.9em; color: #718096; margin-top: 10px;">Supports unlimited photos of any size - JPG, PNG, RAW files welcome!</p>
+                <p>Click here or drag files to upload</p>
+                <p style="font-size: 0.9em; color: #718096; margin-top: 10px;">Supports all file types - photos, RAW files, videos, documents, audio files!</p>
             </div>
-            <input type="file" id="fileInput" multiple accept="image/*" style="display: none;">
+            <input type="file" id="fileInput" multiple style="display: none;">
             <div id="uploadProgress" style="margin: 20px 0;">
                 <div id="filePreview" style="margin-bottom: 15px;"></div>
                 
@@ -4466,7 +4490,7 @@
         function handleDrop(e) {
             e.preventDefault();
             e.currentTarget.classList.remove('dragover');
-            const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+            const files = Array.from(e.dataTransfer.files); // Accept all file types
             if (files.length > 0) {
                 selectedFiles = files;
                 showFilePreview(files);
@@ -4477,7 +4501,7 @@
         let selectedFiles = [];
 
         function handleFileSelect(e) {
-            const files = Array.from(e.target.files).filter(file => file.type.startsWith('image/'));
+            const files = Array.from(e.target.files); // Accept all file types
             if (files.length > 0) {
                 selectedFiles = files;
                 showFilePreview(files);
@@ -4498,15 +4522,23 @@
             const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(1);
             
             filePreview.innerHTML = `
-                <h4>Selected Photos (${files.length}) - ${totalSizeMB}MB Total</h4>
+                <h4>Selected Files (${files.length}) - ${totalSizeMB}MB Total</h4>
                 <div class="file-preview-grid">
                     ${files.map((file, index) => {
                         const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
+                        const fileType = getFileType(file);
+                        const fileIcon = getFileIcon(fileType);
+                        
                         return `
                             <div class="file-preview-item">
-                                <img src="${URL.createObjectURL(file)}" alt="Preview">
+                                ${fileType === 'image' ? 
+                                    `<img src="${URL.createObjectURL(file)}" alt="Preview">` :
+                                    `<div class="file-icon">${fileIcon}</div>`
+                                }
+                                <div class="file-type-badge">${fileType.toUpperCase()}</div>
                                 <button class="file-preview-remove" onclick="removeFile(${index})">&times;</button>
                                 <div style="font-size: 0.7em; color: #666; margin-top: 2px;">${fileSizeMB}MB</div>
+                                <div style="font-size: 0.6em; color: #888; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${file.name}">${file.name}</div>
                             </div>
                         `;
                     }).join('')}
@@ -4520,6 +4552,28 @@
         function removeFile(index) {
             selectedFiles.splice(index, 1);
             showFilePreview(selectedFiles);
+        }
+
+        // Helper functions for file type detection and icons
+        function getFileType(file) {
+            if (file.type.startsWith('image/')) return 'image';
+            if (file.type.startsWith('video/')) return 'video';
+            if (file.type.startsWith('audio/')) return 'audio';
+            if (file.type === 'application/pdf') return 'pdf';
+            if (file.type.includes('document') || file.type.includes('text')) return 'document';
+            return 'other';
+        }
+
+        function getFileIcon(fileType) {
+            const icons = {
+                image: '🖼️',
+                video: '🎬',
+                audio: '🎵',
+                pdf: '📄',
+                document: '📝',
+                other: '📁'
+            };
+            return icons[fileType] || icons.other;
         }
 
         // Search ENHANCED CLIENT MANAGEMENT FUNCTIONS

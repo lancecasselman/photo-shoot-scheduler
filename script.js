@@ -290,7 +290,7 @@ function createSessionCard(session) {
 
     const uploadBtn = document.createElement('button');
     uploadBtn.className = 'btn btn-secondary upload-photos-btn';
-    uploadBtn.textContent = '📸 Upload Photos';
+    uploadBtn.textContent = '📁 Upload Files';
     uploadBtn.onclick = () => openUploadDialog(session.id);
     // Remove inline styles that interfere with responsive design
     uploadBtn.style.backgroundColor = '#6b7280'; // Gray background
@@ -1289,12 +1289,9 @@ function setupUploadModal(sessionId) {
     
     function handleFileSelection(files) {
         selectedFiles = Array.from(files).filter(file => {
-            if (!file.type.startsWith('image/')) {
-                showMessage(`${file.name} is not an image file`, 'error');
-                return false;
-            }
-            if (file.size > 10 * 1024 * 1024) {
-                showMessage(`${file.name} is too large (max 10MB)`, 'error');
+            // Accept all file types - no restrictions for photographers
+            if (file.size > 100 * 1024 * 1024 * 1024) { // 100GB limit (extremely high)
+                showMessage(`${file.name} is too large (max 100GB)`, 'error');
                 return false;
             }
             return true;
@@ -1310,7 +1307,7 @@ function setupUploadModal(sessionId) {
         
         // Enable/disable upload button
         uploadBtn.disabled = selectedFiles.length === 0;
-        uploadBtn.textContent = selectedFiles.length > 0 ? `Upload ${selectedFiles.length} Photos` : 'Upload Photos';
+        uploadBtn.textContent = selectedFiles.length > 0 ? `Upload ${selectedFiles.length} Files` : 'Upload Files';
     }
     
     function updateUploadPreview() {
@@ -1339,7 +1336,7 @@ function setupUploadModal(sessionId) {
                 selectedFiles.splice(index, 1);
                 updateUploadPreview();
                 uploadBtn.disabled = selectedFiles.length === 0;
-                uploadBtn.textContent = selectedFiles.length > 0 ? `Upload ${selectedFiles.length} Photos` : 'Upload Photos';
+                uploadBtn.textContent = selectedFiles.length > 0 ? `Upload ${selectedFiles.length} Files` : 'Upload Files';
             };
             
             previewItem.appendChild(img);
