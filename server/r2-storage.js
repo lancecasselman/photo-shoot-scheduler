@@ -18,6 +18,14 @@ class R2StorageService {
         secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY,
       },
       forcePathStyle: true,
+      tls: true,
+      // Add additional configuration for private bucket access
+      requestHandler: {
+        requestTimeout: 60000,
+        httpsAgent: {
+          maxSockets: 25,
+        }
+      }
     });
     
     console.log(`R2 endpoint: ${endpoint}`);
@@ -205,7 +213,8 @@ class R2StorageService {
         Prefix: prefix
       };
 
-      const result = await this.s3.listObjectsV2(listParams).promise();
+      const command = new ListObjectsV2Command(listParams);
+      const result = await this.s3Client.send(command);
       
       return result.Contents.map(obj => ({
         key: obj.Key,
@@ -260,7 +269,8 @@ class R2StorageService {
    */
   async testConnection() {
     try {
-      await this.s3.headBucket({ Bucket: this.bucketName }).promise();
+      const command = new HeadBucketCommand({ Bucket: this.bucketName });
+      await this.s3Client.send(command);
       console.log('R2 connection successful');
       return true;
     } catch (error) {
