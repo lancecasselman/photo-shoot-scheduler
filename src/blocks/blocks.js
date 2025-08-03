@@ -118,6 +118,56 @@ const blockLibrary = [
                 </div>
             </div>
         `
+    },
+    {
+        id: 'image-gallery',
+        name: 'Image Gallery',
+        category: 'media',
+        html: `
+            <div class="block gallery-block" contenteditable="false" style="padding: 60px 20px;">
+                <div style="max-width: 1200px; margin: 0 auto; text-align: center;">
+                    <h2 contenteditable="true" style="font-size: 36px; margin-bottom: 50px; color: #2c3e50;">Gallery</h2>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                        <img contenteditable="false" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'><rect width='400' height='300' fill='%23f8f9fa' stroke='%23dee2e6' stroke-width='2'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%236c757d' font-size='16'>Click to upload image</text></svg>" style="width: 100%; height: 300px; object-fit: cover; border-radius: 8px;" alt="Gallery Image 1">
+                        <img contenteditable="false" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'><rect width='400' height='300' fill='%23f8f9fa' stroke='%23dee2e6' stroke-width='2'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%236c757d' font-size='16'>Click to upload image</text></svg>" style="width: 100%; height: 300px; object-fit: cover; border-radius: 8px;" alt="Gallery Image 2">
+                        <img contenteditable="false" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'><rect width='400' height='300' fill='%23f8f9fa' stroke='%23dee2e6' stroke-width='2'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%236c757d' font-size='16'>Click to upload image</text></svg>" style="width: 100%; height: 300px; object-fit: cover; border-radius: 8px;" alt="Gallery Image 3">
+                        <img contenteditable="false" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'><rect width='400' height='300' fill='%23f8f9fa' stroke='%23dee2e6' stroke-width='2'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%236c757d' font-size='16'>Click to upload image</text></svg>" style="width: 100%; height: 300px; object-fit: cover; border-radius: 8px;" alt="Gallery Image 4">
+                    </div>
+                </div>
+            </div>
+        `
+    },
+    {
+        id: 'testimonial-with-photo',
+        name: 'Testimonial with Photo',
+        category: 'content',
+        html: `
+            <div class="block testimonial-block" contenteditable="false" style="padding: 60px 20px; background: #f8f9fa;">
+                <div style="max-width: 800px; margin: 0 auto; text-align: center;">
+                    <img contenteditable="false" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'><circle cx='60' cy='60' r='58' fill='%23f8f9fa' stroke='%23dee2e6' stroke-width='4'/><text x='50%' y='45%' dominant-baseline='middle' text-anchor='middle' fill='%236c757d' font-size='12'>Upload</text><text x='50%' y='65%' dominant-baseline='middle' text-anchor='middle' fill='%236c757d' font-size='12'>Photo</text></svg>" style="width: 120px; height: 120px; border-radius: 50%; margin-bottom: 30px;" alt="Customer Photo">
+                    <blockquote contenteditable="true" style="font-size: 20px; font-style: italic; color: #555; margin-bottom: 20px; line-height: 1.6;">"This service exceeded all my expectations. The team was professional, responsive, and delivered outstanding results."</blockquote>
+                    <h4 contenteditable="true" style="color: #2c3e50; margin-bottom: 5px;">Sarah Johnson</h4>
+                    <p contenteditable="true" style="color: #777; font-size: 14px;">CEO, Johnson Marketing</p>
+                </div>
+            </div>
+        `
+    },
+    {
+        id: 'service-card',
+        name: 'Service Card',
+        category: 'content',
+        html: `
+            <div class="block service-card-block" contenteditable="false" style="padding: 40px 20px;">
+                <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); overflow: hidden;">
+                    <img contenteditable="false" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='250' viewBox='0 0 600 250'><rect width='600' height='250' fill='%23f8f9fa' stroke='%23dee2e6' stroke-width='2'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%236c757d' font-size='18'>Click to upload service image</text></svg>" style="width: 100%; height: 250px; object-fit: cover;" alt="Service Image">
+                    <div style="padding: 30px;">
+                        <h3 contenteditable="true" style="font-size: 24px; margin-bottom: 15px; color: #2c3e50;">Professional Service</h3>
+                        <p contenteditable="true" style="color: #555; line-height: 1.6; margin-bottom: 20px;">Detailed description of your professional service and how it benefits your clients. Highlight key features and advantages.</p>
+                        <button contenteditable="true" style="background: #3498db; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 16px;">Learn More</button>
+                    </div>
+                </div>
+            </div>
+        `
     }
 ];
 

@@ -171,6 +171,12 @@ function loadPageContent(pageId) {
         if (typeof reinitializeBlocks === 'function') {
             reinitializeBlocks();
         }
+        
+        // Setup image placeholders for loaded blocks
+        if (typeof setupImagePlaceholders === 'function') {
+            const blocks = blocksContainer.querySelectorAll('.block');
+            blocks.forEach(block => setupImagePlaceholders(block));
+        }
     }
 }
 

@@ -193,6 +193,9 @@ function insertBlock(block) {
     // Close the library modal
     closeBlockLibrary();
     
+    // Setup image placeholders in the inserted block
+    setupImagePlaceholders(blockElement);
+    
     // Add animation
     blockElement.classList.add('new');
     setTimeout(() => blockElement.classList.remove('new'), 300);
@@ -297,6 +300,164 @@ function handleDragEnd(e) {
         setTimeout(() => saveUndoState(), 100);
     }
 }
+
+// Setup image placeholders for clickable upload
+function setupImagePlaceholders(container) {
+    // Find all image placeholders (SVG data URLs containing "Click to upload image")
+    const images = container.querySelectorAll('img');
+    
+    images.forEach(img => {
+        if (isImagePlaceholder(img)) {
+            setupImagePlaceholderClick(img);
+        }
+    });
+}
+
+// Check if an image is a placeholder
+function isImagePlaceholder(img) {
+    const src = img.src;
+    return src.includes('data:image/svg+xml') && 
+           (src.includes('Click to upload image') || src.includes('Upload') || src.includes('upload'));
+}
+
+// Setup click handler for image placeholder
+function setupImagePlaceholderClick(img) {
+    // Add visual styling to indicate it's clickable
+    img.style.cursor = 'pointer';
+    img.style.border = '2px dashed #dee2e6';
+    img.style.borderRadius = '8px';
+    img.style.transition = 'all 0.3s ease';
+    
+    // Add hover effect
+    img.addEventListener('mouseenter', () => {
+        img.style.borderColor = '#007bff';
+        img.style.opacity = '0.8';
+    });
+    
+    img.addEventListener('mouseleave', () => {
+        img.style.borderColor = '#dee2e6';
+        img.style.opacity = '1';
+    });
+    
+    // Add click handler for upload
+    img.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openImageUploadForPlaceholder(img);
+    });
+    
+    // Mark as placeholder for future reference
+    img.dataset.placeholder = 'true';
+}
+
+// Open image upload for a specific placeholder
+function openImageUploadForPlaceholder(placeholderImg) {
+    // Create a temporary file input
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.jpg,.jpeg,.png,.webp';
+    fileInput.style.display = 'none';
+    
+    fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        try {
+            // Show loading state
+            const originalSrc = placeholderImg.src;
+            placeholderImg.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="500" height="300" viewBox="0 0 500 300"><rect width="500" height="300" fill="#f8f9fa" stroke="#dee2e6" stroke-width="2"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#6c757d" font-size="18">Uploading...</text></svg>';
+            
+            // Upload using existing server endpoint
+            const uploadResult = await uploadImageToServer(file);
+            
+            if (uploadResult && uploadResult.downloadURL) {
+                // Replace placeholder with uploaded image
+                replacePlaceholderWithImage(placeholderImg, uploadResult.downloadURL, file.name);
+            } else {
+                throw new Error('Upload failed');
+            }
+            
+        } catch (error) {
+            console.error('Image upload failed:', error);
+            
+            // Restore original placeholder
+            placeholderImg.src = originalSrc;
+            alert('Image upload failed. Please try again.');
+        }
+        
+        // Clean up
+        document.body.removeChild(fileInput);
+    });
+    
+    // Trigger file selection
+    document.body.appendChild(fileInput);
+    fileInput.click();
+}
+
+// Upload image using existing server logic
+async function uploadImageToServer(file) {
+    const formData = new FormData();
+    formData.append('image', file);
+    
+    const response = await fetch('/api/upload/builder-image', {
+        method: 'POST',
+        body: formData
+    });
+    
+    if (!response.ok) {
+        throw new Error(`Upload failed: ${response.status}`);
+    }
+    
+    return await response.json();
+}
+
+// Replace placeholder with actual image
+function replacePlaceholderWithImage(placeholderImg, imageUrl, fileName) {
+    // Update the image source
+    placeholderImg.src = imageUrl;
+    placeholderImg.alt = fileName || 'Uploaded image';
+    
+    // Remove placeholder styling
+    placeholderImg.style.cursor = 'default';
+    placeholderImg.style.border = 'none';
+    placeholderImg.dataset.placeholder = 'false';
+    
+    // Remove hover effects
+    placeholderImg.replaceWith(placeholderImg.cloneNode(true));
+    
+    // Add image resize functionality if available
+    if (typeof setupImageResize === 'function') {
+        setupImageResize(placeholderImg);
+    }
+    
+    // Save state for undo/redo
+    if (typeof saveUndoState === 'function') {
+        setTimeout(() => saveUndoState(), 200);
+    }
+    
+    console.log('Placeholder replaced with uploaded image:', imageUrl);
+}
+
+// Reinitialize blocks after loading (for multi-page support)
+function reinitializeBlocks() {
+    const builderContainer = document.getElementById('blocks');
+    if (!builderContainer) return;
+    
+    // Setup image placeholders for all blocks
+    const blocks = builderContainer.querySelectorAll('.block');
+    blocks.forEach(block => {
+        setupImagePlaceholders(block);
+        
+        // Ensure drag and drop is setup
+        if (!block.draggable) {
+            block.draggable = true;
+            setupBlockDragEvents(block);
+        }
+    });
+}
+
+// Make reinitializeBlocks available globally for multi-page support
+window.reinitializeBlocks = reinitializeBlocks;
 
 // Update drag indicator position
 function updateDragIndicator(e) {
