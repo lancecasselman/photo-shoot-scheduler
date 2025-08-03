@@ -42,13 +42,6 @@ function generatePreviewHTML() {
     // Get all pages data
     const pagesData = pages || {};
     const navOrder = navigationOrder || Object.keys(pagesData);
-    const navLabels = navigationLabels || {};
-    
-    // Generate navigation HTML
-    const navigationHTML = navOrder.map(pageId => {
-        const label = navLabels[pageId] || pagesData[pageId]?.name || pageId;
-        return `<a href="#" onclick="showPage('${pageId}')" class="nav-link" data-page="${pageId}">${label}</a>`;
-    }).join('');
     
     // Generate pages HTML
     const pagesHTML = Object.entries(pagesData).map(([pageId, pageData]) => {
@@ -89,49 +82,13 @@ function generatePreviewHTML() {
             color: #333;
         }
         
-        /* Navigation Styles */
-        .preview-navigation {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid #eee;
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-            z-index: 1000;
-        }
-        
-        .nav-link {
-            text-decoration: none;
-            color: #333;
-            font-weight: 500;
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-        
-        .nav-link:hover {
-            background: #f5f5f5;
-            color: #007bff;
-        }
-        
-        .nav-link.active {
-            background: #007bff;
-            color: white;
-        }
-        
         /* Content Styles */
         .preview-content {
-            margin-top: 80px;
+            margin-top: 0;
         }
         
         .page-content {
-            min-height: calc(100vh - 80px);
+            min-height: 100vh;
         }
         
         /* Make buttons and links functional */
@@ -161,15 +118,8 @@ function generatePreviewHTML() {
         
         /* Responsive design */
         @media (max-width: 768px) {
-            .preview-navigation {
-                padding: 1rem;
-                gap: 1rem;
-                flex-wrap: wrap;
-            }
-            
-            .nav-link {
-                padding: 0.4rem 0.8rem;
-                font-size: 0.9rem;
+            .preview-content {
+                margin-top: 0;
             }
         }
         
@@ -188,78 +138,25 @@ function generatePreviewHTML() {
     </style>
 </head>
 <body>
-    <nav class="preview-navigation">
-        ${navigationHTML}
-    </nav>
-    
     <div class="preview-content">
         ${pagesHTML}
     </div>
     
     <script>
-        let currentPageId = '${navOrder[0] || 'home'}';
-        
-        function showPage(pageId) {
-            // Hide all pages
-            document.querySelectorAll('.page-content').forEach(page => {
-                page.style.display = 'none';
-            });
-            
-            // Show selected page
-            const targetPage = document.getElementById('page-' + pageId);
-            if (targetPage) {
-                targetPage.style.display = 'block';
-                currentPageId = pageId;
-            }
-            
-            // Update navigation
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.classList.remove('active');
-            });
-            
-            const activeLink = document.querySelector('.nav-link[data-page="' + pageId + '"]');
-            if (activeLink) {
-                activeLink.classList.add('active');
-            }
-            
-            // Scroll to top
-            window.scrollTo(0, 0);
-        }
-        
-        // Initialize navigation
+        // Make buttons functional with visual feedback
         document.addEventListener('DOMContentLoaded', function() {
-            // Set first nav item as active
-            const firstNavLink = document.querySelector('.nav-link');
-            if (firstNavLink) {
-                firstNavLink.classList.add('active');
-            }
-            
-            // Make buttons functional (basic interaction)
             document.querySelectorAll('button').forEach(button => {
                 if (!button.onclick) {
                     button.addEventListener('click', function(e) {
                         e.preventDefault();
                         
-                        // Basic button interactions
-                        const buttonText = this.textContent.toLowerCase();
+                        // Visual button feedback
+                        this.style.transform = 'scale(0.95)';
+                        setTimeout(() => {
+                            this.style.transform = '';
+                        }, 150);
                         
-                        if (buttonText.includes('portfolio') || buttonText.includes('gallery')) {
-                            showPage('portfolio');
-                        } else if (buttonText.includes('about')) {
-                            showPage('about');
-                        } else if (buttonText.includes('contact')) {
-                            showPage('contact');
-                        } else if (buttonText.includes('package') || buttonText.includes('pricing')) {
-                            showPage('packages');
-                        } else if (buttonText.includes('home')) {
-                            showPage('home');
-                        } else {
-                            // Generic button feedback
-                            this.style.transform = 'scale(0.95)';
-                            setTimeout(() => {
-                                this.style.transform = '';
-                            }, 150);
-                        }
+                        console.log('Button clicked:', this.textContent);
                     });
                 }
             });
