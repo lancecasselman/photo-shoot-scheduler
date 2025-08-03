@@ -759,6 +759,11 @@ class AIAssistant {
     }
 
     getBundleDescription(credits) {
+        // Use shared bundle description function if available
+        if (window.getBundleDescription) {
+            return window.getBundleDescription(credits);
+        }
+        // Fallback descriptions
         if (credits <= 1000) return 'basic content generation';
         if (credits <= 5000) return 'small websites';
         if (credits <= 10000) return 'medium websites';

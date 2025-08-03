@@ -157,13 +157,9 @@ Return only the alt text, no quotes or explanations.`;
   }
 
   async getCreditBundles() {
-    return [
-      { credits: 1000, price: 1.00, popular: false },
-      { credits: 5000, price: 4.99, popular: false },
-      { credits: 10000, price: 8.99, popular: true },
-      { credits: 25000, price: 19.99, popular: false },
-      { credits: 50000, price: 34.99, popular: false }
-    ];
+    // Use shared bundle definitions
+    const { AI_CREDIT_BUNDLES } = require('../shared/ai-credit-bundles');
+    return AI_CREDIT_BUNDLES;
   }
 }
 

@@ -41,6 +41,7 @@ const R2BackupService = require('./server/r2-backup');
 // Import AI services
 const { AIServices } = require('./server/ai-services');
 const { aiService } = require('./server/ai-service');
+const { AI_CREDIT_BUNDLES, isValidBundle } = require('./shared/ai-credit-bundles');
 
 // ZIP export dependencies
 const archiver = require('archiver');
@@ -4047,10 +4048,10 @@ app.get('/api/ai/credits', isAuthenticated, async (req, res) => {
 
 app.get('/api/ai/credit-bundles', isAuthenticated, async (req, res) => {
     try {
-        const bundles = await aiService.getCreditBundles();
+        // Return bundles from shared source of truth
         res.json({
             success: true,
-            bundles: bundles
+            bundles: AI_CREDIT_BUNDLES
         });
     } catch (error) {
         console.error('Error fetching credit bundles:', error);
@@ -4064,7 +4065,7 @@ app.post('/api/ai/purchase-credits', isAuthenticated, async (req, res) => {
         const normalizedUser = normalizeUserForLance(req.user);
         const userId = normalizedUser.uid;
         
-        console.log('🤖 AI Credits purchase request:', { 
+        console.log('AI Credits purchase request:', { 
             credits, 
             priceUsd, 
             userId,
@@ -4072,43 +4073,44 @@ app.post('/api/ai/purchase-credits', isAuthenticated, async (req, res) => {
             priceType: typeof priceUsd
         });
         
-        // Convert strings to numbers if needed
+        // Convert to numbers and validate types
         const creditsNum = parseInt(credits);
         const priceNum = parseFloat(priceUsd);
         
-        console.log('🔢 Converted values:', { creditsNum, priceNum });
+        console.log('Converted values:', { creditsNum, priceNum });
         
         if (!creditsNum || !priceNum || creditsNum <= 0 || priceNum <= 0) {
-            console.log('❌ Invalid purchase data after conversion');
+            console.log('Invalid purchase data after conversion');
             return res.status(400).json({ error: 'Valid credits amount and price required' });
         }
 
-        // Validate against available bundles with tolerance
-        const validBundles = [
-            { credits: 1000, price: 1.00 },
-            { credits: 5000, price: 4.99 },
-            { credits: 10000, price: 8.99 },
-            { credits: 25000, price: 19.99 },
-            { credits: 50000, price: 34.99 }
-        ];
-
-        const matchingBundle = validBundles.find(bundle => 
-            bundle.credits === creditsNum && Math.abs(bundle.price - priceNum) < 0.02
-        );
-
-        if (!matchingBundle) {
-            console.log('❌ No matching bundle found:', { 
+        // Debug: Show all bundles for comparison
+        console.log('Available bundles:', AI_CREDIT_BUNDLES);
+        console.log('Testing bundle validation with:', { creditsNum, priceNum });
+        
+        // Test each bundle individually
+        const validationResults = AI_CREDIT_BUNDLES.map(bundle => ({
+            bundle,
+            creditsMatch: bundle.credits === creditsNum,
+            priceMatch: Math.abs(bundle.price - priceNum) < 0.01,
+            priceDiff: Math.abs(bundle.price - priceNum)
+        }));
+        console.log('Validation results:', validationResults);
+        
+        // Validate against shared bundle definitions
+        if (!isValidBundle(creditsNum, priceNum)) {
+            console.log('Invalid credits package - not in allowed bundles:', { 
                 creditsNum, 
                 priceNum, 
-                availableBundles: validBundles
+                allowedBundles: AI_CREDIT_BUNDLES,
+                validationResults
             });
             return res.status(400).json({ 
-                error: 'Invalid credits package',
-                debug: { creditsNum, priceNum, validBundles }
+                error: 'Invalid credits package'
             });
         }
 
-        console.log('✅ Valid bundle found:', matchingBundle);
+        console.log('Valid bundle confirmed:', { creditsNum, priceNum });
 
         // Create Stripe payment session for AI credits
         console.log('💳 Creating Stripe session...');
