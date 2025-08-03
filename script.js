@@ -1369,7 +1369,7 @@ function setupUploadModal(sessionId) {
             // Remove old progress tracking - using HTML modal now
             console.log('Uploading photos...');
             
-            const response = await fetch(`/api/sessions/${sessionId}/photos`, {
+            const response = await fetch(`/api/sessions/${sessionId}/upload-photos`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${authToken}`
