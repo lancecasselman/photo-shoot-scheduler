@@ -456,15 +456,16 @@ class AIAssistant {
     async loadCredits() {
         try {
             const response = await fetch('/api/ai/credits', {
-                headers: {
-                    'Authorization': `Bearer ${window.authToken || ''}`
-                }
+                credentials: 'include'
             });
 
             if (response.ok) {
                 const data = await response.json();
                 this.credits = data.credits || 0;
                 this.updateCreditsDisplay();
+                console.log('AI Credits loaded:', this.credits);
+            } else {
+                console.error('Failed to load credits:', response.status, response.statusText);
             }
         } catch (error) {
             console.error('Failed to load AI credits:', error);
@@ -525,9 +526,9 @@ class AIAssistant {
             const response = await fetch('/api/ai/generate-content', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${window.authToken || ''}`
+                    'Content-Type': 'application/json'
                 },
+                credentials: 'include',
                 body: JSON.stringify({
                     prompt: prompt,
                     requestType: 'general_assistance'
@@ -650,9 +651,9 @@ class AIAssistant {
             const response = await fetch('/api/ai/generate-page-content', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${window.authToken || ''}`
+                    'Content-Type': 'application/json'
                 },
+                credentials: 'include',
                 body: JSON.stringify({ businessInfo })
             });
 
@@ -766,27 +767,40 @@ class AIAssistant {
     }
 
     async purchaseCredits(credits, price) {
+        console.log('Attempting to purchase:', credits, 'credits for $', price);
+        
         try {
             const response = await fetch('/api/ai/purchase-credits', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${window.authToken || ''}`
+                    'Content-Type': 'application/json'
                 },
+                credentials: 'include',
                 body: JSON.stringify({ credits, priceUsd: price })
             });
 
-            const result = await response.json();
+            console.log('Purchase response status:', response.status);
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Purchase failed with error:', errorText);
+                alert(`Purchase failed: ${response.status} ${response.statusText}`);
+                return;
+            }
 
-            if (result.success) {
-                // Redirect to Stripe Checkout
+            const result = await response.json();
+            console.log('Purchase result:', result);
+
+            if (result.success && result.checkoutUrl) {
+                console.log('Redirecting to Stripe checkout:', result.checkoutUrl);
                 window.location.href = result.checkoutUrl;
             } else {
-                alert('Failed to initiate purchase. Please try again.');
+                console.error('Purchase result error:', result);
+                alert(result.error || 'Failed to initiate purchase. Please try again.');
             }
         } catch (error) {
-            console.error('Purchase failed:', error);
-            alert('Failed to initiate purchase. Please try again.');
+            console.error('Purchase request failed:', error);
+            alert('Network error. Please check your connection and try again.');
         }
     }
 
