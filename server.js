@@ -4016,72 +4016,30 @@ app.get('/api/ai/credit-bundles', isAuthenticated, async (req, res) => {
     }
 });
 
-app.post('/api/ai/purchase-credits', (req, res, next) => {
-    console.log('=== PURCHASE CREDITS ENDPOINT HIT ===');
-    console.log('Request URL:', req.url);
-    console.log('Request method:', req.method);
-    console.log('Session exists:', !!req.session);
-    console.log('User in session:', !!req.session?.user);
-    next();
-}, isAuthenticated, async (req, res) => {
+app.post('/api/ai/purchase-credits', isAuthenticated, async (req, res) => {
     try {
-        console.log('=== AI CREDITS PURCHASE REQUEST START ===');
-        console.log('Request body:', req.body);
-        console.log('User:', req.user);
-        
         const { credits, priceUsd } = req.body;
         const normalizedUser = normalizeUserForLance(req.user);
         const userId = normalizedUser.uid;
-        
-        console.log('AI Credits purchase request:', { 
-            credits, 
-            priceUsd, 
-            userId,
-            creditsType: typeof credits,
-            priceType: typeof priceUsd
-        });
         
         // Convert to numbers and validate types
         const creditsNum = parseInt(credits);
         const priceNum = parseFloat(priceUsd);
         
-        console.log('Converted values:', { creditsNum, priceNum });
-        
         if (!creditsNum || !priceNum || creditsNum <= 0 || priceNum <= 0) {
-            console.log('Invalid purchase data after conversion');
             return res.status(400).json({ error: 'Valid credits amount and price required' });
         }
 
-        // Debug: Show all bundles for comparison
-        console.log('Available bundles:', AI_CREDIT_BUNDLES);
-        console.log('Testing bundle validation with:', { creditsNum, priceNum });
-        
-        // Test each bundle individually
-        const validationResults = AI_CREDIT_BUNDLES.map(bundle => ({
-            bundle,
-            creditsMatch: bundle.credits === creditsNum,
-            priceMatch: Math.abs(bundle.price - priceNum) < 0.01,
-            priceDiff: Math.abs(bundle.price - priceNum)
-        }));
-        console.log('Validation results:', validationResults);
+        // Validate against shared bundle definitions
         
         // Validate against shared bundle definitions
         if (!isValidBundle(creditsNum, priceNum)) {
-            console.log('Invalid credits package - not in allowed bundles:', { 
-                creditsNum, 
-                priceNum, 
-                allowedBundles: AI_CREDIT_BUNDLES,
-                validationResults
-            });
             return res.status(400).json({ 
                 error: 'Invalid credits package'
             });
         }
 
-        console.log('Valid bundle confirmed:', { creditsNum, priceNum });
-
         // Create Stripe payment session for AI credits
-        console.log('💳 Creating Stripe session...');
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: [{
@@ -4105,11 +4063,6 @@ app.post('/api/ai/purchase-credits', (req, res, next) => {
                 type: 'ai_credits'
             }
         });
-
-        console.log('✅ Stripe session created:', session.id);
-
-        console.log('Stripe session created successfully:', session.id);
-        console.log('=== AI CREDITS PURCHASE REQUEST END ===');
         
         res.json({
             success: true,
@@ -4117,9 +4070,7 @@ app.post('/api/ai/purchase-credits', (req, res, next) => {
             sessionId: session.id
         });
     } catch (error) {
-        console.error('=== ERROR creating AI credits purchase ===');
-        console.error('Error details:', error);
-        console.error('Stack trace:', error.stack);
+        console.error('Error creating AI credits purchase:', error);
         res.status(500).json({ error: 'Failed to create purchase session' });
     }
 });
