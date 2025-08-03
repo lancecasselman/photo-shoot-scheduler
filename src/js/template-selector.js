@@ -40,20 +40,21 @@ function addPrebuiltButton() {
             box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
         `;
         
-        // Remove any existing click handlers
-        existingButton.removeEventListener('click', existingButton.clickHandler);
+        // Remove any existing click handlers more thoroughly
+        const newButton = existingButton.cloneNode(true);
+        existingButton.parentNode.replaceChild(newButton, existingButton);
         
-        // Add new click handler
-        existingButton.clickHandler = openTemplateSelectorModal;
-        existingButton.addEventListener('click', existingButton.clickHandler);
+        // Add new click handler to the cloned button
+        newButton.clickHandler = openTemplateSelectorModal;
+        newButton.addEventListener('click', newButton.clickHandler);
         
-        // Add hover effects
-        existingButton.addEventListener('mouseenter', function() {
+        // Add hover effects to the new button
+        newButton.addEventListener('mouseenter', function() {
             this.style.transform = 'translateY(-2px)';
             this.style.boxShadow = '0 6px 20px rgba(108, 92, 231, 0.4)';
         });
         
-        existingButton.addEventListener('mouseleave', function() {
+        newButton.addEventListener('mouseleave', function() {
             this.style.transform = 'translateY(0)';
             this.style.boxShadow = '0 4px 15px rgba(108, 92, 231, 0.3)';
         });

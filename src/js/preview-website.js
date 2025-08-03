@@ -50,6 +50,12 @@ function generatePreviewHTML() {
         return `<a href="#" onclick="showPage('${pageId}')" class="nav-link" data-page="${pageId}">${label}</a>`;
     }).join('');
     
+    // Generate navigation HTML
+    const navigationHTML = navOrder.map(pageId => {
+        const label = navLabels[pageId] || pagesData[pageId]?.name || pageId;
+        return `<a href="#" onclick="showPage('${pageId}')" class="nav-link" data-page="${pageId}">${label}</a>`;
+    }).join('');
+    
     // Generate pages HTML
     const pagesHTML = Object.entries(pagesData).map(([pageId, pageData]) => {
         // Clean the content - remove contenteditable and other editing attributes
@@ -165,6 +171,11 @@ function generatePreviewHTML() {
                 padding: 1rem;
                 gap: 1rem;
                 flex-wrap: wrap;
+            }
+            
+            .nav-link {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.9rem;
             }
             
             .nav-link {
