@@ -195,10 +195,11 @@ function setupTextSelectionListeners() {
     document.addEventListener('keyup', handleTextSelection);
     document.addEventListener('mousedown', handleMouseDown);
     
-    // Hide toolbar when clicking outside
+    // Hide toolbar when clicking outside editable content
     document.addEventListener('click', (e) => {
         if (!textToolbar.contains(e.target) && !isInEditableBlock(e.target)) {
-            hideTextToolbar();
+            // Small delay to allow block selection to work
+            setTimeout(() => hideTextToolbar(), 50);
         }
     });
 }
@@ -207,6 +208,12 @@ function handleMouseDown(e) {
     // Don't hide toolbar if clicking on it
     if (textToolbar && textToolbar.contains(e.target)) {
         e.preventDefault();
+        return;
+    }
+    
+    // Check if clicking on editable content - allow text selection
+    if (isInEditableBlock(e.target)) {
+        // Don't prevent default for text selection in editable blocks
         return;
     }
 }
@@ -230,6 +237,14 @@ function handleTextSelection(e) {
                 currentSelection = { selection, range };
                 showTextToolbar(range);
                 updateToolbarState();
+                
+                // Also ensure the containing block is selected for block toolbar
+                const container = range.commonAncestorContainer;
+                const textNode = container.nodeType === Node.TEXT_NODE ? container.parentElement : container;
+                const block = textNode.closest('.block');
+                if (block && typeof window.blockToolbarAPI !== 'undefined') {
+                    setTimeout(() => window.blockToolbarAPI.selectBlock(block), 10);
+                }
             } else {
                 hideTextToolbar();
             }

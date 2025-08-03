@@ -201,6 +201,16 @@ function createBlockToolbar() {
             outline-offset: 2px;
         }
         
+        .selected-block [contenteditable="true"] {
+            outline: none !important;
+            cursor: text !important;
+        }
+        
+        .selected-block [contenteditable="true"]:focus {
+            outline: 1px solid #28a745 !important;
+            outline-offset: 1px;
+        }
+        
         @media (max-width: 768px) {
             .block-toolbar {
                 transform: scale(0.85);
@@ -235,6 +245,10 @@ function setupBlockSelectionListeners() {
         }
         
         const clickedBlock = e.target.closest('.block');
+        const editableElement = e.target.closest('[contenteditable="true"]');
+        
+        // Don't hide block toolbar if clicking on editable text inside a block
+        // But do hide it if clicking completely outside any block
         if (!clickedBlock) {
             hideBlockToolbar();
         }
@@ -252,6 +266,17 @@ function handleBlockClick(e) {
     const block = e.target.closest('.block');
     
     if (block && isInBuilderContainer(block)) {
+        // Check if we're clicking on editable content inside the block
+        const editableElement = e.target.closest('[contenteditable="true"]');
+        
+        // If clicking on editable content, allow text editing but still select block
+        if (editableElement && editableElement !== block) {
+            // Select block but don't prevent text editing
+            selectBlock(block);
+            return; // Don't stop propagation for text editing
+        }
+        
+        // If clicking on non-editable areas, select the block immediately
         e.stopPropagation();
         selectBlock(block);
     }
@@ -580,5 +605,6 @@ function rgbToHex(rgb) {
 window.blockToolbarAPI = {
     selectBlock: selectBlock,
     hideToolbar: hideBlockToolbar,
-    showToolbar: showBlockToolbar
+    showToolbar: showBlockToolbar,
+    getSelectedBlock: () => selectedBlock
 };
