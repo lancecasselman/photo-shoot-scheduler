@@ -212,7 +212,6 @@ function loadPageContent(pageId) {
             });
         }
         
-        console.log(`Switched to page: ${pages[pageId].name}`);
     }
 }
 
