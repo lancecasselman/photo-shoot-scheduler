@@ -69,6 +69,8 @@ This is a comprehensive photography business management platform designed to rev
   - **Floating Text Toolbar** (Added Feb 2, 2025): Inline text formatting toolbar that appears when selecting text in editable blocks, featuring font controls, formatting options, and color pickers
   - **Floating Block Toolbar** (Added Feb 2, 2025): Block styling toolbar that appears when selecting blocks, providing controls for background, borders, spacing, opacity, layering, and block management (duplicate/delete)
   - **Prebuilt Templates System** (Added Feb 2, 2025): One-click template loading with "Light & Airy Portfolio" professional photography website template featuring 5 complete pages (Home, Portfolio, About, Contact, Pricing) with fully editable content, clickable image placeholders, and proper multi-page integration
+  - **Enhanced Image Placeholder System** (Added Feb 2, 2025): Every image location in templates is fully editable with click-to-upload functionality, professional modal dialogs for device upload or gallery selection, hover overlays for editing existing images, and automatic server upload integration
+  - **Draggable Toolbars System** (Added Feb 2, 2025): Text and block editing toolbars feature drag handles with dot-grid indicators, can be repositioned to prevent content blocking, remember positions during editing sessions, and maintain professional styling without emoji elements
 - **Subscription System** (Added Jan 31, 2025):
   - Integrated Stripe payment processing for SaaS subscriptions
   - Three pricing tiers: $25/month, $125/6 months (1 month free), $200/year (2 months free)

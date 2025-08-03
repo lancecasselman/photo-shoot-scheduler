@@ -367,7 +367,13 @@ function loadTemplateIntoBuilder(template) {
         
         // Initialize image placeholder editing for new template
         if (typeof window.imagePlaceholderAPI !== 'undefined') {
-            window.imagePlaceholderAPI.updateImagePlaceholderHandlers();
+            // Clear existing handlers first
+            document.querySelectorAll('.image-placeholder-container').forEach(p => {
+                p.removeAttribute('data-handlers-added');
+            });
+            setTimeout(() => {
+                window.imagePlaceholderAPI.updateImagePlaceholderHandlers();
+            }, 100);
         }
         
         // Initialize draggable toolbars for new template

@@ -19,9 +19,13 @@ function setupImagePlaceholderClickHandlers() {
     // Set up click handlers for existing placeholders
     updateImagePlaceholderHandlers();
     
-    // Monitor for new placeholders added dynamically
+    // Monitor for new placeholders added dynamically with throttling
+    let observerTimeout;
     const observer = new MutationObserver(() => {
-        updateImagePlaceholderHandlers();
+        clearTimeout(observerTimeout);
+        observerTimeout = setTimeout(() => {
+            updateImagePlaceholderHandlers();
+        }, 100); // Throttle to prevent excessive updates
     });
     
     observer.observe(document.body, {
@@ -35,11 +39,11 @@ function setupImagePlaceholderClickHandlers() {
  * Called when new content is added to ensure all placeholders are editable
  */
 function updateImagePlaceholderHandlers() {
-    const placeholders = document.querySelectorAll('.image-placeholder-container');
+    const placeholders = document.querySelectorAll('.image-placeholder-container:not([data-handlers-added])');
     
     placeholders.forEach(placeholder => {
-        // Remove existing handlers to prevent duplicates
-        placeholder.removeEventListener('click', handlePlaceholderClick);
+        // Mark as processed to avoid duplicate handlers
+        placeholder.setAttribute('data-handlers-added', 'true');
         
         // Add click handler
         placeholder.addEventListener('click', handlePlaceholderClick);
@@ -60,7 +64,9 @@ function updateImagePlaceholderHandlers() {
         });
     });
     
-    console.log(`Updated ${placeholders.length} image placeholder handlers`);
+    if (placeholders.length > 0) {
+        console.log(`Added handlers to ${placeholders.length} new image placeholders`);
+    }
 }
 
 /**
@@ -254,9 +260,14 @@ function handleImageUpload(file, placeholder) {
     // Try to upload to server if upload system is available
     if (typeof window.uploadImageToServer === 'function') {
         window.uploadImageToServer(file)
-            .then(serverUrl => {
-                if (serverUrl) {
-                    setPlaceholderImage(placeholder, serverUrl);
+            .then(result => {
+                if (result && result.downloadURL) {
+                    // Use the server download URL for the image
+                    setPlaceholderImage(placeholder, result.downloadURL);
+                    console.log('Image uploaded to server:', result);
+                } else if (result && typeof result === 'string') {
+                    // Handle string URL response
+                    setPlaceholderImage(placeholder, result);
                 }
             })
             .catch(error => {
