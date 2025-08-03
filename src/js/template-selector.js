@@ -438,23 +438,15 @@ function createTemplateCard(template) {
 }
 
 /**
- * Handle template selection with user confirmation
+ * Handle template selection - direct loading without confirmation
  * @param {Object} template - Selected template configuration
  */
 function selectTemplate(template) {
-    // Show confirmation dialog before replacing current content
-    const confirmation = confirm(
-        `Are you sure you want to load the "${template.name}" template?\n\n` +
-        'This will replace your current website content. Make sure to save any work you want to keep.'
-    );
+    // Close the template selector modal
+    closeTemplateSelectorModal();
     
-    if (confirmation) {
-        // Close the template selector modal
-        closeTemplateSelectorModal();
-        
-        // Load the selected template
-        loadSelectedTemplate(template);
-    }
+    // Load the selected template directly
+    loadSelectedTemplate(template);
 }
 
 /**
