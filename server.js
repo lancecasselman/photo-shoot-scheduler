@@ -42,7 +42,6 @@ const createR2Routes = require('./server/r2-api-routes');
 
 // Import AI services
 const { AIServices } = require('./server/ai-services');
-const { aiService } = require('./server/ai-service');
 const { AI_CREDIT_BUNDLES, isValidBundle } = require('./shared/ai-credit-bundles');
 
 // ZIP export dependencies

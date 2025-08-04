@@ -1,6 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
-const { db } = require('./db');
-const { paymentPlans, paymentRecords, photographySessions } = require('./schema');
+const { db } = require('./db.ts');
+const { paymentPlans, paymentRecords, photographySessions } = require('../shared/schema');
 const { eq, and, lte, gte, sql } = require('drizzle-orm');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
