@@ -3,18 +3,18 @@ import {
   photographySessions,
   aiCreditPurchases,
   aiCreditUsage,
-  rawFiles,
-  rawStorageUsage,
+  r2Files,
+  r2StorageUsage,
   type User,
   type UpsertUser,
   type PhotographySession,
   type InsertPhotographySession,
   type InsertAiCreditPurchase,
   type InsertAiCreditUsage,
-  type RawFile,
-  type InsertRawFile,
-  type RawStorageUsage,
-  type InsertRawStorageUsage,
+  type R2File,
+  type InsertR2File,
+  type R2StorageUsage,
+  type InsertR2StorageUsage,
 } from "../shared/schema";
 import { db } from "./db";
 import { eq, and, sql } from "drizzle-orm";
@@ -38,16 +38,18 @@ export interface IStorage {
   useAiCredits(userId: string, credits: number, requestType: string, prompt?: string): Promise<boolean>;
   addAiCredits(userId: string, credits: number, priceUsd: number, stripePaymentIntentId?: string): Promise<void>;
   
-  // RAW Storage operations
-  createRawFile(rawFile: InsertRawFile): Promise<RawFile>;
-  getRawFilesBySession(sessionId: string, userId: string): Promise<RawFile[]>;
-  getRawFileById(fileId: string, userId: string): Promise<RawFile | undefined>;
-  deleteRawFile(fileId: string, userId: string): Promise<boolean>;
-  updateRawFileStatus(fileId: string, status: string, uploadCompletedAt?: Date): Promise<boolean>;
+  // R2 Storage operations (RAW files, gallery images, documents)
+  createR2File(r2File: InsertR2File): Promise<R2File>;
+  getR2FilesBySession(sessionId: string, userId: string): Promise<R2File[]>;
+  getR2FileById(fileId: string, userId: string): Promise<R2File | undefined>;
+  deleteR2File(fileId: string, userId: string): Promise<boolean>;
+  updateR2FileStatus(fileId: string, status: string, uploadCompletedAt?: Date): Promise<boolean>;
   
-  getUserRawStorageUsage(userId: string): Promise<RawStorageUsage | undefined>;
-  updateRawStorageUsage(userId: string, updates: Partial<RawStorageUsage>): Promise<RawStorageUsage>;
-  createRawStorageUsage(usage: InsertRawStorageUsage): Promise<RawStorageUsage>;
+  getUserR2StorageUsage(userId: string): Promise<R2StorageUsage | undefined>;
+  updateR2StorageUsage(userId: string, updates: Partial<R2StorageUsage>): Promise<R2StorageUsage>;
+  createR2StorageUsage(usage: InsertR2StorageUsage): Promise<R2StorageUsage>;
+  recalculateUserStorageUsage(userId: string): Promise<R2StorageUsage>;
+  checkStorageLimit(userId: string, additionalSizeBytes: number): Promise<{ allowed: boolean; usage: R2StorageUsage }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -206,58 +208,140 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
-  // RAW Storage operations
-  async createRawFile(rawFile: InsertRawFile): Promise<RawFile> {
-    const [newRawFile] = await db.insert(rawFiles).values(rawFile).returning();
-    return newRawFile;
+  // R2 Storage operations (RAW files, gallery images, documents)
+  async createR2File(r2File: InsertR2File): Promise<R2File> {
+    const [newR2File] = await db.insert(r2Files).values(r2File).returning();
+    
+    // Update user's storage usage after creating file
+    await this.recalculateUserStorageUsage(r2File.userId);
+    
+    return newR2File;
   }
 
-  async getRawFilesBySession(sessionId: string, userId: string): Promise<RawFile[]> {
-    return await db.select().from(rawFiles)
-      .where(and(eq(rawFiles.sessionId, sessionId), eq(rawFiles.userId, userId)));
+  async getR2FilesBySession(sessionId: string, userId: string): Promise<R2File[]> {
+    return await db.select().from(r2Files)
+      .where(and(eq(r2Files.sessionId, sessionId), eq(r2Files.userId, userId)));
   }
 
-  async getRawFileById(fileId: string, userId: string): Promise<RawFile | undefined> {
-    const [rawFile] = await db.select().from(rawFiles)
-      .where(and(eq(rawFiles.id, fileId), eq(rawFiles.userId, userId)));
-    return rawFile;
+  async getR2FileById(fileId: string, userId: string): Promise<R2File | undefined> {
+    const [r2File] = await db.select().from(r2Files)
+      .where(and(eq(r2Files.id, fileId), eq(r2Files.userId, userId)));
+    return r2File;
   }
 
-  async deleteRawFile(fileId: string, userId: string): Promise<boolean> {
-    const result = await db.delete(rawFiles)
-      .where(and(eq(rawFiles.id, fileId), eq(rawFiles.userId, userId)));
+  async deleteR2File(fileId: string, userId: string): Promise<boolean> {
+    const result = await db.delete(r2Files)
+      .where(and(eq(r2Files.id, fileId), eq(r2Files.userId, userId)));
+    
+    // Update user's storage usage after deleting file
+    if ((result.rowCount ?? 0) > 0) {
+      await this.recalculateUserStorageUsage(userId);
+    }
+    
     return (result.rowCount ?? 0) > 0;
   }
 
-  async updateRawFileStatus(fileId: string, status: string, uploadCompletedAt?: Date): Promise<boolean> {
+  async updateR2FileStatus(fileId: string, status: string, uploadCompletedAt?: Date): Promise<boolean> {
     const updates: any = { uploadStatus: status, updatedAt: new Date() };
     if (uploadCompletedAt) {
       updates.uploadCompletedAt = uploadCompletedAt;
     }
     
-    const result = await db.update(rawFiles)
+    const result = await db.update(r2Files)
       .set(updates)
-      .where(eq(rawFiles.id, fileId));
+      .where(eq(r2Files.id, fileId));
     return (result.rowCount ?? 0) > 0;
   }
 
-  async getUserRawStorageUsage(userId: string): Promise<RawStorageUsage | undefined> {
-    const [usage] = await db.select().from(rawStorageUsage)
-      .where(eq(rawStorageUsage.userId, userId));
+  async getUserR2StorageUsage(userId: string): Promise<R2StorageUsage | undefined> {
+    const [usage] = await db.select().from(r2StorageUsage)
+      .where(eq(r2StorageUsage.userId, userId));
     return usage;
   }
 
-  async updateRawStorageUsage(userId: string, updates: Partial<RawStorageUsage>): Promise<RawStorageUsage> {
-    const [updatedUsage] = await db.update(rawStorageUsage)
-      .set({ ...updates, updatedAt: new Date() })
-      .where(eq(rawStorageUsage.userId, userId))
+  async updateR2StorageUsage(userId: string, updates: Partial<R2StorageUsage>): Promise<R2StorageUsage> {
+    const [updatedUsage] = await db.update(r2StorageUsage)
+      .set({ ...updates, updatedAt: new Date(), lastUsageUpdate: new Date() })
+      .where(eq(r2StorageUsage.userId, userId))
       .returning();
     return updatedUsage;
   }
 
-  async createRawStorageUsage(usage: InsertRawStorageUsage): Promise<RawStorageUsage> {
-    const [newUsage] = await db.insert(rawStorageUsage).values(usage).returning();
+  async createR2StorageUsage(usage: InsertR2StorageUsage): Promise<R2StorageUsage> {
+    const [newUsage] = await db.insert(r2StorageUsage).values(usage).returning();
     return newUsage;
+  }
+
+  /**
+   * Recalculate user's total storage usage from all R2 files
+   * This ensures real-time accuracy of storage tracking
+   */
+  async recalculateUserStorageUsage(userId: string): Promise<R2StorageUsage> {
+    // Get sum of all file sizes for this user
+    const [totals] = await db
+      .select({
+        totalFiles: sql<number>`CAST(COUNT(*) AS INTEGER)`,
+        totalSizeBytes: sql<string>`CAST(SUM(CAST(${r2Files.fileSizeBytes} AS BIGINT)) AS TEXT)`,
+      })
+      .from(r2Files)
+      .where(and(eq(r2Files.userId, userId), eq(r2Files.uploadStatus, 'completed')));
+
+    const totalSizeBytes = BigInt(totals.totalSizeBytes || '0');
+    const totalSizeGB = Number(totalSizeBytes) / (1024 * 1024 * 1024);
+    const totalSizeTB = totalSizeGB / 1024;
+
+    // Get or create storage usage record
+    let usage = await this.getUserR2StorageUsage(userId);
+    
+    if (!usage) {
+      usage = await this.createR2StorageUsage({
+        id: crypto.randomUUID(),
+        userId,
+        totalFiles: totals.totalFiles,
+        totalSizeBytes: totals.totalSizeBytes || '0',
+        totalSizeGB: totalSizeGB.toFixed(3),
+        totalSizeTB: totalSizeTB.toFixed(6),
+        baseStorageTB: '1.00',
+        additionalStorageTB: 0,
+        maxAllowedTB: '1.00',
+        storageStatus: 'active',
+        monthlyStorageCost: '0.00',
+      });
+    } else {
+      // Update existing usage record
+      const maxAllowedTB = Number(usage.baseStorageTB) + usage.additionalStorageTB;
+      const storageStatus = totalSizeTB > maxAllowedTB ? 'overlimit' : 'active';
+      const monthlyStorageCost = usage.additionalStorageTB * 35; // $35 per additional TB
+
+      usage = await this.updateR2StorageUsage(userId, {
+        totalFiles: totals.totalFiles,
+        totalSizeBytes: totals.totalSizeBytes || '0',
+        totalSizeGB: totalSizeGB.toFixed(3),
+        totalSizeTB: totalSizeTB.toFixed(6),
+        maxAllowedTB: maxAllowedTB.toFixed(2),
+        storageStatus,
+        monthlyStorageCost: monthlyStorageCost.toFixed(2),
+      });
+    }
+
+    return usage;
+  }
+
+  /**
+   * Check if user can upload additional files without exceeding storage limit
+   * Returns usage info and whether upload is allowed
+   */
+  async checkStorageLimit(userId: string, additionalSizeBytes: number): Promise<{ allowed: boolean; usage: R2StorageUsage }> {
+    const usage = await this.recalculateUserStorageUsage(userId);
+    
+    const currentSizeBytes = BigInt(usage.totalSizeBytes);
+    const newTotalSizeBytes = currentSizeBytes + BigInt(additionalSizeBytes);
+    const newTotalSizeTB = Number(newTotalSizeBytes) / (1024 * 1024 * 1024 * 1024);
+    
+    const maxAllowedTB = Number(usage.maxAllowedTB);
+    const allowed = newTotalSizeTB <= maxAllowedTB;
+    
+    return { allowed, usage };
   }
 }
 

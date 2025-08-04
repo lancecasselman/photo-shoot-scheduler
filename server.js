@@ -35,8 +35,10 @@ const PaymentScheduler = require('./server/paymentScheduler');
 // Import contract management
 const ContractManager = require('./server/contracts');
 
-// Import R2 RAW storage service
-const R2StorageService = require('./server/r2-storage');
+// Import R2 storage services (new comprehensive system)
+const R2FileManager = require('./server/r2-file-manager');
+const StripeStorageBilling = require('./server/stripe-storage-billing');
+const createR2Routes = require('./server/r2-api-routes');
 
 // Import AI services
 const { AIServices } = require('./server/ai-services');
@@ -82,9 +84,17 @@ async function useAiCredits(userId, amount, operation, details) {
     }
 }
 
-// Initialize services
-const r2StorageService = new R2StorageService();
+// Initialize services  
+const r2FileManager = new R2FileManager();
+const stripeStorageBilling = new StripeStorageBilling();
+const paymentPlanManager = new PaymentPlanManager();
+const paymentScheduler = new PaymentScheduler();
+const contractManager = new ContractManager();
 const aiServices = new AIServices();
+
+console.log('✅ R2 File Manager and Storage Billing services initialized');
+console.log('✅ Payment and contract services initialized');
+console.log('AI Services:', aiServices.status);
 
 // PostgreSQL database connection
 const pool = new Pool({
@@ -751,6 +761,9 @@ app.post('/api/auth/logout', (req, res) => {
         }
     });
 });
+
+// R2 Storage API Routes - Complete file management system
+app.use('/api/r2', createR2Routes());
 
 // Subscription success page
 app.get('/subscription-success', isAuthenticated, async (req, res) => {
@@ -4582,11 +4595,6 @@ app.get('/api/sessions/:id/calendar.ics', async (req, res) => {
 });
 
 // Payment Plan API Endpoints
-const paymentManager = new PaymentPlanManager();
-const paymentScheduler = new PaymentScheduler();
-
-// Contract Manager
-const contractManager = new ContractManager();
 
 // Create payment plan for a session
 app.post('/api/sessions/:id/payment-plan', isAuthenticated, async (req, res) => {
