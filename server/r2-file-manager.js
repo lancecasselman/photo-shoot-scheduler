@@ -2,6 +2,7 @@ const { S3Client, HeadBucketCommand, CreateBucketCommand, PutObjectCommand, GetO
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const crypto = require('crypto');
 const { Pool } = require('pg');
+const LocalBackupFallback = require('./local-backup-fallback');
 
 /**
  * Enhanced R2 File Manager for Photography Management System
@@ -36,6 +37,13 @@ class R2FileManager {
       ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
     });
     
+    // Local backup fallback system
+    this.localBackup = new LocalBackupFallback();
+    this.r2Available = false;
+    
+    // Test R2 connection on initialization
+    this.testConnection();
+    
     // Supported file types (all file types are now supported)
     this.fileTypeCategories = {
       raw: ['.nef', '.cr2', '.arw', '.dng', '.raf', '.orf', '.pef', '.srw', '.x3f', '.rw2'],
@@ -62,10 +70,13 @@ class R2FileManager {
     try {
       const command = new HeadBucketCommand({ Bucket: this.bucketName });
       await this.s3Client.send(command);
-      console.log('✅ R2 connection successful');
+      console.log('✅ R2 connection successful - cloud backup active');
+      this.r2Available = true;
       return true;
     } catch (error) {
-      console.error('❌ R2 connection test failed:', error.message);
+      console.log('⚠️ R2 unavailable - using local backup fallback');
+      console.log(`   Error: ${error.code} - ${error.message?.substring(0, 50)}`);
+      this.r2Available = false;
       
       // Try to create bucket if it doesn't exist
       if (error.name === 'NotFound' || error.$metadata?.httpStatusCode === 404) {
@@ -74,9 +85,11 @@ class R2FileManager {
           const createCommand = new CreateBucketCommand({ Bucket: this.bucketName });
           await this.s3Client.send(createCommand);
           console.log('✅ Bucket created successfully');
+          this.r2Available = true;
           return true;
         } catch (createError) {
           console.error('❌ Failed to create bucket:', createError.message);
+          this.r2Available = false;
           return false;
         }
       }
@@ -155,6 +168,7 @@ class R2FileManager {
   async uploadFile(fileBuffer, filename, userId, sessionId) {
     const fileSizeBytes = fileBuffer.length;
     const fileType = this.getFileTypeCategory(filename);
+    const fileSizeMB = (fileSizeBytes / (1024 * 1024));
     
     try {
       // Check storage limit before upload
@@ -163,69 +177,83 @@ class R2FileManager {
         throw new Error(limitCheck.message);
       }
 
-      // Generate R2 key and metadata
-      const r2Key = this.generateR2Key(userId, sessionId, filename, fileType);
-      const fileSizeMB = (fileSizeBytes / (1024 * 1024));
-      const fileExtension = filename.toLowerCase().substring(filename.lastIndexOf('.'));
-
-      console.log(`📤 Uploading ${fileType} file: ${filename} (${fileSizeMB.toFixed(2)}MB) to R2`);
-
-      // Create database record FIRST (with pending status)
-      const fileId = crypto.randomUUID();
+      console.log(`📤 Uploading ${fileType} file: ${filename} (${fileSizeMB.toFixed(2)}MB)`);
       
-      // For now, skip database record creation and proceed with R2 upload
-      // This allows testing while database schema is being finalized
-      console.log(`📝 Would create DB record for file: ${filename} (${fileId})`);
-
-      // Upload to R2
-      const uploadParams = {
-        Bucket: this.bucketName,
-        Key: r2Key,
-        Body: fileBuffer,
-        ContentType: this.getContentType(filename),
-        Metadata: {
-          'original-filename': filename,
-          'user-id': userId,
-          'session-id': sessionId,
-          'file-type': fileType,
-          'upload-timestamp': new Date().toISOString(),
-          'file-size-bytes': fileSizeBytes.toString(),
-          'file-size-mb': fileSizeMB.toFixed(2)
+      // Try R2 upload first if available
+      if (this.r2Available) {
+        try {
+          console.log('☁️ Attempting R2 cloud upload...');
+          return await this.uploadToR2(fileBuffer, filename, userId, sessionId, fileType);
+        } catch (r2Error) {
+          console.log('⚠️ R2 upload failed, falling back to local backup');
+          this.r2Available = false; // Mark as unavailable for subsequent uploads
         }
-      };
-
-      const command = new PutObjectCommand(uploadParams);
-      const uploadResult = await this.s3Client.send(command);
-
-      // Update database record to completed (placeholder)
-      console.log(`✅ Would update DB record to completed for: ${filename}`);
-
-      // Generate public URL if needed
-      const r2Url = `https://${this.bucketName}.${process.env.CLOUDFLARE_R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${r2Key}`;
-
-      console.log(`✅ Upload successful: ${filename}`);
-
+      }
+      
+      // Fall back to local backup
+      console.log('💾 Using local backup storage...');
+      const localResult = await this.localBackup.saveFile(fileBuffer, filename, userId, sessionId);
+      
       return {
         success: true,
-        fileId: fileId,
-        r2Key,
-        r2Url,
+        fileId: localResult.id,
+        storageType: 'local',
+        localPath: localResult.localPath,
         fileType,
         fileSizeBytes,
-        fileSizeMB: fileSizeMB.toFixed(2),
-        etag: uploadResult.ETag,
-        uploadedAt: new Date(),
-        storageUsage: limitCheck.usage
+        fileSizeMB: localResult.fileSizeMB,
+        uploadedAt: localResult.savedAt,
+        storageUsage: limitCheck.usage,
+        note: 'Stored locally - will sync to cloud when R2 connection is restored'
       };
 
     } catch (error) {
-      console.error('❌ R2 upload error:', error);
-      
-      // Update database record to failed (placeholder)
-      console.log(`❌ Would update DB record to failed for: ${filename}`);
-      
+      console.error('❌ Upload failed:', error);
       throw new Error(`Upload failed: ${error.message}`);
     }
+  }
+
+  async uploadToR2(fileBuffer, filename, userId, sessionId, fileType) {
+    const fileSizeBytes = fileBuffer.length;
+    const fileSizeMB = (fileSizeBytes / (1024 * 1024));
+    const r2Key = this.generateR2Key(userId, sessionId, filename, fileType);
+    const fileId = crypto.randomUUID();
+
+    const uploadParams = {
+      Bucket: this.bucketName,
+      Key: r2Key,
+      Body: fileBuffer,
+      ContentType: this.getContentType(filename),
+      Metadata: {
+        'original-filename': filename,
+        'user-id': userId,
+        'session-id': sessionId,
+        'file-type': fileType,
+        'upload-timestamp': new Date().toISOString(),
+        'file-size-bytes': fileSizeBytes.toString(),
+        'file-size-mb': fileSizeMB.toFixed(2)
+      }
+    };
+
+    const command = new PutObjectCommand(uploadParams);
+    const uploadResult = await this.s3Client.send(command);
+
+    const r2Url = `https://${this.bucketName}.${process.env.CLOUDFLARE_R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${r2Key}`;
+
+    console.log(`✅ R2 upload successful: ${filename}`);
+
+    return {
+      success: true,
+      fileId: fileId,
+      storageType: 'r2',
+      r2Key,
+      r2Url,
+      fileType,
+      fileSizeBytes,
+      fileSizeMB: fileSizeMB.toFixed(2),
+      etag: uploadResult.ETag,
+      uploadedAt: new Date()
+    };
   }
 
   /**
@@ -310,27 +338,29 @@ class R2FileManager {
    */
   async getUserStorageUsage(userId) {
     try {
-      // Return basic usage info while R2 system is being tested
-      const totalGB = 0;
+      // Get usage from local backup system
+      const localUsage = await this.localBackup.getStorageUsage(userId);
+      const totalGB = localUsage.totalSizeGB;
       const maxTB = 1;
       const maxGB = maxTB * 1024;
-      const percentUsed = 0;
+      const percentUsed = Math.round((totalGB / maxGB) * 100);
       
-      console.log(`📊 Storage usage calculated for user ${userId}: ${totalGB}GB of ${maxGB}GB`);
+      console.log(`📊 Storage usage for user ${userId}: ${totalGB}GB of ${maxGB}GB (${percentUsed}%)`);
       
       return {
-        totalFiles: 0,
+        totalFiles: localUsage.totalFiles,
         totalSizeGB: totalGB,
-        totalSizeTB: 0,
+        totalSizeTB: Number((totalGB / 1024).toFixed(3)),
         maxAllowedTB: maxTB,
         maxAllowedGB: maxGB,
         percentUsed,
-        storageStatus: 'active',
+        storageStatus: totalGB > maxGB ? 'overlimit' : 'active',
         additionalStorageTB: 0,
         monthlyStorageCost: 0,
         displayText: `${Math.round(totalGB)}GB of ${Math.round(maxGB)}GB used (${percentUsed}%)`,
-        isNearLimit: false,
-        isOverLimit: false
+        isNearLimit: percentUsed >= 90,
+        isOverLimit: totalGB > maxGB,
+        storageType: this.r2Available ? 'cloud' : 'local-backup'
       };
     } catch (error) {
       console.error('Error getting storage usage:', error);
