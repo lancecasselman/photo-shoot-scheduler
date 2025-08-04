@@ -258,11 +258,12 @@ class R2StorageService {
    */
   async testConnection() {
     try {
-      await this.s3.headBucket({ Bucket: this.bucketName }).promise();
+      const command = new HeadBucketCommand({ Bucket: this.bucketName });
+      await this.s3Client.send(command);
       console.log('R2 connection successful');
       return true;
     } catch (error) {
-      console.error('R2 connection failed:', error);
+      console.error('R2 connection failed:', error.message);
       return false;
     }
   }
