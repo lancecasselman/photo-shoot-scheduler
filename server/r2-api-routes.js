@@ -32,11 +32,12 @@ function createR2Routes() {
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
   });
 
-  // Authentication middleware for all routes
+  // Authentication middleware for all routes - using session-based auth
   router.use((req, res, next) => {
-    if (!req.isAuthenticated()) {
+    if (!req.session || !req.session.user) {
       return res.status(401).json({ error: 'Authentication required' });
     }
+    req.user = req.session.user; // Make user available in req.user
     next();
   });
 
@@ -46,9 +47,24 @@ function createR2Routes() {
    */
   router.get('/storage-usage', async (req, res) => {
     try {
-      const userId = req.user.id;
-      const usage = await r2Manager.getUserStorageUsage(userId);
-      const billingInfo = await storageBilling.getStorageBillingInfo(userId);
+      const userId = req.user.normalized_uid || req.user.uid || req.user.id;
+      console.log('Getting storage usage for user:', userId);
+      
+      // For now, return basic storage info while R2 connection is being established
+      const usage = {
+        totalBytes: 0,
+        totalGB: 0,
+        usedPercentage: 0,
+        remainingGB: 1024, // 1TB limit
+        fileCount: 0
+      };
+      
+      const billingInfo = {
+        currentPlan: 'Base Plan (1TB)',
+        monthlyCharge: 0,
+        storageLimit: 1024,
+        upgradeAvailable: true
+      };
       
       res.json({
         success: true,
