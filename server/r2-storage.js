@@ -23,7 +23,7 @@ class R2StorageService {
     console.log(`R2 endpoint: ${endpoint}`);
     
     this.bucketName = process.env.CLOUDFLARE_R2_BUCKET_NAME;
-    this.supportedExtensions = ['.nef', '.cr2', '.arw', '.dng', '.raf', '.orf', '.pef', '.srw', '.x3f', '.rw2'];
+    this.supportedExtensions = []; // Accept all file types - no restrictions
     
     console.log('R2 Storage Service initialized with bucket:', this.bucketName);
   }
@@ -65,8 +65,8 @@ class R2StorageService {
    * @returns {boolean} - True if supported RAW format
    */
   isRawFile(filename) {
-    const ext = filename.toLowerCase().substring(filename.lastIndexOf('.'));
-    return this.supportedExtensions.includes(ext);
+    // Accept all file types - photographers need to store everything
+    return true;
   }
 
   /**
@@ -92,9 +92,7 @@ class R2StorageService {
    */
   async uploadRawFile(fileBuffer, filename, userId, sessionId) {
     try {
-      if (!this.isRawFile(filename)) {
-        throw new Error(`Unsupported file type. Supported: ${this.supportedExtensions.join(', ')}`);
-      }
+      // All file types are now supported - no validation needed
 
       const r2Key = this.generateR2Key(userId, sessionId, filename);
       const fileSizeBytes = fileBuffer.length;

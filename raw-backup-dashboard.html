@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RAW File Backup Dashboard - Photography Management System</title>
+    <title>File Backup Dashboard - Photography Management System</title>
     
     <!-- Firebase SDK v8 (Legacy) -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -397,12 +397,12 @@
 <body>
     <div class="dashboard-container">
         <div class="dashboard-header">
-            <h1>RAW File Backup Dashboard</h1>
-            <p>Secure cloud storage for your RAW photography files</p>
+            <h1>File Backup Dashboard</h1>
+            <p>Secure cloud storage for all your photography files</p>
         </div>
 
         <div class="dashboard-content">
-            <div id="loadingMessage" class="loading">Loading your RAW storage dashboard</div>
+            <div id="loadingMessage" class="loading">Loading your file storage dashboard</div>
             
             <div id="dashboardMain" style="display: none;">
                 <!-- Storage Overview -->
@@ -410,7 +410,7 @@
                     <div class="storage-card">
                         <h3>Total Files</h3>
                         <div class="value" id="totalFiles">0</div>
-                        <div class="unit">RAW files stored</div>
+                        <div class="unit">files stored</div>
                     </div>
                     
                     <div class="storage-card">
@@ -445,7 +445,7 @@
                 <!-- Session Selector -->
                 <div class="session-selector">
                     <select id="sessionSelect">
-                        <option value="">Select a session to manage RAW files...</option>
+                        <option value="">Select a session to manage files...</option>
                     </select>
                 </div>
 
@@ -464,9 +464,9 @@
 
                 <!-- Upload Area (Hidden by default) -->
                 <div class="upload-area" id="uploadArea" style="display: none;">
-                    <h3>Drop RAW files here or click to browse</h3>
-                    <p>Maximum file size: 500MB per file</p>
-                    <input type="file" id="fileInput" multiple accept=".nef,.cr2,.arw,.dng,.raf,.orf,.pef,.srw,.x3f,.rw2" style="display: none;">
+                    <h3>Drop files here or click to browse</h3>
+                    <p>All file types supported - photos, RAW files, videos, documents, audio files</p>
+                    <input type="file" id="fileInput" multiple style="display: none;">
                     <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
                         Choose Files
                     </button>
@@ -739,23 +739,11 @@
                 return;
             }
 
-            // Filter for RAW files only
-            const rawFiles = files.filter(file => {
-                const ext = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
-                return ['.nef', '.cr2', '.arw', '.dng', '.raf', '.orf', '.pef', '.srw', '.x3f', '.rw2'].includes(ext);
-            });
-
-            if (rawFiles.length === 0) {
-                showAlert('No supported RAW files found', 'warning');
-                return;
-            }
-
-            if (rawFiles.length !== files.length) {
-                showAlert(`Only ${rawFiles.length} of ${files.length} files are supported RAW formats`, 'warning');
-            }
+            // Accept all file types - no filtering needed
+            const rawFiles = files;
 
             try {
-                showAlert(`Uploading ${rawFiles.length} RAW files...`, 'info');
+                showAlert(`Uploading ${rawFiles.length} files...`, 'info');
                 
                 const formData = new FormData();
                 rawFiles.forEach(file => {
@@ -780,7 +768,7 @@
                         if (failedCount > 0) {
                             showAlert(`Upload completed: ${successCount} successful, ${failedCount} failed`, 'warning');
                         } else {
-                            showAlert(`Successfully uploaded ${successCount} RAW files (${result.totalSizeMB.toFixed(1)}MB)`, 'success');
+                            showAlert(`Successfully uploaded ${successCount} files (${result.totalSizeMB.toFixed(1)}MB)`, 'success');
                         }
                         
                         // Refresh storage usage and file list
