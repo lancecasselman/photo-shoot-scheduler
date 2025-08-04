@@ -2,6 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const R2FileManager = require('./r2-file-manager');
 const StripeStorageBilling = require('./stripe-storage-billing');
+const R2SyncService = require('./r2-sync-service');
 const { Pool } = require('pg');
 
 // Configure multer for file uploads (memory storage for direct R2 upload)
@@ -25,6 +26,7 @@ function createR2Routes() {
   const router = express.Router();
   const r2Manager = new R2FileManager();
   const storageBilling = new StripeStorageBilling();
+  const syncService = new R2SyncService(r2Manager);
   
   // Database connection for API routes
   const pool = new Pool({
@@ -351,6 +353,61 @@ function createR2Routes() {
     } catch (error) {
       console.error('Error handling Stripe webhook:', error);
       res.status(400).json({ error: 'Webhook processing failed' });
+    }
+  });
+
+  /**
+   * POST /api/r2/sync/local-to-r2
+   * Sync all local backup files to R2 when connection is restored
+   */
+  router.post('/sync/local-to-r2', async (req, res) => {
+    try {
+      const userId = req.user.id;
+      
+      if (!r2Manager.r2Available) {
+        return res.status(400).json({ 
+          error: 'R2 not available - fix credentials first',
+          r2Status: 'unavailable'
+        });
+      }
+      
+      const syncResults = await syncService.syncLocalToR2(userId);
+      
+      res.json({
+        success: true,
+        message: 'Local files synced to R2 successfully',
+        results: syncResults
+      });
+      
+    } catch (error) {
+      console.error('Error syncing to R2:', error);
+      res.status(500).json({ 
+        error: 'Sync failed', 
+        details: error.message 
+      });
+    }
+  });
+
+  /**
+   * GET /api/r2/sync/status
+   * Get sync status and pending files
+   */
+  router.get('/sync/status', async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const status = await syncService.getSyncStatus(userId);
+      
+      res.json({
+        success: true,
+        ...status
+      });
+      
+    } catch (error) {
+      console.error('Error getting sync status:', error);
+      res.status(500).json({ 
+        error: 'Failed to get sync status', 
+        details: error.message 
+      });
     }
   });
 
