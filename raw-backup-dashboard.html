@@ -495,6 +495,9 @@
                 currentUsage = data.usage;
                 updateDashboard(data.usage, data.billing);
                 
+                // Load recent files from all sessions
+                await loadRecentFiles();
+                
                 showLoading(false);
                 
             } catch (error) {
@@ -538,7 +541,6 @@
             // Show dashboard
             document.getElementById('dashboardGrid').style.display = 'grid';
             document.getElementById('uploadSection').style.display = 'block';
-            document.getElementById('recentFiles').style.display = 'block';
         }
 
         async function loadSessions() {
@@ -674,6 +676,88 @@
                 console.error('Checkout error:', error);
                 showAlert('danger', 'Failed to create checkout: ' + error.message);
             }
+        }
+
+        async function loadRecentFiles() {
+            try {
+                // Get all sessions first
+                const sessionsResponse = await fetch('/api/sessions');
+                const sessionsData = await sessionsResponse.json();
+                
+                if (!sessionsData.success) {
+                    console.log('No sessions found for recent files display');
+                    return;
+                }
+                
+                const fileGrid = document.getElementById('fileGrid');
+                fileGrid.innerHTML = '';
+                let totalFiles = 0;
+                
+                // Load files from each session (limit to 10 most recent)
+                for (const session of sessionsData.sessions.slice(0, 5)) {
+                    try {
+                        const filesResponse = await fetch(`/api/r2/session/${session.id}/files`);
+                        const filesData = await filesResponse.json();
+                        
+                        if (filesData.success && filesData.filesByType) {
+                            Object.values(filesData.filesByType).forEach(typeFiles => {
+                                typeFiles.forEach(file => {
+                                    if (totalFiles < 10) { // Limit display to 10 files
+                                        const fileCard = createFileCard(file, session);
+                                        fileGrid.appendChild(fileCard);
+                                        totalFiles++;
+                                    }
+                                });
+                            });
+                        }
+                    } catch (error) {
+                        console.warn(`Failed to load files for session ${session.clientName}:`, error);
+                    }
+                }
+                
+                if (totalFiles > 0) {
+                    document.getElementById('recentFiles').style.display = 'block';
+                    console.log(`✅ Loaded ${totalFiles} recent files for display`);
+                } else {
+                    console.log('No files found to display');
+                }
+                
+            } catch (error) {
+                console.error('Error loading recent files:', error);
+            }
+        }
+        
+        function createFileCard(file, session) {
+            const card = document.createElement('div');
+            card.className = 'file-card';
+            
+            const fileTypeIcon = getFileTypeIcon(file.fileType);
+            const uploadDate = new Date(file.uploadedAt).toLocaleDateString();
+            
+            card.innerHTML = `
+                <div class="file-type-icon">${fileTypeIcon}</div>
+                <div class="file-name">${file.filename}</div>
+                <div class="file-size">${file.fileSizeMB.toFixed(1)}MB</div>
+                <div style="color: #6c757d; font-size: 0.8rem; margin-top: 0.5rem;">
+                    📁 ${session.clientName}<br>
+                    📅 ${uploadDate}<br>
+                    💾 ${file.storageLocation || 'local-backup'}
+                </div>
+            `;
+            
+            return card;
+        }
+        
+        function getFileTypeIcon(fileType) {
+            const icons = {
+                'images': '🖼️',
+                'raw': '📸',
+                'videos': '🎬',
+                'documents': '📄',
+                'audio': '🎵',
+                'other': '📁'
+            };
+            return icons[fileType] || icons.other;
         }
 
         function viewBillingHistory() {
