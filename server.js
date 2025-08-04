@@ -1727,8 +1727,8 @@ app.get('/api/r2-test', isAuthenticated, async (req, res) => {
         res.json({
             success: true,
             message: "R2 connection successful",
-            endpoint: "7c6cbcff658042c3a36b2aceead25b6f.r2.cloudflarestorage.com",
-            bucket: "photography-raw-backups",
+            endpoint: "726b54cf4750eddf5d76a63df636a0b6.r2.cloudflarestorage.com",
+            bucket: "rawphoto",
             pricing: "$20/TB/month"
         });
     } catch (error) {
