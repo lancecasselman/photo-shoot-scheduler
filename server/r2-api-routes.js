@@ -50,13 +50,21 @@ function createR2Routes() {
       const userId = req.user.normalized_uid || req.user.uid || req.user.id;
       console.log('Getting storage usage for user:', userId);
       
-      // For now, return basic storage info while R2 connection is being established
+      // Return frontend-compatible storage info
       const usage = {
         totalBytes: 0,
         totalGB: 0,
         usedPercentage: 0,
+        percentUsed: 0,
         remainingGB: 1024, // 1TB limit
-        fileCount: 0
+        fileCount: 0,
+        totalFiles: 0,
+        displayText: "0 GB of 1024 GB used",
+        monthlyStorageCost: 0,
+        additionalStorageTB: 0,
+        storageStatus: "Base Plan Active",
+        isNearLimit: false,
+        isOverLimit: false
       };
       
       const billingInfo = {
