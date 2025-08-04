@@ -92,7 +92,7 @@ function createR2Routes() {
    */
   router.post('/upload', upload.array('files', 50), async (req, res) => {
     try {
-      const userId = req.user.id;
+      const userId = req.user.normalized_uid || req.user.uid || req.user.id;
       const { sessionId } = req.body;
       
       if (!sessionId) {
