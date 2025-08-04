@@ -22,7 +22,7 @@ class R2StorageService {
     
     console.log(`R2 endpoint: ${endpoint}`);
     
-    this.bucketName = process.env.CLOUDFLARE_R2_BUCKET_NAME;
+    this.bucketName = 'rawphoto'; // Updated to new bucket name
     this.supportedExtensions = []; // Accept all file types - no restrictions
     
     console.log('R2 Storage Service initialized with bucket:', this.bucketName);
