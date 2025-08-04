@@ -376,21 +376,25 @@ class R2FileManager {
    */
   async getSessionFiles(sessionId, userId) {
     try {
-      // Return placeholder files list while database integration is finalized
-      const files = [];
+      // Get files from local backup system
+      const files = await this.localBackup.getSessionFiles(sessionId, userId);
       const usage = await this.getUserStorageUsage(userId);
       
-      // Group files by type
+      // Group files by type with proper categorization
       const filesByType = files.reduce((acc, file) => {
-        if (!acc[file.fileType]) acc[file.fileType] = [];
-        acc[file.fileType].push({
+        // Determine file type from extension since local backup doesn't store this
+        const fileType = this.getFileTypeCategory(file.originalFilename);
+        
+        if (!acc[fileType]) acc[fileType] = [];
+        acc[fileType].push({
           id: file.id,
           filename: file.originalFilename,
-          fileType: file.fileType,
+          fileType: fileType,
           fileSizeMB: Number(file.fileSizeMB),
-          uploadStatus: file.uploadStatus,
-          uploadedAt: file.uploadCompletedAt,
-          downloadCount: file.downloadCount
+          uploadStatus: 'completed', // Local backup files are completed
+          uploadedAt: file.savedAt,
+          downloadCount: 0,
+          storageLocation: 'local-backup'
         });
         return acc;
       }, {});
