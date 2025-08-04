@@ -29,7 +29,7 @@ class R2FileManager {
       forcePathStyle: true,
     });
     
-    this.bucketName = process.env.CLOUDFLARE_R2_BUCKET_NAME || 'rawphoto';
+    this.bucketName = process.env.CLOUDFLARE_R2_BUCKET_NAME || 'photoappr2token';
     
     // Database connection for R2 file tracking
     this.pool = new Pool({
