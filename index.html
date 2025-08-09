@@ -3721,8 +3721,8 @@
 
         .golden-hour-btn {
             width: 100%;
-            background: linear-gradient(135deg, var(--gold-muted) 0%, var(--cream-warm) 100%);
-            color: var(--bg-primary);
+            background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
+            color: white;
             border: none;
             padding: var(--spacing-lg);
             border-radius: var(--border-radius);
@@ -3732,11 +3732,14 @@
             transition: all 0.3s ease;
             margin-bottom: var(--spacing-lg);
             font-family: var(--font-heading);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
 
         .golden-hour-btn:hover {
             transform: translateY(-2px);
-            box-shadow: var(--shadow-hover);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+            background: linear-gradient(135deg, #e6c547 0%, #c8941c 100%);
         }
 
         .golden-hour-btn:disabled {
