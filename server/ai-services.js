@@ -291,6 +291,156 @@ Return as JSON with packages array containing: name, description, features, pric
             throw new Error('Failed to generate pricing copy: ' + error.message);
         }
     }
+
+    // Business Management AI Functions
+    async generateBlogPost(prompt) {
+        if (!this.initialized) {
+            throw new Error('AI services not available - OpenAI API key required');
+        }
+
+        try {
+            const blogPrompt = `Create a comprehensive, engaging blog post for a photography business:
+
+Topic/Prompt: ${prompt}
+
+Generate a well-structured blog post with:
+1. Compelling headline
+2. Engaging introduction hook
+3. 3-4 main sections with subheadings
+4. Practical tips or insights
+5. Strong conclusion with call-to-action
+6. SEO-friendly content
+
+Target audience: Potential photography clients and industry peers
+Tone: Professional yet personable, expertise-driven
+Length: 800-1200 words
+Focus: Provide genuine value while subtly showcasing expertise
+
+Format the response as HTML with proper headings (h2, h3), paragraphs, and bullet points where appropriate.`;
+
+            const completion = await openai.chat.completions.create({
+                model: "gpt-4o",
+                messages: [
+                    {
+                        role: "system",
+                        content: "You are an expert content marketing specialist for photography businesses. Create valuable, engaging blog content that establishes authority and attracts clients."
+                    },
+                    {
+                        role: "user",
+                        content: blogPrompt
+                    }
+                ],
+                max_tokens: 2000,
+                temperature: 0.7
+            });
+
+            return completion.choices[0].message.content;
+        } catch (error) {
+            console.error('AI Services: Error generating blog post:', error);
+            throw new Error('Failed to generate blog post: ' + error.message);
+        }
+    }
+
+    async generateSocialPost(platform, prompt, includeHashtags) {
+        if (!this.initialized) {
+            throw new Error('AI services not available - OpenAI API key required');
+        }
+
+        try {
+            const platformGuidelines = {
+                instagram: "Visual-focused, 2-3 sentences, engaging and aspirational",
+                facebook: "Community-oriented, can be longer, storytelling approach",
+                twitter: "Concise, under 280 characters, trending and timely",
+                linkedin: "Professional, industry insights, value-driven content",
+                tiktok: "Trendy, fun, engaging hook, younger audience"
+            };
+
+            const guidelines = platformGuidelines[platform] || "Engaging and platform-appropriate";
+            const hashtagInstruction = includeHashtags ? "Include 5-10 relevant hashtags" : "No hashtags needed";
+
+            const socialPrompt = `Create a ${platform} post for a photography business:
+
+Topic/Prompt: ${prompt}
+Platform: ${platform}
+Guidelines: ${guidelines}
+Hashtags: ${hashtagInstruction}
+
+Requirements:
+- Engaging and platform-appropriate tone
+- Clear value proposition
+- Encourages engagement (likes, comments, shares)
+- Includes subtle call-to-action
+- Photography business context
+
+Keep it authentic and avoid overly sales-focused language.`;
+
+            const completion = await openai.chat.completions.create({
+                model: "gpt-4o",
+                messages: [
+                    {
+                        role: "system",
+                        content: "You are a social media expert specializing in photography business marketing. Create engaging posts that build community and attract clients."
+                    },
+                    {
+                        role: "user",
+                        content: socialPrompt
+                    }
+                ],
+                max_tokens: 300,
+                temperature: 0.8
+            });
+
+            return completion.choices[0].message.content;
+        } catch (error) {
+            console.error('AI Services: Error generating social post:', error);
+            throw new Error('Failed to generate social post: ' + error.message);
+        }
+    }
+
+    async generateQuickIdeas(prompt) {
+        if (!this.initialized) {
+            throw new Error('AI services not available - OpenAI API key required');
+        }
+
+        try {
+            const ideasPrompt = `Generate 8-10 creative, actionable ideas for a photography business:
+
+Topic/Request: ${prompt}
+
+Requirements:
+- Practical and implementable
+- Creative but realistic
+- Specific to photography business context
+- Varied approaches and perspectives
+- Each idea should be 1-2 sentences
+- Mix of short-term and long-term ideas
+
+Format as a simple array of ideas, no numbering or bullets needed.`;
+
+            const completion = await openai.chat.completions.create({
+                model: "gpt-4o",
+                messages: [
+                    {
+                        role: "system",
+                        content: "You are a creative business consultant specializing in photography businesses. Generate diverse, actionable ideas that photographers can implement."
+                    },
+                    {
+                        role: "user",
+                        content: ideasPrompt
+                    }
+                ],
+                response_format: { type: "json_object" },
+                max_tokens: 800,
+                temperature: 0.9
+            });
+
+            const result = JSON.parse(completion.choices[0].message.content);
+            return result.ideas || [];
+        } catch (error) {
+            console.error('AI Services: Error generating ideas:', error);
+            throw new Error('Failed to generate ideas: ' + error.message);
+        }
+    }
 }
 
 module.exports = { AIServices };

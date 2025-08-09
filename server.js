@@ -3362,6 +3362,187 @@ app.post('/api/ai/pricing-copy', async (req, res) => {
     }
 });
 
+// Business Management AI Endpoints
+app.post('/api/ai/generate-blog', isAuthenticated, async (req, res) => {
+    try {
+        const { prompt } = req.body;
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
+
+        if (!prompt || !prompt.trim()) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Blog prompt is required' 
+            });
+        }
+
+        // Check AI credits (2 credits for blog posts - longer content)
+        const creditsNeeded = 2;
+        const availableCredits = await getUserAiCredits(userId);
+
+        if (availableCredits < creditsNeeded) {
+            return res.status(402).json({
+                success: false,
+                error: 'Insufficient AI credits',
+                creditsNeeded,
+                availableCredits
+            });
+        }
+
+        // Use AI credits
+        const creditsUsed = await useAiCredits(userId, creditsNeeded, 'blog_generation', prompt);
+        if (!creditsUsed) {
+            return res.status(402).json({
+                success: false,
+                error: 'Failed to deduct AI credits'
+            });
+        }
+
+        try {
+            const blogContent = await aiServices.generateBlogPost(prompt);
+            
+            res.json({
+                success: true,
+                content: blogContent,
+                creditsUsed: creditsNeeded,
+                remainingCredits: availableCredits - creditsNeeded
+            });
+        } catch (aiError) {
+            // Refund credits on AI failure
+            await pool.query('UPDATE users SET ai_credits = ai_credits + $1 WHERE id = $2', [creditsNeeded, userId]);
+            throw aiError;
+        }
+
+    } catch (error) {
+        console.error('AI blog generation error:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Failed to generate blog post', 
+            details: error.message 
+        });
+    }
+});
+
+app.post('/api/ai/generate-social', isAuthenticated, async (req, res) => {
+    try {
+        const { platform, prompt, includeHashtags } = req.body;
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
+
+        if (!prompt || !prompt.trim() || !platform) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Platform and prompt are required' 
+            });
+        }
+
+        // Check AI credits (1 credit for social posts)
+        const creditsNeeded = 1;
+        const availableCredits = await getUserAiCredits(userId);
+
+        if (availableCredits < creditsNeeded) {
+            return res.status(402).json({
+                success: false,
+                error: 'Insufficient AI credits',
+                creditsNeeded,
+                availableCredits
+            });
+        }
+
+        // Use AI credits
+        const creditsUsed = await useAiCredits(userId, creditsNeeded, 'social_generation', `${platform}: ${prompt}`);
+        if (!creditsUsed) {
+            return res.status(402).json({
+                success: false,
+                error: 'Failed to deduct AI credits'
+            });
+        }
+
+        try {
+            const socialContent = await aiServices.generateSocialPost(platform, prompt, includeHashtags);
+            
+            res.json({
+                success: true,
+                content: socialContent,
+                creditsUsed: creditsNeeded,
+                remainingCredits: availableCredits - creditsNeeded
+            });
+        } catch (aiError) {
+            // Refund credits on AI failure
+            await pool.query('UPDATE users SET ai_credits = ai_credits + $1 WHERE id = $2', [creditsNeeded, userId]);
+            throw aiError;
+        }
+
+    } catch (error) {
+        console.error('AI social generation error:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Failed to generate social post', 
+            details: error.message 
+        });
+    }
+});
+
+app.post('/api/ai/generate-ideas', isAuthenticated, async (req, res) => {
+    try {
+        const { prompt } = req.body;
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
+
+        if (!prompt || !prompt.trim()) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Ideas prompt is required' 
+            });
+        }
+
+        // Check AI credits (1 credit for ideas)
+        const creditsNeeded = 1;
+        const availableCredits = await getUserAiCredits(userId);
+
+        if (availableCredits < creditsNeeded) {
+            return res.status(402).json({
+                success: false,
+                error: 'Insufficient AI credits',
+                creditsNeeded,
+                availableCredits
+            });
+        }
+
+        // Use AI credits
+        const creditsUsed = await useAiCredits(userId, creditsNeeded, 'ideas_generation', prompt);
+        if (!creditsUsed) {
+            return res.status(402).json({
+                success: false,
+                error: 'Failed to deduct AI credits'
+            });
+        }
+
+        try {
+            const ideas = await aiServices.generateQuickIdeas(prompt);
+            
+            res.json({
+                success: true,
+                ideas: ideas,
+                creditsUsed: creditsNeeded,
+                remainingCredits: availableCredits - creditsNeeded
+            });
+        } catch (aiError) {
+            // Refund credits on AI failure
+            await pool.query('UPDATE users SET ai_credits = ai_credits + $1 WHERE id = $2', [creditsNeeded, userId]);
+            throw aiError;
+        }
+
+    } catch (error) {
+        console.error('AI ideas generation error:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Failed to generate ideas', 
+            details: error.message 
+        });
+    }
+});
+
 // Trigger automated workflows
 app.post('/api/trigger-workflow', isAuthenticated, async (req, res) => {
     try {

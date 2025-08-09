@@ -3909,6 +3909,529 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* Business Management Styles */
+        .business-nav {
+            display: flex;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-lg);
+            border-bottom: 2px solid var(--accent-beige);
+            padding-bottom: var(--spacing-sm);
+            flex-wrap: wrap;
+        }
+
+        .business-nav-btn {
+            background: none;
+            border: 2px solid var(--gold-muted);
+            color: var(--text-secondary);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-family: var(--font-body);
+        }
+
+        .business-nav-btn.active,
+        .business-nav-btn:hover {
+            background: var(--gold-muted);
+            color: var(--bg-secondary);
+            font-weight: 600;
+        }
+
+        .business-section {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .business-section.active {
+            display: block;
+        }
+
+        /* Dashboard Styles */
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-lg);
+            flex-wrap: wrap;
+            gap: var(--spacing-md);
+        }
+
+        .date-range-selector select {
+            padding: var(--spacing-sm);
+            border: 2px solid var(--gold-muted);
+            border-radius: var(--border-radius);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+        }
+
+        .financial-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .financial-card {
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-lg);
+            box-shadow: var(--shadow-soft);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            border-left: 4px solid;
+        }
+
+        .financial-card.earnings {
+            border-left-color: #28a745;
+        }
+
+        .financial-card.expenses {
+            border-left-color: #dc3545;
+        }
+
+        .financial-card.profit {
+            border-left-color: var(--gold-muted);
+        }
+
+        .card-icon {
+            font-size: 2.5rem;
+            opacity: 0.8;
+        }
+
+        .card-content h3 {
+            margin: 0 0 var(--spacing-xs) 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .card-content .amount {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .card-content .period {
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+
+        .dashboard-charts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: var(--spacing-lg);
+        }
+
+        .chart-container {
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-lg);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .chart-container h3 {
+            margin-bottom: var(--spacing-md);
+            color: var(--text-primary);
+        }
+
+        /* AI Assistant Styles */
+        .ai-header {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .ai-tabs {
+            display: flex;
+            gap: var(--spacing-xs);
+            margin-bottom: var(--spacing-lg);
+            border-bottom: 2px solid var(--accent-beige);
+            flex-wrap: wrap;
+        }
+
+        .ai-tab-btn {
+            background: none;
+            border: none;
+            padding: var(--spacing-sm) var(--spacing-md);
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--text-secondary);
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            font-family: var(--font-body);
+        }
+
+        .ai-tab-btn.active,
+        .ai-tab-btn:hover {
+            color: var(--gold-muted);
+            border-bottom-color: var(--gold-muted);
+            font-weight: 600;
+        }
+
+        .ai-tab-content {
+            display: none;
+        }
+
+        .ai-tab-content.active {
+            display: block;
+        }
+
+        .ai-input-section {
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .ai-input-section label {
+            display: block;
+            margin-bottom: var(--spacing-sm);
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .ai-input-section textarea,
+        .ai-input-section input[type="text"],
+        .ai-input-section select {
+            width: 100%;
+            padding: var(--spacing-sm);
+            border: 2px solid var(--gold-muted);
+            border-radius: var(--border-radius);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .ai-generate-btn {
+            background: linear-gradient(135deg, var(--gold-muted) 0%, #b8941f 100%);
+            color: var(--bg-secondary);
+            border: none;
+            padding: var(--spacing-sm) var(--spacing-lg);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-family: var(--font-body);
+        }
+
+        .ai-generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .ai-output-section {
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-lg);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .rich-text-editor {
+            min-height: 300px;
+            padding: var(--spacing-md);
+            border: 2px solid var(--accent-beige);
+            border-radius: var(--border-radius);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            line-height: 1.6;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .social-output {
+            min-height: 150px;
+            padding: var(--spacing-md);
+            border: 2px solid var(--accent-beige);
+            border-radius: var(--border-radius);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            line-height: 1.6;
+            margin-bottom: var(--spacing-md);
+            white-space: pre-wrap;
+        }
+
+        .ideas-list {
+            padding: var(--spacing-md);
+            border: 2px solid var(--accent-beige);
+            border-radius: var(--border-radius);
+            background: var(--bg-primary);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .idea-item {
+            padding: var(--spacing-sm);
+            margin-bottom: var(--spacing-sm);
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius-sm);
+            border-left: 3px solid var(--gold-muted);
+        }
+
+        .output-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+
+        .output-actions button {
+            background: var(--accent-beige);
+            color: var(--text-primary);
+            border: none;
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .output-actions button:hover {
+            background: var(--gold-muted);
+            color: var(--bg-secondary);
+        }
+
+        /* Expense and Mileage Tracker Styles */
+        .expenses-header,
+        .mileage-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .add-btn {
+            background: var(--gold-muted);
+            color: var(--bg-secondary);
+            border: none;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .add-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .expense-form,
+        .trip-form {
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: var(--spacing-xs);
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: var(--spacing-sm);
+            border: 2px solid var(--gold-muted);
+            border-radius: var(--border-radius);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+            justify-content: flex-end;
+        }
+
+        .save-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .cancel-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .calculate-btn {
+            background: var(--gold-muted);
+            color: var(--bg-secondary);
+            border: none;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* Table Styles */
+        .business-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .business-table th,
+        .business-table td {
+            padding: var(--spacing-sm);
+            text-align: left;
+            border-bottom: 1px solid var(--accent-beige);
+        }
+
+        .business-table th {
+            background: var(--gold-muted);
+            color: var(--bg-secondary);
+            font-weight: 600;
+        }
+
+        .business-table tr:hover {
+            background: var(--accent-beige);
+        }
+
+        .table-actions {
+            margin-bottom: var(--spacing-md);
+        }
+
+        .export-btn {
+            background: var(--accent-sage);
+            color: var(--text-primary);
+            border: none;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* Reports Styles */
+        .reports-header {
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .report-date-range {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            flex-wrap: wrap;
+        }
+
+        .generate-btn {
+            background: var(--gold-muted);
+            color: var(--bg-secondary);
+            border: none;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .report-content {
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-lg);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: var(--spacing-sm);
+            background: var(--accent-beige);
+            border-radius: var(--border-radius-sm);
+        }
+
+        .summary-item label {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .summary-item span {
+            font-weight: 600;
+            color: var(--gold-muted);
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .business-nav {
+                flex-direction: column;
+            }
+
+            .business-nav-btn {
+                text-align: center;
+            }
+
+            .dashboard-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .financial-overview {
+                grid-template-columns: 1fr;
+            }
+
+            .dashboard-charts {
+                grid-template-columns: 1fr;
+            }
+
+            .ai-tabs {
+                flex-direction: column;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .report-date-range {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .business-table {
+                font-size: 0.9rem;
+            }
+
+            .business-table th,
+            .business-table td {
+                padding: var(--spacing-xs);
+            }
+        }
     </style>
 </head>
 <body>
@@ -3944,6 +4467,11 @@
                     <li class="nav-item">
                         <a href="#" class="nav-link" onclick="switchTab('goldenHour'); closeMobileMenu();">
                             🌅 Golden Hour Times
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="switchTab('businessManagement'); closeMobileMenu();">
+                            💼 Business Management
                         </a>
                     </li>
 
@@ -8084,7 +8612,748 @@ END:VCALENDAR`;
                     const today = new Date();
                     dateInput.value = today.toISOString().split('T')[0];
                 }
+            } else if (tabName === 'businessManagement') {
+                // Initialize Business Management when tab is first opened
+                initializeBusinessManagement();
             }
+        }
+
+        // Business Management Functions
+        function initializeBusinessManagement() {
+            updateDashboard();
+            loadExpenses();
+            loadMileageTrips();
+            loadAIHistory();
+            
+            // Set default dates
+            const today = new Date().toISOString().split('T')[0];
+            if (document.getElementById('expenseDate')) document.getElementById('expenseDate').value = today;
+            if (document.getElementById('tripDate')) document.getElementById('tripDate').value = today;
+            if (document.getElementById('reportStartDate')) document.getElementById('reportStartDate').value = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+            if (document.getElementById('reportEndDate')) document.getElementById('reportEndDate').value = today;
+        }
+
+        // Business Section Navigation
+        function showBusinessSection(sectionName) {
+            // Hide all business sections
+            const sections = document.querySelectorAll('.business-section');
+            sections.forEach(section => section.classList.remove('active'));
+            
+            // Remove active class from all nav buttons
+            const navButtons = document.querySelectorAll('.business-nav-btn');
+            navButtons.forEach(btn => btn.classList.remove('active'));
+            
+            // Show selected section
+            const selectedSection = document.getElementById(sectionName + 'Section');
+            if (selectedSection) {
+                selectedSection.classList.add('active');
+            }
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+            
+            // Initialize section-specific data
+            if (sectionName === 'dashboard') {
+                updateDashboard();
+            } else if (sectionName === 'expenses') {
+                loadExpenses();
+            } else if (sectionName === 'mileage') {
+                loadMileageTrips();
+            } else if (sectionName === 'aiAssistant') {
+                loadAIHistory();
+            }
+        }
+
+        // AI Assistant Functions
+        function showAITab(tabName) {
+            // Hide all AI tab contents
+            const aiTabs = document.querySelectorAll('.ai-tab-content');
+            aiTabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Remove active class from all AI tab buttons
+            const aiButtons = document.querySelectorAll('.ai-tab-btn');
+            aiButtons.forEach(btn => btn.classList.remove('active'));
+            
+            // Show selected AI tab
+            const selectedTab = document.getElementById(tabName + 'Tab');
+            if (selectedTab) {
+                selectedTab.classList.add('active');
+            }
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
+
+        // AI Content Generation Functions
+        async function generateBlogPost() {
+            const prompt = document.getElementById('blogPrompt').value.trim();
+            if (!prompt) {
+                showMessage('Please enter a blog topic or prompt', 'error');
+                return;
+            }
+
+            const button = event.target;
+            const originalText = button.textContent;
+            button.textContent = 'Generating...';
+            button.disabled = true;
+
+            try {
+                const response = await fetch('/api/ai/generate-blog', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ prompt })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to generate blog post');
+                }
+
+                const data = await response.json();
+                document.getElementById('blogOutput').innerHTML = data.content;
+                
+                // Save to history
+                saveAIPrompt('blog', prompt, data.content);
+                showMessage('Blog post generated successfully!', 'success');
+            } catch (error) {
+                console.error('Error generating blog post:', error);
+                showMessage('Failed to generate blog post. Please try again.', 'error');
+            } finally {
+                button.textContent = originalText;
+                button.disabled = false;
+            }
+        }
+
+        async function generateSocialPost() {
+            const platform = document.getElementById('socialPlatform').value;
+            const prompt = document.getElementById('socialPrompt').value.trim();
+            const includeHashtags = document.getElementById('includeHashtags').checked;
+
+            if (!prompt) {
+                showMessage('Please enter a post topic or prompt', 'error');
+                return;
+            }
+
+            const button = event.target;
+            const originalText = button.textContent;
+            button.textContent = 'Generating...';
+            button.disabled = true;
+
+            try {
+                const response = await fetch('/api/ai/generate-social', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ platform, prompt, includeHashtags })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to generate social post');
+                }
+
+                const data = await response.json();
+                document.getElementById('socialOutput').textContent = data.content;
+                
+                // Save to history
+                saveAIPrompt('social', `${platform}: ${prompt}`, data.content);
+                showMessage('Social media post generated successfully!', 'success');
+            } catch (error) {
+                console.error('Error generating social post:', error);
+                showMessage('Failed to generate social post. Please try again.', 'error');
+            } finally {
+                button.textContent = originalText;
+                button.disabled = false;
+            }
+        }
+
+        async function generateQuickIdeas() {
+            const prompt = document.getElementById('ideaPrompt').value.trim();
+            if (!prompt) {
+                showMessage('Please enter what you need ideas for', 'error');
+                return;
+            }
+
+            const button = event.target;
+            const originalText = button.textContent;
+            button.textContent = 'Generating...';
+            button.disabled = true;
+
+            try {
+                const response = await fetch('/api/ai/generate-ideas', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ prompt })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to generate ideas');
+                }
+
+                const data = await response.json();
+                const ideasContainer = document.getElementById('ideasOutput');
+                ideasContainer.innerHTML = '';
+                
+                data.ideas.forEach(idea => {
+                    const ideaDiv = document.createElement('div');
+                    ideaDiv.className = 'idea-item';
+                    ideaDiv.textContent = idea;
+                    ideasContainer.appendChild(ideaDiv);
+                });
+                
+                // Save to history
+                saveAIPrompt('ideas', prompt, data.ideas.join('\\n'));
+                showMessage('Ideas generated successfully!', 'success');
+            } catch (error) {
+                console.error('Error generating ideas:', error);
+                showMessage('Failed to generate ideas. Please try again.', 'error');
+            } finally {
+                button.textContent = originalText;
+                button.disabled = false;
+            }
+        }
+
+        function saveAIPrompt(type, prompt, response) {
+            const history = JSON.parse(localStorage.getItem('aiHistory') || '[]');
+            history.unshift({
+                id: Date.now(),
+                type,
+                prompt,
+                response,
+                timestamp: new Date().toISOString()
+            });
+            
+            // Keep only last 50 entries
+            if (history.length > 50) {
+                history.splice(50);
+            }
+            
+            localStorage.setItem('aiHistory', JSON.stringify(history));
+            loadAIHistory();
+        }
+
+        function loadAIHistory() {
+            const history = JSON.parse(localStorage.getItem('aiHistory') || '[]');
+            const historyContainer = document.getElementById('aiHistoryList');
+            
+            if (!historyContainer) return;
+            
+            if (history.length === 0) {
+                historyContainer.innerHTML = '<p>No AI prompts in history yet.</p>';
+                return;
+            }
+            
+            historyContainer.innerHTML = history.map(item => \`
+                <div class="history-item" style="padding: var(--spacing-md); border: 1px solid var(--accent-beige); border-radius: var(--border-radius); margin-bottom: var(--spacing-sm);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-xs);">
+                        <span style="font-weight: 600; color: var(--gold-muted);">\${item.type.toUpperCase()}</span>
+                        <span style="font-size: 0.85rem; color: var(--text-light);">\${new Date(item.timestamp).toLocaleDateString()}</span>
+                    </div>
+                    <div style="margin-bottom: var(--spacing-xs); font-weight: 500;">Prompt: \${item.prompt}</div>
+                    <div style="color: var(--text-secondary); max-height: 100px; overflow-y: auto;">\${item.response.substring(0, 200)}\${item.response.length > 200 ? '...' : ''}</div>
+                </div>
+            \`).join('');
+        }
+
+        // Utility Functions
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+            
+            const text = element.textContent || element.innerHTML;
+            
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showMessage('Copied to clipboard!', 'success');
+                });
+            } else {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                showMessage('Copied to clipboard!', 'success');
+            }
+        }
+
+        function clearOutput(elementId) {
+            const element = document.getElementById(elementId);
+            if (element) element.innerHTML = '';
+        }
+
+        // Dashboard Functions
+        async function updateDashboard() {
+            const dateRange = document.getElementById('dashboardDateRange')?.value || 'thisMonth';
+            const customRange = document.getElementById('customDateRange');
+            
+            if (customRange) {
+                if (dateRange === 'custom') {
+                    customRange.style.display = 'block';
+                } else {
+                    customRange.style.display = 'none';
+                }
+            }
+
+            try {
+                // Calculate date range
+                const { startDate, endDate } = getDateRange(dateRange);
+                
+                // Load financial data
+                const expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
+                const trips = JSON.parse(localStorage.getItem('mileageTrips') || '[]');
+                
+                // For now, we'll use dummy earnings data since we don't have a booking system
+                // In a real implementation, this would come from the session booking system
+                const earnings = calculateEarnings(startDate, endDate);
+                const totalExpenses = calculateExpenses(expenses, startDate, endDate);
+                const netProfit = earnings - totalExpenses;
+                
+                // Update dashboard cards
+                if (document.getElementById('totalEarnings')) document.getElementById('totalEarnings').textContent = \`$\${earnings.toFixed(2)}\`;
+                if (document.getElementById('totalExpenses')) document.getElementById('totalExpenses').textContent = \`$\${totalExpenses.toFixed(2)}\`;
+                if (document.getElementById('netProfit')) document.getElementById('netProfit').textContent = \`$\${netProfit.toFixed(2)}\`;
+                
+                const periodText = getPeriodText(dateRange);
+                if (document.getElementById('earningsPeriod')) document.getElementById('earningsPeriod').textContent = periodText;
+                if (document.getElementById('expensesPeriod')) document.getElementById('expensesPeriod').textContent = periodText;
+                if (document.getElementById('profitPeriod')) document.getElementById('profitPeriod').textContent = periodText;
+                
+            } catch (error) {
+                console.error('Error updating dashboard:', error);
+                showMessage('Failed to update dashboard', 'error');
+            }
+        }
+
+        function getDateRange(range) {
+            const now = new Date();
+            let startDate, endDate;
+            
+            switch (range) {
+                case 'today':
+                    startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+                    break;
+                case 'thisWeek':
+                    const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+                    startDate = new Date(startOfWeek.getFullYear(), startOfWeek.getMonth(), startOfWeek.getDate());
+                    endDate = new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+                    break;
+                case 'thisMonth':
+                    startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                    endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+                    break;
+                case 'thisYear':
+                    startDate = new Date(now.getFullYear(), 0, 1);
+                    endDate = new Date(now.getFullYear() + 1, 0, 1);
+                    break;
+                case 'custom':
+                    const startInput = document.getElementById('startDate');
+                    const endInput = document.getElementById('endDate');
+                    startDate = startInput ? new Date(startInput.value) : new Date(now.getFullYear(), now.getMonth(), 1);
+                    endDate = endInput ? new Date(endInput.value) : new Date();
+                    break;
+                default:
+                    startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+                    endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+            }
+            
+            return { startDate, endDate };
+        }
+
+        function calculateEarnings(startDate, endDate) {
+            // This would integrate with the session booking system
+            // For now, returning a placeholder calculation
+            const months = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24 * 30));
+            return months * 2500; // $2500 average per month
+        }
+
+        function calculateExpenses(expenses, startDate, endDate) {
+            return expenses.filter(expense => {
+                const expenseDate = new Date(expense.date);
+                return expenseDate >= startDate && expenseDate <= endDate;
+            }).reduce((total, expense) => total + expense.amount, 0);
+        }
+
+        function getPeriodText(range) {
+            switch (range) {
+                case 'today': return 'Today';
+                case 'thisWeek': return 'This Week';
+                case 'thisMonth': return 'This Month';
+                case 'thisYear': return 'This Year';
+                case 'custom': return 'Custom Range';
+                default: return 'This Month';
+            }
+        }
+
+        // Expense Tracker Functions
+        function showAddExpenseForm() {
+            const form = document.getElementById('addExpenseForm');
+            if (form) {
+                form.style.display = form.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+
+        function cancelExpenseForm() {
+            const form = document.getElementById('addExpenseForm');
+            if (form) {
+                form.style.display = 'none';
+                // Clear form
+                if (document.getElementById('expenseDate')) document.getElementById('expenseDate').value = '';
+                if (document.getElementById('expenseCategory')) document.getElementById('expenseCategory').value = 'software';
+                if (document.getElementById('expenseAmount')) document.getElementById('expenseAmount').value = '';
+                if (document.getElementById('expenseDescription')) document.getElementById('expenseDescription').value = '';
+                if (document.getElementById('expenseRecurring')) document.getElementById('expenseRecurring').checked = false;
+            }
+        }
+
+        function saveExpense() {
+            const date = document.getElementById('expenseDate')?.value;
+            const category = document.getElementById('expenseCategory')?.value;
+            const amount = parseFloat(document.getElementById('expenseAmount')?.value || '0');
+            const description = document.getElementById('expenseDescription')?.value;
+            const recurring = document.getElementById('expenseRecurring')?.checked;
+
+            if (!date || !amount || !description) {
+                showMessage('Please fill in all required fields', 'error');
+                return;
+            }
+
+            const expense = {
+                id: Date.now(),
+                date,
+                category,
+                amount,
+                description,
+                recurring,
+                timestamp: new Date().toISOString()
+            };
+
+            const expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
+            expenses.unshift(expense);
+            localStorage.setItem('expenses', JSON.stringify(expenses));
+
+            cancelExpenseForm();
+            loadExpenses();
+            updateDashboard();
+            showMessage('Expense added successfully!', 'success');
+        }
+
+        function loadExpenses() {
+            const expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
+            const tbody = document.getElementById('expensesTableBody');
+            
+            if (!tbody) return;
+            
+            if (expenses.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">No expenses recorded yet.</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = expenses.map(expense => \`
+                <tr>
+                    <td>\${new Date(expense.date).toLocaleDateString()}</td>
+                    <td>\${expense.category.charAt(0).toUpperCase() + expense.category.slice(1)}</td>
+                    <td>\${expense.description}</td>
+                    <td>$\${expense.amount.toFixed(2)}</td>
+                    <td>\${expense.recurring ? 'Yes' : 'No'}</td>
+                    <td>
+                        <button onclick="deleteExpense(\${expense.id})" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Delete</button>
+                    </td>
+                </tr>
+            \`).join('');
+        }
+
+        function deleteExpense(id) {
+            if (!confirm('Are you sure you want to delete this expense?')) return;
+            
+            const expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
+            const filteredExpenses = expenses.filter(expense => expense.id !== id);
+            localStorage.setItem('expenses', JSON.stringify(filteredExpenses));
+            
+            loadExpenses();
+            updateDashboard();
+            showMessage('Expense deleted successfully!', 'success');
+        }
+
+        function exportExpensesToCSV() {
+            const expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
+            if (expenses.length === 0) {
+                showMessage('No expenses to export', 'error');
+                return;
+            }
+
+            const csvContent = [
+                ['Date', 'Category', 'Description', 'Amount', 'Recurring'],
+                ...expenses.map(expense => [
+                    expense.date,
+                    expense.category,
+                    expense.description,
+                    expense.amount,
+                    expense.recurring ? 'Yes' : 'No'
+                ])
+            ].map(row => row.join(',')).join('\\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = \`expenses_\${new Date().toISOString().split('T')[0]}.csv\`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+            
+            showMessage('Expenses exported to CSV!', 'success');
+        }
+
+        // Mileage Tracker Functions
+        function showAddTripForm() {
+            const form = document.getElementById('addTripForm');
+            if (form) {
+                form.style.display = form.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+
+        function cancelTripForm() {
+            const form = document.getElementById('addTripForm');
+            if (form) {
+                form.style.display = 'none';
+                // Clear form
+                if (document.getElementById('tripDate')) document.getElementById('tripDate').value = '';
+                if (document.getElementById('tripPurpose')) document.getElementById('tripPurpose').value = 'client_work';
+                if (document.getElementById('startLocation')) document.getElementById('startLocation').value = '';
+                if (document.getElementById('endLocation')) document.getElementById('endLocation').value = '';
+                if (document.getElementById('milesDriven')) document.getElementById('milesDriven').value = '';
+            }
+        }
+
+        async function calculateMiles() {
+            const startLocation = document.getElementById('startLocation')?.value.trim();
+            const endLocation = document.getElementById('endLocation')?.value.trim();
+
+            if (!startLocation || !endLocation) {
+                showMessage('Please enter both start and end locations', 'error');
+                return;
+            }
+
+            try {
+                // Use Nominatim geocoding API to get coordinates for both locations
+                const startResponse = await fetch(\`https://nominatim.openstreetmap.org/search?format=json&q=\${encodeURIComponent(startLocation)}\`);
+                const endResponse = await fetch(\`https://nominatim.openstreetmap.org/search?format=json&q=\${encodeURIComponent(endLocation)}\`);
+
+                const startData = await startResponse.json();
+                const endData = await endResponse.json();
+
+                if (startData.length === 0 || endData.length === 0) {
+                    showMessage('Could not find one or both locations. Please check addresses.', 'error');
+                    return;
+                }
+
+                const startLat = parseFloat(startData[0].lat);
+                const startLon = parseFloat(startData[0].lon);
+                const endLat = parseFloat(endData[0].lat);
+                const endLon = parseFloat(endData[0].lon);
+
+                // Calculate distance using Haversine formula
+                const miles = calculateHaversineDistance(startLat, startLon, endLat, endLon);
+                
+                const milesInput = document.getElementById('milesDriven');
+                if (milesInput) {
+                    milesInput.value = miles.toFixed(1);
+                }
+                
+                showMessage(\`Calculated distance: \${miles.toFixed(1)} miles\`, 'success');
+            } catch (error) {
+                console.error('Error calculating miles:', error);
+                showMessage('Failed to calculate miles. Please enter manually.', 'error');
+            }
+        }
+
+        function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+            const R = 3959; // Radius of Earth in miles
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                    Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        function saveTrip() {
+            const date = document.getElementById('tripDate')?.value;
+            const purpose = document.getElementById('tripPurpose')?.value;
+            const startLocation = document.getElementById('startLocation')?.value;
+            const endLocation = document.getElementById('endLocation')?.value;
+            const miles = parseFloat(document.getElementById('milesDriven')?.value || '0');
+
+            if (!date || !startLocation || !endLocation || !miles) {
+                showMessage('Please fill in all required fields', 'error');
+                return;
+            }
+
+            const trip = {
+                id: Date.now(),
+                date,
+                purpose,
+                startLocation,
+                endLocation,
+                miles,
+                timestamp: new Date().toISOString()
+            };
+
+            const trips = JSON.parse(localStorage.getItem('mileageTrips') || '[]');
+            trips.unshift(trip);
+            localStorage.setItem('mileageTrips', JSON.stringify(trips));
+
+            cancelTripForm();
+            loadMileageTrips();
+            showMessage('Trip added successfully!', 'success');
+        }
+
+        function loadMileageTrips() {
+            const trips = JSON.parse(localStorage.getItem('mileageTrips') || '[]');
+            const tbody = document.getElementById('mileageTableBody');
+            
+            if (!tbody) return;
+            
+            if (trips.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">No trips recorded yet.</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = trips.map(trip => \`
+                <tr>
+                    <td>\${new Date(trip.date).toLocaleDateString()}</td>
+                    <td>\${trip.startLocation}</td>
+                    <td>\${trip.endLocation}</td>
+                    <td>\${trip.miles.toFixed(1)}</td>
+                    <td>\${trip.purpose.replace('_', ' ').replace(/\\b\\w/g, l => l.toUpperCase())}</td>
+                    <td>
+                        <button onclick="deleteTrip(\${trip.id})" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Delete</button>
+                    </td>
+                </tr>
+            \`).join('');
+        }
+
+        function deleteTrip(id) {
+            if (!confirm('Are you sure you want to delete this trip?')) return;
+            
+            const trips = JSON.parse(localStorage.getItem('mileageTrips') || '[]');
+            const filteredTrips = trips.filter(trip => trip.id !== id);
+            localStorage.setItem('mileageTrips', JSON.stringify(filteredTrips));
+            
+            loadMileageTrips();
+            showMessage('Trip deleted successfully!', 'success');
+        }
+
+        // Reports Functions
+        function generateReport() {
+            const startDate = document.getElementById('reportStartDate')?.value;
+            const endDate = document.getElementById('reportEndDate')?.value;
+
+            if (!startDate || !endDate) {
+                showMessage('Please select start and end dates', 'error');
+                return;
+            }
+
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+
+            const expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
+            const trips = JSON.parse(localStorage.getItem('mileageTrips') || '[]');
+
+            // Filter data by date range
+            const filteredExpenses = expenses.filter(expense => {
+                const expenseDate = new Date(expense.date);
+                return expenseDate >= start && expenseDate <= end;
+            });
+
+            const filteredTrips = trips.filter(trip => {
+                const tripDate = new Date(trip.date);
+                return tripDate >= start && tripDate <= end;
+            });
+
+            // Calculate totals
+            const totalExpenses = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+            const totalMiles = filteredTrips.reduce((sum, trip) => sum + trip.miles, 0);
+            const totalEarnings = calculateEarnings(start, end);
+            const netProfit = totalEarnings - totalExpenses;
+
+            // Update report display
+            if (document.getElementById('reportEarnings')) document.getElementById('reportEarnings').textContent = \`$\${totalEarnings.toFixed(2)}\`;
+            if (document.getElementById('reportExpenses')) document.getElementById('reportExpenses').textContent = \`$\${totalExpenses.toFixed(2)}\`;
+            if (document.getElementById('reportMiles')) document.getElementById('reportMiles').textContent = totalMiles.toFixed(1);
+            if (document.getElementById('reportNetProfit')) document.getElementById('reportNetProfit').textContent = \`$\${netProfit.toFixed(2)}\`;
+
+            showMessage('Report generated successfully!', 'success');
+        }
+
+        function exportReportCSV() {
+            const startDate = document.getElementById('reportStartDate')?.value;
+            const endDate = document.getElementById('reportEndDate')?.value;
+
+            if (!startDate || !endDate) {
+                showMessage('Please generate a report first', 'error');
+                return;
+            }
+
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+
+            const expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
+            const trips = JSON.parse(localStorage.getItem('mileageTrips') || '[]');
+
+            const filteredExpenses = expenses.filter(expense => {
+                const expenseDate = new Date(expense.date);
+                return expenseDate >= start && expenseDate <= end;
+            });
+
+            const filteredTrips = trips.filter(trip => {
+                const tripDate = new Date(trip.date);
+                return tripDate >= start && tripDate <= end;
+            });
+
+            const csvContent = [
+                ['BUSINESS REPORT'],
+                [\`Period: \${startDate} to \${endDate}\`],
+                [''],
+                ['EXPENSES'],
+                ['Date', 'Category', 'Description', 'Amount'],
+                ...filteredExpenses.map(expense => [
+                    expense.date,
+                    expense.category,
+                    expense.description,
+                    expense.amount
+                ]),
+                [''],
+                ['MILEAGE'],
+                ['Date', 'Start Location', 'End Location', 'Miles', 'Purpose'],
+                ...filteredTrips.map(trip => [
+                    trip.date,
+                    trip.startLocation,
+                    trip.endLocation,
+                    trip.miles,
+                    trip.purpose
+                ])
+            ].map(row => row.join(',')).join('\\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = \`business_report_\${startDate}_to_\${endDate}.csv\`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+            
+            showMessage('Report exported to CSV!', 'success');
+        }
+
+        function exportReportPDF() {
+            showMessage('PDF export feature coming soon!', 'info');
         }
 
     </script>
@@ -8745,6 +10014,356 @@ END:VCALENDAR`;
                 
                 <div id="errorMessage" class="error-message" style="display: none;">
                     ❌ Could not calculate times. Please check your location and try again.
+                </div>
+            </div>
+        </div>
+
+        <!-- Business Management Tab Content -->
+        <div id="businessManagementTab" class="tab-content">
+            <div class="content-header">
+                <h1>💼 Business Management</h1>
+                <p>Comprehensive business analytics, AI assistance, and financial tracking</p>
+            </div>
+            
+            <!-- Business Management Navigation -->
+            <div class="business-nav">
+                <button class="business-nav-btn active" onclick="showBusinessSection('dashboard')">📊 Dashboard</button>
+                <button class="business-nav-btn" onclick="showBusinessSection('aiAssistant')">🤖 AI Assistant</button>
+                <button class="business-nav-btn" onclick="showBusinessSection('expenses')">💰 Expense Tracker</button>
+                <button class="business-nav-btn" onclick="showBusinessSection('mileage')">🚗 Mileage Tracker</button>
+                <button class="business-nav-btn" onclick="showBusinessSection('reports')">📋 Reports</button>
+            </div>
+
+            <!-- Dashboard Section -->
+            <div id="dashboardSection" class="business-section active">
+                <div class="dashboard-header">
+                    <h2>📊 Business Dashboard</h2>
+                    <div class="date-range-selector">
+                        <select id="dashboardDateRange" onchange="updateDashboard()">
+                            <option value="today">Today</option>
+                            <option value="thisWeek">This Week</option>
+                            <option value="thisMonth" selected>This Month</option>
+                            <option value="thisYear">This Year</option>
+                            <option value="custom">Custom Range</option>
+                        </select>
+                        <div id="customDateRange" style="display: none;">
+                            <input type="date" id="startDate">
+                            <input type="date" id="endDate">
+                            <button onclick="updateDashboard()">Apply</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="financial-overview">
+                    <div class="financial-card earnings">
+                        <div class="card-icon">💵</div>
+                        <div class="card-content">
+                            <h3>Total Earnings</h3>
+                            <div class="amount" id="totalEarnings">$0.00</div>
+                            <div class="period" id="earningsPeriod">This Month</div>
+                        </div>
+                    </div>
+                    
+                    <div class="financial-card expenses">
+                        <div class="card-icon">💸</div>
+                        <div class="card-content">
+                            <h3>Total Expenses</h3>
+                            <div class="amount" id="totalExpenses">$0.00</div>
+                            <div class="period" id="expensesPeriod">This Month</div>
+                        </div>
+                    </div>
+                    
+                    <div class="financial-card profit">
+                        <div class="card-icon">📈</div>
+                        <div class="card-content">
+                            <h3>Net Profit</h3>
+                            <div class="amount" id="netProfit">$0.00</div>
+                            <div class="period" id="profitPeriod">This Month</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="dashboard-charts">
+                    <div class="chart-container">
+                        <h3>📊 Earnings per Month</h3>
+                        <canvas id="earningsChart" width="400" height="200"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h3>📈 Net Profit Over Time</h3>
+                        <canvas id="profitChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Assistant Section -->
+            <div id="aiAssistantSection" class="business-section">
+                <div class="ai-header">
+                    <h2>🤖 AI Assistant</h2>
+                    <p>Generate content for your photography business</p>
+                </div>
+                
+                <div class="ai-tabs">
+                    <button class="ai-tab-btn active" onclick="showAITab('blogWriter')">📝 Blog Writer</button>
+                    <button class="ai-tab-btn" onclick="showAITab('socialMedia')">📱 Social Media</button>
+                    <button class="ai-tab-btn" onclick="showAITab('quickIdeas')">💡 Quick Ideas</button>
+                    <button class="ai-tab-btn" onclick="showAITab('history')">📚 History</button>
+                </div>
+                
+                <!-- Blog Writer Tab -->
+                <div id="blogWriterTab" class="ai-tab-content active">
+                    <h3>📝 Blog Post Generator</h3>
+                    <div class="ai-input-section">
+                        <label for="blogPrompt">Blog Topic/Prompt:</label>
+                        <textarea id="blogPrompt" placeholder="Enter your blog topic or prompt (e.g., 'Tips for outdoor family photography sessions')" rows="3"></textarea>
+                        <button onclick="generateBlogPost()" class="ai-generate-btn">Generate Blog Post</button>
+                    </div>
+                    <div class="ai-output-section">
+                        <label>Generated Content:</label>
+                        <div id="blogOutput" class="rich-text-editor" contenteditable="true" placeholder="Generated blog post will appear here..."></div>
+                        <div class="output-actions">
+                            <button onclick="copyToClipboard('blogOutput')">📋 Copy</button>
+                            <button onclick="clearOutput('blogOutput')">🗑️ Clear</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Social Media Tab -->
+                <div id="socialMediaTab" class="ai-tab-content">
+                    <h3>📱 Social Media Post Builder</h3>
+                    <div class="ai-input-section">
+                        <div class="social-platform">
+                            <label for="socialPlatform">Platform:</label>
+                            <select id="socialPlatform">
+                                <option value="instagram">Instagram</option>
+                                <option value="facebook">Facebook</option>
+                                <option value="twitter">Twitter</option>
+                                <option value="tiktok">TikTok</option>
+                            </select>
+                        </div>
+                        <label for="socialPrompt">Topic/Prompt:</label>
+                        <textarea id="socialPrompt" placeholder="Enter your post topic (e.g., 'Promoting spring mini sessions')" rows="2"></textarea>
+                        <div class="social-options">
+                            <label>
+                                <input type="checkbox" id="includeHashtags" checked>
+                                Include Hashtags
+                            </label>
+                        </div>
+                        <button onclick="generateSocialPost()" class="ai-generate-btn">Generate Post</button>
+                    </div>
+                    <div class="ai-output-section">
+                        <label>Generated Post:</label>
+                        <div id="socialOutput" class="social-output" placeholder="Generated social media post will appear here..."></div>
+                        <div class="output-actions">
+                            <button onclick="copyToClipboard('socialOutput')">📋 Copy</button>
+                            <button onclick="clearOutput('socialOutput')">🗑️ Clear</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Ideas Tab -->
+                <div id="quickIdeasTab" class="ai-tab-content">
+                    <h3>💡 Quick Ideas Generator</h3>
+                    <div class="ai-input-section">
+                        <label for="ideaPrompt">What do you need ideas for?</label>
+                        <input type="text" id="ideaPrompt" placeholder="e.g., 'Christmas photo session promotions'">
+                        <button onclick="generateQuickIdeas()" class="ai-generate-btn">Generate Ideas</button>
+                    </div>
+                    <div class="ai-output-section">
+                        <label>Generated Ideas:</label>
+                        <div id="ideasOutput" class="ideas-list"></div>
+                        <div class="output-actions">
+                            <button onclick="copyToClipboard('ideasOutput')">📋 Copy All</button>
+                            <button onclick="clearOutput('ideasOutput')">🗑️ Clear</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- History Tab -->
+                <div id="historyTab" class="ai-tab-content">
+                    <h3>📚 AI Prompt History</h3>
+                    <div id="aiHistoryList" class="history-list"></div>
+                </div>
+            </div>
+
+            <!-- Expense Tracker Section -->
+            <div id="expensesSection" class="business-section">
+                <div class="expenses-header">
+                    <h2>💰 Expense Tracker</h2>
+                    <button onclick="showAddExpenseForm()" class="add-btn">+ New Expense</button>
+                </div>
+                
+                <div id="addExpenseForm" class="expense-form" style="display: none;">
+                    <h3>Add New Expense</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="expenseDate">Date:</label>
+                            <input type="date" id="expenseDate">
+                        </div>
+                        <div class="form-group">
+                            <label for="expenseCategory">Category:</label>
+                            <select id="expenseCategory">
+                                <option value="software">Software</option>
+                                <option value="equipment">Equipment</option>
+                                <option value="travel">Travel</option>
+                                <option value="marketing">Marketing</option>
+                                <option value="misc">Miscellaneous</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="expenseAmount">Amount ($):</label>
+                            <input type="number" id="expenseAmount" step="0.01" min="0">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group full-width">
+                            <label for="expenseDescription">Description:</label>
+                            <input type="text" id="expenseDescription" placeholder="Brief description of the expense">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="expenseRecurring">
+                                Recurring Monthly Expense
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button onclick="saveExpense()" class="save-btn">Save Expense</button>
+                        <button onclick="cancelExpenseForm()" class="cancel-btn">Cancel</button>
+                    </div>
+                </div>
+                
+                <div class="expenses-table-container">
+                    <div class="table-actions">
+                        <button onclick="exportExpensesToCSV()" class="export-btn">📊 Export to CSV</button>
+                    </div>
+                    <table id="expensesTable" class="business-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Category</th>
+                                <th>Description</th>
+                                <th>Amount</th>
+                                <th>Recurring</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="expensesTableBody">
+                            <!-- Expenses will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Mileage Tracker Section -->
+            <div id="mileageSection" class="business-section">
+                <div class="mileage-header">
+                    <h2>🚗 Mileage Tracker</h2>
+                    <button onclick="showAddTripForm()" class="add-btn">+ Add Trip</button>
+                </div>
+                
+                <div id="addTripForm" class="trip-form" style="display: none;">
+                    <h3>Add New Trip</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="tripDate">Date:</label>
+                            <input type="date" id="tripDate">
+                        </div>
+                        <div class="form-group">
+                            <label for="tripPurpose">Purpose:</label>
+                            <select id="tripPurpose">
+                                <option value="client_work">Client Work</option>
+                                <option value="supplies">Supplies</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="startLocation">Start Location:</label>
+                            <input type="text" id="startLocation" placeholder="Starting address">
+                        </div>
+                        <div class="form-group">
+                            <label for="endLocation">End Location:</label>
+                            <input type="text" id="endLocation" placeholder="Destination address">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="milesDriven">Miles Driven:</label>
+                            <input type="number" id="milesDriven" step="0.1" min="0">
+                        </div>
+                        <div class="form-group">
+                            <button onclick="calculateMiles()" class="calculate-btn">🗺️ Calculate Miles</button>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button onclick="saveTrip()" class="save-btn">Save Trip</button>
+                        <button onclick="cancelTripForm()" class="cancel-btn">Cancel</button>
+                    </div>
+                </div>
+                
+                <div class="mileage-table-container">
+                    <table id="mileageTable" class="business-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Start Location</th>
+                                <th>End Location</th>
+                                <th>Miles</th>
+                                <th>Purpose</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="mileageTableBody">
+                            <!-- Trips will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Reports Section -->
+            <div id="reportsSection" class="business-section">
+                <div class="reports-header">
+                    <h2>📋 Business Reports</h2>
+                    <div class="report-date-range">
+                        <label>Report Period:</label>
+                        <input type="date" id="reportStartDate">
+                        <span>to</span>
+                        <input type="date" id="reportEndDate">
+                        <button onclick="generateReport()" class="generate-btn">Generate Report</button>
+                    </div>
+                </div>
+                
+                <div id="reportContent" class="report-content">
+                    <div class="report-summary">
+                        <h3>📊 Financial Summary</h3>
+                        <div class="summary-grid">
+                            <div class="summary-item">
+                                <label>Total Earnings:</label>
+                                <span id="reportEarnings">$0.00</span>
+                            </div>
+                            <div class="summary-item">
+                                <label>Total Expenses:</label>
+                                <span id="reportExpenses">$0.00</span>
+                            </div>
+                            <div class="summary-item">
+                                <label>Total Miles:</label>
+                                <span id="reportMiles">0</span>
+                            </div>
+                            <div class="summary-item">
+                                <label>Net Profit:</label>
+                                <span id="reportNetProfit">$0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="report-actions">
+                        <button onclick="exportReportCSV()" class="export-btn">📊 Export CSV</button>
+                        <button onclick="exportReportPDF()" class="export-btn">📄 Export PDF</button>
+                    </div>
                 </div>
             </div>
         </div>
