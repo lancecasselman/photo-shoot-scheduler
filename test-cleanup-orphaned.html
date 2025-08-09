@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Orphaned File Cleanup</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        button {
+            background: #007cba;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #005a87;
+        }
+        button.danger {
+            background: #dc2626;
+        }
+        button.danger:hover {
+            background: #b91c1c;
+        }
+        .result {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .success { border-left: 4px solid #10b981; }
+        .error { border-left: 4px solid #ef4444; }
+        .info { border-left: 4px solid #3b82f6; }
+    </style>
+</head>
+<body>
+    <h1>🧹 Orphaned File Cleanup Test</h1>
+    
+    <div class="container">
+        <h2>Current Storage Status</h2>
+        <p>This tool will clean up orphaned files that exist in R2 cloud storage but aren't tracked in the database.</p>
+        
+        <div id="storageStatus" class="result info">
+            Click "Check Storage Status" to see current file counts...
+        </div>
+        
+        <button onclick="checkStorageStatus()">📊 Check Storage Status</button>
+    </div>
+    
+    <div class="container">
+        <h2>Cleanup Orphaned Files</h2>
+        <p><strong>Warning:</strong> This will permanently delete orphaned files from cloud storage. Files tracked in your database will be preserved.</p>
+        
+        <div id="cleanupResult" class="result">
+            Cleanup results will appear here...
+        </div>
+        
+        <button class="danger" onclick="cleanupOrphanedFiles()">🔥 Clean Up Orphaned Files</button>
+    </div>
+    
+    <script>
+        async function checkStorageStatus() {
+            const statusDiv = document.getElementById('storageStatus');
+            statusDiv.textContent = 'Loading storage status...';
+            statusDiv.className = 'result info';
+            
+            try {
+                const response = await fetch('/api/global-storage-stats', {
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const stats = await response.json();
+                
+                statusDiv.className = 'result success';
+                statusDiv.textContent = `📊 CURRENT STORAGE STATUS:
+                
+Total Files: ${stats.combined.fileCount}
+Total Size: ${stats.combined.totalSizeFormatted}
+
+Gallery Files: ${stats.gallery.fileCount}
+Gallery Size: ${stats.gallery.totalSizeFormatted}
+
+Raw Files: ${stats.raw.fileCount}  
+Raw Size: ${stats.raw.totalSizeFormatted}
+
+Total Sessions: ${stats.totalSessions}
+
+${stats.combined.fileCount > 1 ? '⚠️ You have more files in R2 than in database - cleanup needed!' : '✅ Storage appears clean'}`;
+                
+            } catch (error) {
+                statusDiv.className = 'result error';
+                statusDiv.textContent = `❌ Error checking storage status: ${error.message}`;
+                console.error('Storage status error:', error);
+            }
+        }
+        
+        async function cleanupOrphanedFiles() {
+            if (!confirm('Are you sure? This will permanently delete orphaned files from cloud storage. This cannot be undone.')) {
+                return;
+            }
+            
+            const resultDiv = document.getElementById('cleanupResult');
+            resultDiv.textContent = 'Starting cleanup...';
+            resultDiv.className = 'result info';
+            
+            try {
+                const response = await fetch('/api/cleanup/orphaned-files', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ CLEANUP COMPLETE!
+
+Files Removed: ${result.cleaned}
+Space Reclaimed: ${result.reclaimedMB} MB
+
+Before: ${result.beforeFiles} files (${result.beforeSizeMB} MB)
+After: ${result.afterFiles} files (${result.afterSizeMB} MB)
+
+${result.cleaned > 0 ? 'Orphaned files have been removed. Your storage should now show accurate amounts when you delete photos.' : 'No orphaned files were found to clean up.'}`;
+                    
+                    // Refresh storage status
+                    setTimeout(checkStorageStatus, 2000);
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ CLEANUP FAILED: ${result.error}`;
+                }
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Error during cleanup: ${error.message}`;
+                console.error('Cleanup error:', error);
+            }
+        }
+        
+        // Check storage status on page load
+        checkStorageStatus();
+    </script>
+</body>
+</html>

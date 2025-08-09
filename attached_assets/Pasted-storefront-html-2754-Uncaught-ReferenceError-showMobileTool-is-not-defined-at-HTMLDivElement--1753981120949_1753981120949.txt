@@ -1,0 +1,41 @@
+storefront.html:2754  Uncaught ReferenceError: showMobileTool is not defined
+    at HTMLDivElement.onclick (storefront.html:2754:96)
+onclick @ storefront.html:2754
+[NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
+        Don't show again
+storefront.html:2706  Uncaught ReferenceError: showMobileTool is not defined
+    at HTMLButtonElement.onclick (storefront.html:2706:79)
+onclick @ storefront.html:2706
+storefront.html:2710  Uncaught ReferenceError: showMobileTool is not defined
+    at HTMLButtonElement.onclick (storefront.html:2710:82)
+onclick @ storefront.html:2710
+storefront.html:2714  Uncaught ReferenceError: showMobileTool is not defined
+    at HTMLButtonElement.onclick (storefront.html:2714:80)
+onclick @ storefront.html:2714
+storefront.html:2718  Uncaught ReferenceError: showMobileTool is not defined
+    at HTMLButtonElement.onclick (storefront.html:2718:84)
+onclick @ storefront.html:2718
+storefront.html:2722  Uncaught ReferenceError: showMobileTool is not defined
+    at HTMLButtonElement.onclick (storefront.html:2722:79)
+onclick @ storefront.html:2722
+storefront.html:2726  Uncaught ReferenceError: showMobileTool is not defined
+    at HTMLButtonElement.onclick (storefront.html:2726:78)
+onclick @ storefront.html:2726
+storefront.html:2730  Uncaught ReferenceError: showMobileTool is not defined
+    at HTMLButtonElement.onclick (storefront.html:2730:80)
+onclick @ storefront.html:2730
+storefront.html:2734  Uncaught ReferenceError: showMobileTool is not defined
+    at HTMLButtonElement.onclick (storefront.html:2734:80)
+onclick @ storefront.html:2734
+storefront.html:2738  Uncaught ReferenceError: showMobileTool is not defined
+    at HTMLButtonElement.onclick (storefront.html:2738:82)
+onclick @ storefront.html:2738
+storefront.html:2742  Uncaught ReferenceError: saveMobileChanges is not defined
+    at HTMLButtonElement.onclick (storefront.html:2742:75)
+onclick @ storefront.html:2742
+storefront.html:2746  Uncaught ReferenceError: publishFromMobile is not defined
+    at HTMLButtonElement.onclick (storefront.html:2746:75)
+onclick @ storefront.html:2746

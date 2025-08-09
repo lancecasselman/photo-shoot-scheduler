@@ -1,0 +1,82 @@
+Task: Redesign the entire photography management platform to match a "Light + Airy Creative Studio" theme. This includes updating the layout, color scheme, components, and typography across every section of the app to reflect the third mockup in the provided UI reference.
+
+Design Characteristics:
+- Warm, inviting colors
+- Rounded corners on all cards, buttons, and containers
+- Generous white space
+- Light pastel accent colors
+- Drop-down navigation style with subtle hover animations
+- Clean, soft typography
+
+Typography:
+- Headers: Cormorant Garamond or similar elegant serif
+- Body: Quicksand, Inter, or a clean sans-serif
+- Font sizes should prioritize readability and modern spacing (16px–18px body text, larger headers)
+
+Color Palette:
+- Background: #FAFAF8 (soft white)
+- Accent 1: #EADBC8 (warm beige)
+- Accent 2: #D9E1D8 (sage gray-green)
+- Buttons: Muted gold (#C1A35E) and dusty rose (#E8C1B4)
+- Text: #1F1F1F for primary, #555 for secondary
+
+General Layout:
+- Top navigation bar with logo, notifications, and dropdown profile menu
+- Sidebar with dropdown or collapsible sections for navigation
+- Main content area with large section headers, cards, and icons
+- All pages should be fully responsive for mobile and tablet
+
+Update the following sections and features:
+
+1. Login and Signup Pages:
+- Apply soft background gradients or color overlays
+- Rounded input fields and buttons
+- Friendly welcoming text in header
+
+2. Main Dashboard:
+- Convert layout to 2-column: sidebar and content panel
+- Use rounded cards with light drop shadows
+- Replace sharp icons with softer, line-based icons
+
+3. Sessions Section:
+- Update session cards with pastel accent headers
+- Add light hover and active states
+- Group session types visually with muted color indicators
+
+4. Galleries:
+- Rounded photo containers with soft drop shadows
+- Larger thumbnails, space between cards
+- Subtle hover animations for viewing and editing
+
+5. Poses Section:
+- Shared gallery grid with rounded image containers
+- Pastel filter buttons
+- Lightbox design should use soft transitions and minimal close controls
+
+6. Marketing Tools:
+- Convert tool cards to soft white backgrounds with thin gold borders
+- Button actions should use soft accent colors
+- Add hover tooltips styled with soft corners and shadows
+
+7. Blog / Social / Email Creator:
+- Editor backgrounds should be off-white
+- Button bars use sage or muted gold
+- Fonts and preview panes should match the overall type system
+
+8. Submit Forms (gallery, photo, pose):
+- Rounded fields and buttons
+- Required fields indicated with clean styling (no harsh red)
+- Success messages in muted green tones
+
+9. Mobile Design:
+- Collapse sidebar into a hamburger menu
+- Buttons and inputs must be touch-friendly
+- Maintain visual style and spacing across breakpoints
+
+Global Styles:
+- Border radius: 8px or 12px across components
+- Box shadows: soft, low-opacity
+- Animations: slide, fade-in, dropdowns — subtle and quick
+
+Final Goal:
+The entire app should reflect a boutique creative studio aesthetic — clean, welcoming, and modern. All components, typography, and UI interactions should follow this new visual language.

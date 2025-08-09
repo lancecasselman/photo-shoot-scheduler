@@ -1,0 +1,159 @@
+// 🧠 Advanced Website Builder – Full Upgrade Prompt
+
+// 🔧 THIS UPGRADE INCLUDES:
+// 1. BlockEditor.jsx – for editing text, font, alignment, colors per block
+// 2. Firebase save & load logic (firebase.js)
+// 3. Save & Publish buttons in SiteBuilder
+// 4. Static publishing function: generateStaticSite(config, username)
+// 5. Demo mode fallback if not logged in
+
+// 📁 ADD THESE FILES:
+
+// 🔹 BlockEditor.jsx
+// Renders block editing UI when a block is selected
+// Supports: content, fontSize, color, alignment
+// Props: selectedBlock, onUpdateBlock
+import React from "react";
+
+export default function BlockEditor({ block, onUpdate }) {
+  if (!block) return <div style={{ padding: "10px" }}>No block selected</div>;
+
+  return (
+    <div style={{ padding: "10px", width: "300px", background: "#f4f4f4" }}>
+      <h3>Edit Block</h3>
+      <label>Text:</label>
+      <input
+        value={block.content}
+        onChange={(e) => onUpdate({ ...block, content: e.target.value })}
+      /><br/>
+      <label>Font Size:</label>
+      <input
+        type="number"
+        value={block.styles.fontSize || 24}
+        onChange={(e) => onUpdate({ ...block, styles: { ...block.styles, fontSize: e.target.value + 'px' } })}
+      /><br/>
+      <label>Color:</label>
+      <input
+        type="color"
+        value={block.styles.color || "#000000"}
+        onChange={(e) => onUpdate({ ...block, styles: { ...block.styles, color: e.target.value } })}
+      /><br/>
+      <label>Align:</label>
+      <select
+        value={block.styles.textAlign || "left"}
+        onChange={(e) => onUpdate({ ...block, styles: { ...block.styles, textAlign: e.target.value } })}
+      >
+        <option>left</option>
+        <option>center</option>
+        <option>right</option>
+      </select>
+    </div>
+  );
+}
+
+// 🔹 Update SiteBuilder.jsx to include:
+// - State for selectedBlock
+// - BlockEditor import
+// - onClick to select block
+// - Save + Publish buttons
+
+import React, { useState } from "react";
+import BlockLibrary from "./BlockLibrary.jsx";
+import LivePreview from "./LivePreview.jsx";
+import BlockEditor from "./BlockEditor.jsx";
+import { saveSiteConfig, publishSite } from "./firebase.js";
+
+export default function SiteBuilder() {
+  const [blocks, setBlocks] = useState([]);
+  const [selectedBlock, setSelectedBlock] = useState(null);
+
+  const addBlock = (type) => {
+    const id = Date.now();
+    const newBlock = { id, type, content: "Edit me", styles: {} };
+    setBlocks((prev) => [...prev, newBlock]);
+  };
+
+  const updateBlock = (updated) => {
+    setBlocks(blocks.map((b) => (b.id === updated.id ? updated : b)));
+    setSelectedBlock(updated);
+  };
+
+  const save = () => {
+    saveSiteConfig({ blocks, theme: "default", font: "Inter" });
+  };
+
+  const publish = () => {
+    publishSite({ blocks, username: "yourusername" }); // Replace with dynamic user ID or input
+  };
+
+  return (
+    <div style={{ display: "flex" }}>
+      <BlockLibrary addBlock={addBlock} />
+      <LivePreview blocks={blocks} onSelect={setSelectedBlock} />
+      <BlockEditor block={selectedBlock} onUpdate={updateBlock} />
+      <div style={{ position: "absolute", bottom: 20, left: 220 }}>
+        <button onClick={save}>💾 Save</button>
+        <button onClick={publish}>🚀 Publish</button>
+      </div>
+    </div>
+  );
+}
+
+// 🔹 Update LivePreview.jsx to allow clicking blocks
+export default function LivePreview({ blocks, onSelect }) {
+  return (
+    <div style={{ flex: 1, padding: "20px", background: "#fff" }}>
+      {blocks.map((block) => {
+        const commonProps = {
+          key: block.id,
+          onClick: () => onSelect(block),
+          style: { ...block.styles, cursor: "pointer" },
+        };
+        switch (block.type) {
+          case "heading":
+            return <h1 {...commonProps}>{block.content}</h1>;
+          case "paragraph":
+            return <p {...commonProps}>{block.content}</p>;
+          case "image":
+            return <img {...commonProps} src="https://via.placeholder.com/300" alt="placeholder" />;
+          case "button":
+            return <button {...commonProps}>{block.content || "Click Me"}</button>;
+          default:
+            return null;
+        }
+      })}
+    </div>
+  );
+}
+
+// 🔹 firebase.js (simple Firestore + publishing mock)
+import { getFirestore, doc, setDoc } from "firebase/firestore";
+const db = getFirestore();
+
+export const saveSiteConfig = async (config) => {
+  const uid = "demo-user"; // TODO: replace with actual user ID
+  await setDoc(doc(db, "users", uid), { siteConfig: config });
+};
+
+export const publishSite = async ({ blocks, username }) => {
+  const html = `
+    <html><head><title>${username}'s Site</title></head>
+    <body style="font-family: sans-serif;">
+      ${blocks.map(b => {
+        if (b.type === "heading") return `<h1 style="${styleStr(b.styles)}">${b.content}</h1>`;
+        if (b.type === "paragraph") return `<p style="${styleStr(b.styles)}">${b.content}</p>`;
+        if (b.type === "image") return `<img src='https://via.placeholder.com/300' />`;
+        if (b.type === "button") return `<button>${b.content}</button>`;
+        return '';
+      }).join("\n")}
+    </body></html>
+  `;
+  // TODO: push this HTML to Firebase Hosting at /site/username
+  console.log("Generated static site:", html);
+};
+
+const styleStr = (styles) => {
+  return Object.entries(styles || {})
+    .map(([k, v]) => `${k.replace(/[A-Z]/g, m => '-' + m.toLowerCase())}:${v}`)
+    .join(";");
+};

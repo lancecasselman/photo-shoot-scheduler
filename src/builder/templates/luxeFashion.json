@@ -1,0 +1,107 @@
+{
+  "name": "Luxe Fashion",
+  "slug": "luxe-fashion",
+  "preview": "/previews/luxe-fashion.jpg",
+  "description": "High-end editorial style for fashion and beauty photographers",
+  "tags": ["Fashion", "Luxury", "Editorial", "Beauty"],
+  "globalStyles": {
+    "colors": {
+      "primary": "#000000",
+      "secondary": "#d4af37",
+      "text": "#1a1a1a",
+      "background": "#ffffff"
+    },
+    "fonts": {
+      "heading": "Playfair Display",
+      "body": "Raleway"
+    },
+    "spacing": "relaxed",
+    "borderRadius": "none"
+  },
+  "pages": [
+    {
+      "title": "Home",
+      "slug": "home",
+      "blocks": [
+        {
+          "type": "Hero",
+          "props": {
+            "style": "editorial-split",
+            "images": ["/images/fashion-1.jpg", "/images/fashion-2.jpg"],
+            "headline": "HAUTE COUTURE",
+            "subtext": "Fashion photography redefined",
+            "layout": "asymmetric"
+          }
+        },
+        {
+          "type": "Gallery",
+          "props": {
+            "layout": "editorial-grid",
+            "images": [],
+            "mixedSizes": true,
+            "hoverEffect": "fade"
+          }
+        },
+        {
+          "type": "ClientLogos",
+          "props": {
+            "title": "Featured In",
+            "logos": ["Vogue", "Harper's Bazaar", "Elle", "Marie Claire"],
+            "style": "minimal"
+          }
+        },
+        {
+          "type": "About",
+          "props": {
+            "style": "editorial",
+            "content": "Award-winning fashion photographer specializing in high-end editorial and commercial work.",
+            "signature": true
+          }
+        }
+      ]
+    },
+    {
+      "title": "Portfolio",
+      "slug": "portfolio",
+      "blocks": [
+        {
+          "type": "Gallery",
+          "props": {
+            "layout": "lookbook",
+            "categories": ["Editorial", "Campaign", "Beauty", "Portrait"],
+            "presentation": "fullscreen-slides"
+          }
+        }
+      ]
+    },
+    {
+      "title": "Services",
+      "slug": "services",
+      "blocks": [
+        {
+          "type": "Services",
+          "props": {
+            "style": "luxury",
+            "services": [
+              {
+                "title": "Editorial",
+                "description": "Magazine features and fashion stories",
+                "startingPrice": "$5,000"
+              },
+              {
+                "title": "Campaign",
+                "description": "Brand campaigns and lookbooks",
+                "startingPrice": "$10,000"
+              },
+              {
+                "title": "E-Commerce",
+                "description": "Product photography for luxury brands",
+                "startingPrice": "$3,000"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

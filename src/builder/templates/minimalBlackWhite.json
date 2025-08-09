@@ -1,0 +1,89 @@
+{
+  "name": "Minimal Black & White",
+  "slug": "minimal-black-white",
+  "preview": "/previews/minimal-bw.jpg",
+  "description": "Clean, monochromatic design for fine art photographers",
+  "tags": ["Minimal", "Black & White", "Fine Art", "Clean"],
+  "globalStyles": {
+    "colors": {
+      "primary": "#000000",
+      "secondary": "#666666",
+      "text": "#000000",
+      "background": "#ffffff"
+    },
+    "fonts": {
+      "heading": "Helvetica Neue",
+      "body": "Helvetica Neue"
+    },
+    "spacing": "relaxed",
+    "borderRadius": "none"
+  },
+  "pages": [
+    {
+      "title": "Home",
+      "slug": "home",
+      "blocks": [
+        {
+          "type": "Hero",
+          "props": {
+            "style": "minimal",
+            "headline": "PHOTOGRAPHER",
+            "subtext": "",
+            "bgImage": "/images/bw-hero.jpg",
+            "height": "fullscreen",
+            "filter": "grayscale"
+          }
+        },
+        {
+          "type": "Gallery",
+          "props": {
+            "layout": "minimal-grid",
+            "columns": 2,
+            "spacing": "large",
+            "images": [],
+            "filter": "grayscale"
+          }
+        },
+        {
+          "type": "About",
+          "props": {
+            "style": "minimal",
+            "content": "Exploring light, shadow, and form through monochromatic imagery.",
+            "alignment": "center",
+            "maxWidth": "600px"
+          }
+        }
+      ]
+    },
+    {
+      "title": "Work",
+      "slug": "work",
+      "blocks": [
+        {
+          "type": "Gallery",
+          "props": {
+            "layout": "minimal-masonry",
+            "filter": "grayscale",
+            "hoverEffect": "none",
+            "spacing": "medium"
+          }
+        }
+      ]
+    },
+    {
+      "title": "Contact",
+      "slug": "contact",
+      "blocks": [
+        {
+          "type": "ContactForm",
+          "props": {
+            "style": "minimal",
+            "fields": ["email"],
+            "placeholder": "your@email.com",
+            "buttonText": "SEND"
+          }
+        }
+      ]
+    }
+  ]
+}

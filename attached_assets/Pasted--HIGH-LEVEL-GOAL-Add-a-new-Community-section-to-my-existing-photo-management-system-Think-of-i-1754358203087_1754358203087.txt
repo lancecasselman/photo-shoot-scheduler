@@ -1,0 +1,127 @@
+# HIGH-LEVEL GOAL
+Add a new “Community” section to my existing photo-management system.  
+Think of it as a lightweight, Facebook-style forum focused on pose inspiration:
+
+• Photographers can post a single image per post (portrait or landscape) plus an optional caption.  
+• Posts are grouped by calendar month (e.g., “August 2025”).  
+• Each post shows: the image, poster name & avatar, caption, ❤️ like button with live count, 💬 comment button.  
+• When 💬 is tapped, an inline drawer/overlay opens showing threaded comments (author, timestamp, text, delete-own).  
+• Real-time updates (likes & comments update instantly for all viewers).  
+• Only authenticated users can post, like, or comment; public read access is OK.  
+• Soft-delete support (mark as isDeleted = true instead of hard removal).  
+• Totally responsive: tiles in a masonry grid on desktop, single-column feed on mobile.
+
+# TECH STACK / CONSTRAINTS
+• Keep everything inside my existing `/app` folder structure.  
+• Front-end: vanilla JS + modular ES6 imports (NO frameworks) OR React if the rest of the app already uses React. Detect and match automatically.  
+• Backend: Firebase (v10+ modular SDK). Use the already-initialised `firebaseApp`.  
+• Image uploads: reuse my current R2 / Firebase Storage helper (expects `uploadImage(file, path)` → returns downloadURL).  
+• Database: Cloud Firestore, rules locked to current user for writes.  
+• UI kit: use existing Tailwind setup; otherwise generate minimal BEM CSS classes.  
+• Keep code style consistent with the existing project (arrow functions, Prettier defaults).
+
+# FILE / FOLDER STRUCTURE
+1. **/src/community/**
+   • community.html               – page shell, imports CSS + JS.  
+   • community.js                 – top-level controller: auth check, loadFeed(), handleNewPost().  
+   • postCard.js                  – renders single post + listeners for like / comment buttons.  
+   • commentDrawer.js             – renders & manages live comments for a given post.  
+   • newPostModal.js              – image-chooser, caption field, progress bar, submit.  
+   • community.css                – only styles unique to community (masonry grid etc.).
+
+2. **/src/firebase/**  
+   • communityApi.js              – CRUD helpers for posts, likes, comments.
+
+3. **/functions/** (only if Cloud Functions enabled)  
+   • onPostDelete.cjs             – cleans up Storage & subcollections when a post is soft-deleted.
+
+# DATABASE SCHEMA
+• Collection: `community_posts`
+  - id (docId)          – auto  
+  - uid                 – poster uid  
+  - displayName         – from auth  
+  - photoURL            – avatar  
+  - imageUrl            – storage URL  
+  - caption             – string (≤ 300 chars)  
+  - month               – “2025-08” (YYYY-MM, for querying)  
+  - createdAt           – serverTimestamp()  
+  - likeCount           – integer (incremented via transaction)  
+  - isDeleted           – bool, default false
+
+• Subcollection on each post: `likes`  
+  - docId == liker uid → { createdAt }
+
+• Subcollection on each post: `comments`
+  - id (docId)          – auto  
+  - uid                 – commenter uid  
+  - displayName         – commenter  
+  - text                – string (≤ 500)  
+  - createdAt           – serverTimestamp()  
+  - isDeleted           – bool
+
+# SECURITY RULES (Firestore)
+match /community_posts/{postId} {
+  allow read: if true;
+  allow create: if request.auth != null;
+  allow update, delete: if request.auth != null && request.auth.uid == resource.data.uid;
+  match /likes/{likeId} {
+    allow read: if true;
+    allow create: if request.auth != null && request.auth.uid == likeId;
+    allow delete: if request.auth != null && request.auth.uid == likeId;
+  }
+  match /comments/{commentId} {
+    allow read: if true;
+    allow create: if request.auth != null;
+    allow update, delete: if request.auth != null && request.auth.uid == resource.data.uid;
+  }
+}
+
+# FRONT-END BEHAVIOUR DETAILS
+1. **Feed Loading**
+   • Default view = current month.  
+   • Dropdown lets user jump to previous months (list distinct `month` values, newest first).  
+   • Query: `collection('community_posts').where('month', '==', selectedMonth).orderBy('createdAt', 'desc')`.  
+   • Attach `onSnapshot` for live updates.
+
+2. **New Post Flow**
+   • “Share a Pose” floating button → opens `newPostModal`.  
+   • Accepts image (jpg/png, ≤ 10 MB); show preview.  
+   • On submit:  
+     – Upload image to `/community/{uid}/{timestamp}.jpg`.  
+     – Create post doc with downloadURL, caption, month = YYYY-MM.  
+     – Close modal & scroll feed to top.
+
+3. **Likings**
+   • Optimistic UI: toggle heart instantly, then upsert / delete like doc in subcollection with batched write & increment/decrement likeCount on the parent post in a transaction.
+
+4. **Comments Drawer**
+   • Lazy-load comments subcollection on first open with `orderBy('createdAt')`.  
+   • Real-time listener for new comments.  
+   • Auto-scroll to newest.  
+   • Allow commenter to long-press (mobile) or click kebab menu (desktop) to delete own comment (sets isDeleted = true; UI hides it).
+
+# UI / UX NOTES
+• Use CSS grid with `grid-auto-rows: masonry;` polyfill fallback for browsers without masonry layout.  
+• Heart icon turns solid red when liked; number animates with a small scale-up.  
+• Comment icon shows existing count; when drawer open, icon remains highlighted.  
+• On very small screens (≤ 420 px) collapse captions under a “⋯” toggle to save space.  
+• Display friendly timestamps (“2 h ago”, “Jul 31”). Use `date-fns` if already installed; otherwise provide a tiny helper.
+
+# BUILD & DEPLOY
+• Add route `/community` to existing router (or side-nav) linking to community.html.  
+• Update service worker (if present) to cache community assets.  
+• Include new Firestore index suggestion if composite index required (likes sorting, etc.).  
+• Run `npm run format` at the end.
+
+# TESTS / CI
+• Unit tests with Jest for communityApi helpers (createPost, toggleLike, addComment).  
+• Cypress (if available) e2e: login → create post → like → comment → delete comment.  
+• Lint gate must pass.
+
+# DELIVERABLE SUMMARY
+• All files listed above created & integrated.  
+• App compiles without TypeScript errors (if TS project) or ESLint errors.  
+• Full Community module visible at `/community`, ready for production.
+
+# START NOW
+Generate every file, inject into repo, then display a commit diff summary.

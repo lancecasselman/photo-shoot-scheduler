@@ -1,0 +1,130 @@
+{
+  "name": "Rustic Barn Wedding",
+  "slug": "rustic-barn-wedding",
+  "preview": "/previews/rustic-barn.jpg",
+  "description": "Warm, countryside charm for rustic wedding photographers",
+  "tags": ["Rustic", "Wedding", "Country", "Barn"],
+  "globalStyles": {
+    "colors": {
+      "primary": "#8b5a3c",
+      "secondary": "#c9a961",
+      "text": "#3d2817",
+      "background": "#faf8f3"
+    },
+    "fonts": {
+      "heading": "Dancing Script",
+      "body": "Lato"
+    },
+    "spacing": "relaxed",
+    "borderRadius": "medium"
+  },
+  "pages": [
+    {
+      "title": "Home",
+      "slug": "home",
+      "blocks": [
+        {
+          "type": "Hero",
+          "props": {
+            "headline": "Love in the Countryside",
+            "subtext": "Rustic wedding photography with heart",
+            "bgImage": "/images/barn-hero.jpg",
+            "overlay": "warm",
+            "ctaText": "View Weddings",
+            "ctaLink": "#weddings"
+          }
+        },
+        {
+          "type": "Features",
+          "props": {
+            "style": "rustic-cards",
+            "features": [
+              {
+                "icon": "barn",
+                "title": "Barn Venues",
+                "description": "Specializing in rustic barn weddings"
+              },
+              {
+                "icon": "flower",
+                "title": "Natural Beauty",
+                "description": "Capturing authentic countryside moments"
+              },
+              {
+                "icon": "heart",
+                "title": "Heartfelt Stories",
+                "description": "Your love story, naturally told"
+              }
+            ]
+          }
+        },
+        {
+          "type": "Gallery",
+          "props": {
+            "layout": "rustic-grid",
+            "borderStyle": "wood-frame",
+            "images": []
+          }
+        },
+        {
+          "type": "Testimonial",
+          "props": {
+            "style": "handwritten",
+            "testimonials": [
+              {
+                "quote": "She captured the rustic charm of our barn wedding perfectly!",
+                "client": "Katie & Tom",
+                "venue": "Willow Creek Barn"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "title": "Weddings",
+      "slug": "weddings",
+      "blocks": [
+        {
+          "type": "WeddingGalleries",
+          "props": {
+            "layout": "story-tiles",
+            "showVenue": true,
+            "showSeason": true
+          }
+        }
+      ]
+    },
+    {
+      "title": "Info",
+      "slug": "info",
+      "blocks": [
+        {
+          "type": "FAQ",
+          "props": {
+            "title": "Wedding Day Questions",
+            "style": "accordion-rustic",
+            "questions": [
+              {
+                "q": "Do you travel to countryside venues?",
+                "a": "Absolutely! I love exploring new barn venues and countryside locations."
+              },
+              {
+                "q": "What's included in your packages?",
+                "a": "All packages include full day coverage, online gallery, and print release."
+              }
+            ]
+          }
+        },
+        {
+          "type": "ContactForm",
+          "props": {
+            "title": "Let's Chat About Your Day",
+            "style": "rustic",
+            "fields": ["names", "email", "weddingDate", "venue", "howDidYouHear", "tellMeMore"],
+            "backgroundTexture": "paper"
+          }
+        }
+      ]
+    }
+  ]
+}

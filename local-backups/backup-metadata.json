@@ -1,0 +1,57 @@
+{
+  "files": [
+    {
+      "id": "010fc677-aa0f-4c16-954e-e7353829cc1c",
+      "originalFilename": "20250802072520-DSC_1198.jpeg",
+      "backupFilename": "010fc677-aa0f-4c16-954e-e7353829cc1c_20250802072520-DSC_1198.jpeg",
+      "userId": "BFZI4tzu4rdsiZZSK63cqZ5yohw2",
+      "sessionId": "5dc5c901-66ff-4ec5-8bac-9ca8a6d13c57",
+      "fileSizeBytes": 30343385,
+      "fileSizeMB": "28.94",
+      "fileExtension": ".jpeg",
+      "savedAt": "2025-08-04T04:50:19.485Z",
+      "localPath": "/home/runner/workspace/local-backups/BFZI4tzu4rdsiZZSK63cqZ5yohw2/5dc5c901-66ff-4ec5-8bac-9ca8a6d13c57/010fc677-aa0f-4c16-954e-e7353829cc1c_20250802072520-DSC_1198.jpeg",
+      "status": "saved"
+    },
+    {
+      "id": "c6e340ff-55d3-4416-bb8c-4da442b7672c",
+      "originalFilename": "20250802073745-DSC_1261.jpeg",
+      "backupFilename": "c6e340ff-55d3-4416-bb8c-4da442b7672c_20250802073745-DSC_1261.jpeg",
+      "userId": "BFZI4tzu4rdsiZZSK63cqZ5yohw2",
+      "sessionId": "5dc5c901-66ff-4ec5-8bac-9ca8a6d13c57",
+      "fileSizeBytes": 30837323,
+      "fileSizeMB": "29.41",
+      "fileExtension": ".jpeg",
+      "savedAt": "2025-08-04T04:51:08.978Z",
+      "localPath": "/home/runner/workspace/local-backups/BFZI4tzu4rdsiZZSK63cqZ5yohw2/5dc5c901-66ff-4ec5-8bac-9ca8a6d13c57/c6e340ff-55d3-4416-bb8c-4da442b7672c_20250802073745-DSC_1261.jpeg",
+      "status": "saved"
+    },
+    {
+      "id": "dcd26216-93d8-4f18-8939-377069337227",
+      "originalFilename": "20250802072520-DSC_1198.jpeg",
+      "backupFilename": "dcd26216-93d8-4f18-8939-377069337227_20250802072520-DSC_1198.jpeg",
+      "userId": "BFZI4tzu4rdsiZZSK63cqZ5yohw2",
+      "sessionId": "5dc5c901-66ff-4ec5-8bac-9ca8a6d13c57",
+      "fileSizeBytes": 30343385,
+      "fileSizeMB": "28.94",
+      "fileExtension": ".jpeg",
+      "savedAt": "2025-08-04T09:24:06.922Z",
+      "localPath": "/home/runner/workspace/local-backups/BFZI4tzu4rdsiZZSK63cqZ5yohw2/5dc5c901-66ff-4ec5-8bac-9ca8a6d13c57/dcd26216-93d8-4f18-8939-377069337227_20250802072520-DSC_1198.jpeg",
+      "status": "saved"
+    },
+    {
+      "id": "77c4e09d-657f-487a-a15c-cea4ee619e9c",
+      "originalFilename": "20250802072422-DSC_1193.jpeg",
+      "backupFilename": "77c4e09d-657f-487a-a15c-cea4ee619e9c_20250802072422-DSC_1193.jpeg",
+      "userId": "BFZI4tzu4rdsiZZSK63cqZ5yohw2",
+      "sessionId": "5dc5c901-66ff-4ec5-8bac-9ca8a6d13c57",
+      "fileSizeBytes": 29070193,
+      "fileSizeMB": "27.72",
+      "fileExtension": ".jpeg",
+      "savedAt": "2025-08-04T09:24:06.923Z",
+      "localPath": "/home/runner/workspace/local-backups/BFZI4tzu4rdsiZZSK63cqZ5yohw2/5dc5c901-66ff-4ec5-8bac-9ca8a6d13c57/77c4e09d-657f-487a-a15c-cea4ee619e9c_20250802072422-DSC_1193.jpeg",
+      "status": "saved"
+    }
+  ],
+  "created": "2025-08-04T04:50:19.387Z"
+}

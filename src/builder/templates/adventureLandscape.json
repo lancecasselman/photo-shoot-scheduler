@@ -1,0 +1,124 @@
+{
+  "name": "Adventure Landscape",
+  "slug": "adventure-landscape",
+  "preview": "/previews/adventure-landscape.jpg",
+  "description": "Wide vistas and earth tones for outdoor and landscape photographers",
+  "tags": ["Adventure", "Landscape", "Nature", "Travel"],
+  "globalStyles": {
+    "colors": {
+      "primary": "#92400e",
+      "secondary": "#059669",
+      "text": "#1f2937",
+      "background": "#fefefe"
+    },
+    "fonts": {
+      "heading": "Bebas Neue",
+      "body": "Open Sans"
+    },
+    "spacing": "normal",
+    "borderRadius": "small"
+  },
+  "pages": [
+    {
+      "title": "Home",
+      "slug": "home",
+      "blocks": [
+        {
+          "type": "Hero",
+          "props": {
+            "style": "fullscreen",
+            "headline": "EXPLORE THE WILD",
+            "subtext": "Adventure photography from the world's most remote places",
+            "bgImage": "/images/mountain-hero.jpg",
+            "parallax": true,
+            "ctaText": "View Adventures",
+            "ctaLink": "#expeditions"
+          }
+        },
+        {
+          "type": "Gallery",
+          "props": {
+            "layout": "panoramic",
+            "images": [],
+            "aspectRatio": "21:9",
+            "spacing": "large"
+          }
+        },
+        {
+          "type": "Features",
+          "props": {
+            "title": "Expedition Services",
+            "layout": "cards-with-images",
+            "features": [
+              {
+                "title": "Landscape Workshops",
+                "description": "Join me on location for hands-on photography workshops",
+                "image": "/images/workshop.jpg"
+              },
+              {
+                "title": "Print Shop",
+                "description": "Museum-quality prints of stunning landscapes",
+                "image": "/images/prints.jpg"
+              },
+              {
+                "title": "Commercial Work",
+                "description": "Professional landscape photography for brands",
+                "image": "/images/commercial.jpg"
+              }
+            ]
+          }
+        },
+        {
+          "type": "Newsletter",
+          "props": {
+            "title": "Join the Adventure",
+            "subtitle": "Get expedition updates and photography tips",
+            "backgroundImage": "/images/newsletter-bg.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "title": "Expeditions",
+      "slug": "expeditions",
+      "blocks": [
+        {
+          "type": "BlogGrid",
+          "props": {
+            "layout": "adventure-cards",
+            "posts": [
+              {
+                "title": "Patagonia: Edge of the World",
+                "excerpt": "Three weeks photographing the windswept peaks",
+                "image": "/images/patagonia.jpg",
+                "date": "March 2024"
+              },
+              {
+                "title": "Arctic Aurora",
+                "excerpt": "Chasing northern lights across frozen landscapes",
+                "image": "/images/arctic.jpg",
+                "date": "January 2024"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "title": "Prints",
+      "slug": "prints",
+      "blocks": [
+        {
+          "type": "Shop",
+          "props": {
+            "title": "Limited Edition Prints",
+            "layout": "gallery-shop",
+            "currency": "USD",
+            "showSizes": true,
+            "categories": ["Mountains", "Deserts", "Forests", "Oceans"]
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+TASK: We are removing the website builder feature from the photo management app and replacing it with professional marketing tools. Follow these steps carefully.
+
+STEP 1: REMOVE ALL WEBSITE BUILDER FEATURES
+- Delete all UI components, buttons, pages, routes, or menu items related to:
+  - Template selection
+  - Website editing
+  - Page builders or custom HTML editors
+  - Static site publishing logic
+- Delete files and folders such as:
+  - /template-selector.html
+  - /editor.html
+  - /templates/
+  - Any JS/TS modules related to site building or publishing
+- Remove related Firebase calls, API endpoints, or stored site data (if applicable)
+- Ensure nothing breaks in the dashboard layout; remove visual gaps or broken routes
+
+STEP 2: REPLACE WITH MARKETING AND CONTENT CREATION TOOLS
+Add a new “Marketing” tab in the sidebar or dashboard with the following tools:
+
+1. Blog Post Creator
+   - Rich text editor
+   - Title, tags, featured image
+   - Save to Firebase
+   - Optional AI prompt to generate blog post based on a session
+
+2. Social Media Post Creator
+   - Short-form text editor with caption preview
+   - Toggle tone: Fun, Bold, Romantic, Elegant
+   - Generate hashtags and variations
+   - Upload photo(s) and export caption with images
+
+3. Marketing Calendar
+   - Calendar view with drag-and-drop post planner
+   - Content suggestions based on holidays, shoot type, or season
+   - Syncs blog and social post drafts for unified planning
+
+4. AI Caption and Headline Generator
+   - Upload photo(s) or provide shoot details
+   - Generates multiple caption options and SEO-optimized blog titles
+
+5. Shoot-to-Story Converter
+   - Select a past client session
+   - Auto-generates:
+     - Blog post draft
+     - Three Instagram captions
+     - One short video or reel idea
+   - Editable before saving or publishing
+
+6. Email Blast Creator
+   - Simple newsletter builder
+   - Prebuilt templates for announcements, promotions, gallery notifications, and referral campaigns
+   - Output plain HTML or export to Mailchimp/Flodesk
+
+7. Client Testimonial Generator
+   - Based on user notes or session metadata
+   - Generates polished testimonial copy and visual quote card
+
+8. Content Idea Vault
+   - Ongoing list of blog and post ideas
+   - Filters for niche, season, and content type
+   - Save ideas directly to drafts or calendar
+
+9. Content Repurposer
+   - Input existing blog or post
+   - Generates 3 to 5 alternate versions in different tones or formats
+   - Options to simplify, turn into list, summarize, or adapt for social
+
+STEP 3: ORGANIZATION AND CLEANUP
+- Create a new directory structure under /features/marketing/
+- Store user-generated content in Firebase under userID > marketing/
+- Ensure clean routing from the main dashboard, with fully mobile-responsive layouts
+
+GOAL:
+This update transitions the app from offering a static website builder to a robust, modern content marketing suite that empowers photographers to consistently publish and promote their work.

@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscriber Management - The Client Management Area</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .actions-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .actions-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+
+        .action-group {
+            margin-bottom: 30px;
+        }
+
+        .action-group h3 {
+            color: #555;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .form-group textarea {
+            height: 100px;
+            resize: vertical;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #51cf66;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #47b85a;
+            transform: translateY(-2px);
+        }
+
+        .btn-warning {
+            background: #ffd43b;
+            color: #333;
+        }
+
+        .btn-warning:hover {
+            background: #ffcc02;
+            transform: translateY(-2px);
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: white;
+            text-decoration: none;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .feature-input {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .feature-input input {
+            margin-bottom: 10px;
+        }
+
+        .add-feature {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .remove-feature {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-left: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+            
+            .actions-section {
+                padding: 20px;
+            }
+            
+            .btn {
+                width: 100%;
+                margin-right: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">← Back to Main Dashboard</a>
+        
+        <div class="header">
+            <h1>Subscriber Management</h1>
+            <p>Professional notification system for The Client Management Area</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="totalSubscribers">-</div>
+                <div class="stat-label">Total Subscribers</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="activeSubscribers">-</div>
+                <div class="stat-label">Active Subscribers</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="welcomedSubscribers">-</div>
+                <div class="stat-label">Welcomed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="freeSubscribers">-</div>
+                <div class="stat-label">Free Plan</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="proSubscribers">-</div>
+                <div class="stat-label">Pro Plan</div>
+            </div>
+        </div>
+
+        <div class="actions-section">
+            <h2>Notification Actions</h2>
+            
+            <div class="action-group">
+                <h3>Send Welcome Email</h3>
+                <div class="form-group">
+                    <label for="welcomeEmail">Email Address</label>
+                    <input type="email" id="welcomeEmail" placeholder="photographer@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="welcomeName">Photographer Name</label>
+                    <input type="text" id="welcomeName" placeholder="Jane Smith">
+                </div>
+                <div class="form-group">
+                    <label for="welcomeBusiness">Business Name</label>
+                    <input type="text" id="welcomeBusiness" placeholder="Smith Photography">
+                </div>
+                <button class="btn btn-primary" onclick="sendWelcomeEmail()">Send Welcome Email</button>
+            </div>
+
+            <div class="action-group">
+                <h3>Send Billing Notification</h3>
+                <div class="form-group">
+                    <label for="billingEmail">Email Address</label>
+                    <input type="email" id="billingEmail" placeholder="photographer@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="billingName">Photographer Name</label>
+                    <input type="text" id="billingName" placeholder="Jane Smith">
+                </div>
+                <div class="form-group">
+                    <label for="billingAmount">Amount ($)</label>
+                    <input type="number" id="billingAmount" placeholder="29.99" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="billingPlan">Plan</label>
+                    <select id="billingPlan">
+                        <option value="Free">Free Plan</option>
+                        <option value="Pro">Pro Plan ($29.99/month)</option>
+                        <option value="Enterprise">Enterprise Plan ($99.99/month)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="billingDue">Due Date</label>
+                    <input type="date" id="billingDue">
+                </div>
+                <button class="btn btn-warning" onclick="sendBillingNotification()">Send Billing Notice</button>
+            </div>
+
+            <div class="action-group">
+                <h3>Broadcast Feature Update</h3>
+                <div class="form-group">
+                    <label for="updateTitle">Update Title</label>
+                    <input type="text" id="updateTitle" placeholder="New Features Available">
+                </div>
+                <div id="featuresContainer">
+                    <div class="feature-input">
+                        <input type="text" placeholder="Feature Title" class="feature-title">
+                        <input type="text" placeholder="Feature Description" class="feature-description">
+                    </div>
+                </div>
+                <button class="add-feature" onclick="addFeature()">+ Add Feature</button>
+                <br><br>
+                <button class="btn btn-success" onclick="broadcastUpdate()">Broadcast to All Subscribers</button>
+            </div>
+        </div>
+
+        <div id="message" class="message"></div>
+    </div>
+
+    <script>
+        // Load subscriber statistics
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/subscribers/stats');
+                if (response.ok) {
+                    const stats = await response.json();
+                    document.getElementById('totalSubscribers').textContent = stats.total_subscribers || 0;
+                    document.getElementById('activeSubscribers').textContent = stats.active_subscribers || 0;
+                    document.getElementById('welcomedSubscribers').textContent = stats.welcomed_subscribers || 0;
+                    document.getElementById('freeSubscribers').textContent = stats.free_subscribers || 0;
+                    document.getElementById('proSubscribers').textContent = stats.pro_subscribers || 0;
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Send welcome email
+        async function sendWelcomeEmail() {
+            const email = document.getElementById('welcomeEmail').value;
+            const name = document.getElementById('welcomeName').value;
+            const business = document.getElementById('welcomeBusiness').value;
+
+            if (!email || !name) {
+                showMessage('Please fill in email and photographer name', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/subscribers/welcome', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: email,
+                        photographerName: name,
+                        businessName: business || 'Photography Business'
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    showMessage(`Welcome email sent successfully to ${email}`, 'success');
+                    document.getElementById('welcomeEmail').value = '';
+                    document.getElementById('welcomeName').value = '';
+                    document.getElementById('welcomeBusiness').value = '';
+                    loadStats();
+                } else {
+                    showMessage(`Failed to send email: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Send billing notification
+        async function sendBillingNotification() {
+            const email = document.getElementById('billingEmail').value;
+            const name = document.getElementById('billingName').value;
+            const amount = document.getElementById('billingAmount').value;
+            const plan = document.getElementById('billingPlan').value;
+            const dueDate = document.getElementById('billingDue').value;
+
+            if (!email || !name || !amount || !dueDate) {
+                showMessage('Please fill in all billing fields', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/subscribers/billing', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: email,
+                        photographerName: name,
+                        amount: amount,
+                        plan: plan,
+                        dueDate: new Date(dueDate).toLocaleDateString()
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    showMessage(`Billing notification sent successfully to ${email}`, 'success');
+                    document.getElementById('billingEmail').value = '';
+                    document.getElementById('billingName').value = '';
+                    document.getElementById('billingAmount').value = '';
+                    document.getElementById('billingDue').value = '';
+                } else {
+                    showMessage(`Failed to send billing notice: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Add feature input
+        function addFeature() {
+            const container = document.getElementById('featuresContainer');
+            const featureDiv = document.createElement('div');
+            featureDiv.className = 'feature-input';
+            featureDiv.innerHTML = `
+                <input type="text" placeholder="Feature Title" class="feature-title">
+                <input type="text" placeholder="Feature Description" class="feature-description">
+                <button class="remove-feature" onclick="removeFeature(this)">Remove</button>
+            `;
+            container.appendChild(featureDiv);
+        }
+
+        // Remove feature input
+        function removeFeature(button) {
+            button.parentElement.remove();
+        }
+
+        // Broadcast feature update
+        async function broadcastUpdate() {
+            const title = document.getElementById('updateTitle').value;
+            const featureInputs = document.querySelectorAll('.feature-input');
+            
+            if (!title) {
+                showMessage('Please enter an update title', 'error');
+                return;
+            }
+
+            const features = [];
+            featureInputs.forEach(input => {
+                const title = input.querySelector('.feature-title').value;
+                const description = input.querySelector('.feature-description').value;
+                if (title && description) {
+                    features.push({ title, description });
+                }
+            });
+
+            if (features.length === 0) {
+                showMessage('Please add at least one feature', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/subscribers/broadcast', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: title,
+                        features: features
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    showMessage(`Feature update broadcasted to ${result.totalSent} subscribers!`, 'success');
+                    document.getElementById('updateTitle').value = '';
+                    document.getElementById('featuresContainer').innerHTML = `
+                        <div class="feature-input">
+                            <input type="text" placeholder="Feature Title" class="feature-title">
+                            <input type="text" placeholder="Feature Description" class="feature-description">
+                        </div>
+                    `;
+                } else {
+                    showMessage(`Failed to broadcast: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showMessage(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Show message
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Load stats on page load
+        loadStats();
+    </script>
+</body>
+</html>

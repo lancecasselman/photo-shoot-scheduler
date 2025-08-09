@@ -1,0 +1,55 @@
+website-builder.html:300   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/src/js/image-resize.js net::ERR_ABORTED 404 (Not Found)
+[NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
+        Don't show again
+website-builder.html:1  Refused to apply style from 'https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/css/style.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+website-builder.html:299   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/src/js/undo-redo.js net::ERR_ABORTED 404 (Not Found)
+firebase-config.js:15 Firebase client initialized with storage bucket: photoshcheduleapp.appspot.com
+Refused to execute script from '<URL>' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled.
+Refused to execute script from '<URL>' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled.
+Refused to execute script from '<URL>' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled.
+Refused to execute script from '<URL>' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled.
+Refused to execute script from '<URL>' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled.
+Refused to execute script from '<URL>' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled.
+Refused to execute script from '<URL>' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled.
+Refused to execute script from '<URL>' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled.
+Refused to execute script from '<URL>' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled.
+Refused to execute script from '<URL>' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled.
+Refused to execute script from '<URL>' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled.
+Refused to execute script from '<URL>' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled.
+Refused to execute script from '<URL>' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled.
+Refused to execute script from '<URL>' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled.
+Refused to execute script from '<URL>' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled.
+Refused to execute script from '<URL>' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled.
+Refused to execute script from '<URL>' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled.
+Refused to execute script from '<URL>' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled.
+Refused to execute script from '<URL>' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled.
+Refused to execute script from '<URL>' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled.
+Refused to execute script from '<URL>' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled.
+Refused to execute script from '<URL>' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled.
+Refused to execute script from '<URL>' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled.
+Refused to execute script from '<URL>' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled.
+website-builder.html:306   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/src/blocks/blocks.js net::ERR_ABORTED 404 (Not Found)
+website-builder.html:301   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/src/js/multi-select.js net::ERR_ABORTED 404 (Not Found)
+website-builder.html:302   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/src/js/dragdrop.js net::ERR_ABORTED 404 (Not Found)
+website-builder.html:303   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/src/js/save-layout.js net::ERR_ABORTED 404 (Not Found)
+website-builder.html:304   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/src/js/load-layout.js net::ERR_ABORTED 404 (Not Found)
+website-builder.html:307   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/src/js/block-library.js net::ERR_ABORTED 404 (Not Found)
+website-builder.html:305   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/src/js/autosave-versions.js net::ERR_ABORTED 404 (Not Found)
+website-builder.html:308   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/src/js/auth-bridge.js net::ERR_ABORTED 404 (Not Found)
+website-builder.html:309   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/src/js/image-upload.js net::ERR_ABORTED 404 (Not Found)
+website-builder.html:310   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/src/js/zip-export.js net::ERR_ABORTED 404 (Not Found)
+website-builder.html:312   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/src/js/text-toolbar.js net::ERR_ABORTED 404 (Not Found)
+website-builder.html:311   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/src/js/multi-page.js net::ERR_ABORTED 404 (Not Found)
+website-builder.html:313   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/src/js/block-toolbar.js net::ERR_ABORTED 404 (Not Found)
+website-builder.html:314   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/src/templates/light-airy-portfolio.js net::ERR_ABORTED 404 (Not Found)
+website-builder.html:315   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/src/templates/bold-modern-studio.js net::ERR_ABORTED 404 (Not Found)
+website-builder.html:316   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/src/templates/elegant-wedding.js net::ERR_ABORTED 404 (Not Found)
+website-builder.html:317   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/src/templates/edgy-urban-lookbook.js net::ERR_ABORTED 404 (Not Found)
+website-builder.html:319   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/src/js/template-selector.js net::ERR_ABORTED 404 (Not Found)
+website-builder.html:320   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/src/js/draggable-toolbars.js net::ERR_ABORTED 404 (Not Found)
+website-builder.html:321   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/src/js/image-placeholder-editor.js net::ERR_ABORTED 404 (Not Found)
+website-builder.html:323   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/src/js/preview-website.js net::ERR_ABORTED 404 (Not Found)
+website-builder.html:324   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/src/js/ai-assistant.js net::ERR_ABORTED 404 (Not Found)

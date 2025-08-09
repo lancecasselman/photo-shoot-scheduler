@@ -1,0 +1,125 @@
+{
+  "name": "Edgy Urban Lookbook",
+  "slug": "edgy-urban-lookbook",
+  "preview": "/previews/edgy-urban.jpg",
+  "description": "Dark theme with neon accents for street and fashion photographers",
+  "tags": ["Urban", "Edgy", "Dark", "Fashion"],
+  "globalStyles": {
+    "colors": {
+      "primary": "#38bdf8",
+      "secondary": "#f59e0b",
+      "text": "#f3f4f6",
+      "background": "#111111"
+    },
+    "fonts": {
+      "heading": "Oswald",
+      "body": "Roboto"
+    },
+    "spacing": "tight",
+    "borderRadius": "none"
+  },
+  "pages": [
+    {
+      "title": "Home",
+      "slug": "home",
+      "blocks": [
+        {
+          "type": "Hero",
+          "props": {
+            "style": "video",
+            "videoUrl": "/videos/urban-reel.mp4",
+            "headline": "STREET VISION",
+            "subtext": "Urban photography with attitude",
+            "ctaText": "EXPLORE",
+            "ctaLink": "#work",
+            "textAnimation": "glitch"
+          }
+        },
+        {
+          "type": "Gallery",
+          "props": {
+            "layout": "grid",
+            "columns": 3,
+            "hoverEffect": "neon-zoom",
+            "images": [],
+            "backgroundColor": "#0a0a0a"
+          }
+        },
+        {
+          "type": "Packages",
+          "props": {
+            "title": "SHOOT PACKAGES",
+            "style": "neon-cards",
+            "packages": [
+              {
+                "name": "BASIC",
+                "price": "$500",
+                "features": ["2 hour shoot", "1 location", "25 edited shots"],
+                "icon": "flash",
+                "accentColor": "#38bdf8"
+              },
+              {
+                "name": "PREMIUM",
+                "price": "$1000",
+                "features": ["4 hour shoot", "3 locations", "50 edited shots", "Rush delivery"],
+                "icon": "star",
+                "accentColor": "#f59e0b"
+              },
+              {
+                "name": "CAMPAIGN",
+                "price": "CUSTOM",
+                "features": ["Full day", "Multiple looks", "100+ shots", "Usage rights"],
+                "icon": "crown",
+                "accentColor": "#38bdf8"
+              }
+            ]
+          }
+        },
+        {
+          "type": "ContactForm",
+          "props": {
+            "title": "BOOK A SHOOT",
+            "style": "overlay",
+            "fields": ["name", "email", "instagram", "projectType", "budget", "concept"],
+            "backgroundColor": "transparent",
+            "borderColor": "#38bdf8"
+          }
+        }
+      ]
+    },
+    {
+      "title": "Work",
+      "slug": "work",
+      "blocks": [
+        {
+          "type": "Gallery",
+          "props": {
+            "layout": "masonry",
+            "filter": true,
+            "categories": ["Street", "Fashion", "Portrait", "Editorial"],
+            "lazyLoad": true,
+            "infiniteScroll": true
+          }
+        }
+      ]
+    },
+    {
+      "title": "Contact",
+      "slug": "contact",
+      "blocks": [
+        {
+          "type": "ContactForm",
+          "props": {
+            "style": "minimal-dark",
+            "fields": ["name", "email", "message"],
+            "socialLinks": {
+              "instagram": "@urbanshooter",
+              "tiktok": "@urbanshooter",
+              "behance": "urbanshooter"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

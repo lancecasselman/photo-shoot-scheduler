@@ -1,0 +1,88 @@
+// REPLIT MEGA PROMPT: Replace existing website builder with full prebuilt template selector system
+
+/**
+ * 🚨 Wipe all current website builder code.
+ * Remove all buttons, blocks, preview logic, and UI related to old builder.
+ * We are replacing it with a **template-first** system (similar to Pixieset's live site templates).
+ */
+
+/**
+ * 📦 New Features to Implement:
+ */
+
+/** 1. Template Selection Page */
+// New route: /template-selector.html
+// Displays 20+ fully designed, prebuilt website previews
+// Each template includes:
+// - Home
+// - About
+// - Gallery
+// - Contact
+// - Fully styled with layout, fonts, color schemes, animations
+
+// Clicking "Preview" opens a live demo in full window
+// Clicking "Select Template" saves the user's selection in Firestore
+
+/** 2. Editor Mode */
+// After selection, redirect to /editor.html
+// Load the chosen template layout and content blocks
+// Allow editing of text/images per block
+// UI should include:
+// - Page selector (Home, About, etc.)
+// - Block list (in order)
+// - Inline editing of text, images, social links
+// - Replace logo/profile image
+// - Brand color + font adjustments
+// - Button manager (edit links, style, text)
+
+/** 3. Templates Structure */
+// Store 20+ templates in /templates folder (JSON or EJS)
+// Each template has:
+// - name, themeId, thumbnail
+// - default layout per page
+// - animations, styles, fonts
+// - placeholder images and copy
+
+/** 4. Theme Engine */
+// Render templates dynamically with:
+// - EJS/Handlebars (backend)
+// - Live block rendering (frontend)
+// - Firebase Storage image resolution
+// - Meta + Open Graph support
+
+/** 5. Publishing System */
+// Publish button outputs static site to:
+// /site/{username}/index.html (with subpages)
+// Using Firebase Cloud Functions
+// CDN cached with HTTPS and SEO-friendly routing
+
+/** 6. Account Integration */
+// User must be logged in to select or edit templates
+// Save selected template and customization in Firestore under their UID
+
+/** 7. Firebase Setup */
+// Firestore: saves template ID + custom content
+// Storage: stores uploaded images (logos, portraits)
+// Hosting: published static HTML for public viewing
+
+/** 8. Remove Old Builder */
+// Remove:
+// - websiteBuilder.html
+// - websiteSettings object
+// - website preview UI and old theme selector
+// - All related buttons + handlers in navbar and sidebar
+
+/** 9. Files to Create */
+// - /template-selector.html
+// - /editor.html
+// - /scripts/templateLoader.js
+// - /scripts/editorUI.js
+// - /templates/*.json (20 templates)
+// - /firebase/firebase.js
+
+/** 10. Deployment */
+// Firebase deploy with:
+// firebase deploy --only hosting,functions
+
+// This must be a clean, polished, premium template-based system for photographers to select and launch beautiful websites — fast.
+// No emojis. Clean UI. Full functionality. Like Pixieset, but ours.

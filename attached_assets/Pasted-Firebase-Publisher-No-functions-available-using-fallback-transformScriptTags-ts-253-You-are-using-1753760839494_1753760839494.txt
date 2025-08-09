@@ -1,0 +1,54 @@
+Firebase Publisher: No functions available, using fallback
+transformScriptTags.ts:253  You are using the in-browser Babel transformer. Be sure to precompile your scripts for production - https://babeljs.io/docs/setup/
+(anonymous) @ transformScriptTags.ts:253
+CEe @ index.ts:244
+kEe @ index.ts:228
+SiteBuilder.jsx:37 SiteBuilder: Initializing component...
+SiteBuilder.jsx:56 SiteBuilder: No Firebase auth available, proceeding without auth
+SiteBuilder.jsx:202 SiteBuilder: Waiting for templates to load...
+[NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
+        Don't show again
+react-dom.production.min.js:121  Error: Minified React error #130; visit https://reactjs.org/docs/error-decoder.html?invariant=130&args[]=undefined&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at rd (react-dom.production.min.js:206:306)
+    at k (react-dom.production.min.js:87:70)
+    at p (react-dom.production.min.js:89:494)
+    at x (react-dom.production.min.js:91:130)
+    at v (react-dom.production.min.js:95:81)
+    at aa (react-dom.production.min.js:123:416)
+    at Qk (react-dom.production.min.js:253:416)
+    at Ri (react-dom.production.min.js:195:185)
+    at Ok (react-dom.production.min.js:195:116)
+    at Nd (react-dom.production.min.js:194:492)
+    at Qf (react-dom.production.min.js:187:439)
+    at Ni (react-dom.production.min.js:185:400)
+    at S (react.production.min.js:17:25)
+    at MessagePort.U (react.production.min.js:21:229)
+wf @ react-dom.production.min.js:121
+(anonymous) @ react-dom.production.min.js:121
+Hh @ react-dom.production.min.js:103
+Ji @ react-dom.production.min.js:180
+Hi @ react-dom.production.min.js:179
+Hk @ react-dom.production.min.js:178
+Rk @ react-dom.production.min.js:197
+xb @ react-dom.production.min.js:196
+Ni @ react-dom.production.min.js:186
+S @ react.production.min.js:17
+U @ react.production.min.js:21
+react-dom.production.min.js:206  Uncaught Error: Minified React error #130; visit https://reactjs.org/docs/error-decoder.html?invariant=130&args[]=undefined&args[]= for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at rd (react-dom.production.min.js:206:306)
+    at k (react-dom.production.min.js:87:70)
+    at p (react-dom.production.min.js:89:494)
+    at x (react-dom.production.min.js:91:130)
+    at v (react-dom.production.min.js:95:81)
+    at aa (react-dom.production.min.js:123:416)
+    at Qk (react-dom.production.min.js:253:416)
+    at Ri (react-dom.production.min.js:195:185)
+    at Ok (react-dom.production.min.js:195:116)
+    at Nd (react-dom.production.min.js:194:492)
+    at Qf (react-dom.production.min.js:187:439)
+    at Ni (react-dom.production.min.js:185:400)
+    at S (react.production.min.js:17:25)
+    at MessagePort.U (react.production.min.js:21:229)

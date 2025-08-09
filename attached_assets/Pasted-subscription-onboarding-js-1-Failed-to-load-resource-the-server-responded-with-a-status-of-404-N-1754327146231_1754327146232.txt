@@ -1,0 +1,27 @@
+subscription-onboarding.js:1   Failed to load resource: the server responded with a status of 404 (Not Found)
+app:1  Refused to execute script from 'https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/subscription-onboarding.js' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled.
+script.js?v=1754320300:164 Loading sessions from API...
+script.js?v=1754320300:164 Loading sessions from API...
+script.js?v=1754320300:1594 Page loaded, initializing...
+script.js?v=1754320300:1573 Initializing page...
+script.js?v=1754320300:180 Data type: object Array: true
+script.js?v=1754320300:181 Raw API response: Array(8)
+script.js?v=1754320300:213 Transformed sessions: Array(8)
+script.js?v=1754320300:222 Successfully loaded 8 sessions
+script.js?v=1754320300:23 User authenticated successfully: lancecasselman@icloud.com
+script.js?v=1754320300:1583 Loading sessions from API...
+script.js?v=1754320300:1588 Session loading failed, but page initialized
+app:11744 No active subscription found
+script.js?v=1754320300:180 Data type: object Array: true
+script.js?v=1754320300:181 Raw API response: Array(8)
+script.js?v=1754320300:213 Transformed sessions: Array(8)
+script.js?v=1754320300:222 Successfully loaded 8 sessions
+script.js?v=1754320300:2109 📦 Starting download for session: 5dc5c901-66ff-4ec5-8bac-9ca8a6d13c57 client: undefined
+script.js?v=1754320300:2113 📦 Progress modal created: <div class=​"modal-parent" id=​"downloadProgressModal" style=​"position:​ fixed;​ top:​ 0px;​ left:​ 0px;​ width:​ 100%;​ height:​ 100%;​ background:​ rgba(0, 0, 0, 0.5)​;​ display:​ flex;​ align-items:​ center;​ justify-content:​ center;​ z-index:​ 10000;​">​…​</div>​flex
+script.js?v=1754320300:2118 📦 Progress modal displayed
+script.js?v=1754320300:2122 📦 Initial progress set
+[NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
+        Don't show again

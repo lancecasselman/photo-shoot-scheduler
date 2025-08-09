@@ -1,0 +1,62 @@
+ask:
+Remove the current (global) backup system. Add RAW backup to each session as two new buttons—“RAW Backup Upload” and “RAW Gallery”—functioning just like the standard session upload/gallery buttons. Track total storage usage (RAW + regular gallery) per user, with all files in Cloudflare R2.
+
+Instructions
+Remove the old/global RAW backup feature from the sidebar/menu.
+
+For each session, add:
+
+RAW Backup Upload button:
+
+Appears in the session view, next to the standard upload button.
+
+Lets users upload RAW files (.CR2, .NEF, .ARW, etc.) directly to Cloudflare R2.
+
+Shows upload progress, handles errors, enforces filetype.
+
+RAW Gallery button:
+
+Shows a gallery/list of all RAW files for that session, with preview (if possible), filename, upload date, size, and download/delete options.
+
+Functionality:
+
+Both new buttons work exactly like the regular photo upload/gallery buttons, but are only for RAW files.
+
+Regular photos and RAW files are stored in separate folders/paths within the same Cloudflare R2 bucket.
+
+Unified Storage Tracking:
+
+Track storage used for both RAW and regular galleries combined (per user).
+
+Display total usage (e.g., “You are using 224 GB of your 1 TB storage”) in the dashboard and/or session.
+
+Storage limit enforcement, upgrade prompts, and all quotas apply to the sum of RAW + gallery files.
+
+Backend/Storage:
+
+Use Cloudflare R2 for all uploads (both RAW and standard images).
+
+Store metadata for every file (session, file type, size, upload date, etc.) in your database.
+
+Only authenticated users can access their session’s RAW files.
+
+UI/UX:
+
+RAW upload/gallery buttons should be visually distinct, labeled “RAW Backup Upload” and “RAW Gallery.”
+
+If possible, preview thumbnails for RAWs (if not, just list filename and info).
+
+Show current total storage and storage left on the main dashboard and inside each session.
+
+No emojis in UI or code. Comment code and test thoroughly.
+
+Summary:
+
+Remove current backup system.
+
+Add RAW upload/gallery buttons to each session.
+
+RAW and regular files both go to R2; storage usage is tracked together.
+
+All controls and logic match current gallery behavior.
+

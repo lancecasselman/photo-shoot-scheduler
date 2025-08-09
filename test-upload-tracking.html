@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Tracking Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .upload-area {
+            border: 2px dashed #ccc;
+            padding: 30px;
+            text-align: center;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        .upload-area.dragover {
+            border-color: #007cba;
+            background: #e3f2fd;
+        }
+        .result {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success { border-left: 4px solid #28a745; }
+        .error { border-left: 4px solid #dc3545; }
+        .info { border-left: 4px solid #17a2b8; }
+        .warning { border-left: 4px solid #ffc107; }
+        button {
+            background: #007cba;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover { background: #005a87; }
+        #fileInput { display: none; }
+        .step-number {
+            background: #007cba;
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>📤 Upload Tracking Verification</h1>
+    <p>Test that uploads go to the correct locations and are tracked properly.</p>
+
+    <div class="test-section">
+        <h2><span class="step-number">1</span>Upload Test Photo</h2>
+        <p>Upload a photo and track where it gets stored:</p>
+        
+        <div class="upload-area" id="uploadArea">
+            <p>📸 Drop a test photo here or click to select</p>
+            <input type="file" id="fileInput" accept="image/*">
+            <button onclick="document.getElementById('fileInput').click()">Select Photo</button>
+        </div>
+
+        <div>
+            <label>Test Session: 
+                <select id="sessionSelect">
+                    <option value="">Loading sessions...</option>
+                </select>
+            </label>
+        </div>
+
+        <div id="uploadResult" class="result info">Upload results will appear here...</div>
+    </div>
+
+    <div class="test-section">
+        <h2><span class="step-number">2</span>Verify Storage Locations</h2>
+        <p>Check where the uploaded file ended up:</p>
+        
+        <button onclick="checkStorageLocations()">📂 Check Storage Locations</button>
+        <div id="locationResult" class="result">Storage location results will appear here...</div>
+    </div>
+
+    <div class="test-section">
+        <h2><span class="step-number">3</span>Verify Database Tracking</h2>
+        <p>Ensure the upload is properly tracked in the database:</p>
+        
+        <button onclick="verifyDatabaseTracking()">🗄️ Verify Database Tracking</button>
+        <div id="databaseResult" class="result">Database tracking results will appear here...</div>
+    </div>
+
+    <div class="test-section">
+        <h2><span class="step-number">4</span>Check R2 Cloud Backup</h2>
+        <p>Verify the file was backed up to Cloudflare R2:</p>
+        
+        <button onclick="checkR2Backup()">☁️ Check R2 Backup</button>
+        <div id="r2Result" class="result">R2 backup results will appear here...</div>
+    </div>
+
+    <script>
+        let uploadedFile = null;
+        let selectedSessionId = null;
+        
+        // Load sessions
+        async function loadSessions() {
+            try {
+                const response = await fetch('/api/sessions', { credentials: 'include' });
+                const sessions = await response.json();
+                
+                const select = document.getElementById('sessionSelect');
+                select.innerHTML = '<option value="">Select session...</option>';
+                
+                sessions.forEach(session => {
+                    const option = document.createElement('option');
+                    option.value = session.id;
+                    option.textContent = `${session.clientName} (${session.id.substring(0,8)})`;
+                    select.appendChild(option);
+                });
+                
+                if (sessions.length > 0) {
+                    selectedSessionId = sessions[0].id;
+                    select.value = selectedSessionId;
+                }
+                
+            } catch (error) {
+                console.error('Error loading sessions:', error);
+            }
+        }
+        
+        // File upload handling
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const uploadResult = document.getElementById('uploadResult');
+        const sessionSelect = document.getElementById('sessionSelect');
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleUpload(e.dataTransfer.files);
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            handleUpload(e.target.files);
+        });
+        
+        sessionSelect.addEventListener('change', (e) => {
+            selectedSessionId = e.target.value;
+        });
+        
+        async function handleUpload(files) {
+            if (!selectedSessionId) {
+                uploadResult.className = 'result error';
+                uploadResult.textContent = 'Please select a session first';
+                return;
+            }
+            
+            if (!files.length) return;
+            
+            const file = files[0];
+            uploadedFile = {
+                name: file.name,
+                size: file.size,
+                sessionId: selectedSessionId
+            };
+            
+            uploadResult.className = 'result info';
+            uploadResult.textContent = `Uploading ${file.name} (${(file.size/1024/1024).toFixed(2)}MB)...`;
+            
+            const formData = new FormData();
+            formData.append('photos', file);
+            
+            try {
+                const response = await fetch(`/api/sessions/${selectedSessionId}/upload-photos`, {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'include'
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.uploaded) {
+                    uploadResult.className = 'result success';
+                    uploadResult.textContent = `✅ UPLOAD SUCCESSFUL!
+
+File: ${file.name}
+Size: ${(file.size/1024/1024).toFixed(2)}MB
+Session: ${selectedSessionId}
+Uploaded: ${result.uploaded} files
+
+Upload Details:
+${JSON.stringify(result, null, 2)}
+
+Now proceed to steps 2-4 to verify proper storage and tracking.`;
+                } else {
+                    throw new Error(result.error || 'Upload failed');
+                }
+                
+            } catch (error) {
+                uploadResult.className = 'result error';
+                uploadResult.textContent = `❌ Upload failed: ${error.message}`;
+            }
+        }
+        
+        async function checkStorageLocations() {
+            if (!uploadedFile) {
+                document.getElementById('locationResult').className = 'result error';
+                document.getElementById('locationResult').textContent = 'No file uploaded yet. Please upload a file first.';
+                return;
+            }
+            
+            const resultDiv = document.getElementById('locationResult');
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Checking storage locations...';
+            
+            try {
+                // Check session storage
+                const storageResponse = await fetch(`/api/sessions/${uploadedFile.sessionId}/storage`, { 
+                    credentials: 'include' 
+                });
+                
+                if (storageResponse.ok) {
+                    const storage = await storageResponse.json();
+                    
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `📂 STORAGE LOCATION CHECK
+
+Session: ${uploadedFile.sessionId}
+
+Gallery Storage:
+- Files: ${storage.gallery.fileCount}
+- Size: ${storage.gallery.totalSizeFormatted}
+
+Raw Storage:
+- Files: ${storage.raw.fileCount}  
+- Size: ${storage.raw.totalSizeFormatted}
+
+Combined:
+- Total Files: ${storage.combined.fileCount}
+- Total Size: ${storage.combined.totalSizeFormatted}
+
+${storage.combined.fileCount > 0 ? 
+'✅ File found in storage system' : 
+'⚠️ File not found in storage system'}`;
+                } else {
+                    throw new Error(`Storage check failed: ${storageResponse.status}`);
+                }
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Storage location check failed: ${error.message}`;
+            }
+        }
+        
+        async function verifyDatabaseTracking() {
+            if (!uploadedFile) {
+                document.getElementById('databaseResult').className = 'result error';
+                document.getElementById('databaseResult').textContent = 'No file uploaded yet. Please upload a file first.';
+                return;
+            }
+            
+            const resultDiv = document.getElementById('databaseResult');
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Checking database tracking...';
+            
+            try {
+                // Get updated session data
+                const sessionResponse = await fetch('/api/sessions', { credentials: 'include' });
+                const sessions = await sessionResponse.json();
+                
+                const targetSession = sessions.find(s => s.id === uploadedFile.sessionId);
+                
+                if (targetSession) {
+                    const photoCount = targetSession.photos ? targetSession.photos.length : 0;
+                    
+                    resultDiv.className = photoCount > 0 ? 'result success' : 'result warning';
+                    resultDiv.textContent = `🗄️ DATABASE TRACKING CHECK
+
+Session: ${targetSession.clientName}
+Photos in session.photos: ${photoCount}
+
+${photoCount > 0 ? 
+`✅ File tracked in database
+
+Recent Photos:
+${targetSession.photos.slice(-3).map(p => 
+`- ${p.originalName || p.filename} (${(p.originalSize/1024/1024).toFixed(2)}MB)`
+).join('\n')}` : 
+'⚠️ File not found in session.photos array'}`;
+                } else {
+                    throw new Error('Session not found');
+                }
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Database tracking check failed: ${error.message}`;
+            }
+        }
+        
+        async function checkR2Backup() {
+            if (!uploadedFile) {
+                document.getElementById('r2Result').className = 'result error';
+                document.getElementById('r2Result').textContent = 'No file uploaded yet. Please upload a file first.';
+                return;
+            }
+            
+            const resultDiv = document.getElementById('r2Result');
+            resultDiv.className = 'result info';
+            resultDiv.textContent = 'Checking R2 backup status...';
+            
+            try {
+                // Check global storage stats to see if R2 shows the file
+                const globalResponse = await fetch('/api/global-storage-stats', { credentials: 'include' });
+                
+                if (globalResponse.ok) {
+                    const globalStats = await globalResponse.json();
+                    
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `☁️ R2 BACKUP STATUS
+
+Global Storage Stats:
+- Total Files: ${globalStats.combined.fileCount}
+- Total Size: ${globalStats.combined.totalSizeFormatted}
+- Gallery: ${globalStats.gallery.fileCount} files (${globalStats.gallery.totalSizeFormatted})
+- Raw: ${globalStats.raw.fileCount} files (${globalStats.raw.totalSizeFormatted})
+
+${globalStats.combined.fileCount > 0 ? 
+'✅ Files detected in R2 backup system' : 
+'⚠️ No files detected in R2 backup system'}
+
+Note: R2 backup happens asynchronously after upload.
+Check the server console logs for "R2 backup successful" messages.`;
+                } else {
+                    throw new Error(`R2 check failed: ${globalResponse.status}`);
+                }
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ R2 backup check failed: ${error.message}`;
+            }
+        }
+        
+        loadSessions();
+    </script>
+</body>
+</html>
