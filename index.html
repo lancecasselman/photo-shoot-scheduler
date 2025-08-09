@@ -3937,12 +3937,12 @@
             <nav class="nav-menu">
                 <ul>
                     <li class="nav-item">
-                        <a href="#" class="nav-link active" onclick="switchTab('clients'); closeMobileMenu();">
+                        <a href="#" class="nav-link active" onclick="event.preventDefault(); switchTab('clients'); document.getElementById('mobileMenu').classList.remove('show'); document.querySelector('.hamburger-menu').classList.remove('active');">
                             Sessions
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="#" class="nav-link" onclick="switchTab('goldenHour'); closeMobileMenu();">
+                        <a href="#" class="nav-link" onclick="event.preventDefault(); switchTab('goldenHour'); document.getElementById('mobileMenu').classList.remove('show'); document.querySelector('.hamburger-menu').classList.remove('active');">
                             🌅 Golden Hour Times
                         </a>
                     </li>
@@ -8283,11 +8283,18 @@ END:VCALENDAR`;
             const mobileMenu = document.getElementById('mobileMenu');
             const hamburgerBtn = document.querySelector('.hamburger-menu');
             
+            console.log('Closing mobile menu...');
             if (mobileMenu && hamburgerBtn) {
                 mobileMenu.classList.remove('show');
                 hamburgerBtn.classList.remove('active');
+                console.log('Mobile menu closed successfully');
+            } else {
+                console.log('Mobile menu elements not found');
             }
         }
+
+        // Ensure the function is available globally
+        window.closeMobileMenu = closeMobileMenu;
 
         // Close menu when clicking outside
         document.addEventListener('click', function(event) {
