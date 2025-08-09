@@ -337,6 +337,15 @@ Format the response as HTML with proper headings (h2, h3), paragraphs, and bulle
             return completion.choices[0].message.content;
         } catch (error) {
             console.error('AI Services: Error generating blog post:', error);
+            
+            // Provide specific error messages for common issues
+            if (error.message && error.message.includes('insufficient permissions')) {
+                throw new Error('OpenAI API key has insufficient permissions. Please create a new API key with full access at platform.openai.com');
+            }
+            if (error.message && error.message.includes('quota')) {
+                throw new Error('OpenAI API quota exceeded. Please add credits to your OpenAI account.');
+            }
+            
             throw new Error('Failed to generate blog post: ' + error.message);
         }
     }
