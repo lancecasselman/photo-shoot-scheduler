@@ -3410,6 +3410,17 @@ app.post('/api/ai/generate-blog', isAuthenticated, async (req, res) => {
         } catch (aiError) {
             // Refund credits on AI failure
             await pool.query('UPDATE users SET ai_credits = ai_credits + $1 WHERE id = $2', [creditsNeeded, userId]);
+            
+            // Handle specific OpenAI errors
+            if (aiError.message && aiError.message.includes('quota')) {
+                return res.status(429).json({
+                    success: false,
+                    error: 'OpenAI API quota exceeded',
+                    message: 'The OpenAI API quota has been exceeded. Please check your OpenAI billing settings or try again later.',
+                    creditsRefunded: creditsNeeded
+                });
+            }
+            
             throw aiError;
         }
 
@@ -3470,6 +3481,17 @@ app.post('/api/ai/generate-social', isAuthenticated, async (req, res) => {
         } catch (aiError) {
             // Refund credits on AI failure
             await pool.query('UPDATE users SET ai_credits = ai_credits + $1 WHERE id = $2', [creditsNeeded, userId]);
+            
+            // Handle specific OpenAI errors
+            if (aiError.message && aiError.message.includes('quota')) {
+                return res.status(429).json({
+                    success: false,
+                    error: 'OpenAI API quota exceeded',
+                    message: 'The OpenAI API quota has been exceeded. Please check your OpenAI billing settings or try again later.',
+                    creditsRefunded: creditsNeeded
+                });
+            }
+            
             throw aiError;
         }
 
@@ -3530,6 +3552,17 @@ app.post('/api/ai/generate-ideas', isAuthenticated, async (req, res) => {
         } catch (aiError) {
             // Refund credits on AI failure
             await pool.query('UPDATE users SET ai_credits = ai_credits + $1 WHERE id = $2', [creditsNeeded, userId]);
+            
+            // Handle specific OpenAI errors
+            if (aiError.message && aiError.message.includes('quota')) {
+                return res.status(429).json({
+                    success: false,
+                    error: 'OpenAI API quota exceeded',
+                    message: 'The OpenAI API quota has been exceeded. Please check your OpenAI billing settings or try again later.',
+                    creditsRefunded: creditsNeeded
+                });
+            }
+            
             throw aiError;
         }
 
