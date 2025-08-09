@@ -8622,7 +8622,8 @@ END:VCALENDAR`;
                     <h3>📍 Location</h3>
                     <div class="input-group">
                         <input type="text" id="locationInput" placeholder="Enter location (e.g., Myrtle Beach, SC)" 
-                               list="popularLocations" style="width: 70%; padding: 12px; border: 2px solid var(--gold-muted); 
+                               list="popularLocations" onkeypress="handleLocationEnter(event)" 
+                               style="width: 60%; padding: 12px; border: 2px solid var(--gold-muted); 
                                border-radius: var(--border-radius); background: var(--bg-primary); color: var(--text-primary); 
                                font-family: var(--font-body);">
                         <datalist id="popularLocations">
@@ -8637,9 +8638,13 @@ END:VCALENDAR`;
                             <option value="Kiawah Island, SC">
                             <option value="Tybee Island, GA">
                         </datalist>
+                        <button onclick="selectLocation()" style="padding: 12px 16px; background: var(--cream-warm); 
+                                color: var(--text-primary); border: 2px solid var(--gold-muted); 
+                                border-radius: var(--border-radius); margin-left: 8px; cursor: pointer; 
+                                font-weight: 600;">📍 Enter</button>
                         <button id="getCurrentLocation" onclick="getCurrentLocation()" style="padding: 12px 20px; 
                                 background: var(--gold-muted); color: var(--bg-primary); border: none; 
-                                border-radius: var(--border-radius); margin-left: 10px; cursor: pointer; 
+                                border-radius: var(--border-radius); margin-left: 8px; cursor: pointer; 
                                 font-weight: 600;">📍 Use My Location</button>
                     </div>
                 </div>
@@ -8652,7 +8657,7 @@ END:VCALENDAR`;
                 </div>
                 
                 <button onclick="calculateGoldenHour()" id="calculateBtn" class="golden-hour-btn">
-                    ✨ Calculate Golden Hour Times
+                    ✨ Get Times
                 </button>
                 
                 <div id="goldenHourResults" class="golden-hour-results" style="display: none;">
@@ -9032,7 +9037,7 @@ END:VCALENDAR`;
                 showMessage('Failed to calculate golden hour times', 'error');
             } finally {
                 calculateBtn.disabled = false;
-                calculateBtn.textContent = '✨ Calculate Golden Hour Times';
+                calculateBtn.textContent = '✨ Get Times';
             }
         };
 
@@ -9099,6 +9104,29 @@ END:VCALENDAR`;
                     getCurrentBtn.disabled = false;
                 }
             );
+        };
+
+        // Location selection and enter key handling
+        window.selectLocation = function() {
+            const locationInput = document.getElementById('locationInput');
+            if (locationInput.value.trim()) {
+                showMessage('Location selected: ' + locationInput.value, 'success');
+                // Auto-focus the date input after selecting location
+                const dateInput = document.getElementById('dateInput');
+                if (dateInput) {
+                    dateInput.focus();
+                }
+            } else {
+                showMessage('Please enter a location first', 'error');
+                locationInput.focus();
+            }
+        };
+
+        window.handleLocationEnter = function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                selectLocation();
+            }
         };
 
         // Initialize date input to today on page load
