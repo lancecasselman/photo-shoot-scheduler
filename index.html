@@ -8941,15 +8941,33 @@ END:VCALENDAR`;
             calculateBtn.textContent = '⏳ Calculating...';
 
             try {
-                // First get coordinates for the location
-                const geocodeResponse = await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(locationInput.value)}&limit=1&appid=cf0cdc68b7adeb4f28a34c6bae6b1b8c`);
+                // First get coordinates for the location using free Nominatim API
+                const geocodeUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationInput.value)}&limit=1&addressdetails=1`;
+                console.log('Geocoding URL:', geocodeUrl);
+                
+                const geocodeResponse = await fetch(geocodeUrl);
+                console.log('Geocoding response status:', geocodeResponse.status);
+                
                 const geocodeData = await geocodeResponse.json();
+                console.log('Geocoding response data:', geocodeData);
 
-                if (!geocodeData || geocodeData.length === 0) {
-                    throw new Error('Location not found');
+                if (!geocodeResponse.ok) {
+                    throw new Error('Failed to get location data from geocoding service');
                 }
 
-                const { lat, lon, name, state, country } = geocodeData[0];
+                if (!geocodeData || geocodeData.length === 0) {
+                    throw new Error('Location not found. Please try a different location or be more specific (e.g., "Myrtle Beach, SC" or "Charleston, South Carolina")');
+                }
+
+                const locationData = geocodeData[0];
+                const lat = parseFloat(locationData.lat);
+                const lon = parseFloat(locationData.lon);
+                
+                // Extract location details from the response
+                const address = locationData.address || {};
+                const name = address.city || address.town || address.village || address.hamlet || locationData.display_name.split(',')[0];
+                const state = address.state;
+                const country = address.country;
                 console.log('Found location:', { lat, lon, name, state, country });
 
                 // Get sunrise/sunset data
@@ -9036,12 +9054,15 @@ END:VCALENDAR`;
                         const lat = position.coords.latitude;
                         const lon = position.coords.longitude;
 
-                        // Reverse geocode to get location name
-                        const response = await fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=cf0cdc68b7adeb4f28a34c6bae6b1b8c`);
+                        // Reverse geocode to get location name using free API
+                        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`);
                         const data = await response.json();
 
-                        if (data && data.length > 0) {
-                            const { name, state, country } = data[0];
+                        if (data && data.address) {
+                            const address = data.address;
+                            const name = address.city || address.town || address.village || address.hamlet || 'Unknown Location';
+                            const state = address.state;
+                            const country = address.country;
                             locationInput.value = `${name}${state ? `, ${state}` : ''}, ${country}`;
                             showMessage('Location detected successfully!', 'success');
                         } else {
