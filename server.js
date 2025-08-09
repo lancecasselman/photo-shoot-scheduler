@@ -3365,8 +3365,8 @@ app.post('/api/ai/pricing-copy', async (req, res) => {
 // Test OpenAI connection directly (no auth required for testing)
 app.post('/api/test-openai-direct', async (req, res) => {
     try {
-        const hasApiKey = !!(process.env.OPENAI_API_KEY_NEW || process.env.OPENAI_API_KEY);
-        const apiKeyPrefix = (process.env.OPENAI_API_KEY_NEW || process.env.OPENAI_API_KEY)?.substring(0, 10) + '...';
+        const hasApiKey = !!(process.env.secretkey || process.env.OPENAI_API_KEY_NEW || process.env.OPENAI_API_KEY);
+        const apiKeyPrefix = (process.env.secretkey || process.env.OPENAI_API_KEY_NEW || process.env.OPENAI_API_KEY)?.substring(0, 10) + '...';
         
         if (!hasApiKey) {
             return res.json({
@@ -3391,8 +3391,8 @@ app.post('/api/test-openai-direct', async (req, res) => {
         res.json({
             success: false,
             error: error.message,
-            hasApiKey: !!(process.env.OPENAI_API_KEY_NEW || process.env.OPENAI_API_KEY),
-            apiKeyPrefix: (process.env.OPENAI_API_KEY_NEW || process.env.OPENAI_API_KEY)?.substring(0, 10) + '...',
+            hasApiKey: !!(process.env.secretkey || process.env.OPENAI_API_KEY_NEW || process.env.OPENAI_API_KEY),
+            apiKeyPrefix: (process.env.secretkey || process.env.OPENAI_API_KEY_NEW || process.env.OPENAI_API_KEY)?.substring(0, 10) + '...',
             isQuotaError: error.message?.includes('quota'),
             isAuthError: error.message?.includes('auth'),
             fullError: error.message
