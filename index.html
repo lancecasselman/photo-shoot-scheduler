@@ -3690,6 +3690,222 @@
             66% { content: '..'; }
             100% { content: '...'; }
         }
+
+        /* Golden Hour Times Styles */
+        .golden-hour-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: var(--spacing-lg);
+        }
+
+        .location-selector, .date-selector {
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .location-selector h3, .date-selector h3 {
+            color: var(--gold-muted);
+            margin-bottom: var(--spacing-md);
+            font-family: var(--font-heading);
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            flex-wrap: wrap;
+        }
+
+        .golden-hour-btn {
+            width: 100%;
+            background: linear-gradient(135deg, var(--gold-muted) 0%, var(--cream-warm) 100%);
+            color: var(--bg-primary);
+            border: none;
+            padding: var(--spacing-lg);
+            border-radius: var(--border-radius);
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: var(--spacing-lg);
+            font-family: var(--font-heading);
+        }
+
+        .golden-hour-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .golden-hour-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .golden-hour-results {
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-lg);
+            box-shadow: var(--shadow-soft);
+            border: 2px solid var(--gold-muted);
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .time-card {
+            background: var(--bg-primary);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-lg);
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .time-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .sunrise-card {
+            border-color: #ff7b00;
+            background: linear-gradient(135deg, rgba(255, 123, 0, 0.1) 0%, var(--bg-primary) 100%);
+        }
+
+        .sunset-card {
+            border-color: #ff4757;
+            background: linear-gradient(135deg, rgba(255, 71, 87, 0.1) 0%, var(--bg-primary) 100%);
+        }
+
+        .blue-hour-card {
+            border-color: #3742fa;
+            background: linear-gradient(135deg, rgba(55, 66, 250, 0.1) 0%, var(--bg-primary) 100%);
+        }
+
+        .time-icon {
+            font-size: 3rem;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .time-card h4 {
+            color: var(--gold-muted);
+            margin-bottom: var(--spacing-md);
+            font-family: var(--font-heading);
+        }
+
+        .time-display {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-md);
+            font-family: var(--font-heading);
+        }
+
+        .golden-hour-period {
+            background: rgba(212, 175, 55, 0.1);
+            border-radius: var(--border-radius-sm);
+            padding: var(--spacing-sm);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .golden-hour-period span {
+            display: block;
+            font-size: 0.9rem;
+            color: var(--gold-muted);
+            font-weight: 600;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .location-info {
+            background: var(--bg-primary);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            border: 1px solid var(--accent-beige);
+        }
+
+        .location-info h4 {
+            color: var(--gold-muted);
+            margin-bottom: var(--spacing-md);
+            font-family: var(--font-heading);
+        }
+
+        .photography-tips {
+            background: var(--bg-primary);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-lg);
+            border: 1px solid var(--accent-beige);
+        }
+
+        .photography-tips h4 {
+            color: var(--gold-muted);
+            margin-bottom: var(--spacing-md);
+            font-family: var(--font-heading);
+        }
+
+        .tips-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: var(--spacing-md);
+        }
+
+        .tip-card {
+            background: rgba(212, 175, 55, 0.05);
+            border-radius: var(--border-radius-sm);
+            padding: var(--spacing-md);
+            border-left: 4px solid var(--gold-muted);
+        }
+
+        .tip-card strong {
+            color: var(--gold-muted);
+            display: block;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .loading-message, .error-message {
+            text-align: center;
+            padding: var(--spacing-lg);
+            border-radius: var(--border-radius);
+            margin-top: var(--spacing-lg);
+            font-size: 1.1rem;
+        }
+
+        .loading-message {
+            background: rgba(212, 175, 55, 0.1);
+            color: var(--gold-muted);
+            border: 2px solid var(--gold-muted);
+        }
+
+        .error-message {
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+            border: 2px solid #dc3545;
+        }
+
+        @media (max-width: 768px) {
+            .input-group {
+                flex-direction: column;
+            }
+            
+            .input-group input[type="text"] {
+                width: 100% !important;
+            }
+            
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .tips-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
@@ -3720,6 +3936,11 @@
                     <li class="nav-item">
                         <a href="#" class="nav-link active" onclick="switchTab('clients'); closeMobileMenu();">
                             Sessions
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="switchTab('goldenHour'); closeMobileMenu();">
+                            🌅 Golden Hour Times
                         </a>
                     </li>
 
@@ -7816,23 +8037,43 @@ END:VCALENDAR`;
 
         // Tab switching functionality
         window.switchTab = function(tabName) {
+            console.log('Switching to tab:', tabName);
+            
             // Hide all tab contents
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.classList.remove('active');
             });
             
-            // Remove active class from all nav tabs
-            document.querySelectorAll('.nav-tab').forEach(tab => {
-                tab.classList.remove('active');
+            // Remove active class from all navigation links
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
             });
             
             // Show selected tab content
-            document.getElementById(tabName + 'Tab').classList.add('active');
+            const targetTab = document.getElementById(tabName + 'Tab');
+            if (targetTab) {
+                targetTab.classList.add('active');
+                console.log('Activated tab:', tabName + 'Tab');
+            } else {
+                console.error('Tab not found:', tabName + 'Tab');
+            }
             
-            // Set active nav tab
-            event.target.classList.add('active');
+            // Set active nav link
+            const activeLink = document.querySelector(`.nav-link[onclick*="${tabName}"]`);
+            if (activeLink) {
+                activeLink.classList.add('active');
+                console.log('Set active nav link for:', tabName);
+            }
             
             // Initialize specific tabs when switching
+            if (tabName === 'goldenHour') {
+                // Set default date to today if not already set
+                const dateInput = document.getElementById('dateInput');
+                if (dateInput && !dateInput.value) {
+                    const today = new Date();
+                    dateInput.value = today.toISOString().split('T')[0];
+                }
+            }
         }
 
     </script>
@@ -8369,6 +8610,122 @@ END:VCALENDAR`;
 
     </script>
 
+        <!-- Golden Hour Times Tab Content -->
+        <div id="goldenHourTab" class="tab-content">
+            <div class="content-header">
+                <h1>🌅 Golden Hour Times</h1>
+                <p>Find perfect lighting times for your photography sessions</p>
+            </div>
+            
+            <div class="golden-hour-container">
+                <div class="location-selector">
+                    <h3>📍 Location</h3>
+                    <div class="input-group">
+                        <input type="text" id="locationInput" placeholder="Enter location (e.g., Myrtle Beach, SC)" 
+                               list="popularLocations" style="width: 70%; padding: 12px; border: 2px solid var(--gold-muted); 
+                               border-radius: var(--border-radius); background: var(--bg-primary); color: var(--text-primary); 
+                               font-family: var(--font-body);">
+                        <datalist id="popularLocations">
+                            <option value="Myrtle Beach, SC">
+                            <option value="Charleston, SC">
+                            <option value="Savannah, GA">
+                            <option value="Wilmington, NC">
+                            <option value="Virginia Beach, VA">
+                            <option value="Ocean City, MD">
+                            <option value="Outer Banks, NC">
+                            <option value="Hilton Head, SC">
+                            <option value="Kiawah Island, SC">
+                            <option value="Tybee Island, GA">
+                        </datalist>
+                        <button id="getCurrentLocation" onclick="getCurrentLocation()" style="padding: 12px 20px; 
+                                background: var(--gold-muted); color: var(--bg-primary); border: none; 
+                                border-radius: var(--border-radius); margin-left: 10px; cursor: pointer; 
+                                font-weight: 600;">📍 Use My Location</button>
+                    </div>
+                </div>
+                
+                <div class="date-selector">
+                    <h3>📅 Date</h3>
+                    <input type="date" id="dateInput" style="padding: 12px; border: 2px solid var(--gold-muted); 
+                           border-radius: var(--border-radius); background: var(--bg-primary); color: var(--text-primary); 
+                           font-family: var(--font-body); font-size: 16px;">
+                </div>
+                
+                <button onclick="calculateGoldenHour()" id="calculateBtn" class="golden-hour-btn">
+                    ✨ Calculate Golden Hour Times
+                </button>
+                
+                <div id="goldenHourResults" class="golden-hour-results" style="display: none;">
+                    <div class="results-grid">
+                        <div class="time-card sunrise-card">
+                            <div class="time-icon">🌅</div>
+                            <h4>Sunrise</h4>
+                            <div class="time-display" id="sunriseTime">--:--</div>
+                            <div class="golden-hour-period">
+                                <span>Golden Hour</span>
+                                <div id="morningGoldenHour">--:-- to --:--</div>
+                            </div>
+                        </div>
+                        
+                        <div class="time-card sunset-card">
+                            <div class="time-icon">🌇</div>
+                            <h4>Sunset</h4>
+                            <div class="time-display" id="sunsetTime">--:--</div>
+                            <div class="golden-hour-period">
+                                <span>Golden Hour</span>
+                                <div id="eveningGoldenHour">--:-- to --:--</div>
+                            </div>
+                        </div>
+                        
+                        <div class="time-card blue-hour-card">
+                            <div class="time-icon">🌌</div>
+                            <h4>Blue Hour</h4>
+                            <div class="time-display">Perfect for dramatic shots</div>
+                            <div class="golden-hour-period">
+                                <span>Morning</span>
+                                <div id="morningBlueHour">--:-- to --:--</div>
+                            </div>
+                            <div class="golden-hour-period">
+                                <span>Evening</span>
+                                <div id="eveningBlueHour">--:-- to --:--</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="location-info" id="locationInfo">
+                        <h4>📍 Location Details</h4>
+                        <div id="locationDetails">--</div>
+                    </div>
+                    
+                    <div class="photography-tips">
+                        <h4>📸 Photography Tips</h4>
+                        <div class="tips-grid">
+                            <div class="tip-card">
+                                <strong>🌅 Golden Hour</strong>
+                                <p>Soft, warm light perfect for portraits and landscapes. Best for: couple sessions, family photos, romantic portraits.</p>
+                            </div>
+                            <div class="tip-card">
+                                <strong>🌌 Blue Hour</strong>
+                                <p>Deep blue sky creates dramatic contrast. Best for: architectural photos, cityscapes, creative portraits with artificial lighting.</p>
+                            </div>
+                            <div class="tip-card">
+                                <strong>⏰ Planning Tip</strong>
+                                <p>Arrive 30 minutes before golden hour starts to set up and catch the light transition.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="loadingSpinner" class="loading-message" style="display: none;">
+                    🌅 Calculating lighting times...
+                </div>
+                
+                <div id="errorMessage" class="error-message" style="display: none;">
+                    ❌ Could not calculate times. Please check your location and try again.
+                </div>
+            </div>
+        </div>
+
         </div> <!-- Close main-content -->
     </div> <!-- Close container -->
     
@@ -8551,6 +8908,186 @@ END:VCALENDAR`;
             await window.loadGlobalStorageStats();
             showMessage('Storage statistics refreshed!', 'success');
         }
+
+        // Golden Hour Times Functionality
+        window.calculateGoldenHour = async function() {
+            const locationInput = document.getElementById('locationInput');
+            const dateInput = document.getElementById('dateInput');
+            const calculateBtn = document.getElementById('calculateBtn');
+            const resultsDiv = document.getElementById('goldenHourResults');
+            const loadingDiv = document.getElementById('loadingSpinner');
+            const errorDiv = document.getElementById('errorMessage');
+
+            // Hide previous results/messages
+            resultsDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+
+            // Validate inputs
+            if (!locationInput.value.trim()) {
+                errorDiv.textContent = '❌ Please enter a location';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            if (!dateInput.value) {
+                errorDiv.textContent = '❌ Please select a date';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            // Show loading
+            loadingDiv.style.display = 'block';
+            calculateBtn.disabled = true;
+            calculateBtn.textContent = '⏳ Calculating...';
+
+            try {
+                // First get coordinates for the location
+                const geocodeResponse = await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(locationInput.value)}&limit=1&appid=cf0cdc68b7adeb4f28a34c6bae6b1b8c`);
+                const geocodeData = await geocodeResponse.json();
+
+                if (!geocodeData || geocodeData.length === 0) {
+                    throw new Error('Location not found');
+                }
+
+                const { lat, lon, name, state, country } = geocodeData[0];
+                console.log('Found location:', { lat, lon, name, state, country });
+
+                // Get sunrise/sunset data
+                const sunResponse = await fetch(`https://api.sunrise-sunset.org/json?lat=${lat}&lng=${lon}&date=${dateInput.value}&formatted=0`);
+                const sunData = await sunResponse.json();
+
+                if (sunData.status !== 'OK') {
+                    throw new Error('Failed to get sunrise/sunset data');
+                }
+
+                // Parse times and convert to local timezone
+                const sunrise = new Date(sunData.results.sunrise);
+                const sunset = new Date(sunData.results.sunset);
+
+                // Calculate golden hour periods (approximately 1 hour after sunrise and 1 hour before sunset)
+                const morningGoldenStart = new Date(sunrise.getTime());
+                const morningGoldenEnd = new Date(sunrise.getTime() + 60 * 60 * 1000); // 1 hour after sunrise
+
+                const eveningGoldenStart = new Date(sunset.getTime() - 60 * 60 * 1000); // 1 hour before sunset
+                const eveningGoldenEnd = new Date(sunset.getTime());
+
+                // Calculate blue hour periods (approximately 30 minutes before sunrise and after sunset)
+                const morningBlueStart = new Date(sunrise.getTime() - 30 * 60 * 1000); // 30 min before sunrise
+                const morningBlueEnd = new Date(sunrise.getTime() + 15 * 60 * 1000); // 15 min after sunrise
+
+                const eveningBlueStart = new Date(sunset.getTime() - 15 * 60 * 1000); // 15 min before sunset
+                const eveningBlueEnd = new Date(sunset.getTime() + 30 * 60 * 1000); // 30 min after sunset
+
+                // Format times for display
+                const formatTime = (date) => date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+
+                // Update display
+                document.getElementById('sunriseTime').textContent = formatTime(sunrise);
+                document.getElementById('sunsetTime').textContent = formatTime(sunset);
+                document.getElementById('morningGoldenHour').textContent = `${formatTime(morningGoldenStart)} to ${formatTime(morningGoldenEnd)}`;
+                document.getElementById('eveningGoldenHour').textContent = `${formatTime(eveningGoldenStart)} to ${formatTime(eveningGoldenEnd)}`;
+                document.getElementById('morningBlueHour').textContent = `${formatTime(morningBlueStart)} to ${formatTime(morningBlueEnd)}`;
+                document.getElementById('eveningBlueHour').textContent = `${formatTime(eveningBlueStart)} to ${formatTime(eveningBlueEnd)}`;
+
+                // Update location details
+                const locationDetails = `${name}${state ? `, ${state}` : ''}, ${country}<br>
+                                       Coordinates: ${lat.toFixed(4)}°, ${lon.toFixed(4)}°<br>
+                                       Date: ${new Date(dateInput.value).toLocaleDateString('en-US', { 
+                                           weekday: 'long', 
+                                           year: 'numeric', 
+                                           month: 'long', 
+                                           day: 'numeric' 
+                                       })}`;
+                document.getElementById('locationDetails').innerHTML = locationDetails;
+
+                // Show results
+                loadingDiv.style.display = 'none';
+                resultsDiv.style.display = 'block';
+
+                showMessage('Golden hour times calculated successfully!', 'success');
+
+            } catch (error) {
+                console.error('Error calculating golden hour:', error);
+                loadingDiv.style.display = 'none';
+                errorDiv.textContent = `❌ ${error.message}. Please check your location and try again.`;
+                errorDiv.style.display = 'block';
+                showMessage('Failed to calculate golden hour times', 'error');
+            } finally {
+                calculateBtn.disabled = false;
+                calculateBtn.textContent = '✨ Calculate Golden Hour Times';
+            }
+        };
+
+        window.getCurrentLocation = function() {
+            const locationInput = document.getElementById('locationInput');
+            const getCurrentBtn = document.getElementById('getCurrentLocation');
+            
+            if (!navigator.geolocation) {
+                showMessage('Geolocation is not supported by this browser', 'error');
+                return;
+            }
+
+            getCurrentBtn.textContent = '📍 Getting location...';
+            getCurrentBtn.disabled = true;
+
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    try {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+
+                        // Reverse geocode to get location name
+                        const response = await fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=cf0cdc68b7adeb4f28a34c6bae6b1b8c`);
+                        const data = await response.json();
+
+                        if (data && data.length > 0) {
+                            const { name, state, country } = data[0];
+                            locationInput.value = `${name}${state ? `, ${state}` : ''}, ${country}`;
+                            showMessage('Location detected successfully!', 'success');
+                        } else {
+                            locationInput.value = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+                            showMessage('Location coordinates retrieved', 'success');
+                        }
+                    } catch (error) {
+                        console.error('Error reverse geocoding:', error);
+                        locationInput.value = `${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`;
+                        showMessage('Location coordinates retrieved', 'success');
+                    } finally {
+                        getCurrentBtn.textContent = '📍 Use My Location';
+                        getCurrentBtn.disabled = false;
+                    }
+                },
+                (error) => {
+                    console.error('Geolocation error:', error);
+                    let errorMessage = 'Failed to get location';
+                    
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMessage = 'Location access denied by user';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMessage = 'Location information unavailable';
+                            break;
+                        case error.TIMEOUT:
+                            errorMessage = 'Location request timed out';
+                            break;
+                    }
+                    
+                    showMessage(errorMessage, 'error');
+                    getCurrentBtn.textContent = '📍 Use My Location';
+                    getCurrentBtn.disabled = false;
+                }
+            );
+        };
+
+        // Initialize date input to today on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const dateInput = document.getElementById('dateInput');
+            if (dateInput) {
+                const today = new Date();
+                dateInput.value = today.toISOString().split('T')[0];
+            }
+        });
 
         // Enhanced page initialization is handled by the main DOMContentLoaded event above
 

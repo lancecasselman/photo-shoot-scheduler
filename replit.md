@@ -14,6 +14,7 @@ Preferred communication style: Simple, everyday language.
   - ✅ Developer mode disabled (authentication required)
   - ✅ Database connectivity restored and optimized
   - ✅ Platform verified production-ready
+  - ✅ Golden Hour Times tab added with sunrise/sunset calculations
   - 🔧 Git history cleanup ready (260MB TIFF file removal instructions provided)
   - 📊 Repository size target: <100MB (from 2.4GB)
 
@@ -45,6 +46,9 @@ Capacitor integration enables native mobile app capabilities for iOS deployment,
 
 ### Community Section
 An Instagram-style photo sharing section is available as a standalone page with modular architecture. It supports real-time interactions (likes, comments) using Firebase Firestore, features a responsive design (masonry grid on desktop, single-column on mobile), requires authenticated users, organizes posts by calendar month, and includes an image upload system (10MB limit) to Firebase Storage with progress tracking.
+
+### Golden Hour Times Calculator
+A professional photography planning tool that calculates optimal lighting times for any location and date. Features include location search with popular photography destinations, current location detection using browser geolocation, accurate sunrise/sunset calculations using astronomy APIs, golden hour period calculations (1 hour after sunrise, 1 hour before sunset), blue hour calculations (30 minutes before/after twilight), responsive design with beautiful time cards, photography tips for different lighting conditions, and location details with coordinates. The system integrates OpenWeatherMap geocoding API and Sunrise-Sunset API for accurate astronomical calculations.
 
 ### Feature Specifications
 The system supports chronological session sorting, prioritizing today's sessions, then future sessions by proximity, and past sessions by recency. A deposit system is fully integrated, tracking deposit amounts in the database, applying them to invoices, and displaying remaining balances on the frontend. A professional contract management system generates three contract types per session (Photo Print Release, Service Agreement, Model Release) with automatic date insertion and integrates a signature system for client signatures, providing a professional viewing modal, print functionality, and PDF download options.
