@@ -8846,16 +8846,16 @@ END:VCALENDAR`;
                 return;
             }
             
-            historyContainer.innerHTML = history.map(item => \`
+            historyContainer.innerHTML = history.map(item => `
                 <div class="history-item" style="padding: var(--spacing-md); border: 1px solid var(--accent-beige); border-radius: var(--border-radius); margin-bottom: var(--spacing-sm);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-xs);">
-                        <span style="font-weight: 600; color: var(--gold-muted);">\${item.type.toUpperCase()}</span>
-                        <span style="font-size: 0.85rem; color: var(--text-light);">\${new Date(item.timestamp).toLocaleDateString()}</span>
+                        <span style="font-weight: 600; color: var(--gold-muted);">${item.type.toUpperCase()}</span>
+                        <span style="font-size: 0.85rem; color: var(--text-light);">${new Date(item.timestamp).toLocaleDateString()}</span>
                     </div>
-                    <div style="margin-bottom: var(--spacing-xs); font-weight: 500;">Prompt: \${item.prompt}</div>
-                    <div style="color: var(--text-secondary); max-height: 100px; overflow-y: auto;">\${item.response.substring(0, 200)}\${item.response.length > 200 ? '...' : ''}</div>
+                    <div style="margin-bottom: var(--spacing-xs); font-weight: 500;">Prompt: ${item.prompt}</div>
+                    <div style="color: var(--text-secondary); max-height: 100px; overflow-y: auto;">${item.response.substring(0, 200)}${item.response.length > 200 ? '...' : ''}</div>
                 </div>
-            \`).join('');
+            `).join('');
         }
 
         // Utility Functions
@@ -8914,9 +8914,9 @@ END:VCALENDAR`;
                 const netProfit = earnings - totalExpenses;
                 
                 // Update dashboard cards
-                if (document.getElementById('totalEarnings')) document.getElementById('totalEarnings').textContent = \`$\${earnings.toFixed(2)}\`;
-                if (document.getElementById('totalExpenses')) document.getElementById('totalExpenses').textContent = \`$\${totalExpenses.toFixed(2)}\`;
-                if (document.getElementById('netProfit')) document.getElementById('netProfit').textContent = \`$\${netProfit.toFixed(2)}\`;
+                if (document.getElementById('totalEarnings')) document.getElementById('totalEarnings').textContent = `$${earnings.toFixed(2)}`;
+                if (document.getElementById('totalExpenses')) document.getElementById('totalExpenses').textContent = `$${totalExpenses.toFixed(2)}`;
+                if (document.getElementById('netProfit')) document.getElementById('netProfit').textContent = `$${netProfit.toFixed(2)}`;
                 
                 const periodText = getPeriodText(dateRange);
                 if (document.getElementById('earningsPeriod')) document.getElementById('earningsPeriod').textContent = periodText;
@@ -9054,18 +9054,18 @@ END:VCALENDAR`;
                 return;
             }
             
-            tbody.innerHTML = expenses.map(expense => \`
+            tbody.innerHTML = expenses.map(expense => `
                 <tr>
-                    <td>\${new Date(expense.date).toLocaleDateString()}</td>
-                    <td>\${expense.category.charAt(0).toUpperCase() + expense.category.slice(1)}</td>
-                    <td>\${expense.description}</td>
-                    <td>$\${expense.amount.toFixed(2)}</td>
-                    <td>\${expense.recurring ? 'Yes' : 'No'}</td>
+                    <td>${new Date(expense.date).toLocaleDateString()}</td>
+                    <td>${expense.category.charAt(0).toUpperCase() + expense.category.slice(1)}</td>
+                    <td>${expense.description}</td>
+                    <td>$${expense.amount.toFixed(2)}</td>
+                    <td>${expense.recurring ? 'Yes' : 'No'}</td>
                     <td>
-                        <button onclick="deleteExpense(\${expense.id})" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Delete</button>
+                        <button onclick="deleteExpense(${expense.id})" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Delete</button>
                     </td>
                 </tr>
-            \`).join('');
+            `).join('');
         }
 
         function deleteExpense(id) {
@@ -9096,13 +9096,13 @@ END:VCALENDAR`;
                     expense.amount,
                     expense.recurring ? 'Yes' : 'No'
                 ])
-            ].map(row => row.join(',')).join('\\n');
+            ].map(row => row.join(',')).join('\n');
 
             const blob = new Blob([csvContent], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = \`expenses_\${new Date().toISOString().split('T')[0]}.csv\`;
+            a.download = `expenses_${new Date().toISOString().split('T')[0]}.csv`;
             a.click();
             window.URL.revokeObjectURL(url);
             
@@ -9141,8 +9141,8 @@ END:VCALENDAR`;
 
             try {
                 // Use Nominatim geocoding API to get coordinates for both locations
-                const startResponse = await fetch(\`https://nominatim.openstreetmap.org/search?format=json&q=\${encodeURIComponent(startLocation)}\`);
-                const endResponse = await fetch(\`https://nominatim.openstreetmap.org/search?format=json&q=\${encodeURIComponent(endLocation)}\`);
+                const startResponse = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(startLocation)}`);
+                const endResponse = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(endLocation)}`);
 
                 const startData = await startResponse.json();
                 const endData = await endResponse.json();
@@ -9165,7 +9165,7 @@ END:VCALENDAR`;
                     milesInput.value = miles.toFixed(1);
                 }
                 
-                showMessage(\`Calculated distance: \${miles.toFixed(1)} miles\`, 'success');
+                showMessage(`Calculated distance: ${miles.toFixed(1)} miles`, 'success');
             } catch (error) {
                 console.error('Error calculating miles:', error);
                 showMessage('Failed to calculate miles. Please enter manually.', 'error');
@@ -9225,18 +9225,18 @@ END:VCALENDAR`;
                 return;
             }
             
-            tbody.innerHTML = trips.map(trip => \`
+            tbody.innerHTML = trips.map(trip => `
                 <tr>
-                    <td>\${new Date(trip.date).toLocaleDateString()}</td>
-                    <td>\${trip.startLocation}</td>
-                    <td>\${trip.endLocation}</td>
-                    <td>\${trip.miles.toFixed(1)}</td>
-                    <td>\${trip.purpose.replace('_', ' ').replace(/\\b\\w/g, l => l.toUpperCase())}</td>
+                    <td>${new Date(trip.date).toLocaleDateString()}</td>
+                    <td>${trip.startLocation}</td>
+                    <td>${trip.endLocation}</td>
+                    <td>${trip.miles.toFixed(1)}</td>
+                    <td>${trip.purpose.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</td>
                     <td>
-                        <button onclick="deleteTrip(\${trip.id})" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Delete</button>
+                        <button onclick="deleteTrip(${trip.id})" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Delete</button>
                     </td>
                 </tr>
-            \`).join('');
+            `).join('');
         }
 
         function deleteTrip(id) {
@@ -9284,10 +9284,10 @@ END:VCALENDAR`;
             const netProfit = totalEarnings - totalExpenses;
 
             // Update report display
-            if (document.getElementById('reportEarnings')) document.getElementById('reportEarnings').textContent = \`$\${totalEarnings.toFixed(2)}\`;
-            if (document.getElementById('reportExpenses')) document.getElementById('reportExpenses').textContent = \`$\${totalExpenses.toFixed(2)}\`;
+            if (document.getElementById('reportEarnings')) document.getElementById('reportEarnings').textContent = `$${totalEarnings.toFixed(2)}`;
+            if (document.getElementById('reportExpenses')) document.getElementById('reportExpenses').textContent = `$${totalExpenses.toFixed(2)}`;
             if (document.getElementById('reportMiles')) document.getElementById('reportMiles').textContent = totalMiles.toFixed(1);
-            if (document.getElementById('reportNetProfit')) document.getElementById('reportNetProfit').textContent = \`$\${netProfit.toFixed(2)}\`;
+            if (document.getElementById('reportNetProfit')) document.getElementById('reportNetProfit').textContent = `$${netProfit.toFixed(2)}`;
 
             showMessage('Report generated successfully!', 'success');
         }
@@ -9319,7 +9319,7 @@ END:VCALENDAR`;
 
             const csvContent = [
                 ['BUSINESS REPORT'],
-                [\`Period: \${startDate} to \${endDate}\`],
+                [`Period: ${startDate} to ${endDate}`],
                 [''],
                 ['EXPENSES'],
                 ['Date', 'Category', 'Description', 'Amount'],
@@ -9339,13 +9339,13 @@ END:VCALENDAR`;
                     trip.miles,
                     trip.purpose
                 ])
-            ].map(row => row.join(',')).join('\\n');
+            ].map(row => row.join(',')).join('\n');
 
             const blob = new Blob([csvContent], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = \`business_report_\${startDate}_to_\${endDate}.csv\`;
+            a.download = `business_report_${startDate}_to_${endDate}.csv`;
             a.click();
             window.URL.revokeObjectURL(url);
             
