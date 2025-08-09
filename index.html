@@ -279,7 +279,7 @@
 
         /* Mobile Menu Dropdown - positioned relative to header */
         .mobile-menu {
-            display: none;
+            display: none !important;
             position: absolute;
             top: calc(100% + 5px);
             left: 0;
@@ -290,10 +290,11 @@
             z-index: 1003;
             animation: slideDown 0.3s ease;
             margin: 0;
+            transition: all 0.3s ease;
         }
 
         .mobile-menu.show {
-            display: block;
+            display: block !important;
         }
 
         /* Ensure container has relative positioning for dropdown */
@@ -3937,12 +3938,12 @@
             <nav class="nav-menu">
                 <ul>
                     <li class="nav-item">
-                        <a href="#" class="nav-link active" onclick="event.preventDefault(); switchTab('clients'); document.getElementById('mobileMenu').classList.remove('show'); document.querySelector('.hamburger-menu').classList.remove('active');">
+                        <a href="#" class="nav-link active" onclick="event.preventDefault(); var menu = document.getElementById('mobileMenu'); var burger = document.querySelector('.hamburger-menu'); menu.classList.remove('show'); burger.classList.remove('active'); setTimeout(() => switchTab('clients'), 100);">
                             Sessions
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="#" class="nav-link" onclick="event.preventDefault(); switchTab('goldenHour'); document.getElementById('mobileMenu').classList.remove('show'); document.querySelector('.hamburger-menu').classList.remove('active');">
+                        <a href="#" class="nav-link" onclick="event.preventDefault(); var menu = document.getElementById('mobileMenu'); var burger = document.querySelector('.hamburger-menu'); menu.classList.remove('show'); burger.classList.remove('active'); setTimeout(() => switchTab('goldenHour'), 100);">
                             🌅 Golden Hour Times
                         </a>
                     </li>
