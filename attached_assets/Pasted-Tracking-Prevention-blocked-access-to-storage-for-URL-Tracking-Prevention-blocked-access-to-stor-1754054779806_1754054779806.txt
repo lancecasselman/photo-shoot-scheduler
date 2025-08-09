@@ -1,0 +1,47 @@
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+website-builder.html:3442  Uncaught SyntaxError: Identifier 'userAiCredits' has already been declared
+[NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
+        Don't show again
+website-builder.html:947  Uncaught ReferenceError: switchToPage is not defined
+    at HTMLDivElement.onclick (website-builder.html:947:94)
+onclick @ website-builder.html:947
+website-builder.html:951  Uncaught ReferenceError: switchToPage is not defined
+    at HTMLDivElement.onclick (website-builder.html:951:102)
+onclick @ website-builder.html:951
+website-builder.html:955  Uncaught ReferenceError: switchToPage is not defined
+    at HTMLDivElement.onclick (website-builder.html:955:98)
+onclick @ website-builder.html:955
+website-builder.html:935  Uncaught ReferenceError: applyTemplate is not defined
+    at HTMLButtonElement.onclick (website-builder.html:935:98)
+onclick @ website-builder.html:935
+website-builder.html:909  Uncaught ReferenceError: generateWebsite is not defined
+    at HTMLButtonElement.onclick (website-builder.html:909:98)
+onclick @ website-builder.html:909
+website-builder.html:873  Uncaught ReferenceError: addTextElement is not defined
+    at HTMLButtonElement.onclick (website-builder.html:873:78)
+onclick @ website-builder.html:873
+website-builder.html:876  Uncaught ReferenceError: triggerPhotoUpload is not defined
+    at HTMLButtonElement.onclick (website-builder.html:876:82)
+onclick @ website-builder.html:876
+website-builder.html:879  Uncaught ReferenceError: addLogoElement is not defined
+    at HTMLButtonElement.onclick (website-builder.html:879:78)
+onclick @ website-builder.html:879
+website-builder.html:885  Uncaught ReferenceError: saveDraft is not defined
+    at HTMLButtonElement.onclick (website-builder.html:885:73)
+onclick @ website-builder.html:885
+website-builder.html:888  Uncaught ReferenceError: previewSite is not defined
+    at HTMLButtonElement.onclick (website-builder.html:888:75)
+onclick @ website-builder.html:888
+website-builder.html:891  Uncaught ReferenceError: publishSite is not defined
+    at HTMLButtonElement.onclick (website-builder.html:891:73)
+onclick @ website-builder.html:891

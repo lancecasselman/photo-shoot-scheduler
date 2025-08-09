@@ -1,0 +1,127 @@
+{
+  "name": "Product Catalogue",
+  "slug": "product-catalogue",
+  "preview": "/previews/product-catalogue.jpg",
+  "description": "E-commerce focused design for product photographers",
+  "tags": ["Product", "E-commerce", "Catalog", "Commercial"],
+  "globalStyles": {
+    "colors": {
+      "primary": "#2563eb",
+      "secondary": "#10b981",
+      "text": "#111827",
+      "background": "#f9fafb"
+    },
+    "fonts": {
+      "heading": "Inter",
+      "body": "Inter"
+    },
+    "spacing": "tight",
+    "borderRadius": "small"
+  },
+  "pages": [
+    {
+      "title": "Home",
+      "slug": "home",
+      "blocks": [
+        {
+          "type": "Hero",
+          "props": {
+            "style": "product-showcase",
+            "headline": "Product Photography That Sells",
+            "subtext": "Professional imagery for e-commerce success",
+            "ctaText": "View Portfolio",
+            "ctaLink": "#portfolio",
+            "backgroundStyle": "gradient"
+          }
+        },
+        {
+          "type": "Features",
+          "props": {
+            "title": "Our Services",
+            "style": "product-cards",
+            "features": [
+              {
+                "icon": "camera",
+                "title": "White Background",
+                "description": "Clean, professional product shots"
+              },
+              {
+                "icon": "palette",
+                "title": "Lifestyle",
+                "description": "Products in real-world settings"
+              },
+              {
+                "icon": "360",
+                "title": "360° Spins",
+                "description": "Interactive product views"
+              }
+            ]
+          }
+        },
+        {
+          "type": "Gallery",
+          "props": {
+            "layout": "product-grid",
+            "columns": 4,
+            "hoverEffect": "zoom",
+            "showQuickView": true,
+            "images": []
+          }
+        },
+        {
+          "type": "ClientLogos",
+          "props": {
+            "title": "Trusted By",
+            "style": "grayscale",
+            "logos": ["Amazon", "Shopify", "Target", "Walmart"]
+          }
+        }
+      ]
+    },
+    {
+      "title": "Portfolio",
+      "slug": "portfolio",
+      "blocks": [
+        {
+          "type": "ProductGallery",
+          "props": {
+            "categories": ["Fashion", "Electronics", "Jewelry", "Home Goods"],
+            "layout": "catalog",
+            "showFilters": true,
+            "viewOptions": ["grid", "list"]
+          }
+        }
+      ]
+    },
+    {
+      "title": "Pricing",
+      "slug": "pricing",
+      "blocks": [
+        {
+          "type": "PricingTable",
+          "props": {
+            "title": "Simple, Transparent Pricing",
+            "style": "product-pricing",
+            "options": [
+              {
+                "name": "Basic",
+                "price": "$50/product",
+                "includes": ["White background", "3 angles", "Basic retouching"]
+              },
+              {
+                "name": "Standard",
+                "price": "$100/product",
+                "includes": ["White + lifestyle", "5 angles", "Advanced retouching", "Clipping paths"]
+              },
+              {
+                "name": "Premium",
+                "price": "$200/product",
+                "includes": ["All backgrounds", "360° spin", "Video", "Rush delivery"]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

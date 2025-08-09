@@ -1,0 +1,90 @@
+Task: Build a fully customizable, modern storefront builder for each user of the photography platform. Every user should be able to create a beautiful, multi-page public website with a print store, gallery, blog, and about page. All functionality must be fully mobile responsive and visually polished, significantly exceeding the quality of prior versions and competing builders like Pixieset.
+
+PHASE 1: INITIAL STRUCTURE
+
+1. Create a new top-level section in the user dashboard called “Storefront”
+2. Add routing to a builder interface with:
+   - Sidebar for navigation between pages (Home, About, Gallery, Print Store, Contact)
+   - Live preview canvas
+   - Editor sidebar for adjusting layout, text, images, and theme settings
+
+PHASE 2: TEMPLATE ENGINE
+
+1. Build 4-6 professionally styled, mobile-optimized templates to choose from
+   - Themes include: Light & Airy, Bold & Modern, Earthy Neutral, Minimal Serif
+   - Each theme includes:
+     - Page layouts for: Home, About, Gallery, Store, Contact
+     - Default colors, fonts, and structure
+     - Responsive layouts with header, hero, section blocks, footer
+   - All templates live under `/storefront-templates/{template-name}/`
+
+2. Allow user to preview templates and select one to activate
+   - Save selection to Firebase: `/users/{userId}/storefront/config/theme`
+
+PHASE 3: PAGE CONTENT + EDITOR
+
+1. Each page is editable:
+   - Home: Hero image, intro text, call-to-action
+   - About: Bio text, profile image, social links
+   - Gallery: Choose photos from uploaded sessions or mark favorites
+   - Store: Upload images for sale, choose print products via WHCC
+   - Contact: Editable form, email destination set by user
+
+2. Enable drag-and-drop block ordering per page
+   - Block types: text, photo grid, CTA, testimonial, embedded video, pricing table
+   - Each block has prebuilt layouts
+
+3. All content saved to Firebase under: `/users/{userId}/storefront/content/{page}`
+
+PHASE 4: PRINT STORE INTEGRATION
+
+1. Integrate WHCC API:
+   - Allow users to select products to offer
+   - Upload print-resolution images per product
+   - Set price markup per product (or use default pricing)
+   - Store orders and forward fulfillment to WHCC
+
+2. Orders saved to `/users/{userId}/storefront/orders/`
+
+3. Optional Stripe Connect setup for direct payouts, or route payments through platform
+
+PHASE 5: ADVANCED FEATURES
+
+1. Blog System
+   - Add blog page with title, cover image, rich-text body
+   - Simple WYSIWYG editor
+   - Save posts to `/users/{userId}/storefront/blog/`
+
+2. Moodboard Integration
+   - Let user feature favorite pose inspiration from shared pose gallery
+   - Add a "Moodboard" block to homepage or gallery
+
+3. Custom Domain Support
+   - Add domain field in settings (e.g., `johnsmithphoto.com`)
+   - Use Firebase Hosting or Vercel for publishing
+
+4. Mobile Optimization
+   - All views must fully support mobile layouts
+   - Hamburger menu on mobile
+   - Touch-friendly buttons, block spacing, and content
+
+PHASE 6: DEPLOY + PUBLISH
+
+1. Add “Preview Site” and “Publish” buttons
+2. Generate public site at:
+   - `yourplatform.com/{username}`
+   - Optional custom domain if set
+3. Publishing uses Firebase Hosting or static site generation as backend
+
+PHASE 7: SETTINGS PANEL
+
+1. Theme toggles:
+   - Fonts, color palette, spacing presets
+   - Global layout options (boxed vs full width, padding toggles)
+
+2. Site visibility:
+   - Public, password-protected, or hidden
+   - Page-level visibility toggles (e.g., hide blog or gallery)
+
+FINAL GOAL:
+Each user has a stunning, multi-page, professionally designed storefront site that includes a home page, about page, contact page, public gallery, blog, and WHCC-integrated print store. It is fully customizable with drag-and-drop content blocks, layout selection, and personal branding options. This builder must exceed the visual and usability standard set by Pixieset and Format.

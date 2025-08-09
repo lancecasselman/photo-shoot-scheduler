@@ -1,0 +1,57 @@
+Task
+
+Integrate a RAW file storage and backup feature for each client session, using Cloudflare R2 as the backend. Charge subscribers $20/month per TB of storage used. Track storage per photographer, and make all controls simple and safe.
+
+⸻
+
+Features to Add
+	1.	RAW File Upload Button
+	•	Add a “RAW File Upload” button to each client session in the builder.
+	•	Allow photographers to select and upload multiple RAW files (.NEF, .CR2, .ARW, .DNG, .RAF, etc.).
+	•	Upload directly to a Cloudflare R2 bucket assigned to the user/session.
+	•	Show upload progress, supported file types, and size limits if any.
+	2.	RAW Photo Access Button
+	•	Add a “View RAW Files” or “Download RAWs” button to each client session.
+	•	Lists all RAW files for that session (filename, upload date, size).
+	•	Allow users to download any or all files, or delete them (with confirmation).
+	3.	Storage Usage Tracking
+	•	Track total storage used per photographer (across all sessions).
+	•	Display current usage and available storage (e.g., “You are using 480 GB of your 1 TB RAW storage”).
+	•	Alert/lockout when user exceeds purchased capacity, with “Upgrade Storage” prompt.
+	4.	Purchasing More Storage
+	•	When RAW photo storage is enabled, prompt user to select storage tier (1 TB, 2 TB, 3 TB, etc.), $20 per TB/month via Stripe.
+	•	Allow upgrading storage at any time; charge a prorated or new monthly rate as needed.
+	•	Automatically update allowed storage and usage tracking after purchase.
+	5.	Admin/Support
+	•	Log all uploads, downloads, and deletions for support/audit.
+	•	Allow admins to manually adjust user storage if needed.
+
+⸻
+
+Backend Details
+	•	Use Cloudflare R2 for file storage (buckets by user or session).
+	•	Enforce file type and size validation before upload.
+	•	Update storage usage immediately after each upload/delete.
+	•	Store file metadata (filename, size, session ID, upload date, owner) in your app’s database for fast listing/search.
+	•	Handle errors gracefully and alert the user if an upload fails.
+
+⸻
+
+Pricing/Logic
+	•	$20 per TB per month (rounded up—e.g., 1.1 TB = $40/month).
+	•	Tie Stripe subscription/payment to storage tier.
+	•	If user stops paying, lock access to upload/download until payment resumes.
+
+⸻
+
+UI/UX
+	•	Clearly show storage status bar (“X GB of Y TB used”).
+	•	Simple “Upgrade Storage” button in the storage panel.
+	•	“RAW File Upload” and “Access RAW Files” buttons prominent in each session’s dashboard.
+
+⸻
+
+Safety & Documentation
+	•	No emojis in UI or code.
+	•	Comment every major function, especially where file operations and billing logic meet.
+	•	Test upload, download, storage limits, upgrades, and downgrade paths.

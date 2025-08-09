@@ -1,0 +1,27 @@
+steps:
+# Build the container image
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/photo-management-system/photo-management-system:$COMMIT_SHA', '.']
+
+# Push the container image to Container Registry
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/photo-management-system/photo-management-system:$COMMIT_SHA']
+
+# Deploy container image to Cloud Run
+- name: 'gcr.io/cloud-builders/gcloud'
+  args:
+  - 'run'
+  - 'deploy'
+  - 'photo-management-system'
+  - '--image'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/photo-management-system/photo-management-system:$COMMIT_SHA'
+  - '--region'
+  - 'us-central1'
+  - '--platform'
+  - 'managed'
+  - '--allow-unauthenticated'
+  - '--port'
+  - '3000'
+
+images:
+- 'us-central1-docker.pkg.dev/$PROJECT_ID/photo-management-system/photo-management-system:$COMMIT_SHA'

@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Storage Management - Photography Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Quicksand:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --warm-white: #FEFDFB;
+            --beige: #F5F1EB;
+            --sage: #9CAF88;
+            --muted-gold: #C4962D;
+            --soft-brown: #8B7355;
+            --deep-charcoal: #2C2C2C;
+            --font-serif: 'Cormorant Garamond', serif;
+            --font-sans: 'Quicksand', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: linear-gradient(135deg, var(--warm-white) 0%, var(--beige) 100%);
+            color: var(--deep-charcoal);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(44, 44, 44, 0.1);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-family: var(--font-serif);
+            font-size: 2.5em;
+            font-weight: 600;
+            color: var(--deep-charcoal);
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: var(--soft-brown);
+            font-size: 1.1em;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(44, 44, 44, 0.1);
+        }
+
+        .card h2 {
+            font-family: var(--font-serif);
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            color: var(--deep-charcoal);
+        }
+
+        .usage-overview {
+            grid-column: 1 / -1;
+        }
+
+        .progress-container {
+            margin: 20px 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: var(--beige);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--sage), var(--muted-gold));
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-fill.warning {
+            background: linear-gradient(90deg, #f39c12, #e74c3c);
+        }
+
+        .usage-text {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 500;
+            color: var(--soft-brown);
+        }
+
+        .breakdown {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .breakdown-item {
+            text-align: center;
+            padding: 15px;
+            background: var(--beige);
+            border-radius: 10px;
+        }
+
+        .breakdown-number {
+            font-family: var(--font-serif);
+            font-size: 1.5em;
+            font-weight: 600;
+            color: var(--muted-gold);
+        }
+
+        .breakdown-label {
+            color: var(--soft-brown);
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--muted-gold), #f4e4bc);
+            color: var(--deep-charcoal);
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: var(--font-sans);
+            font-size: 1em;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(196, 150, 45, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--sage), #b8d4a3);
+        }
+
+        .package-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .package-card {
+            background: var(--beige);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .package-card:hover {
+            border-color: var(--muted-gold);
+            transform: translateY(-2px);
+        }
+
+        .package-size {
+            font-family: var(--font-serif);
+            font-size: 2em;
+            font-weight: 600;
+            color: var(--muted-gold);
+        }
+
+        .package-price {
+            color: var(--soft-brown);
+            margin: 10px 0;
+        }
+
+        .subscription-item {
+            background: var(--beige);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .subscription-info {
+            flex: 1;
+        }
+
+        .subscription-status {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .subscription-status.active {
+            background: var(--sage);
+            color: white;
+        }
+
+        .warning-card {
+            background: linear-gradient(135deg, #f39c12, #e74c3c);
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .warning-card h2 {
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .breakdown {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--soft-brown);
+        }
+
+        .error {
+            background: #e74c3c;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+    </style>
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+    <div class="header">
+        <h1>Storage Management</h1>
+        <p>Monitor your storage usage and manage your subscription packages</p>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading" class="loading">
+        <p>Loading your storage information...</p>
+    </div>
+
+    <!-- Error State -->
+    <div id="error" class="error" style="display: none;">
+        <p id="error-message"></p>
+    </div>
+
+    <!-- Warning Card -->
+    <div id="warning-card" class="card warning-card" style="display: none;">
+        <h2>⚠️ Storage Limit Reached</h2>
+        <p>You've reached your storage limit. Please upgrade your storage package to continue uploading photos.</p>
+        <button class="btn" onclick="showUpgradeOptions()">Upgrade Now</button>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="dashboard" style="display: none;">
+        <div class="dashboard-grid">
+            <!-- Usage Overview -->
+            <div class="card usage-overview">
+                <h2>Storage Usage</h2>
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div id="progress-fill" class="progress-fill"></div>
+                    </div>
+                    <div class="usage-text">
+                        <span id="usage-text">0 GB / 5 GB used</span>
+                        <span id="usage-percentage">0%</span>
+                    </div>
+                </div>
+                
+                <div class="breakdown">
+                    <div class="breakdown-item">
+                        <div id="gallery-size" class="breakdown-number">0 GB</div>
+                        <div class="breakdown-label">Gallery Photos</div>
+                    </div>
+                    <div class="breakdown-item">
+                        <div id="raw-size" class="breakdown-number">0 GB</div>
+                        <div class="breakdown-label">RAW Files</div>
+                    </div>
+                    <div class="breakdown-item">
+                        <div id="total-files" class="breakdown-number">0</div>
+                        <div class="breakdown-label">Total Files</div>
+                    </div>
+                    <div class="breakdown-item">
+                        <div id="remaining-storage" class="breakdown-number">5 GB</div>
+                        <div class="breakdown-label">Remaining</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current Plan -->
+            <div class="card">
+                <h2>Current Plan</h2>
+                <div id="current-plan">
+                    <p><strong>Free Plan:</strong> 5 GB included</p>
+                    <p id="purchased-storage">Additional Storage: 0 TB</p>
+                    <p id="monthly-cost">Monthly Cost: $0</p>
+                </div>
+                <button class="btn btn-secondary" onclick="refreshUsage()">Refresh Usage</button>
+            </div>
+
+            <!-- Active Subscriptions -->
+            <div class="card">
+                <h2>Active Subscriptions</h2>
+                <div id="subscriptions-list">
+                    <p style="color: var(--soft-brown);">No active storage subscriptions</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upgrade Options -->
+        <div class="card">
+            <h2>Upgrade Storage</h2>
+            <p style="margin-bottom: 20px; color: var(--soft-brown);">Purchase additional storage in 1TB increments at $25/month each.</p>
+            
+            <div class="package-grid">
+                <div class="package-card" onclick="purchaseStorage(1)">
+                    <div class="package-size">1 TB</div>
+                    <div class="package-price">$25/month</div>
+                    <button class="btn">Purchase</button>
+                </div>
+                <div class="package-card" onclick="purchaseStorage(2)">
+                    <div class="package-size">2 TB</div>
+                    <div class="package-price">$50/month</div>
+                    <button class="btn">Purchase</button>
+                </div>
+                <div class="package-card" onclick="purchaseStorage(5)">
+                    <div class="package-size">5 TB</div>
+                    <div class="package-price">$125/month</div>
+                    <button class="btn">Purchase</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let stripe;
+        let storageData = null;
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                // Initialize Stripe
+                const response = await fetch('/api/stripe-public-key');
+                const { publicKey } = await response.json();
+                stripe = Stripe(publicKey);
+
+                // Load storage data
+                await loadStorageData();
+            } catch (error) {
+                console.error('Initialization error:', error);
+                showError('Failed to initialize storage dashboard');
+            }
+        });
+
+        // Load user's storage data
+        async function loadStorageData() {
+            try {
+                // Get both individual storage summary and global overview
+                const [summaryResponse, globalResponse] = await Promise.all([
+                    fetch('/api/storage/summary', { credentials: 'include' }),
+                    fetch('/api/global-storage-stats', { credentials: 'include' })
+                ]);
+
+                if (!summaryResponse.ok) {
+                    throw new Error('Failed to load storage data');
+                }
+
+                storageData = await summaryResponse.json();
+                
+                // Add global stats to storage data for unified display
+                if (globalResponse.ok) {
+                    const globalStats = await globalResponse.json();
+                    storageData.globalStats = globalStats;
+                    console.log('Global storage stats loaded into storage manager:', globalStats);
+                }
+                
+                updateUI();
+                
+                // Hide loading, show dashboard
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+
+            } catch (error) {
+                console.error('Error loading storage data:', error);
+                showError('Failed to load storage information');
+            }
+        }
+
+        // Update UI with storage data
+        function updateUI() {
+            if (!storageData) return;
+
+            // Usage overview
+            const usagePercentage = storageData.usagePercentage;
+            const progressFill = document.getElementById('progress-fill');
+            progressFill.style.width = usagePercentage + '%';
+            
+            if (usagePercentage >= 90) {
+                progressFill.classList.add('warning');
+            }
+
+            document.getElementById('usage-text').textContent = 
+                `${storageData.usedStorageGB} GB / ${storageData.totalQuotaGB} GB used`;
+            document.getElementById('usage-percentage').textContent = usagePercentage + '%';
+
+            // Breakdown - use global stats if available for consistency with Platform Storage Overview
+            if (storageData.globalStats) {
+                document.getElementById('gallery-size').textContent = storageData.globalStats.gallery.totalSizeFormatted;
+                document.getElementById('raw-size').textContent = storageData.globalStats.raw.totalSizeFormatted;
+                document.getElementById('total-files').textContent = storageData.globalStats.combined.fileCount.toString();
+                console.log('Storage manager updated with Platform Storage Overview data:', storageData.globalStats);
+            } else {
+                document.getElementById('gallery-size').textContent = storageData.breakdown.galleryGB + ' GB';
+                document.getElementById('raw-size').textContent = storageData.breakdown.rawStorageGB + ' GB';
+                document.getElementById('total-files').textContent = '0';
+            }
+            document.getElementById('remaining-storage').textContent = storageData.remainingGB + ' GB';
+
+            // Current plan
+            document.getElementById('purchased-storage').textContent = 
+                `Additional Storage: ${storageData.purchasedTB} TB`;
+            document.getElementById('monthly-cost').textContent = 
+                `Monthly Cost: $${storageData.monthlyCost}`;
+
+            // Subscriptions
+            updateSubscriptionsList();
+
+            // Show warning if near/over limit
+            if (storageData.usagePercentage >= 95) {
+                document.getElementById('warning-card').style.display = 'block';
+            }
+        }
+
+        // Update subscriptions list
+        function updateSubscriptionsList() {
+            const container = document.getElementById('subscriptions-list');
+            
+            if (!storageData.activeSubscriptions || storageData.activeSubscriptions.length === 0) {
+                container.innerHTML = '<p style="color: var(--soft-brown);">No active storage subscriptions</p>';
+                return;
+            }
+
+            container.innerHTML = '';
+            storageData.activeSubscriptions.forEach(sub => {
+                const div = document.createElement('div');
+                div.className = 'subscription-item';
+                div.innerHTML = `
+                    <div class="subscription-info">
+                        <strong>${sub.tb_count} TB Package</strong>
+                        <div>$${sub.monthly_price_usd}/month</div>
+                    </div>
+                    <div class="subscription-status active">Active</div>
+                    <button class="btn btn-secondary" onclick="cancelSubscription('${sub.stripe_subscription_id}')">Cancel</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // Purchase storage package
+        async function purchaseStorage(tbCount) {
+            try {
+                const confirmed = confirm(`Purchase ${tbCount}TB of additional storage for $${tbCount * 25}/month?`);
+                if (!confirmed) return;
+
+                const response = await fetch('/api/storage/purchase', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ tbCount })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.error);
+                }
+
+                // Redirect to Stripe checkout
+                const { error } = await stripe.confirmCardPayment(result.clientSecret);
+
+                if (error) {
+                    throw new Error(error.message);
+                }
+
+                alert(`Successfully purchased ${tbCount}TB storage package!`);
+                await loadStorageData(); // Refresh data
+
+            } catch (error) {
+                console.error('Purchase error:', error);
+                alert('Failed to purchase storage: ' + error.message);
+            }
+        }
+
+        // Cancel subscription
+        async function cancelSubscription(subscriptionId) {
+            try {
+                const confirmed = confirm('Are you sure you want to cancel this storage subscription?');
+                if (!confirmed) return;
+
+                const response = await fetch(`/api/storage/subscription/${subscriptionId}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    const result = await response.json();
+                    throw new Error(result.error);
+                }
+
+                alert('Subscription cancelled successfully');
+                await loadStorageData(); // Refresh data
+
+            } catch (error) {
+                console.error('Cancellation error:', error);
+                alert('Failed to cancel subscription: ' + error.message);
+            }
+        }
+
+        // Refresh usage data
+        async function refreshUsage() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('dashboard').style.display = 'none';
+            await loadStorageData();
+            console.log('Storage manager refreshed with latest Platform Storage Overview data');
+        }
+        
+        // Add global function to sync with Platform Storage Overview
+        window.syncWithPlatformOverview = async function() {
+            await loadStorageData();
+            console.log('Storage manager synced with Platform Storage Overview');
+        }
+
+        // Show upgrade options
+        function showUpgradeOptions() {
+            document.querySelector('.card:last-child').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Show error message
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error-message').textContent = message;
+            document.getElementById('error').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

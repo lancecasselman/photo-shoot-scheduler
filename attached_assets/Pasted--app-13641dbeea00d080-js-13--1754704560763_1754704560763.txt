@@ -1,0 +1,204 @@
+_app-13641dbeea00d080.js:13 
+      /////////////////////
+   ///////////////////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////        Curious and driven?
+  ///////////////@@@@@@@///////        Work with us!
+  ///////////////@@@@@@@///////
+  ///////////////@@@@@@@///////        https://join.replit.com/hack.with.us
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@#//////////////
+   ///////////////////////////
+      /////////////////////
+      
+_app-13641dbeea00d080.js:13 [LaunchDarkly] LaunchDarkly client initialized
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+[NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
+        Don't show again
+PhotoShootScheduler:1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
+framework-aeb459c58bdfae80.js:1  Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+_ @ framework-aeb459c58bdfae80.js:1
+(anonymous) @ framework-aeb459c58bdfae80.js:1
+uD @ framework-aeb459c58bdfae80.js:1
+uI @ framework-aeb459c58bdfae80.js:1
+uM @ framework-aeb459c58bdfae80.js:1
+uS @ framework-aeb459c58bdfae80.js:1
+C @ framework-aeb459c58bdfae80.js:1
+z @ framework-aeb459c58bdfae80.js:1
+framework-aeb459c58bdfae80.js:1  Unrecognized feature: 'ambient-light-sensor'.
+_ @ framework-aeb459c58bdfae80.js:1
+(anonymous) @ framework-aeb459c58bdfae80.js:1
+uD @ framework-aeb459c58bdfae80.js:1
+uI @ framework-aeb459c58bdfae80.js:1
+uM @ framework-aeb459c58bdfae80.js:1
+uS @ framework-aeb459c58bdfae80.js:1
+C @ framework-aeb459c58bdfae80.js:1
+z @ framework-aeb459c58bdfae80.js:1
+framework-aeb459c58bdfae80.js:1  Unrecognized feature: 'battery'.
+_ @ framework-aeb459c58bdfae80.js:1
+(anonymous) @ framework-aeb459c58bdfae80.js:1
+uD @ framework-aeb459c58bdfae80.js:1
+uI @ framework-aeb459c58bdfae80.js:1
+uM @ framework-aeb459c58bdfae80.js:1
+uS @ framework-aeb459c58bdfae80.js:1
+C @ framework-aeb459c58bdfae80.js:1
+z @ framework-aeb459c58bdfae80.js:1
+framework-aeb459c58bdfae80.js:1  Unrecognized feature: 'execution-while-not-rendered'.
+_ @ framework-aeb459c58bdfae80.js:1
+(anonymous) @ framework-aeb459c58bdfae80.js:1
+uD @ framework-aeb459c58bdfae80.js:1
+uI @ framework-aeb459c58bdfae80.js:1
+uM @ framework-aeb459c58bdfae80.js:1
+uS @ framework-aeb459c58bdfae80.js:1
+C @ framework-aeb459c58bdfae80.js:1
+z @ framework-aeb459c58bdfae80.js:1
+framework-aeb459c58bdfae80.js:1  Unrecognized feature: 'execution-while-out-of-viewport'.
+_ @ framework-aeb459c58bdfae80.js:1
+(anonymous) @ framework-aeb459c58bdfae80.js:1
+uD @ framework-aeb459c58bdfae80.js:1
+uI @ framework-aeb459c58bdfae80.js:1
+uM @ framework-aeb459c58bdfae80.js:1
+uS @ framework-aeb459c58bdfae80.js:1
+C @ framework-aeb459c58bdfae80.js:1
+z @ framework-aeb459c58bdfae80.js:1
+framework-aeb459c58bdfae80.js:1  Unrecognized feature: 'layout-animations'.
+_ @ framework-aeb459c58bdfae80.js:1
+(anonymous) @ framework-aeb459c58bdfae80.js:1
+uD @ framework-aeb459c58bdfae80.js:1
+uI @ framework-aeb459c58bdfae80.js:1
+uM @ framework-aeb459c58bdfae80.js:1
+uS @ framework-aeb459c58bdfae80.js:1
+C @ framework-aeb459c58bdfae80.js:1
+z @ framework-aeb459c58bdfae80.js:1
+framework-aeb459c58bdfae80.js:1  Unrecognized feature: 'legacy-image-formats'.
+_ @ framework-aeb459c58bdfae80.js:1
+(anonymous) @ framework-aeb459c58bdfae80.js:1
+uD @ framework-aeb459c58bdfae80.js:1
+uI @ framework-aeb459c58bdfae80.js:1
+uM @ framework-aeb459c58bdfae80.js:1
+uS @ framework-aeb459c58bdfae80.js:1
+C @ framework-aeb459c58bdfae80.js:1
+z @ framework-aeb459c58bdfae80.js:1
+framework-aeb459c58bdfae80.js:1  Unrecognized feature: 'navigation-override'.
+_ @ framework-aeb459c58bdfae80.js:1
+(anonymous) @ framework-aeb459c58bdfae80.js:1
+uD @ framework-aeb459c58bdfae80.js:1
+uI @ framework-aeb459c58bdfae80.js:1
+uM @ framework-aeb459c58bdfae80.js:1
+uS @ framework-aeb459c58bdfae80.js:1
+C @ framework-aeb459c58bdfae80.js:1
+z @ framework-aeb459c58bdfae80.js:1
+framework-aeb459c58bdfae80.js:1  Unrecognized feature: 'oversized-images'.
+_ @ framework-aeb459c58bdfae80.js:1
+(anonymous) @ framework-aeb459c58bdfae80.js:1
+uD @ framework-aeb459c58bdfae80.js:1
+uI @ framework-aeb459c58bdfae80.js:1
+uM @ framework-aeb459c58bdfae80.js:1
+uS @ framework-aeb459c58bdfae80.js:1
+C @ framework-aeb459c58bdfae80.js:1
+z @ framework-aeb459c58bdfae80.js:1
+framework-aeb459c58bdfae80.js:1  Unrecognized feature: 'publickey-credentials'.
+_ @ framework-aeb459c58bdfae80.js:1
+(anonymous) @ framework-aeb459c58bdfae80.js:1
+uD @ framework-aeb459c58bdfae80.js:1
+uI @ framework-aeb459c58bdfae80.js:1
+uM @ framework-aeb459c58bdfae80.js:1
+uS @ framework-aeb459c58bdfae80.js:1
+C @ framework-aeb459c58bdfae80.js:1
+z @ framework-aeb459c58bdfae80.js:1
+framework-aeb459c58bdfae80.js:1  Unrecognized feature: 'speaker-selection'.
+_ @ framework-aeb459c58bdfae80.js:1
+(anonymous) @ framework-aeb459c58bdfae80.js:1
+uD @ framework-aeb459c58bdfae80.js:1
+uI @ framework-aeb459c58bdfae80.js:1
+uM @ framework-aeb459c58bdfae80.js:1
+uS @ framework-aeb459c58bdfae80.js:1
+C @ framework-aeb459c58bdfae80.js:1
+z @ framework-aeb459c58bdfae80.js:1
+framework-aeb459c58bdfae80.js:1  Unrecognized feature: 'unoptimized-images'.
+_ @ framework-aeb459c58bdfae80.js:1
+(anonymous) @ framework-aeb459c58bdfae80.js:1
+uD @ framework-aeb459c58bdfae80.js:1
+uI @ framework-aeb459c58bdfae80.js:1
+uM @ framework-aeb459c58bdfae80.js:1
+uS @ framework-aeb459c58bdfae80.js:1
+C @ framework-aeb459c58bdfae80.js:1
+z @ framework-aeb459c58bdfae80.js:1
+framework-aeb459c58bdfae80.js:1  Unrecognized feature: 'unsized-media'.
+_ @ framework-aeb459c58bdfae80.js:1
+(anonymous) @ framework-aeb459c58bdfae80.js:1
+uD @ framework-aeb459c58bdfae80.js:1
+uI @ framework-aeb459c58bdfae80.js:1
+uM @ framework-aeb459c58bdfae80.js:1
+uS @ framework-aeb459c58bdfae80.js:1
+C @ framework-aeb459c58bdfae80.js:1
+z @ framework-aeb459c58bdfae80.js:1
+framework-aeb459c58bdfae80.js:1  Unrecognized feature: 'pointer-lock'.
+_ @ framework-aeb459c58bdfae80.js:1
+(anonymous) @ framework-aeb459c58bdfae80.js:1
+uD @ framework-aeb459c58bdfae80.js:1
+uI @ framework-aeb459c58bdfae80.js:1
+uM @ framework-aeb459c58bdfae80.js:1
+uS @ framework-aeb459c58bdfae80.js:1
+C @ framework-aeb459c58bdfae80.js:1
+z @ framework-aeb459c58bdfae80.js:1
+framework-aeb459c58bdfae80.js:1  Allow attribute will take precedence over 'allowfullscreen'.
+_ @ framework-aeb459c58bdfae80.js:1
+(anonymous) @ framework-aeb459c58bdfae80.js:1
+uD @ framework-aeb459c58bdfae80.js:1
+uI @ framework-aeb459c58bdfae80.js:1
+uM @ framework-aeb459c58bdfae80.js:1
+uS @ framework-aeb459c58bdfae80.js:1
+C @ framework-aeb459c58bdfae80.js:1
+z @ framework-aeb459c58bdfae80.js:1
+framework-aeb459c58bdfae80.js:1  Allow attribute will take precedence over 'allowpaymentrequest'.
+_ @ framework-aeb459c58bdfae80.js:1
+(anonymous) @ framework-aeb459c58bdfae80.js:1
+uD @ framework-aeb459c58bdfae80.js:1
+uI @ framework-aeb459c58bdfae80.js:1
+uM @ framework-aeb459c58bdfae80.js:1
+uS @ framework-aeb459c58bdfae80.js:1
+C @ framework-aeb459c58bdfae80.js:1
+z @ framework-aeb459c58bdfae80.js:1
+workspace_iframe.html:32  Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+workspace_iframe.html:32  Unrecognized feature: 'ambient-light-sensor'.
+workspace_iframe.html:32  Unrecognized feature: 'battery'.
+workspace_iframe.html:32  Unrecognized feature: 'execution-while-not-rendered'.
+workspace_iframe.html:32  Unrecognized feature: 'execution-while-out-of-viewport'.
+workspace_iframe.html:32  Unrecognized feature: 'layout-animations'.
+workspace_iframe.html:32  Unrecognized feature: 'legacy-image-formats'.
+workspace_iframe.html:32  Unrecognized feature: 'navigation-override'.
+workspace_iframe.html:32  Unrecognized feature: 'oversized-images'.
+workspace_iframe.html:32  Unrecognized feature: 'publickey-credentials'.
+workspace_iframe.html:32  Unrecognized feature: 'speaker-selection'.
+workspace_iframe.html:32  Unrecognized feature: 'unoptimized-images'.
+workspace_iframe.html:32  Unrecognized feature: 'unsized-media'.
+workspace_iframe.html:32  Allow attribute will take precedence over 'allowfullscreen'.
+workspace_iframe.html:32  Allow attribute will take precedence over 'allowpaymentrequest'.
+stallwart.build.js:1 stallwart: failed ping 1
+stallwart.build.js:1 stallwart: failed ping 2

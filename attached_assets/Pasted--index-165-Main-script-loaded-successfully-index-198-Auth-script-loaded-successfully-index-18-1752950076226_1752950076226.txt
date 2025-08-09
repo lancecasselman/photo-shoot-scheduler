@@ -1,0 +1,124 @@
+(index):165 Main script loaded successfully
+(index):198 Auth script loaded successfully
+(index):185 Firebase config loaded successfully
+auth.js?v=1752950025965:46 Server auth status: true
+auth.js?v=1752950025965:53 Server authentication enabled - using Firebase auth
+script.js?v=1752950025964:23 PWA: Service Worker registered successfully
+auth.js?v=1752950025965:141 User signed in: lancecasselman@icloud.com
+auth.js?v=1752950025965:168 Loading sessions for authenticated user
+script.js?v=1752950025964:142 Loading sessions from database...
+script.js?v=1752950025964:144 Sessions loaded: (4) [{…}, {…}, {…}, {…}]
+script.js?v=1752950025964:145 Data type: object Array: true
+script.js?v=1752950025964:149 Transformed sessions: (4) [{…}, {…}, {…}, {…}]
+script.js?v=1752950025964:405 renderSessions called with 4 sessions
+script.js?v=1752950025964:406 Sessions container: <div id=​"sessionsContainer" class=​"sessions-container">​…​</div>​grid
+script.js?v=1752950025964:424 Rendering 4 session cards
+script.js?v=1752950025964:428 Sorted sessions: (4) [{…}, {…}, {…}, {…}]
+script.js?v=1752950025964:432 Creating card 1 for session: lance
+script.js?v=1752950025964:1322  Error loading session gallery: TypeError: window.firebaseRef is not a function
+    at loadSessionGallery (script.js?v=1752950025964:1313:32)
+    at createSessionCard (script.js?v=1752950025964:676:5)
+    at script.js?v=1752950025964:433:29
+    at Array.forEach (<anonymous>)
+    at renderSessions (script.js?v=1752950025964:431:20)
+    at loadSessions (script.js?v=1752950025964:151:9)
+loadSessionGallery @ script.js?v=1752950025964:1322
+createSessionCard @ script.js?v=1752950025964:676
+(anonymous) @ script.js?v=1752950025964:433
+renderSessions @ script.js?v=1752950025964:431
+loadSessions @ script.js?v=1752950025964:151
+await in loadSessions
+(anonymous) @ auth.js?v=1752950025965:169
+setTimeout
+(anonymous) @ auth.js?v=1752950025965:167
+await in (anonymous)
+(anonymous) @ auth_impl.ts:681
+Promise.then
+registerStateListener @ auth_impl.ts:681
+onAuthStateChanged @ auth_impl.ts:482
+onAuthStateChanged @ index.ts:210
+(anonymous) @ auth.js?v=1752950025965:129
+script.js?v=1752950025964:435 Card 1 appended to container
+script.js?v=1752950025964:432 Creating card 2 for session: lancey
+script.js?v=1752950025964:1322  Error loading session gallery: TypeError: window.firebaseRef is not a function
+    at loadSessionGallery (script.js?v=1752950025964:1313:32)
+    at createSessionCard (script.js?v=1752950025964:676:5)
+    at script.js?v=1752950025964:433:29
+    at Array.forEach (<anonymous>)
+    at renderSessions (script.js?v=1752950025964:431:20)
+    at loadSessions (script.js?v=1752950025964:151:9)
+loadSessionGallery @ script.js?v=1752950025964:1322
+createSessionCard @ script.js?v=1752950025964:676
+(anonymous) @ script.js?v=1752950025964:433
+renderSessions @ script.js?v=1752950025964:431
+loadSessions @ script.js?v=1752950025964:151
+await in loadSessions
+(anonymous) @ auth.js?v=1752950025965:169
+setTimeout
+(anonymous) @ auth.js?v=1752950025965:167
+await in (anonymous)
+(anonymous) @ auth_impl.ts:681
+Promise.then
+registerStateListener @ auth_impl.ts:681
+onAuthStateChanged @ auth_impl.ts:482
+onAuthStateChanged @ index.ts:210
+(anonymous) @ auth.js?v=1752950025965:129
+script.js?v=1752950025964:435 Card 2 appended to container
+script.js?v=1752950025964:432 Creating card 3 for session: Amanda
+script.js?v=1752950025964:1322  Error loading session gallery: TypeError: window.firebaseRef is not a function
+    at loadSessionGallery (script.js?v=1752950025964:1313:32)
+    at createSessionCard (script.js?v=1752950025964:676:5)
+    at script.js?v=1752950025964:433:29
+    at Array.forEach (<anonymous>)
+    at renderSessions (script.js?v=1752950025964:431:20)
+    at loadSessions (script.js?v=1752950025964:151:9)
+loadSessionGallery @ script.js?v=1752950025964:1322
+createSessionCard @ script.js?v=1752950025964:676
+(anonymous) @ script.js?v=1752950025964:433
+renderSessions @ script.js?v=1752950025964:431
+loadSessions @ script.js?v=1752950025964:151
+await in loadSessions
+(anonymous) @ auth.js?v=1752950025965:169
+setTimeout
+(anonymous) @ auth.js?v=1752950025965:167
+await in (anonymous)
+(anonymous) @ auth_impl.ts:681
+Promise.then
+registerStateListener @ auth_impl.ts:681
+onAuthStateChanged @ auth_impl.ts:482
+onAuthStateChanged @ index.ts:210
+(anonymous) @ auth.js?v=1752950025965:129
+script.js?v=1752950025964:435 Card 3 appended to container
+script.js?v=1752950025964:432 Creating card 4 for session: lala
+script.js?v=1752950025964:1322  Error loading session gallery: TypeError: window.firebaseRef is not a function
+    at loadSessionGallery (script.js?v=1752950025964:1313:32)
+    at createSessionCard (script.js?v=1752950025964:676:5)
+    at script.js?v=1752950025964:433:29
+    at Array.forEach (<anonymous>)
+    at renderSessions (script.js?v=1752950025964:431:20)
+    at loadSessions (script.js?v=1752950025964:151:9)
+loadSessionGallery @ script.js?v=1752950025964:1322
+createSessionCard @ script.js?v=1752950025964:676
+(anonymous) @ script.js?v=1752950025964:433
+renderSessions @ script.js?v=1752950025964:431
+loadSessions @ script.js?v=1752950025964:151
+await in loadSessions
+(anonymous) @ auth.js?v=1752950025965:169
+setTimeout
+(anonymous) @ auth.js?v=1752950025965:167
+await in (anonymous)
+(anonymous) @ auth_impl.ts:681
+Promise.then
+registerStateListener @ auth_impl.ts:681
+onAuthStateChanged @ auth_impl.ts:482
+onAuthStateChanged @ index.ts:210
+(anonymous) @ auth.js?v=1752950025965:129
+script.js?v=1752950025964:435 Card 4 appended to container
+script.js?v=1752950025964:438 All session cards rendered. Container children count: 4
+script.js?v=1752950025964:152 Sessions rendered, container should now show 4 sessions
+script.js?v=1752950025964:157 Successfully loaded 4 sessions
+[NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
+        Don't show again

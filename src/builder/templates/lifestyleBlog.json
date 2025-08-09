@@ -1,0 +1,112 @@
+{
+  "name": "Lifestyle Blog-ish",
+  "slug": "lifestyle-blog-ish",
+  "preview": "/previews/lifestyle-blog.jpg",
+  "description": "Blog-style layout for lifestyle and personal brand photographers",
+  "tags": ["Lifestyle", "Blog", "Personal", "Stories"],
+  "globalStyles": {
+    "colors": {
+      "primary": "#e8b4b8",
+      "secondary": "#a8dadc",
+      "text": "#2d3436",
+      "background": "#ffffff"
+    },
+    "fonts": {
+      "heading": "Playfair Display",
+      "body": "Source Sans Pro"
+    },
+    "spacing": "relaxed",
+    "borderRadius": "medium"
+  },
+  "pages": [
+    {
+      "title": "Home",
+      "slug": "home",
+      "blocks": [
+        {
+          "type": "Hero",
+          "props": {
+            "style": "lifestyle-intro",
+            "headline": "Hello, Beautiful",
+            "subtext": "Lifestyle photography & storytelling",
+            "image": "/images/lifestyle-hero.jpg",
+            "layout": "split-casual"
+          }
+        },
+        {
+          "type": "BlogFeed",
+          "props": {
+            "title": "Recent Stories",
+            "layout": "lifestyle-cards",
+            "showExcerpt": true,
+            "showDate": true,
+            "showCategory": true
+          }
+        },
+        {
+          "type": "About",
+          "props": {
+            "style": "lifestyle-bio",
+            "image": "/images/profile.jpg",
+            "title": "Hey, I'm Sarah!",
+            "content": "I'm a lifestyle photographer who loves capturing real moments and telling authentic stories.",
+            "socialLinks": true
+          }
+        },
+        {
+          "type": "Instagram",
+          "props": {
+            "title": "Follow Along",
+            "handle": "@lifestylephotog",
+            "layout": "lifestyle-grid",
+            "posts": 9
+          }
+        }
+      ]
+    },
+    {
+      "title": "Blog",
+      "slug": "blog",
+      "blocks": [
+        {
+          "type": "BlogArchive",
+          "props": {
+            "layout": "magazine-style",
+            "sidebar": true,
+            "categories": ["Sessions", "Personal", "Tips", "Travel"],
+            "showSearch": true
+          }
+        }
+      ]
+    },
+    {
+      "title": "Services",
+      "slug": "services",
+      "blocks": [
+        {
+          "type": "Services",
+          "props": {
+            "style": "lifestyle-offerings",
+            "services": [
+              {
+                "title": "Brand Photography",
+                "description": "Authentic imagery for your personal brand",
+                "image": "/images/brand.jpg"
+              },
+              {
+                "title": "Lifestyle Sessions",
+                "description": "Natural, story-driven photography",
+                "image": "/images/lifestyle.jpg"
+              },
+              {
+                "title": "Content Creation",
+                "description": "Monthly content packages for influencers",
+                "image": "/images/content.jpg"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
