@@ -3362,6 +3362,44 @@ app.post('/api/ai/pricing-copy', async (req, res) => {
     }
 });
 
+// Test OpenAI connection directly (no auth required for testing)
+app.post('/api/test-openai-direct', async (req, res) => {
+    try {
+        const hasApiKey = !!(process.env.OPENAI_API_KEY_NEW || process.env.OPENAI_API_KEY);
+        const apiKeyPrefix = (process.env.OPENAI_API_KEY_NEW || process.env.OPENAI_API_KEY)?.substring(0, 10) + '...';
+        
+        if (!hasApiKey) {
+            return res.json({
+                success: false,
+                error: 'No OpenAI API key found in environment',
+                hasApiKey: false
+            });
+        }
+
+        // Test the actual OpenAI connection
+        const testResult = await aiServices.generateBlogPost('Test connection with a single word response');
+        
+        res.json({
+            success: true,
+            message: 'OpenAI API connected and working',
+            hasApiKey: true,
+            apiKeyPrefix: apiKeyPrefix,
+            testResponse: testResult?.substring(0, 100) + '...'
+        });
+        
+    } catch (error) {
+        res.json({
+            success: false,
+            error: error.message,
+            hasApiKey: !!(process.env.OPENAI_API_KEY_NEW || process.env.OPENAI_API_KEY),
+            apiKeyPrefix: (process.env.OPENAI_API_KEY_NEW || process.env.OPENAI_API_KEY)?.substring(0, 10) + '...',
+            isQuotaError: error.message?.includes('quota'),
+            isAuthError: error.message?.includes('auth'),
+            fullError: error.message
+        });
+    }
+});
+
 // Business Management AI Endpoints
 app.post('/api/ai/generate-blog', isAuthenticated, async (req, res) => {
     try {
