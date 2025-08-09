@@ -8042,6 +8042,14 @@ END:VCALENDAR`;
         window.switchTab = function(tabName) {
             console.log('Switching to tab:', tabName);
             
+            // Close mobile menu when a tab is selected
+            const mobileMenu = document.getElementById('mobileMenu');
+            const hamburgerBtn = document.querySelector('.hamburger-menu');
+            if (mobileMenu && hamburgerBtn) {
+                mobileMenu.classList.remove('show');
+                hamburgerBtn.classList.remove('active');
+            }
+            
             // Hide all tab contents
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.classList.remove('active');
@@ -8234,6 +8242,13 @@ END:VCALENDAR`;
         // Override switchTab function to work with new navigation
         const originalSwitchTab = window.switchTab;
         window.switchTab = function(tab) {
+            // Close mobile menu when switching tabs
+            const mobileMenu = document.getElementById('mobileMenu');
+            const hamburgerBtn = document.querySelector('.hamburger-menu');
+            if (mobileMenu && hamburgerBtn) {
+                mobileMenu.classList.remove('show');
+                hamburgerBtn.classList.remove('active');
+            }
             setActiveNavLink(tab);
             if (originalSwitchTab) {
                 originalSwitchTab(tab);
