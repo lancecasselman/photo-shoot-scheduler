@@ -125,3 +125,8 @@ jspm_packages/
 *.mp3
 *.wav
 *.flac
+
+# Old/unused directories (cleaned up August 9, 2025)
+src/builder/
+components/presets/websites/
+website-builder/
