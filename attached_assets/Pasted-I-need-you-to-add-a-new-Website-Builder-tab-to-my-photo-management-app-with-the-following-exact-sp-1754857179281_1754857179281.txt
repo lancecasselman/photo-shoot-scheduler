@@ -1,0 +1,136 @@
+I need you to add a new "Website Builder" tab to my photo management app with the following exact specifications. This should be a fully functional photography website builder integrated as a new section/tab.
+
+Create a new tab/section called "Website Builder" that contains:
+
+1. **HTML Structure:**
+- Add a new tab button labeled "Website Builder" to the existing navigation
+- Create a container div with id="website-builder-container" that will hold the entire builder interface
+- The builder should have: header with logo and action buttons, left sidebar with templates/elements/pages, main canvas area for preview, and right edit panel
+
+2. **Complete Feature Set to Implement:**
+
+CORE LAYOUT:
+- Fixed header with: logo "PhotoSite Builder", device preview buttons (Desktop/Tablet/Mobile), Preview button, Publish button
+- Left sidebar (280px width) with sections for: Templates, Add Elements, Pages
+- Main canvas area with white background and rounded corners
+- Right edit panel (400px width, slides in from right when editing)
+
+TEMPLATES SECTION:
+- 4 prebuilt templates: Minimal Portfolio, Wedding Photography, Fashion Portfolio, Nature & Landscape
+- Each template should update colors and content when selected
+- Templates include: navigation, hero section, gallery grid, about section, contact form
+
+ADD ELEMENTS:
+- Text Block, Image, Gallery (with 6 items), Button, Contact Form, Social Links
+- All elements are draggable with drag handle (⋮⋮) and deletable with (×) button
+- Elements can be added anywhere on the page
+
+PAGES SYSTEM:
+- Start with Home page by default
+- Add Portfolio, About, Contact, Blog pages
+- Dynamic navigation that updates when pages are added
+- Page persistence (content saved when switching pages)
+- Current pages list in sidebar
+- Delete page functionality (except Home)
+
+EDITING FEATURES:
+- Click any element to edit
+- Edit panel includes:
+  * Text content input
+  * Font family dropdown (12 font options including Playfair Display, Montserrat, Raleway, etc.)
+  * Font weight (300-900)
+  * Text align (left/center/right/justify)
+  * Font size slider (12-120px)
+  * Text color picker
+  * Background color picker
+  * Padding/margin inputs
+  * Border radius
+  * Image URL input
+  * Image upload from device (using FileReader API)
+  * Delete element button
+
+DRAG & DROP:
+- All editable elements are draggable
+- Visual feedback during drag (opacity 0.5, scale 0.95)
+- Blue line indicator shows drop position
+- Smooth animations on drop
+
+RESPONSIVE PREVIEW:
+- Desktop (1400px), Tablet (768px), Mobile (375px) views
+- Canvas resizes based on selected device
+
+STYLING:
+- Dark theme UI (#0a0a0a background, #1a1a1a panels)
+- Purple gradient accents (#667eea to #764ba2)
+- Smooth transitions (0.3s ease)
+- Glassmorphism effects on header
+- Toast notifications for actions
+
+3. **JavaScript Functionality:**
+
+State Management:
+```javascript
+let currentElement = null;
+let currentDevice = 'desktop';
+let pages = {
+    home: { name: 'Home', content: null, active: true }
+};
+let currentPage = 'home';
+Key Functions:
+
+setupEditableElements() - adds click/drag handlers
+editElement(element, event) - opens edit panel
+updateElement() - applies changes
+addElement(type) - adds new elements
+addPage(pageType) - creates new pages
+switchPage(pageKey, event) - navigation between pages
+deleteElement(element) - removes elements
+deletePage() - removes current page
+updateNavMenu() - syncs navigation
+handleImageUpload(event) - processes image uploads
+initializeDragAndDrop() - enables drag functionality
+showToast(message) - displays notifications
+
+
+CSS Styling:
+Include Google Fonts link for all typography options
+Use CSS Grid for layouts
+Include all hover states, animations, and transitions
+Mobile-responsive breakpoints
+Integration Requirements:
+
+
+This should work within the existing app structure
+Should not conflict with other tabs/features
+All functionality should be self-contained
+Should save website data (you can use localStorage or integrate with your existing database)
+Include auto-save every 30 seconds
+Export functionality to get the HTML/CSS code
+
+
+Make sure to include:
+
+
+Full image upload capability with FileReader API
+All 12 font options working with Google Fonts
+Drag and drop working smoothly
+Page persistence when switching
+Dynamic navigation updates
+All elements fully customizable
+Responsive preview modes
+Delete functionality for elements and pages
+Toast notifications for user feedback
+
+Please implement this complete website builder as a new tab in my photo management app, ensuring all features work exactly as specified. The builder should be production-ready and fully functional.
+
+## **Additional Notes for Replit Integration:**
+
+Add this context if needed:
+The website builder should integrate with the existing photo management system by:
+
+Allowing users to pull images from their photo library
+Saving website projects alongside their photo collections
+Using the same authentication system
+Matching the overall app's design language if needed
+
+The implementation should be modular so it can be easily maintained and updated.
