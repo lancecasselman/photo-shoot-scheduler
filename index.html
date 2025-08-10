@@ -10616,15 +10616,14 @@ END:VCALENDAR`;
                     ]),
                     [''],
                     ['MILEAGE BREAKDOWN'],
-                    ['Date', 'Start', 'End', 'Miles', 'Type', 'Purpose', 'Deduction'],
+                    ['Date', 'Start', 'End', 'Miles', 'Type', 'Purpose'],
                     ...filteredTrips.map(trip => [
                         new Date(trip.date).toLocaleDateString(),
                         `"${(trip.startLocation || '').replace(/"/g, '""')}"`,
                         `"${(trip.endLocation || '').replace(/"/g, '""')}"`,
                         (trip.miles || 0).toFixed(1),
                         trip.roundTrip ? 'Round Trip' : 'One Way',
-                        `"${((trip.purpose || '').replace('_', ' ')).replace(/"/g, '""')}"`,
-                        `$${((trip.miles || 0) * 0.655).toFixed(2)}`
+                        `"${((trip.purpose || '').replace('_', ' ')).replace(/"/g, '""')}"`
                     ])
                 ].map(row => row.map(cell => {
                     // Escape CSV fields that contain commas, quotes, or newlines
