@@ -1060,22 +1060,23 @@ registerStorageRoutes(app, isAuthenticated, normalizeUserForLance, storageSystem
 // Object Storage Routes for Gallery and Raw Storage
 const objectStorageService = new ObjectStorageService();
 
-// Get upload URL for session files (WITH STORAGE QUOTA ENFORCEMENT)
+// Get upload URL for session files (WITH STORAGE QUOTA ENFORCEMENT) - Using R2
 app.post('/api/sessions/:sessionId/files/upload', isAuthenticated, async (req, res) => {
     try {
         const { sessionId } = req.params;
         const { folderType, fileName, fileSize } = req.body; // Include file size for quota check
-        const userId = normalizeUserForLance(req.user.uid);
+        const userId = req.session.user.uid; // Use Firebase UID directly for R2 path consistency
         
-        console.log(`Upload request - Session: ${sessionId}, Folder: ${folderType}, FileName: ${fileName}, Size: ${fileSize}`);
+        console.log(`Upload request - Session: ${sessionId}, Folder: ${folderType}, FileName: ${fileName}, Size: ${fileSize}, User: ${userId}`);
         
         if (!['gallery', 'raw'].includes(folderType)) {
             return res.status(400).json({ error: 'Invalid folder type' });
         }
 
         // QUOTA ENFORCEMENT: Check if user can upload this file
+        const normalizedUserId = normalizeUserForLance(userId);
         if (fileSize) {
-            const quotaCheck = await storageSystem.canUpload(userId, fileSize);
+            const quotaCheck = await storageSystem.canUpload(normalizedUserId, fileSize);
             if (!quotaCheck.canUpload) {
                 return res.status(413).json({ 
                     error: 'Storage quota exceeded',
@@ -1088,12 +1089,38 @@ app.post('/api/sessions/:sessionId/files/upload', isAuthenticated, async (req, r
 
             // Warning if near limit
             if (quotaCheck.isNearLimit) {
-                console.log(`⚠️ User ${userId} is approaching storage limit: ${quotaCheck.currentUsageGB}GB / ${quotaCheck.quotaGB}GB`);
+                console.log(`⚠️ User ${normalizedUserId} is approaching storage limit: ${quotaCheck.currentUsageGB}GB / ${quotaCheck.quotaGB}GB`);
             }
         }
         
-        const uploadURL = await objectStorageService.getSessionFileUploadURL(sessionId, folderType, fileName);
-        console.log(`✅ Generated upload URL for ${fileName} (quota check passed)`);
+        // Generate R2 presigned URL instead of using objectStorageService
+        const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+        const { PutObjectCommand } = require('@aws-sdk/client-s3');
+        
+        // Generate unique filename while preserving extension
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const ext = fileName.substring(fileName.lastIndexOf('.'));
+        const uniqueFileName = `${timestamp}-${fileName}`;
+        
+        // Create R2 key path using Firebase UID
+        const r2Key = `photographer-${userId}/session-${sessionId}/${folderType}/${uniqueFileName}`;
+        
+        // Create presigned URL for R2 upload
+        const putCommand = new PutObjectCommand({
+            Bucket: 'photoappr2token',
+            Key: r2Key,
+            ContentType: 'application/octet-stream',
+            Metadata: {
+                'original-filename': fileName,
+                'user-id': userId,
+                'session-id': sessionId,
+                'folder-type': folderType
+            }
+        });
+        
+        const uploadURL = await getSignedUrl(r2FileManager.s3Client, putCommand, { expiresIn: 3600 });
+        
+        console.log(`✅ Generated R2 upload URL for ${fileName} at path: ${r2Key}`);
         res.json({ uploadURL });
     } catch (error) {
         console.error('Error getting upload URL:', error);
