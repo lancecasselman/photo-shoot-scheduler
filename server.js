@@ -2952,16 +2952,18 @@ app.post('/api/sessions/:id/upload-photos', isAuthenticated, async (req, res) =>
                         const fileSize = photo.originalSize || 0;
                         
                         await pool.query(`
-                            INSERT INTO session_files (session_id, filename, file_size_bytes, folder_type)
-                            VALUES ($1, $2, $3, $4)
+                            INSERT INTO session_files (session_id, filename, file_size_bytes, folder_type, user_id)
+                            VALUES ($1, $2, $3, $4, $5)
                             ON CONFLICT (session_id, filename) DO UPDATE SET
                                 file_size_bytes = $3,
-                                folder_type = $4
+                                folder_type = $4,
+                                user_id = $5
                         `, [
                             sessionId,
                             photo.originalName || photo.filename,
                             fileSize,
-                            folderType
+                            folderType,
+                            userId  // Use the Firebase UID here
                         ]);
 
                         // NEW: Log storage usage for quota tracking
