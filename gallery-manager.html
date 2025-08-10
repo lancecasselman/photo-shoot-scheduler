@@ -681,7 +681,7 @@
         // Load and display storage statistics for both folders
         async function loadStorageStats() {
             try {
-                const response = await fetch('/api/sessions/' + sessionId + '/storage-stats', {
+                const response = await fetch('/api/sessions/' + sessionId + '/storage', {
                     credentials: 'include'
                 });
                 

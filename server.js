@@ -1397,6 +1397,9 @@ app.get('/api/sessions/:sessionId/storage', isAuthenticated, async (req, res) =>
             const galleryStats = galleryResult.rows[0];
             const rawStats = rawResult.rows[0];
             
+            console.log('Gallery query result:', galleryStats);
+            console.log('Raw query result:', rawStats);
+            
             const gallerySize = parseInt(galleryStats.total_bytes) || 0;
             const rawSize = parseInt(rawStats.total_bytes) || 0;
             const totalSize = gallerySize + rawSize;
