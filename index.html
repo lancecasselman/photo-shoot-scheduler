@@ -7077,6 +7077,170 @@ lance@thelegacyphotography.com`;
                     .status-signed { background: #28a745; color: white; }
                     .status-sent { background: #17a2b8; color: white; }
                     .status-expired { background: #dc3545; color: white; }
+                    
+                    /* Home Base Setup Styles */
+                    .mileage-header-actions {
+                        display: flex;
+                        gap: 10px;
+                        align-items: center;
+                    }
+
+                    .setup-btn {
+                        background: #6c757d;
+                        color: white;
+                        border: none;
+                        padding: 8px 16px;
+                        border-radius: 5px;
+                        cursor: pointer;
+                        font-size: 14px;
+                        transition: all 0.2s;
+                    }
+
+                    .setup-btn:hover {
+                        background: #5a6268;
+                        transform: translateY(-1px);
+                    }
+
+                    .home-base-setup {
+                        margin: 20px 0;
+                        padding: 0;
+                    }
+
+                    .setup-card {
+                        background: #f8f9fa;
+                        border: 1px solid #dee2e6;
+                        border-radius: 8px;
+                        padding: 20px;
+                        margin-bottom: 20px;
+                    }
+
+                    .setup-card h3 {
+                        color: #495057;
+                        margin-bottom: 10px;
+                        font-size: 18px;
+                    }
+
+                    .setup-card p {
+                        color: #6c757d;
+                        margin-bottom: 20px;
+                        font-size: 14px;
+                    }
+
+                    .location-setup {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 15px;
+                    }
+
+                    .location-actions {
+                        display: flex;
+                        gap: 10px;
+                        flex-wrap: wrap;
+                    }
+
+                    .location-btn {
+                        background: #17a2b8;
+                        color: white;
+                        border: none;
+                        padding: 8px 16px;
+                        border-radius: 5px;
+                        cursor: pointer;
+                        font-size: 14px;
+                        transition: all 0.2s;
+                    }
+
+                    .location-btn:hover {
+                        background: #138496;
+                        transform: translateY(-1px);
+                    }
+
+                    .status-card {
+                        background: #d4edda;
+                        border: 1px solid #c3e6cb;
+                        border-radius: 5px;
+                        padding: 15px;
+                        margin-top: 15px;
+                    }
+
+                    .status-card h4 {
+                        color: #155724;
+                        margin-bottom: 8px;
+                        font-size: 16px;
+                    }
+
+                    .status-card p {
+                        color: #155724;
+                        margin-bottom: 10px;
+                        font-weight: 500;
+                    }
+
+                    .edit-btn {
+                        background: #ffc107;
+                        color: #212529;
+                        border: none;
+                        padding: 6px 12px;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-size: 12px;
+                        font-weight: 500;
+                    }
+
+                    .edit-btn:hover {
+                        background: #e0a800;
+                    }
+
+                    .location-input-group {
+                        display: flex;
+                        gap: 8px;
+                        align-items: center;
+                    }
+
+                    .location-input-group input {
+                        flex: 1;
+                    }
+
+                    .home-base-btn {
+                        background: #28a745;
+                        color: white;
+                        border: none;
+                        padding: 8px 12px;
+                        border-radius: 4px;
+                        cursor: pointer;
+                        font-size: 12px;
+                        white-space: nowrap;
+                        transition: all 0.2s;
+                    }
+
+                    .home-base-btn:hover:not(:disabled) {
+                        background: #218838;
+                        transform: translateY(-1px);
+                    }
+
+                    .home-base-btn:disabled {
+                        background: #6c757d;
+                        cursor: not-allowed;
+                        opacity: 0.6;
+                    }
+
+                    @media (max-width: 768px) {
+                        .mileage-header-actions {
+                            flex-direction: column;
+                            gap: 8px;
+                        }
+
+                        .location-actions {
+                            flex-direction: column;
+                        }
+
+                        .location-input-group {
+                            flex-direction: column;
+                            align-items: stretch;
+                        }
+
+                        .location-input-group input {
+                            margin-bottom: 8px;
+                        }
+                    }
                 </style>
             `;
             
@@ -9167,6 +9331,138 @@ END:VCALENDAR`;
             const form = document.getElementById('addTripForm');
             if (form) {
                 form.style.display = form.style.display === 'none' ? 'block' : 'none';
+                // Check if home base is set and enable/disable button
+                updateHomeBaseButton();
+            }
+        }
+
+        // Home Base Functions
+        function showHomeBaseSetup() {
+            const setup = document.getElementById('homeBaseSetup');
+            const currentBase = document.getElementById('currentHomeBase');
+            const homeBase = localStorage.getItem('homeBaseLocation');
+            
+            if (setup) {
+                setup.style.display = setup.style.display === 'none' ? 'block' : 'none';
+                
+                if (homeBase) {
+                    // Show current home base
+                    document.getElementById('homeBaseAddress').textContent = homeBase;
+                    currentBase.style.display = 'block';
+                    document.getElementById('homeAddress').value = homeBase;
+                } else {
+                    currentBase.style.display = 'none';
+                    document.getElementById('homeAddress').value = '';
+                }
+            }
+        }
+
+        function cancelHomeBaseSetup() {
+            const setup = document.getElementById('homeBaseSetup');
+            if (setup) {
+                setup.style.display = 'none';
+            }
+        }
+
+        function editHomeBase() {
+            const currentBase = document.getElementById('currentHomeBase');
+            if (currentBase) {
+                currentBase.style.display = 'none';
+            }
+        }
+
+        async function useCurrentLocation() {
+            if ("geolocation" in navigator) {
+                showMessage('Getting your current location...', 'info');
+                
+                try {
+                    const position = await new Promise((resolve, reject) => {
+                        navigator.geolocation.getCurrentPosition(resolve, reject, {
+                            enableHighAccuracy: true,
+                            timeout: 10000,
+                            maximumAge: 60000
+                        });
+                    });
+                    
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    
+                    // Use reverse geocoding to get address
+                    const address = await reverseGeocode(lat, lng);
+                    document.getElementById('homeAddress').value = address;
+                    showMessage('Current location detected!', 'success');
+                    
+                } catch (error) {
+                    console.error('Error getting location:', error);
+                    showMessage('Could not get your location. Please enter address manually.', 'error');
+                }
+            } else {
+                showMessage('Location services not available in your browser', 'error');
+            }
+        }
+
+        async function reverseGeocode(lat, lng) {
+            try {
+                // Using a free geocoding service (you might want to use a better one)
+                const response = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`);
+                const data = await response.json();
+                
+                if (data.locality && data.principalSubdivision) {
+                    return `${data.locality}, ${data.principalSubdivision}, ${data.countryCode}`;
+                } else {
+                    return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+                }
+            } catch (error) {
+                console.error('Geocoding error:', error);
+                return `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+            }
+        }
+
+        function saveHomeBase() {
+            const address = document.getElementById('homeAddress').value.trim();
+            
+            if (!address) {
+                showMessage('Please enter an address for your home base', 'error');
+                return;
+            }
+            
+            localStorage.setItem('homeBaseLocation', address);
+            showMessage('Home base location saved!', 'success');
+            
+            // Update the display
+            document.getElementById('homeBaseAddress').textContent = address;
+            document.getElementById('currentHomeBase').style.display = 'block';
+            
+            // Enable the use home base button in trip form
+            updateHomeBaseButton();
+        }
+
+        function updateHomeBaseButton() {
+            const homeBase = localStorage.getItem('homeBaseLocation');
+            const button = document.getElementById('useHomeBaseBtn');
+            
+            if (button) {
+                if (homeBase) {
+                    button.disabled = false;
+                    button.textContent = `🏠 Use Home Base`;
+                    button.title = `Click to use: ${homeBase}`;
+                } else {
+                    button.disabled = true;
+                    button.textContent = `🏠 No Home Base Set`;
+                    button.title = 'Set up your home base first';
+                }
+            }
+        }
+
+        function useHomeBaseForTrip() {
+            const homeBase = localStorage.getItem('homeBaseLocation');
+            const startLocationInput = document.getElementById('startLocation');
+            
+            if (homeBase && startLocationInput) {
+                startLocationInput.value = homeBase;
+                showMessage('Home base location added!', 'success');
+            } else {
+                showMessage('No home base set. Please configure it first.', 'error');
             }
         }
 
@@ -9272,6 +9568,9 @@ END:VCALENDAR`;
             const tbody = document.getElementById('mileageTableBody');
             
             if (!tbody) return;
+            
+            // Update home base button status
+            updateHomeBaseButton();
             
             if (trips.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">No trips recorded yet.</td></tr>';
@@ -10314,7 +10613,38 @@ END:VCALENDAR`;
             <div id="mileageSection" class="business-section">
                 <div class="mileage-header">
                     <h2>🚗 Mileage Tracker</h2>
-                    <button onclick="showAddTripForm()" class="add-btn">+ Add Trip</button>
+                    <div class="mileage-header-actions">
+                        <button onclick="showHomeBaseSetup()" class="setup-btn">🏠 Setup Home Base</button>
+                        <button onclick="showAddTripForm()" class="add-btn">+ Add Trip</button>
+                    </div>
+                </div>
+                
+                <!-- Home Base Setup Section -->
+                <div id="homeBaseSetup" class="home-base-setup" style="display: none;">
+                    <div class="setup-card">
+                        <h3>🏠 Set Your Home Base Location</h3>
+                        <p>Configure your default start location to save time when adding trips.</p>
+                        
+                        <div class="location-setup">
+                            <div class="form-group">
+                                <label for="homeAddress">Home/Office Address:</label>
+                                <input type="text" id="homeAddress" placeholder="Enter your business address" value="">
+                            </div>
+                            <div class="location-actions">
+                                <button onclick="useCurrentLocation()" class="location-btn">📍 Use Current Location</button>
+                                <button onclick="saveHomeBase()" class="save-btn">💾 Save Home Base</button>
+                                <button onclick="cancelHomeBaseSetup()" class="cancel-btn">Cancel</button>
+                            </div>
+                        </div>
+                        
+                        <div class="current-home-base" id="currentHomeBase" style="display: none;">
+                            <div class="status-card">
+                                <h4>✅ Current Home Base:</h4>
+                                <p id="homeBaseAddress">Not set</p>
+                                <button onclick="editHomeBase()" class="edit-btn">Edit</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 
                 <div id="addTripForm" class="trip-form" style="display: none;">
@@ -10336,7 +10666,10 @@ END:VCALENDAR`;
                     <div class="form-row">
                         <div class="form-group">
                             <label for="startLocation">Start Location:</label>
-                            <input type="text" id="startLocation" placeholder="Starting address">
+                            <div class="location-input-group">
+                                <input type="text" id="startLocation" placeholder="Starting address">
+                                <button type="button" onclick="useHomeBaseForTrip()" class="home-base-btn" id="useHomeBaseBtn" disabled>🏠 Use Home Base</button>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label for="endLocation">End Location:</label>
