@@ -9629,20 +9629,28 @@ END:VCALENDAR`;
                 
                 const data = await response.json();
                 
-                // Transform Google Maps response to our format
-                return data.results.map(result => ({
-                    display_name: result.formatted_address,
-                    address: result.address_components.reduce((acc, component) => {
-                        if (component.types.includes('street_number')) acc.house_number = component.long_name;
-                        if (component.types.includes('route')) acc.road = component.long_name;
-                        if (component.types.includes('locality')) acc.city = component.long_name;
-                        if (component.types.includes('administrative_area_level_1')) acc.state = component.short_name;
-                        if (component.types.includes('postal_code')) acc.postcode = component.long_name;
-                        return acc;
-                    }, {}),
-                    lat: result.geometry.location.lat,
-                    lon: result.geometry.location.lng
-                }));
+                // Handle both Google Places Autocomplete and regular Geocoding responses
+                if (data.source === 'places_autocomplete') {
+                    // Google Places Autocomplete format
+                    return data.results;
+                } else if (data.results) {
+                    // Regular Google Maps Geocoding format
+                    return data.results.map(result => ({
+                        display_name: result.formatted_address,
+                        address: result.address_components.reduce((acc, component) => {
+                            if (component.types.includes('street_number')) acc.house_number = component.long_name;
+                            if (component.types.includes('route')) acc.road = component.long_name;
+                            if (component.types.includes('locality')) acc.city = component.long_name;
+                            if (component.types.includes('administrative_area_level_1')) acc.state = component.short_name;
+                            if (component.types.includes('postal_code')) acc.postcode = component.long_name;
+                            return acc;
+                        }, {}),
+                        lat: result.geometry?.location?.lat,
+                        lon: result.geometry?.location?.lng
+                    }));
+                }
+                
+                return [];
                 
             } catch (error) {
                 console.log('Google Maps API fallback to OpenStreetMap');
@@ -9724,7 +9732,9 @@ END:VCALENDAR`;
                 let helpText = "Try a different search term";
                 
                 if (inputValue.includes("county line") || inputValue.includes("rural") || /^\d+\s+\w+\s+(road|rd|street|st|lane|ln|drive|dr)/i.test(inputValue)) {
-                    helpText = "Rural addresses may need city/state added (e.g., '16574 County Line Rd, Andrews, SC')";
+                    helpText = "Some rural addresses may not be in databases. Try adding city/state or use the manual option below.";
+                } else if (inputValue.length > 10) {
+                    helpText = "Address not found in database. You can still use it with the manual option below.";
                 }
                 
                 suggestionsContainer.innerHTML = `

@@ -801,7 +801,7 @@ app.use((req, res, next) => {
     }
 });
 
-// Geocoding API endpoint for address autocomplete
+// Address autocomplete API endpoint using Google Places Autocomplete
 app.post('/api/geocode', async (req, res) => {
   try {
     const { address } = req.body;
@@ -816,9 +816,43 @@ app.post('/api/geocode', async (req, res) => {
       return res.status(503).json({ error: 'Google Maps API not configured' });
     }
     
-    // Make request to Google Maps Geocoding API
+    // First try Google Places Autocomplete for better address suggestions
+    try {
+      const autocompleteResponse = await fetch(
+        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(address)}&types=address&components=country:us&key=${googleMapsApiKey}`
+      );
+      
+      if (autocompleteResponse.ok) {
+        const autocompleteData = await autocompleteResponse.json();
+        
+        if (autocompleteData.status === 'OK' && autocompleteData.predictions && autocompleteData.predictions.length > 0) {
+          // Transform Google Places predictions to match our expected format
+          const results = autocompleteData.predictions.map(prediction => ({
+            display_name: prediction.description,
+            formatted_address: prediction.description,
+            place_id: prediction.place_id,
+            address: {
+              // Extract components from structured formatting if available
+              road: prediction.structured_formatting?.main_text || '',
+              city: prediction.structured_formatting?.secondary_text?.split(',')[0] || '',
+              state: prediction.structured_formatting?.secondary_text?.split(',')[1]?.trim() || ''
+            }
+          }));
+          
+          return res.json({ 
+            status: 'OK', 
+            results: results,
+            source: 'places_autocomplete'
+          });
+        }
+      }
+    } catch (placesError) {
+      console.log('Places Autocomplete failed, trying regular geocoding:', placesError.message);
+    }
+    
+    // Fallback to regular geocoding
     const response = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${googleMapsApiKey}`
+      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&components=country:US&key=${googleMapsApiKey}`
     );
     
     if (!response.ok) {
@@ -828,7 +862,10 @@ app.post('/api/geocode', async (req, res) => {
     const data = await response.json();
     
     if (data.status === 'OK') {
-      res.json(data);
+      res.json({
+        ...data,
+        source: 'geocoding'
+      });
     } else {
       console.log(`Google Maps API status: ${data.status} for address: ${address}`);
       res.status(404).json({ error: 'Address not found', status: data.status });
