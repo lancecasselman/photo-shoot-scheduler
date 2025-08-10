@@ -1249,8 +1249,15 @@ app.post('/api/sessions/:sessionId/files/:folderType/upload-direct', isAuthentic
             if (client) client.release();
         }
         
-        // Update storage tracking
-        await storageSystem.updateStorage(normalizedUserId, file.size, 'add');
+        // Log storage change for quota tracking
+        await storageSystem.logStorageChange(
+            normalizedUserId, 
+            sessionId, 
+            'upload', 
+            file.size, 
+            folderType, 
+            uniqueFileName
+        );
         
         res.json({ 
             success: true,
