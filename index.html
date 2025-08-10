@@ -10529,7 +10529,7 @@ END:VCALENDAR`;
             showMessage('Exporting dashboard data...', 'info');
 
             try {
-                // Get current dashboard data
+                // Get current dashboard data using existing functions
                 const { startDate, endDate } = getDateRange(period);
                 
                 // Get expenses from database
@@ -10553,13 +10553,19 @@ END:VCALENDAR`;
                     return tripDate >= startDate && tripDate <= endDate;
                 });
 
-                // Get sessions for earnings calculation
-                const filteredSessions = getSessionsInPeriod(period);
+                // Get sessions using existing global sessions array
+                let filteredSessions = [];
+                if (typeof sessions !== 'undefined' && sessions.length > 0) {
+                    filteredSessions = sessions.filter(session => {
+                        const sessionDate = new Date(session.dateTime);
+                        return sessionDate >= startDate && sessionDate <= endDate;
+                    });
+                }
                 
                 // Calculate totals
                 const totalEarnings = filteredSessions.reduce((sum, session) => sum + (session.price || 0), 0);
                 const totalExpenses = filteredExpenses.reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
-                const totalMiles = filteredTrips.reduce((sum, trip) => sum + trip.miles, 0);
+                const totalMiles = filteredTrips.reduce((sum, trip) => sum + (trip.miles || 0), 0);
                 const mileageDeduction = totalMiles * 0.655;
                 const netProfit = totalEarnings - totalExpenses;
 
@@ -10581,9 +10587,9 @@ END:VCALENDAR`;
                     ['Date', 'Client', 'Session Type', 'Price', 'Status'],
                     ...filteredSessions.map(session => [
                         new Date(session.dateTime).toLocaleDateString(),
-                        session.clientName,
-                        session.sessionType,
-                        `$${session.price.toFixed(2)}`,
+                        session.clientName || '',
+                        session.sessionType || '',
+                        `$${(session.price || 0).toFixed(2)}`,
                         session.paid ? 'Paid' : 'Unpaid'
                     ]),
                     [''],
@@ -10601,12 +10607,12 @@ END:VCALENDAR`;
                     ['Date', 'Start', 'End', 'Miles', 'Type', 'Purpose', 'Deduction'],
                     ...filteredTrips.map(trip => [
                         new Date(trip.date).toLocaleDateString(),
-                        trip.startLocation,
-                        trip.endLocation,
-                        trip.miles.toFixed(1),
+                        trip.startLocation || '',
+                        trip.endLocation || '',
+                        (trip.miles || 0).toFixed(1),
                         trip.roundTrip ? 'Round Trip' : 'One Way',
-                        trip.purpose.replace('_', ' '),
-                        `$${(trip.miles * 0.655).toFixed(2)}`
+                        (trip.purpose || '').replace('_', ' '),
+                        `$${((trip.miles || 0) * 0.655).toFixed(2)}`
                     ])
                 ].map(row => row.join(',')).join('\n');
 
