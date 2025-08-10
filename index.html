@@ -11133,6 +11133,102 @@ END:VCALENDAR`;
             }
         }
 
+        // Load and display expenses in the table
+        window.loadExpensesTable = async function() {
+            console.log('Loading expenses table...');
+            const tbody = document.getElementById('expensesTableBody');
+            if (!tbody) {
+                console.log('Expenses table body not found');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/expenses');
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to load expenses');
+                }
+
+                const expenses = data.expenses || [];
+                console.log('Loaded expenses:', expenses);
+                
+                if (expenses.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 20px; color: #666;">
+                                No expenses recorded yet. Click "+ New Expense" to add your first expense.
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                tbody.innerHTML = expenses.map(expense => {
+                    const date = new Date(expense.date).toLocaleDateString();
+                    const amount = parseFloat(expense.amount).toFixed(2);
+                    const recurring = expense.recurring ? '✓' : '';
+                    
+                    return `
+                        <tr>
+                            <td>${date}</td>
+                            <td>${expense.category}</td>
+                            <td>${expense.description}</td>
+                            <td>$${amount}</td>
+                            <td>${recurring}</td>
+                            <td>
+                                <button onclick="deleteExpense('${expense.id}')" class="btn btn-danger btn-sm">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+                
+                console.log('Expenses table populated successfully');
+                
+            } catch (error) {
+                console.error('Error loading expenses:', error);
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 20px; color: #dc3545;">
+                            Error loading expenses: ${error.message}
+                        </td>
+                    </tr>
+                `;
+            }
+        };
+
+        // Delete expense function
+        window.deleteExpense = async function(expenseId) {
+            if (!confirm('Are you sure you want to delete this expense?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/expenses/${expenseId}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to delete expense');
+                }
+
+                showMessage('Expense deleted successfully!', 'success');
+                
+                // Refresh expenses table
+                await loadExpensesTable();
+                
+                // Update dashboard
+                const currentRange = document.getElementById('dashboardDateRange')?.value || 'thisMonth';
+                await calculateFinancialStats(currentRange);
+                
+            } catch (error) {
+                console.error('Error deleting expense:', error);
+                showMessage('Failed to delete expense: ' + error.message, 'error');
+            }
+        };
+
         // Enhanced page initialization is handled by the main DOMContentLoaded event above
 
     </script>
