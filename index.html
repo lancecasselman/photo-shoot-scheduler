@@ -10598,8 +10598,8 @@ END:VCALENDAR`;
                     ['Date', 'Client', 'Session Type', 'Price', 'Status'],
                     ...filteredSessions.map(session => [
                         new Date(session.dateTime).toLocaleDateString(),
-                        session.clientName || '',
-                        session.sessionType || '',
+                        `"${(session.clientName || '').replace(/"/g, '""')}"`,
+                        `"${(session.sessionType || '').replace(/"/g, '""')}"`,
                         `$${(session.price || 0).toFixed(2)}`,
                         session.paid ? 'Paid' : 'Unpaid'
                     ]),
@@ -10608,8 +10608,8 @@ END:VCALENDAR`;
                     ['Date', 'Category', 'Description', 'Amount', 'Tax Deductible'],
                     ...filteredExpenses.map(expense => [
                         new Date(expense.date).toLocaleDateString(),
-                        expense.category,
-                        expense.description,
+                        `"${(expense.category || '').replace(/"/g, '""')}"`,
+                        `"${(expense.description || '').replace(/"/g, '""')}"`,
                         `$${parseFloat(expense.amount).toFixed(2)}`,
                         expense.tax_deductible ? 'Yes' : 'No'
                     ]),
@@ -10618,14 +10618,21 @@ END:VCALENDAR`;
                     ['Date', 'Start', 'End', 'Miles', 'Type', 'Purpose', 'Deduction'],
                     ...filteredTrips.map(trip => [
                         new Date(trip.date).toLocaleDateString(),
-                        trip.startLocation || '',
-                        trip.endLocation || '',
+                        `"${(trip.startLocation || '').replace(/"/g, '""')}"`,
+                        `"${(trip.endLocation || '').replace(/"/g, '""')}"`,
                         (trip.miles || 0).toFixed(1),
                         trip.roundTrip ? 'Round Trip' : 'One Way',
-                        (trip.purpose || '').replace('_', ' '),
+                        `"${((trip.purpose || '').replace('_', ' ')).replace(/"/g, '""')}"`,
                         `$${((trip.miles || 0) * 0.655).toFixed(2)}`
                     ])
-                ].map(row => row.join(',')).join('\n');
+                ].map(row => row.map(cell => {
+                    // Escape CSV fields that contain commas, quotes, or newlines
+                    const cellStr = String(cell || '');
+                    if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+                        return cellStr.startsWith('"') ? cellStr : `"${cellStr.replace(/"/g, '""')}"`;
+                    }
+                    return cellStr;
+                }).join(',')).join('\n');
 
                 // Download CSV
                 const blob = new Blob([csvContent], { type: 'text/csv' });
