@@ -99,20 +99,82 @@ function showMessage(message, type = 'info') {
     }
 }
 
-// Add missing mobile menu functions
+// Mobile menu functions
 function toggleMobileMenu() {
     const mobileMenu = document.getElementById('mobileMenu');
-    const menuToggle = document.querySelector('.menu-toggle');
+    const hamburgerMenu = document.querySelector('.hamburger-menu');
     
     if (mobileMenu) {
-        const isVisible = mobileMenu.style.display === 'block';
-        mobileMenu.style.display = isVisible ? 'none' : 'block';
+        const isVisible = mobileMenu.classList.contains('show');
         
-        if (menuToggle) {
-            menuToggle.classList.toggle('active', !isVisible);
+        if (isVisible) {
+            closeMobileMenu();
+        } else {
+            showMobileMenu();
         }
     }
 }
+
+function showMobileMenu() {
+    const mobileMenu = document.getElementById('mobileMenu');
+    const hamburgerMenu = document.querySelector('.hamburger-menu');
+    
+    if (mobileMenu) {
+        mobileMenu.classList.add('show');
+        if (hamburgerMenu) {
+            hamburgerMenu.classList.add('active');
+        }
+    }
+}
+
+function closeMobileMenu() {
+    const mobileMenu = document.getElementById('mobileMenu');
+    const hamburgerMenu = document.querySelector('.hamburger-menu');
+    
+    if (mobileMenu) {
+        mobileMenu.classList.remove('show');
+        if (hamburgerMenu) {
+            hamburgerMenu.classList.remove('active');
+        }
+    }
+}
+
+// Add event listeners for dropdown menu handling
+document.addEventListener('DOMContentLoaded', function() {
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+        const mobileMenu = document.getElementById('mobileMenu');
+        const hamburgerMenu = document.querySelector('.hamburger-menu');
+        
+        if (mobileMenu && mobileMenu.classList.contains('show')) {
+            // Check if click is outside the mobile menu and hamburger button
+            if (!mobileMenu.contains(event.target) && !hamburgerMenu.contains(event.target)) {
+                closeMobileMenu();
+            }
+        }
+    });
+    
+    // Close dropdown when any button in the page is clicked (except nav links)
+    document.addEventListener('click', function(event) {
+        const mobileMenu = document.getElementById('mobileMenu');
+        
+        if (mobileMenu && mobileMenu.classList.contains('show')) {
+            // Check if the clicked element is a button but not a nav link
+            if ((event.target.tagName === 'BUTTON' || event.target.classList.contains('btn')) && 
+                !event.target.classList.contains('nav-link') && 
+                !event.target.classList.contains('hamburger-menu')) {
+                closeMobileMenu();
+            }
+        }
+    });
+    
+    // Close dropdown when pressing Escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeMobileMenu();
+        }
+    });
+});
 
 function showMobileTool(toolName) {
     // Hide all mobile tools first
