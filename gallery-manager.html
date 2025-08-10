@@ -578,8 +578,12 @@
                     throw new Error(`Failed to get upload URL: ${response.status} - ${errorText}`);
                 }
                 
-                const { uploadURL } = await response.json();
-                console.log('Got upload URL:', uploadURL);
+                const uploadData = await response.json();
+                const uploadURL = uploadData.uploadURL;
+                const finalFileName = uploadData.finalFileName || fileName;
+                const r2Key = uploadData.r2Key;
+                console.log('Got R2 upload URL:', uploadURL);
+                console.log('R2 storage path:', r2Key);
                 
                 // Upload file to object storage
                 console.log(`Uploading ${file.name} to object storage...`);
@@ -616,7 +620,9 @@
                         credentials: 'include',
                         body: JSON.stringify({
                             uploadUrl: uploadURL,
-                            originalName: file.name
+                            originalName: file.name,
+                            finalFileName: finalFileName,
+                            r2Key: r2Key
                         })
                     });
                     

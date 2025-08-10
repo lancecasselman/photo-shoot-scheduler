@@ -1093,35 +1093,58 @@ app.post('/api/sessions/:sessionId/files/upload', isAuthenticated, async (req, r
             }
         }
         
-        // Generate R2 presigned URL instead of using objectStorageService
+        // Generate R2 presigned URL for direct upload to Cloudflare R2
         const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
         const { PutObjectCommand } = require('@aws-sdk/client-s3');
         
-        // Generate unique filename while preserving extension
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const ext = fileName.substring(fileName.lastIndexOf('.'));
-        const uniqueFileName = `${timestamp}-${fileName}`;
+        // Generate timestamp-based unique filename to avoid conflicts
+        const now = new Date();
+        const timestamp = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}${String(now.getSeconds()).padStart(2,'0')}`;
+        const fileExt = fileName.substring(fileName.lastIndexOf('.'));
+        const fileNameWithoutExt = fileName.substring(0, fileName.lastIndexOf('.'));
+        const uniqueFileName = `${timestamp}-${fileNameWithoutExt}${fileExt}`;
         
-        // Create R2 key path using Firebase UID
+        // Create R2 key path using Firebase UID directly
         const r2Key = `photographer-${userId}/session-${sessionId}/${folderType}/${uniqueFileName}`;
         
-        // Create presigned URL for R2 upload
+        // Determine content type from file extension
+        const contentTypeMap = {
+            '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png',
+            '.gif': 'image/gif', '.webp': 'image/webp', '.tiff': 'image/tiff', '.tif': 'image/tiff',
+            '.pdf': 'application/pdf', '.mp4': 'video/mp4', '.mov': 'video/quicktime',
+            '.nef': 'image/x-nikon-nef', '.cr2': 'image/x-canon-cr2', '.arw': 'image/x-sony-arw',
+            '.dng': 'image/x-adobe-dng'
+        };
+        const contentType = contentTypeMap[fileExt.toLowerCase()] || 'application/octet-stream';
+        
+        // Create presigned URL for R2 upload with proper headers
         const putCommand = new PutObjectCommand({
             Bucket: 'photoappr2token',
             Key: r2Key,
-            ContentType: 'application/octet-stream',
+            ContentType: contentType,
             Metadata: {
-                'original-filename': fileName,
-                'user-id': userId,
-                'session-id': sessionId,
-                'folder-type': folderType
+                'originalName': fileName,
+                'userId': userId,
+                'sessionId': sessionId,
+                'folderType': folderType,
+                'uploadTimestamp': now.toISOString()
             }
         });
         
+        // Generate presigned URL with 1 hour expiration
         const uploadURL = await getSignedUrl(r2FileManager.s3Client, putCommand, { expiresIn: 3600 });
         
-        console.log(`✅ Generated R2 upload URL for ${fileName} at path: ${r2Key}`);
-        res.json({ uploadURL });
+        console.log(`✅ Generated R2 presigned upload URL`);
+        console.log(`   File: ${fileName} -> ${uniqueFileName}`);
+        console.log(`   R2 Path: ${r2Key}`);
+        console.log(`   Content-Type: ${contentType}`);
+        
+        // Return both the URL and the final filename for tracking
+        res.json({ 
+            uploadURL,
+            finalFileName: uniqueFileName,
+            r2Key
+        });
     } catch (error) {
         console.error('Error getting upload URL:', error);
         res.status(500).json({ error: 'Failed to get upload URL' });
@@ -1347,48 +1370,49 @@ app.delete('/api/sessions/:sessionId/files/:folderType/:fileName', isAuthenticat
 app.post('/api/sessions/:sessionId/files/:folderType/update-metadata', isAuthenticated, async (req, res) => {
     try {
         const { sessionId, folderType } = req.params;
-        const { uploadUrl, originalName } = req.body;
+        const { uploadUrl, originalName, finalFileName, r2Key } = req.body;
         const userId = req.session.user.uid; // Use Firebase UID for consistency
         
         if (!['gallery', 'raw'].includes(folderType)) {
             return res.status(400).json({ error: 'Invalid folder type' });
         }
         
-        // Extract filename from upload URL
-        const url = new URL(uploadUrl);
-        const pathParts = url.pathname.split('/');
-        const fileName = pathParts[pathParts.length - 1];
+        // Use the finalFileName from R2 upload
+        const fileName = finalFileName || originalName;
         
-        console.log(`Setting metadata for file: ${fileName}, originalName: ${originalName}`);
-        console.log(`User ID (Firebase UID): ${userId}, Session ID: ${sessionId}`);
+        console.log(`Tracking R2 upload completion:`);
+        console.log(`  Original name: ${originalName}`);
+        console.log(`  Final filename: ${fileName}`);
+        console.log(`  R2 Key: ${r2Key}`);
+        console.log(`  User ID (Firebase UID): ${userId}`);
+        console.log(`  Session ID: ${sessionId}`);
         
-        // Wait a moment for file to be available after upload
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // For R2 uploads, we need to get the file size from R2 directly
+        let fileSizeBytes = 0;
+        let fileSizeMB = 0;
         
-        const files = await objectStorageService.getSessionFiles(sessionId, folderType);
-        console.log(`Found ${files.length} files in ${sessionId}/${folderType}`);
-        
-        const file = files.find(f => f.name.split('/').pop() === fileName);
-        
-        if (!file) {
-            console.error(`File ${fileName} not found in session ${sessionId}/${folderType}`);
-            console.log('Available files:', files.map(f => f.name.split('/').pop()));
-            return res.status(404).json({ error: 'File not found' });
+        try {
+            // Get file metadata from R2 using HeadObject
+            const { HeadObjectCommand } = require('@aws-sdk/client-s3');
+            const headCommand = new HeadObjectCommand({
+                Bucket: 'photoappr2token',
+                Key: r2Key
+            });
+            
+            // Wait a moment for file to be available in R2
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            const headResponse = await r2FileManager.s3Client.send(headCommand);
+            fileSizeBytes = headResponse.ContentLength || 0;
+            fileSizeMB = fileSizeBytes / (1024 * 1024);
+            
+            console.log(`✅ R2 file confirmed: ${fileName} (${fileSizeMB.toFixed(2)}MB)`);
+        } catch (r2Error) {
+            console.error('Error checking R2 file:', r2Error);
+            // File might not be ready yet, use a default size
+            fileSizeBytes = 0;
+            fileSizeMB = 0;
         }
-        
-        // Get file metadata for size
-        const [metadata] = await file.getMetadata();
-        const fileSizeBytes = metadata.size || 0;
-        const fileSizeMB = fileSizeBytes / (1024 * 1024);
-        
-        // Set metadata with original filename
-        await file.setMetadata({
-            metadata: {
-                originalName: originalName
-            }
-        });
-        
-        console.log(`Successfully set metadata for ${fileName} with original name: ${originalName}`);
         
         // Track file in database with Firebase UID
         try {
