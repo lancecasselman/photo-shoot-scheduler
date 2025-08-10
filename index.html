@@ -11138,9 +11138,10 @@ END:VCALENDAR`;
             console.log('Loading expenses table...');
             const tbody = document.getElementById('expensesTableBody');
             if (!tbody) {
-                console.log('Expenses table body not found');
+                console.error('ERROR: Expenses table body not found! Available elements:', document.querySelectorAll('tbody'));
                 return;
             }
+            console.log('Found table body:', tbody);
 
             try {
                 const response = await fetch('/api/expenses');
