@@ -46,6 +46,9 @@ const { registerStorageRoutes } = require('./server/storage-routes');
 // Import object storage services
 const { ObjectStorageService } = require('./server/objectStorage');
 
+// Database schema imports
+const { businessExpenses } = require('./shared/schema');
+const { eq, and, desc, asc, between } = require('drizzle-orm');
 
 
 // Import AI services
@@ -2999,6 +3002,103 @@ app.post('/api/ai/process-page-request', isAuthenticated, async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Failed to process AI request: ' + error.message
+        });
+    }
+});
+
+// 💰 BUSINESS EXPENSE MANAGEMENT API
+app.get('/api/expenses', isAuthenticated, async (req, res) => {
+    try {
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
+
+        const client = await pool.connect();
+        const result = await client.query(
+            'SELECT * FROM business_expenses WHERE user_id = $1 ORDER BY date DESC',
+            [userId]
+        );
+        client.release();
+
+        res.json({
+            success: true,
+            expenses: result.rows
+        });
+    } catch (error) {
+        console.error('Error fetching expenses:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch expenses'
+        });
+    }
+});
+
+app.post('/api/expenses', isAuthenticated, async (req, res) => {
+    try {
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
+        const { date, category, description, amount, recurring, taxDeductible } = req.body;
+
+        if (!date || !category || !description || !amount) {
+            return res.status(400).json({
+                success: false,
+                error: 'Missing required fields'
+            });
+        }
+
+        const expenseId = uuidv4();
+        const client = await pool.connect();
+        
+        const result = await client.query(
+            `INSERT INTO business_expenses (id, user_id, date, category, description, amount, recurring, tax_deductible)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+            [expenseId, userId, date, category, description, amount, recurring || false, taxDeductible !== false]
+        );
+        
+        client.release();
+
+        res.json({
+            success: true,
+            expense: result.rows[0],
+            message: 'Expense added successfully'
+        });
+    } catch (error) {
+        console.error('Error adding expense:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to add expense'
+        });
+    }
+});
+
+app.delete('/api/expenses/:id', isAuthenticated, async (req, res) => {
+    try {
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
+        const expenseId = req.params.id;
+
+        const client = await pool.connect();
+        const result = await client.query(
+            'DELETE FROM business_expenses WHERE id = $1 AND user_id = $2 RETURNING *',
+            [expenseId, userId]
+        );
+        client.release();
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                error: 'Expense not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Expense deleted successfully'
+        });
+    } catch (error) {
+        console.error('Error deleting expense:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to delete expense'
         });
     }
 });

@@ -10826,7 +10826,7 @@ END:VCALENDAR`;
         });
 
         // Business Management Dashboard Functions
-        window.updateDashboard = function() {
+        window.updateDashboard = async function() {
             const dateRange = document.getElementById('dashboardDateRange').value;
             const customDateRange = document.getElementById('customDateRange');
             
@@ -10837,11 +10837,11 @@ END:VCALENDAR`;
                 customDateRange.style.display = 'none';
             }
             
-            calculateFinancialStats(dateRange);
+            await calculateFinancialStats(dateRange);
         };
 
         // Apply custom date range
-        window.applyCustomDateRange = function() {
+        window.applyCustomDateRange = async function() {
             const startDate = document.getElementById('startDate').value;
             const endDate = document.getElementById('endDate').value;
             
@@ -10855,10 +10855,10 @@ END:VCALENDAR`;
                 return;
             }
             
-            calculateFinancialStats('custom', startDate, endDate);
+            await calculateFinancialStats('custom', startDate, endDate);
         };
 
-        function calculateFinancialStats(dateRange, startDate = null, endDate = null) {
+        async function calculateFinancialStats(dateRange, startDate = null, endDate = null) {
             if (!window.sessions || !Array.isArray(window.sessions)) {
                 console.log('Sessions not loaded yet, using empty array');
                 window.sessions = [];
@@ -10914,8 +10914,8 @@ END:VCALENDAR`;
                 return total + price;
             }, 0);
 
-            // Calculate total expenses for the same period
-            const totalExpenses = calculateExpensesForPeriod(filterStart, filterEnd);
+            // Calculate total expenses for the same period (await the async function)
+            const totalExpenses = await calculateExpensesForPeriod(filterStart, filterEnd);
             
             // Calculate net profit
             const netProfit = totalEarnings - totalExpenses;
@@ -10980,26 +10980,45 @@ END:VCALENDAR`;
         }
 
         // Expense calculation function
-        function calculateExpensesForPeriod(filterStart, filterEnd) {
-            // Initialize expenses if not exists
-            if (!window.expenses || !Array.isArray(window.expenses)) {
-                window.expenses = loadExpensesFromStorage();
+        async function calculateExpensesForPeriod(filterStart, filterEnd) {
+            try {
+                // Fetch expenses from database
+                const response = await fetch('/api/expenses', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    console.error('Failed to fetch expenses:', response.status);
+                    return 0;
+                }
+
+                const data = await response.json();
+                if (!data.success || !Array.isArray(data.expenses)) {
+                    console.error('Invalid expenses response:', data);
+                    return 0;
+                }
+
+                // Filter expenses by date range
+                const filteredExpenses = data.expenses.filter(expense => {
+                    const expenseDate = new Date(expense.date);
+                    return expenseDate >= filterStart && expenseDate < filterEnd;
+                });
+
+                // Calculate total amount
+                const totalExpenses = filteredExpenses.reduce((total, expense) => {
+                    const amount = parseFloat(expense.amount) || 0;
+                    return total + amount;
+                }, 0);
+
+                console.log(`Found ${filteredExpenses.length} expenses totaling $${totalExpenses.toFixed(2)} in period`);
+                return totalExpenses;
+            } catch (error) {
+                console.error('Error calculating expenses:', error);
+                return 0;
             }
-
-            // Filter expenses by date range
-            const filteredExpenses = window.expenses.filter(expense => {
-                const expenseDate = new Date(expense.date);
-                return expenseDate >= filterStart && expenseDate < filterEnd;
-            });
-
-            // Calculate total amount
-            const totalExpenses = filteredExpenses.reduce((total, expense) => {
-                const amount = parseFloat(expense.amount) || 0;
-                return total + amount;
-            }, 0);
-
-            console.log(`Found ${filteredExpenses.length} expenses totaling $${totalExpenses.toFixed(2)} in period`);
-            return totalExpenses;
         }
 
         // Load expenses from localStorage
@@ -11051,7 +11070,7 @@ END:VCALENDAR`;
             }
         };
 
-        window.saveExpense = function() {
+        window.saveExpense = async function() {
             const date = document.getElementById('expenseDate').value;
             const category = document.getElementById('expenseCategory').value;
             const amount = parseFloat(document.getElementById('expenseAmount').value);
@@ -11063,45 +11082,52 @@ END:VCALENDAR`;
                 return;
             }
 
-            if (!window.expenses) {
-                window.expenses = [];
-            }
+            try {
+                const response = await fetch('/api/expenses', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        date: date,
+                        category: category,
+                        description: description || '',
+                        amount: amount,
+                        recurring: recurring,
+                        taxDeductible: true
+                    })
+                });
 
-            const expense = {
-                id: Date.now(),
-                date: date,
-                category: category,
-                amount: amount,
-                description: description || '',
-                recurring: recurring,
-                createdAt: new Date().toISOString()
-            };
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to save expense');
+                }
 
-            window.expenses.push(expense);
-            saveExpensesToStorage(window.expenses);
-            
-            // Update dashboard if we're currently viewing it
-            const currentRange = document.getElementById('dashboardDateRange')?.value || 'thisMonth';
-            calculateFinancialStats(currentRange);
-            
-            // Close form and show success
-            window.cancelExpenseForm();
-            showMessage('Expense added successfully!', 'success');
-            
-            // Refresh expenses table if visible
-            if (typeof loadExpensesTable === 'function') {
-                loadExpensesTable();
+                // Update dashboard if we're currently viewing it
+                const currentRange = document.getElementById('dashboardDateRange')?.value || 'thisMonth';
+                await calculateFinancialStats(currentRange);
+                
+                // Close form and show success
+                window.cancelExpenseForm();
+                showMessage('Expense added successfully!', 'success');
+                
+                // Refresh expenses table if visible
+                if (typeof loadExpensesTable === 'function') {
+                    loadExpensesTable();
+                }
+            } catch (error) {
+                console.error('Error saving expense:', error);
+                showMessage('Failed to save expense: ' + error.message, 'error');
             }
         };
 
         // Initialize dashboard when sessions are loaded
-        window.initializeDashboard = function() {
+        window.initializeDashboard = async function() {
             // Wait for sessions to be loaded, then calculate stats
             if (window.sessions && Array.isArray(window.sessions)) {
                 console.log('Initializing dashboard with', window.sessions.length, 'sessions');
-                // Initialize expenses
-                window.expenses = loadExpensesFromStorage();
-                calculateFinancialStats('thisMonth');
+                await calculateFinancialStats('thisMonth');
             } else {
                 console.log('Sessions not ready yet, retrying dashboard initialization...');
                 // Retry after a short delay

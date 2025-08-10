@@ -334,6 +334,21 @@ export const aiCreditUsage = pgTable("ai_credit_usage", {
   usedAt: timestamp("used_at").defaultNow(),
 });
 
+// Business expenses tracking
+export const businessExpenses = pgTable("business_expenses", {
+  id: varchar("id").primaryKey().notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  date: timestamp("date").notNull(),
+  category: varchar("category").notNull(), // software, equipment, travel, marketing, misc
+  description: text("description").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  recurring: boolean("recurring").default(false),
+  receiptUrl: varchar("receipt_url"), // Optional receipt attachment
+  taxDeductible: boolean("tax_deductible").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Workflow automation tables
 export const userAutomationSettings = pgTable('user_automation_settings', {
   id: serial('id').primaryKey(),
@@ -363,3 +378,5 @@ export type InsertAiCreditPurchase = typeof aiCreditPurchases.$inferInsert;
 export type AiCreditPurchase = typeof aiCreditPurchases.$inferSelect;
 export type InsertAiCreditUsage = typeof aiCreditUsage.$inferInsert;
 export type AiCreditUsage = typeof aiCreditUsage.$inferSelect;
+export type InsertBusinessExpense = typeof businessExpenses.$inferInsert;
+export type BusinessExpense = typeof businessExpenses.$inferSelect;
