@@ -1,0 +1,68 @@
+Diagnostic information for administrators:
+
+Generating server: googlemail.com
+lancecasselman@icloud.com
+mx01.mail.icloud.com. (17.57.154.33, the server for the domain icloud.com.)
+Remote server returned '554 5.7.1 <mx01.mail.icloud.com. (17.57.154.33, the server for the domain icloud.com.) #5.7.1 smtp; 554 5.7.1 [HM07] Message rejected due to local policy. Please visit https://support.apple.com/en-us/HT204137>'
+Original message headers:
+
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=thelegacyphotography-com.20230601.gappssmtp.com; s=20230601; t=1754860023; x=1755464823; darn=icloud.com;
+        h=mime-version:msip_labels:content-language:accept-language
+         :message-id:date:thread-index:thread-topic:subject:to:from:from:to
+         :cc:subject:date:message-id:reply-to;
+        bh=S/TFrLlRyxVVuAgxPtcOxHNVxgKd/vwU6y1C5OCEjWE=;
+        b=e7CVgEGXccpC8CCRwzPhEBNQEjjSZ0l4D79tOQkvttsOnquj3Ga0BVlCEAzjUBm7CH
+         LdErcXydixtlhUj0+J2lfQrj1QtcrH+Ulz3o4YOIucx3RW8AoW7wRnf3n3LCbydMeoyO
+         NLk0uWZynZ3WZ8bEb/dW1i0fWNoNVwqlItWpW5eVUfj3JX+VP05NFdmqStSeg5grb0rp
+         NXFMDY3X/ME96L8xzH3HvVPpFAspvr7WDDDG34oqQSI9kCUn0g+t3ofk//MgBhUaPrEM
+         vncaImDlUN5d2V4VzoNwk8G/yAPtFdysyNCpMgOZRRkvUiX5fmOq7BJkZe/WiMbNO9sJ
+         237w==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20230601; t=1754860023; x=1755464823;
+        h=mime-version:msip_labels:content-language:accept-language
+         :message-id:date:thread-index:thread-topic:subject:to:from
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to;
+        bh=S/TFrLlRyxVVuAgxPtcOxHNVxgKd/vwU6y1C5OCEjWE=;
+        b=eT2KRdj9GlqwOfTruE3T8yfWdV6rHpuErRZ8ULfCsH2UbT36knLqz3/hx9340e44WW
+         Mq2gDkgdycHDXX7sSuq4oHIaclUyVW4zy6N9TqQ4P+SkA+tJIRZE3DAv+E8kVWuE5eH4
+         3dbmBJvBNlvbQ/vXkjUWXZfoK5Ljl3OmwDZk15Gdv1yfX/xkHI7HdgoWnKIL5cUrvwvo
+         j4AFshsI0ET+x+dbhUMWxgDFngnuqpvUs8a21oDTH9hsp+ft+HbVWlBFQ8RPnffeZggV
+         vWW1VGCbhkiUeju4oCH/FpyZGVRZ/fXWdrvr2kLRrAL4I5nvDlEtUKESvxHZRuTRTHkD
+         vMhg==
+X-Gm-Message-State: AOJu0Yz0o1HVi1S7+QMzQ6MVieYwx0h/3fOhfUlGg7U/6xcY7Qpz0bRT
+ PTSLZda3GnmlgRJT2PvJpGC3FZ0R+aUSim6HijvNIwUF3dzrndc1+U+U13qCERhIolyWY6zmITS
+       yaUB4mC0=
+X-Gm-Gg: ASbGncu34gYKfmHZ0xnN1mRn/jDNDxUan/Oord7i6PLXdanRLprndIHZUETQBXEmDD7
+     B+tkqkt5RlX6ZwTqguWubss9cV05ITr+pU3v9NdivYh+rdUq0ocwLDqgAReonQFrgLy3Qo0TfwR
+   BIn+3cHWJ1LjLBfCqn1TYQqCpgD3edi/8hSvHLKIzlzU8ndsxISATnBu4OlgdZErXJCTSsKeOH1
+ WJREgL4JDNLpsclNi98CtBmwzxcQ8qkpVJEdrC5LybtyYSONUBGGyNyZ+nedGpKiWWL5H9ifwMb
+       U9Xx68RPeE5UdkeEGnaJRM5EPXwxD4wWDc5yUXPpiXqM8ESXFIBcRqgoKzcL8MOQ4pmRE1jA5Uf
+     ktDvyyXOfBtephCCfESGoKcD4AGVaL9ES1CiyQ275HkCVm1OHaUFCll0zB0oAoA==
+X-Google-Smtp-Source: AGHT+IFzSV71uyXHwbf+T3uOLgC0FEBb6EepY5VvX4i9CRk7ka81FFtESrEHTnFFZS8NUjrafh1ldQ==
+X-Received: by 2002:a17:903:187:b0:242:9bbc:6019 with SMTP id d9443c01a7336-242c2277bf5mr155440405ad.57.1754860023569;
+        Sun, 10 Aug 2025 14:07:03 -0700 (PDT)
+Return-Path: <lance@thelegacyphotography.com>
+Received: from BYAPR01MB4870.prod.exchangelabs.com ([2603:1036:307:288d::5])
+        by smtp.gmail.com with ESMTPSA id d9443c01a7336-241d1ef66efsm254961755ad.32.2025.08.10.14.07.03
+        for <lancecasselman@icloud.com>
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Sun, 10 Aug 2025 14:07:03 -0700 (PDT)
+From: Lance Casselman <lance@thelegacyphotography.com>
+To: "lancecasselman@icloud.com" <lancecasselman@icloud.com>
+Subject: Your Photography Gallery - Fam  Session
+Thread-Topic: Your Photography Gallery - Fam  Session
+Thread-Index: AQHcCjq38JmB6vFWAUCLxGWYK/rq6g==
+X-MS-Exchange-MessageSentRepresentingType: 1
+Date: Sun, 10 Aug 2025 21:07:02 +0000
+Message-ID: <BYAPR01MB4870D9C2C38931F21701F594F829A@BYAPR01MB4870.prod.exchangelabs.com>
+Accept-Language: en-US
+Content-Language: en-US
+X-MS-Has-Attach:
+X-MS-Exchange-Organization-SCL: -1
+X-MS-TNEF-Correlator:
+X-MS-Exchange-Organization-RecordReviewCfmType: 0
+msip_labels:
+Content-Type: multipart/alternative;
+     boundary="_000_BYAPR01MB4870D9C2C38931F21701F594F829ABYAPR01MB4870prod_"
+MIME-Version: 1.0
