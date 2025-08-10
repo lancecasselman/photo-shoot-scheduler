@@ -8675,7 +8675,12 @@ END:VCALENDAR`;
             if (sectionName === 'dashboard') {
                 updateDashboard();
             } else if (sectionName === 'expenses') {
-                loadExpenses();
+                // Load expenses table when switching to expense section
+                setTimeout(() => {
+                    if (typeof loadExpensesTable === 'function') {
+                        loadExpensesTable();
+                    }
+                }, 100);
             } else if (sectionName === 'mileage') {
                 loadMileageTrips();
             } else if (sectionName === 'aiAssistant') {
