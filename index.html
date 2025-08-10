@@ -4165,11 +4165,32 @@
         }
 
         .idea-item {
-            padding: var(--spacing-sm);
-            margin-bottom: var(--spacing-sm);
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
             background: var(--bg-secondary);
-            border-radius: var(--border-radius-sm);
-            border-left: 3px solid var(--gold-muted);
+            border-radius: var(--border-radius);
+            border-left: 4px solid var(--gold-muted);
+            transition: all 0.3s ease;
+        }
+
+        .idea-item:hover {
+            border-left-color: var(--gold-primary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .idea-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--gold-muted);
+            margin-bottom: var(--spacing-xs);
+            border-bottom: 1px solid var(--accent-beige);
+            padding-bottom: var(--spacing-xs);
+        }
+
+        .idea-description {
+            color: var(--text-secondary);
+            line-height: 1.5;
+            font-size: 0.95rem;
         }
 
         .output-actions {
@@ -8815,7 +8836,21 @@ END:VCALENDAR`;
                 data.ideas.forEach(idea => {
                     const ideaDiv = document.createElement('div');
                     ideaDiv.className = 'idea-item';
-                    ideaDiv.textContent = idea;
+                    
+                    if (typeof idea === 'object' && idea.title && idea.description) {
+                        // Structured format with title and description
+                        ideaDiv.innerHTML = `
+                            <div class="idea-title">${idea.title}</div>
+                            <div class="idea-description">${idea.description}</div>
+                        `;
+                    } else if (typeof idea === 'object') {
+                        // Object but different structure - try to extract meaningful content
+                        ideaDiv.textContent = idea.idea || idea.text || idea.content || JSON.stringify(idea);
+                    } else {
+                        // Simple string format
+                        ideaDiv.textContent = idea;
+                    }
+                    
                     ideasContainer.appendChild(ideaDiv);
                 });
                 
