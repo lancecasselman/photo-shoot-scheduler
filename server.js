@@ -1272,7 +1272,7 @@ app.post('/api/sessions/:sessionId/files/:folderType/upload-direct', isAuthentic
     }
 });
 
-// List session files
+// List session files from database/R2
 app.get('/api/sessions/:sessionId/files/:folderType', isAuthenticated, async (req, res) => {
     try {
         const { sessionId, folderType } = req.params;
@@ -1281,38 +1281,40 @@ app.get('/api/sessions/:sessionId/files/:folderType', isAuthenticated, async (re
             return res.status(400).json({ error: 'Invalid folder type' });
         }
         
-        const files = await objectStorageService.getSessionFiles(sessionId, folderType);
-        
-        const fileList = await Promise.all(files.map(async (file) => {
-            const [metadata] = await file.getMetadata();
-            const rawFileName = file.name.split('/').pop();
+        // Get files from database
+        let client;
+        try {
+            client = await pool.connect();
+            const result = await client.query(`
+                SELECT * FROM session_files 
+                WHERE session_id = $1 AND folder_type = $2
+                ORDER BY uploaded_at DESC
+            `, [sessionId, folderType]);
             
-            console.log(`File: ${file.name}`);
-            console.log(`Raw filename: ${rawFileName}`);
-            console.log(`Metadata:`, JSON.stringify(metadata.metadata, null, 2));
+            const fileList = result.rows.map(row => ({
+                name: row.original_name || row.filename,
+                fileName: row.filename,
+                size: row.file_size_bytes || (parseFloat(row.file_size_mb) * 1024 * 1024),
+                sizeFormatted: `${row.file_size_mb} MB`,
+                contentType: 'image/jpeg', // Default for images
+                timeCreated: row.uploaded_at,
+                downloadUrl: `/api/sessions/${sessionId}/files/${folderType}/download/${row.filename}`,
+                r2Key: row.r2_key
+            }));
             
-            // Use original filename from metadata if available, otherwise use the stored filename
-            const displayName = metadata.metadata?.originalName || metadata.metadata?.originalFilename || rawFileName;
+            console.log(`Found ${fileList.length} files for session ${sessionId} in ${folderType}`);
             
-            console.log(`Display name: ${displayName}`);
-            
-            return {
-                name: displayName,
-                size: metadata.size,
-                contentType: metadata.contentType,
-                timeCreated: metadata.timeCreated,
-                downloadUrl: `/api/sessions/${sessionId}/files/${folderType}/download/${rawFileName}`
-            };
-        }));
-        
-        res.json({ files: fileList });
+            res.json({ files: fileList });
+        } finally {
+            if (client) client.release();
+        }
     } catch (error) {
         console.error('Error listing files:', error);
         res.status(500).json({ error: 'Failed to list files' });
     }
 });
 
-// Download session file
+// Download session file from R2
 app.get('/api/sessions/:sessionId/files/:folderType/download/:fileName', async (req, res) => {
     try {
         const { sessionId, folderType, fileName } = req.params;
@@ -1321,14 +1323,39 @@ app.get('/api/sessions/:sessionId/files/:folderType/download/:fileName', async (
             return res.status(400).json({ error: 'Invalid folder type' });
         }
         
-        const files = await objectStorageService.getSessionFiles(sessionId, folderType);
-        const file = files.find(f => f.name.split('/').pop() === fileName);
-        
-        if (!file) {
-            return res.status(404).json({ error: 'File not found' });
+        // Get file info from database
+        let client;
+        try {
+            client = await pool.connect();
+            const result = await client.query(`
+                SELECT * FROM session_files 
+                WHERE session_id = $1 AND folder_type = $2 AND filename = $3
+            `, [sessionId, folderType, fileName]);
+            
+            if (result.rows.length === 0) {
+                return res.status(404).json({ error: 'File not found' });
+            }
+            
+            const fileInfo = result.rows[0];
+            
+            // Download from R2
+            const { GetObjectCommand } = require('@aws-sdk/client-s3');
+            const getCommand = new GetObjectCommand({
+                Bucket: 'photoappr2token',
+                Key: fileInfo.r2_key
+            });
+            
+            const response = await r2FileManager.s3Client.send(getCommand);
+            
+            // Set headers
+            res.setHeader('Content-Type', 'image/jpeg');
+            res.setHeader('Content-Disposition', `inline; filename="${fileInfo.original_name || fileName}"`);
+            
+            // Stream the file to response
+            response.Body.pipe(res);
+        } finally {
+            if (client) client.release();
         }
-        
-        await objectStorageService.downloadObject(file, res);
     } catch (error) {
         console.error('Error downloading file:', error);
         if (!res.headersSent) {
