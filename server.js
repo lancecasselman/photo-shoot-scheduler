@@ -1769,55 +1769,43 @@ app.get('/api/global-storage-stats', isAuthenticated, async (req, res) => {
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         };
         
-        // Calculate storage for each session using R2 OBJECT STORAGE (same as gallery/raw managers)
-        console.log('📊 Using R2 object storage calculation method (consistent with gallery/raw managers)');
-        for (const sessionId of sessionIds) {
-            try {
-                console.log(`📊 Processing session: ${sessionId}`);
+        // Calculate storage from database (consistent with individual session stats)
+        console.log('📊 Using database calculation method');
+        
+        // Get all files from database for this user's sessions
+        let client;
+        try {
+            client = await pool.connect();
+            
+            // Get total storage for all sessions
+            const storageResult = await client.query(`
+                SELECT 
+                    folder_type,
+                    COUNT(*) as file_count,
+                    COALESCE(SUM(file_size_bytes), 0) as total_bytes
+                FROM session_files 
+                WHERE session_id = ANY($1::uuid[])
+                GROUP BY folder_type
+            `, [sessionIds]);
+            
+            // Process results
+            for (const row of storageResult.rows) {
+                const bytes = parseInt(row.total_bytes) || 0;
+                const count = parseInt(row.file_count) || 0;
                 
-                // Get files directly from R2 object storage (same as session storage endpoints)
-                const galleryFiles = await objectStorageService.getSessionFiles(sessionId, 'gallery');
-                const rawFiles = await objectStorageService.getSessionFiles(sessionId, 'raw');
-                
-                console.log(`Found ${galleryFiles.length} gallery files and ${rawFiles.length} raw files in R2 for session ${sessionId}`);
-                
-                // Calculate gallery storage with proper number handling
-                let sessionGallerySize = 0;
-                for (const file of galleryFiles) {
-                    try {
-                        const [metadata] = await file.getMetadata();
-                        const fileSize = parseInt(metadata.size) || 0;
-                        sessionGallerySize += fileSize;
-                        console.log(`Gallery file ${file.name}: ${fileSize} bytes`);
-                    } catch (metaError) {
-                        console.error(`Error getting metadata for gallery file ${file.name}:`, metaError);
-                    }
+                if (row.folder_type === 'gallery') {
+                    totalGallerySize = bytes;
+                    totalGalleryFiles = count;
+                } else if (row.folder_type === 'raw') {
+                    totalRawSize = bytes;
+                    totalRawFiles = count;
                 }
                 
-                // Calculate raw storage with proper number handling
-                let sessionRawSize = 0;
-                for (const file of rawFiles) {
-                    try {
-                        const [metadata] = await file.getMetadata();
-                        const fileSize = parseInt(metadata.size) || 0;
-                        sessionRawSize += fileSize;
-                        console.log(`Raw file ${file.name}: ${fileSize} bytes`);
-                    } catch (metaError) {
-                        console.error(`Error getting metadata for raw file ${file.name}:`, metaError);
-                    }
-                }
-                
-                // Ensure numbers are properly added (not concatenated as strings)
-                totalGallerySize = (totalGallerySize || 0) + (sessionGallerySize || 0);
-                totalRawSize = (totalRawSize || 0) + (sessionRawSize || 0);
-                totalGalleryFiles += galleryFiles.length;
-                totalRawFiles += rawFiles.length;
-                
-                console.log(`Session ${sessionId}: ${formatBytes(sessionGallerySize + sessionRawSize)} (${galleryFiles.length} gallery + ${rawFiles.length} raw)`);
-                
-            } catch (sessionError) {
-                console.warn(`Error processing session ${sessionId}:`, sessionError.message);
+                console.log(`${row.folder_type}: ${count} files, ${formatBytes(bytes)}`);
             }
+            
+        } finally {
+            if (client) client.release();
         }
         
         // Ensure proper number calculation for combined totals
