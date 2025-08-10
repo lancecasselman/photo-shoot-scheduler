@@ -9614,7 +9614,7 @@ END:VCALENDAR`;
 
         async function searchWithGoogleMaps(query) {
             try {
-                // Use our backend to proxy Google Maps API to keep API keys secure
+                // Use enhanced backend geocoding with Places Autocomplete + Geocoding fallback
                 const response = await fetch('/api/geocode', {
                     method: 'POST',
                     headers: {
@@ -9629,24 +9629,19 @@ END:VCALENDAR`;
                 
                 const data = await response.json();
                 
-                // Handle both Google Places Autocomplete and regular Geocoding responses
-                if (data.source === 'places_autocomplete') {
-                    // Google Places Autocomplete format
-                    return data.results;
-                } else if (data.results) {
-                    // Regular Google Maps Geocoding format
+                // Handle enhanced Google geocoding responses
+                if (data.status === 'OK' && data.results) {
                     return data.results.map(result => ({
-                        display_name: result.formatted_address,
-                        address: result.address_components.reduce((acc, component) => {
-                            if (component.types.includes('street_number')) acc.house_number = component.long_name;
-                            if (component.types.includes('route')) acc.road = component.long_name;
-                            if (component.types.includes('locality')) acc.city = component.long_name;
-                            if (component.types.includes('administrative_area_level_1')) acc.state = component.short_name;
-                            if (component.types.includes('postal_code')) acc.postcode = component.long_name;
-                            return acc;
-                        }, {}),
+                        display_name: result.display_name || result.formatted_address,
+                        address: result.address || {
+                            road: result.address?.road || '',
+                            city: result.address?.city || '',
+                            state: result.address?.state || ''
+                        },
                         lat: result.geometry?.location?.lat,
-                        lon: result.geometry?.location?.lng
+                        lon: result.geometry?.location?.lng,
+                        confidence: result.confidence || 1,
+                        source: data.source || 'google_maps'
                     }));
                 }
                 
