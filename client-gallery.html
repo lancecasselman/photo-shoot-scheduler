@@ -305,7 +305,8 @@
     <script type="module">
         // Parse URL parameters
         const urlParams = new URLSearchParams(window.location.search);
-        const sessionId = window.location.pathname.split('/').pop();
+        const sessionParam = urlParams.get('session');
+        const sessionId = sessionParam || window.location.pathname.split('/').pop();
         const accessToken = urlParams.get('access');
         
         let sessionData = null;
@@ -320,13 +321,11 @@
         
         async function loadGallery() {
             try {
-                // Verify access token
-                if (!accessToken) {
-                    throw new Error('Access token required. Please use the secure link provided by your photographer.');
-                }
+                // Access token is now optional - galleries are accessible by session ID
+                const accessParam = accessToken ? `?access=${accessToken}` : '';
                 
                 // Verify gallery access via API
-                const verifyResponse = await fetch(`/api/gallery/${sessionId}/verify?access=${accessToken}`);
+                const verifyResponse = await fetch(`/api/gallery/${sessionId}/verify${accessParam}`);
                 if (!verifyResponse.ok) {
                     const error = await verifyResponse.json();
                     throw new Error(error.error || 'Gallery access denied');
@@ -340,7 +339,7 @@
                 document.title = `${sessionData.clientName}'s Photo Gallery`;
                 
                 // Load photos from API
-                const photosResponse = await fetch(`/api/gallery/${sessionId}/photos?access=${accessToken}`);
+                const photosResponse = await fetch(`/api/gallery/${sessionId}/photos${accessParam}`);
                 if (!photosResponse.ok) {
                     throw new Error('Failed to load photos');
                 }

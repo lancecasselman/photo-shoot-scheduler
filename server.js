@@ -5306,7 +5306,9 @@ app.get('/api/gallery/:id/verify', async (req, res) => {
             return res.status(404).json({ error: 'Gallery not found' });
         }
 
-        if (!session.galleryAccessToken || session.galleryAccessToken !== accessToken) {
+        // Allow access without token - galleries are public by session ID
+        // Token is optional for backwards compatibility
+        if (accessToken && session.galleryAccessToken && session.galleryAccessToken !== accessToken) {
             return res.status(403).json({ error: 'Invalid access token' });
         }
 
@@ -5337,7 +5339,9 @@ app.get('/api/gallery/:id/photos', async (req, res) => {
             return res.status(404).json({ error: 'Gallery not found' });
         }
 
-        if (!session.galleryAccessToken || session.galleryAccessToken !== accessToken) {
+        // Allow access without token - galleries are public by session ID
+        // Token is optional for backwards compatibility
+        if (accessToken && session.galleryAccessToken && session.galleryAccessToken !== accessToken) {
             return res.status(403).json({ error: 'Invalid access token' });
         }
 
