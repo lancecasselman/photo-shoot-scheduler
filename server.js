@@ -1784,7 +1784,7 @@ app.get('/api/global-storage-stats', isAuthenticated, async (req, res) => {
                     COUNT(*) as file_count,
                     COALESCE(SUM(file_size_bytes), 0) as total_bytes
                 FROM session_files 
-                WHERE session_id = ANY($1::uuid[])
+                WHERE session_id = ANY($1::text[])
                 GROUP BY folder_type
             `, [sessionIds]);
             
