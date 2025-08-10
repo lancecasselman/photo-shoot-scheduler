@@ -555,86 +555,46 @@
                     return; // Stop upload if quota exceeded
                 }
                 
-                // Get upload URL
-                const response = await fetch(`/api/sessions/${sessionId}/files/upload`, {
+                // Use FormData for server-proxied upload to R2 (avoids CORS issues)
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                // Upload directly through server to R2
+                const response = await fetch(`/api/sessions/${sessionId}/files/${folderType}/upload-direct`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    credentials: 'include', // Include cookies for authentication
-                    body: JSON.stringify({ 
-                        folderType,
-                        fileName: file.name, // Pass original filename
-                        fileSize: file.size // Pass file size for quota check
-                    })
+                    credentials: 'include',
+                    body: formData
                 });
                 
-                console.log(`Upload URL response status: ${response.status}`);
+                console.log(`Upload response status: ${response.status}`);
                 
                 if (!response.ok) {
                     const errorText = await response.text();
-                    console.error('Upload URL response error:', errorText);
-                    alert(`Authentication or server error: ${errorText}. Please refresh the page and try again.`);
-                    throw new Error(`Failed to get upload URL: ${response.status} - ${errorText}`);
-                }
-                
-                const uploadData = await response.json();
-                const uploadURL = uploadData.uploadURL;
-                const finalFileName = uploadData.finalFileName || fileName;
-                const r2Key = uploadData.r2Key;
-                console.log('Got R2 upload URL:', uploadURL);
-                console.log('R2 storage path:', r2Key);
-                
-                // Upload file to object storage
-                console.log(`Uploading ${file.name} to object storage...`);
-                const uploadResponse = await fetch(uploadURL, {
-                    method: 'PUT',
-                    body: file,
-                    headers: {
-                        'Content-Type': file.type || 'application/octet-stream'
-                    }
-                });
-                
-                console.log(`Object storage upload response status: ${uploadResponse.status}`);
-                
-                if (!uploadResponse.ok) {
-                    const errorText = await uploadResponse.text();
-                    console.error('File upload response error:', errorText);
-                    alert(`File upload failed: ${errorText}. Please try again.`);
-                    throw new Error(`Failed to upload file: ${uploadResponse.status} - ${errorText}`);
-                }
-                
-                console.log(`Successfully uploaded ${file.name} to object storage`);
-                updateProgress(`Uploaded ${file.name}`);
-                
-                // Wait a moment for file to become available in storage before setting metadata
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                
-                // Set metadata with original filename
-                try {
-                    const metadataResponse = await fetch(`/api/sessions/${sessionId}/files/${folderType}/update-metadata`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        credentials: 'include',
-                        body: JSON.stringify({
-                            uploadUrl: uploadURL,
-                            originalName: file.name,
-                            finalFileName: finalFileName,
-                            r2Key: r2Key
-                        })
-                    });
+                    console.error('Upload response error:', errorText);
                     
-                    if (metadataResponse.ok) {
-                        console.log(`Successfully set metadata for ${file.name}`);
-                    } else {
-                        const errorText = await metadataResponse.text();
-                        console.warn(`Failed to set metadata for ${file.name}:`, errorText);
+                    if (response.status === 401) {
+                        alert('Authentication error. Please refresh the page and try again.');
+                        throw new Error(`Authentication failed: ${response.status}`);
                     }
-                } catch (metadataError) {
-                    console.warn('Metadata update error:', metadataError);
+                    
+                    if (response.status === 413) {
+                        try {
+                            const errorData = JSON.parse(errorText);
+                            alert(errorData.message || 'Storage quota exceeded. Please upgrade your storage plan.');
+                            throw new Error(errorData.message || 'Storage quota exceeded');
+                        } catch {
+                            alert('Storage quota exceeded. Please upgrade your storage plan.');
+                            throw new Error('Storage quota exceeded');
+                        }
+                    }
+                    
+                    alert(`Upload failed: ${errorText}. Please try again.`);
+                    throw new Error(`Upload failed: ${response.status} - ${errorText}`);
                 }
+                
+                const result = await response.json();
+                console.log(`Successfully uploaded ${file.name} to R2:`, result);
+                updateProgress(`Uploaded ${file.name}`);
                 
                 // Wait a moment for upload to propagate, then reload files
                 setTimeout(() => {

@@ -1,0 +1,128 @@
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:1128  Uncaught SyntaxError: Identifier 'photoDeletion' has already been declared (at gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:1128:13)
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:811 Loaded 0 files for gallery folder
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:734 Storage stats received: Object
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:789 Storage stats loaded successfully
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:549 Starting upload for 20250622052112-DSC_1136_(2).jpg, size: 31128788
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:550 Session ID: a7e93f59-9a96-497b-8af5-763858e84bd8, Folder Type: gallery
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:549 Starting upload for 20250622052418-DSC_1146.jpg, size: 28544311
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:550 Session ID: a7e93f59-9a96-497b-8af5-763858e84bd8, Folder Type: gallery
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:658   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/api/storage/quota 404 (Not Found)
+checkStorageQuota @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:658
+uploadFile @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:553
+(anonymous) @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:532
+processUploadQueue @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:532
+handleFileSelection @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:518
+(anonymous) @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:503
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:663  Failed to check storage quota, allowing upload
+checkStorageQuota @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:663
+await in checkStorageQuota
+uploadFile @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:553
+(anonymous) @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:532
+processUploadQueue @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:532
+handleFileSelection @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:518
+(anonymous) @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:503
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:658   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/api/storage/quota 404 (Not Found)
+checkStorageQuota @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:658
+uploadFile @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:553
+(anonymous) @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:532
+processUploadQueue @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:532
+handleFileSelection @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:518
+(anonymous) @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:503
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:663  Failed to check storage quota, allowing upload
+checkStorageQuota @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:663
+await in checkStorageQuota
+uploadFile @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:553
+(anonymous) @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:532
+processUploadQueue @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:532
+handleFileSelection @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:518
+(anonymous) @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:503
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:572 Upload URL response status: 200
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:585 Got R2 upload URL: https://c63e5e9dae18a57faff7ea25de2856ff.r2.cloudflarestorage.com/photoappr2token/photographer-BFZI4tzu4rdsiZZSK63cqZ5yohw2/session-a7e93f59-9a96-497b-8af5-763858e84bd8/gallery/20250810224349-20250622052418-DSC_1146.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=a7f2515a33202b681e17a19bbab7a783%2F20250810%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20250810T224349Z&X-Amz-Expires=3600&X-Amz-Signature=30967e7e089225e26c0821654d8c97d3bc60d86ea0c6458b74cc6cd80df25563&X-Amz-SignedHeaders=host&x-amz-checksum-crc32=AAAAAA%3D%3D&x-amz-meta-foldertype=gallery&x-amz-meta-originalname=20250622052418-DSC_1146.jpg&x-amz-meta-sessionid=a7e93f59-9a96-497b-8af5-763858e84bd8&x-amz-meta-uploadtimestamp=2025-08-10T22%3A43%3A49.105Z&x-amz-meta-userid=BFZI4tzu4rdsiZZSK63cqZ5yohw2&x-amz-sdk-checksum-algorithm=CRC32&x-id=PutObject
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:586 R2 storage path: photographer-BFZI4tzu4rdsiZZSK63cqZ5yohw2/session-a7e93f59-9a96-497b-8af5-763858e84bd8/gallery/20250810224349-20250622052418-DSC_1146.jpg
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:589 Uploading 20250622052418-DSC_1146.jpg to object storage...
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=a…:1  Access to fetch at 'https://c63e5e9dae18a57faff7ea25de2856ff.r2.cloudflarestorage.com/photoappr2token/photographer-BFZI4tzu4rdsiZZSK63cqZ5yohw2/session-a7e93f59-9a96-497b-8af5-763858e84bd8/gallery/20250810224349-20250622052418-DSC_1146.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=a7f2515a33202b681e17a19bbab7a783%2F20250810%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20250810T224349Z&X-Amz-Expires=3600&X-Amz-Signature=30967e7e089225e26c0821654d8c97d3bc60d86ea0c6458b74cc6cd80df25563&X-Amz-SignedHeaders=host&x-amz-checksum-crc32=AAAAAA%3D%3D&x-amz-meta-foldertype=gallery&x-amz-meta-originalname=20250622052418-DSC_1146.jpg&x-amz-meta-sessionid=a7e93f59-9a96-497b-8af5-763858e84bd8&x-amz-meta-uploadtimestamp=2025-08-10T22%3A43%3A49.105Z&x-amz-meta-userid=BFZI4tzu4rdsiZZSK63cqZ5yohw2&x-amz-sdk-checksum-algorithm=CRC32&x-id=PutObject' from origin 'https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource.
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:590   PUT https://c63e5e9dae18a57faff7ea25de2856ff.r2.cloudflarestorage.com/photoappr2token/photographer-BFZI4tzu4rdsiZZSK63cqZ5yohw2/session-a7e93f59-9a96-497b-8af5-763858e84bd8/gallery/20250810224349-20250622052418-DSC_1146.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=a7f2515a33202b681e17a19bbab7a783%2F20250810%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20250810T224349Z&X-Amz-Expires=3600&X-Amz-Signature=30967e7e089225e26c0821654d8c97d3bc60d86ea0c6458b74cc6cd80df25563&X-Amz-SignedHeaders=host&x-amz-checksum-crc32=AAAAAA%3D%3D&x-amz-meta-foldertype=gallery&x-amz-meta-originalname=20250622052418-DSC_1146.jpg&x-amz-meta-sessionid=a7e93f59-9a96-497b-8af5-763858e84bd8&x-amz-meta-uploadtimestamp=2025-08-10T22%3A43%3A49.105Z&x-amz-meta-userid=BFZI4tzu4rdsiZZSK63cqZ5yohw2&x-amz-sdk-checksum-algorithm=CRC32&x-id=PutObject net::ERR_FAILED
+uploadFile @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:590
+await in uploadFile
+(anonymous) @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:532
+processUploadQueue @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:532
+handleFileSelection @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:518
+(anonymous) @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:503
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:645  Upload error for 20250622052418-DSC_1146.jpg : TypeError: Failed to fetch
+    at uploadFile (gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:590:46)
+    at async Promise.all (/index 1)
+    at async processUploadQueue (gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:535:21)
+uploadFile @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:645
+await in uploadFile
+(anonymous) @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:532
+processUploadQueue @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:532
+handleFileSelection @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:518
+(anonymous) @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:503
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:572 Upload URL response status: 200
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:585 Got R2 upload URL: https://c63e5e9dae18a57faff7ea25de2856ff.r2.cloudflarestorage.com/photoappr2token/photographer-BFZI4tzu4rdsiZZSK63cqZ5yohw2/session-a7e93f59-9a96-497b-8af5-763858e84bd8/gallery/20250810224349-20250622052112-DSC_1136_%282%29.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=a7f2515a33202b681e17a19bbab7a783%2F20250810%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20250810T224349Z&X-Amz-Expires=3600&X-Amz-Signature=1a44c4e0c6157535a5cc726c4c7cda136ef7df94037fc3ce0780b89c70244f2e&X-Amz-SignedHeaders=host&x-amz-checksum-crc32=AAAAAA%3D%3D&x-amz-meta-foldertype=gallery&x-amz-meta-originalname=20250622052112-DSC_1136_%282%29.jpg&x-amz-meta-sessionid=a7e93f59-9a96-497b-8af5-763858e84bd8&x-amz-meta-uploadtimestamp=2025-08-10T22%3A43%3A49.200Z&x-amz-meta-userid=BFZI4tzu4rdsiZZSK63cqZ5yohw2&x-amz-sdk-checksum-algorithm=CRC32&x-id=PutObject
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:586 R2 storage path: photographer-BFZI4tzu4rdsiZZSK63cqZ5yohw2/session-a7e93f59-9a96-497b-8af5-763858e84bd8/gallery/20250810224349-20250622052112-DSC_1136_(2).jpg
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:589 Uploading 20250622052112-DSC_1136_(2).jpg to object storage...
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=a…:1  Access to fetch at 'https://c63e5e9dae18a57faff7ea25de2856ff.r2.cloudflarestorage.com/photoappr2token/photographer-BFZI4tzu4rdsiZZSK63cqZ5yohw2/session-a7e93f59-9a96-497b-8af5-763858e84bd8/gallery/20250810224349-20250622052112-DSC_1136_%282%29.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=a7f2515a33202b681e17a19bbab7a783%2F20250810%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20250810T224349Z&X-Amz-Expires=3600&X-Amz-Signature=1a44c4e0c6157535a5cc726c4c7cda136ef7df94037fc3ce0780b89c70244f2e&X-Amz-SignedHeaders=host&x-amz-checksum-crc32=AAAAAA%3D%3D&x-amz-meta-foldertype=gallery&x-amz-meta-originalname=20250622052112-DSC_1136_%282%29.jpg&x-amz-meta-sessionid=a7e93f59-9a96-497b-8af5-763858e84bd8&x-amz-meta-uploadtimestamp=2025-08-10T22%3A43%3A49.200Z&x-amz-meta-userid=BFZI4tzu4rdsiZZSK63cqZ5yohw2&x-amz-sdk-checksum-algorithm=CRC32&x-id=PutObject' from origin 'https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource.
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:590   PUT https://c63e5e9dae18a57faff7ea25de2856ff.r2.cloudflarestorage.com/photoappr2token/photographer-BFZI4tzu4rdsiZZSK63cqZ5yohw2/session-a7e93f59-9a96-497b-8af5-763858e84bd8/gallery/20250810224349-20250622052112-DSC_1136_%282%29.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=a7f2515a33202b681e17a19bbab7a783%2F20250810%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20250810T224349Z&X-Amz-Expires=3600&X-Amz-Signature=1a44c4e0c6157535a5cc726c4c7cda136ef7df94037fc3ce0780b89c70244f2e&X-Amz-SignedHeaders=host&x-amz-checksum-crc32=AAAAAA%3D%3D&x-amz-meta-foldertype=gallery&x-amz-meta-originalname=20250622052112-DSC_1136_%282%29.jpg&x-amz-meta-sessionid=a7e93f59-9a96-497b-8af5-763858e84bd8&x-amz-meta-uploadtimestamp=2025-08-10T22%3A43%3A49.200Z&x-amz-meta-userid=BFZI4tzu4rdsiZZSK63cqZ5yohw2&x-amz-sdk-checksum-algorithm=CRC32&x-id=PutObject net::ERR_FAILED
+uploadFile @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:590
+await in uploadFile
+(anonymous) @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:532
+processUploadQueue @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:532
+handleFileSelection @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:518
+(anonymous) @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:503
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:645  Upload error for 20250622052112-DSC_1136_(2).jpg : TypeError: Failed to fetch
+    at uploadFile (gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:590:46)
+    at async Promise.all (/index 0)
+    at async processUploadQueue (gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:535:21)
+uploadFile @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:645
+await in uploadFile
+(anonymous) @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:532
+processUploadQueue @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:532
+handleFileSelection @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:518
+(anonymous) @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:503
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:549 Starting upload for 20250622052850-DSC_1161.jpg, size: 31204731
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:550 Session ID: a7e93f59-9a96-497b-8af5-763858e84bd8, Folder Type: gallery
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:658   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/api/storage/quota 404 (Not Found)
+checkStorageQuota @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:658
+uploadFile @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:553
+(anonymous) @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:532
+processUploadQueue @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:532
+await in processUploadQueue
+handleFileSelection @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:518
+(anonymous) @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:503
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:663  Failed to check storage quota, allowing upload
+checkStorageQuota @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:663
+await in checkStorageQuota
+uploadFile @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:553
+(anonymous) @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:532
+processUploadQueue @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:532
+await in processUploadQueue
+handleFileSelection @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:518
+(anonymous) @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:503
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:572 Upload URL response status: 200
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:585 Got R2 upload URL: https://c63e5e9dae18a57faff7ea25de2856ff.r2.cloudflarestorage.com/photoappr2token/photographer-BFZI4tzu4rdsiZZSK63cqZ5yohw2/session-a7e93f59-9a96-497b-8af5-763858e84bd8/gallery/20250810224353-20250622052850-DSC_1161.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=a7f2515a33202b681e17a19bbab7a783%2F20250810%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20250810T224353Z&X-Amz-Expires=3600&X-Amz-Signature=abd3d642d0d6e1e80489bd39d6896a70e24c2fc015e01a73b8e81d12745ffb41&X-Amz-SignedHeaders=host&x-amz-checksum-crc32=AAAAAA%3D%3D&x-amz-meta-foldertype=gallery&x-amz-meta-originalname=20250622052850-DSC_1161.jpg&x-amz-meta-sessionid=a7e93f59-9a96-497b-8af5-763858e84bd8&x-amz-meta-uploadtimestamp=2025-08-10T22%3A43%3A53.123Z&x-amz-meta-userid=BFZI4tzu4rdsiZZSK63cqZ5yohw2&x-amz-sdk-checksum-algorithm=CRC32&x-id=PutObject
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:586 R2 storage path: photographer-BFZI4tzu4rdsiZZSK63cqZ5yohw2/session-a7e93f59-9a96-497b-8af5-763858e84bd8/gallery/20250810224353-20250622052850-DSC_1161.jpg
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:589 Uploading 20250622052850-DSC_1161.jpg to object storage...
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=a…:1  Access to fetch at 'https://c63e5e9dae18a57faff7ea25de2856ff.r2.cloudflarestorage.com/photoappr2token/photographer-BFZI4tzu4rdsiZZSK63cqZ5yohw2/session-a7e93f59-9a96-497b-8af5-763858e84bd8/gallery/20250810224353-20250622052850-DSC_1161.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=a7f2515a33202b681e17a19bbab7a783%2F20250810%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20250810T224353Z&X-Amz-Expires=3600&X-Amz-Signature=abd3d642d0d6e1e80489bd39d6896a70e24c2fc015e01a73b8e81d12745ffb41&X-Amz-SignedHeaders=host&x-amz-checksum-crc32=AAAAAA%3D%3D&x-amz-meta-foldertype=gallery&x-amz-meta-originalname=20250622052850-DSC_1161.jpg&x-amz-meta-sessionid=a7e93f59-9a96-497b-8af5-763858e84bd8&x-amz-meta-uploadtimestamp=2025-08-10T22%3A43%3A53.123Z&x-amz-meta-userid=BFZI4tzu4rdsiZZSK63cqZ5yohw2&x-amz-sdk-checksum-algorithm=CRC32&x-id=PutObject' from origin 'https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev' has been blocked by CORS policy: Response to preflight request doesn't pass access control check: No 'Access-Control-Allow-Origin' header is present on the requested resource.
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:590   PUT https://c63e5e9dae18a57faff7ea25de2856ff.r2.cloudflarestorage.com/photoappr2token/photographer-BFZI4tzu4rdsiZZSK63cqZ5yohw2/session-a7e93f59-9a96-497b-8af5-763858e84bd8/gallery/20250810224353-20250622052850-DSC_1161.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=a7f2515a33202b681e17a19bbab7a783%2F20250810%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20250810T224353Z&X-Amz-Expires=3600&X-Amz-Signature=abd3d642d0d6e1e80489bd39d6896a70e24c2fc015e01a73b8e81d12745ffb41&X-Amz-SignedHeaders=host&x-amz-checksum-crc32=AAAAAA%3D%3D&x-amz-meta-foldertype=gallery&x-amz-meta-originalname=20250622052850-DSC_1161.jpg&x-amz-meta-sessionid=a7e93f59-9a96-497b-8af5-763858e84bd8&x-amz-meta-uploadtimestamp=2025-08-10T22%3A43%3A53.123Z&x-amz-meta-userid=BFZI4tzu4rdsiZZSK63cqZ5yohw2&x-amz-sdk-checksum-algorithm=CRC32&x-id=PutObject net::ERR_FAILED
+uploadFile @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:590
+await in uploadFile
+(anonymous) @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:532
+processUploadQueue @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:532
+await in processUploadQueue
+handleFileSelection @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:518
+(anonymous) @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:503
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:645  Upload error for 20250622052850-DSC_1161.jpg : TypeError: Failed to fetch
+    at uploadFile (gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:590:46)
+    at async Promise.all (/index 0)
+    at async processUploadQueue (gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:535:21)
+uploadFile @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:645
+await in uploadFile
+(anonymous) @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:532
+processUploadQueue @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:532
+await in processUploadQueue
+handleFileSelection @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:518
+(anonymous) @ gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:503
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:811 Loaded 0 files for gallery folder
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:734 Storage stats received: {sessionId: 'a7e93f59-9a96-497b-8af5-763858e84bd8', gallery: {…}, raw: {…}, combined: {…}}
+gallery-manager.html?sessionId=a7e93f59-9a96-497b-8af5-763858e84bd8&folderType=gallery&clientName=amandatest:789 Storage stats loaded successfully

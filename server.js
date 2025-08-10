@@ -1151,6 +1151,108 @@ app.post('/api/sessions/:sessionId/files/upload', isAuthenticated, async (req, r
     }
 });
 
+// Separate multer config for R2 uploads (using memory storage)
+const uploadMemory = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 5 * 1024 * 1024 * 1024, // 5GB per file for R2
+        files: 100
+    },
+    fileFilter: (req, file, cb) => {
+        console.log(`R2 upload file filter: ${file.originalname} (${file.mimetype})`);
+        cb(null, true);
+    }
+});
+
+// Server-proxied upload to R2 (avoiding CORS issues)
+app.post('/api/sessions/:sessionId/files/:folderType/upload-direct', isAuthenticated, uploadMemory.single('file'), async (req, res) => {
+    try {
+        const { sessionId, folderType } = req.params;
+        const file = req.file;
+        const userId = req.session.user.uid;
+        
+        if (!file) {
+            return res.status(400).json({ error: 'No file provided' });
+        }
+        
+        console.log(`Direct R2 upload - Session: ${sessionId}, Folder: ${folderType}, File: ${file.originalname}, Size: ${file.size}, User: ${userId}`);
+        
+        if (!['gallery', 'raw'].includes(folderType)) {
+            return res.status(400).json({ error: 'Invalid folder type' });
+        }
+
+        // QUOTA ENFORCEMENT: Check if user can upload this file
+        const normalizedUserId = normalizeUserForLance(userId);
+        const quotaCheck = await storageSystem.canUpload(normalizedUserId, file.size);
+        if (!quotaCheck.canUpload) {
+            return res.status(413).json({ 
+                error: 'Storage quota exceeded',
+                currentUsageGB: quotaCheck.currentUsageGB,
+                quotaGB: quotaCheck.quotaGB,
+                requiredGB: quotaCheck.newTotalGB,
+                message: `Upload would exceed your ${quotaCheck.quotaGB}GB storage limit. Please upgrade your storage plan to continue.`
+            });
+        }
+        
+        // Generate unique filename
+        const now = new Date();
+        const timestamp = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}${String(now.getSeconds()).padStart(2,'0')}`;
+        const fileExt = file.originalname.substring(file.originalname.lastIndexOf('.'));
+        const fileNameWithoutExt = file.originalname.substring(0, file.originalname.lastIndexOf('.'));
+        const uniqueFileName = `${timestamp}-${fileNameWithoutExt}${fileExt}`;
+        
+        // Upload to R2
+        const r2Key = `photographer-${userId}/session-${sessionId}/${folderType}/${uniqueFileName}`;
+        
+        const { PutObjectCommand } = require('@aws-sdk/client-s3');
+        const putCommand = new PutObjectCommand({
+            Bucket: 'photoappr2token',
+            Key: r2Key,
+            Body: file.buffer,
+            ContentType: file.mimetype,
+            Metadata: {
+                'originalName': file.originalname,
+                'userId': userId,
+                'sessionId': sessionId,
+                'folderType': folderType,
+                'uploadTimestamp': now.toISOString()
+            }
+        });
+        
+        await r2FileManager.s3Client.send(putCommand);
+        console.log(`✅ File uploaded to R2: ${r2Key}`);
+        
+        // Track in database
+        const fileSizeMB = file.size / (1024 * 1024);
+        await db.insert(sessionFiles).values({
+            sessionId,
+            userId, // Firebase UID
+            fileName: uniqueFileName,
+            originalName: file.originalname,
+            fileSize: fileSizeMB.toFixed(2),
+            folderType,
+            r2Key,
+            uploadedAt: now
+        });
+        
+        console.log(`✅ File tracked in database: ${file.originalname} (${fileSizeMB.toFixed(2)}MB)`);
+        
+        // Update storage tracking
+        await storageSystem.updateStorage(normalizedUserId, file.size, 'add');
+        
+        res.json({ 
+            success: true,
+            fileName: uniqueFileName,
+            originalName: file.originalname,
+            r2Key,
+            size: fileSizeMB.toFixed(2)
+        });
+    } catch (error) {
+        console.error('Error uploading file:', error);
+        res.status(500).json({ error: 'Failed to upload file' });
+    }
+});
+
 // List session files
 app.get('/api/sessions/:sessionId/files/:folderType', isAuthenticated, async (req, res) => {
     try {
