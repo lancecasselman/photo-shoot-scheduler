@@ -10914,36 +10914,193 @@ END:VCALENDAR`;
                 return total + price;
             }, 0);
 
-            // Update UI
+            // Calculate total expenses for the same period
+            const totalExpenses = calculateExpensesForPeriod(filterStart, filterEnd);
+            
+            // Calculate net profit
+            const netProfit = totalEarnings - totalExpenses;
+
+            // Update UI elements
             const totalEarningsElement = document.getElementById('totalEarnings');
             const earningsPeriodElement = document.getElementById('earningsPeriod');
+            const totalExpensesElement = document.getElementById('totalExpenses');
+            const expensesPeriodElement = document.getElementById('expensesPeriod');
+            const netProfitElement = document.getElementById('netProfit');
+            const profitPeriodElement = document.getElementById('profitPeriod');
+            
+            const periodText = dateRange === 'custom' 
+                ? `${startDate} to ${endDate}`
+                : dateRange.charAt(0).toUpperCase() + dateRange.slice(1).replace(/([A-Z])/g, ' $1');
             
             if (totalEarningsElement) {
                 totalEarningsElement.textContent = `$${totalEarnings.toFixed(2)}`;
             }
             
             if (earningsPeriodElement) {
-                const periodText = dateRange === 'custom' 
-                    ? `${startDate} to ${endDate}`
-                    : dateRange.charAt(0).toUpperCase() + dateRange.slice(1).replace(/([A-Z])/g, ' $1');
                 earningsPeriodElement.textContent = periodText;
             }
 
+            if (totalExpensesElement) {
+                totalExpensesElement.textContent = `$${totalExpenses.toFixed(2)}`;
+            }
+            
+            if (expensesPeriodElement) {
+                expensesPeriodElement.textContent = periodText;
+            }
+
+            if (netProfitElement) {
+                netProfitElement.textContent = `$${netProfit.toFixed(2)}`;
+                // Color coding for profit/loss
+                if (netProfit >= 0) {
+                    netProfitElement.style.color = '#28a745'; // Green for profit
+                } else {
+                    netProfitElement.style.color = '#dc3545'; // Red for loss
+                }
+            }
+            
+            if (profitPeriodElement) {
+                profitPeriodElement.textContent = periodText;
+            }
+
             // Log for debugging
-            console.log(`Total earnings for ${dateRange}:`, totalEarnings, 'from', filteredSessions.length, 'sessions');
+            console.log(`Financial stats for ${dateRange}:`, {
+                earnings: totalEarnings,
+                expenses: totalExpenses,
+                profit: netProfit,
+                sessions: filteredSessions.length
+            });
             
             return {
                 totalEarnings,
+                totalExpenses,
+                netProfit,
                 sessionCount: filteredSessions.length,
                 sessions: filteredSessions
             };
         }
+
+        // Expense calculation function
+        function calculateExpensesForPeriod(filterStart, filterEnd) {
+            // Initialize expenses if not exists
+            if (!window.expenses || !Array.isArray(window.expenses)) {
+                window.expenses = loadExpensesFromStorage();
+            }
+
+            // Filter expenses by date range
+            const filteredExpenses = window.expenses.filter(expense => {
+                const expenseDate = new Date(expense.date);
+                return expenseDate >= filterStart && expenseDate < filterEnd;
+            });
+
+            // Calculate total amount
+            const totalExpenses = filteredExpenses.reduce((total, expense) => {
+                const amount = parseFloat(expense.amount) || 0;
+                return total + amount;
+            }, 0);
+
+            console.log(`Found ${filteredExpenses.length} expenses totaling $${totalExpenses.toFixed(2)} in period`);
+            return totalExpenses;
+        }
+
+        // Load expenses from localStorage
+        function loadExpensesFromStorage() {
+            try {
+                const stored = localStorage.getItem('businessExpenses');
+                if (stored) {
+                    return JSON.parse(stored);
+                }
+            } catch (error) {
+                console.error('Error loading expenses from storage:', error);
+            }
+            return [];
+        }
+
+        // Save expenses to localStorage
+        function saveExpensesToStorage(expenses) {
+            try {
+                localStorage.setItem('businessExpenses', JSON.stringify(expenses));
+                return true;
+            } catch (error) {
+                console.error('Error saving expenses to storage:', error);
+                return false;
+            }
+        }
+
+        // Expense management functions
+        window.showAddExpenseForm = function() {
+            const form = document.getElementById('addExpenseForm');
+            if (form) {
+                form.style.display = 'block';
+                // Set today's date as default
+                const today = new Date().toISOString().split('T')[0];
+                const dateInput = document.getElementById('expenseDate');
+                if (dateInput) dateInput.value = today;
+            }
+        };
+
+        window.cancelExpenseForm = function() {
+            const form = document.getElementById('addExpenseForm');
+            if (form) {
+                form.style.display = 'none';
+                // Clear form
+                document.getElementById('expenseDate').value = '';
+                document.getElementById('expenseCategory').value = 'software';
+                document.getElementById('expenseAmount').value = '';
+                document.getElementById('expenseDescription').value = '';
+                document.getElementById('expenseRecurring').checked = false;
+            }
+        };
+
+        window.saveExpense = function() {
+            const date = document.getElementById('expenseDate').value;
+            const category = document.getElementById('expenseCategory').value;
+            const amount = parseFloat(document.getElementById('expenseAmount').value);
+            const description = document.getElementById('expenseDescription').value;
+            const recurring = document.getElementById('expenseRecurring').checked;
+
+            if (!date || !amount || amount <= 0) {
+                showMessage('Please fill in all required fields with valid amounts', 'error');
+                return;
+            }
+
+            if (!window.expenses) {
+                window.expenses = [];
+            }
+
+            const expense = {
+                id: Date.now(),
+                date: date,
+                category: category,
+                amount: amount,
+                description: description || '',
+                recurring: recurring,
+                createdAt: new Date().toISOString()
+            };
+
+            window.expenses.push(expense);
+            saveExpensesToStorage(window.expenses);
+            
+            // Update dashboard if we're currently viewing it
+            const currentRange = document.getElementById('dashboardDateRange')?.value || 'thisMonth';
+            calculateFinancialStats(currentRange);
+            
+            // Close form and show success
+            window.cancelExpenseForm();
+            showMessage('Expense added successfully!', 'success');
+            
+            // Refresh expenses table if visible
+            if (typeof loadExpensesTable === 'function') {
+                loadExpensesTable();
+            }
+        };
 
         // Initialize dashboard when sessions are loaded
         window.initializeDashboard = function() {
             // Wait for sessions to be loaded, then calculate stats
             if (window.sessions && Array.isArray(window.sessions)) {
                 console.log('Initializing dashboard with', window.sessions.length, 'sessions');
+                // Initialize expenses
+                window.expenses = loadExpensesFromStorage();
                 calculateFinancialStats('thisMonth');
             } else {
                 console.log('Sessions not ready yet, retrying dashboard initialization...');
