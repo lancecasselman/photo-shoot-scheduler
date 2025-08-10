@@ -801,6 +801,45 @@ app.use((req, res, next) => {
     }
 });
 
+// Geocoding API endpoint for address autocomplete
+app.post('/api/geocode', async (req, res) => {
+  try {
+    const { address } = req.body;
+    
+    if (!address) {
+      return res.status(400).json({ error: 'Address is required' });
+    }
+    
+    // Check if Google Maps API key is available
+    const googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY;
+    if (!googleMapsApiKey) {
+      return res.status(503).json({ error: 'Google Maps API not configured' });
+    }
+    
+    // Make request to Google Maps Geocoding API
+    const response = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${googleMapsApiKey}`
+    );
+    
+    if (!response.ok) {
+      throw new Error(`Google Maps API returned ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (data.status === 'OK') {
+      res.json(data);
+    } else {
+      console.log(`Google Maps API status: ${data.status} for address: ${address}`);
+      res.status(404).json({ error: 'Address not found', status: data.status });
+    }
+    
+  } catch (error) {
+    console.error('Geocoding API error:', error);
+    res.status(500).json({ error: 'Geocoding service error' });
+  }
+});
+
 // Firebase Authentication Routes
 app.post('/api/auth/firebase-login', async (req, res) => {
     try {

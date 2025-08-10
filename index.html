@@ -9584,18 +9584,17 @@ END:VCALENDAR`;
 
         async function searchAddresses(query, suggestionsContainer, input) {
             try {
-                // Primary search with OpenStreetMap Nominatim API
-                let addresses = await searchWithNominatim(query);
+                // Primary search with Google Maps Geocoding API
+                let addresses = await searchWithGoogleMaps(query);
                 
-                // If no results, try with different search parameters
+                // If no results or API unavailable, fallback to OpenStreetMap
                 if (addresses.length === 0) {
-                    // Try searching without country restriction for rural addresses
-                    addresses = await searchWithNominatim(query, false);
-                }
-                
-                // If still no results, try a broader search
-                if (addresses.length === 0) {
-                    addresses = await searchWithBroadQuery(query);
+                    addresses = await searchWithNominatim(query);
+                    
+                    // If still no results, try broader search
+                    if (addresses.length === 0) {
+                        addresses = await searchWithBroadQuery(query);
+                    }
                 }
                 
                 displayAddressSuggestions(addresses, suggestionsContainer, input);
@@ -9610,6 +9609,44 @@ END:VCALENDAR`;
                     </div>
                 `;
                 suggestionsContainer.style.display = 'block';
+            }
+        }
+
+        async function searchWithGoogleMaps(query) {
+            try {
+                // Use our backend to proxy Google Maps API to keep API keys secure
+                const response = await fetch('/api/geocode', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ address: query })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Google Maps API not available');
+                }
+                
+                const data = await response.json();
+                
+                // Transform Google Maps response to our format
+                return data.results.map(result => ({
+                    display_name: result.formatted_address,
+                    address: result.address_components.reduce((acc, component) => {
+                        if (component.types.includes('street_number')) acc.house_number = component.long_name;
+                        if (component.types.includes('route')) acc.road = component.long_name;
+                        if (component.types.includes('locality')) acc.city = component.long_name;
+                        if (component.types.includes('administrative_area_level_1')) acc.state = component.short_name;
+                        if (component.types.includes('postal_code')) acc.postcode = component.long_name;
+                        return acc;
+                    }, {}),
+                    lat: result.geometry.location.lat,
+                    lon: result.geometry.location.lng
+                }));
+                
+            } catch (error) {
+                console.log('Google Maps API fallback to OpenStreetMap');
+                return [];
             }
         }
 
