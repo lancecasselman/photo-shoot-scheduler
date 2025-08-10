@@ -1364,41 +1364,75 @@ app.get('/api/sessions/:sessionId/files/:folderType/download/:fileName', async (
     }
 });
 
-// Get storage statistics for a specific session
+// Get storage statistics for a specific session from database
 app.get('/api/sessions/:sessionId/storage', isAuthenticated, async (req, res) => {
     try {
         const { sessionId } = req.params;
-
-        // Get files for both folder types
-        const galleryFiles = await objectStorageService.getSessionFiles(sessionId, 'gallery');
-        const rawFiles = await objectStorageService.getSessionFiles(sessionId, 'raw');
         
-        // Calculate storage for each folder type
-        const galleryStats = await calculateFolderStats(galleryFiles);
-        const rawStats = await calculateFolderStats(rawFiles);
-        
-        // Calculate combined stats
-        const totalFiles = galleryStats.fileCount + rawStats.fileCount;
-        const totalSize = galleryStats.totalSize + rawStats.totalSize;
-        
-        res.json({
-            sessionId,
-            gallery: {
-                fileCount: galleryStats.fileCount,
-                totalSize: galleryStats.totalSize,
-                totalSizeFormatted: formatBytes(galleryStats.totalSize)
-            },
-            raw: {
-                fileCount: rawStats.fileCount,
-                totalSize: rawStats.totalSize,
-                totalSizeFormatted: formatBytes(rawStats.totalSize)
-            },
-            combined: {
-                fileCount: totalFiles,
-                totalSize: totalSize,
-                totalSizeFormatted: formatBytes(totalSize)
-            }
-        });
+        // Get files from database
+        let client;
+        try {
+            client = await pool.connect();
+            
+            // Get gallery files
+            const galleryResult = await client.query(`
+                SELECT 
+                    COUNT(*) as file_count,
+                    COALESCE(SUM(file_size_bytes), 0) as total_bytes,
+                    COUNT(CASE WHEN file_size_bytes IS NOT NULL THEN 1 END) as valid_files
+                FROM session_files 
+                WHERE session_id = $1 AND folder_type = 'gallery'
+            `, [sessionId]);
+            
+            // Get raw files
+            const rawResult = await client.query(`
+                SELECT 
+                    COUNT(*) as file_count,
+                    COALESCE(SUM(file_size_bytes), 0) as total_bytes,
+                    COUNT(CASE WHEN file_size_bytes IS NOT NULL THEN 1 END) as valid_files
+                FROM session_files 
+                WHERE session_id = $1 AND folder_type = 'raw'
+            `, [sessionId]);
+            
+            const galleryStats = galleryResult.rows[0];
+            const rawStats = rawResult.rows[0];
+            
+            const gallerySize = parseInt(galleryStats.total_bytes) || 0;
+            const rawSize = parseInt(rawStats.total_bytes) || 0;
+            const totalSize = gallerySize + rawSize;
+            
+            console.log(`Storage stats for session ${sessionId}:`);
+            console.log(`Gallery: ${galleryStats.file_count} total files, ${galleryStats.valid_files} with size data, ${gallerySize} bytes`);
+            console.log(`Raw: ${rawStats.file_count} total files, ${rawStats.valid_files} with size data, ${rawSize} bytes`);
+            
+            const result = {
+                sessionId,
+                gallery: {
+                    fileCount: parseInt(galleryStats.file_count),
+                    validFiles: parseInt(galleryStats.valid_files),
+                    totalSize: gallerySize,
+                    totalSizeFormatted: formatBytes(gallerySize)
+                },
+                raw: {
+                    fileCount: parseInt(rawStats.file_count),
+                    validFiles: parseInt(rawStats.valid_files),
+                    totalSize: rawSize,
+                    totalSizeFormatted: formatBytes(rawSize)
+                },
+                combined: {
+                    fileCount: parseInt(galleryStats.file_count) + parseInt(rawStats.file_count),
+                    validFiles: parseInt(galleryStats.valid_files) + parseInt(rawStats.valid_files),
+                    totalSize: totalSize,
+                    totalSizeFormatted: formatBytes(totalSize)
+                }
+            };
+            
+            console.log('Final storage stats result:', JSON.stringify(result, null, 2));
+            res.json(result);
+            
+        } finally {
+            if (client) client.release();
+        }
     } catch (error) {
         console.error('Error getting session storage stats:', error);
         res.status(500).json({ error: 'Failed to get session storage statistics' });
