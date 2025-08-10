@@ -266,14 +266,14 @@ Generate:
 5. Urgency/scarcity elements
 6. Guarantee/risk reversal copy
 
-Return as JSON with packages array containing: name, description, features, priceAnchor, urgency, guarantee`;
+Please format your response as JSON with a packages array containing: name, description, features, priceAnchor, urgency, guarantee`;
 
             const completion = await openai.chat.completions.create({
                 model: "gpt-4o",
                 messages: [
                     {
                         role: "system",
-                        content: "You are a pricing psychology expert for service businesses. Create pricing copy that justifies value and encourages immediate action."
+                        content: "You are a pricing psychology expert for service businesses. Create pricing copy that justifies value and encourages immediate action. Always respond with valid JSON format."
                     },
                     {
                         role: "user",
@@ -424,14 +424,14 @@ Requirements:
 - Each idea should be 1-2 sentences
 - Mix of short-term and long-term ideas
 
-Format as a simple array of ideas, no numbering or bullets needed.`;
+Please format your response as JSON with an "ideas" array containing the list of ideas.`;
 
             const completion = await openai.chat.completions.create({
                 model: "gpt-4o",
                 messages: [
                     {
                         role: "system",
-                        content: "You are a creative business consultant specializing in photography businesses. Generate diverse, actionable ideas that photographers can implement."
+                        content: "You are a creative business consultant specializing in photography businesses. Generate diverse, actionable ideas that photographers can implement. Always respond with valid JSON format."
                     },
                     {
                         role: "user",
