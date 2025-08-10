@@ -1222,20 +1222,30 @@ app.post('/api/sessions/:sessionId/files/:folderType/upload-direct', isAuthentic
         await r2FileManager.s3Client.send(putCommand);
         console.log(`✅ File uploaded to R2: ${r2Key}`);
         
-        // Track in database
+        // Track in database using pool
         const fileSizeMB = file.size / (1024 * 1024);
-        await db.insert(sessionFiles).values({
-            sessionId,
-            userId, // Firebase UID
-            fileName: uniqueFileName,
-            originalName: file.originalname,
-            fileSize: fileSizeMB.toFixed(2),
-            folderType,
-            r2Key,
-            uploadedAt: now
-        });
-        
-        console.log(`✅ File tracked in database: ${file.originalname} (${fileSizeMB.toFixed(2)}MB)`);
+        let client;
+        try {
+            client = await pool.connect();
+            await client.query(`
+                INSERT INTO session_files (
+                    session_id, user_id, file_name, original_name, 
+                    file_size, folder_type, r2_key, uploaded_at
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            `, [
+                sessionId,
+                userId, // Firebase UID
+                uniqueFileName,
+                file.originalname,
+                fileSizeMB.toFixed(2),
+                folderType,
+                r2Key,
+                now
+            ]);
+            console.log(`✅ File tracked in database: ${file.originalname} (${fileSizeMB.toFixed(2)}MB)`);
+        } finally {
+            if (client) client.release();
+        }
         
         // Update storage tracking
         await storageSystem.updateStorage(normalizedUserId, file.size, 'add');
