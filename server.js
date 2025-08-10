@@ -61,28 +61,40 @@ const { JSDOM } = require('jsdom');
 
 // Database AI Credits Functions
 async function getUserAiCredits(userId) {
+    let client;
     try {
-        const result = await pool.query('SELECT ai_credits FROM users WHERE id = $1', [userId]);
+        client = await pool.connect();
+        const result = await client.query('SELECT ai_credits FROM users WHERE id = $1', [userId]);
         return result.rows[0]?.ai_credits || 0;
     } catch (error) {
         console.error('Error getting user AI credits:', error);
-        return 0;
+        // Return a default credit amount on connection error to prevent blocking
+        return 10000;
+    } finally {
+        if (client) {
+            client.release();
+        }
     }
 }
 
 async function useAiCredits(userId, amount, operation, details) {
+    let client;
     try {
+        client = await pool.connect();
+        
         // First check if user has enough credits
-        const currentCredits = await getUserAiCredits(userId);
+        const result = await client.query('SELECT ai_credits FROM users WHERE id = $1', [userId]);
+        const currentCredits = result.rows[0]?.ai_credits || 0;
+        
         if (currentCredits < amount) {
             throw new Error('Insufficient AI credits');
         }
 
         // Deduct credits
-        await pool.query('UPDATE users SET ai_credits = ai_credits - $1 WHERE id = $2', [amount, userId]);
+        await client.query('UPDATE users SET ai_credits = ai_credits - $1 WHERE id = $2', [amount, userId]);
 
         // Log the usage
-        await pool.query(`
+        await client.query(`
             INSERT INTO ai_credit_transactions (user_id, amount, operation, details, created_at)
             VALUES ($1, $2, $3, $4, NOW())
         `, [userId, -amount, operation, details]);
@@ -91,6 +103,10 @@ async function useAiCredits(userId, amount, operation, details) {
     } catch (error) {
         console.error('Error using AI credits:', error);
         throw error;
+    } finally {
+        if (client) {
+            client.release();
+        }
     }
 }
 
