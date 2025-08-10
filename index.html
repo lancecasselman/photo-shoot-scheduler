@@ -9865,25 +9865,105 @@ END:VCALENDAR`;
                 return;
             }
 
+            showMessage('Calculating driving distance...', 'info');
+
             try {
-                // Use Nominatim geocoding API to get coordinates for both locations
-                const startResponse = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(startLocation)}`);
-                const endResponse = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(endLocation)}`);
+                // Use Google Distance Matrix API for accurate road distances
+                const response = await fetch('/api/distance', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        origins: [startLocation],
+                        destinations: [endLocation]
+                    })
+                });
 
-                const startData = await startResponse.json();
-                const endData = await endResponse.json();
-
-                if (startData.length === 0 || endData.length === 0) {
-                    showMessage('Could not find one or both locations. Please check addresses.', 'error');
-                    return;
+                if (!response.ok) {
+                    throw new Error('Distance API not available');
                 }
 
-                const startLat = parseFloat(startData[0].lat);
-                const startLon = parseFloat(startData[0].lon);
-                const endLat = parseFloat(endData[0].lat);
-                const endLon = parseFloat(endData[0].lon);
+                const data = await response.json();
 
-                // Calculate distance using Haversine formula
+                if (data.status === 'OK' && data.rows[0]?.elements[0]?.status === 'OK') {
+                    const element = data.rows[0].elements[0];
+                    const distanceInMeters = element.distance.value;
+                    const miles = (distanceInMeters * 0.000621371).toFixed(1); // Convert meters to miles
+                    const duration = element.duration.text;
+                    
+                    const milesInput = document.getElementById('milesDriven');
+                    if (milesInput) {
+                        milesInput.value = miles;
+                    }
+                    
+                    showMessage(`Driving distance: ${miles} miles (${duration})`, 'success');
+                } else {
+                    // Fallback to geocoding + Haversine if Distance Matrix fails
+                    await calculateMilesWithFallback(startLocation, endLocation);
+                }
+
+            } catch (error) {
+                console.error('Error with Google Distance Matrix, using fallback:', error);
+                // Fallback to geocoding + Haversine calculation
+                await calculateMilesWithFallback(startLocation, endLocation);
+            }
+        }
+
+        async function calculateMilesWithFallback(startLocation, endLocation) {
+            try {
+                showMessage('Using estimated distance calculation...', 'info');
+                
+                // Use our enhanced geocoding API for coordinates
+                const [startResponse, endResponse] = await Promise.all([
+                    fetch('/api/geocode', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ address: startLocation })
+                    }),
+                    fetch('/api/geocode', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ address: endLocation })
+                    })
+                ]);
+
+                const [startData, endData] = await Promise.all([
+                    startResponse.json(),
+                    endResponse.json()
+                ]);
+
+                if (!startData.results?.[0] || !endData.results?.[0]) {
+                    throw new Error('Could not find one or both locations');
+                }
+
+                // Extract coordinates from enhanced geocoding response
+                const startResult = startData.results[0];
+                const endResult = endData.results[0];
+                
+                let startLat, startLon, endLat, endLon;
+
+                if (startResult.lat && startResult.lon) {
+                    startLat = startResult.lat;
+                    startLon = startResult.lon;
+                } else if (startResult.geometry?.location) {
+                    startLat = startResult.geometry.location.lat;
+                    startLon = startResult.geometry.location.lng;
+                } else {
+                    throw new Error('Could not get coordinates for start location');
+                }
+
+                if (endResult.lat && endResult.lon) {
+                    endLat = endResult.lat;
+                    endLon = endResult.lon;
+                } else if (endResult.geometry?.location) {
+                    endLat = endResult.geometry.location.lat;
+                    endLon = endResult.geometry.location.lng;
+                } else {
+                    throw new Error('Could not get coordinates for end location');
+                }
+
+                // Calculate straight-line distance using Haversine formula
                 const miles = calculateHaversineDistance(startLat, startLon, endLat, endLon);
                 
                 const milesInput = document.getElementById('milesDriven');
@@ -9891,10 +9971,11 @@ END:VCALENDAR`;
                     milesInput.value = miles.toFixed(1);
                 }
                 
-                showMessage(`Calculated distance: ${miles.toFixed(1)} miles`, 'success');
+                showMessage(`Estimated distance: ${miles.toFixed(1)} miles (straight-line)`, 'success');
+
             } catch (error) {
-                console.error('Error calculating miles:', error);
-                showMessage('Failed to calculate miles. Please enter manually.', 'error');
+                console.error('Fallback distance calculation failed:', error);
+                showMessage('Could not calculate distance. Please enter miles manually.', 'error');
             }
         }
 

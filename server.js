@@ -906,6 +906,53 @@ app.post('/api/geocode', async (req, res) => {
   }
 });
 
+// Google Distance Matrix API endpoint for accurate mileage calculation
+app.post('/api/distance', async (req, res) => {
+  try {
+    const { origins, destinations } = req.body;
+    
+    if (!origins || !destinations || !Array.isArray(origins) || !Array.isArray(destinations)) {
+      return res.status(400).json({ error: 'Origins and destinations arrays are required' });
+    }
+    
+    // Check if Google Maps API key is available
+    const googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY;
+    if (!googleMapsApiKey) {
+      return res.status(503).json({ error: 'Google Maps API not configured' });
+    }
+    
+    // Encode origins and destinations for URL
+    const originsStr = origins.map(origin => encodeURIComponent(origin)).join('|');
+    const destinationsStr = destinations.map(dest => encodeURIComponent(dest)).join('|');
+    
+    // Call Google Distance Matrix API
+    const response = await fetch(
+      `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${originsStr}&destinations=${destinationsStr}&units=imperial&key=${googleMapsApiKey}`
+    );
+    
+    if (!response.ok) {
+      throw new Error(`Distance Matrix API returned ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (data.status === 'OK') {
+      res.json(data);
+    } else {
+      console.log(`Distance Matrix API status: ${data.status}`);
+      res.status(404).json({ 
+        error: 'Could not calculate distance', 
+        status: data.status,
+        errorMessage: data.error_message 
+      });
+    }
+    
+  } catch (error) {
+    console.error('Distance Matrix API error:', error);
+    res.status(500).json({ error: 'Distance calculation service error' });
+  }
+});
+
 // Firebase Authentication Routes
 app.post('/api/auth/firebase-login', async (req, res) => {
     try {
