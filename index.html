@@ -3969,9 +3969,16 @@
 
         .financial-overview {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: var(--spacing-lg);
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md);
             margin-bottom: var(--spacing-xl);
+        }
+
+        @media (min-width: 768px) {
+            .financial-overview {
+                grid-template-columns: repeat(4, 1fr);
+                gap: var(--spacing-lg);
+            }
         }
 
         .financial-card {
@@ -3995,6 +4002,10 @@
 
         .financial-card.profit {
             border-left-color: var(--gold-muted);
+        }
+
+        .financial-card.mileage {
+            border-left-color: #6f42c1;
         }
 
         .card-icon {
@@ -11360,6 +11371,15 @@ END:VCALENDAR`;
                         </div>
                     </div>
                     
+                    <div class="financial-card mileage">
+                        <div class="card-icon">🚗</div>
+                        <div class="card-content">
+                            <h3>Mileage Deduction</h3>
+                            <div class="amount" id="totalMileage">$0.00</div>
+                            <div class="period" id="mileagePeriod">This Month</div>
+                        </div>
+                    </div>
+                    
                     <div class="financial-card profit">
                         <div class="card-icon">📈</div>
                         <div class="card-content">
@@ -12201,6 +12221,9 @@ END:VCALENDAR`;
             // Calculate total expenses for the same period (await the async function)
             const totalExpenses = await calculateExpensesForPeriod(filterStart, filterEnd);
             
+            // Calculate mileage deduction for the same period
+            const totalMileageDeduction = calculateMileageForPeriod(filterStart, filterEnd);
+            
             // Calculate net profit
             const netProfit = totalEarnings - totalExpenses;
 
@@ -12209,6 +12232,8 @@ END:VCALENDAR`;
             const earningsPeriodElement = document.getElementById('earningsPeriod');
             const totalExpensesElement = document.getElementById('totalExpenses');
             const expensesPeriodElement = document.getElementById('expensesPeriod');
+            const totalMileageElement = document.getElementById('totalMileage');
+            const mileagePeriodElement = document.getElementById('mileagePeriod');
             const netProfitElement = document.getElementById('netProfit');
             const profitPeriodElement = document.getElementById('profitPeriod');
             
@@ -12232,6 +12257,14 @@ END:VCALENDAR`;
                 expensesPeriodElement.textContent = periodText;
             }
 
+            if (totalMileageElement) {
+                totalMileageElement.textContent = `$${totalMileageDeduction.toFixed(2)}`;
+            }
+            
+            if (mileagePeriodElement) {
+                mileagePeriodElement.textContent = periodText;
+            }
+
             if (netProfitElement) {
                 netProfitElement.textContent = `$${netProfit.toFixed(2)}`;
                 // Color coding for profit/loss
@@ -12250,6 +12283,7 @@ END:VCALENDAR`;
             console.log(`Financial stats for ${dateRange}:`, {
                 earnings: totalEarnings,
                 expenses: totalExpenses,
+                mileageDeduction: totalMileageDeduction,
                 profit: netProfit,
                 sessions: filteredSessions.length
             });
@@ -12257,6 +12291,7 @@ END:VCALENDAR`;
             return {
                 totalEarnings,
                 totalExpenses,
+                totalMileageDeduction,
                 netProfit,
                 sessionCount: filteredSessions.length,
                 sessions: filteredSessions
@@ -12326,6 +12361,33 @@ END:VCALENDAR`;
             } catch (error) {
                 console.error('Error saving expenses to storage:', error);
                 return false;
+            }
+        }
+
+        // Mileage calculation function
+        function calculateMileageForPeriod(filterStart, filterEnd) {
+            try {
+                // Get mileage trips from localStorage
+                const trips = JSON.parse(localStorage.getItem('mileageTrips') || '[]');
+                
+                // Filter trips by date range
+                const filteredTrips = trips.filter(trip => {
+                    const tripDate = new Date(trip.date);
+                    return tripDate >= filterStart && tripDate < filterEnd;
+                });
+
+                // Calculate total mileage deduction (IRS rate: $0.655 per mile for 2023)
+                const totalMiles = filteredTrips.reduce((total, trip) => {
+                    return total + (trip.miles || 0);
+                }, 0);
+
+                const mileageDeduction = totalMiles * 0.655;
+                
+                console.log(`Found ${filteredTrips.length} trips totaling ${totalMiles.toFixed(1)} miles ($${mileageDeduction.toFixed(2)} deduction) in period`);
+                return mileageDeduction;
+            } catch (error) {
+                console.error('Error calculating mileage:', error);
+                return 0;
             }
         }
 
