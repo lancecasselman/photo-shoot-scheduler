@@ -7123,7 +7123,41 @@ lance@thelegacyphotography.com`;
                     .setup-card p {
                         color: #6c757d;
                         margin-bottom: 20px;
+                    }
+
+                    /* Round Trip Toggle Styles */
+                    .form-group label {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        font-weight: 500;
+                        color: #495057;
+                        margin-bottom: 10px;
+                    }
+                    
+                    .form-group input[type="checkbox"] {
+                        width: 16px;
+                        height: 16px;
+                        accent-color: #d4af37;
+                        cursor: pointer;
+                    }
+                    
+                    .calculate-btn {
+                        background: #28a745;
+                        color: white;
+                        border: none;
+                        padding: 10px 16px;
+                        border-radius: 5px;
+                        cursor: pointer;
                         font-size: 14px;
+                        font-weight: 500;
+                        transition: all 0.2s;
+                        margin-left: 10px;
+                    }
+                    
+                    .calculate-btn:hover {
+                        background: #218838;
+                        transform: translateY(-1px);
                     }
 
                     .location-setup {
@@ -9853,64 +9887,125 @@ END:VCALENDAR`;
                 if (document.getElementById('startLocation')) document.getElementById('startLocation').value = '';
                 if (document.getElementById('endLocation')) document.getElementById('endLocation').value = '';
                 if (document.getElementById('milesDriven')) document.getElementById('milesDriven').value = '';
+                if (document.getElementById('roundTrip')) document.getElementById('roundTrip').checked = false;
+                
+                // Reset calculate button text
+                updateCalculateButton();
             }
         }
 
         async function calculateMiles() {
             const startLocation = document.getElementById('startLocation')?.value.trim();
             const endLocation = document.getElementById('endLocation')?.value.trim();
+            const isRoundTrip = document.getElementById('roundTrip')?.checked;
 
             if (!startLocation || !endLocation) {
                 showMessage('Please enter both start and end locations', 'error');
                 return;
             }
 
-            showMessage('Calculating driving distance...', 'info');
+            const tripType = isRoundTrip ? 'round trip' : 'one way';
+            showMessage(`Calculating ${tripType} driving distance...`, 'info');
 
             try {
-                // Use Google Distance Matrix API for accurate road distances
-                const response = await fetch('/api/distance', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ 
-                        origins: [startLocation],
-                        destinations: [endLocation]
-                    })
-                });
+                if (isRoundTrip) {
+                    // Calculate round trip: Start → End → Start
+                    const outboundResponse = await fetch('/api/distance', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ 
+                            origins: [startLocation],
+                            destinations: [endLocation]
+                        })
+                    });
 
-                if (!response.ok) {
-                    throw new Error('Distance API not available');
-                }
+                    const returnResponse = await fetch('/api/distance', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ 
+                            origins: [endLocation],
+                            destinations: [startLocation]
+                        })
+                    });
 
-                const data = await response.json();
-
-                if (data.status === 'OK' && data.rows[0]?.elements[0]?.status === 'OK') {
-                    const element = data.rows[0].elements[0];
-                    const distanceInMeters = element.distance.value;
-                    const miles = (distanceInMeters * 0.000621371).toFixed(1); // Convert meters to miles
-                    const duration = element.duration.text;
-                    
-                    const milesInput = document.getElementById('milesDriven');
-                    if (milesInput) {
-                        milesInput.value = miles;
+                    if (!outboundResponse.ok || !returnResponse.ok) {
+                        throw new Error('Distance API not available');
                     }
-                    
-                    showMessage(`Driving distance: ${miles} miles (${duration})`, 'success');
+
+                    const outboundData = await outboundResponse.json();
+                    const returnData = await returnResponse.json();
+
+                    if (outboundData.status === 'OK' && returnData.status === 'OK' &&
+                        outboundData.rows[0]?.elements[0]?.status === 'OK' &&
+                        returnData.rows[0]?.elements[0]?.status === 'OK') {
+                        
+                        const outboundElement = outboundData.rows[0].elements[0];
+                        const returnElement = returnData.rows[0].elements[0];
+                        
+                        const outboundMeters = outboundElement.distance.value;
+                        const returnMeters = returnElement.distance.value;
+                        const totalMeters = outboundMeters + returnMeters;
+                        
+                        const totalMiles = (totalMeters * 0.000621371).toFixed(1);
+                        const outboundDuration = outboundElement.duration.text;
+                        const returnDuration = returnElement.duration.text;
+                        
+                        const milesInput = document.getElementById('milesDriven');
+                        if (milesInput) {
+                            milesInput.value = totalMiles;
+                        }
+                        
+                        showMessage(`Round trip: ${totalMiles} miles (${outboundDuration} + ${returnDuration})`, 'success');
+                    } else {
+                        await calculateMilesWithFallback(startLocation, endLocation, isRoundTrip);
+                    }
                 } else {
-                    // Fallback to geocoding + Haversine if Distance Matrix fails
-                    await calculateMilesWithFallback(startLocation, endLocation);
+                    // Calculate one-way trip
+                    const response = await fetch('/api/distance', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ 
+                            origins: [startLocation],
+                            destinations: [endLocation]
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Distance API not available');
+                    }
+
+                    const data = await response.json();
+
+                    if (data.status === 'OK' && data.rows[0]?.elements[0]?.status === 'OK') {
+                        const element = data.rows[0].elements[0];
+                        const distanceInMeters = element.distance.value;
+                        const miles = (distanceInMeters * 0.000621371).toFixed(1);
+                        const duration = element.duration.text;
+                        
+                        const milesInput = document.getElementById('milesDriven');
+                        if (milesInput) {
+                            milesInput.value = miles;
+                        }
+                        
+                        showMessage(`Driving distance: ${miles} miles (${duration})`, 'success');
+                    } else {
+                        await calculateMilesWithFallback(startLocation, endLocation, isRoundTrip);
+                    }
                 }
 
             } catch (error) {
                 console.error('Error with Google Distance Matrix, using fallback:', error);
-                // Fallback to geocoding + Haversine calculation
-                await calculateMilesWithFallback(startLocation, endLocation);
+                await calculateMilesWithFallback(startLocation, endLocation, isRoundTrip);
             }
         }
 
-        async function calculateMilesWithFallback(startLocation, endLocation) {
+        async function calculateMilesWithFallback(startLocation, endLocation, isRoundTrip = false) {
             try {
                 showMessage('Using estimated distance calculation...', 'info');
                 
@@ -9964,14 +10059,20 @@ END:VCALENDAR`;
                 }
 
                 // Calculate straight-line distance using Haversine formula
-                const miles = calculateHaversineDistance(startLat, startLon, endLat, endLon);
+                let miles = calculateHaversineDistance(startLat, startLon, endLat, endLon);
+                
+                // Double the distance for round trips
+                if (isRoundTrip) {
+                    miles = miles * 2;
+                }
                 
                 const milesInput = document.getElementById('milesDriven');
                 if (milesInput) {
                     milesInput.value = miles.toFixed(1);
                 }
                 
-                showMessage(`Estimated distance: ${miles.toFixed(1)} miles (straight-line)`, 'success');
+                const tripType = isRoundTrip ? 'round trip' : 'one way';
+                showMessage(`Estimated ${tripType}: ${miles.toFixed(1)} miles (straight-line)`, 'success');
 
             } catch (error) {
                 console.error('Fallback distance calculation failed:', error);
@@ -9990,12 +10091,28 @@ END:VCALENDAR`;
             return R * c;
         }
 
+        function updateCalculateButton() {
+            const isRoundTrip = document.getElementById('roundTrip')?.checked;
+            const button = document.getElementById('calculateBtn');
+            
+            if (button) {
+                if (isRoundTrip) {
+                    button.textContent = '🔄 Calculate Round Trip';
+                    button.title = 'Calculate total distance: Start → End → Start';
+                } else {
+                    button.textContent = '🗺️ Calculate Miles';
+                    button.title = 'Calculate one-way distance';
+                }
+            }
+        }
+
         function saveTrip() {
             const date = document.getElementById('tripDate')?.value;
             const purpose = document.getElementById('tripPurpose')?.value;
             const startLocation = document.getElementById('startLocation')?.value;
             const endLocation = document.getElementById('endLocation')?.value;
             const miles = parseFloat(document.getElementById('milesDriven')?.value || '0');
+            const isRoundTrip = document.getElementById('roundTrip')?.checked || false;
 
             if (!date || !startLocation || !endLocation || !miles) {
                 showMessage('Please fill in all required fields', 'error');
@@ -10009,6 +10126,7 @@ END:VCALENDAR`;
                 startLocation,
                 endLocation,
                 miles,
+                roundTrip: isRoundTrip,
                 timestamp: new Date().toISOString()
             };
 
@@ -10018,7 +10136,9 @@ END:VCALENDAR`;
 
             cancelTripForm();
             loadMileageTrips();
-            showMessage('Trip added successfully!', 'success');
+            
+            const tripType = isRoundTrip ? 'round trip' : 'one-way trip';
+            showMessage(`${tripType} added successfully!`, 'success');
         }
 
         function loadMileageTrips() {
@@ -10034,7 +10154,7 @@ END:VCALENDAR`;
             initializeAddressAutocomplete();
             
             if (trips.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;">No trips recorded yet.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">No trips recorded yet.</td></tr>';
                 return;
             }
             
@@ -10044,6 +10164,7 @@ END:VCALENDAR`;
                     <td>${trip.startLocation}</td>
                     <td>${trip.endLocation}</td>
                     <td>${trip.miles.toFixed(1)}</td>
+                    <td>${trip.roundTrip ? '🔄 Round Trip' : '➡️ One Way'}</td>
                     <td>${trip.purpose.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</td>
                     <td>
                         <button onclick="deleteTrip(${trip.id})" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Delete</button>
@@ -11152,7 +11273,11 @@ END:VCALENDAR`;
                             <input type="number" id="milesDriven" step="0.1" min="0">
                         </div>
                         <div class="form-group">
-                            <button onclick="calculateMiles()" class="calculate-btn">🗺️ Calculate Miles</button>
+                            <label>
+                                <input type="checkbox" id="roundTrip" onchange="updateCalculateButton()">
+                                Round Trip (Start → End → Start)
+                            </label>
+                            <button onclick="calculateMiles()" class="calculate-btn" id="calculateBtn">🗺️ Calculate Miles</button>
                         </div>
                     </div>
                     <div class="form-actions">
@@ -11169,6 +11294,7 @@ END:VCALENDAR`;
                                 <th>Start Location</th>
                                 <th>End Location</th>
                                 <th>Miles</th>
+                                <th>Type</th>
                                 <th>Purpose</th>
                                 <th>Actions</th>
                             </tr>
