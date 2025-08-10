@@ -1316,11 +1316,12 @@ app.delete('/api/sessions/:sessionId/files/:folderType/:fileName', isAuthenticat
     }
 });
 
-// Update uploaded file with metadata
+// Update uploaded file with metadata and track in database
 app.post('/api/sessions/:sessionId/files/:folderType/update-metadata', isAuthenticated, async (req, res) => {
     try {
         const { sessionId, folderType } = req.params;
         const { uploadUrl, originalName } = req.body;
+        const userId = req.session.user.uid; // Use Firebase UID for consistency
         
         if (!['gallery', 'raw'].includes(folderType)) {
             return res.status(400).json({ error: 'Invalid folder type' });
@@ -1332,6 +1333,7 @@ app.post('/api/sessions/:sessionId/files/:folderType/update-metadata', isAuthent
         const fileName = pathParts[pathParts.length - 1];
         
         console.log(`Setting metadata for file: ${fileName}, originalName: ${originalName}`);
+        console.log(`User ID (Firebase UID): ${userId}, Session ID: ${sessionId}`);
         
         // Wait a moment for file to be available after upload
         await new Promise(resolve => setTimeout(resolve, 2000));
@@ -1347,6 +1349,11 @@ app.post('/api/sessions/:sessionId/files/:folderType/update-metadata', isAuthent
             return res.status(404).json({ error: 'File not found' });
         }
         
+        // Get file metadata for size
+        const [metadata] = await file.getMetadata();
+        const fileSizeBytes = metadata.size || 0;
+        const fileSizeMB = fileSizeBytes / (1024 * 1024);
+        
         // Set metadata with original filename
         await file.setMetadata({
             metadata: {
@@ -1356,11 +1363,38 @@ app.post('/api/sessions/:sessionId/files/:folderType/update-metadata', isAuthent
         
         console.log(`Successfully set metadata for ${fileName} with original name: ${originalName}`);
         
-        // Update storage tracking for this file
+        // Track file in database with Firebase UID
         try {
-            await updateStorageTracking(req.session.user.uid, sessionId, folderType, fileName, file);
+            // Ensure session_files table exists
+            await pool.query(`
+                CREATE TABLE IF NOT EXISTS session_files (
+                    id SERIAL PRIMARY KEY,
+                    user_id VARCHAR(255) NOT NULL,
+                    session_id VARCHAR(255) NOT NULL,
+                    folder_type VARCHAR(20) NOT NULL,
+                    filename VARCHAR(500) NOT NULL,
+                    file_size_bytes BIGINT NOT NULL,
+                    file_size_mb DECIMAL(10,3) NOT NULL,
+                    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(session_id, folder_type, filename)
+                )
+            `);
+            
+            // Insert or update file record with Firebase UID
+            await pool.query(`
+                INSERT INTO session_files (user_id, session_id, folder_type, filename, file_size_bytes, file_size_mb)
+                VALUES ($1, $2, $3, $4, $5, $6)
+                ON CONFLICT (session_id, folder_type, filename) 
+                DO UPDATE SET 
+                    user_id = EXCLUDED.user_id,
+                    file_size_bytes = EXCLUDED.file_size_bytes,
+                    file_size_mb = EXCLUDED.file_size_mb,
+                    uploaded_at = CURRENT_TIMESTAMP
+            `, [userId, sessionId, folderType, fileName, fileSizeBytes, fileSizeMB]);
+            
+            console.log(`✅ File tracked in database: ${fileName} (${fileSizeMB.toFixed(2)}MB) for user ${userId}`);
         } catch (trackingError) {
-            console.warn('Storage tracking update failed:', trackingError);
+            console.error('Storage tracking error:', trackingError);
         }
         
         res.json({ success: true });

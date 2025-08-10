@@ -564,7 +564,8 @@
                     credentials: 'include', // Include cookies for authentication
                     body: JSON.stringify({ 
                         folderType,
-                        fileName: file.name // Pass original filename
+                        fileName: file.name, // Pass original filename
+                        fileSize: file.size // Pass file size for quota check
                     })
                 });
                 
