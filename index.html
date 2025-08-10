@@ -13753,11 +13753,15 @@ END:VCALENDAR`;
             }
         });
 
-        // Update the switchTab function to handle Website Builder
-        const originalSwitchTab = window.switchTab;
+        // Extend the existing switchTab function to handle Website Builder
+        const existingSwitchTab = window.switchTab;
         window.switchTab = function(tabName) {
-            originalSwitchTab(tabName);
+            // Call the original switchTab function
+            if (existingSwitchTab) {
+                existingSwitchTab.call(this, tabName);
+            }
             
+            // Handle Website Builder initialization
             if (tabName === 'websiteBuilder' && !WebsiteBuilder.initialized) {
                 WebsiteBuilder.init();
                 WebsiteBuilder.loadSavedData();
