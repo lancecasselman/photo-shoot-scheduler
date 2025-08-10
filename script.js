@@ -254,6 +254,11 @@ async function loadSessions() {
         }
         console.log('Successfully loaded', sessions.length, 'sessions');
         
+        // Initialize business dashboard with real session data
+        if (typeof window.initializeDashboard === 'function') {
+            window.initializeDashboard();
+        }
+        
         // Storage usage is now handled by loadStorageUsage() in index.html
         
     } catch (error) {

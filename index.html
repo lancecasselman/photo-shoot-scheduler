@@ -10099,7 +10099,7 @@ END:VCALENDAR`;
                         <div id="customDateRange" style="display: none;">
                             <input type="date" id="startDate">
                             <input type="date" id="endDate">
-                            <button onclick="updateDashboard()">Apply</button>
+                            <button onclick="applyCustomDateRange()">Apply</button>
                         </div>
                     </div>
                 </div>
@@ -10824,6 +10824,133 @@ END:VCALENDAR`;
                 dateInput.value = today.toISOString().split('T')[0];
             }
         });
+
+        // Business Management Dashboard Functions
+        window.updateDashboard = function() {
+            const dateRange = document.getElementById('dashboardDateRange').value;
+            const customDateRange = document.getElementById('customDateRange');
+            
+            if (dateRange === 'custom') {
+                customDateRange.style.display = 'block';
+                return; // Wait for user to apply custom range
+            } else {
+                customDateRange.style.display = 'none';
+            }
+            
+            calculateFinancialStats(dateRange);
+        };
+
+        // Apply custom date range
+        window.applyCustomDateRange = function() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            
+            if (!startDate || !endDate) {
+                showMessage('Please select both start and end dates', 'error');
+                return;
+            }
+            
+            if (new Date(startDate) > new Date(endDate)) {
+                showMessage('Start date must be before end date', 'error');
+                return;
+            }
+            
+            calculateFinancialStats('custom', startDate, endDate);
+        };
+
+        function calculateFinancialStats(dateRange, startDate = null, endDate = null) {
+            if (!window.sessions || !Array.isArray(window.sessions)) {
+                console.log('Sessions not loaded yet, using empty array');
+                window.sessions = [];
+            }
+
+            // Calculate date range boundaries
+            const now = new Date();
+            let filterStart, filterEnd;
+            
+            switch (dateRange) {
+                case 'today':
+                    filterStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    filterEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+                    break;
+                case 'thisWeek':
+                    const startOfWeek = now.getDate() - now.getDay();
+                    filterStart = new Date(now.getFullYear(), now.getMonth(), startOfWeek);
+                    filterEnd = new Date(now.getFullYear(), now.getMonth(), startOfWeek + 7);
+                    break;
+                case 'thisMonth':
+                    filterStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                    filterEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+                    break;
+                case 'thisYear':
+                    filterStart = new Date(now.getFullYear(), 0, 1);
+                    filterEnd = new Date(now.getFullYear() + 1, 0, 1);
+                    break;
+                case 'custom':
+                    if (startDate && endDate) {
+                        filterStart = new Date(startDate);
+                        filterEnd = new Date(endDate);
+                        filterEnd.setDate(filterEnd.getDate() + 1); // Include end date
+                    } else {
+                        return; // Invalid custom range
+                    }
+                    break;
+                default:
+                    filterStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                    filterEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+            }
+
+            // Filter sessions by date range
+            const filteredSessions = window.sessions.filter(session => {
+                const sessionDate = new Date(session.dateTime);
+                return sessionDate >= filterStart && sessionDate < filterEnd;
+            });
+
+            console.log(`Found ${filteredSessions.length} sessions in ${dateRange} period`);
+
+            // Calculate total earnings from session prices
+            const totalEarnings = filteredSessions.reduce((total, session) => {
+                const price = parseFloat(session.price) || 0;
+                return total + price;
+            }, 0);
+
+            // Update UI
+            const totalEarningsElement = document.getElementById('totalEarnings');
+            const earningsPeriodElement = document.getElementById('earningsPeriod');
+            
+            if (totalEarningsElement) {
+                totalEarningsElement.textContent = `$${totalEarnings.toFixed(2)}`;
+            }
+            
+            if (earningsPeriodElement) {
+                const periodText = dateRange === 'custom' 
+                    ? `${startDate} to ${endDate}`
+                    : dateRange.charAt(0).toUpperCase() + dateRange.slice(1).replace(/([A-Z])/g, ' $1');
+                earningsPeriodElement.textContent = periodText;
+            }
+
+            // Log for debugging
+            console.log(`Total earnings for ${dateRange}:`, totalEarnings, 'from', filteredSessions.length, 'sessions');
+            
+            return {
+                totalEarnings,
+                sessionCount: filteredSessions.length,
+                sessions: filteredSessions
+            };
+        }
+
+        // Initialize dashboard when sessions are loaded
+        window.initializeDashboard = function() {
+            // Wait for sessions to be loaded, then calculate stats
+            if (window.sessions && Array.isArray(window.sessions)) {
+                console.log('Initializing dashboard with', window.sessions.length, 'sessions');
+                calculateFinancialStats('thisMonth');
+            } else {
+                console.log('Sessions not ready yet, retrying dashboard initialization...');
+                // Retry after a short delay
+                setTimeout(window.initializeDashboard, 500);
+            }
+        }
 
         // Enhanced page initialization is handled by the main DOMContentLoaded event above
 
