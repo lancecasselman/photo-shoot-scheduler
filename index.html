@@ -10544,10 +10544,11 @@ END:VCALENDAR`;
                 const { startDate, endDate } = getDateRange(period);
                 
                 // Get expenses from database
-                const expensesResponse = await fetch('/api/business/expenses');
+                const expensesResponse = await fetch('/api/expenses');
                 let expenses = [];
                 if (expensesResponse.ok) {
-                    expenses = await expensesResponse.json();
+                    const data = await expensesResponse.json();
+                    expenses = data.success ? data.expenses : [];
                 }
 
                 // Get mileage trips from localStorage
