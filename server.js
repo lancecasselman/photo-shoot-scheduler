@@ -5312,13 +5312,61 @@ app.get('/api/gallery/:id/verify', async (req, res) => {
             return res.status(403).json({ error: 'Invalid access token' });
         }
 
+        // Get the Firebase UID from session_files table to properly locate R2 files
+        let firebaseUserId = null;
+        try {
+            const client = await pool.connect();
+            const fileUserResult = await client.query(
+                'SELECT DISTINCT user_id FROM session_files WHERE session_id = $1 LIMIT 1',
+                [sessionId]
+            );
+            client.release();
+            if (fileUserResult.rows.length > 0) {
+                firebaseUserId = fileUserResult.rows[0].user_id;
+            }
+        } catch (dbError) {
+            console.error('Error getting Firebase UID:', dbError);
+        }
+
+        // List files directly from R2 using the S3 API
+        const { ListObjectsV2Command } = require('@aws-sdk/client-s3');
+        const userIdForR2 = firebaseUserId || session.userId;
+        const prefix = `photographer-${userIdForR2}/session-${sessionId}/gallery/`;
+        const listCommand = new ListObjectsV2Command({
+            Bucket: 'photoappr2token',
+            Prefix: prefix
+        });
+        
+        let galleryPhotos = [];
+        try {
+            const listResponse = await r2FileManager.s3Client.send(listCommand);
+            const r2Files = listResponse.Contents || [];
+            
+            console.log(`Found ${r2Files.length} files in R2 with prefix ${prefix}`);
+            
+            galleryPhotos = r2Files.map(file => {
+                const filename = file.Key.split('/').pop();
+                return {
+                    filename: filename,
+                    displayName: filename,
+                    url: `/api/gallery/${sessionId}/photo/${encodeURIComponent(filename)}`,
+                    size: file.Size,
+                    folderType: 'gallery'
+                };
+            });
+        } catch (r2Error) {
+            console.error('Error listing R2 files directly:', r2Error);
+        }
+        
+        console.log(`Found ${galleryPhotos.length} photos in R2 gallery for session ${sessionId}`);
+
         // No expiration check - galleries never expire
 
         res.json({
             sessionId: session.id,
             clientName: session.clientName,
             sessionType: session.sessionType,
-            photos: session.photos || [],
+            photos: galleryPhotos || [],
             valid: true
         });
     } catch (error) {
@@ -5345,15 +5393,132 @@ app.get('/api/gallery/:id/photos', async (req, res) => {
             return res.status(403).json({ error: 'Invalid access token' });
         }
 
+        // Get the Firebase UID from session_files table to properly locate R2 files
+        let firebaseUserId = null;
+        try {
+            const client = await pool.connect();
+            const fileUserResult = await client.query(
+                'SELECT DISTINCT user_id FROM session_files WHERE session_id = $1 LIMIT 1',
+                [sessionId]
+            );
+            client.release();
+            if (fileUserResult.rows.length > 0) {
+                firebaseUserId = fileUserResult.rows[0].user_id;
+            }
+        } catch (dbError) {
+            console.error('Error getting Firebase UID:', dbError);
+        }
+
+        // List files directly from R2 using the S3 API
+        const { ListObjectsV2Command } = require('@aws-sdk/client-s3');
+        const userIdForR2 = firebaseUserId || session.userId;
+        const prefix = `photographer-${userIdForR2}/session-${sessionId}/gallery/`;
+        const listCommand = new ListObjectsV2Command({
+            Bucket: 'photoappr2token',
+            Prefix: prefix
+        });
+        
+        let galleryPhotos = [];
+        try {
+            const listResponse = await r2FileManager.s3Client.send(listCommand);
+            const r2Files = listResponse.Contents || [];
+            
+            console.log(`Found ${r2Files.length} files in R2 with prefix ${prefix}`);
+            
+            galleryPhotos = r2Files.map(file => {
+                const filename = file.Key.split('/').pop();
+                return {
+                    filename: filename,
+                    displayName: filename,
+                    url: `/api/gallery/${sessionId}/photo/${encodeURIComponent(filename)}`,
+                    size: file.Size,
+                    folderType: 'gallery'
+                };
+            });
+        } catch (r2Error) {
+            console.error('Error listing R2 files directly:', r2Error);
+        }
+        
+        console.log(`Found ${galleryPhotos.length} photos in R2 gallery for session ${sessionId}`);
+
         // No expiration check - galleries never expire
 
         res.json({
-            photos: session.photos || [],
-            totalPhotos: (session.photos || []).length
+            photos: galleryPhotos || [],
+            totalPhotos: galleryPhotos.length
         });
     } catch (error) {
         console.error('Error getting gallery photos:', error);
         res.status(500).json({ error: 'Failed to get gallery photos' });
+    }
+});
+
+// Serve individual photo from gallery
+app.get('/api/gallery/:id/photo/:filename', async (req, res) => {
+    const sessionId = req.params.id;
+    const filename = decodeURIComponent(req.params.filename);
+
+    try {
+        // Get session to get userId
+        const session = await getSessionById(sessionId);
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+        
+        // Get the Firebase UID from session_files table to properly locate R2 files
+        let firebaseUserId = null;
+        try {
+            const client = await pool.connect();
+            const fileUserResult = await client.query(
+                'SELECT DISTINCT user_id FROM session_files WHERE session_id = $1 LIMIT 1',
+                [sessionId]
+            );
+            client.release();
+            if (fileUserResult.rows.length > 0) {
+                firebaseUserId = fileUserResult.rows[0].user_id;
+            }
+        } catch (dbError) {
+            console.error('Error getting Firebase UID:', dbError);
+        }
+        
+        // Get the photo directly from R2 using the S3 API
+        const { GetObjectCommand } = require('@aws-sdk/client-s3');
+        const userIdForR2 = firebaseUserId || session.userId;
+        const key = `photographer-${userIdForR2}/session-${sessionId}/gallery/${filename}`;
+        
+        console.log(`Fetching photo from R2: ${key}`);
+        
+        const getCommand = new GetObjectCommand({
+            Bucket: 'photoappr2token',
+            Key: key
+        });
+        
+        const response = await r2FileManager.s3Client.send(getCommand);
+        
+        // Convert stream to buffer
+        const chunks = [];
+        for await (const chunk of response.Body) {
+            chunks.push(chunk);
+        }
+        const buffer = Buffer.concat(chunks);
+        
+        // Determine content type from filename
+        const ext = filename.toLowerCase().split('.').pop();
+        let contentType = 'image/jpeg';
+        if (ext === 'png') contentType = 'image/png';
+        else if (ext === 'gif') contentType = 'image/gif';
+        else if (ext === 'webp') contentType = 'image/webp';
+        
+        // Set appropriate headers
+        res.setHeader('Content-Type', contentType);
+        res.setHeader('Cache-Control', 'public, max-age=31536000');
+        res.setHeader('Content-Length', buffer.length);
+        
+        // Send the photo buffer
+        res.send(buffer);
+    } catch (error) {
+        console.error('Error serving gallery photo:', error);
+        res.status(404).json({ error: 'Photo not found' });
     }
 });
 
