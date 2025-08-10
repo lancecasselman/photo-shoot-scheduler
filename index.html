@@ -8642,9 +8642,7 @@ END:VCALENDAR`;
         // Business Management Functions
         function initializeBusinessManagement() {
             updateDashboard();
-            loadExpenses();
-            loadMileageTrips();
-            loadAIHistory();
+            loadExpensesTable();
             
             // Set default dates
             const today = new Date().toISOString().split('T')[0];
@@ -11114,7 +11112,7 @@ END:VCALENDAR`;
                 
                 // Refresh expenses table if visible
                 if (typeof loadExpensesTable === 'function') {
-                    loadExpensesTable();
+                    await loadExpensesTable();
                 }
             } catch (error) {
                 console.error('Error saving expense:', error);
