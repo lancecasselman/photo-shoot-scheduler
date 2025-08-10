@@ -7160,6 +7160,76 @@ lance@thelegacyphotography.com`;
                         transform: translateY(-1px);
                     }
 
+                    /* Report Breakdown Styles */
+                    .report-breakdown {
+                        margin-top: 30px;
+                        background: #f8f9fa;
+                        border-radius: 8px;
+                        padding: 20px;
+                    }
+
+                    .report-breakdown h4 {
+                        color: #495057;
+                        margin-bottom: 20px;
+                        border-bottom: 2px solid #d4af37;
+                        padding-bottom: 10px;
+                    }
+
+                    .breakdown-section {
+                        margin-bottom: 25px;
+                    }
+
+                    .breakdown-section h5 {
+                        color: #6c757d;
+                        margin-bottom: 15px;
+                        font-size: 16px;
+                    }
+
+                    .breakdown-item {
+                        display: grid;
+                        grid-template-columns: 1fr 2fr 1fr;
+                        gap: 15px;
+                        padding: 10px;
+                        background: white;
+                        border-radius: 5px;
+                        margin-bottom: 8px;
+                        border-left: 3px solid #d4af37;
+                    }
+
+                    .breakdown-item .amount {
+                        text-align: right;
+                        font-weight: 600;
+                        color: #28a745;
+                    }
+
+                    .summary-grid {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                        gap: 15px;
+                        margin-bottom: 20px;
+                    }
+
+                    .summary-item {
+                        background: white;
+                        padding: 15px;
+                        border-radius: 8px;
+                        border-left: 4px solid #d4af37;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    }
+
+                    .summary-item label {
+                        font-weight: 600;
+                        color: #495057;
+                        display: block;
+                        margin-bottom: 5px;
+                    }
+
+                    .summary-item span {
+                        font-size: 18px;
+                        font-weight: 700;
+                        color: #28a745;
+                    }
+
                     .location-setup {
                         display: flex;
                         flex-direction: column;
@@ -10185,7 +10255,7 @@ END:VCALENDAR`;
         }
 
         // Reports Functions
-        function generateReport() {
+        async function generateReport() {
             const startDate = document.getElementById('reportStartDate')?.value;
             const endDate = document.getElementById('reportEndDate')?.value;
 
@@ -10194,39 +10264,130 @@ END:VCALENDAR`;
                 return;
             }
 
-            const start = new Date(startDate);
-            const end = new Date(endDate);
+            showMessage('Generating report...', 'info');
 
-            const expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
-            const trips = JSON.parse(localStorage.getItem('mileageTrips') || '[]');
+            try {
+                const start = new Date(startDate);
+                const end = new Date(endDate);
 
-            // Filter data by date range
-            const filteredExpenses = expenses.filter(expense => {
-                const expenseDate = new Date(expense.date);
-                return expenseDate >= start && expenseDate <= end;
-            });
+                // Get expenses from database (same as dashboard)
+                const expensesResponse = await fetch('/api/business/expenses');
+                let expenses = [];
+                if (expensesResponse.ok) {
+                    expenses = await expensesResponse.json();
+                }
 
-            const filteredTrips = trips.filter(trip => {
-                const tripDate = new Date(trip.date);
-                return tripDate >= start && tripDate <= end;
-            });
+                // Get mileage trips from localStorage (local storage)
+                const trips = JSON.parse(localStorage.getItem('mileageTrips') || '[]');
 
-            // Calculate totals
-            const totalExpenses = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-            const totalMiles = filteredTrips.reduce((sum, trip) => sum + trip.miles, 0);
-            const totalEarnings = calculateEarnings(start, end);
-            const netProfit = totalEarnings - totalExpenses;
+                // Filter data by date range
+                const filteredExpenses = expenses.filter(expense => {
+                    const expenseDate = new Date(expense.date);
+                    return expenseDate >= start && expenseDate <= end;
+                });
 
-            // Update report display
-            if (document.getElementById('reportEarnings')) document.getElementById('reportEarnings').textContent = `$${totalEarnings.toFixed(2)}`;
-            if (document.getElementById('reportExpenses')) document.getElementById('reportExpenses').textContent = `$${totalExpenses.toFixed(2)}`;
-            if (document.getElementById('reportMiles')) document.getElementById('reportMiles').textContent = totalMiles.toFixed(1);
-            if (document.getElementById('reportNetProfit')) document.getElementById('reportNetProfit').textContent = `$${netProfit.toFixed(2)}`;
+                const filteredTrips = trips.filter(trip => {
+                    const tripDate = new Date(trip.date);
+                    return tripDate >= start && tripDate <= end;
+                });
 
-            showMessage('Report generated successfully!', 'success');
+                // Calculate totals using same logic as dashboard
+                const totalExpenses = filteredExpenses.reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
+                const totalMiles = filteredTrips.reduce((sum, trip) => sum + trip.miles, 0);
+                const mileageDeduction = totalMiles * 0.655; // 2024 IRS standard mileage rate
+                const totalEarnings = await calculateEarningsForPeriod(start, end);
+                const netProfit = totalEarnings - totalExpenses;
+
+                // Update report display
+                if (document.getElementById('reportEarnings')) document.getElementById('reportEarnings').textContent = `$${totalEarnings.toFixed(2)}`;
+                if (document.getElementById('reportExpenses')) document.getElementById('reportExpenses').textContent = `$${totalExpenses.toFixed(2)}`;
+                if (document.getElementById('reportMiles')) document.getElementById('reportMiles').textContent = totalMiles.toFixed(1);
+                if (document.getElementById('reportMileageDeduction')) document.getElementById('reportMileageDeduction').textContent = `$${mileageDeduction.toFixed(2)}`;
+                if (document.getElementById('reportNetProfit')) document.getElementById('reportNetProfit').textContent = `$${netProfit.toFixed(2)}`;
+
+                // Show detailed breakdown
+                updateReportBreakdown(filteredExpenses, filteredTrips, start, end);
+
+                showMessage('Report generated successfully!', 'success');
+
+            } catch (error) {
+                console.error('Error generating report:', error);
+                showMessage('Error generating report. Please try again.', 'error');
+            }
         }
 
-        function exportReportCSV() {
+        async function calculateEarningsForPeriod(startDate, endDate) {
+            try {
+                // Get sessions from the same source as dashboard
+                if (typeof sessions !== 'undefined' && sessions.length > 0) {
+                    const filteredSessions = sessions.filter(session => {
+                        const sessionDate = new Date(session.dateTime);
+                        return sessionDate >= startDate && sessionDate <= endDate;
+                    });
+                    return filteredSessions.reduce((sum, session) => sum + (session.price || 0), 0);
+                } else {
+                    // Fallback to API call if sessions not available
+                    const response = await fetch('/api/sessions');
+                    if (response.ok) {
+                        const apiSessions = await response.json();
+                        const filteredSessions = apiSessions.filter(session => {
+                            const sessionDate = new Date(session.dateTime);
+                            return sessionDate >= startDate && sessionDate <= endDate;
+                        });
+                        return filteredSessions.reduce((sum, session) => sum + (session.price || 0), 0);
+                    }
+                }
+            } catch (error) {
+                console.error('Error calculating earnings:', error);
+            }
+            return 0;
+        }
+
+        function updateReportBreakdown(expenses, trips, startDate, endDate) {
+            // Create detailed breakdown section
+            let breakdownHTML = `
+                <div class="report-breakdown">
+                    <h4>Report Period: ${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}</h4>
+                    
+                    <div class="breakdown-section">
+                        <h5>📊 Expenses Breakdown (${expenses.length} items)</h5>
+                        ${expenses.length > 0 ? `
+                            <div class="expense-details">
+                                ${expenses.map(expense => `
+                                    <div class="breakdown-item">
+                                        <span>${new Date(expense.date).toLocaleDateString()}</span>
+                                        <span>${expense.description}</span>
+                                        <span class="amount">$${parseFloat(expense.amount).toFixed(2)}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : '<p>No expenses in this period</p>'}
+                    </div>
+                    
+                    <div class="breakdown-section">
+                        <h5>🚗 Mileage Breakdown (${trips.length} trips)</h5>
+                        ${trips.length > 0 ? `
+                            <div class="trip-details">
+                                ${trips.map(trip => `
+                                    <div class="breakdown-item">
+                                        <span>${new Date(trip.date).toLocaleDateString()}</span>
+                                        <span>${trip.startLocation} → ${trip.endLocation} ${trip.roundTrip ? '(Round Trip)' : ''}</span>
+                                        <span class="amount">${trip.miles.toFixed(1)} mi</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : '<p>No trips in this period</p>'}
+                    </div>
+                </div>
+            `;
+
+            const breakdownElement = document.getElementById('reportBreakdown');
+            if (breakdownElement) {
+                breakdownElement.innerHTML = breakdownHTML;
+            }
+        }
+
+        async function exportReportCSV() {
             const startDate = document.getElementById('reportStartDate')?.value;
             const endDate = document.getElementById('reportEndDate')?.value;
 
@@ -10235,55 +10396,83 @@ END:VCALENDAR`;
                 return;
             }
 
-            const start = new Date(startDate);
-            const end = new Date(endDate);
+            showMessage('Exporting report data...', 'info');
 
-            const expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
-            const trips = JSON.parse(localStorage.getItem('mileageTrips') || '[]');
+            try {
+                const start = new Date(startDate);
+                const end = new Date(endDate);
 
-            const filteredExpenses = expenses.filter(expense => {
-                const expenseDate = new Date(expense.date);
-                return expenseDate >= start && expenseDate <= end;
-            });
+                // Get expenses from database (same as dashboard)
+                const expensesResponse = await fetch('/api/business/expenses');
+                let expenses = [];
+                if (expensesResponse.ok) {
+                    expenses = await expensesResponse.json();
+                }
 
-            const filteredTrips = trips.filter(trip => {
-                const tripDate = new Date(trip.date);
-                return tripDate >= start && tripDate <= end;
-            });
+                // Get mileage trips from localStorage
+                const trips = JSON.parse(localStorage.getItem('mileageTrips') || '[]');
 
-            const csvContent = [
-                ['BUSINESS REPORT'],
-                [`Period: ${startDate} to ${endDate}`],
-                [''],
-                ['EXPENSES'],
-                ['Date', 'Category', 'Description', 'Amount'],
-                ...filteredExpenses.map(expense => [
-                    expense.date,
-                    expense.category,
-                    expense.description,
-                    expense.amount
-                ]),
-                [''],
-                ['MILEAGE'],
-                ['Date', 'Start Location', 'End Location', 'Miles', 'Purpose'],
-                ...filteredTrips.map(trip => [
-                    trip.date,
-                    trip.startLocation,
-                    trip.endLocation,
-                    trip.miles,
-                    trip.purpose
-                ])
-            ].map(row => row.join(',')).join('\n');
+                const filteredExpenses = expenses.filter(expense => {
+                    const expenseDate = new Date(expense.date);
+                    return expenseDate >= start && expenseDate <= end;
+                });
 
-            const blob = new Blob([csvContent], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `business_report_${startDate}_to_${endDate}.csv`;
-            a.click();
-            window.URL.revokeObjectURL(url);
-            
-            showMessage('Report exported to CSV!', 'success');
+                const filteredTrips = trips.filter(trip => {
+                    const tripDate = new Date(trip.date);
+                    return tripDate >= start && tripDate <= end;
+                });
+
+                // Calculate totals for CSV summary
+                const totalExpenses = filteredExpenses.reduce((sum, expense) => sum + parseFloat(expense.amount), 0);
+                const totalMiles = filteredTrips.reduce((sum, trip) => sum + trip.miles, 0);
+                const mileageDeduction = totalMiles * 0.655;
+
+                const csvContent = [
+                    ['BUSINESS REPORT'],
+                    [`Period: ${startDate} to ${endDate}`],
+                    [''],
+                    ['SUMMARY'],
+                    ['Total Expenses', `$${totalExpenses.toFixed(2)}`],
+                    ['Total Miles', `${totalMiles.toFixed(1)}`],
+                    ['Mileage Deduction (@ $0.655/mi)', `$${mileageDeduction.toFixed(2)}`],
+                    [''],
+                    ['EXPENSES DETAIL'],
+                    ['Date', 'Category', 'Description', 'Amount', 'Tax Deductible'],
+                    ...filteredExpenses.map(expense => [
+                        new Date(expense.date).toLocaleDateString(),
+                        expense.category,
+                        expense.description,
+                        `$${parseFloat(expense.amount).toFixed(2)}`,
+                        expense.tax_deductible ? 'Yes' : 'No'
+                    ]),
+                    [''],
+                    ['MILEAGE DETAIL'],
+                    ['Date', 'Start Location', 'End Location', 'Miles', 'Type', 'Purpose', 'Deduction'],
+                    ...filteredTrips.map(trip => [
+                        new Date(trip.date).toLocaleDateString(),
+                        trip.startLocation,
+                        trip.endLocation,
+                        trip.miles.toFixed(1),
+                        trip.roundTrip ? 'Round Trip' : 'One Way',
+                        trip.purpose.replace('_', ' '),
+                        `$${(trip.miles * 0.655).toFixed(2)}`
+                    ])
+                ].map(row => row.join(',')).join('\n');
+
+                const blob = new Blob([csvContent], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `business_report_${startDate}_to_${endDate}.csv`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+                
+                showMessage('Report exported to CSV successfully!', 'success');
+
+            } catch (error) {
+                console.error('Error exporting CSV:', error);
+                showMessage('Error exporting CSV. Please try again.', 'error');
+            }
         }
 
         function exportReportPDF() {
@@ -11336,10 +11525,19 @@ END:VCALENDAR`;
                                 <span id="reportMiles">0</span>
                             </div>
                             <div class="summary-item">
+                                <label>Mileage Deduction:</label>
+                                <span id="reportMileageDeduction">$0.00</span>
+                            </div>
+                            <div class="summary-item">
                                 <label>Net Profit:</label>
                                 <span id="reportNetProfit">$0.00</span>
                             </div>
                         </div>
+                    </div>
+                    
+                    <!-- Detailed Breakdown Section -->
+                    <div id="reportBreakdown" class="report-breakdown">
+                        <!-- Breakdown content will be populated by JavaScript -->
                     </div>
                     
                     <div class="report-actions">
