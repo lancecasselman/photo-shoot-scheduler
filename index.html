@@ -13731,41 +13731,32 @@ END:VCALENDAR`;
             }
         };
 
-        // Initialize Website Builder when tab is activated
+        // Initialize Website Builder when page loads
         document.addEventListener('DOMContentLoaded', () => {
-            // Check if Website Builder tab exists and initialize
-            const websiteBuilderTab = document.getElementById('websiteBuilderTab');
-            if (websiteBuilderTab) {
-                // Initialize when tab becomes visible
-                const observer = new MutationObserver((mutations) => {
-                    mutations.forEach((mutation) => {
-                        if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-                            if (websiteBuilderTab.style.display !== 'none' && !WebsiteBuilder.initialized) {
-                                WebsiteBuilder.init();
-                                WebsiteBuilder.loadSavedData();
-                                WebsiteBuilder.initialized = true;
-                            }
-                        }
-                    });
-                });
-                
-                observer.observe(websiteBuilderTab, { attributes: true });
-            }
+            console.log('Website Builder module loaded');
         });
 
-        // Extend the existing switchTab function to handle Website Builder
-        const existingSwitchTab = window.switchTab;
+        // Hook into the existing switchTab function
+        const originalSwitchTabFunc = window.switchTab;
         window.switchTab = function(tabName) {
-            // Call the original switchTab function
-            if (existingSwitchTab) {
-                existingSwitchTab.call(this, tabName);
+            console.log('Website Builder: Tab switch detected:', tabName);
+            
+            // Call the original function first
+            if (originalSwitchTabFunc) {
+                originalSwitchTabFunc.call(this, tabName);
             }
             
-            // Handle Website Builder initialization
-            if (tabName === 'websiteBuilder' && !WebsiteBuilder.initialized) {
-                WebsiteBuilder.init();
-                WebsiteBuilder.loadSavedData();
-                WebsiteBuilder.initialized = true;
+            // Initialize Website Builder when its tab is selected
+            if (tabName === 'websiteBuilder') {
+                console.log('Initializing Website Builder...');
+                setTimeout(() => {
+                    if (!WebsiteBuilder.initialized) {
+                        WebsiteBuilder.init();
+                        WebsiteBuilder.loadSavedData();
+                        WebsiteBuilder.initialized = true;
+                        console.log('Website Builder initialized successfully');
+                    }
+                }, 100);
             }
         };
     </script>
