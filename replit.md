@@ -15,6 +15,10 @@ Preferred communication style: Simple, everyday language.
   - ✅ Async/await implementation for database operations
   - ✅ Database connection timeout issues resolved with proper pool management
   - ✅ Financial stats showing: $1,500 earnings, $800 expenses, $700 net profit
+  - ✅ Round trip mileage tracker with Google Distance Matrix API integration
+  - ✅ Business reports pulling data from dashboard sources (database + localStorage)
+  - ✅ Enhanced CSV export with mileage deductions and detailed breakdowns
+  - ✅ Chart sections removed from dashboard for cleaner interface
 - **August 9, 2025**: Production optimization and Git repository cleanup
   - ✅ Git repository cleanup system implemented
   - ✅ Comprehensive .gitignore preventing large file commits
