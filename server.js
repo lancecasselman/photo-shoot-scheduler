@@ -1224,20 +1224,22 @@ app.post('/api/sessions/:sessionId/files/:folderType/upload-direct', isAuthentic
         
         // Track in database using pool
         const fileSizeMB = file.size / (1024 * 1024);
+        const fileSizeBytes = file.size;
         let client;
         try {
             client = await pool.connect();
             await client.query(`
                 INSERT INTO session_files (
-                    session_id, user_id, file_name, original_name, 
-                    file_size, folder_type, r2_key, uploaded_at
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                    session_id, user_id, filename, original_name, 
+                    file_size_mb, file_size_bytes, folder_type, r2_key, uploaded_at
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             `, [
                 sessionId,
                 userId, // Firebase UID
                 uniqueFileName,
                 file.originalname,
-                fileSizeMB.toFixed(2),
+                parseFloat(fileSizeMB.toFixed(2)),
+                fileSizeBytes,
                 folderType,
                 r2Key,
                 now
