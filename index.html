@@ -5896,31 +5896,77 @@ ${contract.contract_content}
                 if (files.length === 0) {
                     container.innerHTML = '<div class="loading-files">No files uploaded yet</div>';
                 } else {
-                    container.innerHTML = files.map(file => {
+                    // Clear container first
+                    container.innerHTML = '';
+                    
+                    // Create file items using DOM methods to avoid template literal issues
+                    files.forEach(file => {
+                        const fileItem = document.createElement('div');
+                        fileItem.className = 'file-item';
+                        
                         const isImage = file.contentType && file.contentType.startsWith('image/');
-                        return `
-                        <div class="file-item">
-                            ${isImage ? `
-                                <div class="file-thumbnail">
-                                    <img src="/api/r2/thumbnail/${sessionId}/${encodeURIComponent(file.name)}?size=medium&t=${Date.now()}" 
-                                         alt="${file.name}"
-                                         onclick="window.open('${file.downloadUrl}', '_blank'); event.stopPropagation();"
-                                         onerror="this.style.display='none'; this.parentNode.innerHTML='<div class=\\'file-icon\\'>🖼️</div>';"
-                                         loading="lazy" />
-                                </div>
-                            ` : ''}
-                            <div class="file-info">
-                                <div class="file-name">${file.name}</div>
-                                <div class="file-meta">${formatFileSize(file.size)} • ${formatDate(file.timeCreated)}</div>
-                            </div>
-                            <div class="file-actions">
-                                <button onclick="downloadFile('${sessionId}', '${folderType}', '${file.name}'); event.stopPropagation();" 
-                                        class="btn btn-secondary">Download</button>
-                                <button onclick="deleteFile('${sessionId}', '${folderType}', '${file.name}'); event.stopPropagation();" 
-                                        class="btn btn-danger">Delete</button>
-                            </div>
-                        </div>
-                    `;}).join('');
+                        
+                        if (isImage) {
+                            const thumbnail = document.createElement('div');
+                            thumbnail.className = 'file-thumbnail';
+                            
+                            const img = document.createElement('img');
+                            img.src = `/api/r2/thumbnail/${sessionId}/${encodeURIComponent(file.name)}?size=medium&t=${Date.now()}`;
+                            img.alt = file.name;
+                            img.loading = 'lazy';
+                            img.onclick = () => {
+                                window.open(file.downloadUrl, '_blank');
+                                event.stopPropagation();
+                            };
+                            img.onerror = () => {
+                                img.style.display = 'none';
+                                thumbnail.innerHTML = '<div class="file-icon">🖼️</div>';
+                            };
+                            
+                            thumbnail.appendChild(img);
+                            fileItem.appendChild(thumbnail);
+                        }
+                        
+                        const fileInfo = document.createElement('div');
+                        fileInfo.className = 'file-info';
+                        
+                        const fileName = document.createElement('div');
+                        fileName.className = 'file-name';
+                        fileName.textContent = file.name;
+                        
+                        const fileMeta = document.createElement('div');
+                        fileMeta.className = 'file-meta';
+                        fileMeta.textContent = `${formatFileSize(file.size)} • ${formatDate(file.timeCreated)}`;
+                        
+                        fileInfo.appendChild(fileName);
+                        fileInfo.appendChild(fileMeta);
+                        fileItem.appendChild(fileInfo);
+                        
+                        const fileActions = document.createElement('div');
+                        fileActions.className = 'file-actions';
+                        
+                        const downloadBtn = document.createElement('button');
+                        downloadBtn.className = 'btn btn-secondary';
+                        downloadBtn.textContent = '📥 Download';
+                        downloadBtn.onclick = (e) => {
+                            downloadFile(sessionId, folderType, file.name);
+                            e.stopPropagation();
+                        };
+                        
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.className = 'btn btn-danger';
+                        deleteBtn.textContent = '🗑️ Delete';
+                        deleteBtn.onclick = (e) => {
+                            deleteFile(sessionId, folderType, file.name);
+                            e.stopPropagation();
+                        };
+                        
+                        fileActions.appendChild(downloadBtn);
+                        fileActions.appendChild(deleteBtn);
+                        fileItem.appendChild(fileActions);
+                        
+                        container.appendChild(fileItem);
+                    });
                 }
             } catch (error) {
                 console.error('Error loading files:', error);
