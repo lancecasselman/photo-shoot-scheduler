@@ -604,6 +604,43 @@ class R2FileManager {
   }
 
   /**
+   * Get file stream from R2 for ZIP downloads and direct access
+   */
+  async getFileStream(r2Key) {
+    try {
+      if (!this.r2Available) {
+        console.log('⚠️ R2 not available for file stream');
+        return null;
+      }
+
+      console.log(`📥 Getting file stream from R2: ${r2Key}`);
+      
+      const getCommand = new GetObjectCommand({
+        Bucket: this.bucketName,
+        Key: r2Key
+      });
+      
+      const response = await this.s3Client.send(getCommand);
+      
+      if (response.Body) {
+        console.log(`✅ File stream retrieved: ${r2Key}`);
+        return response.Body;
+      } else {
+        console.warn(`⚠️ No body in response for: ${r2Key}`);
+        return null;
+      }
+      
+    } catch (error) {
+      if (error.name === 'NoSuchKey' || error.Code === 'NoSuchKey') {
+        console.warn(`⚠️ File not found in R2: ${r2Key}`);
+      } else {
+        console.error(`❌ Error getting file stream for ${r2Key}:`, error.message);
+      }
+      return null;
+    }
+  }
+
+  /**
    * Get user's current storage usage from R2 cloud with RAW/Gallery breakdown
    */
   async getUserStorageUsage(userId) {

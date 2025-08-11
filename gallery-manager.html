@@ -975,37 +975,6 @@
 
         // OLD DELETE FUNCTION REMOVED - Now using unified deletion system (loaded at bottom of page)
 
-        // Download all files as ZIP
-        async function downloadAllFiles() {
-            if (files.length === 0) {
-                alert('No files available for download');
-                return;
-            }
-
-            try {
-                const response = await fetch(`/api/sessions/${sessionId}/files/${folderType}/download-zip`);
-                
-                if (!response.ok) {
-                    throw new Error(`Download failed: ${response.status}`);
-                }
-
-                // Create download link
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `${clientName.replace(/[^a-zA-Z0-9]/g, '_')}_${folderType}_files.zip`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
-                
-            } catch (error) {
-                console.error('Download error:', error);
-                alert('Failed to download files: ' + error.message);
-            }
-        }
-
         // Delete all files using unified deletion system
         async function deleteAllFiles() {
             if (files.length === 0) {

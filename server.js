@@ -2189,68 +2189,93 @@ app.get('/api/sessions/:sessionId/files/:folderType/:filename/verify-deletion', 
 app.get('/api/sessions/:sessionId/files/:folderType/download-zip', isAuthenticated, async (req, res) => {
     try {
         const { sessionId, folderType } = req.params;
+        const userId = normalizeUserForLance(req.user).uid;
         
         if (!['gallery', 'raw'].includes(folderType)) {
             return res.status(400).json({ error: 'Invalid folder type' });
         }
         
-        const files = await objectStorageService.getSessionFiles(sessionId, folderType);
+        console.log(`📦 Creating ZIP for session ${sessionId}, folder ${folderType}`);
         
-        if (files.length === 0) {
-            return res.status(404).json({ error: 'No files found' });
-        }
-        
-        // Set proper headers for ZIP download
-        res.setHeader('Content-Type', 'application/zip');
-        res.setHeader('Content-Disposition', `attachment; filename="${sessionId}-${folderType}.zip"`);
-        res.setHeader('Cache-Control', 'no-cache');
-        
-        const archive = archiver('zip', { 
-            zlib: { level: 9 },
-            store: true // Store files without compression for faster processing
-        });
-        
-        // Handle archive errors
-        archive.on('error', (err) => {
-            console.error('Archive error:', err);
-            if (!res.headersSent) {
-                res.status(500).json({ error: 'Failed to create ZIP archive' });
+        // Get files from database (R2 system)
+        let client;
+        try {
+            client = await pool.connect();
+            
+            const filesResult = await client.query(`
+                SELECT id, filename, r2_key, file_size_bytes
+                FROM session_files 
+                WHERE session_id = $1 AND folder_type = $2 AND r2_key IS NOT NULL AND r2_key != ''
+                ORDER BY filename
+            `, [sessionId, folderType]);
+            
+            if (filesResult.rows.length === 0) {
+                return res.status(404).json({ error: 'No files found for download' });
             }
-        });
-        
-        archive.pipe(res);
-        
-        console.log(`Creating ZIP with ${files.length} files for ${sessionId}/${folderType}`);
-        
-        for (const file of files) {
-            try {
-                // Log the full file path first
-                console.log(`Processing file with full path: ${file.name}`);
-                
-                // Try to get the original filename from metadata first
-                const [metadata] = await file.getMetadata();
-                let originalFilename = metadata.metadata?.originalName || metadata.metadata?.originalFilename;
-                
-                if (!originalFilename) {
-                    // Fallback to extracting from path
-                    const pathParts = file.name.split('/');
-                    originalFilename = pathParts[pathParts.length - 1];
+            
+            console.log(`Found ${filesResult.rows.length} files with R2 backup for ZIP download`);
+            
+            // Get client name for ZIP filename
+            const sessionResult = await client.query('SELECT client_name FROM photography_sessions WHERE id = $1', [sessionId]);
+            const clientName = sessionResult.rows[0]?.client_name || 'Client';
+            
+            // Set proper headers for ZIP download
+            const zipFilename = `${clientName.replace(/[^a-zA-Z0-9\s-]/g, '_')}_${folderType}_photos.zip`;
+            res.setHeader('Content-Type', 'application/zip');
+            res.setHeader('Content-Disposition', `attachment; filename="${zipFilename}"`);
+            res.setHeader('Cache-Control', 'no-cache');
+            
+            const archive = archiver('zip', { 
+                zlib: { level: 6 }, // Balanced compression
+                store: false
+            });
+            
+            // Handle archive errors
+            archive.on('error', (err) => {
+                console.error('Archive error:', err);
+                if (!res.headersSent) {
+                    res.status(500).json({ error: 'Failed to create ZIP archive' });
                 }
-                
-                console.log(`Using filename for ZIP: ${originalFilename}`);
-                
-                const stream = file.createReadStream();
-                archive.append(stream, { name: originalFilename });
-            } catch (fileError) {
-                console.error(`Error processing file ${file.name}:`, fileError);
+            });
+            
+            // Track progress
+            let processedFiles = 0;
+            let totalSize = 0;
+            
+            archive.pipe(res);
+            
+            // Process each file from R2 storage
+            for (const file of filesResult.rows) {
+                try {
+                    console.log(`📁 Adding to ZIP: ${file.filename} (${Math.round(file.file_size_bytes/1024/1024)}MB)`);
+                    
+                    // Get file stream from R2
+                    const fileStream = await r2FileManager.getFileStream(file.r2_key);
+                    
+                    if (fileStream) {
+                        archive.append(fileStream, { name: file.filename });
+                        processedFiles++;
+                        totalSize += parseInt(file.file_size_bytes);
+                    } else {
+                        console.warn(`⚠️  Could not get stream for ${file.filename}, skipping`);
+                    }
+                } catch (fileError) {
+                    console.error(`❌ Error processing file ${file.filename}:`, fileError.message);
+                }
             }
+            
+            console.log(`📦 ZIP creation complete: ${processedFiles} files, ${Math.round(totalSize/1024/1024)}MB total`);
+            
+            await archive.finalize();
+            
+        } finally {
+            if (client) client.release();
         }
         
-        await archive.finalize();
     } catch (error) {
         console.error('Error creating ZIP:', error);
         if (!res.headersSent) {
-            res.status(500).json({ error: 'Failed to create ZIP' });
+            res.status(500).json({ error: 'Failed to create ZIP: ' + error.message });
         }
     }
 });
