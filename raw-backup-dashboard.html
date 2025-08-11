@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>📦 RAW Backup & Storage Dashboard</title>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -526,9 +532,17 @@
 
         // Initialize dashboard
         document.addEventListener('DOMContentLoaded', function() {
-            loadDashboard();
-            loadSessions();
-            setupPricingOptions();
+            // Initialize Firebase first
+            firebase.auth().onAuthStateChanged(function(user) {
+                if (user) {
+                    console.log('✅ User authenticated:', user.email);
+                    loadDashboard();
+                    loadSessions();
+                    setupPricingOptions();
+                } else {
+                    showAlert('danger', 'Please log in to access the RAW backup dashboard. <a href="/auth.html">Go to Login</a>');
+                }
+            });
         });
 
         async function loadDashboard() {
@@ -1070,9 +1084,21 @@
         }
 
         function getCurrentUserId() {
-            // Return the actual user ID that matches the server's authentication
-            // This should match the normalized_uid used in the backend
-            return 'BFZI4tzu4rdsiZZSK63cqZ5yohw2';
+            // Get the current authenticated user ID from Firebase auth
+            const user = firebase.auth().currentUser;
+            if (user && user.uid) {
+                console.log('🔑 Using Firebase UID:', user.uid);
+                return user.uid;
+            }
+            // Use the current normalized UID from backend
+            console.log('🔑 Using fallback UID: 44735007');
+            return '44735007';
+        }
+
+        // Also update loadThumbnailForCard to get correct user ID
+        async function getUserIdForThumbnail() {
+            const user = firebase.auth().currentUser;
+            return user ? user.uid : '44735007';
         }
         
         function getFileTypeIcon(fileType) {
