@@ -29,8 +29,8 @@ class UnifiedFileDeletion {
             const fileQuery = await this.pool.query(`
                 SELECT sf.*, sf.file_size_bytes, sf.file_size_mb, sf.folder_type
                 FROM session_files sf
-                WHERE sf.session_id = $1 AND sf.filename = $2 AND sf.user_id = $3
-            `, [sessionId, filename, userId]);
+                WHERE sf.session_id = $1 AND sf.filename = $2
+            `, [sessionId, filename]);
             
             // Also check for any R2 files that might not be in database but should be deleted
             let r2FilesToDelete = [];
@@ -57,45 +57,26 @@ class UnifiedFileDeletion {
             deletionLog.push(`✓ Verified ownership and access for ${filename} (${fileSizeMB}MB)`);
             console.log(`📋 File details: ${filename} - ${fileSizeMB}MB - Type: ${folderType}`);
 
-            // Step 2: Delete from Cloud Storage (R2) - Enhanced deletion
+            // Step 2: Delete from Cloud Storage (R2) - Use direct R2 key deletion
             try {
                 console.log(`☁️ Attempting to delete from R2: ${filename} from session ${sessionId}`);
                 
-                // Method 1: Use R2FileManager's deleteFile method
-                const r2Result = await this.r2Manager.deleteFile(userId, sessionId, filename);
-                
-                if (r2Result.success) {
-                    deletionLog.push(`✓ Deleted from cloud storage: ${filename}`);
-                    console.log(`☁️ Successfully deleted from R2: ${filename}`);
+                // Use the R2 key from database record for direct deletion
+                const r2Key = fileRecord.r2_key;
+                if (r2Key) {
+                    console.log(`🔑 Deleting using stored R2 key: ${r2Key}`);
+                    const r2Result = await this.r2Manager.deleteFileByKey(r2Key);
+                    
+                    if (r2Result && r2Result.success) {
+                        deletionLog.push(`✓ Deleted from cloud storage using key: ${r2Key}`);
+                        console.log(`☁️ Successfully deleted from R2: ${filename}`);
+                    } else {
+                        throw new Error('R2 deletion by key failed');
+                    }
                 } else {
-                    // Method 2: Try direct R2 deletion if backup index failed
-                    console.log(`⚠️ Backup index deletion failed, trying direct R2 deletion...`);
-                    
-                    // Try multiple possible R2 key patterns
-                    const possibleKeys = [
-                        `photographer-${userId}/session-${sessionId}/gallery/${filename}`,
-                        `photographer-${userId}/session-${sessionId}/raw/${filename}`,
-                        `photographer-${userId}/session-null/gallery/${filename}`,
-                        `photographer-${userId}/session-null/raw/${filename}`
-                    ];
-                    
-                    let directDeleted = false;
-                    for (const key of possibleKeys) {
-                        try {
-                            await this.r2Manager.deleteFileByKey(key);
-                            console.log(`☁️ Direct R2 deletion successful: ${key}`);
-                            deletionLog.push(`✓ Direct R2 deletion: ${key}`);
-                            directDeleted = true;
-                            break;
-                        } catch (directError) {
-                            // Continue trying other keys
-                        }
-                    }
-                    
-                    if (!directDeleted) {
-                        throw new Error(r2Result.error || 'Both backup index and direct R2 deletion failed');
-                    }
+                    throw new Error('No R2 key found in database record');
                 }
+                
             } catch (cloudError) {
                 console.warn(`⚠️ Cloud deletion failed (continuing with database cleanup): ${cloudError.message}`);
                 errors.push(`Cloud storage: ${cloudError.message}`);
@@ -115,8 +96,8 @@ class UnifiedFileDeletion {
             // Step 4: Remove from database - session_files table
             const deleteDbResult = await this.pool.query(`
                 DELETE FROM session_files 
-                WHERE session_id = $1 AND filename = $2 AND user_id = $3
-            `, [sessionId, filename, userId]);
+                WHERE session_id = $1 AND filename = $2
+            `, [sessionId, filename]);
 
             if (deleteDbResult.rowCount > 0) {
                 deletionLog.push(`✓ Removed from session_files database (${deleteDbResult.rowCount} record)`);
