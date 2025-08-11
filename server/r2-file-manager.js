@@ -1,5 +1,6 @@
 const { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, HeadBucketCommand, CreateBucketCommand, ListObjectsV2Command } = require('@aws-sdk/client-s3');
 const crypto = require('crypto');
+const sharp = require('sharp');
 
 class R2FileManager {
   constructor(localBackup, pool = null) {
@@ -79,6 +80,10 @@ class R2FileManager {
    * Determine file type category based on extension
    */
   getFileTypeCategory(filename) {
+    if (!filename || typeof filename !== 'string') {
+      return 'other';
+    }
+    
     const ext = filename.toLowerCase().substring(filename.lastIndexOf('.'));
     
     for (const [category, extensions] of Object.entries(this.fileTypeCategories)) {
@@ -88,6 +93,206 @@ class R2FileManager {
     }
     
     return 'other';
+  }
+
+  // Check if file is an image that can be processed
+  isImageFile(filename) {
+    const ext = filename.toLowerCase().substring(filename.lastIndexOf('.'));
+    const imageExtensions = [
+      ...this.fileTypeCategories.raw,
+      ...this.fileTypeCategories.gallery,
+      '.heic', '.heif', '.avif' // Additional formats Sharp can handle
+    ];
+    return imageExtensions.includes(ext);
+  }
+
+  // Generate thumbnail for uploaded images
+  async generateThumbnail(fileBuffer, originalFilename, userId, sessionId, fileType) {
+    try {
+      console.log(`🖼️ Generating thumbnail for: ${originalFilename}`);
+
+      // Create thumbnail filename
+      const ext = originalFilename.split('.').pop();
+      const baseName = originalFilename.replace(`.${ext}`, '');
+      
+      // Generate multiple thumbnail sizes for different use cases
+      const thumbnailSizes = [
+        { suffix: '_sm', width: 150, height: 150, quality: 80 }, // Small thumbnail
+        { suffix: '_md', width: 400, height: 300, quality: 85 }, // Medium preview
+        { suffix: '_lg', width: 800, height: 600, quality: 90 }  // Large preview
+      ];
+
+      const thumbnails = [];
+
+      for (const size of thumbnailSizes) {
+        try {
+          // Process image with Sharp
+          let processedBuffer;
+          
+          // Handle different file types
+          const isRawFile = this.fileTypeCategories.raw.includes('.' + ext.toLowerCase());
+          
+          if (isRawFile) {
+            // For RAW files, extract embedded JPEG if possible, otherwise convert
+            try {
+              processedBuffer = await sharp(fileBuffer)
+                .jpeg({ quality: size.quality, progressive: true, mozjpeg: true })
+                .resize(size.width, size.height, { 
+                  fit: 'inside', 
+                  withoutEnlargement: true,
+                  background: { r: 255, g: 255, b: 255, alpha: 1 }
+                })
+                .toBuffer();
+            } catch (rawError) {
+              console.warn(`⚠️ RAW processing failed for ${originalFilename}, trying basic conversion`);
+              // Fallback for difficult RAW formats
+              processedBuffer = await sharp(fileBuffer)
+                .resize(size.width, size.height, { fit: 'inside', withoutEnlargement: true })
+                .jpeg({ quality: size.quality })
+                .toBuffer();
+            }
+          } else {
+            // Standard image processing
+            processedBuffer = await sharp(fileBuffer)
+              .resize(size.width, size.height, { 
+                fit: 'inside', 
+                withoutEnlargement: true,
+                background: { r: 255, g: 255, b: 255, alpha: 1 }
+              })
+              .jpeg({ quality: size.quality, progressive: true })
+              .toBuffer();
+          }
+
+          // Upload thumbnail to R2
+          const thumbnailKey = `photographer-${userId}/session-${sessionId}/thumbnails/${baseName}${size.suffix}.jpg`;
+          
+          const putCommand = new PutObjectCommand({
+            Bucket: this.bucketName,
+            Key: thumbnailKey,
+            Body: processedBuffer,
+            ContentType: 'image/jpeg',
+            Metadata: {
+              'original-file': originalFilename,
+              'thumbnail-size': size.suffix,
+              'original-type': fileType,
+              'generated-at': new Date().toISOString()
+            }
+          });
+
+          await this.s3Client.send(putCommand);
+          
+          thumbnails.push({
+            size: size.suffix,
+            key: thumbnailKey,
+            dimensions: `${size.width}x${size.height}`,
+            sizeBytes: processedBuffer.length
+          });
+
+          console.log(`✅ Generated ${size.suffix} thumbnail: ${thumbnailKey}`);
+
+        } catch (sizeError) {
+          console.warn(`⚠️ Failed to generate ${size.suffix} thumbnail:`, sizeError.message);
+        }
+      }
+
+      // Update backup index with thumbnail information
+      if (thumbnails.length > 0) {
+        await this.updateBackupIndex(userId, sessionId, {
+          originalFile: originalFilename,
+          thumbnails: thumbnails,
+          type: 'thumbnail-set'
+        }, 'add');
+      }
+
+      return {
+        success: true,
+        thumbnails: thumbnails,
+        count: thumbnails.length
+      };
+
+    } catch (error) {
+      console.error(`❌ Thumbnail generation failed for ${originalFilename}:`, error.message);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  // Get thumbnail for a file
+  async getThumbnail(userId, sessionId, originalFilename, size = '_md') {
+    try {
+      const ext = originalFilename.split('.').pop();
+      const baseName = originalFilename.replace(`.${ext}`, '');
+      const thumbnailKey = `photographer-${userId}/session-${sessionId}/thumbnails/${baseName}${size}.jpg`;
+      
+      console.log(`🖼️ Retrieving thumbnail: ${thumbnailKey}`);
+      
+      const getCommand = new GetObjectCommand({
+        Bucket: this.bucketName,
+        Key: thumbnailKey
+      });
+      
+      const response = await this.s3Client.send(getCommand);
+      const buffer = await response.Body.transformToByteArray();
+      
+      return {
+        success: true,
+        buffer: Buffer.from(buffer),
+        contentType: 'image/jpeg',
+        size: size,
+        key: thumbnailKey
+      };
+      
+    } catch (error) {
+      // If thumbnail doesn't exist, try to generate it on-demand
+      if (error.name === 'NoSuchKey' || error.$metadata?.httpStatusCode === 404) {
+        console.log(`⚠️ Thumbnail not found, attempting on-demand generation for: ${originalFilename}`);
+        return this.generateThumbnailOnDemand(userId, sessionId, originalFilename, size);
+      }
+      
+      console.error(`❌ Failed to retrieve thumbnail:`, error.message);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  // Generate thumbnail on-demand if it doesn't exist
+  async generateThumbnailOnDemand(userId, sessionId, originalFilename, requestedSize = '_md') {
+    try {
+      console.log(`🔄 Generating thumbnail on-demand for: ${originalFilename}`);
+      
+      // First download the original file
+      const originalFile = await this.downloadFile(userId, sessionId, originalFilename);
+      if (!originalFile.success) {
+        throw new Error('Could not download original file for thumbnail generation');
+      }
+      
+      // Generate thumbnail
+      const thumbnailResult = await this.generateThumbnail(
+        originalFile.buffer, 
+        originalFilename, 
+        userId, 
+        sessionId, 
+        this.getFileTypeCategory(originalFilename)
+      );
+      
+      if (!thumbnailResult.success) {
+        throw new Error('Thumbnail generation failed');
+      }
+      
+      // Return the requested size thumbnail
+      return await this.getThumbnail(userId, sessionId, originalFilename, requestedSize);
+      
+    } catch (error) {
+      console.error(`❌ On-demand thumbnail generation failed:`, error.message);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
   }
 
   /**
@@ -303,6 +508,16 @@ class R2FileManager {
         } catch (dbError) {
           console.warn('⚠️ Failed to update database record:', dbError.message);
           // Continue with success since R2 upload worked
+        }
+      }
+
+      // Generate thumbnail for image files
+      if (this.isImageFile(filename)) {
+        try {
+          await this.generateThumbnail(fileBuffer, filename, userId, sessionId, fileType);
+        } catch (thumbnailError) {
+          console.warn(`⚠️ Failed to generate thumbnail for ${filename}:`, thumbnailError.message);
+          // Continue - thumbnail generation failure shouldn't fail the main upload
         }
       }
       

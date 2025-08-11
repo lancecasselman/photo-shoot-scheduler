@@ -216,10 +216,23 @@ function createR2Routes() {
       // Separate successful and failed uploads
       const successful = [];
       const failed = [];
+      const thumbnailTasks = []; // For automatic thumbnail generation
       
       uploadResults.forEach((result, index) => {
         if (result.status === 'fulfilled') {
           successful.push(result.value);
+          
+          // Queue thumbnail generation for image files
+          const file = req.files[index];
+          if (r2Manager.isImageFile(file.originalname)) {
+            thumbnailTasks.push({
+              buffer: file.buffer,
+              filename: file.originalname,
+              userId,
+              sessionId,
+              fileType: result.value.fileType
+            });
+          }
         } else {
           failed.push({
             filename: req.files[index].originalname,
@@ -227,6 +240,29 @@ function createR2Routes() {
           });
         }
       });
+
+      // Generate thumbnails in background (don't wait for completion)
+      if (thumbnailTasks.length > 0) {
+        console.log(`🖼️ Generating thumbnails for ${thumbnailTasks.length} image files...`);
+        
+        // Run thumbnail generation in background
+        Promise.allSettled(
+          thumbnailTasks.map(task => 
+            r2Manager.generateThumbnail(
+              task.buffer, 
+              task.filename, 
+              task.userId, 
+              task.sessionId, 
+              task.fileType
+            )
+          )
+        ).then(thumbResults => {
+          const successfulThumbs = thumbResults.filter(r => r.status === 'fulfilled' && r.value.success).length;
+          console.log(`✅ Generated thumbnails for ${successfulThumbs}/${thumbnailTasks.length} images`);
+        }).catch(thumbError => {
+          console.warn('⚠️ Background thumbnail generation error:', thumbError.message);
+        });
+      }
 
       // Get updated storage usage
       const updatedUsage = await r2Manager.getUserStorageUsage(userId);
@@ -287,18 +323,53 @@ function createR2Routes() {
       
       const uploadResults = await Promise.allSettled(uploadPromises);
       
-      // Count successful and failed uploads
+      // Count successful and failed uploads and queue thumbnail generation
       let successfulUploads = 0;
       let failedUploads = 0;
+      const thumbnailTasks = [];
       
-      uploadResults.forEach((result) => {
+      uploadResults.forEach((result, index) => {
         if (result.status === 'fulfilled') {
           successfulUploads++;
+          
+          // Queue thumbnail generation for image files
+          const file = req.files[index];
+          if (r2Manager.isImageFile(file.originalname)) {
+            thumbnailTasks.push({
+              buffer: file.buffer,
+              filename: file.originalname,
+              userId,
+              sessionId,
+              fileType: 'raw'
+            });
+          }
         } else {
           failedUploads++;
           console.error('Upload failed:', result.reason?.message);
         }
       });
+
+      // Generate thumbnails in background for RAW files too
+      if (thumbnailTasks.length > 0) {
+        console.log(`🖼️ Generating RAW thumbnails for ${thumbnailTasks.length} image files...`);
+        
+        Promise.allSettled(
+          thumbnailTasks.map(task => 
+            r2Manager.generateThumbnail(
+              task.buffer, 
+              task.filename, 
+              task.userId, 
+              task.sessionId, 
+              task.fileType
+            )
+          )
+        ).then(thumbResults => {
+          const successfulThumbs = thumbResults.filter(r => r.status === 'fulfilled' && r.value.success).length;
+          console.log(`✅ Generated RAW thumbnails for ${successfulThumbs}/${thumbnailTasks.length} images`);
+        }).catch(thumbError => {
+          console.warn('⚠️ Background RAW thumbnail generation error:', thumbError.message);
+        });
+      }
 
       res.json({
         success: true,
@@ -443,47 +514,114 @@ function createR2Routes() {
    */
   router.get('/preview/:sessionId/:filename', async (req, res) => {
     try {
-      const sharp = require('sharp');
       const userId = req.user.normalized_uid || req.user.uid || req.user.id;
       const { sessionId, filename } = req.params;
+      const { size } = req.query; // Optional size parameter: small, medium, large
       
-      console.log(`🖼️ Preview request: ${filename} for session ${sessionId}`);
+      console.log(`🖼️ Preview request: ${filename} for session ${sessionId} (size: ${size || 'medium'})`);
       
-      // Get file from R2
+      // Map size parameter to thumbnail suffix
+      const thumbnailSize = size === 'small' ? '_sm' : 
+                           size === 'large' ? '_lg' : '_md';
+      
+      // Try to get pre-generated thumbnail first (only for image files)
+      if (r2Manager.isImageFile(filename)) {
+        const thumbnailResult = await r2Manager.getThumbnail(userId, sessionId, filename, thumbnailSize);
+        
+        if (thumbnailResult.success) {
+          res.setHeader('Content-Type', 'image/jpeg');
+          res.setHeader('Cache-Control', 'public, max-age=86400'); // 24 hours cache
+          res.setHeader('X-Thumbnail-Size', thumbnailSize);
+          res.send(thumbnailResult.buffer);
+          console.log(`✅ Served thumbnail ${thumbnailSize} for ${filename}`);
+          return;
+        }
+        console.log(`⚠️ Thumbnail not available for ${filename}, using fallback processing`);
+      }
+      
+      // Fallback: Get original file and process if needed
       const downloadResult = await r2Manager.downloadFile(userId, sessionId, filename);
       
       if (!downloadResult.success) {
-        return res.status(404).json({ error: 'Image not found' });
+        return res.status(404).json({ error: 'File not found' });
       }
       
-      // Check if file is an image that needs conversion
-      const isRawImage = filename.toLowerCase().includes('.tif') || 
-                        filename.toLowerCase().includes('.raw') ||
-                        filename.toLowerCase().includes('.cr2') ||
-                        filename.toLowerCase().includes('.nef');
-      
-      if (isRawImage) {
-        // Convert to JPEG for browser display
-        const jpegBuffer = await sharp(downloadResult.buffer)
-          .jpeg({ quality: 85, progressive: true })
-          .resize(800, 600, { fit: 'inside', withoutEnlargement: true })
-          .toBuffer();
+      // Process image files with Sharp as fallback
+      if (r2Manager.isImageFile(filename)) {
+        const sharp = require('sharp');
+        const maxSize = size === 'small' ? 150 : size === 'large' ? 800 : 400;
         
-        res.setHeader('Content-Type', 'image/jpeg');
-        res.setHeader('Cache-Control', 'public, max-age=3600');
-        res.send(jpegBuffer);
-        
-        console.log(`✅ Converted ${filename} to JPEG preview`);
+        try {
+          const processedBuffer = await sharp(downloadResult.buffer)
+            .jpeg({ quality: 85, progressive: true })
+            .resize(maxSize, maxSize, { fit: 'inside', withoutEnlargement: true })
+            .toBuffer();
+          
+          res.setHeader('Content-Type', 'image/jpeg');
+          res.setHeader('Cache-Control', 'public, max-age=3600');
+          res.setHeader('X-Processed', 'fallback');
+          res.send(processedBuffer);
+          console.log(`✅ Processed ${filename} with fallback Sharp processing`);
+        } catch (sharpError) {
+          console.warn(`⚠️ Sharp processing failed for ${filename}, serving original`);
+          res.setHeader('Content-Type', downloadResult.contentType || 'application/octet-stream');
+          res.setHeader('Cache-Control', 'public, max-age=3600');
+          res.send(downloadResult.buffer);
+        }
       } else {
-        // Send original file for standard formats
-        res.setHeader('Content-Type', downloadResult.contentType || 'image/jpeg');
+        // For non-image files, return original
+        res.setHeader('Content-Type', downloadResult.contentType || 'application/octet-stream');
         res.setHeader('Cache-Control', 'public, max-age=3600');
         res.send(downloadResult.buffer);
+        console.log(`✅ Served original ${filename} (non-image file)`);
       }
       
     } catch (error) {
       console.error('Preview error:', error);
-      res.status(404).json({ error: 'Image preview failed' });
+      res.status(500).json({ error: 'Preview failed', message: error.message });
+    }
+  });
+
+  /**
+   * GET /api/r2/thumbnail/:sessionId/:filename
+   * Get optimized thumbnail for a file (JPEG format, multiple sizes)
+   */
+  router.get('/thumbnail/:sessionId/:filename', async (req, res) => {
+    try {
+      const userId = req.user.normalized_uid || req.user.uid || req.user.id;
+      const { sessionId, filename } = req.params;
+      const { size = 'medium' } = req.query; // small, medium, large
+      
+      console.log(`🖼️ Thumbnail request: ${filename} (${size}) for session ${sessionId}`);
+      
+      // Map size parameter to thumbnail suffix
+      const thumbnailSize = size === 'small' ? '_sm' : 
+                           size === 'large' ? '_lg' : '_md';
+      
+      // Get thumbnail
+      const thumbnailResult = await r2Manager.getThumbnail(userId, sessionId, filename, thumbnailSize);
+      
+      if (thumbnailResult.success) {
+        res.setHeader('Content-Type', 'image/jpeg');
+        res.setHeader('Cache-Control', 'public, max-age=86400'); // 24 hours cache
+        res.setHeader('X-Thumbnail-Size', thumbnailSize);
+        res.setHeader('X-Original-File', filename);
+        res.send(thumbnailResult.buffer);
+        console.log(`✅ Served thumbnail ${thumbnailSize} for ${filename}`);
+      } else {
+        res.status(404).json({ 
+          error: 'Thumbnail not available',
+          message: thumbnailResult.error,
+          originalFile: filename
+        });
+      }
+      
+    } catch (error) {
+      console.error('Thumbnail error:', error);
+      res.status(500).json({ 
+        error: 'Thumbnail generation failed', 
+        message: error.message 
+      });
     }
   });
 
