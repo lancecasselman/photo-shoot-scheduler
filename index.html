@@ -5770,8 +5770,13 @@ ${contract.contract_content}
                     
                     // Sort sessions FIRST before rendering
                     console.log('About to call sortSessions with date-asc...');
-                    sortSessions();
-                    console.log('sortSessions completed with date-asc');
+                    console.log('sortSessions function exists:', typeof sortSessions);
+                    try {
+                        window.sortSessions();
+                        console.log('sortSessions completed with date-asc');
+                    } catch (error) {
+                        console.error('Error calling sortSessions:', error);
+                    }
                     
                     // THEN render the sorted sessions
                     console.log('About to render sorted sessions...');
@@ -6554,12 +6559,14 @@ lance@thelegacyphotography.com`;
         }
 
         // Sort Functionality
-        function sortSessions() {
+        window.sortSessions = function sortSessions() {
+            console.log('=== sortSessions FUNCTION CALLED ===');
             const sortElement = document.getElementById('sortOptions');
             const sortOption = sortElement?.value || 'date-asc';
             console.log('sortSessions called - Current sort option:', sortOption);
             console.log('Sort element found:', !!sortElement);
             console.log('Sessions array length:', sessions.length);
+            console.log('Sessions global var exists:', typeof sessions, Array.isArray(sessions));
             
             sessions.sort((a, b) => {
                 const now = new Date();
@@ -6706,6 +6713,7 @@ lance@thelegacyphotography.com`;
                 });
             }
             
+            console.log('=== CALLING RENDER SESSIONS FROM SORT ===');
             window.renderSessions();
         }
 
