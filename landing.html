@@ -1076,11 +1076,12 @@
 
             <div class="pricing-card featured">
                 <h3 class="plan-name">Professional</h3>
-                <div class="plan-price">$29 <span>/month</span></div>
+                <div class="plan-price">$39 <span>/month</span></div>
                 <p class="plan-description">Everything you need to run your photography business</p>
                 <ul class="plan-features">
                     <li>Unlimited sessions</li>
-                    <li>100GB cloud storage</li>
+                    <li>100GB cloud storage included</li>
+                    <li>Additional storage: $25/month per TB</li>
                     <li>Advanced galleries with downloads</li>
                     <li>Payment processing</li>
                     <li>Digital contracts</li>
@@ -1093,19 +1094,19 @@
 
             <div class="pricing-card">
                 <h3 class="plan-name">Studio</h3>
-                <div class="plan-price">$79 <span>/month</span></div>
+                <div class="plan-price">Custom</div>
                 <p class="plan-description">For established studios and teams</p>
                 <ul class="plan-features">
                     <li>Everything in Professional</li>
-                    <li>Unlimited cloud storage</li>
-                    <li>Team collaboration (5 users)</li>
+                    <li>Custom storage options</li>
+                    <li>Team collaboration (unlimited users)</li>
                     <li>Advanced analytics</li>
                     <li>API access</li>
                     <li>White-label options</li>
                     <li>Dedicated account manager</li>
                     <li>Custom integrations</li>
                 </ul>
-                <button class="plan-cta" onclick="openPaymentModal('studio')">Contact Sales</button>
+                <button class="plan-cta" onclick="window.location.href='mailto:support@example.com?subject=Studio Plan Inquiry'">Contact Sales</button>
             </div>
         </div>
     </section>
@@ -1140,7 +1141,7 @@
         <div class="payment-content">
             <button class="payment-close" onclick="closePaymentModal()">×</button>
             <h2 class="payment-title">Start Your Free Trial</h2>
-            <p style="color: #666; margin-bottom: 20px;">14 days free, then <span id="planPrice">$29</span>/month. Cancel anytime.</p>
+            <p style="color: #666; margin-bottom: 20px;">14 days free, then <span id="planPrice">$39</span>/month. Cancel anytime.</p>
             
             <form id="payment-form" class="payment-form">
                 <div class="form-group">
@@ -1199,9 +1200,9 @@
             // Update price based on plan
             const planPrice = document.getElementById('planPrice');
             if (plan === 'pro') {
-                planPrice.textContent = '$29';
+                planPrice.textContent = '$39';
             } else if (plan === 'studio') {
-                planPrice.textContent = '$79';
+                planPrice.textContent = 'Custom';
             }
             
             // Initialize Stripe Elements

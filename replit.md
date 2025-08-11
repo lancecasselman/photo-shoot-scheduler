@@ -1,7 +1,7 @@
 # Photography Management System
 
 ## Overview
-A streamlined photography business management platform designed for professional photographers. Its purpose is to provide essential workflow management tools, including session scheduling, client management, invoicing, and contract signing. The platform operates on a freemium model, offering basic features for all users and premium features via subscription ($29/month Professional, $79/month Studio). The business vision is to empower photographers with tools to efficiently manage their operations, enhancing productivity and client satisfaction. Features a commercial landing page with Stripe payment integration for subscription management.
+A streamlined photography business management platform designed for professional photographers. Its purpose is to provide essential workflow management tools, including session scheduling, client management, invoicing, and contract signing. The platform operates on a freemium model, offering basic features for all users and premium features via subscription ($39/month Professional with 100GB storage included, additional storage at $25/month per TB). The business vision is to empower photographers with tools to efficiently manage their operations, enhancing productivity and client satisfaction. Features a commercial landing page with Stripe payment integration for subscription management.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
