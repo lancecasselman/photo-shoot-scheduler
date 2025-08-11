@@ -5653,7 +5653,8 @@ ${contract.contract_content}
                 mobileMenu.classList.remove('show');
             }
             
-            // Main app initialization
+            // Main app initialization - loading sessions
+            console.log('Loading sessions from API...');
             loadSessions();
             setupEventListeners();
             setMinDateTime();
@@ -5666,6 +5667,15 @@ ${contract.contract_content}
             
             console.log('Photography management system loaded');
             showMessage('Welcome to your photography management platform!', 'success');
+            
+            // Initialize dashboard after brief delay to ensure sessions are loaded
+            setTimeout(() => {
+                if (typeof window.initializeDashboard === 'function') {
+                    window.initializeDashboard();
+                } else {
+                    console.log('Dashboard initialization deferred - function not yet available');
+                }
+            }, 500);
         });
 
         window.setupEventListeners = function() {
@@ -5848,6 +5858,9 @@ ${contract.contract_content}
                     } catch (renderError) {
                         console.error('CRITICAL ERROR in renderSessions:', renderError);
                     }
+                    
+                    // Store sessions globally for dashboard initialization
+                    window.sessions = sessions;
                     
                     // Remove any existing storage display elements from session cards
                     setTimeout(() => {
