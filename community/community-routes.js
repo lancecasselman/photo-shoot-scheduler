@@ -18,9 +18,17 @@ const upload = multer({
 let db = null;
 let imageProcessor = null;
 
-function initializeCommunityServices(pool, firebaseAdmin) {
+function initializeCommunityServices(pool, r2Config) {
     db = new CommunityDatabase(pool);
-    imageProcessor = new CommunityImageProcessor(firebaseAdmin.storage());
+    
+    // Pass R2 configuration to image processor
+    imageProcessor = new CommunityImageProcessor({
+        endpoint: process.env.R2_ENDPOINT || 'https://c63e5e9dae18a57faff7ea25de2856ff.r2.cloudflarestorage.com',
+        accessKeyId: process.env.R2_ACCESS_KEY_ID,
+        secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+        bucketName: process.env.R2_BUCKET || 'photoappr2token',
+        publicUrl: process.env.R2_PUBLIC_URL || 'https://pub-f4fb0dd444374c70b491e4a0adb6bb02.r2.dev'
+    });
     
     // Initialize database tables
     db.initializeTables().catch(console.error);

@@ -310,8 +310,15 @@ try {
         
         // Initialize Community Platform after Firebase is ready
         const initializeCommunityServices = require('./community/community-routes');
-        communityRoutes = initializeCommunityServices(pool, admin);
-        console.log('✅ Community Platform initialized with Firebase Storage');
+        // Pass R2 configuration to community services
+        communityRoutes = initializeCommunityServices(pool, {
+            endpoint: process.env.R2_ENDPOINT,
+            accessKeyId: process.env.R2_ACCESS_KEY_ID,
+            secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+            bucketName: process.env.R2_BUCKET,
+            publicUrl: process.env.R2_PUBLIC_URL
+        });
+        console.log('✅ Community Platform initialized with R2 Storage');
     } else {
         console.log('WARNING: Firebase credentials not provided - authentication disabled');
     }
