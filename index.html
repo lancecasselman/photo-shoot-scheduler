@@ -14218,7 +14218,7 @@ END:VCALENDAR`;
                 
                 // Create navigation menu
                 const navMenu = Object.keys(this.pages).map(key => 
-                    `<a href="#" onclick="showPage('${key}'); return false;" style="padding: 10px 20px; text-decoration: none; color: #333; font-weight: 500;">${this.pages[key].name}</a>`
+                    `<a href="#" onclick="showPage('${key}', event); return false;" style="padding: 10px 20px; text-decoration: none; color: #333; font-weight: 500;">${this.pages[key].name}</a>`
                 ).join('');
                 
                 // Prepare all pages content
@@ -14227,7 +14227,7 @@ END:VCALENDAR`;
                         const pages = ${JSON.stringify(this.pages)};
                         let currentPage = '${this.currentPage}';
                         
-                        function showPage(pageKey) {
+                        function showPage(pageKey, evt) {
                             const contentDiv = document.getElementById('page-content');
                             if (pages[pageKey] && pages[pageKey].content) {
                                 contentDiv.innerHTML = pages[pageKey].content;
@@ -14240,8 +14240,20 @@ END:VCALENDAR`;
                                 link.style.background = 'transparent';
                                 link.style.color = '#333';
                             });
-                            event.target.style.background = '#667eea';
-                            event.target.style.color = 'white';
+                            
+                            // If called from a click event, update the clicked link
+                            if (evt && evt.target) {
+                                evt.target.style.background = '#667eea';
+                                evt.target.style.color = 'white';
+                            } else {
+                                // Otherwise update based on pageKey
+                                document.querySelectorAll('nav a').forEach((link, index) => {
+                                    if (Object.keys(pages)[index] === pageKey) {
+                                        link.style.background = '#667eea';
+                                        link.style.color = 'white';
+                                    }
+                                });
+                            }
                             currentPage = pageKey;
                         }
                         
@@ -14292,7 +14304,7 @@ END:VCALENDAR`;
                 
                 // Create navigation menu for published site
                 const navMenu = Object.keys(this.pages).map(key => 
-                    `<a href="#" onclick="showPage('${key}'); return false;" style="padding: 10px 20px; text-decoration: none; color: #333; font-weight: 500;">${this.pages[key].name}</a>`
+                    `<a href="#" onclick="showPage('${key}', event); return false;" style="padding: 10px 20px; text-decoration: none; color: #333; font-weight: 500;">${this.pages[key].name}</a>`
                 ).join('');
                 
                 const publishedHTML = `
@@ -14320,7 +14332,7 @@ END:VCALENDAR`;
                             const pages = ${JSON.stringify(this.pages)};
                             let currentPage = 'home';
                             
-                            function showPage(pageKey) {
+                            function showPage(pageKey, evt) {
                                 const contentDiv = document.getElementById('page-content');
                                 if (pages[pageKey] && pages[pageKey].content) {
                                     contentDiv.innerHTML = pages[pageKey].content;
