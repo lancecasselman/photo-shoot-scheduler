@@ -5774,13 +5774,19 @@ ${contract.contract_content}
                     const sortSelect = document.getElementById('sortOptions');
                     if (sortSelect) {
                         sortSelect.value = 'date-asc';
+                        console.log('Default sort set to date-asc');
                     }
                     
                     // Apply sort after initial render - force execution
-                    console.log('About to call sortSessions...');
+                    console.log('About to call sortSessions with date-asc...');
                     setTimeout(() => {
+                        // Force the sort value again just to be sure
+                        const sortSelect2 = document.getElementById('sortOptions');
+                        if (sortSelect2) {
+                            sortSelect2.value = 'date-asc';
+                        }
                         sortSessions();
-                        console.log('sortSessions completed');
+                        console.log('sortSessions completed with date-asc');
                     }, 100);
                     
                     // Remove any existing storage display elements from session cards
@@ -6556,7 +6562,8 @@ lance@thelegacyphotography.com`;
 
         // Sort Functionality
         function sortSessions() {
-            const sortOption = document.getElementById('sortOptions')?.value || 'calendar-upcoming';
+            const sortOption = document.getElementById('sortOptions')?.value || 'date-asc';
+            console.log('Current sort option:', sortOption);
             
             sessions.sort((a, b) => {
                 const now = new Date();
@@ -6580,6 +6587,7 @@ lance@thelegacyphotography.com`;
                         // Parse dates properly to ensure accurate sorting
                         return dateB.getTime() - dateA.getTime(); // Newest first
                     case 'date-asc':
+                        console.log('Sorting by date-asc (oldest first)');
                         return dateA.getTime() - dateB.getTime(); // Oldest first
                     case 'calendar-upcoming':
                         // Show upcoming sessions first (with same-day priority), then past sessions
