@@ -5902,10 +5902,10 @@ ${contract.contract_content}
                         <div class="file-item">
                             ${isImage ? `
                                 <div class="file-thumbnail">
-                                    <img src="/api/sessions/${sessionId}/files/${folderType}/thumbnail/${file.name}" 
+                                    <img src="/api/r2/thumbnail/${sessionId}/${encodeURIComponent(file.name)}?size=medium&t=${Date.now()}" 
                                          alt="${file.name}"
                                          onclick="window.open('${file.downloadUrl}', '_blank'); event.stopPropagation();"
-                                         onerror="this.style.display='none';"
+                                         onerror="this.style.display='none'; this.parentNode.innerHTML='<div class=\\'file-icon\\'>🖼️</div>';"
                                          loading="lazy" />
                                 </div>
                             ` : ''}
