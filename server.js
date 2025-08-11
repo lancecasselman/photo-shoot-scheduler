@@ -1594,7 +1594,7 @@ app.delete('/api/sessions/:sessionId/files/:folderType/:fileName', isAuthenticat
             console.log(`Found file record for deletion: ${fileName}, R2 key: ${fileRecord.r2_key}`);
             
             // Delete from R2
-            const deleteSuccess = await r2FileManager.deleteFile(fileRecord.r2_key);
+            const deleteSuccess = await r2FileManager.deleteFileByKey(fileRecord.r2_key);
             
             if (!deleteSuccess) {
                 console.error('Failed to delete file from R2:', fileRecord.r2_key);
