@@ -5771,14 +5771,7 @@ ${contract.contract_content}
                     console.log('Transformed sessions:', sessions);
                     console.log(`Successfully loaded ${sessions.length} sessions`);
                     
-                    // SIMPLE SORT - Just sort by dateTime chronologically (oldest appointment first)
-                    console.log('🔥 SORTING sessions by appointment date...');
-                    sessions.sort((a, b) => {
-                        const dateA = new Date(a.dateTime);
-                        const dateB = new Date(b.dateTime);
-                        return dateA.getTime() - dateB.getTime(); // Oldest first
-                    });
-                    console.log('✅ Sessions sorted by appointment date - first session:', sessions[0]?.clientName, new Date(sessions[0]?.dateTime).toLocaleDateString());
+
                     
 
                     
