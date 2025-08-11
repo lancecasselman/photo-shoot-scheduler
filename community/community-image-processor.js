@@ -1,20 +1,13 @@
 // Community Platform Image Processing System
 const sharp = require('sharp');
-const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 const path = require('path');
 const fs = require('fs').promises;
 
 class CommunityImageProcessor {
-    constructor(r2Config) {
-        this.r2Client = new S3Client({
-            endpoint: r2Config.endpoint,
-            region: 'auto',
-            credentials: {
-                accessKeyId: r2Config.accessKeyId,
-                secretAccessKey: r2Config.secretAccessKey
-            }
-        });
-        this.bucketName = r2Config.bucketName;
+    constructor(firebaseStorage) {
+        this.storage = firebaseStorage;
+        this.bucketName = 'photoshcheduleapp.appspot.com';
+        console.log('Community Image Processor initialized with Firebase Storage');
     }
 
     async processImage(imageBuffer, filename, userId) {
@@ -169,22 +162,25 @@ class CommunityImageProcessor {
 
     async uploadToR2(buffer, key, contentType) {
         try {
-            const command = new PutObjectCommand({
-                Bucket: this.bucketName,
-                Key: key,
-                Body: buffer,
-                ContentType: contentType,
-                Metadata: {
-                    'uploaded-by': 'community-platform'
+            // Use Firebase Storage instead of R2
+            const file = this.storage.bucket(this.bucketName).file(key);
+            
+            await file.save(buffer, {
+                metadata: {
+                    contentType: contentType,
+                    metadata: {
+                        'uploaded-by': 'community-platform'
+                    }
                 }
             });
 
-            await this.r2Client.send(command);
+            // Make file public
+            await file.makePublic();
             
             // Return the public URL
-            return `https://${this.bucketName}.r2.cloudflarestorage.com/${key}`;
+            return `https://storage.googleapis.com/${this.bucketName}/${key}`;
         } catch (error) {
-            console.error('Error uploading to R2:', error);
+            console.error('Error uploading to Firebase Storage:', error);
             throw error;
         }
     }

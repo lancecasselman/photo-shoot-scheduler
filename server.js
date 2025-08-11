@@ -253,14 +253,8 @@ const aiServices = new AIServices();
 // Initialize new storage system
 const storageSystem = new StorageSystem(pool, r2FileManager);
 
-// Initialize Community Platform
-const initializeCommunityServices = require('./community/community-routes');
-const communityRoutes = initializeCommunityServices(pool, {
-    endpoint: process.env.R2_ENDPOINT,
-    accessKeyId: process.env.R2_ACCESS_KEY_ID,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
-    bucketName: process.env.R2_BUCKET_NAME || 'photoappr2token'
-});
+// Initialize Community Platform - will be initialized after Firebase admin is ready
+let communityRoutes = null;
 
 // Initialize storage system database tables
 storageSystem.initializeTables().catch(error => {
@@ -313,6 +307,11 @@ try {
         });
         console.log('Firebase Admin SDK initialized successfully with project:', serviceAccount.project_id);
         console.log('Storage bucket configured as:', storageBucket);
+        
+        // Initialize Community Platform after Firebase is ready
+        const initializeCommunityServices = require('./community/community-routes');
+        communityRoutes = initializeCommunityServices(pool, admin);
+        console.log('✅ Community Platform initialized with Firebase Storage');
     } else {
         console.log('WARNING: Firebase credentials not provided - authentication disabled');
     }
@@ -1063,8 +1062,14 @@ app.post('/api/auth/logout', (req, res) => {
 // R2 Storage API Routes - Complete file management system
 app.use('/api/r2', createR2Routes());
 
-// Community Platform routes
-app.use('/api/community', communityRoutes);
+// Community Platform routes (initialized after Firebase)
+app.use('/api/community', (req, res, next) => {
+    if (communityRoutes) {
+        communityRoutes(req, res, next);
+    } else {
+        res.status(503).json({ error: 'Community platform is initializing...' });
+    }
+});
 
 // Register new storage system routes
 registerStorageRoutes(app, isAuthenticated, normalizeUserForLance, storageSystem);

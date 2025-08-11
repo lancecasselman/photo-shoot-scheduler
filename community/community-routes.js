@@ -18,9 +18,9 @@ const upload = multer({
 let db = null;
 let imageProcessor = null;
 
-function initializeCommunityServices(pool, r2Config) {
+function initializeCommunityServices(pool, firebaseAdmin) {
     db = new CommunityDatabase(pool);
-    imageProcessor = new CommunityImageProcessor(r2Config);
+    imageProcessor = new CommunityImageProcessor(firebaseAdmin.storage());
     
     // Initialize database tables
     db.initializeTables().catch(console.error);
