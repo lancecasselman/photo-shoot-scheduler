@@ -1480,8 +1480,8 @@ Lance - The Legacy Photography`;
             }, 100);
         }
         
-        // Add loadStorageStats function to refresh storage statistics
-        async function loadStorageStats() {
+        // Add loadStorageStats function to refresh storage statistics (global scope)
+        window.loadStorageStats = async function loadStorageStats() {
             try {
                 const response = await fetch('/api/global-storage-stats', {
                     credentials: 'include'
@@ -1500,10 +1500,10 @@ Lance - The Legacy Photography`;
             } catch (error) {
                 console.warn('Failed to load storage stats:', error);
             }
-        }
+        };
         
-        // Define deleteFile function to use unified deletion
-        async function deleteFile(fileName) {
+        // Define deleteFile function to use unified deletion (global scope)
+        window.deleteFile = async function deleteFile(fileName) {
             if (!confirm(`Are you sure you want to delete ${fileName}?`)) {
                 return;
             }
@@ -1559,7 +1559,7 @@ Lance - The Legacy Photography`;
                     alert('Failed to delete file: ' + apiError.message);
                 }
             }
-        }
+        };
     </script>
 </body>
 </html>
