@@ -13114,6 +13114,33 @@ END:VCALENDAR`;
             font-weight: 600;
             z-index: 1000;
         }
+        
+        /* Image resize handles */
+        .wb-image-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .wb-resize-handle {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: #667eea;
+            border: 2px solid white;
+            border-radius: 50%;
+            cursor: pointer;
+            display: none;
+            z-index: 1001;
+        }
+        
+        .wb-image-wrapper.selected .wb-resize-handle {
+            display: block;
+        }
+        
+        .wb-resize-handle.nw { top: -6px; left: -6px; cursor: nw-resize; }
+        .wb-resize-handle.ne { top: -6px; right: -6px; cursor: ne-resize; }
+        .wb-resize-handle.sw { bottom: -6px; left: -6px; cursor: sw-resize; }
+        .wb-resize-handle.se { bottom: -6px; right: -6px; cursor: se-resize; }
 
         .wb-drag-handle {
             position: absolute;
@@ -13398,9 +13425,17 @@ END:VCALENDAR`;
                             </div>
                             <div class="wb-edit-group" id="wb-image-group" style="display: none;">
                                 <label>Image URL</label>
-                                <input type="text" id="wb-edit-image-url" placeholder="Enter image URL">
+                                <input type="text" id="wb-edit-image-url" placeholder="Enter image URL" onchange="WebsiteBuilder.updateElement()">
                                 <label>Or Upload Image</label>
                                 <input type="file" id="wb-edit-image-upload" accept="image/*" onchange="WebsiteBuilder.handleImageUpload(event)">
+                                <label>Width (px)</label>
+                                <input type="number" id="wb-edit-image-width" min="50" value="400" onchange="WebsiteBuilder.updateImageSize()">
+                                <label>Height</label>
+                                <select id="wb-edit-image-height-mode" onchange="WebsiteBuilder.updateImageSize()">
+                                    <option value="auto">Auto (maintain aspect ratio)</option>
+                                    <option value="custom">Custom height</option>
+                                </select>
+                                <input type="number" id="wb-edit-image-height" min="50" value="300" style="display: none;" onchange="WebsiteBuilder.updateImageSize()">
                             </div>
                             <button class="wb-btn" style="background: #e53e3e; margin-top: 20px;" onclick="WebsiteBuilder.deleteElement()">Delete Element</button>
                         </div>
@@ -13451,32 +13486,55 @@ END:VCALENDAR`;
                 document.querySelectorAll('.wb-editable').forEach(el => {
                     el.classList.remove('selected');
                 });
+                document.querySelectorAll('.wb-image-wrapper').forEach(el => {
+                    el.classList.remove('selected');
+                });
                 
                 element.classList.add('selected');
                 this.currentElement = element;
+                
+                // Check if it's an image wrapper
+                let targetElement = element;
+                if (element.classList.contains('wb-image-wrapper')) {
+                    const img = element.querySelector('img');
+                    if (img) {
+                        targetElement = img;
+                        this.currentElement = element; // Keep wrapper as current element
+                    }
+                }
                 
                 // Show edit panel
                 const panel = document.getElementById('wb-edit-panel');
                 panel.classList.add('active');
                 
                 // Load current values
-                document.getElementById('wb-edit-content').value = element.textContent || '';
-                document.getElementById('wb-edit-font').value = element.style.fontFamily || 'Roboto';
-                document.getElementById('wb-edit-size').value = parseInt(element.style.fontSize) || 16;
-                document.getElementById('wb-size-value').textContent = (parseInt(element.style.fontSize) || 16) + 'px';
-                document.getElementById('wb-edit-weight').value = element.style.fontWeight || '400';
-                document.getElementById('wb-edit-align').value = element.style.textAlign || 'left';
-                document.getElementById('wb-edit-color').value = this.rgbToHex(element.style.color || '#000000');
-                document.getElementById('wb-edit-bg').value = this.rgbToHex(element.style.backgroundColor || '#ffffff');
-                document.getElementById('wb-edit-padding').value = parseInt(element.style.padding) || 10;
-                document.getElementById('wb-edit-margin').value = parseInt(element.style.margin) || 10;
-                document.getElementById('wb-edit-radius').value = parseInt(element.style.borderRadius) || 0;
+                document.getElementById('wb-edit-content').value = targetElement.textContent || '';
+                document.getElementById('wb-edit-font').value = targetElement.style.fontFamily || 'Roboto';
+                document.getElementById('wb-edit-size').value = parseInt(targetElement.style.fontSize) || 16;
+                document.getElementById('wb-size-value').textContent = (parseInt(targetElement.style.fontSize) || 16) + 'px';
+                document.getElementById('wb-edit-weight').value = targetElement.style.fontWeight || '400';
+                document.getElementById('wb-edit-align').value = targetElement.style.textAlign || 'left';
+                document.getElementById('wb-edit-color').value = this.rgbToHex(targetElement.style.color || '#000000');
+                document.getElementById('wb-edit-bg').value = this.rgbToHex(targetElement.style.backgroundColor || '#ffffff');
+                document.getElementById('wb-edit-padding').value = parseInt(targetElement.style.padding) || 10;
+                document.getElementById('wb-edit-margin').value = parseInt(targetElement.style.margin) || 10;
+                document.getElementById('wb-edit-radius').value = parseInt(targetElement.style.borderRadius) || 0;
                 
-                // Show image options if it's an image
+                // Show image options if it's an image or image wrapper
                 const imageGroup = document.getElementById('wb-image-group');
-                if (element.tagName === 'IMG') {
+                if (targetElement.tagName === 'IMG' || element.classList.contains('wb-image-wrapper')) {
                     imageGroup.style.display = 'block';
-                    document.getElementById('wb-edit-image-url').value = element.src || '';
+                    document.getElementById('wb-edit-image-url').value = targetElement.src || '';
+                    document.getElementById('wb-edit-image-width').value = parseInt(targetElement.style.width) || targetElement.offsetWidth || 400;
+                    
+                    if (targetElement.style.height === 'auto' || !targetElement.style.height) {
+                        document.getElementById('wb-edit-image-height-mode').value = 'auto';
+                        document.getElementById('wb-edit-image-height').style.display = 'none';
+                    } else {
+                        document.getElementById('wb-edit-image-height-mode').value = 'custom';
+                        document.getElementById('wb-edit-image-height').style.display = 'block';
+                        document.getElementById('wb-edit-image-height').value = parseInt(targetElement.style.height) || targetElement.offsetHeight || 300;
+                    }
                 } else {
                     imageGroup.style.display = 'none';
                 }
@@ -13539,13 +13597,31 @@ END:VCALENDAR`;
                         break;
                         
                     case 'image':
+                        // Create wrapper for image with resize handles
+                        const imageWrapper = document.createElement('div');
+                        imageWrapper.className = 'wb-image-wrapper wb-editable';
+                        imageWrapper.style.display = 'inline-block';
+                        imageWrapper.style.position = 'relative';
+                        
                         element = document.createElement('img');
                         element.src = 'https://images.unsplash.com/photo-1452587925148-ce544e77e70d?w=400&h=300&fit=crop';
-                        element.className = 'wb-editable';
-                        element.style.maxWidth = '100%';
+                        element.style.width = '400px';
                         element.style.height = 'auto';
+                        element.style.display = 'block';
                         element.style.cursor = 'pointer';
                         element.alt = 'Click to change image';
+                        
+                        imageWrapper.appendChild(element);
+                        
+                        // Add resize handles
+                        ['nw', 'ne', 'sw', 'se'].forEach(position => {
+                            const handle = document.createElement('div');
+                            handle.className = `wb-resize-handle ${position}`;
+                            handle.addEventListener('mousedown', (e) => this.startResize(e, element, position));
+                            imageWrapper.appendChild(handle);
+                        });
+                        
+                        element = imageWrapper;
                         break;
                         
                     case 'gallery':
@@ -13692,6 +13768,8 @@ END:VCALENDAR`;
                 
                 this.showToast(`${template.name} template applied`);
                 this.setupEditableElements();
+                this.makeImagesResizable();
+                this.saveToHistory();
                 this.savePage();
             },
 
@@ -13863,9 +13941,38 @@ END:VCALENDAR`;
                 if (this.currentPage && canvas) {
                     this.pages[this.currentPage].content = canvas.innerHTML;
                     
-                    // Save to localStorage
-                    localStorage.setItem('wb_pages', JSON.stringify(this.pages));
-                    localStorage.setItem('wb_current_page', this.currentPage);
+                    // Try to save to localStorage with error handling
+                    try {
+                        // Clear old data first to make space
+                        const keysToKeep = ['wb_pages', 'wb_current_page', 'wb_website_data'];
+                        const allKeys = Object.keys(localStorage);
+                        allKeys.forEach(key => {
+                            if (!keysToKeep.includes(key) && key.startsWith('wb_')) {
+                                localStorage.removeItem(key);
+                            }
+                        });
+                        
+                        // Save current data
+                        localStorage.setItem('wb_pages', JSON.stringify(this.pages));
+                        localStorage.setItem('wb_current_page', this.currentPage);
+                    } catch (e) {
+                        if (e.name === 'QuotaExceededError') {
+                            console.warn('LocalStorage quota exceeded - clearing old data');
+                            // Clear all website builder data and try again
+                            Object.keys(localStorage).forEach(key => {
+                                if (key.startsWith('wb_')) {
+                                    localStorage.removeItem(key);
+                                }
+                            });
+                            
+                            try {
+                                localStorage.setItem('wb_pages', JSON.stringify(this.pages));
+                                localStorage.setItem('wb_current_page', this.currentPage);
+                            } catch (e2) {
+                                console.error('Unable to save to localStorage:', e2);
+                            }
+                        }
+                    }
                 }
             },
 
@@ -14188,6 +14295,114 @@ END:VCALENDAR`;
                         this.deleteElement();
                     }
                 });
+            },
+            
+            startResize(e, img, handle) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const startX = e.clientX;
+                const startY = e.clientY;
+                const startWidth = parseInt(img.style.width) || img.offsetWidth;
+                const startHeight = parseInt(img.style.height) || img.offsetHeight;
+                const aspectRatio = startWidth / startHeight;
+                
+                const doResize = (e) => {
+                    const deltaX = e.clientX - startX;
+                    const deltaY = e.clientY - startY;
+                    
+                    let newWidth = startWidth;
+                    let newHeight = startHeight;
+                    
+                    // Calculate new dimensions based on handle position
+                    switch(handle) {
+                        case 'se':
+                            newWidth = startWidth + deltaX;
+                            newHeight = newWidth / aspectRatio;
+                            break;
+                        case 'sw':
+                            newWidth = startWidth - deltaX;
+                            newHeight = newWidth / aspectRatio;
+                            break;
+                        case 'ne':
+                            newWidth = startWidth + deltaX;
+                            newHeight = newWidth / aspectRatio;
+                            break;
+                        case 'nw':
+                            newWidth = startWidth - deltaX;
+                            newHeight = newWidth / aspectRatio;
+                            break;
+                    }
+                    
+                    // Minimum size constraints
+                    if (newWidth > 50) {
+                        img.style.width = newWidth + 'px';
+                        img.style.height = newHeight + 'px';
+                    }
+                };
+                
+                const stopResize = () => {
+                    document.removeEventListener('mousemove', doResize);
+                    document.removeEventListener('mouseup', stopResize);
+                    this.saveToHistory();
+                    this.savePage();
+                };
+                
+                document.addEventListener('mousemove', doResize);
+                document.addEventListener('mouseup', stopResize);
+            },
+            
+            makeImagesResizable() {
+                const images = document.querySelectorAll('#wb-canvas img');
+                images.forEach(img => {
+                    if (!img.parentElement.classList.contains('wb-image-wrapper')) {
+                        const wrapper = document.createElement('div');
+                        wrapper.className = 'wb-image-wrapper wb-editable';
+                        wrapper.style.display = 'inline-block';
+                        wrapper.style.position = 'relative';
+                        
+                        img.parentNode.insertBefore(wrapper, img);
+                        wrapper.appendChild(img);
+                        
+                        // Add resize handles
+                        ['nw', 'ne', 'sw', 'se'].forEach(position => {
+                            const handle = document.createElement('div');
+                            handle.className = `wb-resize-handle ${position}`;
+                            handle.addEventListener('mousedown', (e) => this.startResize(e, img, position));
+                            wrapper.appendChild(handle);
+                        });
+                        
+                        wrapper.addEventListener('click', (e) => this.editElement(wrapper, e));
+                    }
+                });
+            },
+            
+            updateImageSize() {
+                if (!this.currentElement) return;
+                
+                let targetImg = this.currentElement;
+                if (this.currentElement.classList.contains('wb-image-wrapper')) {
+                    targetImg = this.currentElement.querySelector('img');
+                }
+                
+                if (targetImg && targetImg.tagName === 'IMG') {
+                    const width = document.getElementById('wb-edit-image-width').value;
+                    const heightMode = document.getElementById('wb-edit-image-height-mode').value;
+                    
+                    targetImg.style.width = width + 'px';
+                    
+                    if (heightMode === 'auto') {
+                        targetImg.style.height = 'auto';
+                        document.getElementById('wb-edit-image-height').style.display = 'none';
+                    } else {
+                        const height = document.getElementById('wb-edit-image-height').value;
+                        targetImg.style.height = height + 'px';
+                        document.getElementById('wb-edit-image-height').style.display = 'block';
+                    }
+                    
+                    this.saveToHistory();
+                    this.savePage();
+                }
             }
         };
 
