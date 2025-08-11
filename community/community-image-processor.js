@@ -2,7 +2,8 @@
 const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs').promises;
-const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+const { S3Client, PutObjectCommand, GetObjectCommand } = require('@aws-sdk/client-s3');
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 
 class CommunityImageProcessor {
     constructor(r2Config) {
@@ -185,8 +186,17 @@ class CommunityImageProcessor {
             
             await this.r2Client.send(command);
             
-            // Return the public URL
-            return `${this.publicUrl}/${key}`;
+            // Generate a presigned URL valid for 7 days
+            const getCommand = new GetObjectCommand({
+                Bucket: this.bucketName,
+                Key: key
+            });
+            
+            const presignedUrl = await getSignedUrl(this.r2Client, getCommand, { 
+                expiresIn: 604800 // 7 days 
+            });
+            
+            return presignedUrl;
         } catch (error) {
             console.error('Error uploading to R2:', error);
             throw error;
