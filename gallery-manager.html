@@ -1455,29 +1455,31 @@ Lance - The Legacy Photography`;
             }
         }
 
-        // Initialize unified deletion system
-        let photoDeletion;
-        
-        // Wait for PhotoDeletion class to be available
-        function initializePhotoDeletion() {
-            if (typeof PhotoDeletion !== 'undefined') {
-                photoDeletion = new PhotoDeletion();
-                console.log('PhotoDeletion system initialized');
-                return true;
-            } else {
-                console.warn('PhotoDeletion class not yet available');
-                return false;
-            }
-        }
-        
-        // Try to initialize immediately
-        if (!initializePhotoDeletion()) {
-            // If not available immediately, try again after a short delay
-            setTimeout(() => {
-                if (!initializePhotoDeletion()) {
-                    console.error('PhotoDeletion class failed to load');
+        // Initialize unified deletion system - ensure no conflicts
+        if (typeof window.photoDeletion === 'undefined') {
+            window.photoDeletion = null;
+            
+            // Wait for PhotoDeletion class to be available
+            window.initializePhotoDeletion = function() {
+                if (typeof PhotoDeletion !== 'undefined' && !window.photoDeletion) {
+                    window.photoDeletion = new PhotoDeletion();
+                    console.log('PhotoDeletion system initialized');
+                    return true;
+                } else {
+                    console.warn('PhotoDeletion class not yet available');
+                    return false;
                 }
-            }, 100);
+            };
+            
+            // Try to initialize immediately
+            if (!window.initializePhotoDeletion()) {
+                // If not available immediately, try again after a short delay
+                setTimeout(() => {
+                    if (!window.initializePhotoDeletion()) {
+                        console.error('PhotoDeletion class failed to load');
+                    }
+                }, 100);
+            }
         }
         
         // Add loadStorageStats function to refresh storage statistics (global scope)
@@ -1512,15 +1514,15 @@ Lance - The Legacy Photography`;
                 console.log(`Attempting to delete ${fileName} from session ${sessionId}, folder ${folderType}`);
                 
                 // Ensure PhotoDeletion is available
-                if (!photoDeletion) {
+                if (!window.photoDeletion) {
                     console.log('Initializing PhotoDeletion system...');
-                    if (!initializePhotoDeletion()) {
+                    if (!window.initializePhotoDeletion()) {
                         throw new Error('PhotoDeletion system is not available');
                     }
                 }
                 
                 // Use unified deletion system
-                const result = await photoDeletion.deletePhoto(sessionId, folderType, fileName);
+                const result = await window.photoDeletion.deletePhoto(sessionId, folderType, fileName);
                 console.log('Delete result:', result);
                 
                 // Refresh file list and storage stats after successful deletion
