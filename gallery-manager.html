@@ -975,60 +975,23 @@
             }
         }
 
-        // Delete all files
+        // Delete all files using unified deletion system
         async function deleteAllFiles() {
             if (files.length === 0) {
                 alert('No files to delete');
                 return;
             }
 
-            const confirmMessage = `Are you sure you want to delete ALL ${files.length} files from the ${folderType} folder?\n\nThis action cannot be undone!`;
+            // Extract filenames for deletion
+            const filenames = files.map(file => file.fileName || file.name);
             
-            if (!confirm(confirmMessage)) {
-                return;
-            }
-
             try {
-                let successCount = 0;
-                let errorCount = 0;
+                // Use unified deletion system's batch delete method
+                await photoDeletion.batchDeletePhotos(sessionId, folderType, filenames);
                 
-                // Delete files in batches of 3 to avoid overwhelming the server
-                const batchSize = 3;
-                for (let i = 0; i < files.length; i += batchSize) {
-                    const batch = files.slice(i, i + batchSize);
-                    const promises = batch.map(async (file) => {
-                        try {
-                            const response = await fetch(`/api/sessions/${sessionId}/files/${folderType}/${encodeURIComponent(file.name)}`, {
-                                method: 'DELETE'
-                            });
-                            
-                            if (!response.ok) {
-                                throw new Error(`Failed to delete ${file.name}: ${response.status}`);
-                            }
-                            successCount++;
-                            console.log(`Successfully deleted ${file.name}`);
-                        } catch (error) {
-                            errorCount++;
-                            console.error(`Failed to delete ${file.name}:`, error);
-                        }
-                    });
-                    
-                    await Promise.all(promises);
-                    
-                    // Small delay between batches to prevent overwhelming the server
-                    if (i + batchSize < files.length) {
-                        await new Promise(resolve => setTimeout(resolve, 500));
-                    }
-                }
-                
-                // Show results and refresh
-                if (errorCount === 0) {
-                    alert(`Successfully deleted all ${successCount} files!`);
-                } else {
-                    alert(`Deleted ${successCount} files. Failed to delete ${errorCount} files. Check console for details.`);
-                }
-                
-                loadFiles(); // Refresh file list
+                // Refresh file list after deletion
+                loadFiles();
+                loadStorageStats();
                 
             } catch (error) {
                 console.error('Delete all error:', error);
