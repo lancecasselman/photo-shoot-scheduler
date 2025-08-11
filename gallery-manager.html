@@ -1052,6 +1052,20 @@ lance@thelegacyphotography.com`;
     <!-- Import unified deletion system -->
     <script src="/static/js/photo-deletion.js"></script>
     <script>
+        // Add showMessage function for compatibility with deletion system
+        function showMessage(message, type) {
+            console.log(`${type.toUpperCase()}: ${message}`);
+            if (type === 'error') {
+                alert(`Error: ${message}`);
+            } else if (type === 'success') {
+                console.log(`✅ Success: ${message}`);
+            } else if (type === 'warning') {
+                console.log(`⚠️ Warning: ${message}`);
+            } else {
+                console.log(`ℹ️ Info: ${message}`);
+            }
+        }
+
         // Initialize unified deletion system (check if not already initialized)
         if (typeof photoDeletion === 'undefined') {
             var photoDeletion = new PhotoDeletion();
