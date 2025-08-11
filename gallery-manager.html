@@ -1455,10 +1455,29 @@ Lance - The Legacy Photography`;
             }
         }
 
-        // Initialize unified deletion system (check if not already initialized)
+        // Initialize unified deletion system
         let photoDeletion;
-        if (typeof PhotoDeletion !== 'undefined') {
-            photoDeletion = new PhotoDeletion();
+        
+        // Wait for PhotoDeletion class to be available
+        function initializePhotoDeletion() {
+            if (typeof PhotoDeletion !== 'undefined') {
+                photoDeletion = new PhotoDeletion();
+                console.log('PhotoDeletion system initialized');
+                return true;
+            } else {
+                console.warn('PhotoDeletion class not yet available');
+                return false;
+            }
+        }
+        
+        // Try to initialize immediately
+        if (!initializePhotoDeletion()) {
+            // If not available immediately, try again after a short delay
+            setTimeout(() => {
+                if (!initializePhotoDeletion()) {
+                    console.error('PhotoDeletion class failed to load');
+                }
+            }, 100);
         }
         
         // Add loadStorageStats function to refresh storage statistics
@@ -1492,8 +1511,17 @@ Lance - The Legacy Photography`;
             try {
                 console.log(`Attempting to delete ${fileName} from session ${sessionId}, folder ${folderType}`);
                 
+                // Ensure PhotoDeletion is available
+                if (!photoDeletion) {
+                    console.log('Initializing PhotoDeletion system...');
+                    if (!initializePhotoDeletion()) {
+                        throw new Error('PhotoDeletion system is not available');
+                    }
+                }
+                
                 // Use unified deletion system
-                await photoDeletion.deletePhoto(sessionId, folderType, fileName);
+                const result = await photoDeletion.deletePhoto(sessionId, folderType, fileName);
+                console.log('Delete result:', result);
                 
                 // Refresh file list and storage stats after successful deletion
                 console.log('Refreshing files after deletion...');
@@ -1502,7 +1530,34 @@ Lance - The Legacy Photography`;
                 
             } catch (error) {
                 console.error('Delete error:', error);
-                alert('Failed to delete file: ' + error.message);
+                
+                // Fallback: Try direct API call if PhotoDeletion fails
+                console.log('Attempting direct API deletion...');
+                try {
+                    const response = await fetch(`/api/sessions/${sessionId}/files/${folderType}/${encodeURIComponent(fileName)}`, {
+                        method: 'DELETE',
+                        credentials: 'include'
+                    });
+                    
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        throw new Error(`Server responded with ${response.status}: ${errorText}`);
+                    }
+                    
+                    const result = await response.json();
+                    console.log('Direct API deletion success:', result);
+                    
+                    if (result.success) {
+                        alert(`File deleted successfully: ${fileName}`);
+                        loadFiles();
+                        loadStorageStats();
+                    } else {
+                        alert(`Deletion failed: ${result.error}`);
+                    }
+                } catch (apiError) {
+                    console.error('Direct API deletion also failed:', apiError);
+                    alert('Failed to delete file: ' + apiError.message);
+                }
             }
         }
     </script>
