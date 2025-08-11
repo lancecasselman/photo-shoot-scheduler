@@ -175,6 +175,25 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 25px rgba(196, 150, 45, 0.4);
         }
+        
+        .nav-signin {
+            background: transparent;
+            color: var(--primary);
+            padding: 10px 25px;
+            border: 2px solid var(--primary);
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-right: 15px;
+        }
+        
+        .nav-signin:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(196, 150, 45, 0.3);
+        }
 
         /* Hero Section */
         .hero {
@@ -897,7 +916,7 @@
                 <a href="#features" class="nav-link">Features</a>
                 <a href="#pricing" class="nav-link">Pricing</a>
                 <a href="#testimonials" class="nav-link">Reviews</a>
-                <a href="/auth.html" class="nav-link">Sign In</a>
+                <a href="/auth.html" class="nav-signin">Sign In</a>
                 <a href="#pricing" class="nav-cta">Get Started Free</a>
             </div>
         </nav>
@@ -916,6 +935,9 @@
                     <span>→</span>
                 </a>
                 <a href="#features" class="hero-cta-secondary">See How It Works</a>
+            </div>
+            <div class="existing-customer">
+                <p>Already have an account? <a href="/auth.html" class="signin-link">Sign in here</a></p>
             </div>
             <div class="trust-badges">
                 <div class="trust-badge">
