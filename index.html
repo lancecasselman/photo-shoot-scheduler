@@ -13473,10 +13473,15 @@ END:VCALENDAR`;
                 if (!canvas) return;
 
                 canvas.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('wb-editable')) {
-                        this.editElement(e.target, e);
+                    if (e.target.classList.contains('wb-editable') || 
+                        e.target.closest('.wb-image-wrapper')) {
+                        const element = e.target.closest('.wb-image-wrapper') || e.target;
+                        this.editElement(element, e);
                     }
                 });
+                
+                // Make all elements draggable
+                this.makeElementsDraggable();
                 
                 // Setup click outside handler
                 this.setupClickOutsideHandler();
@@ -13770,8 +13775,9 @@ END:VCALENDAR`;
                 
                 if (element) {
                     // Make element draggable
-                    element.draggable = true;
-                    element.style.position = 'relative';
+                    const targetElement = element.classList.contains('wb-image-wrapper') ? element : element;
+                    targetElement.draggable = true;
+                    targetElement.style.cursor = 'move';
                     
                     // Direct append for cleaner structure
                     canvas.appendChild(element);
@@ -13780,6 +13786,9 @@ END:VCALENDAR`;
                     if (!element.classList.contains('wb-contact-form')) {
                         element.addEventListener('click', (e) => this.editElement(element, e));
                     }
+                    
+                    // Make all elements draggable again (including the new one)
+                    this.makeElementsDraggable();
                     
                     this.showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} element added`);
                     this.saveToHistory();
@@ -14066,37 +14075,58 @@ END:VCALENDAR`;
             initializeDragAndDrop() {
                 let draggedElement = null;
                 let dropIndicator = null;
+                let dragOffset = { x: 0, y: 0 };
+                let isDragging = false;
                 
                 // Create drop indicator
                 dropIndicator = document.createElement('div');
-                dropIndicator.style.cssText = 'height: 3px; background: #667eea; margin: 10px 0; display: none;';
+                dropIndicator.style.cssText = 'height: 3px; background: #667eea; margin: 10px 0; display: none; pointer-events: none;';
                 dropIndicator.id = 'drop-indicator';
                 
+                const canvas = document.getElementById('wb-canvas');
+                // Make canvas relative for absolute positioning
+                canvas.style.position = 'relative';
+                canvas.style.minHeight = '600px';
+                
+                // Handle drag start
                 document.addEventListener('dragstart', (e) => {
-                    if (e.target.classList.contains('wb-editable')) {
-                        draggedElement = e.target;
+                    if (e.target.classList.contains('wb-editable') || 
+                        e.target.closest('.wb-image-wrapper')) {
+                        
+                        draggedElement = e.target.closest('.wb-image-wrapper') || e.target;
+                        draggedElement.classList.add('dragging');
                         e.target.style.opacity = '0.5';
                         e.dataTransfer.effectAllowed = 'move';
-                        e.dataTransfer.setData('text/html', e.target.innerHTML);
+                        
+                        // Calculate offset
+                        const rect = draggedElement.getBoundingClientRect();
+                        dragOffset.x = e.clientX - rect.left;
+                        dragOffset.y = e.clientY - rect.top;
+                        
+                        isDragging = true;
                     }
                 });
                 
+                // Handle drag end
                 document.addEventListener('dragend', (e) => {
-                    if (e.target.classList.contains('wb-editable')) {
-                        e.target.style.opacity = '';
+                    if (draggedElement) {
+                        draggedElement.style.opacity = '';
+                        draggedElement.classList.remove('dragging');
+                        isDragging = false;
                     }
                     if (dropIndicator.parentNode) {
                         dropIndicator.parentNode.removeChild(dropIndicator);
                     }
                 });
                 
-                document.addEventListener('dragover', (e) => {
+                // Handle drag over
+                canvas.addEventListener('dragover', (e) => {
                     e.preventDefault();
                     e.dataTransfer.dropEffect = 'move';
                     
-                    const canvas = document.getElementById('wb-canvas');
-                    if (!canvas.contains(e.target)) return;
+                    if (!isDragging || !draggedElement) return;
                     
+                    // Show drop indicator for reordering
                     const afterElement = this.getDragAfterElement(canvas, e.clientY);
                     if (afterElement == null) {
                         canvas.appendChild(dropIndicator);
@@ -14106,17 +14136,21 @@ END:VCALENDAR`;
                     dropIndicator.style.display = 'block';
                 });
                 
-                document.addEventListener('drop', (e) => {
+                // Handle drop
+                canvas.addEventListener('drop', (e) => {
                     e.preventDefault();
-                    const canvas = document.getElementById('wb-canvas');
                     
-                    if (draggedElement && canvas.contains(e.target)) {
-                        const afterElement = this.getDragAfterElement(canvas, e.clientY);
-                        if (afterElement == null) {
-                            canvas.appendChild(draggedElement);
-                        } else {
-                            canvas.insertBefore(draggedElement, afterElement);
-                        }
+                    if (draggedElement && canvas.contains(draggedElement)) {
+                        const rect = canvas.getBoundingClientRect();
+                        const x = e.clientX - rect.left - dragOffset.x;
+                        const y = e.clientY - rect.top - dragOffset.y;
+                        
+                        // Set position to absolute and update coordinates
+                        draggedElement.style.position = 'absolute';
+                        draggedElement.style.left = Math.max(0, Math.min(x, rect.width - draggedElement.offsetWidth)) + 'px';
+                        draggedElement.style.top = Math.max(0, y) + 'px';
+                        draggedElement.style.transform = 'none';
+                        
                         this.saveToHistory();
                         this.savePage();
                     }
@@ -14124,6 +14158,20 @@ END:VCALENDAR`;
                     if (dropIndicator.parentNode) {
                         dropIndicator.parentNode.removeChild(dropIndicator);
                     }
+                    
+                    draggedElement = null;
+                    isDragging = false;
+                });
+                
+                // Make all editable elements draggable
+                this.makeElementsDraggable();
+            },
+            
+            makeElementsDraggable() {
+                const elements = document.querySelectorAll('#wb-canvas .wb-editable, #wb-canvas .wb-image-wrapper');
+                elements.forEach(element => {
+                    element.draggable = true;
+                    element.style.cursor = 'move';
                 });
             },
             
