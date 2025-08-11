@@ -21,6 +21,8 @@ Preferred communication style: Simple, everyday language.
   - ✅ Added real-time progress tracking with file-by-file status indicators
   - ✅ Implemented upload speed calculation and visual progress percentage
   - ✅ Added individual file status tracking (queued, uploading, completed, error)
+  - ✅ Fixed missing backup index causing thumbnail generation failures
+  - ✅ Rebuilt raw_backups table from session_files data (5 records restored)
 - **August 11, 2025**: Legacy System Cleanup and Thumbnail Integration
   - ✅ Removed outdated RAW Backup & Storage Dashboard (empty legacy component)
   - ✅ Thumbnail system successfully integrated into main gallery managers
