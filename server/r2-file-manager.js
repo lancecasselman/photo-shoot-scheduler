@@ -10,6 +10,7 @@ class R2FileManager {
     this.secretAccessKey = process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY;
     this.localBackup = localBackup;
     this.pool = pool;
+    this.db = pool; // Database connection pool
     this.r2Available = false;
     
     // File type categories for organization
@@ -545,16 +546,49 @@ class R2FileManager {
    */
   async downloadFile(userId, sessionId, filename) {
     try {
-      // First, get the backup index to find the file
-      const indexKey = this.generateBackupIndexKey(userId, sessionId);
-      const getIndexCommand = new GetObjectCommand({ Bucket: this.bucketName, Key: indexKey });
-      const indexResponse = await this.s3Client.send(getIndexCommand);
-      const backupIndex = JSON.parse(await indexResponse.Body.transformToString());
+      // First, try to get file info from database
+      let fileInfo;
       
-      // Find the file in the index
-      const fileInfo = backupIndex.files.find(f => f.filename === filename);
+      // Try session_files table first
+      const sessionFileQuery = `
+        SELECT filename, r2_key, file_size_bytes, original_name
+        FROM session_files 
+        WHERE session_id = $1 AND filename = $2
+      `;
+      const sessionFileResult = await this.db.query(sessionFileQuery, [sessionId, filename]);
+      
+      if (sessionFileResult.rows.length > 0) {
+        const row = sessionFileResult.rows[0];
+        fileInfo = {
+          filename: row.filename,
+          r2Key: row.r2_key,
+          fileSizeBytes: row.file_size_bytes,
+          originalName: row.original_name,
+          contentType: 'image/jpeg' // Default, will be determined by file extension
+        };
+      } else {
+        // Try raw_backups table
+        const backupQuery = `
+          SELECT filename, r2_object_key, file_size, original_name, mime_type
+          FROM raw_backups 
+          WHERE session_id = $1 AND filename = $2
+        `;
+        const backupResult = await this.db.query(backupQuery, [sessionId, filename]);
+        
+        if (backupResult.rows.length > 0) {
+          const row = backupResult.rows[0];
+          fileInfo = {
+            filename: row.filename,
+            r2Key: row.r2_object_key,
+            fileSizeBytes: row.file_size,
+            originalName: row.original_name,
+            contentType: row.mime_type || 'image/jpeg'
+          };
+        }
+      }
+      
       if (!fileInfo) {
-        throw new Error(`File not found in backup index: ${filename}`);
+        throw new Error(`File not found in database: ${filename}`);
       }
       
       // Download the file from R2
@@ -575,7 +609,7 @@ class R2FileManager {
         buffer: Buffer.from(fileBuffer),
         contentType: fileInfo.contentType,
         fileSizeBytes: fileInfo.fileSizeBytes,
-        originalFormat: fileInfo.originalFormat,
+        originalFormat: fileInfo.originalFormat || 'jpeg',
         metadata: fileResponse.Metadata
       };
       
