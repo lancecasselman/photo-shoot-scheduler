@@ -49,7 +49,18 @@ router.get('/profile', requireAuth, async (req, res) => {
     try {
         const userId = req.session.user.uid || req.session.user.id;
         const userEmail = req.session.user.email;
-        const displayName = req.session.user.displayName || userEmail || 'Anonymous';
+        
+        // Set proper display name, especially for Lance (admin)
+        let displayName = req.session.user.displayName || userEmail || 'Anonymous';
+        if (!req.session.user.displayName || req.session.user.displayName === req.session.user.email) {
+            if (userEmail && userEmail.includes('lance')) {
+                displayName = 'Lance (Admin)';
+            } else {
+                // Extract name from email
+                const emailName = userEmail ? userEmail.split('@')[0] : 'User';
+                displayName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
+            }
+        }
         
         const profile = await db.getOrCreateProfile(userId, displayName);
         
@@ -125,7 +136,18 @@ router.get('/posts/:postId', async (req, res) => {
 router.post('/posts', requireAuth, upload.array('images', 10), async (req, res) => {
     try {
         const userId = req.session.user.uid || req.session.user.id;
-        const userName = req.session.user.displayName || req.session.user.email || 'Anonymous';
+        
+        // Set proper display name, especially for Lance (admin)
+        let userName = req.session.user.displayName || req.session.user.email || 'Anonymous';
+        if (!req.session.user.displayName || req.session.user.displayName === req.session.user.email) {
+            if (req.session.user.email && req.session.user.email.includes('lance')) {
+                userName = 'Lance (Admin)';
+            } else {
+                // Extract name from email
+                const emailName = req.session.user.email ? req.session.user.email.split('@')[0] : 'User';
+                userName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
+            }
+        }
         
         const postData = {
             userId,

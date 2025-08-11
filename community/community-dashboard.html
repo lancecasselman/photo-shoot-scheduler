@@ -1135,12 +1135,31 @@
                 });
                 if (response.ok) {
                     currentUser = await response.json();
+                    
+                    // Set default display name for Lance (admin) if not set
+                    if (!currentUser.displayName || currentUser.displayName === currentUser.email) {
+                        if (currentUser.email && currentUser.email.includes('lance')) {
+                            currentUser.displayName = 'Lance (Admin)';
+                        } else {
+                            // Extract name from email or use default
+                            const emailName = currentUser.email ? currentUser.email.split('@')[0] : 'User';
+                            currentUser.displayName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
+                        }
+                    }
+                    
                     console.log('Current user profile:', currentUser);
                     updateUserDisplay();
                     displayUserAccount();
                 }
             } catch (error) {
                 console.error('Error initializing user:', error);
+                // Set a default user for development
+                currentUser = {
+                    userId: 'default',
+                    email: 'user@example.com',
+                    displayName: 'Guest User'
+                };
+                updateUserDisplay();
             }
         }
         
