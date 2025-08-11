@@ -3495,7 +3495,7 @@ app.post('/api/create-subscription', async (req, res) => {
                 email: email,
                 plan: plan
             },
-            description: `FreshPhoto Pro ${plan === 'studio' ? 'Studio' : 'Professional'} Plan`
+            description: `Photography Management System ${plan === 'studio' ? 'Studio' : 'Professional'} Plan`
         });
         
         res.json({ 
