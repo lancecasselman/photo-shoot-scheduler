@@ -1031,7 +1031,7 @@
                 html += 'alt="' + file.name + '" ';
                 html += 'onclick="openLightbox(\'' + file.downloadUrl + '\')" ';
                 html += 'onerror="this.style.display=\'none\'; this.parentNode.innerHTML=\'<div class=\\\"file-icon\\\">🖼️</div>\'" ';
-                html += 'loading="lazy">';
+                html += 'loading="lazy" />';
             } else {
                 html += '<div class="file-icon">' + getFileIcon(file.contentType) + '</div>';
             }
