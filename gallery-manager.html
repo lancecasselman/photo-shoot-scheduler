@@ -870,12 +870,13 @@
             let html = '<div class="file-preview">';
             
             if (isImage) {
-                // Use fileName for the API call, but display name for the alt text
+                // Use proper thumbnail API with R2 integration
                 var thumbnailFileName = file.fileName || file.name;
-                html += '<img src="/api/sessions/' + sessionId + '/files/' + folderType + '/thumbnail/' + thumbnailFileName + '" ';
+                var thumbnailUrl = '/api/r2/thumbnail/' + sessionId + '/' + encodeURIComponent(thumbnailFileName) + '?size=medium';
+                html += '<img src="' + thumbnailUrl + '" ';
                 html += 'alt="' + file.name + '" ';
                 html += 'onclick="openLightbox(\'' + file.downloadUrl + '\')" ';
-                html += 'onerror="this.src=\'' + file.downloadUrl + '\'; this.style.objectFit=\'cover\';" ';
+                html += 'onerror="this.style.display=\'none\'; this.parentNode.innerHTML=\'<div class=\\\"file-icon\\\">🖼️</div>\';" ';
                 html += 'loading="lazy">';
             } else {
                 html += '<div class="file-icon">' + getFileIcon(file.contentType) + '</div>';
@@ -1231,8 +1232,9 @@ Lance - The Legacy Photography`;
         }
 
         // Initialize unified deletion system (check if not already initialized)
-        if (typeof photoDeletion === 'undefined') {
-            var photoDeletion = new PhotoDeletion();
+        let photoDeletion;
+        if (typeof PhotoDeletion !== 'undefined') {
+            photoDeletion = new PhotoDeletion();
         }
         
         // Define deleteFile function to use unified deletion
