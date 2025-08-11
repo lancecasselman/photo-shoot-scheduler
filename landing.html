@@ -1057,23 +1057,9 @@
     <section class="pricing" id="pricing">
         <div class="section-header">
             <h2 class="section-title">Simple, Transparent Pricing</h2>
-            <p class="section-subtitle">Choose the plan that grows with your business</p>
+            <p class="section-subtitle">One plan with everything you need</p>
         </div>
-        <div class="pricing-cards">
-            <div class="pricing-card">
-                <h3 class="plan-name">Starter</h3>
-                <div class="plan-price">$0 <span>/month</span></div>
-                <p class="plan-description">Perfect for photographers just starting out</p>
-                <ul class="plan-features">
-                    <li>Up to 5 sessions/month</li>
-                    <li>5GB cloud storage</li>
-                    <li>Basic client galleries</li>
-                    <li>Email support</li>
-                    <li>Mobile app access</li>
-                </ul>
-                <button class="plan-cta" onclick="window.location.href='/auth.html'">Start Free</button>
-            </div>
-
+        <div class="pricing-cards" style="max-width: 500px; margin: 0 auto;">
             <div class="pricing-card featured">
                 <h3 class="plan-name">Professional</h3>
                 <div class="plan-price">$39 <span>/month</span></div>
@@ -1088,25 +1074,10 @@
                     <li>Community access</li>
                     <li>Priority support</li>
                     <li>Custom branding</li>
+                    <li>Mobile app access</li>
+                    <li>Email & SMS notifications</li>
                 </ul>
                 <button class="plan-cta" onclick="openPaymentModal('pro')">Start 14-Day Trial</button>
-            </div>
-
-            <div class="pricing-card">
-                <h3 class="plan-name">Studio</h3>
-                <div class="plan-price">Custom</div>
-                <p class="plan-description">For established studios and teams</p>
-                <ul class="plan-features">
-                    <li>Everything in Professional</li>
-                    <li>Custom storage options</li>
-                    <li>Team collaboration (unlimited users)</li>
-                    <li>Advanced analytics</li>
-                    <li>API access</li>
-                    <li>White-label options</li>
-                    <li>Dedicated account manager</li>
-                    <li>Custom integrations</li>
-                </ul>
-                <button class="plan-cta" onclick="window.location.href='mailto:support@example.com?subject=Studio Plan Inquiry'">Contact Sales</button>
             </div>
         </div>
     </section>
@@ -1199,11 +1170,7 @@
             
             // Update price based on plan
             const planPrice = document.getElementById('planPrice');
-            if (plan === 'pro') {
-                planPrice.textContent = '$39';
-            } else if (plan === 'studio') {
-                planPrice.textContent = 'Custom';
-            }
+            planPrice.textContent = '$39';
             
             // Initialize Stripe Elements
             if (!elements) {

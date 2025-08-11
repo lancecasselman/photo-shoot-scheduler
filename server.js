@@ -3478,8 +3478,7 @@ app.post('/api/create-subscription', async (req, res) => {
         
         // Map plan names to prices
         const planPrices = {
-            'pro': 3900, // $39.00
-            'studio': 3900 // Default to pro price for studio (custom pricing handled separately)
+            'pro': 3900 // $39.00
         };
         
         const amount = planPrices[plan] || 2900;
