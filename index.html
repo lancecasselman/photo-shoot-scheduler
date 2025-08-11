@@ -5786,6 +5786,7 @@ ${contract.contract_content}
                             sortSelect2.value = 'date-asc';
                         }
                         sortSessions();
+                        displaySessions(); // Re-render after sorting
                         console.log('sortSessions completed with date-asc');
                     }, 100);
                     
@@ -6698,6 +6699,15 @@ lance@thelegacyphotography.com`;
                     const sessionDate = new Date(s.dateTime);
                     const daysAgo = Math.ceil((now - sessionDate) / (1000 * 60 * 60 * 24));
                     console.log(`${i+1}. ${s.clientName} - ${sessionDate.toLocaleDateString()} (${daysAgo} days ago)`);
+                });
+            }
+            
+            // Show chronological order for date-asc
+            if (sortOption === 'date-asc') {
+                console.log('=== CHRONOLOGICAL ORDER (date-asc) ===');
+                sessions.forEach((s, i) => {
+                    const sessionDate = new Date(s.dateTime);
+                    console.log(`${i+1}. ${s.clientName} - ${sessionDate.toLocaleDateString()}`);
                 });
             }
             
