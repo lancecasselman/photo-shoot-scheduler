@@ -26,8 +26,18 @@ Cloudflare R2 serves as the primary cloud storage with session-aware file paths,
 ### Mobile & Responsive Features
 Capacitor integration enables native mobile app capabilities for iOS deployment, including direct photo uploads from mobile devices. Core features support offline functionality through local storage and synchronization.
 
-### Community Section
-An Instagram-style photo sharing section is available as a standalone page with modular architecture, supporting real-time interactions (likes, comments) using Firebase Firestore. It features a responsive design, requires authenticated users, organizes posts by calendar month, and includes an image upload system to Firebase Storage with progress tracking.
+### Photography Community Platform
+A comprehensive social platform for photographers to connect, learn, and grow together. Features include:
+- **Feed System**: Multi-tab interface with customizable post types (photos, videos, help requests, tips, marketplace listings, before/after comparisons)
+- **Image Processing**: Advanced image optimization with automatic thumbnail, feed, and full-resolution versions using Sharp library
+- **Smart Storage**: Cloudflare R2 integration with automatic size optimization (200KB thumbnails, 2MB feed images, 10MB full versions)
+- **Social Features**: Like, comment, save, and share functionality with real-time updates
+- **User Profiles**: Reputation points, skill badges, portfolio links, mentor designation
+- **Community Tools**: Weekly challenges, trending topics, top contributors leaderboard
+- **Messaging System**: Direct messaging between photographers with read receipts
+- **Camera Settings**: Automatic EXIF extraction and display for photography education
+- **Database**: PostgreSQL-based with optimized indexes for performance
+- **API**: RESTful endpoints at `/api/community` for all platform features
 
 ### Golden Hour Times Calculator
 A professional photography planning tool that calculates optimal lighting times for any location and date. Features include location search, current location detection, accurate sunrise/sunset and golden/blue hour calculations, responsive design, and photography tips.
@@ -40,6 +50,13 @@ A comprehensive storage quota and billing system provides freemium storage manag
 
 ### Unified File Deletion System
 A robust unified deletion system ensures complete file cleanup with no orphaned records. It includes database lookup for exact folder type detection, enhanced logging, comprehensive verification checks, and pattern matching to catch all database entries. The service coordinates between cloud storage and database cleanup, preventing phantom file records. Delete buttons on thumbnails provide instant file removal with confirmation dialogs, progress feedback, and automatic file list refresh. The system features fallback mechanisms and comprehensive error handling to ensure reliable file deletion across all interfaces.
+
+## Recent Changes (August 11, 2025)
+- **CRITICAL**: Session sorting by appointment date is COMPLETE and WORKING - do not modify
+- **Added**: Photography Community Platform with full social features
+- **Integrated**: Community routes into main server at `/api/community`
+- **Created**: Advanced image processing system with automatic optimization
+- **Database**: Community tables added with proper indexes for performance
 
 ## External Dependencies
 

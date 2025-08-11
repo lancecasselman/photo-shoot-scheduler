@@ -1,0 +1,179 @@
+🚨 CRITICAL: SESSION MANAGEMENT PROTECTION 🚨
+Session management is COMPLETE and WORKING. DO NOT TOUCH ANY SESSION FILES.
+Website builder is COMPLETE and WORKING. DO NOT TOUCH ANY WEBSITE BUILDER FILES.
+Storage system is COMPLETE and WORKING. DO NOT TOUCH ANY STORAGE FILES.
+
+TASK: Build the PHOTOGRAPHY COMMUNITY PLATFORM
+
+Create a comprehensive social platform for photographers with the following specifications:
+
+**FILE STRUCTURE (NEW FILES ONLY):**
+Create /community/ folder with:
+- community-dashboard.html (main interface)
+- community-routes.js (API endpoints)
+- community-posts.js (post management)
+- community-database.js (database schemas)
+- community-image-processor.js (image optimization)
+- community-messages.js (private messaging)
+- community-videos.js (video tutorial management)
+
+**CORE FEATURES TO BUILD:**
+
+**1. IMAGE PROCESSING SYSTEM:**
+- Accept ANY file size upload (no limits)
+- Automatically resize/compress to max 10MB for display
+- Generate multiple versions:
+  • Thumbnail: 200KB (for feed previews)
+  • Feed size: 2MB (for main feed display)
+  • Full size: 10MB (for detailed view)
+- Convert to WebP format for optimal compression
+- Maintain aspect ratios
+- Store original in Cloudflare R2 for future "Download Original" option
+- Implement lazy loading for smooth performance
+
+**2. MAIN FEED SYSTEM:**
+Create Facebook-style feed with multiple post types:
+
+- **Photo Posts**: Images with captions, camera settings, location
+- **Video Tutorials**: Embedded videos with duration, description
+- **Text Posts**: Questions, discussions, announcements
+- **Help Requests**: Yellow-bordered posts for assistance
+- **Tips**: Green-bordered posts for sharing knowledge
+- **Marketplace**: Red-bordered posts with pricing
+- **Before/After**: Slider comparison posts
+
+**3. NAVIGATION SECTIONS:**
+Create separate pages/views for each tab:
+
+- **Feed**: Mixed content timeline
+- **Show Off Your Work**: Gallery grid of best photos only
+- **Help Desk**: Q&A forum structure
+- **Tips & Tutorials**: Categorized written guides
+- **Video Academy**: YouTube-style video library
+- **Marketplace**: Buy/sell listings with filters
+- **Events**: Calendar of meetups/workshops
+- **Mentor Match**: Connect mentors with learners
+
+**4. SOCIAL FEATURES:**
+- **Like**: Simple appreciation counter
+- **Comment**: Threaded discussions with replies
+- **Save/Favorite**: Personal collection building
+- **Share**: Repost to feed or external
+- **Follow**: Follow specific photographers
+- **Hashtags**: Clickable tags for discovery
+
+**5. PRIVATE MESSAGING:**
+- Real-time chat between users
+- Message notifications badge
+- Pop-up chat modal
+- Message history
+- Online/offline status
+- Block/report options
+
+**6. USER PROFILES:**
+- Avatar and bio
+- Skill badges (Wedding Pro, Landscape Expert, etc.)
+- Reputation points from helping others
+- Portfolio link (pulls from website builder)
+- Follower/following counts
+- Recent activity feed
+
+**7. GAMIFICATION:**
+- Weekly photo challenges with voting
+- Contributor badges (10, 50, 100 posts)
+- Trending photographer of the week
+- Helpful mentor awards
+- Points for engagement
+
+**8. DATABASE SCHEMAS:**
+```sql
+-- Posts table
+CREATE TABLE community_posts (
+  id PRIMARY KEY,
+  user_id FOREIGN KEY,
+  type ENUM('photo','video','text','help','tip','marketplace','before_after'),
+  content TEXT,
+  image_urls JSON, -- {thumbnail, feed, full, original}
+  camera_settings JSON,
+  price DECIMAL (for marketplace),
+  likes_count INT DEFAULT 0,
+  comments_count INT DEFAULT 0,
+  saves_count INT DEFAULT 0,
+  created_at TIMESTAMP
+);
+
+-- Comments table
+CREATE TABLE community_comments (
+  id PRIMARY KEY,
+  post_id FOREIGN KEY,
+  user_id FOREIGN KEY,
+  parent_comment_id INT (for replies),
+  content TEXT,
+  created_at TIMESTAMP
+);
+
+-- Messages table
+CREATE TABLE community_messages (
+  id PRIMARY KEY,
+  sender_id FOREIGN KEY,
+  receiver_id FOREIGN KEY,
+  message TEXT,
+  is_read BOOLEAN DEFAULT false,
+  created_at TIMESTAMP
+);
+
+-- Follows, Likes, Saves tables (junction tables)
+9. SEARCH & DISCOVERY:
+
+Filter by post type
+Search by hashtags
+Trending topics algorithm
+"Similar photographers" suggestions
+Location-based discovery
+
+10. MODERATION:
+
+Report inappropriate content
+Community guidelines
+Automated spam detection
+Admin moderation panel
+
+11. PERFORMANCE:
+
+Implement infinite scroll with pagination
+Lazy load images as user scrolls
+Cache frequently accessed content
+Optimize database queries
+Use CDN for media delivery
+
+12. MOBILE RESPONSIVE:
+
+Touch-friendly interface
+Swipe gestures for images
+Bottom navigation on mobile
+Responsive grid layouts
+
+INTEGRATION POINTS (READ-ONLY):
+
+Pull photographer name/business from main account
+Link to photographer's website (from website builder)
+Reference session types for categorization
+Use existing user authentication
+
+UI/UX REQUIREMENTS:
+
+Modern, clean design matching existing platform aesthetic
+Pinterest-style masonry grid for photo displays
+Smooth animations and transitions
+Dark mode support
+Accessibility compliant
+
+START WITH:
+
+Basic feed with photo posts
+Like and comment functionality
+Image processing pipeline
+Then add other features progressively
+
+DO NOT modify any existing session management, website builder, or storage system code.
+Create all community features in isolated /community/ folder.

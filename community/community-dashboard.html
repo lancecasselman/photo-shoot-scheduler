@@ -1,0 +1,1651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photography Community - Connect, Learn, Grow</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .notification-badge {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .badge-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ff4444;
+            color: white;
+            border-radius: 10px;
+            padding: 2px 6px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            background: #1a1a1a;
+            border-bottom: 1px solid #333;
+            position: sticky;
+            top: 64px;
+            z-index: 999;
+        }
+
+        .nav-tabs-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .nav-tabs-content::-webkit-scrollbar {
+            display: none;
+        }
+
+        .nav-tab {
+            padding: 1rem 1.5rem;
+            color: #999;
+            text-decoration: none;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        .nav-tab:hover {
+            color: #fff;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .nav-tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        /* Main Layout */
+        .main-container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            display: grid;
+            grid-template-columns: 250px 1fr 300px;
+            gap: 2rem;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: sticky;
+            top: 140px;
+            height: fit-content;
+        }
+
+        .sidebar-section {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .sidebar-title {
+            font-size: 0.9rem;
+            color: #999;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+
+        .quick-links {
+            list-style: none;
+        }
+
+        .quick-links li {
+            margin-bottom: 0.75rem;
+        }
+
+        .quick-links a {
+            color: #e0e0e0;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: color 0.3s;
+        }
+
+        .quick-links a:hover {
+            color: #667eea;
+        }
+
+        /* Feed */
+        .feed {
+            min-height: 100vh;
+        }
+
+        /* Create Post */
+        .create-post {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .create-post-header {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .user-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .post-input {
+            flex: 1;
+            background: #2a2a2a;
+            border: none;
+            border-radius: 24px;
+            padding: 12px 20px;
+            color: #e0e0e0;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .post-input:focus {
+            outline: 2px solid #667eea;
+            cursor: text;
+        }
+
+        .create-post-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1rem;
+            border-top: 1px solid #333;
+        }
+
+        .post-type-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .post-type-btn {
+            background: #2a2a2a;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            color: #999;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s;
+        }
+
+        .post-type-btn:hover {
+            background: #333;
+            color: #fff;
+        }
+
+        .post-type-btn.photo { color: #4CAF50; }
+        .post-type-btn.video { color: #FF5722; }
+        .post-type-btn.help { color: #FFC107; }
+        .post-type-btn.tip { color: #00BCD4; }
+
+        /* Post Card */
+        .post-card {
+            background: #1a1a1a;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+            transition: transform 0.3s;
+        }
+
+        .post-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .post-card.help {
+            border: 2px solid #FFC107;
+        }
+
+        .post-card.tip {
+            border: 2px solid #4CAF50;
+        }
+
+        .post-card.marketplace {
+            border: 2px solid #FF5722;
+        }
+
+        .post-header {
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .author-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .author-name {
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .post-time {
+            font-size: 0.85rem;
+            color: #999;
+        }
+
+        .post-menu {
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+
+        .post-content {
+            padding: 0 1rem 1rem;
+        }
+
+        .post-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #fff;
+        }
+
+        .post-text {
+            color: #e0e0e0;
+            margin-bottom: 1rem;
+        }
+
+        .post-image {
+            width: 100%;
+            cursor: pointer;
+            display: block;
+        }
+
+        .post-image img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .camera-settings {
+            background: #2a2a2a;
+            padding: 0.75rem 1rem;
+            font-size: 0.85rem;
+            color: #999;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .camera-setting {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .post-tags {
+            padding: 0.75rem 1rem;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            background: #2a2a2a;
+            color: #667eea;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .tag:hover {
+            background: #333;
+        }
+
+        /* Post Actions */
+        .post-actions {
+            padding: 1rem;
+            border-top: 1px solid #333;
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .action-btn:hover {
+            background: #2a2a2a;
+            color: #fff;
+        }
+
+        .action-btn.liked {
+            color: #ff4444;
+        }
+
+        .action-btn.saved {
+            color: #667eea;
+        }
+
+        /* Comments Section */
+        .comments-section {
+            padding: 1rem;
+            border-top: 1px solid #333;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .comment {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .comment-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #667eea;
+            flex-shrink: 0;
+        }
+
+        .comment-content {
+            flex: 1;
+            background: #2a2a2a;
+            border-radius: 12px;
+            padding: 0.75rem;
+        }
+
+        .comment-author {
+            font-weight: 600;
+            color: #fff;
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .comment-text {
+            color: #e0e0e0;
+            font-size: 0.9rem;
+        }
+
+        .comment-input-wrapper {
+            padding: 1rem;
+            border-top: 1px solid #333;
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .comment-input {
+            flex: 1;
+            background: #2a2a2a;
+            border: none;
+            border-radius: 20px;
+            padding: 8px 16px;
+            color: #e0e0e0;
+            font-size: 0.9rem;
+        }
+
+        .comment-input:focus {
+            outline: 2px solid #667eea;
+        }
+
+        /* Right Sidebar */
+        .right-sidebar {
+            position: sticky;
+            top: 140px;
+            height: fit-content;
+        }
+
+        .trending-section {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .trending-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #fff;
+        }
+
+        .trending-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        .trending-item:hover {
+            opacity: 0.8;
+        }
+
+        .trending-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+            width: 30px;
+        }
+
+        .trending-info {
+            flex: 1;
+        }
+
+        .trending-tag {
+            font-size: 0.9rem;
+            color: #999;
+        }
+
+        .trending-count {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1a1a1a;
+            border-radius: 12px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #999;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #999;
+            font-size: 0.9rem;
+        }
+
+        .form-input,
+        .form-textarea,
+        .form-select {
+            width: 100%;
+            background: #2a2a2a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 0.75rem;
+            color: #e0e0e0;
+            font-size: 1rem;
+        }
+
+        .form-input:focus,
+        .form-textarea:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        /* Image Upload */
+        .image-upload-area {
+            border: 2px dashed #333;
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .image-upload-area:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .image-upload-area.dragover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+
+        .upload-text {
+            color: #999;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-subtext {
+            color: #666;
+            font-size: 0.85rem;
+        }
+
+        .image-preview {
+            margin-top: 1rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 0.5rem;
+        }
+
+        .preview-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .preview-item img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+        }
+
+        .preview-remove {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Button Styles */
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #2a2a2a;
+            color: #e0e0e0;
+        }
+
+        .btn-secondary:hover {
+            background: #333;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            border: 3px solid #333;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 2rem auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .main-container {
+                grid-template-columns: 1fr 300px;
+            }
+            
+            .sidebar {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                padding: 0 0.5rem;
+            }
+            
+            .right-sidebar {
+                display: none;
+            }
+            
+            .nav-tabs {
+                top: 56px;
+            }
+            
+            .header-content {
+                padding: 0.5rem;
+            }
+            
+            .logo {
+                font-size: 1.2rem;
+            }
+        }
+
+        /* Before/After Slider */
+        .before-after-container {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+            cursor: col-resize;
+        }
+
+        .before-after-image {
+            width: 100%;
+            display: block;
+        }
+
+        .after-image-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 50%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .slider-handle {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 3px;
+            background: #667eea;
+            cursor: col-resize;
+        }
+
+        .slider-handle::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            background: #667eea;
+            border-radius: 50%;
+            border: 3px solid white;
+        }
+
+        /* Messages */
+        .messages-modal {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 350px;
+            height: 500px;
+            background: #1a1a1a;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            display: none;
+            flex-direction: column;
+            z-index: 1000;
+        }
+
+        .messages-modal.active {
+            display: flex;
+        }
+
+        .messages-header {
+            padding: 1rem;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .messages-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .message-item {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            padding: 0.75rem;
+            border-radius: 8px;
+            transition: background 0.3s;
+        }
+
+        .message-item:hover {
+            background: #2a2a2a;
+        }
+
+        .message-item.unread {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .message-content {
+            flex: 1;
+        }
+
+        .message-sender {
+            font-weight: 600;
+            color: #fff;
+            font-size: 0.9rem;
+        }
+
+        .message-preview {
+            color: #999;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .message-time {
+            color: #666;
+            font-size: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <a href="#" class="logo">📷 Photo Community</a>
+            <div class="header-actions">
+                <div class="notification-badge" onclick="toggleNotifications()">
+                    🔔
+                    <span class="badge-count" id="notificationCount" style="display: none;">0</span>
+                </div>
+                <div class="notification-badge" onclick="toggleMessages()">
+                    💬
+                    <span class="badge-count" id="messageCount" style="display: none;">0</span>
+                </div>
+                <div class="user-avatar" id="userAvatar">U</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+        <div class="nav-tabs-content">
+            <a class="nav-tab active" data-tab="feed" onclick="switchTab('feed')">Feed</a>
+            <a class="nav-tab" data-tab="showcase" onclick="switchTab('showcase')">Show Off Your Work</a>
+            <a class="nav-tab" data-tab="help" onclick="switchTab('help')">Help Desk</a>
+            <a class="nav-tab" data-tab="tips" onclick="switchTab('tips')">Tips & Tutorials</a>
+            <a class="nav-tab" data-tab="videos" onclick="switchTab('videos')">Video Academy</a>
+            <a class="nav-tab" data-tab="marketplace" onclick="switchTab('marketplace')">Marketplace</a>
+            <a class="nav-tab" data-tab="events" onclick="switchTab('events')">Events</a>
+            <a class="nav-tab" data-tab="mentors" onclick="switchTab('mentors')">Mentor Match</a>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Left Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">Quick Links</h3>
+                <ul class="quick-links">
+                    <li><a href="#" onclick="showMyProfile()">👤 My Profile</a></li>
+                    <li><a href="#" onclick="showSavedPosts()">💾 Saved Posts</a></li>
+                    <li><a href="#" onclick="showMyPosts()">📝 My Posts</a></li>
+                    <li><a href="#" onclick="showFollowing()">👥 Following</a></li>
+                    <li><a href="#" onclick="showSettings()">⚙️ Settings</a></li>
+                </ul>
+            </div>
+
+            <div class="sidebar-section">
+                <h3 class="sidebar-title">Weekly Challenge</h3>
+                <p style="color: #999; font-size: 0.9rem; margin-bottom: 0.5rem;">Golden Hour Portraits</p>
+                <p style="color: #667eea; font-size: 0.85rem;">3 days remaining</p>
+                <button class="btn" style="width: 100%; margin-top: 1rem;" onclick="viewChallenge()">View Challenge</button>
+            </div>
+        </aside>
+
+        <!-- Main Feed -->
+        <main class="feed" id="mainFeed">
+            <!-- Create Post -->
+            <div class="create-post">
+                <div class="create-post-header">
+                    <div class="user-avatar" id="createPostAvatar">U</div>
+                    <input type="text" class="post-input" placeholder="Share your photography journey..." onclick="openCreatePost()">
+                </div>
+                <div class="create-post-actions">
+                    <div class="post-type-buttons">
+                        <button class="post-type-btn photo" onclick="openCreatePost('photo')">
+                            📷 Photo
+                        </button>
+                        <button class="post-type-btn video" onclick="openCreatePost('video')">
+                            🎥 Video
+                        </button>
+                        <button class="post-type-btn help" onclick="openCreatePost('help')">
+                            ❓ Ask for Help
+                        </button>
+                        <button class="post-type-btn tip" onclick="openCreatePost('tip')">
+                            💡 Share Tip
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Posts Container -->
+            <div id="postsContainer">
+                <!-- Posts will be dynamically loaded here -->
+                <div class="spinner"></div>
+            </div>
+        </main>
+
+        <!-- Right Sidebar -->
+        <aside class="right-sidebar">
+            <div class="trending-section">
+                <h3 class="trending-title">🔥 Trending Topics</h3>
+                <div id="trendingTopics">
+                    <!-- Trending topics will be loaded here -->
+                </div>
+            </div>
+
+            <div class="trending-section">
+                <h3 class="trending-title">🌟 Top Contributors</h3>
+                <div id="topContributors">
+                    <!-- Top contributors will be loaded here -->
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Create Post Modal -->
+    <div class="modal" id="createPostModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Create Post</h2>
+                <button class="modal-close" onclick="closeCreatePost()">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="createPostForm">
+                    <div class="form-group">
+                        <label class="form-label">Post Type</label>
+                        <select class="form-select" id="postType" onchange="updatePostForm()">
+                            <option value="photo">Photo Post</option>
+                            <option value="video">Video Tutorial</option>
+                            <option value="text">Text Post</option>
+                            <option value="help">Help Request</option>
+                            <option value="tip">Photography Tip</option>
+                            <option value="marketplace">Marketplace Listing</option>
+                            <option value="before_after">Before/After</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Title</label>
+                        <input type="text" class="form-input" id="postTitle" placeholder="Give your post a title...">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Content</label>
+                        <textarea class="form-textarea" id="postContent" placeholder="Share your thoughts..."></textarea>
+                    </div>
+
+                    <div class="form-group" id="imageUploadGroup">
+                        <label class="form-label">Upload Images</label>
+                        <div class="image-upload-area" id="imageUploadArea" onclick="selectImages()">
+                            <div class="upload-icon">📸</div>
+                            <div class="upload-text">Click to upload or drag and drop</div>
+                            <div class="upload-subtext">Any size accepted - we'll optimize it for you!</div>
+                        </div>
+                        <input type="file" id="imageInput" accept="image/*" multiple style="display: none;" onchange="handleImageSelect(event)">
+                        <div class="image-preview" id="imagePreview"></div>
+                    </div>
+
+                    <div class="form-group" id="cameraSettingsGroup" style="display: none;">
+                        <label class="form-label">Camera Settings (Optional)</label>
+                        <input type="text" class="form-input" id="cameraModel" placeholder="Camera Model">
+                        <input type="text" class="form-input" id="lensModel" placeholder="Lens" style="margin-top: 0.5rem;">
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-top: 0.5rem;">
+                            <input type="text" class="form-input" id="aperture" placeholder="f/2.8">
+                            <input type="text" class="form-input" id="shutterSpeed" placeholder="1/250">
+                            <input type="text" class="form-input" id="iso" placeholder="ISO 100">
+                        </div>
+                    </div>
+
+                    <div class="form-group" id="priceGroup" style="display: none;">
+                        <label class="form-label">Price</label>
+                        <input type="number" class="form-input" id="price" placeholder="Enter price in USD">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Tags (separated by commas)</label>
+                        <input type="text" class="form-input" id="postTags" placeholder="portrait, golden hour, nikon">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Location (Optional)</label>
+                        <input type="text" class="form-input" id="postLocation" placeholder="New York, NY">
+                    </div>
+
+                    <button type="submit" class="btn" style="width: 100%;">Post</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Messages Modal -->
+    <div class="messages-modal" id="messagesModal">
+        <div class="messages-header">
+            <h3 style="color: #fff;">Messages</h3>
+            <button class="modal-close" onclick="toggleMessages()">×</button>
+        </div>
+        <div class="messages-list" id="messagesList">
+            <!-- Messages will be loaded here -->
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentUser = null;
+        let currentTab = 'feed';
+        let posts = [];
+        let selectedImages = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initializeUser();
+            await loadPosts();
+            loadTrendingTopics();
+            loadTopContributors();
+            setupEventListeners();
+        });
+
+        // Initialize user
+        async function initializeUser() {
+            try {
+                const response = await fetch('/api/community/profile', {
+                    credentials: 'include'
+                });
+                if (response.ok) {
+                    currentUser = await response.json();
+                    updateUserDisplay();
+                }
+            } catch (error) {
+                console.error('Error initializing user:', error);
+            }
+        }
+
+        // Update user display
+        function updateUserDisplay() {
+            if (currentUser) {
+                const initials = currentUser.displayName ? 
+                    currentUser.displayName.split(' ').map(n => n[0]).join('').toUpperCase() : 
+                    'U';
+                document.getElementById('userAvatar').textContent = initials;
+                document.getElementById('createPostAvatar').textContent = initials;
+            }
+        }
+
+        // Load posts
+        async function loadPosts(type = null) {
+            try {
+                const url = type ? `/api/community/posts?type=${type}` : '/api/community/posts';
+                const response = await fetch(url, {
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    posts = await response.json();
+                    renderPosts();
+                }
+            } catch (error) {
+                console.error('Error loading posts:', error);
+            }
+        }
+
+        // Render posts
+        function renderPosts() {
+            const container = document.getElementById('postsContainer');
+            
+            if (posts.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #999; padding: 2rem;">No posts yet. Be the first to share!</p>';
+                return;
+            }
+
+            container.innerHTML = posts.map(post => createPostHTML(post)).join('');
+        }
+
+        // Create post HTML
+        function createPostHTML(post) {
+            const postClass = post.type === 'help' ? 'help' : 
+                             post.type === 'tip' ? 'tip' : 
+                             post.type === 'marketplace' ? 'marketplace' : '';
+            
+            return `
+                <div class="post-card ${postClass}" data-post-id="${post.id}">
+                    <div class="post-header">
+                        <div class="post-author">
+                            <div class="user-avatar">${getInitials(post.userName)}</div>
+                            <div class="author-info">
+                                <div class="author-name">${post.userName}</div>
+                                <div class="post-time">${formatTime(post.createdAt)}</div>
+                            </div>
+                        </div>
+                        <div class="post-menu">⋮</div>
+                    </div>
+                    
+                    <div class="post-content">
+                        ${post.title ? `<h3 class="post-title">${post.title}</h3>` : ''}
+                        ${post.content ? `<p class="post-text">${post.content}</p>` : ''}
+                    </div>
+                    
+                    ${post.imageUrls && post.imageUrls.feed ? `
+                        <div class="post-image" onclick="viewFullImage('${post.imageUrls.full}')">
+                            <img src="${post.imageUrls.feed}" alt="${post.title}" loading="lazy">
+                        </div>
+                    ` : ''}
+                    
+                    ${post.cameraSettings ? createCameraSettingsHTML(post.cameraSettings) : ''}
+                    
+                    ${post.tags && post.tags.length > 0 ? `
+                        <div class="post-tags">
+                            ${post.tags.map(tag => `<span class="tag" onclick="searchTag('${tag}')">#${tag}</span>`).join('')}
+                        </div>
+                    ` : ''}
+                    
+                    ${post.price ? `
+                        <div style="padding: 1rem; background: #2a2a2a; color: #4CAF50; font-size: 1.25rem; font-weight: bold;">
+                            $${post.price}
+                        </div>
+                    ` : ''}
+                    
+                    <div class="post-actions">
+                        <button class="action-btn" onclick="toggleLike('${post.id}')">
+                            👍 ${post.likesCount || 0}
+                        </button>
+                        <button class="action-btn" onclick="toggleComments('${post.id}')">
+                            💬 ${post.commentsCount || 0}
+                        </button>
+                        <button class="action-btn" onclick="toggleSave('${post.id}')">
+                            💾 Save
+                        </button>
+                        <button class="action-btn" onclick="sharePost('${post.id}')">
+                            🔗 Share
+                        </button>
+                    </div>
+                    
+                    <div class="comments-section" id="comments-${post.id}" style="display: none;">
+                        <!-- Comments will be loaded here -->
+                    </div>
+                    
+                    <div class="comment-input-wrapper">
+                        <div class="user-avatar">${currentUser ? getInitials(currentUser.displayName) : 'U'}</div>
+                        <input type="text" class="comment-input" placeholder="Add a comment..." 
+                               onkeypress="handleCommentKeypress(event, '${post.id}')">
+                    </div>
+                </div>
+            `;
+        }
+
+        // Create camera settings HTML
+        function createCameraSettingsHTML(settings) {
+            if (!settings || Object.keys(settings).length === 0) return '';
+            
+            return `
+                <div class="camera-settings">
+                    ${settings.camera ? `<span class="camera-setting">📷 ${settings.camera}</span>` : ''}
+                    ${settings.lens ? `<span class="camera-setting">🔍 ${settings.lens}</span>` : ''}
+                    ${settings.aperture ? `<span class="camera-setting">f/${settings.aperture}</span>` : ''}
+                    ${settings.shutterSpeed ? `<span class="camera-setting">⏱ ${settings.shutterSpeed}s</span>` : ''}
+                    ${settings.iso ? `<span class="camera-setting">ISO ${settings.iso}</span>` : ''}
+                </div>
+            `;
+        }
+
+        // Switch tab
+        function switchTab(tab) {
+            currentTab = tab;
+            
+            // Update active tab
+            document.querySelectorAll('.nav-tab').forEach(t => {
+                t.classList.toggle('active', t.dataset.tab === tab);
+            });
+            
+            // Load appropriate content
+            switch(tab) {
+                case 'feed':
+                    loadPosts();
+                    break;
+                case 'showcase':
+                    loadPosts('photo');
+                    break;
+                case 'help':
+                    loadPosts('help');
+                    break;
+                case 'tips':
+                    loadPosts('tip');
+                    break;
+                case 'marketplace':
+                    loadPosts('marketplace');
+                    break;
+                default:
+                    loadPosts();
+            }
+        }
+
+        // Open create post modal
+        function openCreatePost(type = 'photo') {
+            document.getElementById('postType').value = type;
+            document.getElementById('createPostModal').classList.add('active');
+            updatePostForm();
+        }
+
+        // Close create post modal
+        function closeCreatePost() {
+            document.getElementById('createPostModal').classList.remove('active');
+            document.getElementById('createPostForm').reset();
+            selectedImages = [];
+            document.getElementById('imagePreview').innerHTML = '';
+        }
+
+        // Update post form based on type
+        function updatePostForm() {
+            const type = document.getElementById('postType').value;
+            const cameraGroup = document.getElementById('cameraSettingsGroup');
+            const priceGroup = document.getElementById('priceGroup');
+            const imageGroup = document.getElementById('imageUploadGroup');
+            
+            // Reset all groups
+            cameraGroup.style.display = 'none';
+            priceGroup.style.display = 'none';
+            imageGroup.style.display = 'block';
+            
+            // Show relevant fields
+            switch(type) {
+                case 'photo':
+                case 'before_after':
+                    cameraGroup.style.display = 'block';
+                    break;
+                case 'marketplace':
+                    priceGroup.style.display = 'block';
+                    break;
+                case 'text':
+                case 'help':
+                case 'tip':
+                    imageGroup.style.display = 'none';
+                    break;
+            }
+        }
+
+        // Select images
+        function selectImages() {
+            document.getElementById('imageInput').click();
+        }
+
+        // Handle image selection
+        function handleImageSelect(event) {
+            const files = Array.from(event.target.files);
+            selectedImages = files;
+            
+            const preview = document.getElementById('imagePreview');
+            preview.innerHTML = '';
+            
+            files.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const div = document.createElement('div');
+                    div.className = 'preview-item';
+                    div.innerHTML = `
+                        <img src="${e.target.result}" alt="Preview">
+                        <button class="preview-remove" onclick="removeImage(${index})">×</button>
+                    `;
+                    preview.appendChild(div);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Remove image from selection
+        function removeImage(index) {
+            selectedImages.splice(index, 1);
+            handleImageSelect({ target: { files: selectedImages } });
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Create post form submission
+            document.getElementById('createPostForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await submitPost();
+            });
+
+            // Drag and drop for images
+            const uploadArea = document.getElementById('imageUploadArea');
+            
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+            
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                
+                const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+                if (files.length > 0) {
+                    selectedImages = files;
+                    handleImageSelect({ target: { files: files } });
+                }
+            });
+        }
+
+        // Submit post
+        async function submitPost() {
+            const formData = new FormData();
+            
+            formData.append('type', document.getElementById('postType').value);
+            formData.append('title', document.getElementById('postTitle').value);
+            formData.append('content', document.getElementById('postContent').value);
+            formData.append('location', document.getElementById('postLocation').value);
+            
+            const tags = document.getElementById('postTags').value;
+            if (tags) {
+                formData.append('tags', tags);
+            }
+            
+            if (document.getElementById('price').value) {
+                formData.append('price', document.getElementById('price').value);
+            }
+            
+            // Add camera settings if photo post
+            if (document.getElementById('postType').value === 'photo') {
+                const cameraSettings = {
+                    camera: document.getElementById('cameraModel').value,
+                    lens: document.getElementById('lensModel').value,
+                    aperture: document.getElementById('aperture').value,
+                    shutterSpeed: document.getElementById('shutterSpeed').value,
+                    iso: document.getElementById('iso').value
+                };
+                formData.append('cameraSettings', JSON.stringify(cameraSettings));
+            }
+            
+            // Add images
+            selectedImages.forEach(image => {
+                formData.append('images', image);
+            });
+            
+            try {
+                const response = await fetch('/api/community/posts', {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    closeCreatePost();
+                    await loadPosts();
+                    showMessage('Post created successfully!', 'success');
+                } else {
+                    showMessage('Failed to create post', 'error');
+                }
+            } catch (error) {
+                console.error('Error submitting post:', error);
+                showMessage('Error creating post', 'error');
+            }
+        }
+
+        // Toggle like
+        async function toggleLike(postId) {
+            try {
+                const response = await fetch(`/api/community/posts/${postId}/like`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    // Update UI
+                    const post = posts.find(p => p.id === postId);
+                    if (post) {
+                        post.likesCount = result.liked ? post.likesCount + 1 : post.likesCount - 1;
+                        renderPosts();
+                    }
+                }
+            } catch (error) {
+                console.error('Error toggling like:', error);
+            }
+        }
+
+        // Toggle comments
+        async function toggleComments(postId) {
+            const commentsSection = document.getElementById(`comments-${postId}`);
+            
+            if (commentsSection.style.display === 'none') {
+                commentsSection.style.display = 'block';
+                await loadComments(postId);
+            } else {
+                commentsSection.style.display = 'none';
+            }
+        }
+
+        // Load comments
+        async function loadComments(postId) {
+            try {
+                const response = await fetch(`/api/community/posts/${postId}/comments`, {
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const comments = await response.json();
+                    renderComments(postId, comments);
+                }
+            } catch (error) {
+                console.error('Error loading comments:', error);
+            }
+        }
+
+        // Render comments
+        function renderComments(postId, comments) {
+            const container = document.getElementById(`comments-${postId}`);
+            
+            if (comments.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #999; padding: 1rem;">No comments yet</p>';
+                return;
+            }
+            
+            container.innerHTML = comments.map(comment => `
+                <div class="comment">
+                    <div class="comment-avatar">${getInitials(comment.userName)}</div>
+                    <div class="comment-content">
+                        <div class="comment-author">${comment.userName}</div>
+                        <div class="comment-text">${comment.content}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Handle comment keypress
+        async function handleCommentKeypress(event, postId) {
+            if (event.key === 'Enter' && event.target.value.trim()) {
+                const content = event.target.value.trim();
+                
+                try {
+                    const response = await fetch(`/api/community/posts/${postId}/comments`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ content }),
+                        credentials: 'include'
+                    });
+                    
+                    if (response.ok) {
+                        event.target.value = '';
+                        await loadComments(postId);
+                        
+                        // Update comment count
+                        const post = posts.find(p => p.id === postId);
+                        if (post) {
+                            post.commentsCount = (post.commentsCount || 0) + 1;
+                            renderPosts();
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error posting comment:', error);
+                }
+            }
+        }
+
+        // Load trending topics
+        function loadTrendingTopics() {
+            const topics = [
+                { tag: 'goldenhour', count: 234 },
+                { tag: 'portrait', count: 189 },
+                { tag: 'landscape', count: 156 },
+                { tag: 'streetphotography', count: 134 },
+                { tag: 'wedding', count: 98 }
+            ];
+            
+            const container = document.getElementById('trendingTopics');
+            container.innerHTML = topics.map((topic, index) => `
+                <div class="trending-item" onclick="searchTag('${topic.tag}')">
+                    <div class="trending-number">${index + 1}</div>
+                    <div class="trending-info">
+                        <div class="trending-tag">#${topic.tag}</div>
+                        <div class="trending-count">${topic.count} posts</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Load top contributors
+        function loadTopContributors() {
+            const contributors = [
+                { name: 'Sarah Johnson', points: 1250 },
+                { name: 'Mike Chen', points: 980 },
+                { name: 'Emily Davis', points: 875 },
+                { name: 'Alex Turner', points: 720 },
+                { name: 'Lisa Wong', points: 650 }
+            ];
+            
+            const container = document.getElementById('topContributors');
+            container.innerHTML = contributors.map(user => `
+                <div class="trending-item" onclick="viewProfile('${user.name}')">
+                    <div class="user-avatar">${getInitials(user.name)}</div>
+                    <div class="trending-info">
+                        <div style="color: #fff; font-weight: 600;">${user.name}</div>
+                        <div class="trending-count">${user.points} points</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Utility functions
+        function getInitials(name) {
+            if (!name) return 'U';
+            return name.split(' ').map(n => n[0]).join('').toUpperCase();
+        }
+
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = Math.floor((now - date) / 1000);
+            
+            if (diff < 60) return 'just now';
+            if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+            if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+            if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+            
+            return date.toLocaleDateString();
+        }
+
+        function showMessage(message, type) {
+            // Simple message display - can be enhanced with toast notifications
+            console.log(`[${type}] ${message}`);
+        }
+
+        // Placeholder functions for features to be implemented
+        function toggleNotifications() {
+            showMessage('Notifications coming soon!', 'info');
+        }
+
+        function toggleMessages() {
+            const modal = document.getElementById('messagesModal');
+            modal.classList.toggle('active');
+        }
+
+        function toggleSave(postId) {
+            showMessage('Save feature coming soon!', 'info');
+        }
+
+        function sharePost(postId) {
+            const url = `${window.location.origin}/community/post/${postId}`;
+            navigator.clipboard.writeText(url);
+            showMessage('Link copied to clipboard!', 'success');
+        }
+
+        function searchTag(tag) {
+            showMessage(`Searching for #${tag}...`, 'info');
+            // Implement tag search
+        }
+
+        function viewProfile(userName) {
+            showMessage(`Viewing profile: ${userName}`, 'info');
+            // Implement profile view
+        }
+
+        function viewFullImage(imageUrl) {
+            window.open(imageUrl, '_blank');
+        }
+
+        function viewChallenge() {
+            showMessage('Weekly challenges coming soon!', 'info');
+        }
+
+        function showMyProfile() {
+            showMessage('My profile coming soon!', 'info');
+        }
+
+        function showSavedPosts() {
+            showMessage('Saved posts coming soon!', 'info');
+        }
+
+        function showMyPosts() {
+            loadPosts(); // Filter by current user
+        }
+
+        function showFollowing() {
+            showMessage('Following list coming soon!', 'info');
+        }
+
+        function showSettings() {
+            showMessage('Settings coming soon!', 'info');
+        }
+    </script>
+</body>
+</html>

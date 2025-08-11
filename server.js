@@ -253,6 +253,15 @@ const aiServices = new AIServices();
 // Initialize new storage system
 const storageSystem = new StorageSystem(pool, r2FileManager);
 
+// Initialize Community Platform
+const initializeCommunityServices = require('./community/community-routes');
+const communityRoutes = initializeCommunityServices(pool, {
+    endpoint: process.env.R2_ENDPOINT,
+    accessKeyId: process.env.R2_ACCESS_KEY_ID,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+    bucketName: process.env.R2_BUCKET_NAME || 'photoappr2token'
+});
+
 // Initialize storage system database tables
 storageSystem.initializeTables().catch(error => {
     console.error('Failed to initialize storage tables:', error);
@@ -1053,6 +1062,9 @@ app.post('/api/auth/logout', (req, res) => {
 
 // R2 Storage API Routes - Complete file management system
 app.use('/api/r2', createR2Routes());
+
+// Community Platform routes
+app.use('/api/community', communityRoutes);
 
 // Register new storage system routes
 registerStorageRoutes(app, isAuthenticated, normalizeUserForLance, storageSystem);
