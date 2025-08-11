@@ -5162,8 +5162,10 @@ ${contract.contract_content}
 
         let currentPaymentPlanSessionId = null;
         
-        // Early payment plan function definition to ensure accessibility
+        // Primary payment plan function - consolidated implementation
         window.openPaymentPlanModal = function(sessionIdOrSession) {
+            console.log('Opening payment plan modal for session:', sessionIdOrSession);
+            
             // Handle both sessionId string and session object
             let session;
             if (typeof sessionIdOrSession === 'string') {
@@ -5177,7 +5179,8 @@ ${contract.contract_content}
                 session = sessionIdOrSession;
             }
             
-            console.log('Opening payment plan modal for session:', session);
+            // Set current session
+            currentPaymentPlanSessionId = session.id;
             
             // Remove test modal code since it works
             
@@ -5237,9 +5240,9 @@ ${contract.contract_content}
                             <div id="calculationResults"></div>
                         </div>
                         
-                        <div style="background:rgba(212,175,55,0.1);padding:20px;border-radius:12px;margin:20px 0;text-align:center;">
-                            <p style="margin:0;color:#d4af37;">🚀 Payment Plan Feature Coming Soon!</p>
-                            <p style="margin:10px 0 0 0;opacity:0.8;">Full Stripe integration with automated scheduling will be available soon.</p>
+                        <div style="margin:20px 0;text-align:center;">
+                            <button onclick="createPaymentPlan('${session.id}')" style="background:#d4af37;color:#1a1a1a;border:none;padding:15px 30px;border-radius:8px;cursor:pointer;font-weight:600;margin-right:10px;">💳 Create Payment Plan</button>
+                            <button onclick="document.getElementById('paymentPlanModal').remove()" style="background:#666;color:white;border:none;padding:15px 30px;border-radius:8px;cursor:pointer;">Cancel</button>
                         </div>
                         
                         <div style="display:flex;gap:15px;justify-content:flex-end;margin-top:30px;">
@@ -5263,6 +5266,14 @@ ${contract.contract_content}
             
             // Modal should now be visible since we used the same approach as the working test modal
             console.log('Payment plan modal should now be visible');
+            
+            // Check if session already has payment plan and show appropriate modal
+            if (session.hasPaymentPlan && session.paymentPlanId) {
+                console.log('Session has existing payment plan, opening view modal');
+                setTimeout(() => document.getElementById('paymentPlanModal').remove(), 100);
+                viewPaymentPlan(session.id);
+                return;
+            }
             
             // Set default dates after modal is added
             setTimeout(() => {
@@ -5364,6 +5375,70 @@ ${contract.contract_content}
             const modal = document.getElementById('paymentPlanModal');
             if (modal) {
                 modal.remove();
+            }
+        };
+        
+        // Create payment plan function with Stripe integration
+        window.createPaymentPlan = async function(sessionId) {
+            try {
+                const frequency = document.getElementById('paymentFrequency').value;
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+                
+                if (!startDate || !endDate) {
+                    showMessage('Please select start and end dates', 'error');
+                    return;
+                }
+                
+                const session = sessions.find(s => s.id === sessionId);
+                if (!session) {
+                    throw new Error('Session not found');
+                }
+                
+                showMessage('Creating payment plan...', 'info');
+                
+                const authToken = await getAuthToken();
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                
+                if (authToken) {
+                    headers['Authorization'] = `Bearer ${authToken}`;
+                }
+                
+                const response = await fetch('/api/payment-plans', {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({
+                        sessionId: sessionId,
+                        totalAmount: parseFloat(session.price),
+                        frequency: frequency,
+                        startDate: startDate,
+                        endDate: endDate,
+                        reminderDays: 3
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage(`Payment plan created! ${result.plan.totalPayments} payments of $${parseFloat(result.plan.monthlyPayment).toFixed(2)} each.`, 'success');
+                    
+                    // Close modal and refresh sessions
+                    document.getElementById('paymentPlanModal').remove();
+                    loadSessions();
+                } else {
+                    throw new Error(result.error || 'Failed to create payment plan');
+                }
+                
+            } catch (error) {
+                console.error('Error creating payment plan:', error);
+                showMessage('Error creating payment plan: ' + error.message, 'error');
             }
         };
         
@@ -8360,8 +8435,10 @@ END:VCALENDAR`;
         // Payment Plan Functions - Updated to work with session object
         
         function closePaymentPlanModal() {
-            document.getElementById('paymentPlanModal').classList.remove('active');
-            document.getElementById('paymentPlanSummary').style.display = 'none';
+            const modal = document.getElementById('paymentPlanModal');
+            if (modal) {
+                modal.remove();
+            }
             currentPaymentPlanSessionId = null;
         }
         
