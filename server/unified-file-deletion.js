@@ -12,7 +12,7 @@ class UnifiedFileDeletion {
             connectionString: process.env.DATABASE_URL,
             ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
         });
-        this.r2Manager = new R2FileManager();
+        this.r2Manager = new R2FileManager(null, this.pool);
     }
 
     /**

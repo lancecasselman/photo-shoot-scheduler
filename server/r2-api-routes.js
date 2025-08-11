@@ -25,16 +25,17 @@ const upload = multer({
  */
 function createR2Routes() {
   const router = express.Router();
-  const r2Manager = new R2FileManager();
-  // REMOVED: Old storage billing - using new storage system
-  const syncService = new R2SyncService(r2Manager);
-  const unifiedDeletion = new UnifiedFileDeletionService();
   
   // Database connection for API routes
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
   });
+  
+  const r2Manager = new R2FileManager(null, pool);
+  // REMOVED: Old storage billing - using new storage system
+  const syncService = new R2SyncService(r2Manager);
+  const unifiedDeletion = new UnifiedFileDeletionService();
 
   // Authentication middleware for all routes - compatible with main server auth
   router.use((req, res, next) => {

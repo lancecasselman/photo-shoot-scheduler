@@ -13,6 +13,13 @@ class R2FileManager {
     this.db = pool; // Database connection pool
     this.r2Available = false;
     
+    // Debug database connection
+    if (pool) {
+      console.log('✅ R2FileManager: Database pool connected');
+    } else {
+      console.log('⚠️ R2FileManager: No database pool provided');
+    }
+    
     // File type categories for organization
     this.fileTypeCategories = {
       'raw': ['.nef', '.cr2', '.arw', '.dng', '.raf', '.orf', '.rw2', '.3fr', '.crw', '.dcr', '.erf', '.k25', '.kdc', '.mrw', '.pef', '.sr2', '.srf', '.x3f'],
