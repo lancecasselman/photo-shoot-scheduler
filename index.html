@@ -5814,6 +5814,19 @@ ${contract.contract_content}
         }
 
         window.renderSessions = function renderSessions() {
+            // SORT SESSIONS BY APPOINTMENT DATE BEFORE RENDERING
+            if (window.sessions && Array.isArray(window.sessions) && window.sessions.length > 0) {
+                console.log('🔥 SORTING sessions by appointment date in renderSessions...');
+                window.sessions.sort((a, b) => {
+                    const dateA = new Date(a.dateTime);
+                    const dateB = new Date(b.dateTime);
+                    return dateA.getTime() - dateB.getTime(); // Oldest appointment first
+                });
+                console.log('✅ Sessions sorted - Test Client should be first:', window.sessions[0]?.clientName, new Date(window.sessions[0]?.dateTime).toLocaleDateString());
+                // Use sorted sessions for rendering
+                sessions = window.sessions;
+            }
+            
             const container = document.getElementById('sessionsContainer');
             
             if (sessions.length === 0) {
