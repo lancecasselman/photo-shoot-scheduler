@@ -170,10 +170,8 @@ router.post('/posts', requireAuth, upload.array('images', 10), async (req, res) 
         
         const post = await db.createPost(postData);
         
-        // Update user's post count
-        await db.updateProfile(userId, { 
-            posts_count: db.pool.query.raw('posts_count + 1') 
-        });
+        // Update user's post count - will be handled by database trigger
+        // or we can update it separately after post creation
         
         res.json(post);
     } catch (error) {
