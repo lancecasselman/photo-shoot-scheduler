@@ -1,0 +1,62 @@
+firebase-config.js:42 Firebase client initialized with storage bucket: photoshcheduleapp.appspot.com
+app:14271  Uncaught SyntaxError: Unexpected end of input
+app:14332  Uncaught SyntaxError: Unexpected token '{'
+app:5643 Page loaded, initializing...
+app:5644 Initializing page...
+app:5662 Loading sessions from API...
+script.js?v=1754320300:254 Loading sessions from API...
+app:5673 Photography management system loaded
+script.js?v=1754320300:254 Loading sessions from API...
+script.js?v=1754320300:1821 Page loaded, initializing...
+script.js?v=1754320300:1800 Initializing page...
+script.js?v=1754320300:23 User authenticated successfully: lancecasselman@icloud.com
+script.js?v=1754320300:1810 Loading sessions from API...
+script.js?v=1754320300:254 Loading sessions from API...
+favicon.ico:1   Failed to load resource: the server responded with a status of 404 (Not Found)
+script.js?v=1754320300:270 Data type: object Array: true
+script.js?v=1754320300:271 Raw API response: Array(10)
+script.js?v=1754320300:272 Testing session deposit_amount from API: NOT FOUND
+script.js?v=1754320300:305 Transformed sessions: Array(10)
+app:5817 🔥 SORTING sessions by appointment date in renderSessions...
+app:5823 ✅ Sessions sorted - Test Client should be first: Test Client 2/1/2025
+script.js?v=1754320300:317 Successfully loaded 10 sessions
+app:12746 Initializing dashboard with 10 sessions
+app:12484 Found 5 sessions in thisMonth period
+app:12606 Found 1 expenses totaling $800.00 in period
+app:12657 Found 0 trips totaling 0.0 miles ($0.00 deduction) in period
+app:12554 Financial stats for thisMonth: Object
+script.js?v=1754320300:270 Data type: object Array: true
+script.js?v=1754320300:271 Raw API response: Array(10)
+script.js?v=1754320300:272 Testing session deposit_amount from API: NOT FOUND
+script.js?v=1754320300:305 Transformed sessions: Array(10)
+app:5817 🔥 SORTING sessions by appointment date in renderSessions...
+app:5823 ✅ Sessions sorted - Test Client should be first: Test Client 2/1/2025
+script.js?v=1754320300:317 Successfully loaded 10 sessions
+app:12746 Initializing dashboard with 10 sessions
+app:12484 Found 5 sessions in thisMonth period
+app:12606 Found 1 expenses totaling $800.00 in period
+app:12657 Found 0 trips totaling 0.0 miles ($0.00 deduction) in period
+app:12554 Financial stats for thisMonth: Object
+script.js?v=1754320300:270 Data type: object Array: true
+script.js?v=1754320300:271 Raw API response: Array(10)
+script.js?v=1754320300:272 Testing session deposit_amount from API: NOT FOUND
+script.js?v=1754320300:305 Transformed sessions: Array(10)
+app:5817 🔥 SORTING sessions by appointment date in renderSessions...
+app:5823 ✅ Sessions sorted - Test Client should be first: Test Client 2/1/2025
+script.js?v=1754320300:317 Successfully loaded 10 sessions
+app:12746 Initializing dashboard with 10 sessions
+app:12484 Found 5 sessions in thisMonth period
+script.js?v=1754320300:1813 Page initialization complete
+app:12606 Found 1 expenses totaling $800.00 in period
+app:12657 Found 0 trips totaling 0.0 miles ($0.00 deduction) in period
+app:12554 Financial stats for thisMonth: Object
+app:12746 Initializing dashboard with 10 sessions
+app:12484 Found 5 sessions in thisMonth period
+app:12606 Found 1 expenses totaling $800.00 in period
+app:12657 Found 0 trips totaling 0.0 miles ($0.00 deduction) in period
+app:12554 Financial stats for thisMonth: Object
+[NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
+        Don't show again

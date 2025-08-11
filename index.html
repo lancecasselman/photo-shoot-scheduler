@@ -14223,7 +14223,7 @@ END:VCALENDAR`;
                 
                 // Prepare all pages content
                 const pagesScript = `
-                    <script>
+                    <${'script'}>
                         const pages = ${JSON.stringify(this.pages)};
                         let currentPage = '${this.currentPage}';
                         
@@ -14268,7 +14268,7 @@ END:VCALENDAR`;
                                 }
                             });
                         });
-                    </script>
+                    </${'script'}>
                 `;
                 
                 previewWindow.document.write(`
@@ -14328,7 +14328,7 @@ END:VCALENDAR`;
                     <body>
                         <nav>${navMenu}</nav>
                         <div id="page-content"></div>
-                        <script>
+                        <${'script'}>
                             const pages = ${JSON.stringify(this.pages)};
                             let currentPage = 'home';
                             
@@ -14354,7 +14354,7 @@ END:VCALENDAR`;
                             window.addEventListener('load', () => {
                                 showPage('home');
                             });
-                        </script>
+                        </${'script'}>
                     </body>
                     </html>
                 `;
