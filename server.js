@@ -2047,7 +2047,7 @@ app.post('/api/cleanup/orphaned-files', isAuthenticated, async (req, res) => {
 app.delete('/api/sessions/:sessionId/files/:folderType/:filename', isAuthenticated, async (req, res) => {
     try {
         const { sessionId, folderType, filename } = req.params;
-        const userId = req.user?.id || req.user?.uid || req.session.user?.uid;
+        const userId = req.session.user?.normalizedUid || req.user?.id || req.user?.uid || req.session.user?.uid;
         
         if (!userId) {
             return res.status(401).json({ 
@@ -2102,7 +2102,7 @@ app.delete('/api/sessions/:sessionId/files/:folderType', isAuthenticated, async 
     try {
         const { sessionId, folderType } = req.params;
         const { filenames } = req.body; // Array of filenames to delete
-        const userId = req.user?.id || req.user?.uid || req.session.user?.uid;
+        const userId = req.session.user?.normalizedUid || req.user?.id || req.user?.uid || req.session.user?.uid;
         
         if (!userId) {
             return res.status(401).json({ 
@@ -2155,7 +2155,7 @@ app.delete('/api/sessions/:sessionId/files/:folderType', isAuthenticated, async 
 app.get('/api/sessions/:sessionId/files/:folderType/:filename/verify-deletion', isAuthenticated, async (req, res) => {
     try {
         const { sessionId, folderType, filename } = req.params;
-        const userId = req.user?.id || req.user?.uid || req.session.user?.uid;
+        const userId = req.session.user?.normalizedUid || req.user?.id || req.user?.uid || req.session.user?.uid;
         
         if (!userId) {
             return res.status(401).json({ 
