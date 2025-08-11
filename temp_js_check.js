@@ -377,7 +377,7 @@
                              alt="${file.name}" 
                              onclick="openLightbox(\\"${file.downloadUrl}\\")"
                              onerror="this.src=\\"${file.downloadUrl}\\"; this.style.objectFit=\\"cover\\";"
-                             loading="lazy">` :
+                             loading="lazy" />` :
                         `<div class="file-icon">${getFileIcon(file.contentType)}</div>`
                     }
                 </div>
