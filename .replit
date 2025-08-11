@@ -2,7 +2,7 @@ modules = ["nodejs-20", "python-3.11", "postgresql-16"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["postgresql", "openssh", "firebase-tools", "git-lfs"]
+packages = ["firebase-tools", "git-lfs", "openssh", "postgresql"]
 
 [workflows]
 runButton = "Project"
