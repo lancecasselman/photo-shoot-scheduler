@@ -480,6 +480,8 @@
             folderType = urlParams.get('folderType');
             clientName = urlParams.get('clientName') || 'Client';
             
+            console.log('URL Parameters:', { sessionId, folderType, clientName });
+            
             // Update UI
             document.getElementById('folderTitle').textContent = 
                 folderType === 'gallery' ? '📸 Gallery Manager' : '📁 Raw Storage Manager';
@@ -490,18 +492,33 @@
             if (folderType === 'gallery') {
                 document.getElementById('sendClientBtn').style.display = 'flex';
             }
+            
+            // Validate folder type
+            if (!folderType || !['gallery', 'raw'].includes(folderType)) {
+                console.error('Invalid or missing folderType:', folderType);
+                document.getElementById('fileContainer').innerHTML = `
+                    <div class="empty-state">
+                        <h3>❌ Invalid Folder Type</h3>
+                        <p>Folder type must be 'gallery' or 'raw'. Current: ${folderType || 'undefined'}</p>
+                        <p>Please check the URL parameters.</p>
+                    </div>
+                `;
+                return false;
+            }
+            
+            return true;
         }
 
         // Initialize
         document.addEventListener('DOMContentLoaded', async function() {
-            getUrlParams();
-            
-            // Load complete session data to get client contact info
-            await loadSessionData();
-            
-            loadFiles();
-            setupDragAndDrop();
-            setupFileInput();
+            if (getUrlParams()) {
+                // Load complete session data to get client contact info
+                await loadSessionData();
+                
+                loadFiles();
+                setupDragAndDrop();
+                setupFileInput();
+            }
         });
 
         // Setup drag and drop
