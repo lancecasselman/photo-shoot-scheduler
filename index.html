@@ -13954,8 +13954,11 @@ END:VCALENDAR`;
                     canvas.innerHTML = this.getDefaultPageContent(this.pages[pageKey].name);
                 }
                 
+                // Re-initialize after page switch
                 this.updatePageList();
                 this.setupEditableElements();
+                this.makeElementsDraggable();
+                this.makeImagesResizable();
                 this.showToast(`Switched to ${this.pages[pageKey].name} page`);
             },
 
@@ -13980,9 +13983,13 @@ END:VCALENDAR`;
                 if (!pageList) return;
                 
                 pageList.innerHTML = Object.keys(this.pages).map(key => `
-                    <div class="wb-page-item ${this.pages[key].active ? 'active' : ''}" onclick="WebsiteBuilder.switchPage('${key}', event)">
-                        ${this.pages[key].name}
-                        ${key !== 'home' ? `<span class="wb-page-delete" onclick="WebsiteBuilder.deletePage('${key}'); event.stopPropagation();">×</span>` : ''}
+                    <div class="wb-page-item ${key === this.currentPage ? 'active' : ''}" 
+                         onclick="WebsiteBuilder.switchPage('${key}')"
+                         style="padding: 10px 15px; margin-bottom: 5px; cursor: pointer; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; ${key === this.currentPage ? 'background: #667eea; color: white;' : 'background: #f0f0f0; color: #333;'}"
+                         onmouseover="if('${key}' !== WebsiteBuilder.currentPage) this.style.background='#e0e0e0'"
+                         onmouseout="if('${key}' !== WebsiteBuilder.currentPage) this.style.background='#f0f0f0'">
+                        <span>${this.pages[key].name}</span>
+                        ${key !== 'home' ? `<span class="wb-page-delete" onclick="event.stopPropagation(); WebsiteBuilder.deletePage('${key}')" style="color: ${key === this.currentPage ? '#fff' : '#ff4444'}; font-size: 20px; line-height: 1; cursor: pointer;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">&times;</span>` : ''}
                     </div>
                 `).join('');
             },
@@ -14205,10 +14212,53 @@ END:VCALENDAR`;
             },
 
             preview() {
-                const canvas = document.getElementById('wb-canvas');
-                const content = canvas.innerHTML;
+                this.savePage(); // Save current page first
                 
                 const previewWindow = window.open('', '_blank');
+                
+                // Create navigation menu
+                const navMenu = Object.keys(this.pages).map(key => 
+                    `<a href="#" onclick="showPage('${key}'); return false;" style="padding: 10px 20px; text-decoration: none; color: #333; font-weight: 500;">${this.pages[key].name}</a>`
+                ).join('');
+                
+                // Prepare all pages content
+                const pagesScript = `
+                    <script>
+                        const pages = ${JSON.stringify(this.pages)};
+                        let currentPage = '${this.currentPage}';
+                        
+                        function showPage(pageKey) {
+                            const contentDiv = document.getElementById('page-content');
+                            if (pages[pageKey] && pages[pageKey].content) {
+                                contentDiv.innerHTML = pages[pageKey].content;
+                            } else {
+                                contentDiv.innerHTML = '<div style="padding: 40px; text-align: center;">Page content not found</div>';
+                            }
+                            
+                            // Update active nav state
+                            document.querySelectorAll('nav a').forEach(link => {
+                                link.style.background = 'transparent';
+                                link.style.color = '#333';
+                            });
+                            event.target.style.background = '#667eea';
+                            event.target.style.color = 'white';
+                            currentPage = pageKey;
+                        }
+                        
+                        // Show initial page on load
+                        window.addEventListener('load', () => {
+                            showPage(currentPage);
+                            // Highlight initial active link
+                            document.querySelectorAll('nav a').forEach((link, index) => {
+                                if (Object.keys(pages)[index] === currentPage) {
+                                    link.style.background = '#667eea';
+                                    link.style.color = 'white';
+                                }
+                            });
+                        });
+                    </script>
+                `;
+                
                 previewWindow.document.write(`
                     <!DOCTYPE html>
                     <html>
@@ -14217,22 +14267,33 @@ END:VCALENDAR`;
                         <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:400,700,900&family=Montserrat:300,400,500,600,700&family=Raleway:300,400,500,600,700&family=Roboto:300,400,500,700&family=Open+Sans:300,400,600,700&family=Lato:300,400,700,900&family=Merriweather:300,400,700,900&family=Bebas+Neue&family=Cormorant+Garamond:300,400,600,700&family=Poppins:300,400,500,600,700&family=Oswald:300,400,500,600,700&family=Dancing+Script:400,700&display=swap" rel="stylesheet">
                         <style>
                             body { margin: 0; padding: 0; font-family: 'Roboto', sans-serif; }
+                            nav { background: #f8f8f8; padding: 10px 0; text-align: center; border-bottom: 2px solid #e0e0e0; position: sticky; top: 0; z-index: 1000; }
+                            nav a { border-radius: 6px; margin: 0 5px; transition: all 0.3s; }
+                            nav a:hover { background: #e0e0e0 !important; }
                             .wb-editable { outline: none; }
-                            .wb-drag-handle, .wb-delete-btn { display: none !important; }
+                            .wb-drag-handle, .wb-delete-btn, .wb-resize-handle { display: none !important; }
+                            .wb-image-wrapper { display: inline-block !important; }
+                            #page-content { min-height: calc(100vh - 60px); }
                         </style>
                     </head>
                     <body>
-                        ${content}
+                        <nav>${navMenu}</nav>
+                        <div id="page-content"></div>
+                        ${pagesScript}
                     </body>
                     </html>
                 `);
                 
-                this.showToast('Preview opened in new window');
+                this.showToast('Preview opened with page navigation');
             },
 
             publish() {
                 this.savePage();
-                const allContent = Object.keys(this.pages).map(key => this.pages[key].content).join('');
+                
+                // Create navigation menu for published site
+                const navMenu = Object.keys(this.pages).map(key => 
+                    `<a href="#" onclick="showPage('${key}'); return false;" style="padding: 10px 20px; text-decoration: none; color: #333; font-weight: 500;">${this.pages[key].name}</a>`
+                ).join('');
                 
                 const publishedHTML = `
                     <!DOCTYPE html>
@@ -14242,12 +14303,46 @@ END:VCALENDAR`;
                         <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:400,700,900&family=Montserrat:300,400,500,600,700&family=Raleway:300,400,500,600,700&family=Roboto:300,400,500,700&family=Open+Sans:300,400,600,700&family=Lato:300,400,700,900&family=Merriweather:300,400,700,900&family=Bebas+Neue&family=Cormorant+Garamond:300,400,600,700&family=Poppins:300,400,500,600,700&family=Oswald:300,400,500,600,700&family=Dancing+Script:400,700&display=swap" rel="stylesheet">
                         <style>
                             body { margin: 0; padding: 0; font-family: 'Roboto', sans-serif; }
+                            nav { background: #f8f8f8; padding: 10px 0; text-align: center; border-bottom: 2px solid #e0e0e0; position: sticky; top: 0; z-index: 1000; }
+                            nav a { border-radius: 6px; margin: 0 5px; transition: all 0.3s; }
+                            nav a:hover { background: #e0e0e0 !important; }
+                            nav a.active { background: #667eea !important; color: white !important; }
                             .wb-editable { outline: none; }
-                            .wb-drag-handle, .wb-delete-btn { display: none !important; }
+                            .wb-drag-handle, .wb-delete-btn, .wb-resize-handle { display: none !important; }
+                            .wb-image-wrapper { display: inline-block !important; }
+                            #page-content { min-height: calc(100vh - 60px); padding: 20px; }
                         </style>
                     </head>
                     <body>
-                        ${allContent}
+                        <nav>${navMenu}</nav>
+                        <div id="page-content"></div>
+                        <script>
+                            const pages = ${JSON.stringify(this.pages)};
+                            let currentPage = 'home';
+                            
+                            function showPage(pageKey) {
+                                const contentDiv = document.getElementById('page-content');
+                                if (pages[pageKey] && pages[pageKey].content) {
+                                    contentDiv.innerHTML = pages[pageKey].content;
+                                } else {
+                                    contentDiv.innerHTML = '<div style="padding: 40px; text-align: center;">Page content not found</div>';
+                                }
+                                
+                                // Update active nav state
+                                document.querySelectorAll('nav a').forEach((link, index) => {
+                                    link.classList.remove('active');
+                                    if (Object.keys(pages)[index] === pageKey) {
+                                        link.classList.add('active');
+                                    }
+                                });
+                                currentPage = pageKey;
+                            }
+                            
+                            // Show home page on load
+                            window.addEventListener('load', () => {
+                                showPage('home');
+                            });
+                        </script>
                     </body>
                     </html>
                 `;
@@ -14260,7 +14355,7 @@ END:VCALENDAR`;
                 a.download = 'my-photography-website.html';
                 a.click();
                 
-                this.showToast('Website published and downloaded!');
+                this.showToast('Website published with navigation!');
             },
 
             showToast(message) {
