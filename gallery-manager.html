@@ -1013,41 +1013,76 @@
             container.appendChild(fileGrid);
         }
 
-        // Create file card
+        // Create file card using DOM methods to avoid string concatenation issues
         function createFileCard(file) {
             const card = document.createElement('div');
             card.className = 'file-card';
             
+            // File preview section
+            const filePreview = document.createElement('div');
+            filePreview.className = 'file-preview';
+            
             const isImage = file.contentType && file.contentType.startsWith('image/');
             
-            // Build HTML with string concatenation to avoid template literal issues
-            let html = '<div class="file-preview">';
-            
             if (isImage) {
-                // Use proper thumbnail API with R2 integration
-                var thumbnailFileName = file.fileName || file.name;
-                var thumbnailUrl = '/api/r2/thumbnail/' + sessionId + '/' + encodeURIComponent(thumbnailFileName) + '?size=medium';
-                html += '<img src="' + thumbnailUrl + '" ';
-                html += 'alt="' + file.name + '" ';
-                html += 'onclick="openLightbox(\'' + file.downloadUrl + '\')" ';
-                html += 'onerror="this.style.display=\'none\'; this.parentNode.innerHTML=\'<div class=\\\"file-icon\\\">🖼️</div>\'" ';
-                html += 'loading="lazy" />';
+                const img = document.createElement('img');
+                const thumbnailFileName = file.fileName || file.name;
+                const thumbnailUrl = `/api/r2/thumbnail/${sessionId}/${encodeURIComponent(thumbnailFileName)}?size=medium`;
+                
+                img.src = thumbnailUrl;
+                img.alt = file.name;
+                img.loading = 'lazy';
+                img.onclick = () => openLightbox(file.downloadUrl);
+                img.onerror = () => {
+                    img.style.display = 'none';
+                    filePreview.innerHTML = '<div class="file-icon">🖼️</div>';
+                };
+                
+                filePreview.appendChild(img);
             } else {
-                html += '<div class="file-icon">' + getFileIcon(file.contentType) + '</div>';
+                const fileIcon = document.createElement('div');
+                fileIcon.className = 'file-icon';
+                fileIcon.textContent = getFileIcon(file.contentType);
+                filePreview.appendChild(fileIcon);
             }
             
-            html += '</div>';
-            html += '<div class="file-info">';
-            html += '<div class="file-name">' + file.name + '</div>';
-            html += '<div class="file-meta">' + formatFileSize(file.size) + ' • ' + formatDate(file.timeCreated) + '</div>';
-            html += '</div>';
-            html += '<div class="file-actions">';
-            html += '<button class="btn" onclick="downloadFile(\'' + file.downloadUrl + '\', \'' + file.name + '\')">📥 Download</button>';
-            var deleteFileName = file.fileName || file.name;
-            html += '<button class="btn btn-danger" onclick="deleteFile(\'' + deleteFileName + '\')">🗑️ Delete</button>';
-            html += '</div>';
+            card.appendChild(filePreview);
             
-            card.innerHTML = html;
+            // File info section
+            const fileInfo = document.createElement('div');
+            fileInfo.className = 'file-info';
+            
+            const fileName = document.createElement('div');
+            fileName.className = 'file-name';
+            fileName.textContent = file.name;
+            
+            const fileMeta = document.createElement('div');
+            fileMeta.className = 'file-meta';
+            fileMeta.textContent = `${formatFileSize(file.size)} • ${formatDate(file.timeCreated)}`;
+            
+            fileInfo.appendChild(fileName);
+            fileInfo.appendChild(fileMeta);
+            card.appendChild(fileInfo);
+            
+            // File actions section
+            const fileActions = document.createElement('div');
+            fileActions.className = 'file-actions';
+            
+            const downloadBtn = document.createElement('button');
+            downloadBtn.className = 'btn';
+            downloadBtn.textContent = '📥 Download';
+            downloadBtn.onclick = () => downloadFile(file.downloadUrl, file.name);
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn btn-danger';
+            deleteBtn.textContent = '🗑️ Delete';
+            const deleteFileName = file.fileName || file.name;
+            deleteBtn.onclick = () => deleteFile(deleteFileName);
+            
+            fileActions.appendChild(downloadBtn);
+            fileActions.appendChild(deleteBtn);
+            card.appendChild(fileActions);
+            
             return card;
         }
 
