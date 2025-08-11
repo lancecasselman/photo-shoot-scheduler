@@ -5761,33 +5761,47 @@ ${contract.contract_content}
                     console.log('Transformed sessions:', sessions);
                     console.log(`Successfully loaded ${sessions.length} sessions`);
                     
-                    // Debug session dates before sorting
-                    sessions.forEach((session, i) => {
-                        const sessionDate = new Date(session.dateTime);
-                        console.log(`Session ${i+1}: ${session.clientName} - Date: ${session.dateTime} - Parsed: ${sessionDate.toLocaleDateString()} - Valid: ${!isNaN(sessionDate.getTime())}`);
-                    });
-                    
-                    // Set default sort to date-asc (oldest first) BEFORE any rendering
-                    const sortSelect = document.getElementById('sortOptions');
-                    if (sortSelect) {
-                        sortSelect.value = 'date-asc';
-                        console.log('Default sort set to date-asc');
+                    // Force debugging to run
+                    try {
+                        console.log('DEBUG BLOCK STARTING...');
+                        
+                        // Debug session dates before sorting - using dateTime field (appointment date, not creation date)
+                        console.log('Checking session dates from dateTime field (appointment dates):');
+                        sessions.forEach((session, i) => {
+                            const sessionDate = new Date(session.dateTime);
+                            console.log(`Session ${i+1}: ${session.clientName} - DateTime: ${session.dateTime} - Parsed: ${sessionDate.toLocaleDateString()} - Valid: ${!isNaN(sessionDate.getTime())}`);
+                        });
+                        
+                        // Set default sort to date-asc (oldest first) BEFORE any rendering
+                        console.log('Setting sort dropdown to date-asc...');
+                        const sortSelect = document.getElementById('sortOptions');
+                        if (sortSelect) {
+                            sortSelect.value = 'date-asc';
+                            console.log('Default sort set to date-asc');
+                        } else {
+                            console.log('Sort dropdown not found!');
+                        }
+                        
+                        // MANUAL SORT by dateTime field (appointment date) oldest first
+                        console.log('Manually sorting sessions by appointment date (dateTime) oldest first...');
+                        sessions.sort((a, b) => {
+                            const dateA = new Date(a.dateTime);
+                            const dateB = new Date(b.dateTime);
+                            const comparison = dateA.getTime() - dateB.getTime();
+                            console.log(`Comparing: ${a.clientName} (${dateA.toLocaleDateString()}) vs ${b.clientName} (${dateB.toLocaleDateString()}) = ${comparison}`);
+                            return comparison; // Oldest first
+                        });
+                        
+                        console.log('FINAL SORTED ORDER by appointment date:');
+                        sessions.forEach((session, i) => {
+                            const sessionDate = new Date(session.dateTime);
+                            console.log(`${i+1}. ${session.clientName} - ${sessionDate.toLocaleDateString()}`);
+                        });
+                        
+                        console.log('DEBUG BLOCK COMPLETED');
+                    } catch (debugError) {
+                        console.error('Error in debug block:', debugError);
                     }
-                    
-                    // MANUAL SORT by date-asc (oldest first) to ensure it works
-                    console.log('Manually sorting sessions by date-asc...');
-                    sessions.sort((a, b) => {
-                        const dateA = new Date(a.dateTime);
-                        const dateB = new Date(b.dateTime);
-                        console.log(`Comparing: ${a.clientName} (${dateA.getTime()}) vs ${b.clientName} (${dateB.getTime()})`);
-                        return dateA.getTime() - dateB.getTime(); // Oldest first
-                    });
-                    
-                    console.log('After manual sort - sessions order:');
-                    sessions.forEach((session, i) => {
-                        const sessionDate = new Date(session.dateTime);
-                        console.log(`${i+1}. ${session.clientName} - ${sessionDate.toLocaleDateString()}`);
-                    });
                     
                     // THEN render the sorted sessions
                     console.log('About to render sorted sessions...');
