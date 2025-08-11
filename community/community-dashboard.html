@@ -1089,10 +1089,36 @@
                 });
                 if (response.ok) {
                     currentUser = await response.json();
+                    console.log('Current user profile:', currentUser);
                     updateUserDisplay();
+                    displayUserAccount();
                 }
             } catch (error) {
                 console.error('Error initializing user:', error);
+            }
+        }
+        
+        // Display user account information
+        function displayUserAccount() {
+            if (currentUser) {
+                // Add user account display to the header
+                const headerRight = document.querySelector('.header-right');
+                if (headerRight) {
+                    // Check if account info already exists
+                    if (!document.getElementById('accountInfo')) {
+                        const accountInfo = document.createElement('div');
+                        accountInfo.id = 'accountInfo';
+                        accountInfo.style.cssText = 'display: flex; align-items: center; gap: 10px; margin-right: 20px;';
+                        accountInfo.innerHTML = `
+                            <span style="color: #888; font-size: 0.9rem;">Logged in as:</span>
+                            <span style="color: #fff; font-weight: bold;">${currentUser.displayName || currentUser.email}</span>
+                            <span style="color: #4CAF50; font-size: 0.8rem; background: rgba(76, 175, 80, 0.2); padding: 2px 8px; border-radius: 4px;">
+                                ${currentUser.accountType || 'Professional'}
+                            </span>
+                        `;
+                        headerRight.insertBefore(accountInfo, headerRight.firstChild);
+                    }
+                }
             }
         }
 
@@ -1146,10 +1172,11 @@
                 <div class="post-card ${postClass}" data-post-id="${post.id}">
                     <div class="post-header">
                         <div class="post-author">
-                            <div class="user-avatar">${getInitials(post.userName)}</div>
+                            <div class="user-avatar">${getInitials(post.user_name || post.userName)}</div>
                             <div class="author-info">
-                                <div class="author-name">${post.userName}</div>
-                                <div class="post-time">${formatTime(post.createdAt)}</div>
+                                <div class="author-name">${post.user_name || post.userName}</div>
+                                <div class="post-time">${formatTime(post.created_at || post.createdAt)}</div>
+                                ${post.user_id === currentUser?.userId ? '<span style="color: #4CAF50; font-size: 0.75rem;">(You)</span>' : ''}
                             </div>
                         </div>
                         <div class="post-menu">⋮</div>

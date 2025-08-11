@@ -48,10 +48,20 @@ function requireAuth(req, res, next) {
 router.get('/profile', requireAuth, async (req, res) => {
     try {
         const userId = req.session.user.uid || req.session.user.id;
-        const displayName = req.session.user.displayName || req.session.user.email || 'Anonymous';
+        const userEmail = req.session.user.email;
+        const displayName = req.session.user.displayName || userEmail || 'Anonymous';
         
         const profile = await db.getOrCreateProfile(userId, displayName);
-        res.json(profile);
+        
+        // Return comprehensive user information
+        res.json({
+            ...profile,
+            userId,
+            email: userEmail,
+            displayName,
+            accountType: 'Photography Professional',
+            sessionUser: req.session.user
+        });
     } catch (error) {
         console.error('Error getting profile:', error);
         res.status(500).json({ error: 'Failed to get profile' });
