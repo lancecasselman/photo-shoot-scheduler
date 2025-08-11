@@ -312,11 +312,11 @@ try {
         const initializeCommunityServices = require('./community/community-routes');
         // Pass R2 configuration to community services
         communityRoutes = initializeCommunityServices(pool, {
-            endpoint: process.env.R2_ENDPOINT,
-            accessKeyId: process.env.R2_ACCESS_KEY_ID,
-            secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
-            bucketName: process.env.R2_BUCKET,
-            publicUrl: process.env.R2_PUBLIC_URL
+            endpoint: process.env.CLOUDFLARE_R2_ENDPOINT || `https://${process.env.CLOUDFLARE_R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+            accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID,
+            secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY,
+            bucketName: process.env.CLOUDFLARE_R2_BUCKET_NAME,
+            publicUrl: process.env.CLOUDFLARE_R2_PUBLIC_URL || 'https://pub-f4fb0dd444374c70b491e4a0adb6bb02.r2.dev'
         });
         console.log('✅ Community Platform initialized with R2 Storage');
     } else {
