@@ -4617,8 +4617,8 @@
                     <div id="sort-filters" class="filter-dropdown" style="display: none; background: rgba(156,39,176,0.1); border-radius: 8px; padding: 15px; margin: 10px 0; border-left: 4px solid #9C27B0;">
                         <select id="sortOptions" onchange="sortSessions()" style="width: 100%; max-width: 350px; padding: 10px; border: 2px solid #9C27B0; border-radius: 6px; background: white; font-size: 14px;">
                             <option value="calendar-upcoming">📅 Calendar (Upcoming First)</option>
-                            <option value="date-desc" selected>📅 Date (Newest First)</option>
-                            <option value="date-asc">📅 Date (Oldest First)</option>
+                            <option value="date-desc">📅 Date (Newest First)</option>
+                            <option value="date-asc" selected>📅 Date (Oldest First)</option>
                             <option value="calendar-past">📅 Calendar (Most Recent Past)</option>
                             <option value="name-asc">👤 Client Name (A-Z)</option>
                             <option value="name-desc">👤 Client Name (Z-A)</option>
@@ -5770,10 +5770,10 @@ ${contract.contract_content}
                         console.error('renderSessions function not found in window scope');
                     }
                     
-                    // Set default sort to date-desc and apply it
+                    // Set default sort to date-asc (oldest first) and apply it
                     const sortSelect = document.getElementById('sortOptions');
                     if (sortSelect) {
-                        sortSelect.value = 'date-desc';
+                        sortSelect.value = 'date-asc';
                     }
                     
                     // Apply sort after initial render - force execution
@@ -6906,7 +6906,7 @@ lance@thelegacyphotography.com`;
             document.getElementById('sessionTypeFilter').value = '';
             document.getElementById('dateFromFilter').value = '';
             document.getElementById('dateToFilter').value = '';
-            document.getElementById('sortOptions').value = 'date-desc';
+            document.getElementById('sortOptions').value = 'date-asc';
             
             filterSessions();
             sortSessions();
