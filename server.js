@@ -1583,7 +1583,7 @@ app.delete('/api/sessions/:sessionId/files/:folderType/:fileName', isAuthenticat
             // Find the file in database
             const fileQuery = `
                 SELECT key, file_size 
-                FROM file_storage 
+                FROM session_files 
                 WHERE session_id = $1 
                 AND folder_type = $2 
                 AND file_name = $3
@@ -1607,7 +1607,7 @@ app.delete('/api/sessions/:sessionId/files/:folderType/:fileName', isAuthenticat
             
             // Delete from database
             const deleteQuery = `
-                DELETE FROM file_storage 
+                DELETE FROM session_files 
                 WHERE session_id = $1 
                 AND folder_type = $2 
                 AND file_name = $3
