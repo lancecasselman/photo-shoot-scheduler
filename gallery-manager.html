@@ -999,11 +999,50 @@
             }
         }
 
-        // Send to client (Gallery only)
+        // Send to client with choice modal
         function sendToClient() {
-            const clientGalleryUrl = `${window.location.origin}/client-gallery.html?session=${sessionId}`;
-            const subject = `Your Photography Gallery - Session`;
-            const body = `Hi ${clientName},
+            // Show modal with email/SMS options
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 1000;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: white; padding: 30px; border-radius: 10px; max-width: 500px; width: 90%;">
+                    <h3 style="margin: 0 0 20px 0; color: #333;">Send Gallery Link to Client</h3>
+                    <p style="margin: 0 0 20px 0; color: #666;">How would you like to send the gallery link to ${clientName}?</p>
+                    
+                    <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                        <button onclick="sendViaEmail()" style="flex: 1; padding: 15px; background: #4285f4; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px;">
+                            📧 Email
+                        </button>
+                        <button onclick="sendViaSMS()" style="flex: 1; padding: 15px; background: #0d9488; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px;">
+                            📱 SMS
+                        </button>
+                    </div>
+                    
+                    <button onclick="closeModal()" style="width: 100%; padding: 10px; background: #6b7280; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                        Cancel
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Add global functions for the modal
+            window.sendViaEmail = function() {
+                const clientGalleryUrl = `${window.location.origin}/client-gallery.html?session=${sessionId}`;
+                const subject = `Your Photography Gallery - ${clientName}`;
+                const body = `Hi ${clientName},
 
 Your photography gallery is ready for viewing and download!
 
@@ -1011,19 +1050,35 @@ Your photography gallery is ready for viewing and download!
 
 You can:
 • View all your photos in high resolution
-• Download individual photos
+• Download individual photos  
 • Download selected photos as a ZIP file
 • Download your entire gallery
 
 The gallery will remain available for download. If you have any questions or need assistance, please don't hesitate to reach out.
 
 Best regards,
-Lance - The Legacy Photography
-Professional Photography Services
-lance@thelegacyphotography.com`;
+Lance - The Legacy Photography`;
 
-            const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-            window.location.href = mailtoUrl;
+                const mailtoUrl = `mailto:${clientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                window.open(mailtoUrl, '_blank');
+                closeModal();
+            };
+            
+            window.sendViaSMS = function() {
+                const clientGalleryUrl = `${window.location.origin}/client-gallery.html?session=${sessionId}`;
+                const message = `Hi ${clientName}! Your photo gallery is ready: ${clientGalleryUrl} - Lance Photography`;
+                
+                const smsUrl = `sms:${clientPhoneNumber}?body=${encodeURIComponent(message)}`;
+                window.open(smsUrl, '_blank');
+                closeModal();
+            };
+            
+            window.closeModal = function() {
+                document.body.removeChild(modal);
+                delete window.sendViaEmail;
+                delete window.sendViaSMS;
+                delete window.closeModal;
+            };
         }
 
         // Refresh files
