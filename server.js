@@ -1576,8 +1576,52 @@ app.delete('/api/sessions/:sessionId/files/:folderType/:fileName', isAuthenticat
         
         console.log(`Deleting file: ${fileName} from ${folderType} folder of session ${sessionId}`);
         
-        await objectStorageService.deleteSessionFile(sessionId, folderType, fileName);
-        res.json({ success: true, message: `${fileName} deleted successfully` });
+        // Get database client
+        const dbClient = await pool.connect();
+        
+        try {
+            // Find the file in database
+            const fileQuery = `
+                SELECT key, file_size 
+                FROM file_storage 
+                WHERE session_id = $1 
+                AND folder_type = $2 
+                AND file_name = $3
+            `;
+            
+            const fileResult = await dbClient.query(fileQuery, [sessionId, folderType, fileName]);
+            
+            if (fileResult.rows.length === 0) {
+                return res.status(404).json({ error: 'File not found' });
+            }
+            
+            const fileRecord = fileResult.rows[0];
+            
+            // Delete from R2
+            const deleteSuccess = await r2FileManager.deleteFile(fileRecord.key);
+            
+            if (!deleteSuccess) {
+                console.error('Failed to delete file from R2:', fileRecord.key);
+                // Continue with database deletion even if R2 deletion fails
+            }
+            
+            // Delete from database
+            const deleteQuery = `
+                DELETE FROM file_storage 
+                WHERE session_id = $1 
+                AND folder_type = $2 
+                AND file_name = $3
+            `;
+            
+            await dbClient.query(deleteQuery, [sessionId, folderType, fileName]);
+            
+            console.log(`Successfully deleted ${fileName} from ${folderType} folder`);
+            res.json({ success: true, message: `${fileName} deleted successfully` });
+            
+        } finally {
+            dbClient.release();
+        }
+        
     } catch (error) {
         console.error('Error deleting file:', error);
         res.status(500).json({ error: 'Failed to delete file: ' + error.message });
