@@ -244,7 +244,7 @@ const LocalBackupFallback = require('./server/local-backup-fallback');
 const localBackup = new LocalBackupFallback();
 
 // Initialize services with proper dependencies
-const r2FileManager = new R2FileManager(localBackup);
+const r2FileManager = new R2FileManager(localBackup, pool);
 const paymentPlanManager = new PaymentPlanManager();
 const paymentScheduler = new PaymentScheduler();
 const contractManager = new ContractManager();

@@ -370,32 +370,32 @@
             
             const isImage = file.contentType && file.contentType.startsWith('image/');
             
-            card.innerHTML = `
-                <div class="file-preview">
-                    ${isImage ? 
-                        `<img src="/api/sessions/${sessionId}/files/${folderType}/thumbnail/${file.name}" 
-                             alt="${file.name}" 
-                             onclick="openLightbox(\\"${file.downloadUrl}\\")"
-                             onerror="this.src=\\"${file.downloadUrl}\\"; this.style.objectFit=\\"cover\\";"
-                             loading="lazy" />` :
-                        `<div class="file-icon">${getFileIcon(file.contentType)}</div>`
-                    }
-                </div>
-                <div class="file-info">
-                    <div class="file-name">${file.name}</div>
-                    <div class="file-meta">
-                        ${formatFileSize(file.size)} • ${formatDate(file.timeCreated)}
-                    </div>
-                </div>
-                <div class="file-actions">
-                    <button class="btn" onclick="downloadFile(\\"${file.downloadUrl}\\", \\"${file.name}\\")">
-                        📥 Download
-                    </button>
-                    <button class="btn btn-danger" onclick="deleteFile(\\"${file.name}\\")">
-                        🗑️ Delete
-                    </button>
-                </div>
-            `;
+            // Build HTML properly to avoid template literal issues
+            let html = '<div class="file-preview">';
+            
+            if (isImage) {
+                var thumbnailUrl = '/api/r2/thumbnail/' + sessionId + '/' + encodeURIComponent(file.name) + '?size=medium';
+                html += '<img src="' + thumbnailUrl + '" ';
+                html += 'alt="' + file.name + '" ';
+                html += 'onclick="openLightbox(\'' + file.downloadUrl + '\')" ';
+                html += 'onerror="this.style.display=\'none\'; this.parentNode.innerHTML=\'<div class=\\\"file-icon\\\">🖼️</div>\'" ';
+                html += 'loading="lazy" />';
+            } else {
+                html += '<div class="file-icon">' + getFileIcon(file.contentType) + '</div>';
+            }
+            
+            html += '</div>';
+            html += '<div class="file-info">';
+            html += '<div class="file-name">' + file.name + '</div>';
+            html += '<div class="file-meta">' + formatFileSize(file.size) + ' • ' + formatDate(file.timeCreated) + '</div>';
+            html += '</div>';
+            html += '<div class="file-actions">';
+            html += '<button class="btn" onclick="downloadFile(\'' + file.downloadUrl + '\', \'' + file.name + '\')">📥 Download</button>';
+            html += '<button class="btn btn-danger" onclick="deleteFile(\'' + file.name + '\')">🗑️ Delete</button>';
+            html += '</div>';
+            
+            card.innerHTML = html;
+
             
             return card;
         }
