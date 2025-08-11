@@ -1485,42 +1485,75 @@ app.get('/api/sessions/:sessionId/files/:folderType/thumbnail/:fileName', async 
             return res.status(400).json({ error: 'Invalid folder type' });
         }
         
-        const files = await objectStorageService.getSessionFiles(sessionId, folderType);
-        const file = files.find(f => f.name.split('/').pop() === fileName);
-        
-        if (!file) {
-            return res.status(404).json({ error: 'File not found' });
+        // First check if user is authenticated
+        const userId = req.session?.userId;
+        if (!userId) {
+            return res.status(401).json({ error: 'Authentication required' });
         }
         
-        // Check if file is an image
-        const [metadata] = await file.getMetadata();
-        if (!metadata.contentType || !metadata.contentType.startsWith('image/')) {
-            // If not an image, serve the original file
-            return await objectStorageService.downloadObject(file, res);
-        }
-        
+        // Query database to find the file
+        const dbClient = await pool.connect();
         try {
-            // Generate thumbnail using Sharp
-            const sharp = require('sharp');
-            const stream = file.createReadStream();
+            const fileQuery = `
+                SELECT key, content_type, file_size
+                FROM file_storage
+                WHERE session_id = $1 
+                AND folder_type = $2 
+                AND file_name = $3
+                LIMIT 1
+            `;
             
-            res.setHeader('Content-Type', 'image/jpeg');
-            res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
+            const fileResult = await dbClient.query(fileQuery, [sessionId, folderType, fileName]);
             
-            // Create thumbnail transform (300x300 max, preserve aspect ratio)
-            const thumbnail = sharp()
-                .resize(300, 300, { 
-                    fit: 'inside', 
-                    withoutEnlargement: true 
-                })
-                .jpeg({ quality: 85 });
+            if (fileResult.rows.length === 0) {
+                return res.status(404).json({ error: 'File not found' });
+            }
             
-            stream.pipe(thumbnail).pipe(res);
+            const fileRecord = fileResult.rows[0];
             
-        } catch (thumbnailError) {
-            console.error('Thumbnail generation error:', thumbnailError);
-            // Fallback to original image if thumbnail generation fails
-            await objectStorageService.downloadObject(file, res);
+            // Check if file is an image
+            if (!fileRecord.content_type || !fileRecord.content_type.startsWith('image/')) {
+                // If not an image, redirect to download endpoint
+                return res.redirect(`/api/sessions/${sessionId}/files/${folderType}/${fileName}`);
+            }
+            
+            // Get file from R2
+            const fileData = await r2FileManager.getFile(fileRecord.key);
+            
+            if (!fileData) {
+                return res.status(404).json({ error: 'File not found in storage' });
+            }
+            
+            try {
+                // Generate thumbnail using Sharp
+                const sharp = require('sharp');
+                
+                res.setHeader('Content-Type', 'image/jpeg');
+                res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
+                
+                // Create thumbnail transform (300x300 max, preserve aspect ratio)
+                const thumbnail = sharp()
+                    .resize(300, 300, { 
+                        fit: 'inside', 
+                        withoutEnlargement: true 
+                    })
+                    .jpeg({ quality: 85 });
+                
+                // Stream the data through sharp and to the response
+                const stream = require('stream');
+                const bufferStream = new stream.PassThrough();
+                bufferStream.end(fileData);
+                bufferStream.pipe(thumbnail).pipe(res);
+                
+            } catch (thumbnailError) {
+                console.error('Thumbnail generation error:', thumbnailError);
+                // Fallback to original image if thumbnail generation fails
+                res.setHeader('Content-Type', fileRecord.content_type);
+                res.send(fileData);
+            }
+            
+        } finally {
+            dbClient.release();
         }
         
     } catch (error) {

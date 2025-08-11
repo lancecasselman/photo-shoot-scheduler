@@ -1089,10 +1089,12 @@ lance@thelegacyphotography.com`;
     <!-- Import unified deletion system -->
     <script src="/static/js/photo-deletion.js"></script>
     <script>
-        // Initialize unified deletion system
-        const photoDeletion = new PhotoDeletion();
+        // Initialize unified deletion system (check if not already initialized)
+        if (typeof photoDeletion === 'undefined') {
+            var photoDeletion = new PhotoDeletion();
+        }
         
-        // Override the old deleteFile function to use unified deletion
+        // Define deleteFile function to use unified deletion
         async function deleteFile(fileName) {
             if (!confirm(`Are you sure you want to delete ${fileName}?`)) {
                 return;
