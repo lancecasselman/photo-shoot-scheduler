@@ -5218,7 +5218,7 @@ ${contract.contract_content}
                         
                         <div style="margin-bottom:20px;">
                             <label style="display:block;color:#d4af37;font-weight:600;margin-bottom:8px;">Payment Frequency</label>
-                            <select id="paymentFrequency" onchange="calculatePayments()" style="width:100%;padding:12px;background:rgba(26,26,26,0.8);border:2px solid rgba(212,175,55,0.3);border-radius:8px;color:#f5f5f5;box-sizing:border-box;">
+                            <select id="paymentFrequency" style="width:100%;padding:12px;background:rgba(26,26,26,0.8);border:2px solid rgba(212,175,55,0.3);border-radius:8px;color:#f5f5f5;box-sizing:border-box;">
                                 <option value="weekly">Weekly</option>
                                 <option value="biweekly">Bi-Weekly</option>
                                 <option value="monthly" selected>Monthly</option>
@@ -5227,12 +5227,16 @@ ${contract.contract_content}
                         
                         <div style="margin-bottom:20px;">
                             <label style="display:block;color:#d4af37;font-weight:600;margin-bottom:8px;">Start Date</label>
-                            <input type="date" id="startDate" onchange="calculatePayments()" style="width:100%;padding:12px;background:rgba(26,26,26,0.8);border:2px solid rgba(212,175,55,0.3);border-radius:8px;color:#f5f5f5;box-sizing:border-box;">
+                            <input type="date" id="startDate" style="width:100%;padding:12px;background:rgba(26,26,26,0.8);border:2px solid rgba(212,175,55,0.3);border-radius:8px;color:#f5f5f5;box-sizing:border-box;">
                         </div>
                         
                         <div style="margin-bottom:20px;">
                             <label style="display:block;color:#d4af37;font-weight:600;margin-bottom:8px;">End Date</label>
-                            <input type="date" id="endDate" onchange="calculatePayments()" style="width:100%;padding:12px;background:rgba(26,26,26,0.8);border:2px solid rgba(212,175,55,0.3);border-radius:8px;color:#f5f5f5;box-sizing:border-box;">
+                            <input type="date" id="endDate" style="width:100%;padding:12px;background:rgba(26,26,26,0.8);border:2px solid rgba(212,175,55,0.3);border-radius:8px;color:#f5f5f5;box-sizing:border-box;">
+                        </div>
+                        
+                        <div style="text-align:center;margin:20px 0;">
+                            <button onclick="calculatePayments()" style="background:#4CAF50;color:white;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-weight:600;margin-right:10px;">📊 Calculate Payments</button>
                         </div>
                         
                         <div id="paymentCalculation" style="background:rgba(212,175,55,0.1);border:1px solid #d4af37;border-radius:12px;padding:20px;margin:20px 0;text-align:center;display:none;">
@@ -5292,8 +5296,7 @@ ${contract.contract_content}
                     endDateInput.value = endDate.toISOString().split('T')[0];
                 }
                 
-                // Calculate initial payment breakdown
-                calculatePayments();
+                // Don't auto-calculate initially - let user click Calculate button
                 
                 console.log('Payment plan modal setup complete');
             }, 100);
