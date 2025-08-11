@@ -1090,27 +1090,61 @@
 
         // OLD DELETE FUNCTION REMOVED - Now using unified deletion system (loaded at bottom of page)
 
-        // Delete all files using unified deletion system
+        // Delete all files - direct API call to server
         async function deleteAllFiles() {
             if (files.length === 0) {
                 alert('No files to delete');
                 return;
             }
 
-            // Extract filenames for deletion
-            const filenames = files.map(file => file.fileName || file.name);
+            const confirmation = confirm(`Are you sure you want to delete ALL ${files.length} files from the ${folderType} folder? This action cannot be undone and will delete files from both the database and cloud storage.`);
+            if (!confirmation) {
+                return;
+            }
+            
+            const deleteBtn = document.querySelector('button[onclick="deleteAllFiles()"]');
+            const originalText = deleteBtn.innerHTML;
+            deleteBtn.innerHTML = '🗑️ Deleting...';
+            deleteBtn.disabled = true;
             
             try {
-                // Use unified deletion system's batch delete method
-                await photoDeletion.batchDeletePhotos(sessionId, folderType, filenames);
+                console.log(`🗑️ Starting delete all for ${files.length} files in ${folderType} folder`);
                 
-                // Refresh file list after deletion
+                // Extract all filenames for batch deletion
+                const filenames = files.map(file => file.fileName || file.name);
+                
+                // Call server endpoint to delete all files in the folder
+                const response = await fetch(`/api/sessions/${sessionId}/files/${folderType}`, {
+                    method: 'DELETE',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ filenames })
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Server error: ${response.status} - ${errorText}`);
+                }
+                
+                const result = await response.json();
+                console.log('✅ Delete all result:', result);
+                
+                // Show success message
+                alert(`Successfully deleted ${result.successCount || result.deletedCount || files.length} files from ${folderType} folder. Reclaimed ${result.totalReclaimedMB || 0}MB of storage.`);
+                
+                // Refresh file list and storage stats
                 loadFiles();
                 loadStorageStats();
                 
             } catch (error) {
-                console.error('Delete all error:', error);
+                console.error('❌ Delete all error:', error);
                 alert('Failed to delete files: ' + error.message);
+            } finally {
+                // Restore button
+                deleteBtn.innerHTML = originalText;
+                deleteBtn.disabled = false;
             }
         }
 
