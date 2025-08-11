@@ -13477,6 +13477,48 @@ END:VCALENDAR`;
                         this.editElement(e.target, e);
                     }
                 });
+                
+                // Setup click outside handler
+                this.setupClickOutsideHandler();
+            },
+            
+            setupClickOutsideHandler() {
+                // Add click listener to canvas and document to hide edit panel
+                document.addEventListener('click', (e) => {
+                    const editPanel = document.getElementById('wb-edit-panel');
+                    const canvas = document.getElementById('wb-canvas');
+                    
+                    // Check if click is outside edit panel and not on an editable element
+                    if (editPanel && editPanel.classList.contains('active')) {
+                        if (!editPanel.contains(e.target) && 
+                            !e.target.classList.contains('wb-editable') &&
+                            !e.target.closest('.wb-editable') &&
+                            !e.target.closest('.wb-image-wrapper') &&
+                            !e.target.classList.contains('wb-resize-handle')) {
+                            
+                            // Hide edit panel
+                            editPanel.classList.remove('active');
+                            
+                            // Remove selection from all elements
+                            document.querySelectorAll('.wb-editable').forEach(el => {
+                                el.classList.remove('selected');
+                            });
+                            document.querySelectorAll('.wb-image-wrapper').forEach(el => {
+                                el.classList.remove('selected');
+                            });
+                            
+                            this.currentElement = null;
+                        }
+                    }
+                });
+                
+                // Prevent edit panel from closing when clicking inside it
+                const editPanel = document.getElementById('wb-edit-panel');
+                if (editPanel) {
+                    editPanel.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                    });
+                }
             },
 
             editElement(element, event) {
