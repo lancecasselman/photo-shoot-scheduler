@@ -4565,7 +4565,7 @@
                 <!-- Compact Filter Controls with Dropdowns -->
                 <div class="filter-controls-compact">
                     <!-- Filter Toggle Buttons -->
-                    <div class="filter-toggle-row" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+                    <div class="filter-toggle-row" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; align-items: center;">
                         <button type="button" class="filter-toggle-btn" onclick="toggleFilterSection('status')" style="background: #d4af37; color: #1a1a1a; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600;">
                             📋 Status Filters <span id="status-indicator" style="opacity: 0.7;">▼</span>
                         </button>
@@ -4578,14 +4578,24 @@
                         <button type="button" class="filter-toggle-btn" onclick="toggleFilterSection('sort')" style="background: #9C27B0; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600;">
                             🔄 Sort Options <span id="sort-indicator" style="opacity: 0.7;">▼</span>
                         </button>
+                        
+                        <!-- Apply Filters Button -->
+                        <div style="margin-left: auto; display: flex; gap: 10px;">
+                            <button type="button" onclick="applyAllFilters()" style="background: #ff6b35; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">
+                                🔍 Apply Filters
+                            </button>
+                            <button type="button" onclick="clearAllFilters()" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;">
+                                🗑️ Clear All
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Collapsible Filter Sections -->
                     <div id="status-filters" class="filter-dropdown" style="display: none; background: rgba(212,175,55,0.1); border-radius: 8px; padding: 15px; margin: 10px 0; border-left: 4px solid #d4af37;">
                         <div class="checkbox-filters" style="display: flex; gap: 20px; flex-wrap: wrap;">
-                            <label style="display: flex; align-items: center; gap: 8px; color: #333; font-weight: 500;"><input type="checkbox" id="filterContractSigned" onchange="filterSessions()" style="margin: 0;"> ✅ Contract Signed</label>
-                            <label style="display: flex; align-items: center; gap: 8px; color: #333; font-weight: 500;"><input type="checkbox" id="filterPaid" onchange="filterSessions()" style="margin: 0;"> 💰 Paid</label>
-                            <label style="display: flex; align-items: center; gap: 8px; color: #333; font-weight: 500;"><input type="checkbox" id="filterDelivered" onchange="filterSessions()" style="margin: 0;"> 📦 Delivered</label>
+                            <label style="display: flex; align-items: center; gap: 8px; color: #333; font-weight: 500;"><input type="checkbox" id="filterContractSigned" style="margin: 0;"> ✅ Contract Signed</label>
+                            <label style="display: flex; align-items: center; gap: 8px; color: #333; font-weight: 500;"><input type="checkbox" id="filterPaid" style="margin: 0;"> 💰 Paid</label>
+                            <label style="display: flex; align-items: center; gap: 8px; color: #333; font-weight: 500;"><input type="checkbox" id="filterDelivered" style="margin: 0;"> 📦 Delivered</label>
                         </div>
                     </div>
 
@@ -4593,18 +4603,18 @@
                         <div class="date-range-controls" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <label style="color: #333; font-weight: 600;">From:</label>
-                                <input type="date" id="dateFromFilter" onchange="filterSessions()" style="padding: 8px; border: 2px solid #4CAF50; border-radius: 4px; background: white;">
+                                <input type="date" id="dateFromFilter" style="padding: 8px; border: 2px solid #4CAF50; border-radius: 4px; background: white;">
                             </div>
                             <span style="color: #333; font-weight: 600;">to</span>
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <label style="color: #333; font-weight: 600;">To:</label>
-                                <input type="date" id="dateToFilter" onchange="filterSessions()" style="padding: 8px; border: 2px solid #4CAF50; border-radius: 4px; background: white;">
+                                <input type="date" id="dateToFilter" style="padding: 8px; border: 2px solid #4CAF50; border-radius: 4px; background: white;">
                             </div>
                         </div>
                     </div>
 
                     <div id="type-filters" class="filter-dropdown" style="display: none; background: rgba(33,150,243,0.1); border-radius: 8px; padding: 15px; margin: 10px 0; border-left: 4px solid #2196F3;">
-                        <select id="sessionTypeFilter" onchange="filterSessions()" style="width: 100%; max-width: 300px; padding: 10px; border: 2px solid #2196F3; border-radius: 6px; background: white; font-size: 14px;">
+                        <select id="sessionTypeFilter" style="width: 100%; max-width: 300px; padding: 10px; border: 2px solid #2196F3; border-radius: 6px; background: white; font-size: 14px;">
                             <option value="">📋 All Types</option>
                             <option value="Wedding">💒 Wedding</option>
                             <option value="Family">👨‍👩‍👧‍👦 Family</option>
@@ -4615,7 +4625,7 @@
                     </div>
 
                     <div id="sort-filters" class="filter-dropdown" style="display: none; background: rgba(156,39,176,0.1); border-radius: 8px; padding: 15px; margin: 10px 0; border-left: 4px solid #9C27B0;">
-                        <select id="sortOptions" onchange="sortSessions()" style="width: 100%; max-width: 350px; padding: 10px; border: 2px solid #9C27B0; border-radius: 6px; background: white; font-size: 14px;">
+                        <select id="sortOptions" style="width: 100%; max-width: 350px; padding: 10px; border: 2px solid #9C27B0; border-radius: 6px; background: white; font-size: 14px;">
                             <option value="calendar-upcoming" selected>📅 Calendar (Upcoming First)</option>
                             <option value="date-desc">📅 Date (Newest First)</option>
                             <option value="date-asc">📅 Date (Oldest First)</option>
@@ -6443,6 +6453,15 @@ lance@thelegacyphotography.com`;
             } else {
                 dropdown.style.display = 'none';
                 indicator.textContent = '▼';
+            }
+        }
+
+        // Apply all filters function
+        function applyAllFilters() {
+            filterSessions();
+            const sortValue = document.getElementById('sortOptions').value;
+            if (sortValue) {
+                sortSessions();
             }
         }
 
