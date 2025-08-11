@@ -349,6 +349,51 @@
             font-weight: 600;
         }
 
+        .progress-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: var(--soft-brown);
+        }
+
+        .upload-queue {
+            margin-top: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .upload-item {
+            background: var(--beige);
+            border-radius: 8px;
+            padding: 10px;
+            margin: 5px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9em;
+        }
+
+        .upload-item .status-icon {
+            width: 20px;
+            text-align: center;
+        }
+
+        .upload-item.uploading {
+            background: #e8f4fd;
+            border-left: 4px solid var(--muted-gold);
+        }
+
+        .upload-item.completed {
+            background: #e8f6e8;
+            border-left: 4px solid var(--sage);
+        }
+
+        .upload-item.error {
+            background: #fde8e8;
+            border-left: 4px solid #dc3545;
+        }
+
         @media (max-width: 768px) {
             body {
                 padding: 10px;
@@ -413,6 +458,11 @@
             <div class="progress-fill" id="progressFill"></div>
         </div>
         <div class="progress-text" id="progressText">Uploading...</div>
+        <div class="progress-stats">
+            <span id="progressStats">0 / 0 files</span>
+            <span id="progressSpeed">0 MB/s</span>
+        </div>
+        <div class="upload-queue" id="uploadQueue"></div>
     </div>
 
     <div class="upload-zone" id="uploadZone" onclick="triggerFileUpload()">
@@ -447,6 +497,11 @@
         let files = [];
         let uploadQueue = [];
         let isUploading = false;
+        let totalFiles = 0;
+        let completedFiles = 0;
+        let startTime = 0;
+        let totalBytes = 0;
+        let uploadedBytes = 0;
 
         // Load session data to get client contact info
         async function loadSessionData() {
@@ -571,7 +626,16 @@
             if (isUploading || uploadQueue.length === 0) return;
             
             isUploading = true;
+            totalFiles = uploadQueue.length;
+            completedFiles = 0;
+            startTime = Date.now();
+            totalBytes = uploadQueue.reduce((sum, file) => sum + file.size, 0);
+            uploadedBytes = 0;
+            
+            // Show progress container and initialize queue display
             document.getElementById('progressContainer').style.display = 'block';
+            initializeUploadQueue();
+            updateProgressDisplay();
             
             const batchSize = 2;
             
@@ -587,8 +651,70 @@
             }
             
             isUploading = false;
-            document.getElementById('progressContainer').style.display = 'none';
+            
+            // Show completion message briefly
+            updateProgressText('Upload complete!');
+            setTimeout(() => {
+                document.getElementById('progressContainer').style.display = 'none';
+                document.getElementById('uploadQueue').innerHTML = '';
+            }, 2000);
+            
             loadFiles(); // Refresh file list
+        }
+
+        // Initialize upload queue display
+        function initializeUploadQueue() {
+            const queueContainer = document.getElementById('uploadQueue');
+            queueContainer.innerHTML = '';
+            
+            [...uploadQueue].forEach(file => {
+                const item = createUploadItem(file);
+                queueContainer.appendChild(item);
+            });
+        }
+
+        // Create upload item display
+        function createUploadItem(file) {
+            const div = document.createElement('div');
+            div.className = 'upload-item';
+            div.id = `upload-${file.name.replace(/[^a-zA-Z0-9]/g, '_')}`;
+            
+            div.innerHTML = `
+                <div class="status-icon">⏳</div>
+                <div style="flex: 1;">
+                    <div style="font-weight: 600;">${file.name}</div>
+                    <div style="font-size: 0.8em; color: var(--soft-brown);">${formatFileSize(file.size)}</div>
+                </div>
+            `;
+            
+            return div;
+        }
+
+        // Update upload item status
+        function updateUploadItem(filename, status, icon) {
+            const cleanName = filename.replace(/[^a-zA-Z0-9]/g, '_');
+            const item = document.getElementById(`upload-${cleanName}`);
+            if (item) {
+                item.className = `upload-item ${status}`;
+                item.querySelector('.status-icon').textContent = icon;
+            }
+        }
+
+        // Update progress display
+        function updateProgressDisplay() {
+            const percentage = totalFiles > 0 ? (completedFiles / totalFiles) * 100 : 0;
+            document.getElementById('progressFill').style.width = percentage + '%';
+            document.getElementById('progressStats').textContent = `${completedFiles} / ${totalFiles} files`;
+            
+            // Calculate upload speed
+            const elapsed = (Date.now() - startTime) / 1000;
+            const speed = elapsed > 0 ? (uploadedBytes / elapsed / 1024 / 1024) : 0;
+            document.getElementById('progressSpeed').textContent = `${speed.toFixed(1)} MB/s`;
+        }
+
+        // Update progress text
+        function updateProgressText(text) {
+            document.getElementById('progressText').textContent = text;
         }
 
         // Upload single file
@@ -597,9 +723,13 @@
                 console.log(`Starting upload for ${file.name}, size: ${file.size}`);
                 console.log(`Session ID: ${sessionId}, Folder Type: ${folderType}`);
                 
+                // Mark upload as starting
+                markUploadStarting(file.name);
+                
                 // Check storage quota before upload
                 const canUpload = await checkStorageQuota(file.size);
                 if (!canUpload) {
+                    updateUploadItem(file.name, 'error', '🚫');
                     return; // Stop upload if quota exceeded
                 }
                 
@@ -642,7 +772,13 @@
                 
                 const result = await response.json();
                 console.log(`Successfully uploaded ${file.name} to R2:`, result);
-                updateProgress(`Uploaded ${file.name}`);
+                
+                // Update progress tracking
+                completedFiles++;
+                uploadedBytes += file.size;
+                updateProgressDisplay();
+                updateProgressText(`Uploaded ${file.name}`);
+                updateUploadItem(file.name, 'completed', '✅');
                 
                 // Wait a moment for upload to propagate, then reload files
                 setTimeout(() => {
@@ -651,13 +787,14 @@
                 
             } catch (error) {
                 console.error('Upload error for', file.name, ':', error);
+                updateUploadItem(file.name, 'error', '❌');
                 alert(`Failed to upload ${file.name}: ${error.message}`);
             }
         }
 
-        // Update progress
-        function updateProgress(text) {
-            document.getElementById('progressText').textContent = text;
+        // Mark upload as starting
+        function markUploadStarting(filename) {
+            updateUploadItem(filename, 'uploading', '📤');
         }
         
         // Storage quota checking function
