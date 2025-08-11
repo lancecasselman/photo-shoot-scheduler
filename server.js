@@ -1495,11 +1495,11 @@ app.get('/api/sessions/:sessionId/files/:folderType/thumbnail/:fileName', async 
         const dbClient = await pool.connect();
         try {
             const fileQuery = `
-                SELECT key, content_type, file_size
-                FROM file_storage
+                SELECT r2_key, file_size_bytes
+                FROM session_files
                 WHERE session_id = $1 
                 AND folder_type = $2 
-                AND file_name = $3
+                AND filename = $3
                 LIMIT 1
             `;
             
@@ -1511,14 +1511,9 @@ app.get('/api/sessions/:sessionId/files/:folderType/thumbnail/:fileName', async 
             
             const fileRecord = fileResult.rows[0];
             
-            // Check if file is an image
-            if (!fileRecord.content_type || !fileRecord.content_type.startsWith('image/')) {
-                // If not an image, redirect to download endpoint
-                return res.redirect(`/api/sessions/${sessionId}/files/${folderType}/${fileName}`);
-            }
-            
+            // All images in gallery should be processable as thumbnails
             // Get file from R2
-            const fileData = await r2FileManager.getFile(fileRecord.key);
+            const fileData = await r2FileManager.getFile(fileRecord.r2_key);
             
             if (!fileData) {
                 return res.status(404).json({ error: 'File not found in storage' });
@@ -1582,11 +1577,11 @@ app.delete('/api/sessions/:sessionId/files/:folderType/:fileName', isAuthenticat
         try {
             // Find the file in database
             const fileQuery = `
-                SELECT key, file_size 
+                SELECT r2_key, file_size_bytes 
                 FROM session_files 
                 WHERE session_id = $1 
                 AND folder_type = $2 
-                AND file_name = $3
+                AND filename = $3
             `;
             
             const fileResult = await dbClient.query(fileQuery, [sessionId, folderType, fileName]);
@@ -1596,13 +1591,16 @@ app.delete('/api/sessions/:sessionId/files/:folderType/:fileName', isAuthenticat
             }
             
             const fileRecord = fileResult.rows[0];
+            console.log(`Found file record for deletion: ${fileName}, R2 key: ${fileRecord.r2_key}`);
             
             // Delete from R2
-            const deleteSuccess = await r2FileManager.deleteFile(fileRecord.key);
+            const deleteSuccess = await r2FileManager.deleteFile(fileRecord.r2_key);
             
             if (!deleteSuccess) {
-                console.error('Failed to delete file from R2:', fileRecord.key);
+                console.error('Failed to delete file from R2:', fileRecord.r2_key);
                 // Continue with database deletion even if R2 deletion fails
+            } else {
+                console.log(`Successfully deleted from R2: ${fileRecord.r2_key}`);
             }
             
             // Delete from database
@@ -1610,7 +1608,7 @@ app.delete('/api/sessions/:sessionId/files/:folderType/:fileName', isAuthenticat
                 DELETE FROM session_files 
                 WHERE session_id = $1 
                 AND folder_type = $2 
-                AND file_name = $3
+                AND filename = $3
             `;
             
             await dbClient.query(deleteQuery, [sessionId, folderType, fileName]);
