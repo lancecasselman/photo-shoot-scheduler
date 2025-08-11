@@ -14,16 +14,19 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Fresh Photo Scheduler"
+args = "Photography Management System"
 
 [[workflows.workflow]]
-name = "Fresh Photo Scheduler"
+name = "Photography Management System"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "node server.js"
 waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
 
 [[ports]]
 localPort = 3000

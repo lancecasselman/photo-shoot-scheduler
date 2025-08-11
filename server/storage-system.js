@@ -1,5 +1,5 @@
 /**
- * Fresh Storage Quota and Billing System
+ * Photography Management System Storage Quota and Billing System
  * Built from scratch with proper Stripe integration and quota enforcement
  */
 

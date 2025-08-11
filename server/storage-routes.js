@@ -1,5 +1,5 @@
 /**
- * Fresh Storage API Routes
+ * Photography Management System Storage API Routes
  * Complete quota enforcement and billing endpoints
  */
 

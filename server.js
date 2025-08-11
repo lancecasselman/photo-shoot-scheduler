@@ -9382,7 +9382,7 @@ async function startServer() {
     paymentScheduler.start();
 
     const server = app.listen(PORT, '0.0.0.0', () => {
-        console.log(` Photo Session Scheduler running on http://0.0.0.0:${PORT}`);
+        console.log(` Photography Management System running on http://0.0.0.0:${PORT}`);
         if (process.env.TEST_MODE === 'true') {
             console.log('🧪 TEST MODE ENABLED - Development authentication bypass active');
         } else {
