@@ -1061,7 +1061,14 @@ app.post('/api/auth/logout', (req, res) => {
             console.error('Logout error:', err);
             res.status(500).json({ message: 'Logout failed' });
         } else {
-            res.json({ message: 'Logged out successfully' });
+            // Clear the session cookie
+            res.clearCookie('connect.sid', {
+                path: '/',
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax'
+            });
+            res.json({ success: true, message: 'Logged out successfully' });
         }
     });
 });
@@ -2527,16 +2534,7 @@ app.post('/api/create-subscription', isAuthenticated, async (req, res) => {
     }
 });
 
-app.post('/api/auth/logout', (req, res) => {
-    req.session.destroy((err) => {
-        if (err) {
-            console.error('Session destruction error:', err);
-            return res.status(500).json({ message: 'Logout failed' });
-        }
-        res.clearCookie('connect.sid');
-        res.json({ success: true, message: 'Logged out successfully' });
-    });
-});
+// Duplicate logout endpoint removed - using the one at line 1058
 
 // Health check endpoint for Docker
 app.get('/health', (req, res) => {

@@ -419,22 +419,29 @@
         /* Removed user avatar styling */
         
         .logout-btn {
-            background: var(--rose-dusty);
-            color: var(--text-primary);
+            background: linear-gradient(135deg, #ff4444, #cc0000);
+            color: white;
             border: none;
-            padding: var(--spacing-sm) var(--spacing-md);
+            padding: 10px 20px;
             border-radius: var(--border-radius-sm);
             text-decoration: none;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             transition: all 0.3s ease;
-            font-weight: 500;
+            font-weight: 600;
             cursor: pointer;
+            box-shadow: 0 2px 5px rgba(255, 68, 68, 0.3);
+            white-space: nowrap;
         }
         
         .logout-btn:hover {
-            background: #d8a593;
+            background: linear-gradient(135deg, #ff6666, #ff0000);
             transform: translateY(-2px);
-            box-shadow: var(--shadow-medium);
+            box-shadow: 0 4px 10px rgba(255, 68, 68, 0.4);
+        }
+        
+        .logout-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 3px rgba(255, 68, 68, 0.3);
         }
         
         .session-form {
@@ -11413,39 +11420,55 @@ END:VCALENDAR`;
             try {
                 console.log('Starting logout process...');
                 
-                // First, clear server session
-                const logoutResponse = await fetch('/api/auth/logout', { 
-                    method: 'POST',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
+                // Set a flag to prevent auth checks during logout
+                sessionStorage.setItem('loggingOut', 'true');
                 
-                console.log('Server logout response:', logoutResponse.status);
+                // First, clear server session
+                try {
+                    const logoutResponse = await fetch('/api/auth/logout', { 
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    console.log('Server logout response:', logoutResponse.status);
+                } catch (err) {
+                    console.error('Server logout error:', err);
+                }
                 
                 // Then clear Firebase auth using existing Firebase instance
-                if (typeof firebase !== 'undefined' && firebase.auth && firebase.auth().currentUser) {
-                    await firebase.auth().signOut();
-                    console.log('Firebase logout successful');
+                try {
+                    if (typeof firebase !== 'undefined' && firebase.auth) {
+                        await firebase.auth().signOut();
+                        console.log('Firebase logout successful');
+                    }
+                } catch (err) {
+                    console.error('Firebase signout error:', err);
                 }
+                
+                // Clear any local storage and session storage
+                localStorage.clear();
+                sessionStorage.clear();
                 
                 // Clear any local user data
                 if (typeof currentUser !== 'undefined') {
                     currentUser = null;
                 }
                 
-                // Set a flag to prevent auth checks during logout
+                // Set flag again in case it was cleared
                 sessionStorage.setItem('loggingOut', 'true');
                 
-                // Force redirect to auth page
+                // Force redirect to auth page with hard reload
                 console.log('Redirecting to auth page...');
-                window.location.replace('/auth.html');
+                window.location.href = '/auth.html';
                 
             } catch (error) {
                 console.error('Logout error:', error);
                 // Force redirect even on error
-                window.location.replace('/auth.html');
+                localStorage.clear();
+                sessionStorage.clear();
+                window.location.href = '/auth.html';
             }
         }
 
