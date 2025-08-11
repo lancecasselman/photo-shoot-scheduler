@@ -442,9 +442,36 @@
         let sessionId = '';
         let folderType = '';
         let clientName = '';
+        let clientEmail = '';
+        let clientPhoneNumber = '';
         let files = [];
         let uploadQueue = [];
         let isUploading = false;
+
+        // Load session data to get client contact info
+        async function loadSessionData() {
+            try {
+                const response = await fetch(`/api/sessions/${sessionId}`, {
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const sessionData = await response.json();
+                    console.log('Session data loaded:', sessionData);
+                    
+                    // Update client info from session data
+                    clientName = sessionData.clientName || sessionData.client_name || clientName;
+                    clientEmail = sessionData.email || '';
+                    clientPhoneNumber = sessionData.phoneNumber || sessionData.phone_number || '';
+                    
+                    console.log(`Client: ${clientName}, Email: ${clientEmail}, Phone: ${clientPhoneNumber}`);
+                } else {
+                    console.warn('Failed to load session data, using URL parameters only');
+                }
+            } catch (error) {
+                console.error('Error loading session data:', error);
+            }
+        }
 
         // Get URL parameters
         function getUrlParams() {
@@ -466,8 +493,12 @@
         }
 
         // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             getUrlParams();
+            
+            // Load complete session data to get client contact info
+            await loadSessionData();
+            
             loadFiles();
             setupDragAndDrop();
             setupFileInput();
@@ -1040,6 +1071,12 @@
             
             // Add global functions for the modal
             window.sendViaEmail = function() {
+                if (!clientEmail) {
+                    alert('Client email not available. Please add email to session details first.');
+                    closeModal();
+                    return;
+                }
+                
                 const clientGalleryUrl = `${window.location.origin}/client-gallery.html?session=${sessionId}`;
                 const subject = `Your Photography Gallery - ${clientName}`;
                 const body = `Hi ${clientName},
@@ -1065,6 +1102,12 @@ Lance - The Legacy Photography`;
             };
             
             window.sendViaSMS = function() {
+                if (!clientPhoneNumber) {
+                    alert('Client phone number not available. Please add phone number to session details first.');
+                    closeModal();
+                    return;
+                }
+                
                 const clientGalleryUrl = `${window.location.origin}/client-gallery.html?session=${sessionId}`;
                 const message = `Hi ${clientName}! Your photo gallery is ready: ${clientGalleryUrl} - Lance Photography`;
                 
