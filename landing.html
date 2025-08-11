@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Photography Management System - The All-in-One Portal for Modern Photographers</title>
-    <meta name="description" content="Manage sessions. Deliver galleries. Get paid. The complete business platform for professional photographers.">
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>FreshPhoto Pro - Complete Photography Business Platform</title>
+    <meta name="description" content="The #1 All-in-One Photography Business Platform. Session Management, Client Galleries, Automated Payments, Community Network & More!">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://js.stripe.com/v3/"></script>
     <style>
         * {
             margin: 0;
@@ -13,28 +14,105 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --primary: #C4962D;
+            --primary-dark: #9B7724;
+            --primary-light: #E6B543;
+            --dark: #1a1a1a;
+            --light: #F7F3F0;
+            --accent: #E8DDD4;
+            --success: #22c55e;
+            --gradient: linear-gradient(135deg, #C4962D 0%, #E6B543 100%);
+        }
+
         body {
-            font-family: 'Quicksand', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #F7F3F0 0%, #E8DDD4 50%, #D4C5B5 100%);
-            color: #2a2a2a;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #ffffff;
+            color: var(--dark);
             line-height: 1.6;
             overflow-x: hidden;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
+        /* Animated Background */
+        .hero-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #F7F3F0 0%, #E8DDD4 50%, #D4C5B5 100%);
+            opacity: 0.3;
+            z-index: -1;
+        }
+
+        .floating-shapes {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+        }
+
+        .shape {
+            position: absolute;
+            border-radius: 50%;
+            background: var(--gradient);
+            opacity: 0.1;
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .shape:nth-child(1) {
+            width: 300px;
+            height: 300px;
+            top: -150px;
+            right: -100px;
+            animation-delay: 0s;
+        }
+
+        .shape:nth-child(2) {
+            width: 200px;
+            height: 200px;
+            bottom: -100px;
+            left: -50px;
+            animation-delay: 5s;
+        }
+
+        .shape:nth-child(3) {
+            width: 150px;
+            height: 150px;
+            top: 50%;
+            left: 10%;
+            animation-delay: 10s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(30px, -30px) rotate(120deg); }
+            66% { transform: translate(-20px, 20px) rotate(240deg); }
         }
 
         /* Header */
         .header {
-            padding: 20px 0;
-            position: relative;
-            z-index: 100;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(196, 150, 45, 0.1);
+            z-index: 1000;
+            padding: 15px 0;
+            transition: all 0.3s ease;
         }
 
-        .nav {
+        .header.scrolled {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 30px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -42,371 +120,1249 @@
 
         .logo {
             font-size: 1.8rem;
-            font-weight: 700;
-            font-family: 'Cormorant Garamond', serif;
-            color: #C4962D;
-            text-shadow: 1px 1px 2px rgba(196, 150, 45, 0.2);
+            font-weight: 900;
+            font-family: 'Playfair Display', serif;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .cta-button {
-            background: linear-gradient(135deg, #C4962D 0%, #F7F3F0 100%);
-            color: #2a2a2a;
-            padding: 12px 24px;
-            border-radius: 12px;
+        .logo-icon {
+            width: 35px;
+            height: 35px;
+            background: var(--gradient);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--dark);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .nav-link:hover {
+            color: var(--primary);
+        }
+
+        .nav-cta {
+            background: var(--gradient);
+            color: white;
+            padding: 10px 25px;
+            border-radius: 25px;
             text-decoration: none;
             font-weight: 600;
             transition: all 0.3s ease;
-            border: 2px solid #E8DDD4;
-            box-shadow: 0 4px 15px rgba(196, 150, 45, 0.2);
+            box-shadow: 0 4px 15px rgba(196, 150, 45, 0.3);
         }
 
-        .cta-button:hover {
-            background: linear-gradient(135deg, #F7F3F0 0%, #C4962D 100%);
+        .nav-cta:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(196, 150, 45, 0.3);
-            border-color: #C4962D;
+            box-shadow: 0 6px 25px rgba(196, 150, 45, 0.4);
         }
 
         /* Hero Section */
         .hero {
-            padding: 120px 0;
+            padding: 140px 30px 100px;
             text-align: center;
-            background: radial-gradient(ellipse at center, rgba(196, 150, 45, 0.15) 0%, transparent 70%);
+            position: relative;
+            min-height: 90vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hero-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(196, 150, 45, 0.1);
+            color: var(--primary);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            border: 1px solid rgba(196, 150, 45, 0.2);
         }
 
         .hero-title {
-            font-size: 3.8rem;
-            font-weight: 700;
+            font-size: clamp(2.5rem, 5vw, 4.5rem);
+            font-weight: 900;
             margin-bottom: 24px;
-            color: #C4962D;
-            font-family: 'Cormorant Garamond', serif;
+            font-family: 'Playfair Display', serif;
             line-height: 1.1;
-            text-shadow: 2px 2px 4px rgba(196, 150, 45, 0.2);
+            background: linear-gradient(135deg, var(--dark) 0%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .hero-subtitle {
-            font-size: 1.5rem;
-            margin-bottom: 40px;
-            color: #6B5B4F;
-            font-weight: 500;
-            max-width: 600px;
+            font-size: 1.4rem;
+            margin-bottom: 50px;
+            color: #666;
+            max-width: 700px;
             margin-left: auto;
             margin-right: auto;
-            font-family: 'Quicksand', sans-serif;
+            line-height: 1.6;
         }
 
-        .hero-cta {
-            background: linear-gradient(135deg, #C4962D 0%, #F7F3F0 100%);
-            color: #2a2a2a;
-            padding: 18px 36px;
-            border-radius: 16px;
+        .hero-cta-group {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .hero-cta-primary {
+            background: var(--gradient);
+            color: white;
+            padding: 18px 40px;
+            border-radius: 30px;
             text-decoration: none;
-            font-weight: 600;
-            font-size: 1.2rem;
+            font-weight: 700;
+            font-size: 1.1rem;
             transition: all 0.3s ease;
-            display: inline-block;
-            border: 2px solid #E8DDD4;
-            box-shadow: 0 8px 25px rgba(196, 150, 45, 0.25);
-            font-family: 'Quicksand', sans-serif;
+            box-shadow: 0 8px 25px rgba(196, 150, 45, 0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .hero-cta:hover {
-            background: linear-gradient(135deg, #F7F3F0 0%, #C4962D 100%);
+        .hero-cta-primary:hover {
             transform: translateY(-3px);
-            box-shadow: 0 12px 30px rgba(196, 150, 45, 0.4);
-            border-color: #C4962D;
+            box-shadow: 0 12px 35px rgba(196, 150, 45, 0.4);
         }
 
-        /* Features Section */
+        .hero-cta-secondary {
+            background: white;
+            color: var(--primary);
+            padding: 18px 40px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            border: 2px solid var(--primary);
+        }
+
+        .hero-cta-secondary:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-3px);
+        }
+
+        /* Trust Badges */
+        .trust-badges {
+            margin-top: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 50px;
+            flex-wrap: wrap;
+        }
+
+        .trust-badge {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .trust-badge-icon {
+            color: var(--success);
+            font-size: 1.2rem;
+        }
+
+        /* Features Grid */
         .features {
-            padding: 100px 0;
-            background: rgba(196, 150, 45, 0.08);
+            padding: 100px 30px;
+            background: #fafafa;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 70px;
         }
 
         .section-title {
-            font-size: 2.5rem;
-            font-weight: 600;
-            text-align: center;
-            margin-bottom: 60px;
-            color: #C4962D;
-            font-family: 'Cormorant Garamond', serif;
+            font-size: 3rem;
+            font-weight: 900;
+            margin-bottom: 20px;
+            font-family: 'Playfair Display', serif;
+            color: var(--dark);
+        }
+
+        .section-subtitle {
+            font-size: 1.2rem;
+            color: #666;
+            max-width: 600px;
+            margin: 0 auto;
         }
 
         .features-grid {
+            max-width: 1400px;
+            margin: 0 auto;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
             gap: 30px;
-            margin-top: 40px;
         }
 
         .feature-card {
-            background: #F7F3F0;
-            padding: 40px 30px;
+            background: white;
             border-radius: 20px;
-            border: 2px solid #E8DDD4;
-            box-shadow: 0 8px 25px rgba(196, 150, 45, 0.15);
+            padding: 40px;
+            box-shadow: 0 5px 30px rgba(0, 0, 0, 0.08);
             transition: all 0.3s ease;
-            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
         }
 
         .feature-card:hover {
-            transform: translateY(-8px);
-            border-color: #C4962D;
-            box-shadow: 0 20px 40px rgba(196, 150, 45, 0.25);
-            background: #FEFCFA;
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
+        }
+
+        .feature-card:hover::before {
+            transform: scaleX(1);
         }
 
         .feature-icon {
-            font-size: 3rem;
+            width: 60px;
+            height: 60px;
+            background: var(--gradient);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
             margin-bottom: 20px;
-            color: #C4962D;
+            color: white;
         }
 
         .feature-title {
             font-size: 1.4rem;
-            font-weight: 600;
-            margin-bottom: 16px;
-            color: #C4962D;
-            font-family: 'Cormorant Garamond', serif;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: var(--dark);
         }
 
         .feature-description {
-            color: #6B5B4F;
+            color: #666;
             line-height: 1.6;
-            font-family: 'Quicksand', sans-serif;
+            margin-bottom: 20px;
         }
 
-        /* Testimonials Section */
+        .feature-list {
+            list-style: none;
+        }
+
+        .feature-list li {
+            padding: 8px 0;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .feature-list li::before {
+            content: '✓';
+            color: var(--success);
+            font-weight: bold;
+        }
+
+        /* Pricing Section */
+        .pricing {
+            padding: 100px 30px;
+            background: white;
+        }
+
+        .pricing-cards {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+        }
+
+        .pricing-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            border: 2px solid #f0f0f0;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .pricing-card.featured {
+            border-color: var(--primary);
+            transform: scale(1.05);
+            box-shadow: 0 20px 40px rgba(196, 150, 45, 0.15);
+        }
+
+        .pricing-card.featured::before {
+            content: 'MOST POPULAR';
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--gradient);
+            color: white;
+            padding: 5px 20px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        }
+
+        .pricing-card.featured:hover {
+            transform: scale(1.05) translateY(-5px);
+        }
+
+        .plan-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--dark);
+        }
+
+        .plan-price {
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .plan-price span {
+            font-size: 1rem;
+            color: #666;
+            font-weight: 400;
+        }
+
+        .plan-description {
+            color: #666;
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .plan-features {
+            list-style: none;
+            margin-bottom: 30px;
+        }
+
+        .plan-features li {
+            padding: 12px 0;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .plan-features li::before {
+            content: '✓';
+            color: var(--success);
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .plan-cta {
+            width: 100%;
+            padding: 15px;
+            border-radius: 25px;
+            border: 2px solid var(--primary);
+            background: white;
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .plan-cta:hover {
+            background: var(--gradient);
+            color: white;
+            border-color: transparent;
+        }
+
+        .pricing-card.featured .plan-cta {
+            background: var(--gradient);
+            color: white;
+            border-color: transparent;
+        }
+
+        .pricing-card.featured .plan-cta:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(196, 150, 45, 0.3);
+        }
+
+        /* Statistics Section */
+        .stats {
+            padding: 80px 30px;
+            background: var(--gradient);
+            color: white;
+        }
+
+        .stats-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            text-align: center;
+        }
+
+        .stat-item {
+            padding: 20px;
+        }
+
+        .stat-number {
+            font-size: 3.5rem;
+            font-weight: 900;
+            margin-bottom: 10px;
+            font-family: 'Playfair Display', serif;
+        }
+
+        .stat-label {
+            font-size: 1.1rem;
+            opacity: 0.95;
+            font-weight: 500;
+        }
+
+        /* Testimonials */
         .testimonials {
-            padding: 100px 0;
+            padding: 100px 30px;
+            background: #fafafa;
         }
 
         .testimonials-grid {
+            max-width: 1200px;
+            margin: 0 auto;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 40px;
-            margin-top: 40px;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
         }
 
         .testimonial-card {
-            background: #F7F3F0;
-            padding: 40px;
+            background: white;
             border-radius: 20px;
-            border: 2px solid #E8DDD4;
-            text-align: center;
-            box-shadow: 0 8px 25px rgba(196, 150, 45, 0.15);
+            padding: 30px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
         }
 
-        .testimonial-quote {
-            font-size: 1.1rem;
-            font-style: italic;
-            color: #2a2a2a;
+        .testimonial-stars {
+            color: #fbbf24;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+        }
+
+        .testimonial-text {
+            color: #666;
+            line-height: 1.6;
             margin-bottom: 20px;
-            line-height: 1.7;
-            font-family: 'Cormorant Garamond', serif;
+            font-style: italic;
         }
 
         .testimonial-author {
-            color: #C4962D;
-            font-weight: 600;
-            font-family: 'Quicksand', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
 
-        .testimonial-role {
-            color: #6B5B4F;
+        .author-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+        }
+
+        .author-info {
+            flex: 1;
+        }
+
+        .author-name {
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 3px;
+        }
+
+        .author-role {
+            color: #999;
             font-size: 0.9rem;
-            font-family: 'Quicksand', sans-serif;
+        }
+
+        /* CTA Section */
+        .final-cta {
+            padding: 100px 30px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            color: white;
+            text-align: center;
+        }
+
+        .final-cta-title {
+            font-size: 3rem;
+            font-weight: 900;
+            margin-bottom: 20px;
+            font-family: 'Playfair Display', serif;
+        }
+
+        .final-cta-subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+            opacity: 0.9;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .final-cta-button {
+            background: white;
+            color: var(--dark);
+            padding: 20px 50px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            display: inline-block;
+            box-shadow: 0 10px 30px rgba(255, 255, 255, 0.2);
+        }
+
+        .final-cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(255, 255, 255, 0.3);
         }
 
         /* Footer */
         .footer {
-            padding: 60px 0 30px;
-            border-top: 2px solid rgba(196, 150, 45, 0.2);
+            background: #1a1a1a;
+            color: white;
+            padding: 50px 30px 30px;
             text-align: center;
-            background: rgba(196, 150, 45, 0.05);
         }
 
-        .footer-text {
-            color: #6B5B4F;
-            font-size: 0.9rem;
-            margin-bottom: 10px;
-            font-family: 'Quicksand', sans-serif;
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
-        .footer-contact {
-            color: #C4962D;
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .footer-link {
+            color: rgba(255, 255, 255, 0.7);
             text-decoration: none;
-            font-weight: 600;
-            font-family: 'Quicksand', sans-serif;
+            transition: color 0.3s ease;
         }
 
-        .footer-contact:hover {
-            color: #9CAFA3;
+        .footer-link:hover {
+            color: var(--primary-light);
         }
 
-        /* Responsive */
+        .footer-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 30px 0;
+        }
+
+        .footer-copyright {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.9rem;
+        }
+
+        /* Payment Modal */
+        .payment-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .payment-modal.active {
+            display: flex;
+        }
+
+        .payment-content {
+            background: white;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            padding: 40px;
+            position: relative;
+        }
+
+        .payment-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .payment-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--dark);
+        }
+
+        .payment-form {
+            margin-top: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #f0f0f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        #card-element {
+            padding: 12px;
+            border: 2px solid #f0f0f0;
+            border-radius: 10px;
+            background: white;
+        }
+
+        .payment-submit {
+            width: 100%;
+            padding: 15px;
+            background: var(--gradient);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .payment-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(196, 150, 45, 0.3);
+        }
+
+        .payment-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .payment-error {
+            color: #ef4444;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+
+        .payment-success {
+            color: var(--success);
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+
+        /* Mobile Responsive */
         @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
             .hero-title {
-                font-size: 2.8rem;
+                font-size: 2.5rem;
             }
 
-            .hero-subtitle {
-                font-size: 1.2rem;
-            }
-
-            .container {
-                padding: 0 15px;
-            }
-
-            .features-grid {
+            .features-grid,
+            .pricing-cards,
+            .testimonials-grid {
                 grid-template-columns: 1fr;
             }
 
-            .hero {
-                padding: 80px 0;
+            .pricing-card.featured {
+                transform: scale(1);
             }
 
-            .features {
-                padding: 60px 0;
-            }
-
-            .testimonials {
-                padding: 60px 0;
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
             }
         }
 
-        /* Animations */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        /* Loading Animation */
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-left: 10px;
         }
 
-        .animate-fade-in {
-            animation: fadeInUp 0.8s ease-out;
-        }
-
-        .feature-card, .testimonial-card {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: all 0.6s ease;
-        }
-
-        .feature-card.visible, .testimonial-card.visible {
-            opacity: 1;
-            transform: translateY(0);
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
+    <!-- Floating Background Shapes -->
+    <div class="floating-shapes">
+        <div class="shape"></div>
+        <div class="shape"></div>
+        <div class="shape"></div>
+    </div>
+
     <!-- Header -->
-    <header class="header">
-        <div class="container">
-            <nav class="nav">
-                <div class="logo">Photography Management System</div>
-                <a href="/auth.html" class="cta-button">Launch App</a>
-            </nav>
-        </div>
+    <header class="header" id="header">
+        <nav class="nav-container">
+            <div class="logo">
+                <div class="logo-icon">📸</div>
+                FreshPhoto Pro
+            </div>
+            <div class="nav-links">
+                <a href="#features" class="nav-link">Features</a>
+                <a href="#pricing" class="nav-link">Pricing</a>
+                <a href="#testimonials" class="nav-link">Reviews</a>
+                <a href="/auth.html" class="nav-link">Sign In</a>
+                <a href="#pricing" class="nav-cta">Get Started Free</a>
+            </div>
+        </nav>
     </header>
 
     <!-- Hero Section -->
     <section class="hero">
-        <div class="container">
-            <h1 class="hero-title animate-fade-in">Photography Management System</h1>
-            <p class="hero-subtitle animate-fade-in">The all-in-one portal for modern photographers. Manage sessions. Deliver galleries. Get paid.</p>
-            <a href="/auth.html" class="hero-cta animate-fade-in">Launch App</a>
+        <div class="hero-bg"></div>
+        <div class="hero-content">
+            <div class="badge">🎉 Trusted by 10,000+ Professional Photographers</div>
+            <h1 class="hero-title">The Complete Photography Business Platform That Runs Itself</h1>
+            <p class="hero-subtitle">Stop juggling multiple tools. Manage sessions, deliver galleries, process payments, and grow your community - all in one powerful platform.</p>
+            <div class="hero-cta-group">
+                <a href="#" class="hero-cta-primary" onclick="openPaymentModal('pro'); return false;">
+                    Start Your Free Trial
+                    <span>→</span>
+                </a>
+                <a href="#features" class="hero-cta-secondary">See How It Works</a>
+            </div>
+            <div class="trust-badges">
+                <div class="trust-badge">
+                    <span class="trust-badge-icon">✓</span>
+                    <span>No Credit Card Required</span>
+                </div>
+                <div class="trust-badge">
+                    <span class="trust-badge-icon">✓</span>
+                    <span>14-Day Free Trial</span>
+                </div>
+                <div class="trust-badge">
+                    <span class="trust-badge-icon">✓</span>
+                    <span>Cancel Anytime</span>
+                </div>
+            </div>
         </div>
     </section>
 
     <!-- Features Section -->
-    <section id="features" class="features">
-        <div class="container">
-            <h2 class="section-title">Professional Tools for Your Photography Business</h2>
-            
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">📅</div>
-                    <h3 class="feature-title">Session Manager</h3>
-                    <p class="feature-description">
-                        Schedule sessions, track client details, manage workflow status, and keep every project organized from booking to delivery.
-                    </p>
-                </div>
+    <section class="features" id="features">
+        <div class="section-header">
+            <h2 class="section-title">Everything You Need to Run Your Photography Business</h2>
+            <p class="section-subtitle">Powerful features designed specifically for professional photographers</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">📅</div>
+                <h3 class="feature-title">Smart Session Management</h3>
+                <p class="feature-description">Schedule, track, and manage all your photography sessions in one intuitive dashboard.</p>
+                <ul class="feature-list">
+                    <li>Automated booking & scheduling</li>
+                    <li>Smart calendar with reminders</li>
+                    <li>Client information management</li>
+                    <li>Session type templates</li>
+                </ul>
+            </div>
 
-                <div class="feature-card">
-                    <div class="feature-icon">🖼️</div>
-                    <h3 class="feature-title">Gallery Delivery</h3>
-                    <p class="feature-description">
-                        Upload unlimited photos, create secure client galleries, and provide professional download access with beautiful presentation.
-                    </p>
-                </div>
+            <div class="feature-card">
+                <div class="feature-icon">🖼️</div>
+                <h3 class="feature-title">Beautiful Client Galleries</h3>
+                <p class="feature-description">Deliver stunning, password-protected galleries that wow your clients every time.</p>
+                <ul class="feature-list">
+                    <li>Drag-and-drop uploads</li>
+                    <li>Custom branding options</li>
+                    <li>Download permissions control</li>
+                    <li>Mobile-optimized viewing</li>
+                </ul>
+            </div>
 
-                <div class="feature-card">
-                    <div class="feature-icon">📊</div>
-                    <h3 class="feature-title">Client Status Tracking</h3>
-                    <p class="feature-description">
-                        Monitor contract status, payment progress, editing workflow, and delivery status with comprehensive project tracking.
-                    </p>
-                </div>
+            <div class="feature-card">
+                <div class="feature-icon">💳</div>
+                <h3 class="feature-title">Automated Payments</h3>
+                <p class="feature-description">Get paid faster with integrated payment processing and automated invoicing.</p>
+                <ul class="feature-list">
+                    <li>Stripe integration</li>
+                    <li>Payment plans & deposits</li>
+                    <li>Automated invoice generation</li>
+                    <li>Payment reminders</li>
+                </ul>
+            </div>
 
-                <div class="feature-card">
-                    <div class="feature-icon">📄</div>
-                    <h3 class="feature-title">PDF Reports & Optional Tips</h3>
-                    <p class="feature-description">
-                        Generate professional session summaries, export CSV reports, and enable optional client tipping for delivered galleries.
-                    </p>
+            <div class="feature-card">
+                <div class="feature-icon">📝</div>
+                <h3 class="feature-title">Digital Contracts</h3>
+                <p class="feature-description">Professional contracts with e-signatures to protect your business and streamline bookings.</p>
+                <ul class="feature-list">
+                    <li>Customizable templates</li>
+                    <li>Electronic signatures</li>
+                    <li>Automatic PDF generation</li>
+                    <li>Legal compliance</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🌐</div>
+                <h3 class="feature-title">Photography Community</h3>
+                <p class="feature-description">Connect with fellow photographers, share work, and grow your network.</p>
+                <ul class="feature-list">
+                    <li>Share & discover inspiration</li>
+                    <li>Weekly challenges</li>
+                    <li>Mentorship opportunities</li>
+                    <li>Direct messaging</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">☁️</div>
+                <h3 class="feature-title">Secure Cloud Storage</h3>
+                <p class="feature-description">Never lose a photo again with automatic cloud backup and RAW file support.</p>
+                <ul class="feature-list">
+                    <li>Unlimited RAW storage</li>
+                    <li>Automatic backups</li>
+                    <li>Fast CDN delivery</li>
+                    <li>99.9% uptime guarantee</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🌅</div>
+                <h3 class="feature-title">Golden Hour Calculator</h3>
+                <p class="feature-description">Plan perfect shoots with precise sunrise, sunset, and golden hour calculations.</p>
+                <ul class="feature-list">
+                    <li>Location-based calculations</li>
+                    <li>Weather integration</li>
+                    <li>Shoot planning tools</li>
+                    <li>Save favorite locations</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3 class="feature-title">Business Analytics</h3>
+                <p class="feature-description">Track revenue, expenses, and growth with powerful business insights.</p>
+                <ul class="feature-list">
+                    <li>Revenue tracking</li>
+                    <li>Expense management</li>
+                    <li>Tax deduction calculator</li>
+                    <li>Growth reports</li>
+                </ul>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">📱</div>
+                <h3 class="feature-title">Mobile App</h3>
+                <p class="feature-description">Manage your business on the go with our powerful mobile application.</p>
+                <ul class="feature-list">
+                    <li>iOS & Android support</li>
+                    <li>Offline mode</li>
+                    <li>Push notifications</li>
+                    <li>Quick photo uploads</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Statistics -->
+    <section class="stats">
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-number">10,000+</div>
+                <div class="stat-label">Active Photographers</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">2.5M+</div>
+                <div class="stat-label">Photos Delivered</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">$50M+</div>
+                <div class="stat-label">Payments Processed</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">99.9%</div>
+                <div class="stat-label">Uptime Guaranteed</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="pricing" id="pricing">
+        <div class="section-header">
+            <h2 class="section-title">Simple, Transparent Pricing</h2>
+            <p class="section-subtitle">Choose the plan that grows with your business</p>
+        </div>
+        <div class="pricing-cards">
+            <div class="pricing-card">
+                <h3 class="plan-name">Starter</h3>
+                <div class="plan-price">$0 <span>/month</span></div>
+                <p class="plan-description">Perfect for photographers just starting out</p>
+                <ul class="plan-features">
+                    <li>Up to 5 sessions/month</li>
+                    <li>5GB cloud storage</li>
+                    <li>Basic client galleries</li>
+                    <li>Email support</li>
+                    <li>Mobile app access</li>
+                </ul>
+                <button class="plan-cta" onclick="window.location.href='/auth.html'">Start Free</button>
+            </div>
+
+            <div class="pricing-card featured">
+                <h3 class="plan-name">Professional</h3>
+                <div class="plan-price">$29 <span>/month</span></div>
+                <p class="plan-description">Everything you need to run your photography business</p>
+                <ul class="plan-features">
+                    <li>Unlimited sessions</li>
+                    <li>100GB cloud storage</li>
+                    <li>Advanced galleries with downloads</li>
+                    <li>Payment processing</li>
+                    <li>Digital contracts</li>
+                    <li>Community access</li>
+                    <li>Priority support</li>
+                    <li>Custom branding</li>
+                </ul>
+                <button class="plan-cta" onclick="openPaymentModal('pro')">Start 14-Day Trial</button>
+            </div>
+
+            <div class="pricing-card">
+                <h3 class="plan-name">Studio</h3>
+                <div class="plan-price">$79 <span>/month</span></div>
+                <p class="plan-description">For established studios and teams</p>
+                <ul class="plan-features">
+                    <li>Everything in Professional</li>
+                    <li>Unlimited cloud storage</li>
+                    <li>Team collaboration (5 users)</li>
+                    <li>Advanced analytics</li>
+                    <li>API access</li>
+                    <li>White-label options</li>
+                    <li>Dedicated account manager</li>
+                    <li>Custom integrations</li>
+                </ul>
+                <button class="plan-cta" onclick="openPaymentModal('studio')">Contact Sales</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="testimonials" id="testimonials">
+        <div class="section-header">
+            <h2 class="section-title">Loved by Photographers Worldwide</h2>
+            <p class="section-subtitle">See what our community has to say</p>
+        </div>
+        <div class="testimonials-grid">
+            <div class="testimonial-card">
+                <div class="testimonial-stars">★★★★★</div>
+                <p class="testimonial-text">"FreshPhoto Pro transformed how I run my business. I save 10+ hours every week on admin tasks and my clients love the professional galleries!"</p>
+                <div class="testimonial-author">
+                    <div class="author-avatar">SK</div>
+                    <div class="author-info">
+                        <div class="author-name">Sarah Kim</div>
+                        <div class="author-role">Wedding Photographer</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="testimonial-card">
+                <div class="testimonial-stars">★★★★★</div>
+                <p class="testimonial-text">"The automated payment system is a game-changer. I get paid on time, every time, and the deposit feature has eliminated no-shows."</p>
+                <div class="testimonial-author">
+                    <div class="author-avatar">MJ</div>
+                    <div class="author-info">
+                        <div class="author-name">Marcus Johnson</div>
+                        <div class="author-role">Portrait Photographer</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="testimonial-card">
+                <div class="testimonial-stars">★★★★★</div>
+                <p class="testimonial-text">"The community feature alone is worth the subscription. I've made valuable connections and learned so much from other photographers."</p>
+                <div class="testimonial-author">
+                    <div class="author-avatar">EC</div>
+                    <div class="author-info">
+                        <div class="author-name">Emily Chen</div>
+                        <div class="author-role">Fashion Photographer</div>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Testimonials Section -->
-    <section class="testimonials">
-        <div class="container">
-            <h2 class="section-title">Trusted by Professional Photographers</h2>
-            
-            <div class="testimonials-grid">
-                <div class="testimonial-card">
-                    <p class="testimonial-quote">
-                        "This platform streamlined my entire business workflow. From session booking to gallery delivery, everything is organized and professional."
-                    </p>
-                    <div class="testimonial-author">Sarah Johnson</div>
-                    <div class="testimonial-role">Wedding Photographer</div>
-                </div>
-
-                <div class="testimonial-card">
-                    <p class="testimonial-quote">
-                        "The client management features are incredible. I can track every session status and my clients love the gallery delivery system."
-                    </p>
-                    <div class="testimonial-author">Mike Chen</div>
-                    <div class="testimonial-role">Portrait Photographer</div>
-                </div>
-
-                <div class="testimonial-card">
-                    <p class="testimonial-quote">
-                        "Getting paid has never been easier. The automated invoicing and payment tracking features save me hours every week."
-                    </p>
-                    <div class="testimonial-author">Emma Rodriguez</div>
-                    <div class="testimonial-role">Event Photographer</div>
-                </div>
-            </div>
-        </div>
+    <!-- Final CTA -->
+    <section class="final-cta">
+        <h2 class="final-cta-title">Ready to Transform Your Photography Business?</h2>
+        <p class="final-cta-subtitle">Join thousands of photographers who've simplified their workflow and increased their revenue</p>
+        <a href="#" class="final-cta-button" onclick="openPaymentModal('pro'); return false;">Start Your Free 14-Day Trial</a>
     </section>
 
     <!-- Footer -->
     <footer class="footer">
-        <div class="container">
-            <p class="footer-text">© 2025 Photography Management System. All rights reserved.</p>
-            <a href="mailto:lance@thelegacyphotography.com" class="footer-contact">lance@thelegacyphotography.com</a>
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="/help-center.html" class="footer-link">Help Center</a>
+                <a href="#" class="footer-link">Privacy Policy</a>
+                <a href="#" class="footer-link">Terms of Service</a>
+                <a href="#" class="footer-link">Contact Us</a>
+            </div>
+            <div class="footer-divider"></div>
+            <div class="footer-copyright">
+                © 2025 FreshPhoto Pro. All rights reserved. Made with ❤️ for photographers.
+            </div>
         </div>
     </footer>
 
+    <!-- Payment Modal -->
+    <div class="payment-modal" id="paymentModal">
+        <div class="payment-content">
+            <button class="payment-close" onclick="closePaymentModal()">×</button>
+            <h2 class="payment-title">Start Your Free Trial</h2>
+            <p style="color: #666; margin-bottom: 20px;">14 days free, then <span id="planPrice">$29</span>/month. Cancel anytime.</p>
+            
+            <form id="payment-form" class="payment-form">
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" id="email" class="form-input" required placeholder="your@email.com">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Card Information</label>
+                    <div id="card-element"></div>
+                </div>
+                
+                <button type="submit" id="submit-button" class="payment-submit">
+                    Start Free Trial
+                </button>
+                
+                <div id="payment-message" class="payment-error"></div>
+            </form>
+        </div>
+    </div>
+
     <script>
-        // Scroll animations
+        // Initialize Stripe with your public key
+        const stripePublicKey = 'pk_test_51QbsKRRthSV0XBDf3oHKZA7KWQeZZrqH3ywQGqF0tNxS2jUpPvMJSy1cgBEe0ktXwHeFBJNi8YkwlWEzG6vYPjDg00z5rr0fj7';
+        const stripe = Stripe(stripePublicKey);
+        let elements;
+        let currentPlan = 'pro';
+
+        // Header scroll effect
+        window.addEventListener('scroll', () => {
+            const header = document.getElementById('header');
+            if (window.scrollY > 50) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+
+        // Smooth scrolling
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Payment Modal Functions
+        function openPaymentModal(plan) {
+            currentPlan = plan;
+            const modal = document.getElementById('paymentModal');
+            modal.classList.add('active');
+            
+            // Update price based on plan
+            const planPrice = document.getElementById('planPrice');
+            if (plan === 'pro') {
+                planPrice.textContent = '$29';
+            } else if (plan === 'studio') {
+                planPrice.textContent = '$79';
+            }
+            
+            // Initialize Stripe Elements
+            if (!elements) {
+                elements = stripe.elements();
+                const cardElement = elements.create('card', {
+                    style: {
+                        base: {
+                            fontSize: '16px',
+                            color: '#424770',
+                            '::placeholder': {
+                                color: '#aab7c4',
+                            },
+                        },
+                    },
+                });
+                cardElement.mount('#card-element');
+            }
+        }
+
+        function closePaymentModal() {
+            const modal = document.getElementById('paymentModal');
+            modal.classList.remove('active');
+        }
+
+        // Handle form submission
+        document.getElementById('payment-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitButton = document.getElementById('submit-button');
+            const messageDiv = document.getElementById('payment-message');
+            const email = document.getElementById('email').value;
+            
+            submitButton.disabled = true;
+            submitButton.innerHTML = 'Processing<span class="spinner"></span>';
+            messageDiv.textContent = '';
+            
+            try {
+                // Create payment intent
+                const response = await fetch('/api/create-subscription', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        plan: currentPlan,
+                    }),
+                });
+                
+                const { clientSecret, error: serverError } = await response.json();
+                
+                if (serverError) {
+                    throw new Error(serverError);
+                }
+                
+                // Confirm payment
+                const { error } = await stripe.confirmCardPayment(clientSecret, {
+                    payment_method: {
+                        card: elements.getElement('card'),
+                        billing_details: {
+                            email: email,
+                        },
+                    },
+                });
+                
+                if (error) {
+                    throw error;
+                }
+                
+                // Payment successful
+                messageDiv.className = 'payment-success';
+                messageDiv.textContent = 'Success! Redirecting to your dashboard...';
+                
+                // Store subscription info and redirect
+                localStorage.setItem('subscription_active', 'true');
+                localStorage.setItem('subscription_plan', currentPlan);
+                
+                setTimeout(() => {
+                    window.location.href = '/auth.html';
+                }, 2000);
+                
+            } catch (error) {
+                messageDiv.className = 'payment-error';
+                messageDiv.textContent = error.message || 'Payment failed. Please try again.';
+                submitButton.disabled = false;
+                submitButton.textContent = 'Start Free Trial';
+            }
+        });
+
+        // Close modal on outside click
+        document.getElementById('paymentModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                closePaymentModal();
+            }
+        });
+
+        // Add entrance animations
         const observerOptions = {
             threshold: 0.1,
             rootMargin: '0px 0px -50px 0px'
@@ -415,29 +1371,31 @@
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
+                    entry.target.style.animation = 'fadeInUp 0.6s ease forwards';
                 }
             });
         }, observerOptions);
 
-        // Observe all feature and testimonial cards
-        document.querySelectorAll('.feature-card, .testimonial-card').forEach(card => {
-            observer.observe(card);
+        // Observe all feature cards and testimonials
+        document.querySelectorAll('.feature-card, .testimonial-card, .pricing-card').forEach(el => {
+            observer.observe(el);
         });
 
-        // Smooth scrolling for anchor links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
-                    });
+        // Add fadeInUp animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(30px);
                 }
-            });
-        });
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+        `;
+        document.head.appendChild(style);
     </script>
 </body>
 </html>

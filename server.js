@@ -3467,6 +3467,47 @@ app.get('/api/automation-settings', isAuthenticated, async (req, res) => {
     }
 });
 
+// Stripe subscription endpoint for landing page
+app.post('/api/create-subscription', async (req, res) => {
+    try {
+        const { email, plan } = req.body;
+        
+        if (!email || !plan) {
+            return res.status(400).json({ error: 'Email and plan are required' });
+        }
+        
+        // Map plan names to prices
+        const planPrices = {
+            'pro': 2900, // $29.00
+            'studio': 7900 // $79.00
+        };
+        
+        const amount = planPrices[plan] || 2900;
+        
+        // Create payment intent with Stripe
+        const Stripe = require('stripe');
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+        
+        const paymentIntent = await stripe.paymentIntents.create({
+            amount: amount,
+            currency: 'usd',
+            metadata: {
+                email: email,
+                plan: plan
+            },
+            description: `FreshPhoto Pro ${plan === 'studio' ? 'Studio' : 'Professional'} Plan`
+        });
+        
+        res.json({ 
+            clientSecret: paymentIntent.client_secret,
+            amount: amount
+        });
+    } catch (error) {
+        console.error('Subscription creation error:', error);
+        res.status(500).json({ error: 'Failed to create subscription' });
+    }
+});
+
 // 🤖 AI WEBSITE BUILDER - Page Processing Endpoint (with credits)
 app.post('/api/ai/process-page-request', isAuthenticated, async (req, res) => {
     try {
