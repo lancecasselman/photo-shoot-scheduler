@@ -39,7 +39,7 @@ The system supports chronological session sorting, prioritizing today's sessions
 A comprehensive storage quota and billing system provides freemium storage management with 5GB free storage and paid packages. The system includes real-time quota tracking, pre-upload validation, a visual storage dashboard with usage analytics, and automatic subscription management. The StorageQuotaManager service handles all quota calculations and billing operations with proper authentication middleware.
 
 ### Unified File Deletion System
-A robust unified deletion system ensures complete file cleanup with no orphaned records. It includes database lookup for exact folder type detection, enhanced logging, comprehensive verification checks, and pattern matching to catch all database entries. The service coordinates between cloud storage and database cleanup, preventing phantom file records.
+A robust unified deletion system ensures complete file cleanup with no orphaned records. It includes database lookup for exact folder type detection, enhanced logging, comprehensive verification checks, and pattern matching to catch all database entries. The service coordinates between cloud storage and database cleanup, preventing phantom file records. Delete buttons on thumbnails provide instant file removal with confirmation dialogs, progress feedback, and automatic file list refresh. The system features fallback mechanisms and comprehensive error handling to ensure reliable file deletion across all interfaces.
 
 ## External Dependencies
 
