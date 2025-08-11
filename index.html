@@ -14135,12 +14135,18 @@ END:VCALENDAR`;
                     
                     // Show drop indicator for reordering
                     const afterElement = this.getDragAfterElement(canvas, e.clientY);
-                    if (afterElement == null) {
-                        canvas.appendChild(dropIndicator);
-                    } else {
+                    
+                    // Ensure we're working with direct children of canvas
+                    if (afterElement && afterElement.parentNode === canvas) {
                         canvas.insertBefore(dropIndicator, afterElement);
+                        dropIndicator.style.display = 'block';
+                    } else if (!afterElement) {
+                        // Only append if not already in canvas
+                        if (dropIndicator.parentNode !== canvas) {
+                            canvas.appendChild(dropIndicator);
+                        }
+                        dropIndicator.style.display = 'block';
                     }
-                    dropIndicator.style.display = 'block';
                 });
                 
                 // Handle drop
@@ -14183,7 +14189,12 @@ END:VCALENDAR`;
             },
             
             getDragAfterElement(container, y) {
-                const draggableElements = [...container.querySelectorAll('.wb-editable:not(.dragging)')];
+                // Only get direct children that are editable
+                const draggableElements = [...container.children].filter(child => 
+                    child.classList.contains('wb-editable') && 
+                    !child.classList.contains('dragging') &&
+                    child !== container.querySelector('.drop-indicator')
+                );
                 
                 return draggableElements.reduce((closest, child) => {
                     const box = child.getBoundingClientRect();
