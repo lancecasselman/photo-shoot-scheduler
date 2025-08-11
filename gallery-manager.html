@@ -939,37 +939,94 @@
 
         // Download all files as ZIP
         async function downloadAllFiles() {
-            if (files.length === 0) {
+            console.log('🔥 Download All button clicked!');
+            
+            if (!files || files.length === 0) {
+                console.error('❌ No files available for download');
                 alert('No files to download');
                 return;
             }
             
+            console.log(`📦 Attempting to download ${files.length} files as ZIP`);
+            console.log('📍 Request details:', {
+                sessionId,
+                folderType,
+                clientName,
+                endpoint: `/api/sessions/${sessionId}/files/${folderType}/download-zip`
+            });
+            
             try {
+                // Show loading indicator
+                const downloadBtn = document.querySelector('button[onclick="downloadAllFiles()"]');
+                const originalText = downloadBtn.innerHTML;
+                downloadBtn.innerHTML = '⏳ Creating ZIP...';
+                downloadBtn.disabled = true;
+                
                 const response = await fetch(`/api/sessions/${sessionId}/files/${folderType}/download-zip`, {
-                    credentials: 'include' // Include cookies for authentication
+                    method: 'GET',
+                    credentials: 'include', // Include cookies for authentication
+                    headers: {
+                        'Accept': 'application/zip',
+                    }
+                });
+                
+                console.log('📥 Server response:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    contentType: response.headers.get('content-type'),
+                    contentLength: response.headers.get('content-length')
                 });
                 
                 if (!response.ok) {
                     const errorText = await response.text();
-                    console.error('Download ZIP response error:', errorText);
-                    throw new Error(`Failed to create ZIP file: ${response.status} - ${errorText}`);
+                    console.error('❌ Download ZIP response error:', errorText);
+                    throw new Error(`Server error: ${response.status} - ${errorText}`);
                 }
                 
+                // Get the blob data
                 const blob = await response.blob();
+                console.log('📦 ZIP blob received:', {
+                    size: blob.size,
+                    type: blob.type
+                });
+                
+                if (blob.size === 0) {
+                    throw new Error('Received empty ZIP file from server');
+                }
+                
+                // Create download link
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `${clientName}-${sessionId}-${folderType}.zip`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
+                a.download = `${clientName.replace(/[^a-zA-Z0-9\s-]/g, '_')}_${folderType}_photos.zip`;
+                a.style.display = 'none';
                 
-                console.log(`Successfully downloaded ZIP for ${folderType} folder`);
+                // Force download
+                document.body.appendChild(a);
+                console.log('🚀 Triggering download for:', a.download);
+                a.click();
+                
+                // Cleanup
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                }, 1000);
+                
+                console.log(`✅ Successfully triggered ZIP download for ${folderType} folder`);
+                alert(`ZIP file downloaded successfully! (${files.length} files)`);
+                
+                // Restore button
+                downloadBtn.innerHTML = originalText;
+                downloadBtn.disabled = false;
                 
             } catch (error) {
-                console.error('Download ZIP error:', error);
+                console.error('❌ Download ZIP error:', error);
                 alert('Failed to download ZIP: ' + error.message);
+                
+                // Restore button on error
+                const downloadBtn = document.querySelector('button[onclick="downloadAllFiles()"]');
+                downloadBtn.innerHTML = '📦 Download All ZIP';
+                downloadBtn.disabled = false;
             }
         }
 
