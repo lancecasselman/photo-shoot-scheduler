@@ -5771,96 +5771,24 @@ ${contract.contract_content}
                     console.log('Transformed sessions:', sessions);
                     console.log(`Successfully loaded ${sessions.length} sessions`);
                     
-                    // DEBUG: Check what date fields are available in each session
-                    console.log('Checking available date fields in first session:');
-                    if (sessions.length > 0) {
-                        const firstSession = sessions[0];
-                        console.log('Session keys:', Object.keys(firstSession));
-                        console.log('dateTime field:', firstSession.dateTime);
-                        console.log('date_time field:', firstSession.date_time);
-                        console.log('createdAt field:', firstSession.createdAt);
-                        console.log('created_at field:', firstSession.created_at);
-                    }
+                    // SIMPLE SORT - Just sort by dateTime chronologically (oldest appointment first)
+                    console.log('🔥 SORTING sessions by appointment date...');
+                    sessions.sort((a, b) => {
+                        const dateA = new Date(a.dateTime);
+                        const dateB = new Date(b.dateTime);
+                        return dateA.getTime() - dateB.getTime(); // Oldest first
+                    });
+                    console.log('✅ Sessions sorted by appointment date - first session:', sessions[0]?.clientName, new Date(sessions[0]?.dateTime).toLocaleDateString());
                     
-                    // WRAP EVERYTHING IN TRY-CATCH TO FIND ERRORS
-                    try {
-                        // IMMEDIATE TEST - Add a simple log to see if this code runs
-                        console.log('🔥 TESTING - This line should appear in console immediately after "Successfully loaded"');
-                        
-                        // SIMPLE SORT TEST - Use the correct date field (appointment date, not creation date)
-                        console.log('Sorting sessions by appointment date...');
-                        sessions.sort((a, b) => {
-                            // Use dateTime field (which should be the appointment date)
-                            const dateA = new Date(a.dateTime || a.date_time);
-                            const dateB = new Date(b.dateTime || b.date_time);
-                            console.log(`Comparing dates: ${a.clientName} (${dateA.toLocaleDateString()}) vs ${b.clientName} (${dateB.toLocaleDateString()})`);
-                            return dateA.getTime() - dateB.getTime(); // Oldest first
-                        });
-                        console.log('Sessions sorted - first session should be oldest appointment:');
-                        console.log(`1st: ${sessions[0]?.clientName} - ${new Date(sessions[0]?.dateTime || sessions[0]?.date_time).toLocaleDateString()}`);
-                        if (sessions[1]) console.log(`2nd: ${sessions[1]?.clientName} - ${new Date(sessions[1]?.dateTime || sessions[1]?.date_time).toLocaleDateString()}`);
-                    } catch (criticalError) {
-                        console.error('CRITICAL ERROR in session sorting:', criticalError);
-                    }
+
                     
-                    // Force debugging to run
-                    try {
-                        console.log('DEBUG BLOCK STARTING...');
-                        
-                        // Debug session dates before sorting - using dateTime field (appointment date, not creation date)
-                        console.log('Checking session dates from dateTime field (appointment dates):');
-                        sessions.forEach((session, i) => {
-                            const sessionDate = new Date(session.dateTime);
-                            console.log(`Session ${i+1}: ${session.clientName} - DateTime: ${session.dateTime} - Parsed: ${sessionDate.toLocaleDateString()} - Valid: ${!isNaN(sessionDate.getTime())}`);
-                        });
-                        
-                        // Set default sort to date-asc (oldest first) BEFORE any rendering
-                        console.log('Setting sort dropdown to date-asc...');
-                        const sortSelect = document.getElementById('sortOptions');
-                        if (sortSelect) {
-                            sortSelect.value = 'date-asc';
-                            console.log('Default sort set to date-asc');
-                        } else {
-                            console.log('Sort dropdown not found!');
-                        }
-                        
-                        // MANUAL SORT by dateTime field (appointment date) oldest first
-                        console.log('Manually sorting sessions by appointment date (dateTime) oldest first...');
-                        sessions.sort((a, b) => {
-                            const dateA = new Date(a.dateTime);
-                            const dateB = new Date(b.dateTime);
-                            const comparison = dateA.getTime() - dateB.getTime();
-                            console.log(`Comparing: ${a.clientName} (${dateA.toLocaleDateString()}) vs ${b.clientName} (${dateB.toLocaleDateString()}) = ${comparison}`);
-                            return comparison; // Oldest first
-                        });
-                        
-                        console.log('FINAL SORTED ORDER by appointment date:');
-                        sessions.forEach((session, i) => {
-                            const sessionDate = new Date(session.dateTime);
-                            console.log(`${i+1}. ${session.clientName} - ${sessionDate.toLocaleDateString()}`);
-                        });
-                        
-                        console.log('DEBUG BLOCK COMPLETED');
-                    } catch (debugError) {
-                        console.error('Error in debug block:', debugError);
-                    }
-                    
-                    // WRAP RENDERING IN TRY-CATCH TOO
-                    try {
-                        // THEN render the sorted sessions
-                        console.log('About to render sorted sessions...');
-                        if (typeof window.renderSessions === 'function') {
-                            window.renderSessions();
-                            console.log('renderSessions called successfully');
-                        } else {
-                            console.error('renderSessions function not found in window scope');
-                        }
-                    } catch (renderError) {
-                        console.error('CRITICAL ERROR in renderSessions:', renderError);
-                    }
-                    
-                    // Store sessions globally for dashboard initialization
+                    // Store sessions globally and render
                     window.sessions = sessions;
+                    console.log('About to render sorted sessions...');
+                    if (typeof window.renderSessions === 'function') {
+                        window.renderSessions();
+                        console.log('✅ Sorted sessions rendered successfully');
+                    }
                     
                     // Remove any existing storage display elements from session cards
                     setTimeout(() => {
