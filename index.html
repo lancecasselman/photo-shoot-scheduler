@@ -5761,34 +5761,26 @@ ${contract.contract_content}
                     console.log('Transformed sessions:', sessions);
                     console.log(`Successfully loaded ${sessions.length} sessions`);
                     
-                    // FORCE RENDER THE FUCKING SESSIONS DIRECTLY
-                    console.log('About to render sessions...');
-                    if (typeof window.renderSessions === 'function') {
-                        window.renderSessions();
-                        console.log('renderSessions called successfully');
-                    } else {
-                        console.error('renderSessions function not found in window scope');
-                    }
-                    
-                    // Set default sort to date-asc (oldest first) and apply it
+                    // Set default sort to date-asc (oldest first) BEFORE any rendering
                     const sortSelect = document.getElementById('sortOptions');
                     if (sortSelect) {
                         sortSelect.value = 'date-asc';
                         console.log('Default sort set to date-asc');
                     }
                     
-                    // Apply sort after initial render - force execution
+                    // Sort sessions FIRST before rendering
                     console.log('About to call sortSessions with date-asc...');
-                    setTimeout(() => {
-                        // Force the sort value again just to be sure
-                        const sortSelect2 = document.getElementById('sortOptions');
-                        if (sortSelect2) {
-                            sortSelect2.value = 'date-asc';
-                        }
-                        sortSessions();
-                        displaySessions(); // Re-render after sorting
-                        console.log('sortSessions completed with date-asc');
-                    }, 100);
+                    sortSessions();
+                    console.log('sortSessions completed with date-asc');
+                    
+                    // THEN render the sorted sessions
+                    console.log('About to render sorted sessions...');
+                    if (typeof window.renderSessions === 'function') {
+                        window.renderSessions();
+                        console.log('renderSessions called successfully');
+                    } else {
+                        console.error('renderSessions function not found in window scope');
+                    }
                     
                     // Remove any existing storage display elements from session cards
                     setTimeout(() => {
@@ -6563,8 +6555,11 @@ lance@thelegacyphotography.com`;
 
         // Sort Functionality
         function sortSessions() {
-            const sortOption = document.getElementById('sortOptions')?.value || 'date-asc';
-            console.log('Current sort option:', sortOption);
+            const sortElement = document.getElementById('sortOptions');
+            const sortOption = sortElement?.value || 'date-asc';
+            console.log('sortSessions called - Current sort option:', sortOption);
+            console.log('Sort element found:', !!sortElement);
+            console.log('Sessions array length:', sessions.length);
             
             sessions.sort((a, b) => {
                 const now = new Date();
