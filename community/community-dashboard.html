@@ -1160,13 +1160,13 @@
                         ${post.content ? `<p class="post-text">${post.content}</p>` : ''}
                     </div>
                     
-                    ${post.imageUrls && post.imageUrls.feed ? `
-                        <div class="post-image" onclick="viewFullImage('${post.imageUrls.full}')">
-                            <img src="${post.imageUrls.feed}" alt="${post.title}" loading="lazy">
+                    ${post.image_urls && (typeof post.image_urls === 'string' ? JSON.parse(post.image_urls) : post.image_urls).feed ? `
+                        <div class="post-image" onclick="viewFullImage('${(typeof post.image_urls === 'string' ? JSON.parse(post.image_urls) : post.image_urls).full}')">
+                            <img src="${(typeof post.image_urls === 'string' ? JSON.parse(post.image_urls) : post.image_urls).feed}" alt="${post.title}" loading="lazy">
                         </div>
                     ` : ''}
                     
-                    ${post.cameraSettings ? createCameraSettingsHTML(post.cameraSettings) : ''}
+                    ${post.camera_settings ? createCameraSettingsHTML(typeof post.camera_settings === 'string' ? JSON.parse(post.camera_settings) : post.camera_settings) : ''}
                     
                     ${post.tags && post.tags.length > 0 ? `
                         <div class="post-tags">

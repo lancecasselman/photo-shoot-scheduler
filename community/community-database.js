@@ -195,7 +195,13 @@ class CommunityDatabase {
         values.push(limit, offset);
 
         const result = await this.pool.query(query, values);
-        return result.rows;
+        
+        // Parse JSON fields
+        return result.rows.map(row => ({
+            ...row,
+            imageUrls: typeof row.image_urls === 'string' ? JSON.parse(row.image_urls) : row.image_urls,
+            cameraSettings: typeof row.camera_settings === 'string' ? JSON.parse(row.camera_settings) : row.camera_settings
+        }));
     }
 
     async getPostById(postId) {
@@ -203,7 +209,16 @@ class CommunityDatabase {
             'SELECT * FROM community_posts WHERE id = $1',
             [postId]
         );
-        return result.rows[0];
+        
+        if (result.rows[0]) {
+            const row = result.rows[0];
+            return {
+                ...row,
+                imageUrls: typeof row.image_urls === 'string' ? JSON.parse(row.image_urls) : row.image_urls,
+                cameraSettings: typeof row.camera_settings === 'string' ? JSON.parse(row.camera_settings) : row.camera_settings
+            };
+        }
+        return null;
     }
 
     async updatePostStats(postId, field, increment = 1) {
