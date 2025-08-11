@@ -291,6 +291,24 @@
             color: white;
             transform: translateY(-3px);
         }
+        
+        .existing-customer {
+            margin-top: 30px;
+            font-size: 1rem;
+            color: #666;
+        }
+        
+        .signin-link {
+            color: var(--primary);
+            font-weight: 600;
+            text-decoration: none;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .signin-link:hover {
+            border-bottom: 2px solid var(--primary);
+        }
 
         /* Trust Badges */
         .trust-badges {
@@ -854,14 +872,118 @@
             font-size: 0.9rem;
         }
 
+        /* Mobile Menu */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--primary);
+        }
+        
+        .mobile-nav {
+            display: none;
+            position: fixed;
+            top: 70px;
+            left: 0;
+            right: 0;
+            background: white;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            z-index: 999;
+        }
+        
+        .mobile-nav.active {
+            display: block;
+        }
+        
+        .mobile-nav-links {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .mobile-nav-link {
+            padding: 12px 20px;
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 500;
+            border-radius: 10px;
+            transition: background 0.3s ease;
+        }
+        
+        .mobile-nav-link:hover {
+            background: var(--accent);
+        }
+        
+        .mobile-nav-signin {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            padding: 12px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .mobile-nav-signin:hover {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .mobile-nav-cta {
+            background: var(--gradient);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            text-align: center;
+            margin-top: 10px;
+        }
+
         /* Mobile Responsive */
         @media (max-width: 768px) {
             .nav-links {
                 display: none;
             }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .logo {
+                font-size: 1.3rem;
+            }
+            
+            .logo-icon {
+                width: 30px;
+                height: 30px;
+                font-size: 18px;
+            }
 
             .hero-title {
-                font-size: 2.5rem;
+                font-size: 2rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1.1rem;
+            }
+            
+            .hero-cta-group {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .hero-cta-primary,
+            .hero-cta-secondary {
+                width: 100%;
+                text-align: center;
+                padding: 15px 30px;
+                font-size: 1rem;
             }
 
             .features-grid,
@@ -876,6 +998,11 @@
 
             .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .existing-customer {
+                margin-top: 20px;
+                font-size: 0.95rem;
             }
         }
 
@@ -919,8 +1046,20 @@
                 <a href="/auth.html" class="nav-signin">Sign In</a>
                 <a href="#pricing" class="nav-cta">Get Started Free</a>
             </div>
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
         </nav>
     </header>
+    
+    <!-- Mobile Navigation Menu -->
+    <div class="mobile-nav" id="mobileNav">
+        <div class="mobile-nav-links">
+            <a href="#features" class="mobile-nav-link" onclick="toggleMobileMenu()">Features</a>
+            <a href="#pricing" class="mobile-nav-link" onclick="toggleMobileMenu()">Pricing</a>
+            <a href="#testimonials" class="mobile-nav-link" onclick="toggleMobileMenu()">Reviews</a>
+            <a href="/auth.html" class="mobile-nav-signin">Sign In</a>
+            <a href="#pricing" class="mobile-nav-cta" onclick="toggleMobileMenu()">Get Started Free</a>
+        </div>
+    </div>
 
     <!-- Hero Section -->
     <section class="hero">
@@ -1323,6 +1462,22 @@
             }
         `;
         document.head.appendChild(style);
+        
+        // Mobile menu toggle function
+        function toggleMobileMenu() {
+            const mobileNav = document.getElementById('mobileNav');
+            mobileNav.classList.toggle('active');
+        }
+        
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const mobileNav = document.getElementById('mobileNav');
+            const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+            
+            if (!mobileNav.contains(event.target) && !mobileMenuBtn.contains(event.target)) {
+                mobileNav.classList.remove('active');
+            }
+        });
     </script>
 </body>
 </html>
