@@ -5301,8 +5301,10 @@ ${contract.contract_content}
 
         // Payment calculation function
         window.calculatePayments = function() {
-            const totalAmount = 200; // Will be dynamic from session data
-            const depositAmount = 12; // Will be dynamic from session data
+            // Get session price from the readonly input field
+            const totalAmountInput = document.querySelector('#paymentPlanModal input[readonly]');
+            const totalAmount = parseFloat(totalAmountInput ? totalAmountInput.value : 250);
+            const depositAmount = 0; // No deposit handling for now
             const remainingAmount = totalAmount - depositAmount;
             
             const startDateInput = document.getElementById('startDate');
@@ -5325,44 +5327,80 @@ ${contract.contract_content}
             }
             
             if (endDate <= startDate) {
-                resultsDiv.innerHTML = '<p style="color:#ff4444;margin:0;">End date must be after start date</p>';
+                resultsDiv.innerHTML = '<p style="color:#ff4444;margin:0;">⚠️ End date must be after start date</p>';
                 calculationDiv.style.display = 'block';
                 return;
             }
             
-            // Calculate number of payments based on frequency
-            let daysBetween = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
-            let numberOfPayments;
+            // Calculate number of payments based on frequency with proper date intervals
+            let numberOfPayments = 0;
+            let paymentDates = [];
+            let currentDate = new Date(startDate);
             
             switch(frequency) {
                 case 'weekly':
-                    numberOfPayments = Math.ceil(daysBetween / 7);
+                    while (currentDate <= endDate) {
+                        paymentDates.push(new Date(currentDate));
+                        numberOfPayments++;
+                        currentDate.setDate(currentDate.getDate() + 7);
+                    }
                     break;
                 case 'biweekly':
-                    numberOfPayments = Math.ceil(daysBetween / 14);
+                    while (currentDate <= endDate) {
+                        paymentDates.push(new Date(currentDate));
+                        numberOfPayments++;
+                        currentDate.setDate(currentDate.getDate() + 14);
+                    }
                     break;
                 case 'monthly':
-                    numberOfPayments = Math.ceil(daysBetween / 30);
+                    while (currentDate <= endDate) {
+                        paymentDates.push(new Date(currentDate));
+                        numberOfPayments++;
+                        currentDate.setMonth(currentDate.getMonth() + 1);
+                    }
                     break;
                 default:
                     numberOfPayments = 1;
+                    paymentDates = [new Date(startDate)];
             }
             
-            const paymentAmount = Math.ceil((remainingAmount / numberOfPayments) * 100) / 100;
-            const lastPaymentAmount = remainingAmount - (paymentAmount * (numberOfPayments - 1));
+            // Ensure at least one payment
+            if (numberOfPayments === 0) {
+                numberOfPayments = 1;
+                paymentDates = [new Date(startDate)];
+            }
+            
+            const paymentAmount = (totalAmount / numberOfPayments).toFixed(2);
+            
+            // Create payment schedule preview
+            let scheduleHTML = '';
+            for (let i = 0; i < Math.min(numberOfPayments, 5); i++) {
+                const paymentDate = paymentDates[i] || new Date(startDate);
+                scheduleHTML += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 10px; background: rgba(212,175,55,0.15); border-radius: 6px; border-left: 3px solid #d4af37;">
+                        <span style="font-weight: 600;">Payment ${i + 1}</span>
+                        <span style="color: #d4af37;">${paymentDate.toLocaleDateString()}</span>
+                        <span style="font-weight: 600; color: #f5f5f5;">$${paymentAmount}</span>
+                    </div>
+                `;
+            }
+            
+            if (numberOfPayments > 5) {
+                scheduleHTML += `<div style="text-align: center; margin: 12px 0; opacity: 0.7; font-style: italic; color: #d4af37;">... and ${numberOfPayments - 5} more ${frequency} payments of $${paymentAmount} each</div>`;
+            }
             
             resultsDiv.innerHTML = `
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:15px;text-align:left;">
-                    <div><strong>Total Amount:</strong> $${totalAmount.toFixed(2)}</div>
-                    <div><strong>Deposit Paid:</strong> $${depositAmount.toFixed(2)}</div>
-                    <div><strong>Remaining Balance:</strong> $${remainingAmount.toFixed(2)}</div>
-                    <div><strong>Payment Frequency:</strong> ${frequency.charAt(0).toUpperCase() + frequency.slice(1)}</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px;text-align:left;">
+                    <div><strong>💰 Total Amount:</strong> $${totalAmount.toFixed(2)}</div>
+                    <div><strong>📅 Payment Frequency:</strong> ${frequency.charAt(0).toUpperCase() + frequency.slice(1)}</div>
+                    <div><strong>🔢 Number of Payments:</strong> ${numberOfPayments}</div>
+                    <div><strong>💳 Each Payment:</strong> $${paymentAmount}</div>
                 </div>
-                <div style="background:rgba(26,26,26,0.6);padding:15px;border-radius:8px;margin-top:15px;">
-                    <div style="color:#d4af37;font-size:1.2rem;margin-bottom:10px;"><strong>${numberOfPayments} payments of $${paymentAmount.toFixed(2)}</strong></div>
-                    ${lastPaymentAmount !== paymentAmount ? `<div style="opacity:0.8;font-size:0.9rem;">Final payment: $${lastPaymentAmount.toFixed(2)}</div>` : ''}
-                    <div style="opacity:0.8;font-size:0.9rem;margin-top:8px;">
-                        From ${startDate.toLocaleDateString()} to ${endDate.toLocaleDateString()}
+                <div style="background:rgba(26,26,26,0.8);padding:20px;border-radius:12px;border:2px solid #d4af37;margin-top:20px;">
+                    <h6 style="color:#d4af37;margin:0 0 15px 0;font-size:1.1rem;">📋 Payment Schedule:</h6>
+                    ${scheduleHTML}
+                    <div style="text-align:center;margin-top:15px;padding-top:15px;border-top:1px solid rgba(212,175,55,0.3);color:#d4af37;font-weight:600;">
+                        Total: ${numberOfPayments} × $${paymentAmount} = $${totalAmount.toFixed(2)}
                     </div>
                 </div>
             `;

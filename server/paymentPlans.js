@@ -86,7 +86,7 @@ class PaymentPlanManager {
       case 'weekly':
         intervalDays = 7;
         break;
-      case 'bi-weekly':
+      case 'biweekly':
         intervalDays = 14;
         break;
       case 'monthly':
