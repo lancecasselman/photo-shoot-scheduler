@@ -839,7 +839,9 @@
             let html = '<div class="file-preview">';
             
             if (isImage) {
-                html += '<img src="/api/sessions/' + sessionId + '/files/' + folderType + '/thumbnail/' + file.name + '" ';
+                // Use fileName for the API call, but display name for the alt text
+                var thumbnailFileName = file.fileName || file.name;
+                html += '<img src="/api/sessions/' + sessionId + '/files/' + folderType + '/thumbnail/' + thumbnailFileName + '" ';
                 html += 'alt="' + file.name + '" ';
                 html += 'onclick="openLightbox(\'' + file.downloadUrl + '\')" ';
                 html += 'onerror="this.src=\'' + file.downloadUrl + '\'; this.style.objectFit=\'cover\';" ';
@@ -855,7 +857,8 @@
             html += '</div>';
             html += '<div class="file-actions">';
             html += '<button class="btn" onclick="downloadFile(\'' + file.downloadUrl + '\', \'' + file.name + '\')">📥 Download</button>';
-            html += '<button class="btn btn-danger" onclick="deleteFile(\'' + file.name + '\')">🗑️ Delete</button>';
+            var deleteFileName = file.fileName || file.name;
+            html += '<button class="btn btn-danger" onclick="deleteFile(\'' + deleteFileName + '\')">🗑️ Delete</button>';
             html += '</div>';
             
             card.innerHTML = html;

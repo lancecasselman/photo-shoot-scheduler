@@ -7,6 +7,13 @@ A streamlined photography business management platform for professional photogra
 Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
+- **August 11, 2025**: R2 Storage Integration Complete
+  - ✅ Fixed gallery file listing to query database instead of Firebase Storage
+  - ✅ Fixed storage statistics calculation from database records (116.45 MB tracked)
+  - ✅ Corrected global storage stats endpoint SQL type mismatch (VARCHAR vs UUID)
+  - ✅ Platform Storage Overview now accurately displays all file storage
+  - ✅ Session storage manager properly integrated with R2 and database
+  - ✅ File downloads now retrieve directly from R2 using stored keys
 - **August 10, 2025**: Business Management Dashboard Integration Complete
   - ✅ Expense tracking database schema implemented (business_expenses table)
   - ✅ Full API endpoints for expense CRUD operations (GET/POST/DELETE)
