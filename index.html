@@ -5761,8 +5761,22 @@ ${contract.contract_content}
                     console.log('Transformed sessions:', sessions);
                     console.log(`Successfully loaded ${sessions.length} sessions`);
                     
-                    // IMMEDIATE TEST - Add a simple log to see if this code runs
-                    console.log('🔥 TESTING - This line should appear in console immediately after "Successfully loaded"');
+                    // WRAP EVERYTHING IN TRY-CATCH TO FIND ERRORS
+                    try {
+                        // IMMEDIATE TEST - Add a simple log to see if this code runs
+                        console.log('🔥 TESTING - This line should appear in console immediately after "Successfully loaded"');
+                        
+                        // SIMPLE SORT TEST - Just sort by dateTime without any complex debugging
+                        console.log('Sorting sessions by appointment date (dateTime field)...');
+                        sessions.sort((a, b) => {
+                            const dateA = new Date(a.dateTime);
+                            const dateB = new Date(b.dateTime);
+                            return dateA.getTime() - dateB.getTime(); // Oldest first
+                        });
+                        console.log('Sessions sorted - first session:', sessions[0]?.clientName, 'date:', new Date(sessions[0]?.dateTime).toLocaleDateString());
+                    } catch (criticalError) {
+                        console.error('CRITICAL ERROR in session sorting:', criticalError);
+                    }
                     
                     // Force debugging to run
                     try {
@@ -5806,13 +5820,18 @@ ${contract.contract_content}
                         console.error('Error in debug block:', debugError);
                     }
                     
-                    // THEN render the sorted sessions
-                    console.log('About to render sorted sessions...');
-                    if (typeof window.renderSessions === 'function') {
-                        window.renderSessions();
-                        console.log('renderSessions called successfully');
-                    } else {
-                        console.error('renderSessions function not found in window scope');
+                    // WRAP RENDERING IN TRY-CATCH TOO
+                    try {
+                        // THEN render the sorted sessions
+                        console.log('About to render sorted sessions...');
+                        if (typeof window.renderSessions === 'function') {
+                            window.renderSessions();
+                            console.log('renderSessions called successfully');
+                        } else {
+                            console.error('renderSessions function not found in window scope');
+                        }
+                    } catch (renderError) {
+                        console.error('CRITICAL ERROR in renderSessions:', renderError);
                     }
                     
                     // Remove any existing storage display elements from session cards
