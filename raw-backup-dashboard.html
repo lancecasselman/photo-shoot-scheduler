@@ -238,6 +238,55 @@
             margin-bottom: 0.5rem;
         }
 
+        .file-thumbnail {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+        }
+
+        .file-thumbnail-placeholder {
+            width: 100%;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            font-size: 2rem;
+            color: #6c757d;
+        }
+
+        .file-thumbnail-loading {
+            width: 100%;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(45deg, #f8f9fa 25%, transparent 25%), 
+                        linear-gradient(-45deg, #f8f9fa 25%, transparent 25%), 
+                        linear-gradient(45deg, transparent 75%, #f8f9fa 75%), 
+                        linear-gradient(-45deg, transparent 75%, #f8f9fa 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            animation: loading-pattern 1s linear infinite;
+            color: #6c757d;
+            font-size: 0.8rem;
+        }
+
+        @keyframes loading-pattern {
+            0% { background-position: 0 0, 0 10px, 10px -10px, -10px 0px; }
+            100% { background-position: 20px 20px, 20px 30px, 30px 10px, 10px 20px; }
+        }
+
         .file-name {
             font-weight: 500;
             margin-bottom: 0.25rem;
@@ -877,10 +926,31 @@
             const fileTypeIcon = getFileTypeIcon(file.fileType);
             const uploadDate = new Date(file.uploadedAt).toLocaleDateString();
             const fileSizeMB = file.fileSizeMB || (file.fileSizeBytes / (1024 * 1024));
+            const isImageFile = isImageFileType(file.filename);
+            
+            // Create thumbnail or icon display
+            let thumbnailHtml = '';
+            if (isImageFile) {
+                const thumbnailId = `thumbnail-${session.id}-${file.filename.replace(/[^a-zA-Z0-9]/g, '_')}`;
+                thumbnailHtml = `
+                    <div class="file-thumbnail-loading" id="${thumbnailId}">
+                        Loading...
+                    </div>
+                `;
+                
+                // Load thumbnail asynchronously
+                setTimeout(() => loadThumbnailForCard(thumbnailId, session.id, file.filename), 100);
+            } else {
+                thumbnailHtml = `
+                    <div class="file-thumbnail-placeholder">
+                        ${fileTypeIcon}
+                    </div>
+                `;
+            }
             
             card.innerHTML = `
-                <div class="file-type-icon">${fileTypeIcon}</div>
-                <div class="file-name">${file.filename}</div>
+                ${thumbnailHtml}
+                <div class="file-name" title="${file.filename}">${file.filename.length > 25 ? file.filename.substring(0, 22) + '...' : file.filename}</div>
                 <div class="file-size">${fileSizeMB.toFixed(1)}MB</div>
                 <div style="color: #6c757d; font-size: 0.8rem; margin-top: 0.5rem;">
                     📁 ${session.clientName}<br>
@@ -1017,6 +1087,64 @@
             return icons[fileType] || icons.other;
         }
 
+        function isImageFileType(filename) {
+            if (!filename || typeof filename !== 'string') return false;
+            
+            const ext = filename.toLowerCase().substring(filename.lastIndexOf('.'));
+            const imageExtensions = [
+                // Standard image formats
+                '.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.tiff', '.tif',
+                // RAW formats that can be processed
+                '.cr2', '.nef', '.arw', '.dng', '.raf', '.orf', '.pef', '.rw2', 
+                '.srw', '.x3f', '.3fr', '.dcr', '.kdc', '.srf', '.sr2', '.bay',
+                // Additional formats
+                '.heic', '.heif', '.avif'
+            ];
+            return imageExtensions.includes(ext);
+        }
+
+        async function loadThumbnailForCard(thumbnailId, sessionId, filename) {
+            try {
+                const thumbnailElement = document.getElementById(thumbnailId);
+                if (!thumbnailElement) return;
+                
+                // Request medium-sized thumbnail for card display
+                const thumbnailUrl = `/api/r2/thumbnail/${sessionId}/${encodeURIComponent(filename)}?size=medium`;
+                
+                // Test if thumbnail exists/can be generated
+                const response = await fetch(thumbnailUrl, { method: 'HEAD' });
+                
+                if (response.ok) {
+                    // Replace loading element with actual thumbnail
+                    thumbnailElement.outerHTML = `
+                        <img src="${thumbnailUrl}" 
+                             class="file-thumbnail" 
+                             alt="${filename}"
+                             onerror="this.outerHTML='<div class=\\'file-thumbnail-placeholder\\'>${getFileTypeIcon('raw')}</div>'"
+                             onload="console.log('✅ Thumbnail loaded: ${filename}')" />
+                    `;
+                } else {
+                    // Fallback to icon if thumbnail generation fails
+                    thumbnailElement.outerHTML = `
+                        <div class="file-thumbnail-placeholder">
+                            ${getFileTypeIcon('raw')}
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                console.warn(`⚠️ Failed to load thumbnail for ${filename}:`, error.message);
+                const thumbnailElement = document.getElementById(thumbnailId);
+                if (thumbnailElement) {
+                    thumbnailElement.outerHTML = `
+                        <div class="file-thumbnail-placeholder">
+                            ${getFileTypeIcon('raw')}
+                        </div>
+                    `;
+                }
+            }
+        }
+
         function viewBillingHistory() {
             showAlert('info', '💡 Billing history feature coming soon! Contact support for detailed billing information.');
         }
@@ -1043,7 +1171,7 @@
         function showAlert(type, message) {
             const alertDiv = document.getElementById('storageAlert');
             alertDiv.className = `alert alert-${type}`;
-            alertDiv.textContent = message;
+            alertDiv.innerHTML = message; // Use innerHTML to support HTML in messages
             alertDiv.style.display = 'block';
             
             // Auto-hide info alerts after 5 seconds
@@ -1183,8 +1311,103 @@
                     files.forEach(file => {
                         const uploadDate = new Date(file.uploadedAt).toLocaleDateString();
                         const fileSizeMB = (file.fileSizeBytes / (1024 * 1024)).toFixed(1);
+                        const isImageFile = isImageFileType(file.filename);
+                        const thumbnailId = `modal-thumb-${sessionId}-${file.filename.replace(/[^a-zA-Z0-9]/g, '_')}`;
+                        
+                        let thumbnailHtml = '';
+                        if (isImageFile) {
+                            thumbnailHtml = `
+                                <div class="file-thumbnail-loading" id="${thumbnailId}" style="width: 150px; height: 120px; margin: 0 auto 0.5rem;">
+                                    Loading...
+                                </div>
+                            `;
+                            // Schedule thumbnail loading
+                            setTimeout(() => loadThumbnailForCard(thumbnailId, sessionId, file.filename), 200);
+                        } else {
+                            thumbnailHtml = `
+                                <div class="file-thumbnail-placeholder" style="width: 150px; height: 120px; margin: 0 auto 0.5rem;">
+                                    ${getFileTypeIcon(type)}
+                                </div>
+                            `;
+                        }
                         
                         fileGridHtml += `
+                            <div style="
+                                display: inline-block; 
+                                background: white; 
+                                border-radius: 8px; 
+                                padding: 1rem; 
+                                margin: 0.5rem; 
+                                width: 200px;
+                                text-align: center;
+                                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                                vertical-align: top;
+                            ">
+                                ${thumbnailHtml}
+                                <div style="font-weight: 500; margin-bottom: 0.25rem; font-size: 0.9rem;" title="${file.filename}">
+                                    ${file.filename.length > 20 ? file.filename.substring(0, 17) + '...' : file.filename}
+                                </div>
+                                <div style="color: #6c757d; font-size: 0.8rem;">
+                                    ${fileSizeMB} MB<br>
+                                    ${uploadDate}
+                                </div>
+                                <div style="margin-top: 0.5rem;">
+                                    <button onclick="downloadFile('${getCurrentUserId()}', '${sessionId}', '${file.filename}')" 
+                                            style="padding: 0.3rem 0.6rem; font-size: 0.8rem; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                        📥 Download
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            });
+            
+            modal.innerHTML = `
+                <div style="
+                    background: white; 
+                    border-radius: 12px; 
+                    max-width: 95%; 
+                    max-height: 95%; 
+                    overflow-y: auto;
+                    position: relative;
+                ">
+                    <div style="
+                        padding: 1.5rem; 
+                        border-bottom: 1px solid #e9ecef; 
+                        position: sticky; 
+                        top: 0; 
+                        background: white; 
+                        z-index: 10;
+                        display: flex; 
+                        justify-content: space-between; 
+                        align-items: center;
+                    ">
+                        <h2 style="margin: 0; color: #333;">📁 ${clientName} - Session Files</h2>
+                        <button onclick="this.closest('div').remove()" 
+                                style="
+                                    background: #6c757d; 
+                                    color: white; 
+                                    border: none; 
+                                    border-radius: 6px; 
+                                    padding: 0.5rem 1rem; 
+                                    cursor: pointer;
+                                    font-size: 1rem;
+                                ">
+                            ✕ Close
+                        </button>
+                    </div>
+                    <div style="padding: 1.5rem;">
+                        <p style="margin-bottom: 1rem; color: #666;">
+                            <strong>Total Files:</strong> ${totalFiles} files
+                        </p>
+                        ${fileGridHtml || '<p>No files found in this session.</p>'}
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
                             <div class="file-card" style="margin-bottom: 1rem; padding: 1rem; border-radius: 8px; background: #f8f9fa; border: 1px solid #dee2e6;">
                                 <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                                     <div style="flex: 1;">
