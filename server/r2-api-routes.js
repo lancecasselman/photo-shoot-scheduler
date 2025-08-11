@@ -80,6 +80,8 @@ function createR2Routes() {
           console.log('UNIFIED LANCE ACCOUNT: Storage calculation for unified Lance account');
           sessionsQuery = 'SELECT id FROM photography_sessions WHERE user_id = $1';
           queryParams = ['44735007'];
+          // Use the Firebase UID for R2 storage lookups
+          userId = 'BFZI4tzu4rdsiZZSK63cqZ5yohw2';
         }
         
         const sessionsResult = await pool.query(sessionsQuery, queryParams);

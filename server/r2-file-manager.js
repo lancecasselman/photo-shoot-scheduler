@@ -183,26 +183,45 @@ class R2FileManager {
           console.log('☁️ Attempting R2 cloud upload...');
           return await this.uploadToR2(fileBuffer, filename, userId, sessionId, actualFileType);
         } catch (r2Error) {
-          console.log('⚠️ R2 upload failed, falling back to local backup');
-          this.r2Available = false; // Mark as unavailable for subsequent uploads
+          console.error('⚠️ R2 upload failed:', r2Error.message);
+          
+          // Check if it's a credential/connection issue
+          if (r2Error.message?.includes('credentials') || r2Error.message?.includes('Access Denied') || r2Error.message?.includes('SignatureDoesNotMatch')) {
+            console.error('❌ R2 credentials issue detected - marking R2 as unavailable');
+            this.r2Available = false;
+          } else {
+            console.warn('⚠️ Temporary R2 issue, retrying...');
+            // Try one more time for temporary network issues
+            try {
+              await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+              return await this.uploadToR2(fileBuffer, filename, userId, sessionId, actualFileType);
+            } catch (retryError) {
+              console.error('❌ R2 retry failed, falling back to local backup');
+              this.r2Available = false;
+            }
+          }
         }
       }
       
-      // Fall back to local backup
-      console.log('💾 Using local backup storage...');
-      const localResult = await this.localBackup.saveFile(fileBuffer, filename, userId, sessionId);
-      
-      return {
-        success: true,
-        fileId: localResult.id,
-        storageType: 'local',
-        localPath: localResult.localPath,
-        fileType: actualFileType,
-        fileSizeBytes,
-        fileSizeMB: localResult.fileSizeMB,
-        uploadedAt: localResult.savedAt,
-        note: 'Stored locally - will sync to cloud when R2 connection is restored'
-      };
+      // Fall back to local backup or throw error if not available
+      if (this.localBackup) {
+        console.log('💾 Using local backup storage...');
+        const localResult = await this.localBackup.saveFile(fileBuffer, filename, userId, sessionId);
+        
+        return {
+          success: true,
+          fileId: localResult.id,
+          storageType: 'local',
+          localPath: localResult.localPath,
+          fileType: actualFileType,
+          fileSizeBytes,
+          fileSizeMB: localResult.fileSizeMB,
+          uploadedAt: localResult.savedAt,
+          note: 'Stored locally - will sync to cloud when R2 connection is restored'
+        };
+      } else {
+        throw new Error('Neither R2 cloud storage nor local backup is available');
+      }
 
     } catch (error) {
       console.error('❌ Upload failed:', error);
@@ -265,6 +284,27 @@ class R2FileManager {
       };
       
       await this.updateBackupIndex(userId, sessionId, fileInfo, 'add');
+      
+      // Also track in database for accurate storage calculations
+      if (this.pool) {
+        try {
+          await this.pool.query(`
+            INSERT INTO session_files (user_id, session_id, folder_type, filename, file_size_bytes, file_size_mb, r2_key, uploaded_at, original_name)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            ON CONFLICT (session_id, filename) 
+            DO UPDATE SET 
+              file_size_bytes = EXCLUDED.file_size_bytes,
+              file_size_mb = EXCLUDED.file_size_mb,
+              r2_key = EXCLUDED.r2_key,
+              uploaded_at = EXCLUDED.uploaded_at
+          `, [userId, sessionId, fileType, filename, fileSizeBytes, fileSizeMB, r2Key, new Date(), filename]);
+          
+          console.log(`✅ Database record updated for file: ${filename}`);
+        } catch (dbError) {
+          console.warn('⚠️ Failed to update database record:', dbError.message);
+          // Continue with success since R2 upload worked
+        }
+      }
       
       return {
         success: true,
@@ -333,12 +373,15 @@ class R2FileManager {
   /**
    * Get all files for a specific session (organized by type)
    */
-  async getSessionFiles(sessionId, userId) {
+  async getSessionFiles(userId, sessionId) {
     try {
+      console.log(`📁 Getting session files for user: ${userId}, session: ${sessionId}`);
+      
       // Get the backup index which contains all file metadata
       const backupIndex = await this.getSessionBackupIndex(userId, sessionId);
       
       if (!backupIndex.files || backupIndex.files.length === 0) {
+        console.log(`📁 No files found in backup index for session ${sessionId}`);
         return {
           success: true,
           filesByType: {
@@ -442,18 +485,29 @@ class R2FileManager {
    */
   async checkStorageLimit(userId, additionalBytes) {
     try {
-      // For now, return a basic 1TB limit check
-      // In production, this would check actual usage from database
       const maxStorageBytes = 1024 * 1024 * 1024 * 1024; // 1TB in bytes
       
-      // Get current usage (simplified for now)
-      const currentUsageBytes = 0; // Would query actual usage from database
+      // Get current usage from actual storage calculation
+      let currentUsageBytes = 0;
+      
+      try {
+        const storageUsage = await this.getUserStorageUsage(userId);
+        currentUsageBytes = storageUsage.totalBytes || 0;
+        console.log(`📊 Current storage usage: ${(currentUsageBytes / (1024**3)).toFixed(2)} GB`);
+      } catch (usageError) {
+        console.warn('⚠️ Could not get current storage usage, using safe default:', usageError.message);
+        currentUsageBytes = 0; // Safe default - allow upload
+      }
+      
       const totalAfterUpload = currentUsageBytes + additionalBytes;
+      const additionalGB = additionalBytes / (1024**3);
+      
+      console.log(`📤 Upload check: Current: ${(currentUsageBytes / (1024**3)).toFixed(2)} GB, Additional: ${additionalGB.toFixed(2)} GB, Total after: ${(totalAfterUpload / (1024**3)).toFixed(2)} GB`);
       
       if (totalAfterUpload > maxStorageBytes) {
         return {
           allowed: false,
-          message: 'Upload would exceed 1TB storage limit',
+          message: `Upload would exceed 1TB storage limit. Current: ${(currentUsageBytes / (1024**3)).toFixed(2)} GB, Upload: ${additionalGB.toFixed(2)} GB, Total: ${(totalAfterUpload / (1024**3)).toFixed(2)} GB`,
           usage: {
             current: currentUsageBytes,
             limit: maxStorageBytes,
@@ -464,7 +518,7 @@ class R2FileManager {
       
       return {
         allowed: true,
-        message: 'Upload within storage limits',
+        message: `Upload within storage limits. Current: ${(currentUsageBytes / (1024**3)).toFixed(2)} GB, After upload: ${(totalAfterUpload / (1024**3)).toFixed(2)} GB`,
         usage: {
           current: currentUsageBytes,
           limit: maxStorageBytes,
@@ -655,7 +709,9 @@ class R2FileManager {
         `photographer-${userId}/`,
         `${userId}/`,
         `user-${userId}/`,
-        `44735007/` // Your specific user ID for testing
+        `photographer-BFZI4tzu4rdsiZZSK63cqZ5yohw2/`, // Firebase UID mapping for Lance
+        `photographer-44735007/`, // Legacy user ID for testing
+        `BFZI4tzu4rdsiZZSK63cqZ5yohw2/` // Direct Firebase UID
       ];
       
       let totalBytes = 0;
