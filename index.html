@@ -5951,7 +5951,7 @@ ${contract.contract_content}
                                 <button onclick="openUpdateSessionModal('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Update Session</button>
                                 <button onclick="addToCalendar('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Calendar</button>
                                 <button onclick="openEmailClient('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Email</button>
-                                <button onclick="viewSessionContracts('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Contracts</button>
+
 
                                 ${session.hasPaymentPlan ? `
                                     <button onclick="viewPaymentPlan('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Payment Plan</button>
@@ -7235,35 +7235,7 @@ lance@thelegacyphotography.com`;
             }
         }
 
-        // View session contracts
-        window.viewSessionContracts = async function(sessionId) {
-            try {
-                const authToken = await getAuthToken();
-                const headers = {
-                    'Content-Type': 'application/json'
-                };
-                if (authToken) {
-                    headers['Authorization'] = `Bearer ${authToken}`;
-                }
-                
-                const response = await fetch(`/api/sessions/${sessionId}/contracts`, {
-                    method: 'GET',
-                    headers
-                });
-                
-                if (!response.ok) {
-                    const errorData = await response.text();
-                    throw new Error(`Failed to fetch contracts: ${response.status} - ${errorData}`);
-                }
-                
-                const contracts = await response.json();
-                displayContractsModal(sessionId, contracts);
-                
-            } catch (error) {
-                console.error('Error fetching contracts:', error);
-                showMessage('Failed to fetch contracts: ' + error.message, 'error');
-            }
-        }
+        // Contract functionality temporarily removed
 
         // Display contracts modal
         function displayContractsModal(sessionId, contracts) {
