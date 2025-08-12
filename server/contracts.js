@@ -105,11 +105,11 @@ Reception Location: {{reception_location}}
 Coverage Hours: {{coverage_hours}} hours
 
 INVESTMENT:
-Total Investment: ${{price}}
+Total Investment: ` + '${{price}}' + `
 {{#if payment_plan}}
 Payment Schedule: {{payment_schedule}}
-Deposit: ${{deposit_amount}}
-Balance: ${{balance_amount}}
+Deposit: ` + '${{deposit_amount}}' + `
+Balance: ` + '${{balance_amount}}' + `
 {{else}}
 Payment in full due by wedding date
 {{/if}}
@@ -146,7 +146,7 @@ Location: {{location}}
 Duration: {{duration}} minutes
 
 INVESTMENT:
-Total: ${{price}}
+Total: ` + '${{price}}' + `
 
 DELIVERABLES:
 - Professional edited high-resolution images
