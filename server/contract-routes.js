@@ -113,7 +113,7 @@ module.exports = function(pool, r2FileManager) {
         try {
             const result = await pool.query(
                 `SELECT * FROM contracts 
-                 WHERE photographer_id = $1 
+                 WHERE user_id = $1 OR photographer_id = $1
                  ORDER BY created_at DESC`,
                 [req.session.user.uid]
             );
@@ -134,7 +134,7 @@ module.exports = function(pool, r2FileManager) {
         try {
             const result = await pool.query(
                 `SELECT * FROM contracts 
-                 WHERE id = $1 AND photographer_id = $2`,
+                 WHERE id = $1 AND (user_id = $2 OR photographer_id = $2)`,
                 [req.params.id, req.session.user.uid]
             );
 
@@ -215,13 +215,14 @@ module.exports = function(pool, r2FileManager) {
             // Create contract record
             const result = await pool.query(
                 `INSERT INTO contracts (
-                    id, photographer_id, session_id, client_id, 
+                    id, user_id, photographer_id, session_id, client_id, 
                     template_key, title, html, status, 
                     created_at, updated_at, timeline
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) 
                 RETURNING *`,
                 [
                     id,
+                    req.session.user.uid,
                     req.session.user.uid,
                     sessionId || null,
                     clientId || null,
@@ -258,7 +259,7 @@ module.exports = function(pool, r2FileManager) {
             // Get contract
             const contractResult = await pool.query(
                 `SELECT * FROM contracts 
-                 WHERE id = $1 AND photographer_id = $2`,
+                 WHERE id = $1 AND (user_id = $2 OR photographer_id = $2)`,
                 [contractId, req.session.user.uid]
             );
 

@@ -210,15 +210,19 @@ async function updateRawStorageUsage(userId, fileSizeTB, fileSizeMB, fileCount) 
     }
 }
 
-// PostgreSQL database connection - Initialize first
+// PostgreSQL database connection - Initialize first with improved stability
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    // Add connection pool configuration for better stability
-    max: 20, // maximum number of clients in pool
-    idleTimeoutMillis: 30000, // close idle clients after 30 seconds
-    connectionTimeoutMillis: 2000, // return error after 2 seconds if connection could not be established
-    maxUses: 7500, // close (and replace) a connection after it has been used 7500 times
+    // Improved connection pool configuration for stability
+    max: 10, // Reduced pool size for better resource management
+    min: 2, // Keep minimum connections alive
+    idleTimeoutMillis: 60000, // Increased idle timeout to 60 seconds
+    connectionTimeoutMillis: 10000, // Increased connection timeout to 10 seconds
+    acquireTimeoutMillis: 60000, // 60 second acquire timeout
+    maxUses: 5000, // Reduced max uses before replacement
+    keepAlive: true, // Keep connections alive
+    keepAliveInitialDelayMillis: 10000,
 });
 
 // Add error handling for database pool
@@ -2578,10 +2582,11 @@ async function initializeDatabase(retryCount = 0) {
 
 
 
-        // Create contracts table for contract management
+        // Create contracts table for contract management with proper structure
         await pool.query(`
             CREATE TABLE IF NOT EXISTS contracts (
                 id VARCHAR(255) PRIMARY KEY,
+                user_id VARCHAR(255) NOT NULL,
                 photographer_id VARCHAR(255) NOT NULL,
                 session_id VARCHAR(255),
                 client_id VARCHAR(255),
@@ -2606,6 +2611,20 @@ async function initializeDatabase(retryCount = 0) {
                 timeline JSONB DEFAULT '[]',
                 metadata JSONB DEFAULT '{}'
             )
+        `);
+
+        // Add missing columns to existing contracts table if they don't exist
+        await pool.query(`
+            ALTER TABLE contracts 
+            ADD COLUMN IF NOT EXISTS user_id VARCHAR(255),
+            ADD COLUMN IF NOT EXISTS photographer_id VARCHAR(255)
+        `);
+
+        // Update photographer_id to match user_id where it's missing
+        await pool.query(`
+            UPDATE contracts 
+            SET photographer_id = user_id 
+            WHERE photographer_id IS NULL AND user_id IS NOT NULL
         `);
 
         // Create storefront_sites table for storefront builder
