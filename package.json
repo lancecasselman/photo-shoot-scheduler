@@ -3,7 +3,15 @@
   "version": "1.0.0",
   "main": "auth.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "echo 'Web app already built - using current directory'",
+    "cap:add:ios": "npx cap add ios",
+    "cap:add:android": "npx cap add android",
+    "cap:sync": "npx cap sync",
+    "cap:build:ios": "npm run build && npx cap sync ios && npx cap build ios",
+    "cap:build:android": "npm run build && npx cap sync android && npx cap build android",
+    "cap:run:ios": "npm run build && npx cap sync ios && npx cap run ios",
+    "cap:run:android": "npm run build && npx cap sync android && npx cap run android"
   },
   "keywords": [],
   "author": "",
