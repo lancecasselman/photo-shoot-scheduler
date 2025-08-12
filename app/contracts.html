@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contract Management - Photography Management System</title>
+    <title>Contract Management</title>
     <style>
         * {
             margin: 0;
@@ -12,650 +12,970 @@
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: #f8f9fa;
-            color: #333;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #2c3e50;
+            line-height: 1.6;
         }
         
         .container {
-            display: flex;
-            height: 100vh;
-        }
-        
-        .sidebar {
-            width: 300px;
-            background: white;
-            border-right: 1px solid #e5e7eb;
+            max-width: 1400px;
+            margin: 0 auto;
             padding: 20px;
-            overflow-y: auto;
-        }
-        
-        .main-content {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
         }
         
         .header {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 16px;
+        }
+        
+        .actions-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #d4af37;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
         }
         
-        h1 {
-            color: #8b7355;
-            font-size: 24px;
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+        
+        .btn-secondary {
+            background: white;
+            color: #666;
+            border: 1px solid #ddd;
+        }
+        
+        .btn-secondary:hover {
+            background: #f8f9fa;
+            border-color: #999;
+        }
+        
+        .search-box {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+            max-width: 400px;
+        }
+        
+        .search-box input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+        
+        .search-box input:focus {
+            outline: none;
+            border-color: #4CAF50;
         }
         
         .filter-tabs {
             display: flex;
             gap: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 12px;
             margin-bottom: 20px;
+            overflow-x: auto;
         }
         
         .filter-tab {
-            padding: 8px 16px;
-            border: 1px solid #ddd;
-            background: white;
-            border-radius: 4px;
+            padding: 10px 20px;
+            border: none;
+            background: transparent;
+            color: #666;
             cursor: pointer;
-            transition: all 0.3s;
+            border-radius: 8px;
+            font-size: 15px;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+        
+        .filter-tab:hover {
+            background: #f0f2f5;
         }
         
         .filter-tab.active {
-            background: #d4af37;
+            background: #4CAF50;
             color: white;
-            border-color: #d4af37;
         }
         
-        .contract-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
+        .contracts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
         }
         
-        .contract-item {
-            padding: 15px;
+        .contract-card {
             background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
             cursor: pointer;
-            transition: all 0.3s;
         }
         
-        .contract-item:hover {
-            border-color: #d4af37;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        .contract-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.12);
         }
         
-        .contract-item.active {
-            border-color: #d4af37;
-            background: #fef9f0;
+        .contract-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
         }
         
-        .status-badge {
+        .contract-type {
             display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
+            padding: 4px 12px;
+            border-radius: 20px;
             font-size: 12px;
-            font-weight: bold;
+            font-weight: 600;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         
-        .status-draft { background: #e3f2fd; color: #1976d2; }
+        .type-portrait { background: #e3f2fd; color: #1976d2; }
+        .type-wedding { background: #fce4ec; color: #c2185b; }
+        .type-event { background: #f3e5f5; color: #7b1fa2; }
+        .type-commercial { background: #fff3e0; color: #f57c00; }
+        .type-model { background: #e8f5e9; color: #388e3c; }
+        
+        .contract-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-draft { background: #f0f2f5; color: #666; }
         .status-sent { background: #fff3cd; color: #856404; }
-        .status-viewed { background: #f3e5f5; color: #7b1fa2; }
+        .status-viewed { background: #cce5ff; color: #004085; }
         .status-signed { background: #d4edda; color: #155724; }
         
-        .editor-container {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            min-height: 500px;
+        .contract-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 8px;
         }
         
-        .editor-toolbar {
+        .contract-client {
+            color: #666;
+            font-size: 15px;
+            margin-bottom: 5px;
+        }
+        
+        .contract-date {
+            color: #999;
+            font-size: 13px;
+        }
+        
+        .contract-actions {
             display: flex;
             gap: 10px;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #e5e7eb;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #f0f2f5;
         }
         
-        .btn {
-            padding: 10px 20px;
+        .action-btn {
+            flex: 1;
+            padding: 10px;
             border: none;
-            border-radius: 4px;
-            cursor: pointer;
+            border-radius: 8px;
             font-size: 14px;
             font-weight: 500;
-            transition: all 0.3s;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
         
-        .btn-primary {
-            background: #d4af37;
-            color: white;
+        .action-view {
+            background: #f0f2f5;
+            color: #333;
         }
         
-        .btn-primary:hover {
-            background: #b8941f;
+        .action-view:hover {
+            background: #e1e4e8;
         }
         
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
+        .action-share {
+            background: #e3f2fd;
+            color: #1976d2;
         }
         
-        .btn-secondary:hover {
-            background: #5a6268;
+        .action-share:hover {
+            background: #bbdefb;
         }
         
-        .btn-danger {
-            background: #dc3545;
-            color: white;
+        .action-delete {
+            background: #ffebee;
+            color: #c62828;
         }
         
-        .btn-danger:hover {
-            background: #c82333;
+        .action-delete:hover {
+            background: #ffcdd2;
         }
         
-        .btn-success {
-            background: #28a745;
-            color: white;
-        }
-        
-        .btn-success:hover {
-            background: #218838;
-        }
-        
-        .contract-editor {
-            min-height: 400px;
-            padding: 20px;
-            border: 1px solid #e5e7eb;
-            border-radius: 4px;
-            font-size: 16px;
-            line-height: 1.6;
-        }
-        
-        .contract-editor[contenteditable="true"] {
-            outline: none;
-        }
-        
-        .contract-editor h2 {
-            color: #8b7355;
-            margin: 20px 0 10px;
-        }
-        
-        .contract-editor h3 {
-            color: #666;
-            margin: 15px 0 10px;
-        }
-        
-        .merge-field {
-            background: #fff3cd;
-            padding: 2px 4px;
-            border-radius: 3px;
-            color: #856404;
-            font-family: monospace;
-        }
-        
-        .share-modal {
+        /* Modal Styles */
+        .modal {
+            display: none;
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
             background: rgba(0,0,0,0.5);
-            display: none;
+            z-index: 1000;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
         }
         
-        .share-modal.active {
+        .modal.active {
             display: flex;
         }
         
-        .share-modal-content {
+        .modal-content {
             background: white;
-            border-radius: 8px;
-            padding: 30px;
-            max-width: 500px;
+            border-radius: 12px;
             width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
         }
         
+        .modal-header {
+            padding: 25px;
+            border-bottom: 1px solid #f0f2f5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h2 {
+            font-size: 24px;
+            color: #1a1a1a;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: #999;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-close:hover {
+            color: #333;
+        }
+        
+        .modal-body {
+            padding: 25px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .modal-footer {
+            padding: 20px 25px;
+            border-top: 1px solid #f0f2f5;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        /* Share Modal Styles */
         .share-options {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(2, 1fr);
             gap: 15px;
             margin-top: 20px;
         }
         
         .share-option {
-            padding: 15px;
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
         }
         
         .share-option:hover {
-            border-color: #d4af37;
-            background: #fef9f0;
+            background: #f8f9fa;
+            border-color: #4CAF50;
+            transform: translateY(-2px);
         }
         
         .share-option i {
-            font-size: 24px;
-            margin-bottom: 8px;
-            display: block;
+            font-size: 32px;
+            margin-bottom: 10px;
+            color: #4CAF50;
         }
         
-        .url-display {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 4px;
-            margin: 15px 0;
-            word-break: break-all;
-            font-family: monospace;
-            font-size: 14px;
+        .share-option .share-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .share-option .share-desc {
+            font-size: 13px;
+            color: #666;
+        }
+        
+        /* Loading and Empty States */
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: #666;
         }
         
         .empty-state {
             text-align: center;
-            padding: 40px;
-            color: #999;
+            padding: 60px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        
+        .empty-state img {
+            width: 200px;
+            opacity: 0.3;
+            margin-bottom: 20px;
         }
         
         .empty-state h3 {
+            color: #333;
             margin-bottom: 10px;
         }
         
-        .template-selector {
-            display: flex;
-            gap: 10px;
-            align-items: center;
+        .empty-state p {
+            color: #666;
+            margin-bottom: 20px;
         }
         
-        .template-selector select {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 24px;
+            }
+            
+            .actions-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .search-box {
+                max-width: none;
+            }
+            
+            .contracts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .share-options {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="sidebar">
-            <h2>Contracts</h2>
-            
-            <div class="filter-tabs">
-                <button class="filter-tab active" data-filter="all">All</button>
-                <button class="filter-tab" data-filter="draft">Draft</button>
-                <button class="filter-tab" data-filter="sent">Sent</button>
-                <button class="filter-tab" data-filter="signed">Signed</button>
-            </div>
-            
-            <div class="contract-list" id="contractList">
-                <div class="empty-state">
-                    <p>No contracts yet</p>
-                </div>
-            </div>
+        <div class="header">
+            <h1>📄 Contract Management</h1>
+            <p>Create, send, and track photography contracts</p>
         </div>
         
-        <div class="main-content">
-            <div class="header">
-                <h1>Contract Editor</h1>
-                <div class="template-selector">
-                    <label>Template:</label>
-                    <select id="templateSelector">
-                        <option value="">Select Template</option>
-                        <option value="portrait">Portrait Photography</option>
-                        <option value="wedding">Wedding Photography</option>
-                        <option value="event">Event Photography</option>
-                        <option value="commercial">Commercial Photography</option>
-                        <option value="model_release">Model Release</option>
-                    </select>
-                    <button class="btn btn-primary" onclick="useTemplate()">Use Template</button>
-                </div>
+        <div class="actions-bar">
+            <button class="btn btn-primary" onclick="openCreateModal()">
+                + Create New Contract
+            </button>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search contracts..." onkeyup="searchContracts()">
             </div>
-            
-            <div class="editor-container">
-                <div class="editor-toolbar">
-                    <button class="btn btn-success" onclick="sendForSignature()">Send for Signature</button>
-                    <button class="btn btn-secondary" onclick="saveDraft()">Save Draft</button>
-                    <button class="btn btn-secondary" onclick="previewContract()">Preview</button>
-                    <button class="btn btn-danger" onclick="deleteContract()">Delete</button>
-                </div>
-                
-                <div class="contract-editor" id="contractEditor" contenteditable="true">
-                    <div class="empty-state">
-                        <h3>No contract selected</h3>
-                        <p>Select a contract from the left or use a template to get started</p>
+            <button class="btn btn-secondary" onclick="window.location.href='/index.html'">
+                ← Back to Dashboard
+            </button>
+        </div>
+        
+        <div class="filter-tabs">
+            <button class="filter-tab active" onclick="filterContracts('all')">All Contracts</button>
+            <button class="filter-tab" onclick="filterContracts('draft')">Drafts</button>
+            <button class="filter-tab" onclick="filterContracts('sent')">Sent</button>
+            <button class="filter-tab" onclick="filterContracts('viewed')">Viewed</button>
+            <button class="filter-tab" onclick="filterContracts('signed')">Signed</button>
+        </div>
+        
+        <div id="contractsContainer" class="contracts-grid">
+            <div class="loading">Loading contracts...</div>
+        </div>
+    </div>
+    
+    <!-- Create/Edit Contract Modal -->
+    <div id="createModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Create New Contract</h2>
+                <button class="modal-close" onclick="closeCreateModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="contractForm">
+                    <div class="form-group">
+                        <label for="contractType">Contract Type</label>
+                        <select id="contractType" required onchange="loadTemplate()">
+                            <option value="">Select a template...</option>
+                            <option value="portrait">Portrait Session</option>
+                            <option value="wedding">Wedding Photography</option>
+                            <option value="event">Event Coverage</option>
+                            <option value="commercial">Commercial Photography</option>
+                            <option value="model">Model Release</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="contractTitle">Contract Title</label>
+                        <input type="text" id="contractTitle" required placeholder="e.g., Smith Family Portrait Session">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="sessionId">Session (Optional)</label>
+                        <select id="sessionId">
+                            <option value="">No session linked</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="clientName">Client Name</label>
+                        <input type="text" id="clientName" required placeholder="John Doe">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="clientEmail">Client Email</label>
+                        <input type="email" id="clientEmail" required placeholder="client@example.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="clientPhone">Client Phone (Optional)</label>
+                        <input type="tel" id="clientPhone" placeholder="+1 (555) 123-4567">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="contractContent">Contract Content</label>
+                        <textarea id="contractContent" required placeholder="Contract terms will be loaded from template..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="mergeFields">Merge Fields (JSON)</label>
+                        <textarea id="mergeFields" placeholder='{"session_date": "January 15, 2025", "location": "Central Park", "price": "$500"}'></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeCreateModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveContract()">Save Contract</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Share Contract Modal -->
+    <div id="shareModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Share Contract</h2>
+                <button class="modal-close" onclick="closeShareModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <p>Choose how to share this contract with your client:</p>
+                <div class="share-options">
+                    <div class="share-option" onclick="shareViaLink()">
+                        <i>🔗</i>
+                        <div class="share-title">Copy Link</div>
+                        <div class="share-desc">Copy signing link to clipboard</div>
+                    </div>
+                    <div class="share-option" onclick="shareViaEmail()">
+                        <i>✉️</i>
+                        <div class="share-title">Open Email</div>
+                        <div class="share-desc">Open your email client</div>
+                    </div>
+                    <div class="share-option" onclick="shareViaSMS()">
+                        <i>💬</i>
+                        <div class="share-title">Open SMS</div>
+                        <div class="share-desc">Send via text message</div>
+                    </div>
+                    <div class="share-option" onclick="shareViaWebShare()">
+                        <i>📤</i>
+                        <div class="share-title">Share</div>
+                        <div class="share-desc">Use device sharing</div>
                     </div>
                 </div>
+                <div id="shareLink" style="margin-top: 20px; padding: 15px; background: #f0f2f5; border-radius: 8px; display: none;">
+                    <div style="font-size: 12px; color: #666; margin-bottom: 5px;">Signing Link:</div>
+                    <div id="linkText" style="word-break: break-all; font-family: monospace; font-size: 13px;"></div>
+                </div>
             </div>
         </div>
     </div>
-    
-    <div class="share-modal" id="shareModal">
-        <div class="share-modal-content">
-            <h2>Share Contract for Signing</h2>
-            <p>Choose how to share the signing link with your client:</p>
-            
-            <div class="url-display" id="signUrl"></div>
-            
-            <div class="share-options">
-                <div class="share-option" onclick="copyLink()">
-                    <i>📋</i>
-                    <div>Copy Link</div>
-                </div>
-                <div class="share-option" onclick="openEmail()">
-                    <i>✉️</i>
-                    <div>Open Email</div>
-                </div>
-                <div class="share-option" onclick="openSMS()">
-                    <i>💬</i>
-                    <div>Open SMS</div>
-                </div>
-                <div class="share-option" onclick="shareNative()">
-                    <i>🔗</i>
-                    <div>Share...</div>
-                </div>
-            </div>
-            
-            <button class="btn btn-secondary" onclick="closeShareModal()" style="width: 100%; margin-top: 20px;">Close</button>
-        </div>
-    </div>
-    
+
     <script>
-        let currentContract = null;
-        let currentSession = null;
         let contracts = [];
-        let signUrl = '';
-        
-        // Get session ID from URL params
-        const urlParams = new URLSearchParams(window.location.search);
-        const sessionId = urlParams.get('sessionId');
-        
+        let sessions = [];
+        let currentFilter = 'all';
+        let editingContractId = null;
+        let currentShareContract = null;
+
         // Initialize
-        document.addEventListener('DOMContentLoaded', async () => {
-            if (sessionId) {
-                await loadSessionContracts();
-            } else {
-                await loadAllContracts();
-            }
-            
-            // Set up filter tabs
-            document.querySelectorAll('.filter-tab').forEach(tab => {
-                tab.addEventListener('click', (e) => {
-                    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
-                    e.target.classList.add('active');
-                    filterContracts(e.target.dataset.filter);
-                });
-            });
+        document.addEventListener('DOMContentLoaded', function() {
+            loadContracts();
+            loadSessions();
         });
-        
-        async function loadAllContracts() {
+
+        // Load contracts from API
+        async function loadContracts() {
             try {
                 const response = await fetch('/api/contracts');
-                if (response.ok) {
-                    contracts = await response.json();
-                    displayContracts(contracts);
-                    
-                    // Select first contract if available
-                    if (contracts.length > 0) {
-                        selectContract(contracts[0]);
-                    }
-                }
+                if (!response.ok) throw new Error('Failed to load contracts');
+                
+                contracts = await response.json();
+                displayContracts();
             } catch (error) {
                 console.error('Error loading contracts:', error);
+                document.getElementById('contractsContainer').innerHTML = `
+                    <div class="empty-state">
+                        <h3>Unable to load contracts</h3>
+                        <p>${error.message}</p>
+                        <button class="btn btn-primary" onclick="loadContracts()">Retry</button>
+                    </div>
+                `;
             }
         }
 
-        async function loadSessionContracts() {
+        // Load sessions for dropdown
+        async function loadSessions() {
             try {
-                const response = await fetch(`/api/contracts/session/${sessionId}`);
-                if (response.ok) {
-                    contracts = await response.json();
-                    displayContracts(contracts);
-                    
-                    // If no contracts exist, create a draft
-                    if (contracts.length === 0) {
-                        await createNewContract();
-                    } else {
-                        // Load the most recent contract
-                        selectContract(contracts[0]);
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading contracts:', error);
-            }
-        }
-        
-        async function createNewContract() {
-            // Auto-select template based on session type
-            const templateKey = determineTemplate();
-            
-            try {
-                const response = await fetch('/api/contracts/create', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        sessionId: sessionId,
-                        templateKey: templateKey
-                    })
-                });
+                const response = await fetch('/api/sessions');
+                if (!response.ok) return;
                 
-                if (response.ok) {
-                    const contract = await response.json();
-                    contracts.unshift(contract);
-                    displayContracts(contracts);
-                    selectContract(contract);
-                }
+                sessions = await response.json();
+                const select = document.getElementById('sessionId');
+                select.innerHTML = '<option value="">No session linked</option>';
+                
+                sessions.forEach(session => {
+                    const option = document.createElement('option');
+                    option.value = session.id;
+                    option.textContent = `${session.clientName} - ${new Date(session.dateTime).toLocaleDateString()}`;
+                    select.appendChild(option);
+                });
             } catch (error) {
-                console.error('Error creating contract:', error);
+                console.error('Error loading sessions:', error);
             }
         }
-        
-        function determineTemplate() {
-            // This would normally be based on session type
-            // For now, default to portrait
-            return 'portrait';
-        }
-        
-        function displayContracts(contractsList) {
-            const listEl = document.getElementById('contractList');
+
+        // Display contracts
+        function displayContracts() {
+            const container = document.getElementById('contractsContainer');
             
-            if (contractsList.length === 0) {
-                listEl.innerHTML = '<div class="empty-state"><p>No contracts yet</p></div>';
+            let filteredContracts = contracts;
+            if (currentFilter !== 'all') {
+                filteredContracts = contracts.filter(c => c.status === currentFilter);
+            }
+            
+            if (filteredContracts.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>No contracts found</h3>
+                        <p>${currentFilter === 'all' ? 'Create your first contract to get started' : `No ${currentFilter} contracts`}</p>
+                        <button class="btn btn-primary" onclick="openCreateModal()">Create Contract</button>
+                    </div>
+                `;
                 return;
             }
             
-            listEl.innerHTML = contractsList.map(contract => `
-                <div class="contract-item" data-id="${contract.id}" onclick="selectContract('${contract.id}')">
-                    <h4>${contract.title}</h4>
-                    <div style="margin: 5px 0;">
-                        <span class="status-badge status-${contract.status}">${contract.status}</span>
+            container.innerHTML = filteredContracts.map(contract => `
+                <div class="contract-card" onclick="viewContract('${contract.id}')">
+                    <div class="contract-header">
+                        <span class="contract-type type-${contract.contract_type}">${contract.contract_type}</span>
+                        <span class="contract-status status-${contract.status}">${contract.status}</span>
                     </div>
-                    <small>${new Date(contract.created_at).toLocaleDateString()}</small>
+                    <div class="contract-title">${contract.contract_title}</div>
+                    <div class="contract-client">👤 ${contract.client_name}</div>
+                    <div class="contract-date">📅 ${new Date(contract.created_at).toLocaleDateString()}</div>
+                    <div class="contract-actions" onclick="event.stopPropagation()">
+                        <button class="action-btn action-view" onclick="viewContract('${contract.id}')">View</button>
+                        <button class="action-btn action-share" onclick="openShareModal('${contract.id}')">Share</button>
+                        <button class="action-btn action-delete" onclick="deleteContract('${contract.id}')">Delete</button>
+                    </div>
                 </div>
             `).join('');
         }
-        
-        function selectContract(contractOrId) {
-            const contract = typeof contractOrId === 'string' 
-                ? contracts.find(c => c.id === contractOrId)
-                : contractOrId;
-                
-            if (!contract) return;
-            
-            currentContract = contract;
-            
-            // Update UI
-            document.querySelectorAll('.contract-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            document.querySelector(`[data-id="${contract.id}"]`)?.classList.add('active');
-            
-            // Load contract content
-            const editor = document.getElementById('contractEditor');
-            editor.innerHTML = contract.resolved_html || contract.html || '<p>Empty contract</p>';
-            
-            // Enable/disable editing based on status
-            editor.contentEditable = contract.status === 'draft';
-        }
-        
+
+        // Filter contracts
         function filterContracts(filter) {
-            const filtered = filter === 'all' 
-                ? contracts 
-                : contracts.filter(c => c.status === filter);
-            displayContracts(filtered);
+            currentFilter = filter;
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            displayContracts();
         }
-        
-        async function useTemplate() {
-            const templateKey = document.getElementById('templateSelector').value;
-            if (!templateKey) return;
+
+        // Search contracts
+        function searchContracts() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = contracts.filter(c => 
+                c.contract_title.toLowerCase().includes(searchTerm) ||
+                c.client_name.toLowerCase().includes(searchTerm) ||
+                c.client_email.toLowerCase().includes(searchTerm)
+            );
             
-            await createNewContract();
-        }
-        
-        async function sendForSignature() {
-            if (!currentContract) return;
-            
-            try {
-                const response = await fetch('/api/contracts/send', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contractId: currentContract.id })
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    signUrl = data.signUrl;
-                    showShareModal();
-                    
-                    // Update contract status
-                    currentContract.status = 'sent';
-                    displayContracts(contracts);
-                }
-            } catch (error) {
-                console.error('Error sending contract:', error);
-            }
-        }
-        
-        async function saveDraft() {
-            if (!currentContract || currentContract.status !== 'draft') return;
-            
-            const editor = document.getElementById('contractEditor');
-            const html = editor.innerHTML;
-            
-            try {
-                const response = await fetch(`/api/contracts/${currentContract.id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ html: html })
-                });
-                
-                if (response.ok) {
-                    alert('Draft saved successfully');
-                }
-            } catch (error) {
-                console.error('Error saving draft:', error);
-            }
-        }
-        
-        async function deleteContract() {
-            if (!currentContract || currentContract.status !== 'draft') {
-                alert('Can only delete draft contracts');
+            const container = document.getElementById('contractsContainer');
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="empty-state"><h3>No matching contracts</h3></div>';
                 return;
             }
+            
+            container.innerHTML = filtered.map(contract => `
+                <div class="contract-card" onclick="viewContract('${contract.id}')">
+                    <div class="contract-header">
+                        <span class="contract-type type-${contract.contract_type}">${contract.contract_type}</span>
+                        <span class="contract-status status-${contract.status}">${contract.status}</span>
+                    </div>
+                    <div class="contract-title">${contract.contract_title}</div>
+                    <div class="contract-client">👤 ${contract.client_name}</div>
+                    <div class="contract-date">📅 ${new Date(contract.created_at).toLocaleDateString()}</div>
+                    <div class="contract-actions" onclick="event.stopPropagation()">
+                        <button class="action-btn action-view" onclick="viewContract('${contract.id}')">View</button>
+                        <button class="action-btn action-share" onclick="openShareModal('${contract.id}')">Share</button>
+                        <button class="action-btn action-delete" onclick="deleteContract('${contract.id}')">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Open create modal
+        function openCreateModal() {
+            editingContractId = null;
+            document.getElementById('modalTitle').textContent = 'Create New Contract';
+            document.getElementById('contractForm').reset();
+            document.getElementById('createModal').classList.add('active');
+        }
+
+        // Close create modal
+        function closeCreateModal() {
+            document.getElementById('createModal').classList.remove('active');
+        }
+
+        // Load template
+        async function loadTemplate() {
+            const type = document.getElementById('contractType').value;
+            if (!type) return;
+            
+            try {
+                const response = await fetch(`/api/contracts/templates/${type}`);
+                if (!response.ok) throw new Error('Failed to load template');
+                
+                const template = await response.json();
+                document.getElementById('contractContent').value = template.content;
+                
+                // Auto-fill title if empty
+                if (!document.getElementById('contractTitle').value) {
+                    document.getElementById('contractTitle').value = template.name;
+                }
+            } catch (error) {
+                console.error('Error loading template:', error);
+                alert('Failed to load template. Please try again.');
+            }
+        }
+
+        // Save contract
+        async function saveContract() {
+            const formData = {
+                contract_type: document.getElementById('contractType').value,
+                contract_title: document.getElementById('contractTitle').value,
+                session_id: document.getElementById('sessionId').value || null,
+                client_name: document.getElementById('clientName').value,
+                client_email: document.getElementById('clientEmail').value,
+                client_phone: document.getElementById('clientPhone').value || null,
+                contract_content: document.getElementById('contractContent').value,
+                merge_fields: {}
+            };
+            
+            // Parse merge fields if provided
+            const mergeFieldsText = document.getElementById('mergeFields').value;
+            if (mergeFieldsText) {
+                try {
+                    formData.merge_fields = JSON.parse(mergeFieldsText);
+                } catch (e) {
+                    alert('Invalid JSON in merge fields');
+                    return;
+                }
+            }
+            
+            try {
+                const url = editingContractId 
+                    ? `/api/contracts/${editingContractId}`
+                    : '/api/contracts';
+                    
+                const method = editingContractId ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                if (!response.ok) throw new Error('Failed to save contract');
+                
+                closeCreateModal();
+                loadContracts();
+                alert('Contract saved successfully!');
+            } catch (error) {
+                console.error('Error saving contract:', error);
+                alert('Failed to save contract. Please try again.');
+            }
+        }
+
+        // View contract
+        function viewContract(contractId) {
+            window.open(`/app/sign.html?token=${contractId}`, '_blank');
+        }
+
+        // Open share modal
+        function openShareModal(contractId) {
+            event.stopPropagation();
+            currentShareContract = contracts.find(c => c.id === contractId);
+            if (!currentShareContract) return;
+            
+            document.getElementById('shareModal').classList.add('active');
+        }
+
+        // Close share modal
+        function closeShareModal() {
+            document.getElementById('shareModal').classList.remove('active');
+            document.getElementById('shareLink').style.display = 'none';
+        }
+
+        // Share via link
+        async function shareViaLink() {
+            if (!currentShareContract) return;
+            
+            // First send the contract to get the access token
+            try {
+                const response = await fetch(`/api/contracts/${currentShareContract.id}/send`, {
+                    method: 'POST'
+                });
+                
+                if (!response.ok) throw new Error('Failed to generate link');
+                
+                const data = await response.json();
+                const signingUrl = `${window.location.origin}/app/sign.html?token=${data.contract.access_token}`;
+                
+                // Copy to clipboard
+                await navigator.clipboard.writeText(signingUrl);
+                
+                // Show link
+                document.getElementById('shareLink').style.display = 'block';
+                document.getElementById('linkText').textContent = signingUrl;
+                
+                alert('Link copied to clipboard!');
+            } catch (error) {
+                console.error('Error sharing contract:', error);
+                alert('Failed to generate sharing link');
+            }
+        }
+
+        // Share via email
+        async function shareViaEmail() {
+            if (!currentShareContract) return;
+            
+            try {
+                const response = await fetch(`/api/contracts/${currentShareContract.id}/send`, {
+                    method: 'POST'
+                });
+                
+                if (!response.ok) throw new Error('Failed to generate link');
+                
+                const data = await response.json();
+                const signingUrl = `${window.location.origin}/app/sign.html?token=${data.contract.access_token}`;
+                
+                const subject = `Contract: ${currentShareContract.contract_title}`;
+                const body = `Hello ${currentShareContract.client_name},\n\nYour photography contract is ready for review and signature.\n\nPlease click the following link to sign:\n${signingUrl}\n\nBest regards,\n${currentShareContract.photographer_name || 'Your Photographer'}`;
+                
+                window.location.href = `mailto:${currentShareContract.client_email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            } catch (error) {
+                console.error('Error sharing via email:', error);
+                alert('Failed to create email');
+            }
+        }
+
+        // Share via SMS
+        async function shareViaSMS() {
+            if (!currentShareContract) return;
+            
+            if (!currentShareContract.client_phone) {
+                alert('No phone number available for this client');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/contracts/${currentShareContract.id}/send`, {
+                    method: 'POST'
+                });
+                
+                if (!response.ok) throw new Error('Failed to generate link');
+                
+                const data = await response.json();
+                const signingUrl = `${window.location.origin}/app/sign.html?token=${data.contract.access_token}`;
+                
+                const message = `Hi ${currentShareContract.client_name}, your photography contract is ready to sign: ${signingUrl}`;
+                
+                window.location.href = `sms:${currentShareContract.client_phone}?body=${encodeURIComponent(message)}`;
+            } catch (error) {
+                console.error('Error sharing via SMS:', error);
+                alert('Failed to create SMS');
+            }
+        }
+
+        // Share via Web Share API
+        async function shareViaWebShare() {
+            if (!currentShareContract) return;
+            
+            if (!navigator.share) {
+                alert('Sharing is not supported on this device');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/contracts/${currentShareContract.id}/send`, {
+                    method: 'POST'
+                });
+                
+                if (!response.ok) throw new Error('Failed to generate link');
+                
+                const data = await response.json();
+                const signingUrl = `${window.location.origin}/app/sign.html?token=${data.contract.access_token}`;
+                
+                await navigator.share({
+                    title: `Contract: ${currentShareContract.contract_title}`,
+                    text: `Photography contract for ${currentShareContract.client_name}`,
+                    url: signingUrl
+                });
+            } catch (error) {
+                if (error.name !== 'AbortError') {
+                    console.error('Error sharing:', error);
+                    alert('Failed to share contract');
+                }
+            }
+        }
+
+        // Delete contract
+        async function deleteContract(contractId) {
+            event.stopPropagation();
             
             if (!confirm('Are you sure you want to delete this contract?')) return;
             
             try {
-                const response = await fetch(`/api/contracts/${currentContract.id}`, {
+                const response = await fetch(`/api/contracts/${contractId}`, {
                     method: 'DELETE'
                 });
                 
-                if (response.ok) {
-                    contracts = contracts.filter(c => c.id !== currentContract.id);
-                    displayContracts(contracts);
-                    currentContract = null;
-                    document.getElementById('contractEditor').innerHTML = '<div class="empty-state"><h3>No contract selected</h3></div>';
-                }
+                if (!response.ok) throw new Error('Failed to delete contract');
+                
+                loadContracts();
+                alert('Contract deleted successfully');
             } catch (error) {
                 console.error('Error deleting contract:', error);
-            }
-        }
-        
-        function previewContract() {
-            const editor = document.getElementById('contractEditor');
-            const content = editor.innerHTML;
-            const win = window.open('', '_blank');
-            win.document.write(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>Contract Preview</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
-                        h2 { color: #8b7355; }
-                        h3 { color: #666; }
-                    </style>
-                </head>
-                <body>${content}</body>
-                </html>
-            `);
-        }
-        
-        function showShareModal() {
-            document.getElementById('signUrl').textContent = signUrl;
-            document.getElementById('shareModal').classList.add('active');
-        }
-        
-        function closeShareModal() {
-            document.getElementById('shareModal').classList.remove('active');
-        }
-        
-        function copyLink() {
-            navigator.clipboard.writeText(signUrl);
-            alert('Link copied to clipboard!');
-        }
-        
-        function openEmail() {
-            const subject = encodeURIComponent('Please Sign Your Photography Contract');
-            const body = encodeURIComponent(`Hi,\n\nPlease review and sign your photography contract at the following link:\n\n${signUrl}\n\nThank you!`);
-            window.location.href = `mailto:?subject=${subject}&body=${body}`;
-        }
-        
-        function openSMS() {
-            const smsBody = encodeURIComponent(`Please sign your contract: ${signUrl}`);
-            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-            
-            if (isMobile) {
-                const smsHref = /iPhone|iPad|iPod/.test(navigator.userAgent)
-                    ? `sms:&body=${smsBody}`
-                    : `sms:?body=${smsBody}`;
-                window.location.href = smsHref;
-            } else {
-                copyLink();
-            }
-        }
-        
-        function shareNative() {
-            if (navigator.share) {
-                navigator.share({
-                    title: 'Sign Photography Contract',
-                    text: 'Please sign your photography contract',
-                    url: signUrl
-                });
-            } else {
-                copyLink();
+                alert('Failed to delete contract');
             }
         }
     </script>

@@ -33,7 +33,7 @@ const PaymentPlanManager = require('./server/paymentPlans');
 const PaymentScheduler = require('./server/paymentScheduler');
 
 // Import contract management
-const ContractManager = require('./server/contracts');
+// const ContractManager = require('./server/contracts'); // Not needed - using contract-system instead
 
 // Import R2 storage services
 const R2FileManager = require('./server/r2-file-manager');
@@ -247,7 +247,7 @@ const localBackup = new LocalBackupFallback();
 const r2FileManager = new R2FileManager(localBackup, pool);
 const paymentPlanManager = new PaymentPlanManager();
 const paymentScheduler = new PaymentScheduler();
-const contractManager = new ContractManager();
+// const contractManager = new ContractManager(); // Not needed - using contract-system instead
 const aiServices = new AIServices();
 
 // Initialize new storage system
@@ -7226,7 +7226,8 @@ app.get('/api/subscribers/stats', isAuthenticated, async (req, res) => {
 
 // Contract API Endpoints
 
-// Get contract templates
+// Get contract templates - now handled by contract-routes.js
+/*
 app.get('/api/contracts/templates', isAuthenticated, async (req, res) => {
     try {
         const templates = contractManager.getContractTemplates();
@@ -7236,565 +7237,567 @@ app.get('/api/contracts/templates', isAuthenticated, async (req, res) => {
         res.status(500).json({ error: 'Failed to get contract templates' });
     }
 });
+*/
+// 
+// // Create contract for session
+// app.post('/api/sessions/:id/contracts', isAuthenticated, async (req, res) => {
+//     const sessionId = req.params.id;
+//     const { contractType } = req.body;
+//     const user = req.user;
+// 
+//     try {
+//         const session = await getSessionById(sessionId);
+//         if (!session) {
+//             return res.status(404).json({ error: 'Session not found' });
+//         }
+// 
+//         // Verify user owns this session (use normalized user for unified account)
+//         const normalizedUser = normalizeUserForLance(user);
+//         if (session.userId !== normalizedUser.uid) {
+//             console.log('Contract authorization check:', {
+//                 sessionUserId: session.userId,
+//                 originalUserUid: user.uid,
+//                 normalizedUserUid: normalizedUser.uid,
+//                 userEmail: user.email
+//             });
+//             return res.status(403).json({ error: 'Unauthorized access to session' });
+//         }
+// 
+//         // Prepare session data for contract template
+//         const contractData = {
+//             client_name: session.clientName,
+//             client_email: session.email,
+//             client_phone: session.phoneNumber,
+//             photographer_name: 'Lance Casselman',
+//             photographer_email: 'lance@thelegacyphotography.com',
+//             session_type: session.sessionType,
+//             session_date: new Date(session.dateTime).toLocaleDateString(),
+//             location: session.location,
+//             price: session.price,
+//             duration: session.duration,
+//             reception_location: session.location, // For wedding contracts
+//             coverage_hours: Math.round(session.duration / 60), // Convert minutes to hours
+//             payment_plan: session.hasPaymentPlan,
+//             payment_schedule: session.hasPaymentPlan ? `${session.paymentsRemaining} monthly payments of $${session.monthlyPayment}` : null,
+//             deposit_amount: session.hasPaymentPlan ? (session.price * 0.5).toFixed(2) : null,
+//             balance_amount: session.hasPaymentPlan ? (session.price * 0.5).toFixed(2) : null,
+//             min_photos: '25'
+//         };
+// 
+//         const contract = await contractManager.createContract(sessionId, user.uid, contractType, contractData);
+// 
+//         res.json({
+//             message: 'Contract created successfully',
+//             contract: contract
+//         });
+//     } catch (error) {
+//         console.error('Error creating contract:', error);
+//         res.status(500).json({ error: 'Failed to create contract' });
+//     }
+// });
+// 
+// // Get contracts for session
+// app.get('/api/sessions/:id/contracts', isAuthenticated, async (req, res) => {
+//     const sessionId = req.params.id;
+//     const user = req.user; // Use req.user directly from isAuthenticated middleware
+// 
+//     try {
+//         const session = await getSessionById(sessionId);
+//         if (!session) {
+//             return res.status(404).json({ error: 'Session not found' });
+//         }
+// 
+//         // Verify user owns this session (use normalized user for unified account)
+//         const normalizedUser = normalizeUserForLance(user);
+//         if (session.userId !== normalizedUser.uid) {
+//             return res.status(403).json({ error: 'Unauthorized access to session' });
+//         }
+// 
+//         const contracts = await contractManager.getContractsBySessionId(sessionId);
+//         res.json(contracts);
+//     } catch (error) {
+//         console.error('Error getting session contracts:', error);
+//         res.status(500).json({ error: 'Failed to get session contracts' });
+//     }
+// });
+// 
+// // Send contract to client
+// app.post('/api/contracts/:id/send', isAuthenticated, async (req, res) => {
+//     const contractId = req.params.id;
+//     const user = req.user;
+// 
+//     try {
+//         const contract = await contractManager.getContract(contractId);
+//         if (!contract) {
+//             return res.status(404).json({ error: 'Contract not found' });
+//         }
+// 
+//         // Verify user owns this contract (use normalized user for unified account)
+//         const normalizedUser = normalizeUserForLance(user);
+//         if (contract.user_id !== normalizedUser.uid) {
+//             return res.status(403).json({ error: 'Unauthorized access to contract' });
+//         }
+// 
+//         // Get session data to include phone number
+//         const session = await getSessionById(contract.session_id);
+//         
+//         // Mark contract as sent
+//         const updatedContract = await contractManager.sendContract(contractId);
+//         
+//         // Add session phone number to contract data
+//         updatedContract.client_phone = session?.phoneNumber || session?.phone_number || null;
+// 
+//         // Generate signing URL - Always use HTTPS for security
+//         const host = req.get('host');
+//         let baseUrl;
+// 
+//         // Check if we're on a Replit domain or localhost
+//         if (host && (host.includes('localhost') || host.includes('127.0.0.1'))) {
+//             // For localhost, check if we have Replit domains available
+//             const replitDomains = process.env.REPLIT_DOMAINS;
+//             if (replitDomains) {
+//                 const domains = replitDomains.split(',');
+//                 baseUrl = `https://${domains[0]}`;
+//             } else {
+//                 // Fallback to HTTP for true localhost development
+//                 baseUrl = `http://${host}`;
+//             }
+//         } else {
+//             // For all production domains (including Replit), always use HTTPS
+//             baseUrl = `https://${host}`;
+//         }
+// 
+//         const signingUrl = `${baseUrl}/contract-signing.html?token=${contract.access_token}`;
+//         console.log(`🔗 Generated signing URL: ${signingUrl}`);
+// 
+//         // Prepare email data for default email client
+//         const emailSubject = `Contract Ready for Signature - ${contract.contract_title}`;
+//         const emailBody = `Hello ${contract.client_name},
+// 
+// Your photography contract is ready for your electronic signature.
+// 
+// Contract Details:
+// - Title: ${contract.contract_title}
+// - Photographer: ${contract.photographer_name}
+// - Created: ${new Date(contract.created_at).toLocaleDateString()}
+// 
+// Please click the following link to review and sign your contract:
+// ${signingUrl}
+// 
+// Please review the contract carefully and sign electronically using the link above. Once signed, you'll receive a copy for your records.
+// 
+// If you have any questions, please don't hesitate to contact us.
+// 
+// Best regards,
+// The Legacy Photography
+// Email: ${contract.photographer_email}
+// Creating lasting memories through professional photography`;
+// 
+//         console.log(` Email template prepared for: ${contract.client_email}`);
+// 
+//         res.json({
+//             message: 'Contract email template ready',
+//             signingUrl: signingUrl,
+//             contract: {
+//                 ...updatedContract,
+//                 client_phone: updatedContract.client_phone || 'No phone available'
+//             },
+//             emailData: {
+//                 to: contract.client_email,
+//                 subject: emailSubject,
+//                 body: emailBody
+//             }
+//         });
+//     } catch (error) {
+//         console.error('Error sending contract:', error);
+//         res.status(500).json({ error: 'Failed to send contract' });
+//     }
+// });
 
-// Create contract for session
-app.post('/api/sessions/:id/contracts', isAuthenticated, async (req, res) => {
-    const sessionId = req.params.id;
-    const { contractType } = req.body;
-    const user = req.user;
-
-    try {
-        const session = await getSessionById(sessionId);
-        if (!session) {
-            return res.status(404).json({ error: 'Session not found' });
-        }
-
-        // Verify user owns this session (use normalized user for unified account)
-        const normalizedUser = normalizeUserForLance(user);
-        if (session.userId !== normalizedUser.uid) {
-            console.log('Contract authorization check:', {
-                sessionUserId: session.userId,
-                originalUserUid: user.uid,
-                normalizedUserUid: normalizedUser.uid,
-                userEmail: user.email
-            });
-            return res.status(403).json({ error: 'Unauthorized access to session' });
-        }
-
-        // Prepare session data for contract template
-        const contractData = {
-            client_name: session.clientName,
-            client_email: session.email,
-            client_phone: session.phoneNumber,
-            photographer_name: 'Lance Casselman',
-            photographer_email: 'lance@thelegacyphotography.com',
-            session_type: session.sessionType,
-            session_date: new Date(session.dateTime).toLocaleDateString(),
-            location: session.location,
-            price: session.price,
-            duration: session.duration,
-            reception_location: session.location, // For wedding contracts
-            coverage_hours: Math.round(session.duration / 60), // Convert minutes to hours
-            payment_plan: session.hasPaymentPlan,
-            payment_schedule: session.hasPaymentPlan ? `${session.paymentsRemaining} monthly payments of $${session.monthlyPayment}` : null,
-            deposit_amount: session.hasPaymentPlan ? (session.price * 0.5).toFixed(2) : null,
-            balance_amount: session.hasPaymentPlan ? (session.price * 0.5).toFixed(2) : null,
-            min_photos: '25'
-        };
-
-        const contract = await contractManager.createContract(sessionId, user.uid, contractType, contractData);
-
-        res.json({
-            message: 'Contract created successfully',
-            contract: contract
-        });
-    } catch (error) {
-        console.error('Error creating contract:', error);
-        res.status(500).json({ error: 'Failed to create contract' });
-    }
-});
-
-// Get contracts for session
-app.get('/api/sessions/:id/contracts', isAuthenticated, async (req, res) => {
-    const sessionId = req.params.id;
-    const user = req.user; // Use req.user directly from isAuthenticated middleware
-
-    try {
-        const session = await getSessionById(sessionId);
-        if (!session) {
-            return res.status(404).json({ error: 'Session not found' });
-        }
-
-        // Verify user owns this session (use normalized user for unified account)
-        const normalizedUser = normalizeUserForLance(user);
-        if (session.userId !== normalizedUser.uid) {
-            return res.status(403).json({ error: 'Unauthorized access to session' });
-        }
-
-        const contracts = await contractManager.getContractsBySessionId(sessionId);
-        res.json(contracts);
-    } catch (error) {
-        console.error('Error getting session contracts:', error);
-        res.status(500).json({ error: 'Failed to get session contracts' });
-    }
-});
-
-// Send contract to client
-app.post('/api/contracts/:id/send', isAuthenticated, async (req, res) => {
-    const contractId = req.params.id;
-    const user = req.user;
-
-    try {
-        const contract = await contractManager.getContract(contractId);
-        if (!contract) {
-            return res.status(404).json({ error: 'Contract not found' });
-        }
-
-        // Verify user owns this contract (use normalized user for unified account)
-        const normalizedUser = normalizeUserForLance(user);
-        if (contract.user_id !== normalizedUser.uid) {
-            return res.status(403).json({ error: 'Unauthorized access to contract' });
-        }
-
-        // Get session data to include phone number
-        const session = await getSessionById(contract.session_id);
-        
-        // Mark contract as sent
-        const updatedContract = await contractManager.sendContract(contractId);
-        
-        // Add session phone number to contract data
-        updatedContract.client_phone = session?.phoneNumber || session?.phone_number || null;
-
-        // Generate signing URL - Always use HTTPS for security
-        const host = req.get('host');
-        let baseUrl;
-
-        // Check if we're on a Replit domain or localhost
-        if (host && (host.includes('localhost') || host.includes('127.0.0.1'))) {
-            // For localhost, check if we have Replit domains available
-            const replitDomains = process.env.REPLIT_DOMAINS;
-            if (replitDomains) {
-                const domains = replitDomains.split(',');
-                baseUrl = `https://${domains[0]}`;
-            } else {
-                // Fallback to HTTP for true localhost development
-                baseUrl = `http://${host}`;
-            }
-        } else {
-            // For all production domains (including Replit), always use HTTPS
-            baseUrl = `https://${host}`;
-        }
-
-        const signingUrl = `${baseUrl}/contract-signing.html?token=${contract.access_token}`;
-        console.log(`🔗 Generated signing URL: ${signingUrl}`);
-
-        // Prepare email data for default email client
-        const emailSubject = `Contract Ready for Signature - ${contract.contract_title}`;
-        const emailBody = `Hello ${contract.client_name},
-
-Your photography contract is ready for your electronic signature.
-
-Contract Details:
-- Title: ${contract.contract_title}
-- Photographer: ${contract.photographer_name}
-- Created: ${new Date(contract.created_at).toLocaleDateString()}
-
-Please click the following link to review and sign your contract:
-${signingUrl}
-
-Please review the contract carefully and sign electronically using the link above. Once signed, you'll receive a copy for your records.
-
-If you have any questions, please don't hesitate to contact us.
-
-Best regards,
-The Legacy Photography
-Email: ${contract.photographer_email}
-Creating lasting memories through professional photography`;
-
-        console.log(` Email template prepared for: ${contract.client_email}`);
-
-        res.json({
-            message: 'Contract email template ready',
-            signingUrl: signingUrl,
-            contract: {
-                ...updatedContract,
-                client_phone: updatedContract.client_phone || 'No phone available'
-            },
-            emailData: {
-                to: contract.client_email,
-                subject: emailSubject,
-                body: emailBody
-            }
-        });
-    } catch (error) {
-        console.error('Error sending contract:', error);
-        res.status(500).json({ error: 'Failed to send contract' });
-    }
-});
-
-// View contract (client access)
+// View contract (client access) - now handled by contract-routes.js
+/*
 app.get('/api/contracts/view/:token', async (req, res) => {
-    const accessToken = req.params.token;
-
-    try {
-        const contract = await contractManager.getContractByToken(accessToken);
-        if (!contract) {
-            return res.status(404).json({ error: 'Contract not found or access denied' });
-        }
-
-        res.json(contract);
-    } catch (error) {
-        console.error('Error viewing contract:', error);
-        res.status(500).json({ error: 'Failed to view contract' });
-    }
-});
-
-// Sign contract (client endpoint)
-app.post('/api/contracts/:id/sign', async (req, res) => {
-    const contractId = req.params.id;
-    const { signature, access_token } = req.body;
-
-    try {
-        // Verify access token
-        const contract = await contractManager.getContractByToken(access_token);
-        if (!contract || contract.id !== contractId) {
-            return res.status(404).json({ error: 'Contract not found or access denied' });
-        }
-
-        if (contract.status === 'signed') {
-            return res.status(400).json({ error: 'Contract already signed' });
-        }
-
-        // Sign the contract
-        const signedContract = await contractManager.signContract(contractId, signature);
-
-        // Update session contract status
-        await updateSession(contract.session_id, { contractSigned: true });
-
-        res.json({
-            message: 'Contract signed successfully',
-            contract: signedContract
-        });
-    } catch (error) {
-        console.error('Error signing contract:', error);
-        res.status(500).json({ error: 'Failed to sign contract' });
-    }
-});
-
-// Update contract
-app.put('/api/contracts/:id', isAuthenticated, async (req, res) => {
-    try {
-        const contractId = req.params.id;
-        const { title, content } = req.body;
-        const user = req.user;
-
-        if (!title || !content) {
-            return res.status(400).json({ error: 'Title and content are required' });
-        }
-
-        const contract = await contractManager.getContract(contractId);
-        if (!contract) {
-            return res.status(404).json({ error: 'Contract not found' });
-        }
-
-        // Verify user owns this contract through session ownership
-        const session = await getSessionById(contract.session_id);
-        if (!session) {
-            return res.status(404).json({ error: 'Session not found' });
-        }
-
-        const normalizedUser = normalizeUserForLance(user);
-        if (session.userId !== normalizedUser.uid) {
-            return res.status(403).json({ error: 'Unauthorized access to contract' });
-        }
-
-        const updatedContract = await contractManager.updateContract(contractId, title, content);
-
-        res.json({
-            message: 'Contract updated successfully',
-            contract: updatedContract
-        });
-    } catch (error) {
-        console.error('Error updating contract:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Create custom contract
-app.post('/api/sessions/:id/contracts/custom', isAuthenticated, async (req, res) => {
-    try {
-        const sessionId = req.params.id;
-        const { title, content } = req.body;
-        const user = req.user;
-
-        if (!title || !content) {
-            return res.status(400).json({ error: 'Title and content are required' });
-        }
-
-        const session = await getSessionById(sessionId);
-        if (!session) {
-            return res.status(404).json({ error: 'Session not found' });
-        }
-
-        // Verify user owns this session
-        const normalizedUser = normalizeUserForLance(user);
-        if (session.userId !== normalizedUser.uid) {
-            return res.status(403).json({ error: 'Unauthorized access to session' });
-        }
-
-        const contract = await contractManager.createCustomContract(sessionId, {
-            title,
-            content,
-            userId: user.uid
-        }, session);
-
-        res.json({
-            message: 'Custom contract created successfully',
-            contract
-        });
-    } catch (error) {
-        console.error('Error creating custom contract:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Contract email sending endpoint
-app.post('/api/contracts/send-email', isAuthenticated, async (req, res) => {
-    try {
-        const { contractId, clientEmail, clientName, signingUrl } = req.body;
-        
-        if (!contractId || !clientEmail || !signingUrl) {
-            return res.status(400).json({ error: 'Missing required fields' });
-        }
-        
-        // Get contract details
-        const contractResult = await pool.query('SELECT * FROM contracts WHERE id = $1', [contractId]);
-        if (contractResult.rows.length === 0) {
-            return res.status(404).json({ error: 'Contract not found' });
-        }
-        
-        const contract = contractResult.rows[0];
-        
-        // Prepare email content
-        const emailContent = {
-            to: clientEmail,
-            from: {
-                email: 'lance@thelegacyphotography.com',
-                name: 'Lance - The Legacy Photography'
-            },
-            subject: `Contract Signing Required - ${contract.contract_title}`,
-            html: `
-                <div style="font-family: 'Georgia', serif; max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow: hidden;">
-                    <div style="background: linear-gradient(135deg, #8b7355 0%, #a08968 100%); color: white; padding: 30px; text-align: center;">
-                        <h1 style="margin: 0; font-size: 28px; font-weight: normal;">The Legacy Photography</h1>
-                        <p style="margin: 10px 0 0 0; opacity: 0.9;">Contract Ready for Signature</p>
-                    </div>
-                    
-                    <div style="padding: 40px 30px;">
-                        <p style="font-size: 18px; color: #333; margin-bottom: 25px;">Hi ${clientName || 'there'}!</p>
-                        
-                        <p style="color: #555; line-height: 1.6; margin-bottom: 25px;">
-                            Your photography contract is ready for review and electronic signature. This secure document outlines all the details of our photography services.
-                        </p>
-                        
-                        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 25px 0;">
-                            <h3 style="color: #8b7355; margin: 0 0 15px 0;">Contract Details:</h3>
-                            <p style="margin: 5px 0; color: #666;"><strong>Title:</strong> ${contract.contract_title}</p>
-                            <p style="margin: 5px 0; color: #666;"><strong>Client:</strong> ${contract.client_name}</p>
-                        </div>
-                        
-                        <div style="text-align: center; margin: 30px 0;">
-                            <a href="${signingUrl}" style="display: inline-block; background: linear-gradient(135deg, #8b7355 0%, #a08968 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold;">
-                                📝 Review & Sign Contract
-                            </a>
-                        </div>
-                        
-                        <p style="color: #666; line-height: 1.6; margin-bottom: 25px;">
-                            Please review all terms carefully. If you have any questions about the contract, feel free to reach out before signing.
-                        </p>
-                        
-                        <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px;">
-                            <p style="color: #888; font-size: 14px; margin: 0;">
-                                Best regards,<br>
-                                Lance Casselman<br>
-                                The Legacy Photography<br>
-                                📧 lance@thelegacyphotography.com
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            `
-        };
-        
-        // Send email using SendGrid
-        await sgMail.send(emailContent);
-        
-        // Update contract status
-        await pool.query(`
-            UPDATE contracts SET 
-                status = 'sent',
-                sent_at = NOW(),
-                updated_at = NOW()
-            WHERE id = $1
-        `, [contractId]);
-        
-        console.log(`✅ Contract email sent successfully to ${clientEmail}`);
-        res.json({ 
-            success: true, 
-            message: 'Contract email sent successfully!',
-            sentTo: clientEmail 
-        });
-        
-    } catch (error) {
-        console.error('❌ Error sending contract email:', error);
-        res.status(500).json({ 
-            error: 'Failed to send contract email',
-            details: error.message 
-        });
-    }
-});
-
-// Contract SMS sending endpoint
-app.post('/api/contracts/send-sms', isAuthenticated, async (req, res) => {
-    try {
-        const { contractId, clientPhone, clientName, signingUrl } = req.body;
-        
-        if (!contractId || !clientPhone || !signingUrl) {
-            return res.status(400).json({ error: 'Missing required fields' });
-        }
-        
-        // Import Twilio (check if configured)
-        const twilio = require('twilio');
-        const accountSid = process.env.TWILIO_ACCOUNT_SID;
-        const authToken = process.env.TWILIO_AUTH_TOKEN;
-        const twilioPhone = process.env.TWILIO_PHONE_NUMBER;
-        
-        if (!accountSid || !authToken || !twilioPhone) {
-            return res.status(400).json({ 
-                error: 'SMS service not configured. Please contact support to enable SMS functionality.' 
-            });
-        }
-        
-        const client = twilio(accountSid, authToken);
-        
-        // Clean phone number
-        const cleanPhone = clientPhone.replace(/[^\d]/g, '');
-        const formattedPhone = cleanPhone.length === 10 ? `+1${cleanPhone}` : `+${cleanPhone}`;
-        
-        // Prepare SMS message
-        const message = `Hi ${clientName || 'there'}! Your photography contract is ready for signing. Please review and sign: ${signingUrl}\n\n- Lance, The Legacy Photography`;
-        
-        // Send SMS
-        const twilioMessage = await client.messages.create({
-            body: message,
-            from: twilioPhone,
-            to: formattedPhone
-        });
-        
-        // Update contract status
-        await pool.query(`
-            UPDATE contracts SET 
-                status = 'sent',
-                sent_at = NOW(),
-                updated_at = NOW()
-            WHERE id = $1
-        `, [contractId]);
-        
-        console.log(`✅ Contract SMS sent successfully to ${formattedPhone}. SID: ${twilioMessage.sid}`);
-        res.json({ 
-            success: true, 
-            message: 'Contract SMS sent successfully!',
-            sentTo: formattedPhone,
-            messageSid: twilioMessage.sid
-        });
-        
-    } catch (error) {
-        console.error('❌ Error sending contract SMS:', error);
-        res.status(500).json({ 
-            error: 'Failed to send contract SMS',
-            details: error.message 
-        });
-    }
-});
-
-// Get individual contract details
-app.get('/api/contracts/:id', isAuthenticated, async (req, res) => {
-    const contractId = req.params.id;
-
-    try {
-        const contract = await contractManager.getContract(contractId);
-        res.json(contract);
-    } catch (error) {
-        console.error('Error getting contract:', error);
-        res.status(500).json({ error: 'Failed to get contract' });
-    }
-});
-
-// Update contract content
-app.put('/api/contracts/:id', isAuthenticated, async (req, res) => {
-    const contractId = req.params.id;
-    const { title, content } = req.body;
-
-    if (!title || !content) {
-        return res.status(400).json({ error: 'Title and content are required' });
-    }
-
-    try {
-        const updatedContract = await contractManager.updateContract(contractId, title, content);
-        res.json(updatedContract);
-    } catch (error) {
-        console.error('Error updating contract:', error);
-        res.status(500).json({ error: 'Failed to update contract' });
-    }
-});
-
-// Setup wizard endpoint - save onboarding data
-app.post('/api/setup-wizard', isAuthenticated, async (req, res) => {
-    try {
-        const userId = req.user.uid;
-        const wizardData = req.body;
-
-        console.log('📋 Processing onboarding wizard data for user:', userId);
-
-        // Create business_settings table if it doesn't exist
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS business_settings (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                user_id TEXT NOT NULL UNIQUE,
-                business_name TEXT,
-                location TEXT,
-                phone TEXT,
-                email TEXT,
-                website TEXT,
-                logo_filename TEXT,
-                theme_color TEXT DEFAULT '#d4af37',
-                tagline TEXT,
-                photography_style TEXT,
-                currency TEXT DEFAULT 'USD',
-                tax_rate DECIMAL,
-                enable_email BOOLEAN DEFAULT true,
-                enable_sms BOOLEAN DEFAULT false,
-                auto_reminders BOOLEAN DEFAULT true,
-                welcome_email_template TEXT,
-                onboarding_completed BOOLEAN DEFAULT true,
-                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
-
-        // Create session_types table if it doesn't exist
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS session_types (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                user_id TEXT NOT NULL,
-                name TEXT NOT NULL,
-                price DECIMAL NOT NULL,
-                duration INTEGER NOT NULL,
-                deliverables TEXT,
-                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-            )
-        `);
-
-        // Save business settings
-        const businessInfo = wizardData.businessInfo || {};
-        const branding = wizardData.branding || {};
-        const stripe = wizardData.stripe || {};
-        const communication = wizardData.communication || {};
-
-        await pool.query(`
-            INSERT INTO business_settings (
-                user_id, business_name, location, phone, email, website,
-                theme_color, tagline, photography_style, currency, tax_rate,
-                enable_email, enable_sms, auto_reminders, welcome_email_template, onboarding_completed
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
-            ON CONFLICT (user_id) DO UPDATE SET
-                business_name = EXCLUDED.business_name,
-                location = EXCLUDED.location,
-                phone = EXCLUDED.phone,
-                email = EXCLUDED.email,
-                website = EXCLUDED.website,
-                theme_color = EXCLUDED.theme_color,
-                tagline = EXCLUDED.tagline,
+//     const accessToken = req.params.token;
+// 
+//     try {
+//         const contract = await contractManager.getContractByToken(accessToken);
+//         if (!contract) {
+//             return res.status(404).json({ error: 'Contract not found or access denied' });
+//         }
+// 
+//         res.json(contract);
+//     } catch (error) {
+//         console.error('Error viewing contract:', error);
+//         res.status(500).json({ error: 'Failed to view contract' });
+//     }
+// });
+// 
+// // Sign contract (client endpoint)
+// app.post('/api/contracts/:id/sign', async (req, res) => {
+//     const contractId = req.params.id;
+//     const { signature, access_token } = req.body;
+// 
+//     try {
+//         // Verify access token
+//         const contract = await contractManager.getContractByToken(access_token);
+//         if (!contract || contract.id !== contractId) {
+//             return res.status(404).json({ error: 'Contract not found or access denied' });
+//         }
+// 
+//         if (contract.status === 'signed') {
+//             return res.status(400).json({ error: 'Contract already signed' });
+//         }
+// 
+//         // Sign the contract
+//         const signedContract = await contractManager.signContract(contractId, signature);
+// 
+//         // Update session contract status
+//         await updateSession(contract.session_id, { contractSigned: true });
+// 
+//         res.json({
+//             message: 'Contract signed successfully',
+//             contract: signedContract
+//         });
+//     } catch (error) {
+//         console.error('Error signing contract:', error);
+//         res.status(500).json({ error: 'Failed to sign contract' });
+//     }
+// });
+// 
+// // Update contract
+// app.put('/api/contracts/:id', isAuthenticated, async (req, res) => {
+//     try {
+//         const contractId = req.params.id;
+//         const { title, content } = req.body;
+//         const user = req.user;
+// 
+//         if (!title || !content) {
+//             return res.status(400).json({ error: 'Title and content are required' });
+//         }
+// 
+//         const contract = await // contractManager.getContract(contractId);
+//         if (!contract) {
+//             return res.status(404).json({ error: 'Contract not found' });
+//         }
+// 
+//         // Verify user owns this contract through session ownership
+//         const session = await getSessionById(contract.session_id);
+//         if (!session) {
+//             return res.status(404).json({ error: 'Session not found' });
+//         }
+// 
+//         const normalizedUser = normalizeUserForLance(user);
+//         if (session.userId !== normalizedUser.uid) {
+//             return res.status(403).json({ error: 'Unauthorized access to contract' });
+//         }
+// 
+//         const updatedContract = await // contractManager.updateContract(contractId, title, content);
+// 
+//         res.json({
+//             message: 'Contract updated successfully',
+//             contract: updatedContract
+//         });
+//     } catch (error) {
+//         console.error('Error updating contract:', error);
+//         res.status(500).json({ error: 'Internal server error' });
+//     }
+// });
+// 
+// // Create custom contract
+// app.post('/api/sessions/:id/contracts/custom', isAuthenticated, async (req, res) => {
+//     try {
+//         const sessionId = req.params.id;
+//         const { title, content } = req.body;
+//         const user = req.user;
+// 
+//         if (!title || !content) {
+//             return res.status(400).json({ error: 'Title and content are required' });
+//         }
+// 
+//         const session = await getSessionById(sessionId);
+//         if (!session) {
+//             return res.status(404).json({ error: 'Session not found' });
+//         }
+// 
+//         // Verify user owns this session
+//         const normalizedUser = normalizeUserForLance(user);
+//         if (session.userId !== normalizedUser.uid) {
+//             return res.status(403).json({ error: 'Unauthorized access to session' });
+//         }
+// 
+//         const contract = await contractManager.createCustomContract(sessionId, {
+//             title,
+//             content,
+//             userId: user.uid
+//         }, session);
+// 
+//         res.json({
+//             message: 'Custom contract created successfully',
+//             contract
+//         });
+//     } catch (error) {
+//         console.error('Error creating custom contract:', error);
+//         res.status(500).json({ error: 'Internal server error' });
+//     }
+// });
+// 
+// // Contract email sending endpoint
+// app.post('/api/contracts/send-email', isAuthenticated, async (req, res) => {
+//     try {
+//         const { contractId, clientEmail, clientName, signingUrl } = req.body;
+//         
+//         if (!contractId || !clientEmail || !signingUrl) {
+//             return res.status(400).json({ error: 'Missing required fields' });
+//         }
+//         
+//         // Get contract details
+//         const contractResult = await pool.query('SELECT * FROM contracts WHERE id = $1', [contractId]);
+//         if (contractResult.rows.length === 0) {
+//             return res.status(404).json({ error: 'Contract not found' });
+//         }
+//         
+//         const contract = contractResult.rows[0];
+//         
+//         // Prepare email content
+//         const emailContent = {
+//             to: clientEmail,
+//             from: {
+//                 email: 'lance@thelegacyphotography.com',
+//                 name: 'Lance - The Legacy Photography'
+//             },
+//             subject: `Contract Signing Required - ${contract.contract_title}`,
+//             html: `
+//                 <div style="font-family: 'Georgia', serif; max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow: hidden;">
+//                     <div style="background: linear-gradient(135deg, #8b7355 0%, #a08968 100%); color: white; padding: 30px; text-align: center;">
+//                         <h1 style="margin: 0; font-size: 28px; font-weight: normal;">The Legacy Photography</h1>
+//                         <p style="margin: 10px 0 0 0; opacity: 0.9;">Contract Ready for Signature</p>
+//                     </div>
+//                     
+//                     <div style="padding: 40px 30px;">
+//                         <p style="font-size: 18px; color: #333; margin-bottom: 25px;">Hi ${clientName || 'there'}!</p>
+//                         
+//                         <p style="color: #555; line-height: 1.6; margin-bottom: 25px;">
+//                             Your photography contract is ready for review and electronic signature. This secure document outlines all the details of our photography services.
+//                         </p>
+//                         
+//                         <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 25px 0;">
+//                             <h3 style="color: #8b7355; margin: 0 0 15px 0;">Contract Details:</h3>
+//                             <p style="margin: 5px 0; color: #666;"><strong>Title:</strong> ${contract.contract_title}</p>
+//                             <p style="margin: 5px 0; color: #666;"><strong>Client:</strong> ${contract.client_name}</p>
+//                         </div>
+//                         
+//                         <div style="text-align: center; margin: 30px 0;">
+//                             <a href="${signingUrl}" style="display: inline-block; background: linear-gradient(135deg, #8b7355 0%, #a08968 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold;">
+//                                 📝 Review & Sign Contract
+//                             </a>
+//                         </div>
+//                         
+//                         <p style="color: #666; line-height: 1.6; margin-bottom: 25px;">
+//                             Please review all terms carefully. If you have any questions about the contract, feel free to reach out before signing.
+//                         </p>
+//                         
+//                         <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px;">
+//                             <p style="color: #888; font-size: 14px; margin: 0;">
+//                                 Best regards,<br>
+//                                 Lance Casselman<br>
+//                                 The Legacy Photography<br>
+//                                 📧 lance@thelegacyphotography.com
+//                             </p>
+//                         </div>
+//                     </div>
+//                 </div>
+//             `
+//         };
+//         
+//         // Send email using SendGrid
+//         await sgMail.send(emailContent);
+//         
+//         // Update contract status
+//         await pool.query(`
+//             UPDATE contracts SET 
+//                 status = 'sent',
+//                 sent_at = NOW(),
+//                 updated_at = NOW()
+//             WHERE id = $1
+//         `, [contractId]);
+//         
+//         console.log(`✅ Contract email sent successfully to ${clientEmail}`);
+//         res.json({ 
+//             success: true, 
+//             message: 'Contract email sent successfully!',
+//             sentTo: clientEmail 
+//         });
+//         
+//     } catch (error) {
+//         console.error('❌ Error sending contract email:', error);
+//         res.status(500).json({ 
+//             error: 'Failed to send contract email',
+//             details: error.message 
+//         });
+//     }
+// });
+// 
+// // Contract SMS sending endpoint
+// app.post('/api/contracts/send-sms', isAuthenticated, async (req, res) => {
+//     try {
+//         const { contractId, clientPhone, clientName, signingUrl } = req.body;
+//         
+//         if (!contractId || !clientPhone || !signingUrl) {
+//             return res.status(400).json({ error: 'Missing required fields' });
+//         }
+//         
+//         // Import Twilio (check if configured)
+//         const twilio = require('twilio');
+//         const accountSid = process.env.TWILIO_ACCOUNT_SID;
+//         const authToken = process.env.TWILIO_AUTH_TOKEN;
+//         const twilioPhone = process.env.TWILIO_PHONE_NUMBER;
+//         
+//         if (!accountSid || !authToken || !twilioPhone) {
+//             return res.status(400).json({ 
+//                 error: 'SMS service not configured. Please contact support to enable SMS functionality.' 
+//             });
+//         }
+//         
+//         const client = twilio(accountSid, authToken);
+//         
+//         // Clean phone number
+//         const cleanPhone = clientPhone.replace(/[^\d]/g, '');
+//         const formattedPhone = cleanPhone.length === 10 ? `+1${cleanPhone}` : `+${cleanPhone}`;
+//         
+//         // Prepare SMS message
+//         const message = `Hi ${clientName || 'there'}! Your photography contract is ready for signing. Please review and sign: ${signingUrl}\n\n- Lance, The Legacy Photography`;
+//         
+//         // Send SMS
+//         const twilioMessage = await client.messages.create({
+//             body: message,
+//             from: twilioPhone,
+//             to: formattedPhone
+//         });
+//         
+//         // Update contract status
+//         await pool.query(`
+//             UPDATE contracts SET 
+//                 status = 'sent',
+//                 sent_at = NOW(),
+//                 updated_at = NOW()
+//             WHERE id = $1
+//         `, [contractId]);
+//         
+//         console.log(`✅ Contract SMS sent successfully to ${formattedPhone}. SID: ${twilioMessage.sid}`);
+//         res.json({ 
+//             success: true, 
+//             message: 'Contract SMS sent successfully!',
+//             sentTo: formattedPhone,
+//             messageSid: twilioMessage.sid
+//         });
+//         
+//     } catch (error) {
+//         console.error('❌ Error sending contract SMS:', error);
+//         res.status(500).json({ 
+//             error: 'Failed to send contract SMS',
+//             details: error.message 
+//         });
+//     }
+// });
+// 
+// // Get individual contract details
+// app.get('/api/contracts/:id', isAuthenticated, async (req, res) => {
+//     const contractId = req.params.id;
+// 
+//     try {
+//         const contract = await contractManager.getContract(contractId);
+//         res.json(contract);
+//     } catch (error) {
+//         console.error('Error getting contract:', error);
+//         res.status(500).json({ error: 'Failed to get contract' });
+//     }
+// });
+// 
+// // Update contract content
+// app.put('/api/contracts/:id', isAuthenticated, async (req, res) => {
+//     const contractId = req.params.id;
+//     const { title, content } = req.body;
+// 
+//     if (!title || !content) {
+//         return res.status(400).json({ error: 'Title and content are required' });
+//     }
+// 
+//     try {
+//         const updatedContract = await contractManager.updateContract(contractId, title, content);
+//         res.json(updatedContract);
+//     } catch (error) {
+//         console.error('Error updating contract:', error);
+//         res.status(500).json({ error: 'Failed to update contract' });
+//     }
+// });
+// 
+// // Setup wizard endpoint - save onboarding data
+// app.post('/api/setup-wizard', isAuthenticated, async (req, res) => {
+//     try {
+//         const userId = req.user.uid;
+//         const wizardData = req.body;
+// 
+//         console.log('📋 Processing onboarding wizard data for user:', userId);
+// 
+//         // Create business_settings table if it doesn't exist
+//         await pool.query(`
+//             CREATE TABLE IF NOT EXISTS business_settings (
+//                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+//                 user_id TEXT NOT NULL UNIQUE,
+//                 business_name TEXT,
+//                 location TEXT,
+//                 phone TEXT,
+//                 email TEXT,
+//                 website TEXT,
+//                 logo_filename TEXT,
+//                 theme_color TEXT DEFAULT '#d4af37',
+//                 tagline TEXT,
+//                 photography_style TEXT,
+//                 currency TEXT DEFAULT 'USD',
+//                 tax_rate DECIMAL,
+//                 enable_email BOOLEAN DEFAULT true,
+//                 enable_sms BOOLEAN DEFAULT false,
+//                 auto_reminders BOOLEAN DEFAULT true,
+//                 welcome_email_template TEXT,
+//                 onboarding_completed BOOLEAN DEFAULT true,
+//                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+//                 updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+//             )
+//         `);
+// 
+//         // Create session_types table if it doesn't exist
+//         await pool.query(`
+//             CREATE TABLE IF NOT EXISTS session_types (
+//                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+//                 user_id TEXT NOT NULL,
+//                 name TEXT NOT NULL,
+//                 price DECIMAL NOT NULL,
+//                 duration INTEGER NOT NULL,
+//                 deliverables TEXT,
+//                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+//             )
+//         `);
+// 
+//         // Save business settings
+//         const businessInfo = wizardData.businessInfo || {};
+//         const branding = wizardData.branding || {};
+//         const stripe = wizardData.stripe || {};
+//         const communication = wizardData.communication || {};
+// 
+//         await pool.query(`
+//             INSERT INTO business_settings (
+//                 user_id, business_name, location, phone, email, website,
+//                 theme_color, tagline, photography_style, currency, tax_rate,
+//                 enable_email, enable_sms, auto_reminders, welcome_email_template, onboarding_completed
+//             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+//             ON CONFLICT (user_id) DO UPDATE SET
+//                 business_name = EXCLUDED.business_name,
+//                 location = EXCLUDED.location,
+//                 phone = EXCLUDED.phone,
+//                 email = EXCLUDED.email,
+//                 website = EXCLUDED.website,
+//                 theme_color = EXCLUDED.theme_color,
+//                 tagline = EXCLUDED.tagline,
                 photography_style = EXCLUDED.photography_style,
                 currency = EXCLUDED.currency,
                 tax_rate = EXCLUDED.tax_rate,
@@ -8659,90 +8662,6 @@ app.post('/api/publishStaticSite', isAuthenticated, requirePremium, async (req, 
     }
 });
 
-// Generate premium static site HTML with advanced features
-function generatePremiumStaticSite(config, username) {
-    const themeStyles = getPremiumThemeStyles(config.theme || 'classic');
-
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${config.title || config.businessName || "Professional Photography"}</title>
-    <meta name="description" content="${config.welcomeMessage || 'Professional photography services'}">
-    <meta name="keywords" content="photography, professional photographer, ${config.businessName || ''}">
-
-    <!-- Premium SEO Meta Tags -->
-    <meta property="og:title" content="${config.title || config.businessName}">
-    <meta property="og:description" content="${config.welcomeMessage}">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://photomanagementsystem.com/site/${username}">
-
-    <!-- Premium Theme Styles -->
-    <style>
-        ${themeStyles}
-
-        /* Premium Analytics Tracking */
-        .analytics-pixel { display: none; }
-
-        /* Premium Mobile Optimizations */
-        @media (max-width: 768px) {
-            .container { padding: 1rem; }
-            .header h1 { font-size: 2rem; }
-            .contact-btn { padding: 12px 20px; margin: 5px 0; display: block; }
-        }
-    </style>
-
-    <!-- Premium Analytics (Development Mode) -->
-    ${DEV_MODE ? '<!-- Analytics disabled in DEV_MODE -->' : '<!-- Premium Analytics Code Here -->'}
-</head>
-<body class="theme-${config.theme || 'classic'}">
-    <div class="container">
-        <header class="header">
-            <h1>${config.title || config.businessName || "Photography Studio"}</h1>
-            ${config.profileImage ? `<img src="${config.profileImage}" alt="${config.title}" class="profile-image">` : ''}
-            <p class="welcome-message">${config.welcomeMessage || "Welcome to our photography studio"}</p>
-        </header>
-
-        <main class="content-section">
-            <div class="contact-info">
-                <h2>Get In Touch</h2>
-                <p>Ready to capture your special moments? Let's create something beautiful together.</p>
-                <div class="contact-buttons">
-                    <a href="mailto:lance@thelegacyphotography.com" class="contact-btn email"> Send Email</a>
-                    <a href="tel:8434851315" class="contact-btn phone">📞 Call Now</a>
-                    <a href="sms:8434851315" class="contact-btn sms">💬 Text Message</a>
-                </div>
-            </div>
-        </main>
-
-        <footer class="footer">
-            <p>© ${new Date().getFullYear()} ${config.title || config.businessName} | Professional Photography Services</p>
-            <p class="powered-by">Powered by <a href="https://photomanagementsystem.com" target="_blank">Photography Management System</a></p>
-            <div class="analytics-pixel" data-site="${username}"></div>
-        </footer>
-    </div>
-
-    <!-- Premium Features Script -->
-    <script>
-        // Premium contact form analytics
-        document.querySelectorAll('.contact-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                console.log('Contact interaction:', this.className);
-                // Premium analytics tracking would go here
-            });
-        });
-
-        // Premium mobile optimizations
-        if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-            document.body.classList.add('mobile-device');
-        }
-    </script>
-</body>
-</html>`;
-}
-
-// Premium theme styles generator
 function getPremiumThemeStyles(theme) {
     const baseStyles = `
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -9447,6 +9366,9 @@ async function startServer() {
 
     // Start automated payment scheduler
     paymentScheduler.start();
+    
+    // Initialize contract routes
+    createContractRoutes(app, pool);
 
     const server = app.listen(PORT, '0.0.0.0', () => {
         console.log(` Photography Management System running on http://0.0.0.0:${PORT}`);
@@ -10642,200 +10564,5 @@ function generateIndexHtml(layoutHtml, selectedFont, isDarkTheme) {
 </html>`;
 }
 
-function generateStylesCSS(selectedFont, isDarkTheme) {
-    return `/* Website Builder Export Styles */
-
-/* CSS Reset */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-/* Base styles */
-body {
-    font-family: '${selectedFont}', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    line-height: 1.6;
-    color: ${isDarkTheme ? '#f0f0f0' : '#333'};
-    background-color: ${isDarkTheme ? '#1a1a1a' : '#ffffff'};
-}
-
-.website-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-/* Block styles */
-.block {
-    margin-bottom: 30px;
-    padding: 20px;
-    background: ${isDarkTheme ? '#2a2a2a' : '#ffffff'};
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, ${isDarkTheme ? '0.3' : '0.1'});
-}
-
-.block h1, .block h2, .block h3, .block h4, .block h5, .block h6 {
-    margin-bottom: 15px;
-    color: ${isDarkTheme ? '#ffffff' : '#2c3e50'};
-}
-
-.block p {
-    margin-bottom: 15px;
-    line-height: 1.7;
-}
-
-/* Image block styles */
-.image-block {
-    text-align: center;
-    padding: 10px;
-}
-
-.image-block img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 4px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, ${isDarkTheme ? '0.4' : '0.1'});
-}
-
-.image-caption {
-    font-size: 14px;
-    color: ${isDarkTheme ? '#ccc' : '#666'};
-    text-align: center;
-    margin-top: 8px;
-    font-style: italic;
-}
-
-/* Responsive design */
-@media (max-width: 768px) {
-    .website-container {
-        padding: 10px;
-    }
-    
-    .block {
-        margin-bottom: 20px;
-        padding: 15px;
-    }
-}
-
-/* Dark theme overrides */
-${isDarkTheme ? `
-body.dark {
-    background-color: #1a1a1a;
-    color: #f0f0f0;
-}
-
-body.dark .block {
-    background: #2a2a2a;
-    border: 1px solid #3a3a3a;
-}
-
-body.dark h1, body.dark h2, body.dark h3, 
-body.dark h4, body.dark h5, body.dark h6 {
-    color: #ffffff;
-}
-` : ''}`;
-}
-
-// Multi-page ZIP Export endpoint
-app.post('/api/export/multi-page-zip', isAuthenticated, async (req, res) => {
-    try {
-        const { pages, navigationOrder, navigationLabels, selectedFont, isDarkTheme } = req.body;
-        const userId = req.session.user.uid;
-        
-        console.log('Starting multi-page ZIP export for user:', userId);
-        
-        // Create ZIP archive
-        const archive = archiver('zip', {
-            zlib: { level: 9 }
-        });
-        
-        // Set response headers
-        res.setHeader('Content-Type', 'application/zip');
-        res.setHeader('Content-Disposition', 'attachment; filename="multi-page-website.zip"');
-        
-        // Pipe archive to response
-        archive.pipe(res);
-        
-        // Generate shared styles.css
-        const stylesCSS = generateMultiPageStylesCSS(selectedFont, isDarkTheme);
-        archive.append(stylesCSS, { name: 'styles.css' });
-        
-        // Generate navigation HTML
-        const navHTML = generateNavigationHTML(navigationOrder, navigationLabels);
-        
-        // Process each page
-        const allImageUrls = new Set();
-        
-        for (const pageId of Object.keys(pages)) {
-            const page = pages[pageId];
-            
-            // Extract images from this page
-            const pageImageUrls = extractImageUrlsFromHTML(page.content);
-            pageImageUrls.forEach(url => allImageUrls.add(url));
-            
-            // Process HTML and update image paths
-            let processedHTML = page.content;
-            
-            // Generate complete HTML file for this page
-            const fileName = pageId === 'home' ? 'index.html' : `${pageId}.html`;
-            const pageHTML = generateMultiPageHTML(processedHTML, navHTML, selectedFont, isDarkTheme, page.name);
-            
-            archive.append(pageHTML, { name: fileName });
-            console.log(`Generated page: ${fileName}`);
-        }
-        
-        // Copy all images to ZIP
-        for (const imageUrl of allImageUrls) {
-            try {
-                if (imageUrl.startsWith('/uploads/')) {
-                    const localPath = path.join(__dirname, imageUrl);
-                    
-                    if (fs.existsSync(localPath)) {
-                        const fileName = path.basename(imageUrl);
-                        const imageBuffer = fs.readFileSync(localPath);
-                        
-                        archive.append(imageBuffer, { name: `images/${fileName}` });
-                        console.log(`Added image: ${fileName}`);
-                    }
-                }
-            } catch (imageError) {
-                console.error(`Failed to process image ${imageUrl}:`, imageError);
-            }
-        }
-        
-        // Update all HTML files to use relative image paths
-        const finalPages = {};
-        for (const pageId of Object.keys(pages)) {
-            const page = pages[pageId];
-            let processedHTML = page.content;
-            
-            // Update image paths
-            for (const imageUrl of allImageUrls) {
-                if (imageUrl.startsWith('/uploads/')) {
-                    const fileName = path.basename(imageUrl);
-                    const escapedUrl = imageUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                    processedHTML = processedHTML.replace(
-                        new RegExp(`src="${escapedUrl}"`, 'g'),
-                        `src="images/${fileName}"`
-                    );
-                }
-            }
-            
-            const fileName = pageId === 'home' ? 'index.html' : `${pageId}.html`;
-            const pageHTML = generateMultiPageHTML(processedHTML, navHTML, selectedFont, isDarkTheme, page.name);
-            
-            archive.append(pageHTML, { name: fileName });
-        }
-        
-        // Finalize archive
-        await archive.finalize();
-        
-        console.log('Multi-page ZIP export completed');
-        
-    } catch (error) {
-        console.error('Multi-page ZIP export error:', error);
-        res.status(500).json({ error: 'Failed to generate multi-page ZIP export' });
-    }
-});
-
+*/
+// End of commented section
