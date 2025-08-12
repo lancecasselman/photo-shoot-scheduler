@@ -10,6 +10,21 @@ module.exports = function(pool, r2FileManager) {
   // Initialize contract tables on startup
   contractSystem.initializeTables().catch(console.error);
 
+// Get all contracts for current user
+router.get('/', async (req, res) => {
+  try {
+    const userId = req.user?.id || req.session?.userId;
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+    const contracts = await contractSystem.getAllContracts(userId);
+    res.json(contracts);
+  } catch (error) {
+    console.error('Error fetching contracts:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Get available templates
 router.get('/templates', async (req, res) => {
   try {
@@ -88,7 +103,7 @@ router.post('/send', async (req, res) => {
 
     // Get session and client data
     const sessionResult = await pool.query(
-      'SELECT * FROM sessions WHERE id = $1',
+      'SELECT * FROM photography_sessions WHERE id = $1',
       [contract.session_id]
     );
     const session = sessionResult.rows[0];

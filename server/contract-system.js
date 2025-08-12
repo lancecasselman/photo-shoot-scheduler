@@ -158,20 +158,35 @@ class ContractSystem {
       const htmlContent = template.sections.map(s => s.bodyHtml).join('\n');
       const contractTitle = title || template.defaultTitle;
 
+      // Get session data for required fields
+      const sessionResult = await client.query(
+        'SELECT * FROM photography_sessions WHERE id = $1',
+        [sessionId]
+      );
+      const session = sessionResult.rows[0];
+      
+      // Normalize user ID
+      const normalizedUserId = userId === 'BFZI4tzu4rdsiZZSK63cqZ5yohw2' ? '44735007' : userId;
+      
       const result = await client.query(`
         INSERT INTO contracts (
-          id, session_id, client_id, template_key, title, html, status, timeline
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          id, session_id, user_id, contract_type, contract_title, contract_content, 
+          status, client_name, client_email, photographer_name, photographer_email, access_token
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         RETURNING *
       `, [
         contractId,
         sessionId,
-        clientId || userId,
+        normalizedUserId,
         templateKey,
         contractTitle,
         htmlContent,
         'draft',
-        JSON.stringify([{ at: Date.now(), action: 'created', by: userId }])
+        session?.client_name || 'Client Name',
+        session?.email || 'client@example.com',
+        'The Legacy Photography',
+        'photographer@example.com',
+        crypto.randomBytes(16).toString('hex')
       ]);
 
       await client.query('COMMIT');
@@ -186,7 +201,7 @@ class ContractSystem {
 
   async getContractsBySession(sessionId) {
     const result = await this.pool.query(
-      'SELECT * FROM contracts WHERE session_id = $1 ORDER BY created_at DESC',
+      'SELECT id, session_id, user_id, contract_type, contract_title as title, contract_content as html, status, client_name, client_email, access_token FROM contracts WHERE session_id = $1 ORDER BY signed_date DESC NULLS FIRST',
       [sessionId]
     );
     return result.rows;
@@ -194,7 +209,7 @@ class ContractSystem {
 
   async getContract(contractId) {
     const result = await this.pool.query(
-      'SELECT * FROM contracts WHERE id = $1',
+      'SELECT id, session_id, user_id, contract_type, contract_title as title, contract_content as html, status, client_name, client_email, access_token FROM contracts WHERE id = $1',
       [contractId]
     );
     return result.rows[0];
@@ -321,14 +336,20 @@ class ContractSystem {
   }
 
   async updateContract(contractId, updates) {
-    const allowedFields = ['html', 'title', 'metadata'];
+    const fieldMapping = {
+      'html': 'contract_content',
+      'title': 'contract_title', 
+      'metadata': 'metadata'
+    };
+    
     const setClause = [];
     const values = [];
     let paramCount = 1;
 
     Object.keys(updates).forEach(key => {
-      if (allowedFields.includes(key)) {
-        setClause.push(`${key} = $${paramCount}`);
+      const dbField = fieldMapping[key];
+      if (dbField) {
+        setClause.push(`${dbField} = $${paramCount}`);
         values.push(updates[key]);
         paramCount++;
       }
@@ -341,9 +362,20 @@ class ContractSystem {
     values.push(contractId);
     
     await this.pool.query(
-      `UPDATE contracts SET ${setClause.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = $${paramCount}`,
+      `UPDATE contracts SET ${setClause.join(', ')} WHERE id = $${paramCount}`,
       values
     );
+  }
+
+  async getAllContracts(userId) {
+    // Normalize user ID to handle both Firebase and unified accounts
+    const normalizedUserId = userId === 'BFZI4tzu4rdsiZZSK63cqZ5yohw2' ? '44735007' : userId;
+    
+    const result = await this.pool.query(
+      'SELECT id, session_id, user_id, contract_type, contract_title as title, contract_content as html, status, client_name, client_email, access_token, signed_date FROM contracts WHERE user_id = $1 ORDER BY signed_date DESC NULLS FIRST',
+      [normalizedUserId]
+    );
+    return result.rows;
   }
 
   async deleteContract(contractId) {

@@ -4003,6 +4003,64 @@
             border-left-color: #28a745;
         }
 
+        /* Contracts Section Styles */
+        .contracts-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-lg);
+            flex-wrap: wrap;
+            gap: var(--spacing-md);
+        }
+
+        .contract-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .stat-card {
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-lg);
+            box-shadow: var(--shadow-soft);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            border-left: 4px solid var(--gold-muted);
+        }
+
+        .stat-icon {
+            font-size: 2rem;
+        }
+
+        .stat-content h4 {
+            margin: 0 0 var(--spacing-xs) 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .recent-contracts {
+            background: var(--bg-primary);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-lg);
+            margin-top: var(--spacing-lg);
+        }
+
+        .recent-contracts h3 {
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-md);
+            font-size: 1.2rem;
+        }
+
         .financial-card.expenses {
             border-left-color: #dc3545;
         }
@@ -9298,6 +9356,56 @@ END:VCALENDAR`;
                 loadMileageTrips();
             } else if (sectionName === 'aiAssistant') {
                 loadAIHistory();
+            } else if (sectionName === 'contracts') {
+                loadContractsOverview();
+            }
+        }
+
+        // Load Contracts Overview
+        async function loadContractsOverview() {
+            try {
+                const response = await fetch('/api/contracts');
+                if (response.ok) {
+                    const contracts = await response.json();
+                    
+                    // Calculate statistics
+                    const stats = {
+                        total: contracts.length,
+                        signed: contracts.filter(c => c.status === 'signed').length,
+                        sent: contracts.filter(c => c.status === 'sent' || c.status === 'viewed').length,
+                        draft: contracts.filter(c => c.status === 'draft').length
+                    };
+                    
+                    // Update stat cards
+                    document.getElementById('totalContracts').textContent = stats.total;
+                    document.getElementById('signedContracts').textContent = stats.signed;
+                    document.getElementById('sentContracts').textContent = stats.sent;
+                    document.getElementById('draftContracts').textContent = stats.draft;
+                    
+                    // Display recent contracts (max 5)
+                    const recentContracts = contracts.slice(0, 5);
+                    const listHTML = recentContracts.length > 0 ? recentContracts.map(contract => `
+                        <div style="padding: 15px; margin-bottom: 10px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid ${contract.status === 'signed' ? '#28a745' : contract.status === 'sent' || contract.status === 'viewed' ? '#ffc107' : '#6c757d'};">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <h4 style="margin: 0 0 5px 0; color: #333;">${contract.title || 'Untitled Contract'}</h4>
+                                    <p style="margin: 0; color: #666; font-size: 14px;">
+                                        Client: ${contract.client_name || 'N/A'} | 
+                                        Status: <span style="font-weight: bold; color: ${contract.status === 'signed' ? '#28a745' : contract.status === 'sent' || contract.status === 'viewed' ? '#ffc107' : '#6c757d'};">${contract.status.toUpperCase()}</span>
+                                    </p>
+                                </div>
+                                <button onclick="window.open('/app/contracts.html?contractId=${contract.id}', '_blank')" class="btn btn-sm btn-secondary" style="padding: 5px 10px; font-size: 12px;">
+                                    View
+                                </button>
+                            </div>
+                        </div>
+                    `).join('') : '<p style="color: #666; padding: 20px; text-align: center;">No contracts found. Create your first contract from a session.</p>';
+                    
+                    document.getElementById('recentContractsList').innerHTML = listHTML;
+                }
+            } catch (error) {
+                console.error('Error loading contracts:', error);
+                document.getElementById('recentContractsList').innerHTML = '<p style="color: #dc3545; padding: 20px; text-align: center;">Error loading contracts. Please try again.</p>';
             }
         }
 
@@ -11584,6 +11692,7 @@ END:VCALENDAR`;
                 <button class="business-nav-btn" onclick="showBusinessSection('aiAssistant')">🤖 AI Assistant</button>
                 <button class="business-nav-btn" onclick="showBusinessSection('expenses')">💰 Expense Tracker</button>
                 <button class="business-nav-btn" onclick="showBusinessSection('mileage')">🚗 Mileage Tracker</button>
+                <button class="business-nav-btn" onclick="showBusinessSection('contracts')">📄 Contracts</button>
                 <button class="business-nav-btn" onclick="showBusinessSection('reports')">📋 Reports</button>
             </div>
 
@@ -11978,6 +12087,58 @@ END:VCALENDAR`;
                     <div class="report-actions">
                         <button onclick="exportReportCSV()" class="export-btn">📊 Export CSV</button>
                         <button onclick="exportReportPDF()" class="export-btn">📄 Export PDF</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contracts Section -->
+            <div id="contractsSection" class="business-section">
+                <div class="contracts-header">
+                    <h2>📄 Contract Management</h2>
+                    <div class="contracts-actions">
+                        <button onclick="window.open('/app/contracts.html', '_blank')" class="btn btn-primary">
+                            Open Contract Manager
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="contracts-overview">
+                    <div class="contract-stats">
+                        <div class="stat-card">
+                            <div class="stat-icon">📝</div>
+                            <div class="stat-content">
+                                <h4>Total Contracts</h4>
+                                <div class="stat-value" id="totalContracts">0</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">✍️</div>
+                            <div class="stat-content">
+                                <h4>Signed</h4>
+                                <div class="stat-value" id="signedContracts">0</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">📤</div>
+                            <div class="stat-content">
+                                <h4>Sent</h4>
+                                <div class="stat-value" id="sentContracts">0</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">📋</div>
+                            <div class="stat-content">
+                                <h4>Draft</h4>
+                                <div class="stat-value" id="draftContracts">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="recent-contracts">
+                        <h3>Recent Contracts</h3>
+                        <div id="recentContractsList">
+                            <p style="color: #666; padding: 20px; text-align: center;">Loading contracts...</p>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -386,6 +386,8 @@
         document.addEventListener('DOMContentLoaded', async () => {
             if (sessionId) {
                 await loadSessionContracts();
+            } else {
+                await loadAllContracts();
             }
             
             // Set up filter tabs
@@ -398,6 +400,23 @@
             });
         });
         
+        async function loadAllContracts() {
+            try {
+                const response = await fetch('/api/contracts');
+                if (response.ok) {
+                    contracts = await response.json();
+                    displayContracts(contracts);
+                    
+                    // Select first contract if available
+                    if (contracts.length > 0) {
+                        selectContract(contracts[0]);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading contracts:', error);
+            }
+        }
+
         async function loadSessionContracts() {
             try {
                 const response = await fetch(`/api/contracts/session/${sessionId}`);
