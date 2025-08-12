@@ -4595,7 +4595,6 @@
                     <!-- Collapsible Filter Sections -->
                     <div id="status-filters" class="filter-dropdown" style="display: none; background: rgba(212,175,55,0.1); border-radius: 8px; padding: 15px; margin: 10px 0; border-left: 4px solid #d4af37;">
                         <div class="checkbox-filters" style="display: flex; gap: 20px; flex-wrap: wrap;">
-                            <label style="display: flex; align-items: center; gap: 8px; color: #333; font-weight: 500;"><input type="checkbox" id="filterContractSigned" onchange="filterSessions()" style="margin: 0;"> ✅ Contract Signed</label>
                             <label style="display: flex; align-items: center; gap: 8px; color: #333; font-weight: 500;"><input type="checkbox" id="filterPaid" onchange="filterSessions()" style="margin: 0;"> 💰 Paid</label>
                             <label style="display: flex; align-items: center; gap: 8px; color: #333; font-weight: 500;"><input type="checkbox" id="filterDelivered" onchange="filterSessions()" style="margin: 0;"> 📦 Delivered</label>
                         </div>
@@ -4698,10 +4697,7 @@
                 <div class="admin-checkboxes">
                     <h3>Admin Workflow Status</h3>
                     <div class="checkbox-grid">
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="contractSigned" name="contractSigned">
-                            <label for="contractSigned">Contract Signed</label>
-                        </div>
+
                         <div class="checkbox-group">
                             <input type="checkbox" id="paid" name="paid">
                             <label for="paid">Paid</label>
