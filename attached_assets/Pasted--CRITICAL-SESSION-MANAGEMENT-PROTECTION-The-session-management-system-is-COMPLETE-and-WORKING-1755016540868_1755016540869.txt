@@ -1,0 +1,102 @@
+🚨 CRITICAL: SESSION MANAGEMENT PROTECTION 🚨
+The session management system is COMPLETE and WORKING PERFECTLY. 
+DO NOT modify any session-related code or files.
+
+TASK: Build a professional photography contract system with e-signature capabilities
+
+**Core Requirements:**
+
+1. **Contract Templates Library:**
+   - Wedding Photography Contract
+   - Portrait Session Contract
+   - Commercial Photography Contract
+   - Event Photography Contract
+   - Mini Session Contract
+   - Newborn/Maternity Contract
+   Each template should include standard sections:
+   - Client information fields
+   - Session details (date, time, location, duration)
+   - Pricing and payment terms
+   - Cancellation/rescheduling policy
+   - Image delivery timeline
+   - Usage rights and copyright
+   - Model release (if applicable)
+   - Liability limitations
+
+2. **Contract Editor:**
+   - Rich text editor for customizing contracts
+   - Variable placeholders that auto-fill from session data:
+     {{client_name}}, {{session_date}}, {{session_price}}, {{deposit_amount}}
+   - Ability to save custom contract templates
+   - Preview mode before sending
+   - Add/remove/edit clauses
+   - Include photographer's business terms
+
+3. **E-Signature Integration:**
+   - Generate unique signing link for each contract
+   - Email contract to client with signing instructions
+   - Capture typed signature or drawn signature
+   - Date/time stamp of signature
+   - IP address logging for legal compliance
+   - Two-party signing (client and photographer)
+
+4. **Contract Management:**
+   - Track contract status: Draft, Sent, Viewed, Signed, Expired
+   - Automatic reminders for unsigned contracts
+   - Store signed contracts with session records
+   - Generate PDF of signed contract
+   - Email signed copy to both parties automatically
+   - Contract expiration dates (e.g., expires in 7 days if unsigned)
+
+5. **Integration with Existing System:**
+   - Link contracts to sessions (READ session data, don't modify)
+   - Auto-populate contract from session details
+   - Update session workflow checkbox when contract is signed
+   - Store contract status in separate contracts table
+
+6. **Database Schema:**
+   Create new tables:
+   - contracts (id, session_id, template_id, content, status, created_at, sent_at, signed_at)
+   - contract_templates (id, name, content, category, is_default)
+   - contract_signatures (id, contract_id, signer_name, signature_data, signed_at, ip_address)
+   - contract_audit_log (contract_id, action, timestamp, details)
+
+7. **User Interface:**
+   - Contracts tab in main navigation
+   - Dashboard showing pending/signed contracts
+   - Quick actions: Send Contract, View, Download PDF
+   - Template management section
+   - Contract analytics (signature rate, average time to sign)
+
+8. **Security & Legal:**
+   - Encrypted storage of contracts
+   - Audit trail of all contract actions
+   - Legally binding e-signature compliance
+   - SSL/HTTPS for signature pages
+   - Tamper-proof signed documents
+
+9. **File Structure:**
+   Create new files:
+   - contracts-manager.js (main contract logic)
+   - contracts-routes.js (API endpoints)
+   - contracts-dashboard.html (UI)
+   - contract-editor.html (editing interface)
+   - contract-templates.js (template management)
+   - signature-capture.js (e-signature functionality)
+
+10. **Notifications:**
+    - Email client when contract is ready to sign
+    - Email photographer when contract is signed
+    - SMS option for urgent contracts
+    - In-app notifications for contract updates
+
+**Expected Result:**
+A complete contract management system where photographers can:
+- Select/customize professional contract templates
+- Send contracts for e-signature
+- Track signature status
+- Automatically receive signed copies
+- Store contracts with their sessions
+All without touching the existing session management system.
+
+Please implement with professional UI/UX and ensure legal compliance for e-signatures.
