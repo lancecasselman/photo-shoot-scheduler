@@ -379,6 +379,38 @@ class CommunityDatabase {
         return result.rows[0];
     }
 
+    // Save operations
+    async toggleSave(userId, postId) {
+        try {
+            // Check if save exists
+            const existingSave = await this.pool.query(
+                'SELECT * FROM community_saves WHERE user_id = $1 AND post_id = $2',
+                [userId, postId]
+            );
+
+            if (existingSave.rows.length > 0) {
+                // Unsave
+                await this.pool.query(
+                    'DELETE FROM community_saves WHERE user_id = $1 AND post_id = $2',
+                    [userId, postId]
+                );
+                await this.updatePostStats(postId, 'saves_count', -1);
+                return { saved: false };
+            } else {
+                // Save
+                await this.pool.query(
+                    'INSERT INTO community_saves (user_id, post_id) VALUES ($1, $2)',
+                    [userId, postId]
+                );
+                await this.updatePostStats(postId, 'saves_count', 1);
+                return { saved: true };
+            }
+        } catch (error) {
+            console.error('Error toggling save:', error);
+            throw error;
+        }
+    }
+
     // Follow operations
     async toggleFollow(followerId, followingId) {
         try {
@@ -405,6 +437,18 @@ class CommunityDatabase {
             }
         } catch (error) {
             console.error('Error toggling follow:', error);
+            throw error;
+        }
+    }
+
+    // Delete post
+    async deletePost(postId) {
+        try {
+            const query = 'DELETE FROM community_posts WHERE id = $1 RETURNING *';
+            const result = await this.pool.query(query, [postId]);
+            return result.rows[0];
+        } catch (error) {
+            console.error('Error deleting post:', error);
             throw error;
         }
     }

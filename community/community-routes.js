@@ -248,8 +248,10 @@ router.delete('/posts/:postId', requireAuth, async (req, res) => {
             return res.status(403).json({ error: 'Not authorized to delete this post' });
         }
         
-        // Delete post (implementation needed in database)
-        res.json({ message: 'Post deletion not yet implemented' });
+        // Delete the post from database
+        await db.deletePost(req.params.postId);
+        
+        res.json({ success: true, message: 'Post deleted successfully' });
     } catch (error) {
         console.error('Error deleting post:', error);
         res.status(500).json({ error: 'Failed to delete post' });
