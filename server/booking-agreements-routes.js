@@ -1,0 +1,332 @@
+const express = require('express');
+const { v4: uuidv4 } = require('uuid');
+const nodemailer = require('nodemailer');
+
+function createBookingAgreementRoutes(pool) {
+    const router = express.Router();
+
+    // Initialize database tables
+    async function initializeTables() {
+        const client = await pool.connect();
+        try {
+            // Create booking agreement templates table
+            await client.query(`
+                CREATE TABLE IF NOT EXISTS booking_agreement_templates (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    name VARCHAR(255) NOT NULL,
+                    category VARCHAR(100),
+                    content TEXT NOT NULL,
+                    is_default BOOLEAN DEFAULT false,
+                    created_at TIMESTAMP DEFAULT NOW(),
+                    updated_at TIMESTAMP DEFAULT NOW()
+                )
+            `);
+
+            // Create booking agreements table
+            await client.query(`
+                CREATE TABLE IF NOT EXISTS booking_agreements (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    session_id UUID NOT NULL,
+                    user_id VARCHAR(255) NOT NULL,
+                    template_id UUID REFERENCES booking_agreement_templates(id),
+                    content TEXT NOT NULL,
+                    status VARCHAR(50) DEFAULT 'draft',
+                    access_token VARCHAR(255) UNIQUE,
+                    created_at TIMESTAMP DEFAULT NOW(),
+                    sent_at TIMESTAMP,
+                    viewed_at TIMESTAMP,
+                    signed_at TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT NOW()
+                )
+            `);
+
+            // Create booking agreement signatures table
+            await client.query(`
+                CREATE TABLE IF NOT EXISTS booking_agreement_signatures (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    agreement_id UUID REFERENCES booking_agreements(id),
+                    signer_name VARCHAR(255),
+                    signer_email VARCHAR(255),
+                    signature_data TEXT,
+                    signature_type VARCHAR(50),
+                    signed_at TIMESTAMP DEFAULT NOW(),
+                    ip_address VARCHAR(45),
+                    user_agent TEXT
+                )
+            `);
+
+            // Create indexes
+            await client.query('CREATE INDEX IF NOT EXISTS idx_agreements_session ON booking_agreements(session_id)');
+            await client.query('CREATE INDEX IF NOT EXISTS idx_agreements_user ON booking_agreements(user_id)');
+            await client.query('CREATE INDEX IF NOT EXISTS idx_agreements_token ON booking_agreements(access_token)');
+
+            console.log('✅ Booking agreement tables initialized');
+        } catch (error) {
+            console.error('Error initializing booking agreement tables:', error);
+        } finally {
+            client.release();
+        }
+    }
+
+    // Initialize tables on startup
+    initializeTables();
+
+    // Get all templates
+    router.get('/templates', async (req, res) => {
+        try {
+            const client = await pool.connect();
+            try {
+                const result = await client.query(
+                    'SELECT * FROM booking_agreement_templates ORDER BY category, name'
+                );
+                res.json(result.rows);
+            } finally {
+                client.release();
+            }
+        } catch (error) {
+            console.error('Error fetching templates:', error);
+            res.status(500).json({ error: 'Failed to fetch templates' });
+        }
+    });
+
+    // Create or update agreement
+    router.post('/agreements', async (req, res) => {
+        try {
+            const { sessionId, templateId, content, agreementId } = req.body;
+            const userId = req.session?.user?.uid || '44735007';
+
+            const client = await pool.connect();
+            try {
+                if (agreementId) {
+                    // Update existing agreement
+                    const result = await client.query(
+                        `UPDATE booking_agreements 
+                         SET content = $1, template_id = $2, updated_at = NOW()
+                         WHERE id = $3 AND user_id = $4
+                         RETURNING *`,
+                        [content, templateId, agreementId, userId]
+                    );
+                    res.json(result.rows[0]);
+                } else {
+                    // Create new agreement
+                    const accessToken = uuidv4();
+                    const result = await client.query(
+                        `INSERT INTO booking_agreements 
+                         (session_id, user_id, template_id, content, access_token, status)
+                         VALUES ($1, $2, $3, $4, $5, 'draft')
+                         RETURNING *`,
+                        [sessionId, userId, templateId, content, accessToken]
+                    );
+                    res.json(result.rows[0]);
+                }
+            } finally {
+                client.release();
+            }
+        } catch (error) {
+            console.error('Error saving agreement:', error);
+            res.status(500).json({ error: 'Failed to save agreement' });
+        }
+    });
+
+    // Get agreement by session ID
+    router.get('/agreements/session/:sessionId', async (req, res) => {
+        try {
+            const { sessionId } = req.params;
+            const userId = req.session?.user?.uid || '44735007';
+
+            const client = await pool.connect();
+            try {
+                const result = await client.query(
+                    `SELECT a.*, t.name as template_name, s.signature_data, s.signer_name, s.signed_at as signature_date
+                     FROM booking_agreements a
+                     LEFT JOIN booking_agreement_templates t ON a.template_id = t.id
+                     LEFT JOIN booking_agreement_signatures s ON a.id = s.agreement_id
+                     WHERE a.session_id = $1 AND a.user_id = $2
+                     ORDER BY a.created_at DESC
+                     LIMIT 1`,
+                    [sessionId, userId]
+                );
+                res.json(result.rows[0] || null);
+            } finally {
+                client.release();
+            }
+        } catch (error) {
+            console.error('Error fetching agreement:', error);
+            res.status(500).json({ error: 'Failed to fetch agreement' });
+        }
+    });
+
+    // Send agreement for signature
+    router.post('/agreements/:id/send', async (req, res) => {
+        try {
+            const { id } = req.params;
+            const { clientEmail, clientName } = req.body;
+            const userId = req.session?.user?.uid || '44735007';
+
+            const client = await pool.connect();
+            try {
+                // Update agreement status
+                const result = await client.query(
+                    `UPDATE booking_agreements 
+                     SET status = 'sent', sent_at = NOW(), updated_at = NOW()
+                     WHERE id = $1 AND user_id = $2
+                     RETURNING *`,
+                    [id, userId]
+                );
+
+                if (result.rows.length === 0) {
+                    return res.status(404).json({ error: 'Agreement not found' });
+                }
+
+                const agreement = result.rows[0];
+
+                // TODO: Send actual email with signing link
+                // For now, just return success
+                res.json({ 
+                    success: true, 
+                    message: 'Agreement sent for signature',
+                    signingUrl: `/sign/${agreement.access_token}`
+                });
+            } finally {
+                client.release();
+            }
+        } catch (error) {
+            console.error('Error sending agreement:', error);
+            res.status(500).json({ error: 'Failed to send agreement' });
+        }
+    });
+
+    // Get agreement for signing (public endpoint)
+    router.get('/sign/:token', async (req, res) => {
+        try {
+            const { token } = req.params;
+
+            const client = await pool.connect();
+            try {
+                // Mark as viewed
+                await client.query(
+                    `UPDATE booking_agreements 
+                     SET viewed_at = COALESCE(viewed_at, NOW()), status = 
+                     CASE WHEN status = 'sent' THEN 'viewed' ELSE status END
+                     WHERE access_token = $1`,
+                    [token]
+                );
+
+                const result = await client.query(
+                    'SELECT * FROM booking_agreements WHERE access_token = $1',
+                    [token]
+                );
+
+                if (result.rows.length === 0) {
+                    return res.status(404).json({ error: 'Agreement not found' });
+                }
+
+                res.json(result.rows[0]);
+            } finally {
+                client.release();
+            }
+        } catch (error) {
+            console.error('Error fetching agreement for signing:', error);
+            res.status(500).json({ error: 'Failed to fetch agreement' });
+        }
+    });
+
+    // Submit signature
+    router.post('/sign/:token', async (req, res) => {
+        try {
+            const { token } = req.params;
+            const { signerName, signerEmail, signatureData, signatureType, ipAddress, userAgent } = req.body;
+
+            const client = await pool.connect();
+            try {
+                await client.query('BEGIN');
+
+                // Get agreement
+                const agreementResult = await client.query(
+                    'SELECT * FROM booking_agreements WHERE access_token = $1',
+                    [token]
+                );
+
+                if (agreementResult.rows.length === 0) {
+                    await client.query('ROLLBACK');
+                    return res.status(404).json({ error: 'Agreement not found' });
+                }
+
+                const agreement = agreementResult.rows[0];
+
+                // Save signature
+                await client.query(
+                    `INSERT INTO booking_agreement_signatures 
+                     (agreement_id, signer_name, signer_email, signature_data, signature_type, ip_address, user_agent)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+                    [agreement.id, signerName, signerEmail, signatureData, signatureType, ipAddress, userAgent]
+                );
+
+                // Update agreement status
+                await client.query(
+                    `UPDATE booking_agreements 
+                     SET status = 'signed', signed_at = NOW(), updated_at = NOW()
+                     WHERE id = $1`,
+                    [agreement.id]
+                );
+
+                // Update session contract status
+                await client.query(
+                    `UPDATE sessions 
+                     SET contract_signed = true, updated_at = NOW()
+                     WHERE id = $1`,
+                    [agreement.session_id]
+                );
+
+                await client.query('COMMIT');
+
+                res.json({ success: true, message: 'Agreement signed successfully' });
+            } catch (error) {
+                await client.query('ROLLBACK');
+                throw error;
+            } finally {
+                client.release();
+            }
+        } catch (error) {
+            console.error('Error signing agreement:', error);
+            res.status(500).json({ error: 'Failed to sign agreement' });
+        }
+    });
+
+    // Get agreement status for multiple sessions
+    router.post('/agreements/status', async (req, res) => {
+        try {
+            const { sessionIds } = req.body;
+            const userId = req.session?.user?.uid || '44735007';
+
+            const client = await pool.connect();
+            try {
+                const result = await client.query(
+                    `SELECT session_id, status, signed_at 
+                     FROM booking_agreements 
+                     WHERE session_id = ANY($1) AND user_id = $2`,
+                    [sessionIds, userId]
+                );
+
+                const statusMap = {};
+                result.rows.forEach(row => {
+                    statusMap[row.session_id] = {
+                        status: row.status,
+                        signedAt: row.signed_at
+                    };
+                });
+
+                res.json(statusMap);
+            } finally {
+                client.release();
+            }
+        } catch (error) {
+            console.error('Error fetching agreement statuses:', error);
+            res.status(500).json({ error: 'Failed to fetch agreement statuses' });
+        }
+    });
+
+    return router;
+}
+
+module.exports = createBookingAgreementRoutes;

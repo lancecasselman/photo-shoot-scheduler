@@ -530,6 +530,22 @@ function createSessionCard(session) {
         paymentPlanBtn.style.backgroundColor = '#17a2b8';
     }
 
+    // Booking Agreement Button
+    const bookingAgreementBtn = document.createElement('button');
+    bookingAgreementBtn.className = 'booking-agreement-btn';
+    bookingAgreementBtn.innerHTML = '<i class="fas fa-file-signature"></i> <span class="agreement-status">Create Agreement</span>';
+    bookingAgreementBtn.onclick = () => {
+        if (typeof window.openBookingAgreementModal === 'function') {
+            window.openBookingAgreementModal(session.id);
+        } else {
+            console.error('Booking agreement system loading...');
+            showMessage('Booking agreement system is loading, please try again.', 'info');
+        }
+    };
+    // Add data attribute for status updates
+    bookingAgreementBtn.parentElement = actions;
+    header.setAttribute('data-session-id', session.id);
+
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn btn-danger';
     deleteBtn.textContent = '🗑️ Delete';
@@ -549,6 +565,7 @@ function createSessionCard(session) {
     console.log('DEBUG: About to append deposit button:', depositBtn);
     actions.appendChild(depositBtn);
     actions.appendChild(paymentPlanBtn);
+    actions.appendChild(bookingAgreementBtn);
     console.log('DEBUG: Deposit button appended successfully');
     console.log('🔴 DEBUG: About to append RAW Upload button:', rawUploadBtn.textContent);
     actions.appendChild(rawUploadBtn);

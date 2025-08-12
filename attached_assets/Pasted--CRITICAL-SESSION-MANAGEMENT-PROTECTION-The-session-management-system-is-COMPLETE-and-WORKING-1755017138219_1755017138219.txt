@@ -1,0 +1,108 @@
+🚨 CRITICAL: SESSION MANAGEMENT PROTECTION 🚨
+The session management system is COMPLETE and WORKING PERFECTLY. 
+DO NOT modify the core session management functionality.
+ONLY ADD the booking agreement button/modal to the existing session cards.
+
+TASK: Build a photography booking agreement system that integrates with existing session cards
+
+**Integration with Session Cards:**
+
+1. **Add Booking Agreement Button to Each Session Card:**
+   - Add a "Booking Agreement" button next to existing buttons (Calendar, Email, etc.)
+   - Button should show agreement status with color coding:
+     * Gray: No agreement created
+     * Yellow: Agreement sent, awaiting signature
+     * Green: Agreement signed
+   - Display status text: "Create Agreement", "Pending Signature", "Signed ✓"
+
+2. **In-App Booking Agreement Modal:**
+   - When Booking Agreement button clicked, open modal WITHIN the app (no external pages)
+   - Modal should be full-featured but stay inside your platform
+   - Smooth modal animation and backdrop
+   - Close button and ESC key to exit
+
+3. **Modal Features:**
+   - **Create/Edit Mode:**
+     * Template selector dropdown
+     * Agreement editor with session data auto-populated
+     * Preview button
+     * Send for Signature button
+   
+   - **View Mode (for sent/signed agreements):**
+     * Display agreement content
+     * Show signature status
+     * Download PDF button
+     * Resend button (if not signed)
+     * Signature timestamp (if signed)
+
+4. **Booking Agreement Templates Library:**
+   - Wedding Photography Agreement
+   - Portrait Session Agreement  
+   - Commercial Photography Agreement
+   - Event Photography Agreement
+   - Mini Session Agreement
+   - Newborn/Maternity Agreement
+
+5. **E-Signature Within Modal:**
+   - Client receives email with secure link
+   - Link opens signature page in THEIR browser
+   - Capture typed or drawn signature
+   - Auto-return signed agreement to photographer's dashboard
+   - Both parties get email confirmation with PDF
+
+6. **Smart Session Integration:**
+   - Auto-populate from session data:
+     * Client name, email, phone
+     * Session date, time, location
+     * Pricing (deposit and total)
+     * Session type
+   - When agreement is signed, automatically check "Contract Signed" in session workflow
+
+7. **Database Schema:**
+   Create new tables:
+   - booking_agreements (id, session_id, template_id, content, status, created_at, sent_at, signed_at)
+   - booking_agreement_templates (id, name, content, category, is_default)
+   - booking_agreement_signatures (id, agreement_id, signer_name, signature_data, signed_at, ip_address)
+
+8. **Status Tracking:**
+   - Track in real-time: Draft, Sent, Viewed, Signed
+   - Show status badge on session card
+   - Update without page refresh
+
+9. **File Structure:**
+   Create new files:
+   - booking-agreements-modal.js (modal functionality)
+   - booking-agreements-manager.js (agreement logic)
+   - booking-agreements-routes.js (API endpoints)
+   - booking-agreement-templates.js (templates)
+   - booking-signature-capture.js (e-signature)
+   - booking-agreements-modal.css (modal styling)
+
+10. **Session Card UI Update:**
+    ```javascript
+    // Add to existing session card HTML:
+    <button class="booking-agreement-btn" onclick="openBookingAgreementModal(sessionId)">
+      <i class="fas fa-file-signature"></i>
+      <span class="agreement-status">Create Agreement</span>
+    </button>
+    ```
+
+11. **Modal Design:**
+    - Clean, professional interface
+    - Mobile-responsive
+    - Matches existing app design
+    - Smooth transitions
+    - Loading states while sending/saving
+    - Title: "Booking Agreement for [Client Name]"
+
+**Expected Result:**
+- Every session card has a Booking Agreement button
+- Clicking opens an in-app modal for agreement management
+- Photographers never leave the platform
+- Seamless integration with existing session data
+- Automatic workflow updates when agreements are signed
+- Professional booking agreement templates ready to use
+
+The booking agreement system should feel like a natural part of the session management, not a separate feature.
+
+DO NOT modify existing session functionality - only ADD the booking agreement button and modal system.

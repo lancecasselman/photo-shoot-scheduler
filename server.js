@@ -1084,6 +1084,13 @@ app.use('/api/r2', createR2Routes());
 const createContractRoutes = require('./server/contract-routes');
 app.use('/api/contracts', createContractRoutes(pool, r2FileManager));
 
+// Booking Agreement API routes
+const createBookingAgreementRoutes = require('./server/booking-agreements-routes');
+const { initializeTemplates } = require('./server/booking-agreement-templates');
+app.use('/api/booking', createBookingAgreementRoutes(pool));
+// Initialize templates on startup
+initializeTemplates(pool);
+
 // Community Platform routes (initialized after Firebase)
 app.use('/api/community', (req, res, next) => {
     if (communityRoutes) {
