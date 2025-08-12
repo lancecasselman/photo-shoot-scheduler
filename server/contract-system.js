@@ -200,6 +200,13 @@ class ContractSystem {
     return result.rows[0];
   }
 
+  async getTemplates() {
+    const result = await this.pool.query(
+      'SELECT key, name, default_title FROM contract_templates ORDER BY created_at'
+    );
+    return result.rows;
+  }
+
   async sendContract(contractId, sessionData, clientData, studioData) {
     const client = await pool.connect();
     try {

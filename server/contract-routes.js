@@ -10,8 +10,19 @@ module.exports = function(pool, r2FileManager) {
   // Initialize contract tables on startup
   contractSystem.initializeTables().catch(console.error);
 
+// Get available templates
+router.get('/templates', async (req, res) => {
+  try {
+    const templates = await contractSystem.getTemplates();
+    res.json(templates);
+  } catch (error) {
+    console.error('Error fetching templates:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Create a new contract
-router.post('/api/contracts/create', async (req, res) => {
+router.post('/create', async (req, res) => {
   try {
     const { sessionId, clientId, templateKey, title } = req.body;
     const userId = req.user?.id || req.session?.userId || 'system';
@@ -36,7 +47,7 @@ router.post('/api/contracts/create', async (req, res) => {
 });
 
 // Get contracts for a session
-router.get('/api/contracts/session/:sessionId', async (req, res) => {
+router.get('/session/:sessionId', async (req, res) => {
   try {
     const contracts = await contractSystem.getContractsBySession(req.params.sessionId);
     res.json(contracts);
@@ -47,7 +58,7 @@ router.get('/api/contracts/session/:sessionId', async (req, res) => {
 });
 
 // Get a specific contract
-router.get('/api/contracts/:id', async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const contract = await contractSystem.getContract(req.params.id);
     if (!contract) {
@@ -61,7 +72,7 @@ router.get('/api/contracts/:id', async (req, res) => {
 });
 
 // Send contract for signature
-router.post('/api/contracts/send', async (req, res) => {
+router.post('/send', async (req, res) => {
   try {
     const { contractId } = req.body;
     
@@ -126,7 +137,7 @@ router.post('/api/contracts/send', async (req, res) => {
 });
 
 // Mark contract as viewed
-router.post('/api/contracts/:id/viewed', async (req, res) => {
+router.post('/:id/viewed', async (req, res) => {
   try {
     await contractSystem.markViewed(req.params.id);
     res.json({ success: true });
@@ -137,7 +148,7 @@ router.post('/api/contracts/:id/viewed', async (req, res) => {
 });
 
 // Sign contract
-router.post('/api/contracts/:id/sign', async (req, res) => {
+router.post('/:id/sign', async (req, res) => {
   try {
     const { signatureDataUrl, signerIp, token } = req.body;
     const contractId = req.params.id;
@@ -199,7 +210,7 @@ router.post('/api/contracts/:id/sign', async (req, res) => {
 });
 
 // Update contract (draft only)
-router.put('/api/contracts/:id', async (req, res) => {
+router.put('/:id', async (req, res) => {
   try {
     const contract = await contractSystem.getContract(req.params.id);
     if (!contract) {
@@ -219,7 +230,7 @@ router.put('/api/contracts/:id', async (req, res) => {
 });
 
 // Delete contract (draft only)
-router.delete('/api/contracts/:id', async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
     const contract = await contractSystem.getContract(req.params.id);
     if (!contract) {
