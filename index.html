@@ -13171,6 +13171,26 @@ END:VCALENDAR`;
         .wb-btn[title*="Layer"]:hover {
             background: linear-gradient(135deg, #667eea, #764ba2);
         }
+        
+        /* Gallery image styling */
+        .wb-gallery .wb-image-wrapper {
+            transition: all 0.3s ease;
+        }
+        
+        .wb-gallery .wb-image-wrapper:hover {
+            transform: scale(1.05);
+            z-index: 10;
+        }
+        
+        .wb-gallery .wb-image-wrapper.selected {
+            outline: 3px solid #667eea;
+            outline-offset: 2px;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+        }
+        
+        .wb-gallery img {
+            transition: all 0.3s ease;
+        }
 
         .wb-main {
             flex: 1;
@@ -13789,6 +13809,19 @@ END:VCALENDAR`;
                 // Define the click handler
                 this.canvasClickHandler = (e) => {
                     console.log('Canvas clicked:', e.target, 'Classes:', e.target.classList);
+                    
+                    // Handle gallery image clicks specifically
+                    if (e.target.tagName === 'IMG' && e.target.closest('.wb-gallery')) {
+                        e.stopPropagation();
+                        const imageWrapper = e.target.closest('.wb-image-wrapper');
+                        if (imageWrapper) {
+                            console.log('Editing gallery image:', imageWrapper);
+                            this.editElement(imageWrapper, e);
+                            return;
+                        }
+                    }
+                    
+                    // Handle regular editable elements
                     if (e.target.classList.contains('wb-editable') || 
                         e.target.closest('.wb-image-wrapper')) {
                         const element = e.target.closest('.wb-image-wrapper') || e.target;
@@ -14074,14 +14107,26 @@ END:VCALENDAR`;
                         ];
                         
                         galleryImages.forEach((src, i) => {
+                            // Create image wrapper for each gallery image
+                            const imageWrapper = document.createElement('div');
+                            imageWrapper.className = 'wb-image-wrapper wb-editable';
+                            imageWrapper.style.position = 'relative';
+                            imageWrapper.style.overflow = 'hidden';
+                            imageWrapper.style.borderRadius = '8px';
+                            
                             const img = document.createElement('img');
+                            img.className = 'wb-editable';
                             img.src = src;
                             img.style.width = '100%';
                             img.style.height = '200px';
                             img.style.objectFit = 'cover';
+                            img.style.objectPosition = '50% 50%';
                             img.style.borderRadius = '8px';
+                            img.style.cursor = 'pointer';
                             img.alt = `Gallery image ${i+1}`;
-                            element.appendChild(img);
+                            
+                            imageWrapper.appendChild(img);
+                            element.appendChild(imageWrapper);
                         });
                         break;
                         
