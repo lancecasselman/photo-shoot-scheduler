@@ -160,8 +160,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (mobileMenu && mobileMenu.classList.contains('show')) {
             // Check if the clicked element is a button but not a nav link
-            if ((event.target.tagName === 'BUTTON' || event.target.classList.contains('btn')) && 
-                !event.target.classList.contains('nav-link') && 
+            if ((event.target.tagName === 'BUTTON' || event.target.classList.contains('btn')) &&
+                !event.target.classList.contains('nav-link') &&
                 !event.target.classList.contains('hamburger-menu')) {
                 closeMobileMenu();
             }
@@ -211,7 +211,7 @@ function addSession(sessionData) {
     showMessage('Session added successfully!', 'success');
 }
 
-// Create API session 
+// Create API session
 async function createAPISession(sessionData) {
     try {
         console.log('Creating session via API:', sessionData);
@@ -311,6 +311,12 @@ async function loadSessions() {
         // Call the index.html renderSessions function instead of the disabled script.js one
         if (typeof window.renderSessions === 'function') {
             window.renderSessions();
+
+            // Trigger booking agreement status updates after sessions are rendered
+            setTimeout(() => {
+                const sessionsRenderedEvent = new Event('sessionsRendered');
+                window.dispatchEvent(sessionsRenderedEvent);
+            }, 200);
         } else {
             console.error('renderSessions function not found in window scope');
         }
@@ -350,15 +356,15 @@ async function getAuthToken() {
 // function renderSessions() {
 //     console.log('renderSessions called with', sessions.length, 'sessions');
 //     const container = document.getElementById('sessionsContainer');
-//     
+//
 //     if (!container) {
 //         console.error('Sessions container not found');
 //         return;
 //     }
-//     
+//
 //     // Clear container
 //     container.innerHTML = '';
-//     
+//
 //     if (sessions.length === 0) {
 //         const emptyState = document.createElement('div');
 //         emptyState.className = 'empty-state';
@@ -366,18 +372,18 @@ async function getAuthToken() {
 //         container.appendChild(emptyState);
 //         return;
 //     }
-//     
+//
 //     console.log('Rendering', sessions.length, 'session cards');
-//     
+//
 //     // Sort sessions by date
 //     const sortedSessions = [...sessions].sort((a, b) => {
 //         const dateA = new Date(a.dateTime || a.date_time);
 //         const dateB = new Date(b.dateTime || b.date_time);
 //         return dateA - dateB;
 //     });
-//     
+//
 //     console.log('Sorted sessions:', sortedSessions);
-//     
+//
 //     // Create session cards
 //     sortedSessions.forEach((session, index) => {
 //         console.log(`Creating session card ${index + 1}:`, session.clientName);
@@ -385,7 +391,7 @@ async function getAuthToken() {
 //         container.appendChild(card);
 //         console.log(`Session card ${index + 1} added`);
 //     });
-//     
+//
 //     console.log('All session cards rendered. Container children count:', container.children.length);
 //     console.log('Sessions rendered, container should now show', sessions.length, 'sessions');
 // }
@@ -942,7 +948,7 @@ window.exportToCalendar = function(sessionId) {
         // Show Google Calendar option based on device type
         const delay = (isIOS || isAndroid) ? 4000 : 3000;
         setTimeout(() => {
-            const message = (isIOS || isAndroid) ? 
+            const message = (isIOS || isAndroid) ?
                 'Calendar app should have opened. Would you also like to add to Google Calendar?' :
                 'Calendar file downloaded. Would you also like to add to Google Calendar?';
 
@@ -1859,8 +1865,8 @@ async function triggerWorkflow(sessionId) {
             { id: 'feedbackRequest', name: '⭐ Feedback Request', desc: 'Request client review' }
         ];
 
-        let optionsHTML = workflowTypes.map(workflow => 
-            `<div style="margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer;" 
+        let optionsHTML = workflowTypes.map(workflow =>
+            `<div style="margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer;"
                   onclick="executeWorkflow('${sessionId}', '${workflow.id}')">
                 <strong>${workflow.name}</strong><br>
                 <small style="color: #666;">${workflow.desc}</small>
@@ -1994,8 +2000,8 @@ function copyToClipboard(text) {
 function openRawUploadDialog(sessionId) {
     const modal = document.createElement('div');
     modal.style.cssText = `
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-        background: rgba(0,0,0,0.5); z-index: 2000; 
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.5); z-index: 2000;
         display: flex; align-items: center; justify-content: center;
     `;
 
@@ -2004,7 +2010,7 @@ function openRawUploadDialog(sessionId) {
             <h3 style="margin: 0 0 1rem 0; color: #333;">RAW Backup Upload</h3>
             <p style="margin-bottom: 1rem; color: #666;">Upload RAW files, high-resolution photos, and documents for cloud backup.</p>
 
-            <input type="file" id="rawFileInput-${sessionId}" multiple accept="*/*" 
+            <input type="file" id="rawFileInput-${sessionId}" multiple accept="*/*"
                    style="margin-bottom: 1rem; padding: 0.5rem; width: 100%; border: 2px dashed #ddd; border-radius: 6px;">
 
             <div id="rawUploadProgress-${sessionId}" style="display: none; margin: 1rem 0;">
@@ -2122,8 +2128,8 @@ function showRawGalleryModal(sessionId, clientName, filesByType) {
     const modal = document.createElement('div');
     modal.className = 'modal-parent';
     modal.style.cssText = `
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-        background: rgba(0,0,0,0.8); z-index: 2000; 
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.8); z-index: 2000;
         display: flex; align-items: center; justify-content: center;
         overflow-y: auto;
     `;
@@ -2154,7 +2160,7 @@ function showRawGalleryModal(sessionId, clientName, filesByType) {
                         <div style="display: flex; gap: 1rem; align-items: flex-start;">
                             ${isImage ? `
                                 <div style="flex-shrink: 0; position: relative;">
-                                    <img src="${previewUrl}" alt="${file.filename}" 
+                                    <img src="${previewUrl}" alt="${file.filename}"
                                          style="width: 150px; height: 100px; object-fit: cover; border-radius: 8px; border: 2px solid #dee2e6; cursor: pointer;"
                                          onclick="viewFullImage('${previewUrl}', '${file.filename}')"
                                          onerror="console.log('Image failed to load:', '${previewUrl}'); this.style.display='none'; this.nextElementSibling.style.display='flex';">
@@ -2175,17 +2181,17 @@ function showRawGalleryModal(sessionId, clientName, filesByType) {
                                     🔗 ${(file.r2Key || '').substring(0, 45)}...
                                 </div>
                                 <div style="margin-top: 0.75rem;">
-                                    <button onclick="downloadRawFile('${sessionId}', '${file.filename}')" 
+                                    <button onclick="downloadRawFile('${sessionId}', '${file.filename}')"
                                             style="padding: 0.5rem 1rem; background: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin-right: 0.5rem;">
                                         📥 Download
                                     </button>
                                     ${isImage ? `
-                                        <button onclick="viewFullImage('${previewUrl}', '${file.filename}')" 
+                                        <button onclick="viewFullImage('${previewUrl}', '${file.filename}')"
                                                 style="padding: 0.5rem 1rem; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin-right: 0.5rem;">
                                             🔍 View Full
                                         </button>
                                     ` : ''}
-                                    <button onclick="deleteRawFile('${sessionId}', '${file.filename}', '${clientName}')" 
+                                    <button onclick="deleteRawFile('${sessionId}', '${file.filename}', '${clientName}')"
                                             style="padding: 0.5rem 1rem; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">
                                         🗑️ Delete
                                     </button>
@@ -2370,12 +2376,12 @@ function viewFullImage(imageUrl, filename) {
 
     modal.innerHTML = `
         <div style="position: relative; max-width: 95vw; max-height: 95vh;">
-            <img src="${imageUrl}" alt="${filename}" 
+            <img src="${imageUrl}" alt="${filename}"
                  style="max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px;">
             <div style="position: absolute; top: -40px; left: 0; color: white; font-size: 16px; font-weight: bold;">
                 ${filename}
             </div>
-            <button onclick="this.closest('.modal-parent-fullscreen').remove()" 
+            <button onclick="this.closest('.modal-parent-fullscreen').remove()"
                     style="position: absolute; top: -40px; right: 0; background: #dc3545; color: white; border: none; border-radius: 4px; padding: 0.5rem 1rem; cursor: pointer;">
                 ✕ Close
             </button>

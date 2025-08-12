@@ -406,17 +406,26 @@ function updateModalButtons(status) {
 
 // Update agreement status on session card
 function updateAgreementStatus(sessionId, status) {
-    const button = document.querySelector(`[data-session-id="${sessionId}"] .booking-agreement-btn`);
-    if (!button) return;
+    // Look for booking agreement button with data-session-id attribute
+    const button = document.querySelector(`.booking-agreement-btn[data-session-id="${sessionId}"]`);
+    if (!button) {
+        console.log(`No booking agreement button found for session ${sessionId}`);
+        return;
+    }
     
     const statusSpan = button.querySelector('.agreement-status');
-    if (!statusSpan) return;
+    if (!statusSpan) {
+        console.log(`No status span found in booking agreement button for session ${sessionId}`);
+        return;
+    }
     
     // Update button appearance
-    button.className = `booking-agreement-btn btn-agreement-${status}`;
+    button.className = `btn booking-agreement-btn btn-agreement-${status}`;
     
     // Update status text
     statusSpan.textContent = getStatusText(status);
+    
+    console.log(`Updated booking agreement status for session ${sessionId} to ${status}`);
 }
 
 // Get status display text
@@ -537,16 +546,35 @@ async function resendAgreement() {
     }
 }
 
+// Expose functions globally
+window.openBookingAgreementModal = openBookingAgreementModal;
+window.closeBookingAgreementModal = closeBookingAgreementModal;
+window.loadSelectedTemplate = loadSelectedTemplate;
+window.saveAgreement = saveAgreement;
+window.sendForSignature = sendForSignature;
+window.previewAgreement = previewAgreement;
+window.downloadAgreementPDF = downloadAgreementPDF;
+window.resendAgreement = resendAgreement;
+
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeBookingAgreements);
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM loaded - initializing booking agreements...');
+        initializeBookingAgreements();
+    });
 } else {
-    // Wait a bit for sessions to load
-    setTimeout(initializeBookingAgreements, 1000);
+    console.log('DOM already loaded - initializing booking agreements...');
+    initializeBookingAgreements();
 }
 
-// Also make sure to update statuses when sessions are loaded
+// Make sure to update statuses when sessions are loaded
 window.addEventListener('sessionsLoaded', function() {
     console.log('Sessions loaded event - updating booking agreement statuses');
-    updateAllAgreementStatuses();
+    setTimeout(updateAllAgreementStatuses, 500);
+});
+
+// Also listen for when sessions are rendered
+window.addEventListener('sessionsRendered', function() {
+    console.log('Sessions rendered event - updating booking agreement statuses');
+    setTimeout(updateAllAgreementStatuses, 100);
 });
