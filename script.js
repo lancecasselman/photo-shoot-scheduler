@@ -539,21 +539,24 @@ function createSessionCard(session) {
     // Booking Agreement Button
     const bookingAgreementBtn = document.createElement('button');
     bookingAgreementBtn.className = 'btn booking-agreement-btn';
-    bookingAgreementBtn.innerHTML = '📄 <span class="agreement-status">Booking Agreement</span>';
+    bookingAgreementBtn.innerHTML = '📄 <span class="agreement-status">Create Agreement</span>';
+    bookingAgreementBtn.setAttribute('data-session-id', session.id);
     bookingAgreementBtn.onclick = () => {
         console.log('Booking agreement button clicked for session:', session.id);
         if (typeof window.openBookingAgreementModal === 'function') {
             window.openBookingAgreementModal(session.id);
         } else {
-            console.error('Booking agreement system loading...');
-            showMessage('Booking agreement system is loading, please try again.', 'info');
+            console.error('openBookingAgreementModal function not found');
+            showMessage('Booking agreement system is loading, please try again in a moment.', 'info');
+            // Try to initialize booking agreements if not loaded
+            if (typeof initializeBookingAgreements === 'function') {
+                initializeBookingAgreements();
+            }
         }
     };
     bookingAgreementBtn.style.backgroundColor = '#9b59b6';
     bookingAgreementBtn.style.color = 'white';
     bookingAgreementBtn.style.margin = '2px';
-    // Add data attribute for status updates
-    header.setAttribute('data-session-id', session.id);
     console.log('Booking Agreement button created for session:', session.id);
 
     const deleteBtn = document.createElement('button');

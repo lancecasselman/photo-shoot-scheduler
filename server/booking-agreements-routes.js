@@ -74,18 +74,20 @@ function createBookingAgreementRoutes(pool) {
     // Get all templates
     router.get('/templates', async (req, res) => {
         try {
+            console.log('Fetching booking agreement templates...');
             const client = await pool.connect();
             try {
                 const result = await client.query(
                     'SELECT * FROM booking_agreement_templates ORDER BY category, name'
                 );
+                console.log(`Found ${result.rows.length} booking agreement templates`);
                 res.json(result.rows);
             } finally {
                 client.release();
             }
         } catch (error) {
-            console.error('Error fetching templates:', error);
-            res.status(500).json({ error: 'Failed to fetch templates' });
+            console.error('Error fetching booking agreement templates:', error);
+            res.status(500).json({ error: 'Failed to fetch templates', details: error.message });
         }
     });
 
@@ -297,7 +299,15 @@ function createBookingAgreementRoutes(pool) {
     router.post('/agreements/status', async (req, res) => {
         try {
             const { sessionIds } = req.body;
-            const userId = req.session?.user?.uid || '44735007';
+            console.log('Fetching agreement statuses for sessions:', sessionIds);
+            
+            // Get user ID from session with fallback
+            const userId = req.session?.user?.normalized_uid || req.session?.user?.uid || '44735007';
+            console.log('Using user ID for agreement status:', userId);
+
+            if (!sessionIds || !Array.isArray(sessionIds) || sessionIds.length === 0) {
+                return res.json({});
+            }
 
             const client = await pool.connect();
             try {
@@ -308,6 +318,8 @@ function createBookingAgreementRoutes(pool) {
                     [sessionIds, userId]
                 );
 
+                console.log(`Found ${result.rows.length} booking agreements for ${sessionIds.length} sessions`);
+
                 const statusMap = {};
                 result.rows.forEach(row => {
                     statusMap[row.session_id] = {
@@ -316,13 +328,14 @@ function createBookingAgreementRoutes(pool) {
                     };
                 });
 
+                console.log('Returning agreement status map:', statusMap);
                 res.json(statusMap);
             } finally {
                 client.release();
             }
         } catch (error) {
             console.error('Error fetching agreement statuses:', error);
-            res.status(500).json({ error: 'Failed to fetch agreement statuses' });
+            res.status(500).json({ error: 'Failed to fetch agreement statuses', details: error.message });
         }
     });
 

@@ -7,15 +7,15 @@ let agreementTemplates = [];
 // Initialize booking agreements
 async function initializeBookingAgreements() {
     console.log('Initializing booking agreements system...');
-    
+
     // Load templates
     await loadAgreementTemplates();
-    
+
     // Create modal if it doesn't exist
     if (!document.getElementById('bookingAgreementModal')) {
         createBookingAgreementModal();
     }
-    
+
     // Update all session cards with agreement status
     await updateAllAgreementStatuses();
 }
@@ -29,7 +29,7 @@ function createBookingAgreementModal() {
                     <h2 id="agreementModalTitle">Booking Agreement</h2>
                     <button class="booking-modal-close" onclick="closeBookingAgreementModal()">&times;</button>
                 </div>
-                
+
                 <div class="booking-modal-body">
                     <!-- Template Selector -->
                     <div id="templateSelector" class="template-section">
@@ -38,12 +38,12 @@ function createBookingAgreementModal() {
                             <option value="">Choose a template...</option>
                         </select>
                     </div>
-                    
+
                     <!-- Agreement Editor -->
                     <div id="agreementEditor" class="editor-section">
                         <div id="agreementContent" contenteditable="true" class="agreement-content-editor"></div>
                     </div>
-                    
+
                     <!-- Agreement Viewer (for sent/signed) -->
                     <div id="agreementViewer" class="viewer-section" style="display: none;">
                         <div class="agreement-status-badge">
@@ -56,7 +56,7 @@ function createBookingAgreementModal() {
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="booking-modal-footer">
                     <div class="button-group">
                         <button id="previewBtn" class="btn btn-secondary" onclick="previewAgreement()">
@@ -79,9 +79,9 @@ function createBookingAgreementModal() {
             </div>
         </div>
     `;
-    
+
     document.body.insertAdjacentHTML('beforeend', modalHTML);
-    
+
     // Add event listener for ESC key
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && document.getElementById('bookingAgreementModal').style.display === 'flex') {
@@ -94,22 +94,22 @@ function createBookingAgreementModal() {
 async function openBookingAgreementModal(sessionId) {
     console.log('Opening booking agreement modal for session:', sessionId);
     currentAgreementSessionId = sessionId;
-    
+
     // Get session data
     const session = sessions.find(s => s.id === sessionId);
     if (!session) {
         showMessage('Session not found', 'error');
         return;
     }
-    
+
     // Update modal title
     document.getElementById('agreementModalTitle').textContent = 
         `Booking Agreement for ${session.clientName}`;
-    
+
     // Show modal
     const modal = document.getElementById('bookingAgreementModal');
     modal.style.display = 'flex';
-    
+
     // Load existing agreement or show template selector
     await loadExistingAgreement(sessionId, session);
 }
@@ -128,11 +128,11 @@ async function loadAgreementTemplates() {
         console.log('Loading booking agreement templates...');
         const response = await fetch('/api/booking/templates');
         console.log('Template response status:', response.status);
-        
+
         if (response.ok) {
             agreementTemplates = await response.json();
             console.log('Loaded templates:', agreementTemplates.length);
-            
+
             // Populate template dropdown
             const select = document.getElementById('agreementTemplate');
             if (select) {
@@ -159,7 +159,7 @@ async function loadExistingAgreement(sessionId, session) {
         const response = await fetch(`/api/booking/agreements/session/${sessionId}`);
         if (response.ok) {
             const agreement = await response.json();
-            
+
             if (agreement) {
                 currentAgreement = agreement;
                 displayAgreement(agreement, session);
@@ -179,7 +179,7 @@ async function loadExistingAgreement(sessionId, session) {
 // Display agreement based on status
 function displayAgreement(agreement, session) {
     const status = agreement.status;
-    
+
     if (status === 'draft') {
         // Show editor mode
         showEditMode(agreement, session);
@@ -187,7 +187,7 @@ function displayAgreement(agreement, session) {
         // Show viewer mode
         showViewMode(agreement, session);
     }
-    
+
     updateModalButtons(status);
 }
 
@@ -196,13 +196,13 @@ function showCreateMode(session) {
     document.getElementById('templateSelector').style.display = 'block';
     document.getElementById('agreementEditor').style.display = 'block';
     document.getElementById('agreementViewer').style.display = 'none';
-    
+
     // Clear editor
     document.getElementById('agreementContent').innerHTML = '';
-    
+
     // Reset template selector
     document.getElementById('agreementTemplate').value = '';
-    
+
     updateModalButtons('new');
 }
 
@@ -211,10 +211,10 @@ function showEditMode(agreement, session) {
     document.getElementById('templateSelector').style.display = 'block';
     document.getElementById('agreementEditor').style.display = 'block';
     document.getElementById('agreementViewer').style.display = 'none';
-    
+
     // Load content into editor
     document.getElementById('agreementContent').innerHTML = agreement.content;
-    
+
     // Select template if applicable
     if (agreement.template_id) {
         document.getElementById('agreementTemplate').value = agreement.template_id;
@@ -226,15 +226,15 @@ function showViewMode(agreement, session) {
     document.getElementById('templateSelector').style.display = 'none';
     document.getElementById('agreementEditor').style.display = 'none';
     document.getElementById('agreementViewer').style.display = 'block';
-    
+
     // Display content
     document.getElementById('agreementViewContent').innerHTML = agreement.content;
-    
+
     // Show status badge
     const badge = document.getElementById('agreementStatusBadge');
     badge.className = `status-badge status-${agreement.status}`;
     badge.textContent = getStatusText(agreement.status);
-    
+
     // Show signature info if signed
     if (agreement.status === 'signed' && agreement.signature_data) {
         document.getElementById('signatureInfo').style.display = 'block';
@@ -250,17 +250,17 @@ function showViewMode(agreement, session) {
 function loadSelectedTemplate() {
     const templateId = document.getElementById('agreementTemplate').value;
     if (!templateId) return;
-    
+
     const template = agreementTemplates.find(t => t.id === templateId);
     if (!template) return;
-    
+
     const session = sessions.find(s => s.id === currentAgreementSessionId);
     if (!session) return;
-    
+
     // Replace template variables with session data
     let content = template.content;
     content = replaceTemplateVariables(content, session);
-    
+
     // Load into editor
     document.getElementById('agreementContent').innerHTML = content;
 }
@@ -293,11 +293,11 @@ function replaceTemplateVariables(content, session) {
         '{{paymentDueDate}}': new Date(new Date(session.dateTime).getTime() - 14 * 24 * 60 * 60 * 1000)
             .toLocaleDateString()
     };
-    
+
     for (const [key, value] of Object.entries(replacements)) {
         content = content.replace(new RegExp(key, 'g'), value);
     }
-    
+
     return content;
 }
 
@@ -305,12 +305,12 @@ function replaceTemplateVariables(content, session) {
 async function saveAgreement() {
     const content = document.getElementById('agreementContent').innerHTML;
     const templateId = document.getElementById('agreementTemplate').value;
-    
+
     if (!content.trim()) {
         showMessage('Please add content to the agreement', 'error');
         return;
     }
-    
+
     try {
         const response = await fetch('/api/booking/agreements', {
             method: 'POST',
@@ -322,7 +322,7 @@ async function saveAgreement() {
                 agreementId: currentAgreement?.id || null
             })
         });
-        
+
         if (response.ok) {
             const agreement = await response.json();
             currentAgreement = agreement;
@@ -342,12 +342,12 @@ async function sendForSignature() {
     if (!currentAgreement) {
         await saveAgreement();
     }
-    
+
     if (!currentAgreement) return;
-    
+
     const session = sessions.find(s => s.id === currentAgreementSessionId);
     if (!session) return;
-    
+
     try {
         const response = await fetch(`/api/booking/agreements/${currentAgreement.id}/send`, {
             method: 'POST',
@@ -357,7 +357,7 @@ async function sendForSignature() {
                 clientName: session.clientName
             })
         });
-        
+
         if (response.ok) {
             const result = await response.json();
             showMessage('Agreement sent for signature!', 'success');
@@ -380,12 +380,12 @@ function updateModalButtons(status) {
     const sendBtn = document.getElementById('sendBtn');
     const downloadBtn = document.getElementById('downloadBtn');
     const resendBtn = document.getElementById('resendBtn');
-    
+
     // Reset all buttons
     [previewBtn, saveBtn, sendBtn, downloadBtn, resendBtn].forEach(btn => {
         if (btn) btn.style.display = 'none';
     });
-    
+
     switch(status) {
         case 'new':
         case 'draft':
@@ -412,19 +412,19 @@ function updateAgreementStatus(sessionId, status) {
         console.log(`No booking agreement button found for session ${sessionId}`);
         return;
     }
-    
+
     const statusSpan = button.querySelector('.agreement-status');
     if (!statusSpan) {
         console.log(`No status span found in booking agreement button for session ${sessionId}`);
         return;
     }
-    
+
     // Update button appearance
     button.className = `btn booking-agreement-btn btn-agreement-${status}`;
-    
+
     // Update status text
     statusSpan.textContent = getStatusText(status);
-    
+
     console.log(`Updated booking agreement status for session ${sessionId} to ${status}`);
 }
 
@@ -447,20 +447,20 @@ async function updateAllAgreementStatuses() {
         console.log('Sessions not yet loaded for booking agreements');
         return;
     }
-    
+
     const sessionIds = sessions.map(s => s.id);
     if (sessionIds.length === 0) return;
-    
+
     try {
         const response = await fetch('/api/booking/agreements/status', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ sessionIds })
         });
-        
+
         if (response.ok) {
             const statusMap = await response.json();
-            
+
             sessionIds.forEach(sessionId => {
                 const status = statusMap[sessionId]?.status || 'none';
                 updateAgreementStatus(sessionId, status);
@@ -507,7 +507,7 @@ function previewAgreement() {
 // Download agreement as PDF
 async function downloadAgreementPDF() {
     if (!currentAgreement) return;
-    
+
     // This would typically generate a PDF server-side
     // For now, we'll open a print dialog
     const content = document.getElementById('agreementViewContent').innerHTML;
@@ -537,10 +537,10 @@ async function downloadAgreementPDF() {
 // Resend agreement
 async function resendAgreement() {
     if (!currentAgreement) return;
-    
+
     const session = sessions.find(s => s.id === currentAgreementSessionId);
     if (!session) return;
-    
+
     if (confirm('Resend agreement to ' + session.email + '?')) {
         await sendForSignature();
     }
