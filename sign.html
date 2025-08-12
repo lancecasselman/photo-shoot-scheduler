@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Contract - Photography Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #C4962D;
+            --primary-light: #D4A843;
+            --primary-dark: #B4861D;
+            --secondary: #2C3E50;
+            --bg-light: #F9F7F5;
+            --bg-white: #FFFFFF;
+            --text-dark: #2C3E50;
+            --text-light: #6B7785;
+            --border: #E5E7EB;
+            --success: #22C55E;
+            --error: #EF4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--bg-light);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .contract-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 3rem;
+            margin-bottom: 2rem;
+        }
+
+        .contract-content {
+            line-height: 1.8;
+            margin-bottom: 3rem;
+        }
+
+        .contract-content h2 {
+            color: var(--text-dark);
+            margin: 2rem 0 1rem;
+            font-size: 1.5rem;
+        }
+
+        .contract-content h3 {
+            color: var(--text-dark);
+            margin: 1.5rem 0 0.75rem;
+            font-size: 1.1rem;
+        }
+
+        .contract-content p {
+            margin-bottom: 1rem;
+        }
+
+        .signature-section {
+            background: var(--bg-light);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+
+        .signature-label {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .signature-canvas {
+            background: white;
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            width: 100%;
+            height: 200px;
+            cursor: crosshair;
+            touch-action: none;
+        }
+
+        .signature-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            justify-content: space-between;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            flex: 1;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-dark);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-light);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: start;
+            gap: 0.75rem;
+            margin: 1.5rem 0;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-top: 2px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .status-message {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .status-message.success {
+            background: #D1FAE5;
+            color: #065F46;
+            border: 1px solid #34D399;
+            display: block;
+        }
+
+        .status-message.error {
+            background: #FEE2E2;
+            color: #991B1B;
+            border: 1px solid #F87171;
+            display: block;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+        }
+
+        .spinner {
+            border: 3px solid var(--border);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .print-section {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .signature-display {
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        .signature-display img {
+            max-width: 300px;
+            height: auto;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+            background: white;
+        }
+
+        .signed-info {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .contract-container {
+                padding: 1.5rem;
+            }
+
+            .signature-actions {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+
+            .signature-section,
+            .print-section,
+            .btn {
+                display: none;
+            }
+
+            .contract-container {
+                box-shadow: none;
+                padding: 0;
+            }
+
+            .signature-display {
+                display: block !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">📸 Photography Management System</div>
+            <p>Contract Signature</p>
+        </div>
+
+        <div id="loadingContainer" class="loading">
+            <div class="spinner"></div>
+        </div>
+
+        <div id="mainContent" style="display: none;">
+            <div id="statusMessage" class="status-message"></div>
+
+            <div class="contract-container">
+                <div id="contractContent" class="contract-content">
+                    <!-- Contract content will be loaded here -->
+                </div>
+
+                <div id="signatureSection" class="signature-section">
+                    <h3>Electronic Signature</h3>
+                    
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="signerName" placeholder="Enter your full name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" id="signerEmail" placeholder="Enter your email address" required>
+                    </div>
+
+                    <div class="signature-label">Please sign below:</div>
+                    <canvas id="signatureCanvas" class="signature-canvas"></canvas>
+                    
+                    <div class="signature-actions">
+                        <button class="btn btn-secondary" onclick="clearSignature()">Clear Signature</button>
+                        <button class="btn btn-primary" id="signButton" onclick="submitSignature()" disabled>
+                            Sign & Complete
+                        </button>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="agreeTerms" onchange="checkFormValidity()">
+                        <label for="agreeTerms">
+                            I agree to the terms and conditions outlined in this contract. I understand that my electronic signature is legally binding.
+                        </label>
+                    </div>
+                </div>
+
+                <div id="signedSection" style="display: none;">
+                    <div class="signature-display">
+                        <h3>Contract Signed Successfully</h3>
+                        <img id="signatureImage" src="" alt="Signature">
+                        <div class="signed-info" id="signedInfo"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="print-section">
+                <button class="btn btn-secondary" onclick="window.print()">🖨️ Print Contract</button>
+                <button class="btn btn-primary" id="downloadBtn" style="display: none;" onclick="downloadPDF()">📄 Download PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Signature Pad Library -->
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+    
+    <script>
+        // Global variables
+        let signaturePad = null;
+        let contractData = null;
+        let contractId = null;
+        let token = null;
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Get parameters from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            contractId = urlParams.get('contractId');
+            token = urlParams.get('token');
+
+            if (!contractId || !token) {
+                showError('Invalid contract link. Please use the link provided in your email.');
+                return;
+            }
+
+            // Initialize signature pad
+            initSignaturePad();
+
+            // Load contract
+            await loadContract();
+        });
+
+        // Initialize signature pad
+        function initSignaturePad() {
+            const canvas = document.getElementById('signatureCanvas');
+            signaturePad = new SignaturePad(canvas, {
+                backgroundColor: 'rgb(255, 255, 255)',
+                penColor: 'rgb(0, 0, 0)'
+            });
+
+            // Resize canvas to maintain quality
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
+            // Check validity on signature change
+            signaturePad.addEventListener('endStroke', checkFormValidity);
+        }
+
+        // Resize canvas
+        function resizeCanvas() {
+            const canvas = document.getElementById('signatureCanvas');
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            
+            canvas.width = canvas.offsetWidth * ratio;
+            canvas.height = canvas.offsetHeight * ratio;
+            canvas.getContext('2d').scale(ratio, ratio);
+            
+            signaturePad.clear();
+        }
+
+        // Load contract
+        async function loadContract() {
+            try {
+                const response = await fetch(`/api/contracts/${contractId}/view?token=${token}`);
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load contract');
+                }
+
+                contractData = await response.json();
+
+                // Check if already signed
+                if (contractData.status === 'signed') {
+                    showSigned();
+                    return;
+                }
+
+                // Display contract content
+                document.getElementById('contractContent').innerHTML = contractData.html;
+                
+                // Mark as viewed
+                await markAsViewed();
+
+                // Show main content
+                document.getElementById('loadingContainer').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+
+            } catch (error) {
+                console.error('Error loading contract:', error);
+                showError('Failed to load contract. Please try again or contact support.');
+            }
+        }
+
+        // Mark contract as viewed
+        async function markAsViewed() {
+            try {
+                await fetch(`/api/contracts/${contractId}/viewed`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ token })
+                });
+            } catch (error) {
+                console.error('Error marking as viewed:', error);
+            }
+        }
+
+        // Clear signature
+        function clearSignature() {
+            signaturePad.clear();
+            checkFormValidity();
+        }
+
+        // Check form validity
+        function checkFormValidity() {
+            const name = document.getElementById('signerName').value.trim();
+            const email = document.getElementById('signerEmail').value.trim();
+            const agreed = document.getElementById('agreeTerms').checked;
+            const signed = !signaturePad.isEmpty();
+
+            const isValid = name && email && agreed && signed;
+            document.getElementById('signButton').disabled = !isValid;
+        }
+
+        // Submit signature
+        async function submitSignature() {
+            const name = document.getElementById('signerName').value.trim();
+            const email = document.getElementById('signerEmail').value.trim();
+
+            if (!name || !email) {
+                showError('Please enter your name and email');
+                return;
+            }
+
+            if (signaturePad.isEmpty()) {
+                showError('Please provide your signature');
+                return;
+            }
+
+            if (!document.getElementById('agreeTerms').checked) {
+                showError('Please agree to the terms and conditions');
+                return;
+            }
+
+            // Disable button and show loading
+            const signButton = document.getElementById('signButton');
+            signButton.disabled = true;
+            signButton.innerHTML = '<span class="spinner" style="width: 20px; height: 20px; border-width: 2px;"></span> Signing...';
+
+            try {
+                // Get signature as data URL
+                const signatureDataUrl = signaturePad.toDataURL('image/png');
+
+                // Submit to server
+                const response = await fetch(`/api/contracts/${contractId}/sign`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        token,
+                        signatureDataUrl,
+                        signerName: name,
+                        signerEmail: email,
+                        signerIp: await getClientIP()
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to submit signature');
+                }
+
+                const result = await response.json();
+                
+                // Show success
+                showSuccess('Contract signed successfully! You will receive a copy via email.');
+                
+                // Show signed section
+                showSigned(result);
+
+            } catch (error) {
+                console.error('Error submitting signature:', error);
+                showError('Failed to submit signature. Please try again.');
+                
+                // Re-enable button
+                signButton.disabled = false;
+                signButton.innerHTML = 'Sign & Complete';
+            }
+        }
+
+        // Show signed contract
+        function showSigned(result) {
+            // Hide signature section
+            document.getElementById('signatureSection').style.display = 'none';
+            
+            // Show signed section
+            const signedSection = document.getElementById('signedSection');
+            signedSection.style.display = 'block';
+
+            if (result && result.signatureImage) {
+                document.getElementById('signatureImage').src = result.signatureImage;
+            }
+
+            if (result && result.signedAt) {
+                const signedDate = new Date(result.signedAt);
+                document.getElementById('signedInfo').innerHTML = `
+                    Signed on ${signedDate.toLocaleDateString()} at ${signedDate.toLocaleTimeString()}<br>
+                    By: ${result.signerName || 'N/A'}
+                `;
+            }
+
+            // Show download button if PDF is available
+            if (result && result.pdfUrl) {
+                const downloadBtn = document.getElementById('downloadBtn');
+                downloadBtn.style.display = 'inline-flex';
+                downloadBtn.onclick = () => window.open(result.pdfUrl, '_blank');
+            }
+
+            // Hide loading if visible
+            document.getElementById('loadingContainer').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+        }
+
+        // Download PDF
+        function downloadPDF() {
+            if (contractData && contractData.pdfUrl) {
+                window.open(contractData.pdfUrl, '_blank');
+            }
+        }
+
+        // Get client IP (fallback)
+        async function getClientIP() {
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                return data.ip;
+            } catch (error) {
+                return 'Unknown';
+            }
+        }
+
+        // Show error message
+        function showError(message) {
+            const statusMessage = document.getElementById('statusMessage');
+            statusMessage.className = 'status-message error';
+            statusMessage.textContent = message;
+            statusMessage.style.display = 'block';
+            
+            // Hide loading
+            document.getElementById('loadingContainer').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+        }
+
+        // Show success message
+        function showSuccess(message) {
+            const statusMessage = document.getElementById('statusMessage');
+            statusMessage.className = 'status-message success';
+            statusMessage.textContent = message;
+            statusMessage.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

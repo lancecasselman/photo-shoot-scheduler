@@ -532,8 +532,11 @@ function createSessionCard(session) {
 
     const contractBtn = document.createElement('button');
     contractBtn.className = 'btn btn-contract';
-    contractBtn.textContent = '📝 Send Contract';
-    contractBtn.onclick = () => openContractModal(session.id);
+    contractBtn.textContent = '📝 Contract';
+    contractBtn.onclick = () => {
+        // Navigate to contracts page with session ID
+        window.location.href = `/contracts.html?sessionId=${encodeURIComponent(session.id)}`;
+    };
 
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn btn-danger';

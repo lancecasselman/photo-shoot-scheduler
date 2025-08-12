@@ -1076,6 +1076,10 @@ app.post('/api/auth/logout', (req, res) => {
 // R2 Storage API Routes - Complete file management system
 app.use('/api/r2', createR2Routes());
 
+// Contract API routes
+const createContractRoutes = require('./server/contract-routes');
+app.use('/api/contracts', createContractRoutes(pool, r2FileManager));
+
 // Community Platform routes (initialized after Firebase)
 app.use('/api/community', (req, res, next) => {
     if (communityRoutes) {
@@ -2578,25 +2582,29 @@ async function initializeDatabase(retryCount = 0) {
         await pool.query(`
             CREATE TABLE IF NOT EXISTS contracts (
                 id VARCHAR(255) PRIMARY KEY,
-                session_id VARCHAR(255) NOT NULL,
-                user_id VARCHAR(255) NOT NULL,
-                contract_type VARCHAR(100) NOT NULL,
-                contract_title VARCHAR(255) NOT NULL,
-                contract_content TEXT NOT NULL,
-                client_name VARCHAR(255),
-                client_email VARCHAR(255),
-                photographer_name VARCHAR(255),
-                photographer_email VARCHAR(255),
-                access_token VARCHAR(255) UNIQUE NOT NULL,
-                custom_fields JSONB DEFAULT '{}',
+                photographer_id VARCHAR(255) NOT NULL,
+                session_id VARCHAR(255),
+                client_id VARCHAR(255),
+                template_key VARCHAR(50),
+                title VARCHAR(255) NOT NULL,
+                html TEXT NOT NULL,
+                resolved_html TEXT,
                 status VARCHAR(50) DEFAULT 'draft',
-                client_signature TEXT,
-                client_signature_date TIMESTAMP,
-                viewed_at TIMESTAMP,
-                sent_at TIMESTAMP,
-                signed_date TIMESTAMP,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                created_at BIGINT NOT NULL,
+                updated_at BIGINT NOT NULL,
+                sent_at BIGINT,
+                viewed_at BIGINT,
+                signed_at BIGINT,
+                signer_ip VARCHAR(45),
+                signer_name VARCHAR(255),
+                signer_email VARCHAR(255),
+                signature_data TEXT,
+                pdf_url TEXT,
+                pdf_hash VARCHAR(255),
+                view_token VARCHAR(255),
+                client_email VARCHAR(255),
+                timeline JSONB DEFAULT '[]',
+                metadata JSONB DEFAULT '{}'
             )
         `);
 
@@ -3006,6 +3014,60 @@ app.use('/uploads', (req, res, next) => {
 
 // Get all sessions
 // This endpoint is defined earlier in the file - removing duplicate
+
+// Get single session by ID
+app.get('/api/sessions/:sessionId', isAuthenticated, requireSubscription, async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
+
+        const result = await pool.query(
+            'SELECT * FROM photography_sessions WHERE id = $1 AND user_id = $2',
+            [sessionId, userId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        const row = result.rows[0];
+        const session = {
+            id: row.id,
+            clientName: row.client_name,
+            sessionType: row.session_type,
+            dateTime: row.date_time,
+            location: row.location,
+            phoneNumber: row.phone_number,
+            email: row.email,
+            price: parseFloat(row.price),
+            depositAmount: parseFloat(row.deposit_amount || 0),
+            deposit_amount: parseFloat(row.deposit_amount || 0),
+            duration: row.duration,
+            notes: row.notes,
+            contractSigned: row.contract_signed,
+            paid: row.paid,
+            edited: row.edited,
+            delivered: row.delivered,
+            sendReminder: row.send_reminder,
+            notifyGalleryReady: row.notify_gallery_ready,
+            photos: row.photos || [],
+            galleryAccessToken: row.gallery_access_token,
+            galleryCreatedAt: row.gallery_created_at,
+            galleryExpiresAt: row.gallery_expires_at,
+            galleryReadyNotified: row.gallery_ready_notified,
+            hasPaymentPlan: row.has_payment_plan || false,
+            paymentPlanId: row.payment_plan_id || null,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at
+        };
+
+        res.json(session);
+    } catch (error) {
+        console.error('Error fetching session:', error);
+        res.status(500).json({ error: 'Failed to fetch session' });
+    }
+});
 
 app.get('/api/sessions', isAuthenticated, requireSubscription, async (req, res) => {
     try {
