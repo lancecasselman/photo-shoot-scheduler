@@ -664,24 +664,33 @@
 
         // Load session and create/open contract
         async function loadSessionAndCreateContract(sessionId) {
+            console.log('Loading session for contract:', sessionId);
             try {
                 // Load session data
                 const response = await fetch(`/api/sessions/${sessionId}`, {
                     credentials: 'include'
                 });
                 
-                if (!response.ok) throw new Error('Failed to load session');
+                if (!response.ok) {
+                    console.error('Failed to load session, status:', response.status);
+                    throw new Error('Failed to load session');
+                }
                 
                 const session = await response.json();
+                console.log('Session loaded:', session);
                 
                 // Check if contract already exists for this session
                 const existingContract = contracts.find(c => c.session_id === sessionId || c.sessionId === sessionId);
+                
+                console.log('Existing contract found:', existingContract);
+                console.log('All contracts:', contracts);
                 
                 if (existingContract) {
                     selectContract(existingContract.id);
                 } else {
                     // Create new contract from template
                     const templateKey = getTemplateForSession(session);
+                    console.log('Creating contract with template:', templateKey);
                     await createContractFromTemplate(templateKey, session);
                 }
             } catch (error) {
@@ -704,10 +713,24 @@
 
         // Create contract from template for a session
         async function createContractFromTemplate(templateKey, session) {
+            console.log('createContractFromTemplate called with:', templateKey, session);
             const template = contractTemplates[templateKey];
-            if (!template) return;
+            if (!template) {
+                console.error('Template not found:', templateKey);
+                return;
+            }
             
             const html = template.sections.map(section => section.bodyHtml).join('\n');
+            console.log('Contract HTML generated');
+            
+            const requestBody = {
+                sessionId: session.id,
+                templateKey,
+                title: `${template.defaultTitle} - ${session.clientName}`,
+                html: html,
+                clientId: session.clientId
+            };
+            console.log('Request body:', requestBody);
             
             try {
                 const response = await fetch('/api/contracts/create', {
@@ -716,18 +739,19 @@
                         'Content-Type': 'application/json'
                     },
                     credentials: 'include',
-                    body: JSON.stringify({
-                        sessionId: session.id,
-                        templateKey,
-                        title: `${template.defaultTitle} - ${session.clientName}`,
-                        html: html,
-                        clientId: session.clientId
-                    })
+                    body: JSON.stringify(requestBody)
                 });
                 
-                if (!response.ok) throw new Error('Failed to create contract');
+                console.log('Create contract response status:', response.status);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Failed to create contract:', errorText);
+                    throw new Error('Failed to create contract');
+                }
                 
                 const contract = await response.json();
+                console.log('Contract created:', contract);
                 showNotification('Contract created from template', 'success');
                 
                 // Reload contracts and select the new one

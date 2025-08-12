@@ -5320,9 +5320,10 @@ app.get('/api/health', async (req, res) => {
 // Get individual session
 app.get('/api/sessions/:id', isAuthenticated, async (req, res) => {
     const sessionId = req.params.id;
+    const userId = req.session.user.uid;
 
     try {
-        const session = await getSessionById(sessionId);
+        const session = await getSessionById(sessionId, userId);
 
         if (!session) {
             return res.status(404).json({ error: 'Session not found' });
