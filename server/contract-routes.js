@@ -113,7 +113,7 @@ module.exports = function(pool, r2FileManager) {
         try {
             const result = await pool.query(
                 `SELECT * FROM contracts 
-                 WHERE photographer_id = $1 
+                 WHERE user_id = $1 
                  ORDER BY created_at DESC`,
                 [req.session.user.uid]
             );
@@ -134,7 +134,7 @@ module.exports = function(pool, r2FileManager) {
         try {
             const result = await pool.query(
                 `SELECT * FROM contracts 
-                 WHERE id = $1 AND photographer_id = $2`,
+                 WHERE id = $1 AND user_id = $2`,
                 [req.params.id, req.session.user.uid]
             );
 
@@ -160,7 +160,7 @@ module.exports = function(pool, r2FileManager) {
         try {
             const result = await pool.query(
                 `SELECT * FROM contracts 
-                 WHERE id = $1 AND view_token = $2`,
+                 WHERE id = $1 AND access_token = $2`,
                 [req.params.id, token]
             );
 
@@ -171,13 +171,14 @@ module.exports = function(pool, r2FileManager) {
             const contract = result.rows[0];
             
             // Don't expose sensitive data to clients
+            const customFields = contract.custom_fields || {};
             const clientContract = {
                 id: contract.id,
-                title: contract.title,
-                html: contract.resolved_html || contract.html,
+                title: contract.contract_title,
+                html: customFields.resolvedHtml || contract.contract_content,
                 status: contract.status,
-                signedAt: contract.signed_at,
-                pdfUrl: contract.pdf_url
+                signedAt: contract.signed_date,
+                pdfUrl: customFields.pdfUrl
             };
 
             res.json(clientContract);
@@ -215,27 +216,24 @@ module.exports = function(pool, r2FileManager) {
             // Create contract record
             const result = await pool.query(
                 `INSERT INTO contracts (
-                    id, photographer_id, session_id, client_id, 
-                    template_key, title, html, status, 
-                    created_at, updated_at, timeline
+                    id, user_id, session_id, 
+                    contract_type, contract_title, contract_content, status,
+                    photographer_name, photographer_email,
+                    created_at, updated_at
                 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
                 RETURNING *`,
                 [
                     id,
                     req.session.user.uid,
                     sessionId || null,
-                    clientId || null,
-                    templateKey || null,
+                    templateKey || 'custom',
                     contractTitle,
                     contractHtml,
                     'draft',
-                    now,
-                    now,
-                    JSON.stringify([{
-                        at: now,
-                        action: 'Contract created',
-                        by: req.session.user.email
-                    }])
+                    req.session.user.displayName || req.session.user.email,
+                    req.session.user.email,
+                    new Date(),
+                    new Date()
                 ]
             );
 
@@ -258,7 +256,7 @@ module.exports = function(pool, r2FileManager) {
             // Get contract
             const contractResult = await pool.query(
                 `SELECT * FROM contracts 
-                 WHERE id = $1 AND photographer_id = $2`,
+                 WHERE id = $1 AND user_id = $2`,
                 [contractId, req.session.user.uid]
             );
 
@@ -284,7 +282,7 @@ module.exports = function(pool, r2FileManager) {
             }
 
             // Resolve merge fields
-            const resolvedHtml = resolveMergeFields(contract.html, {
+            const resolvedHtml = resolveMergeFields(contract.contract_content || '', {
                 photographerName: req.session.user.displayName || 'Photographer',
                 photographerEmail: req.session.user.email,
                 studioName: 'Photography Studio',
@@ -305,25 +303,20 @@ module.exports = function(pool, r2FileManager) {
             });
 
             // Update contract with resolved HTML and token
-            const now = Date.now();
-            const timeline = JSON.parse(contract.timeline || '[]');
-            timeline.push({
-                at: now,
-                action: 'Contract sent for signature',
-                by: req.session.user.email
-            });
+            const now = new Date();
+            const customFields = contract.custom_fields || {};
+            customFields.resolvedHtml = resolvedHtml;
 
             await pool.query(
                 `UPDATE contracts 
                  SET status = 'sent', 
                      sent_at = $1, 
-                     view_token = $2,
-                     resolved_html = $3,
-                     client_email = $4,
-                     timeline = $5,
-                     updated_at = $6
-                 WHERE id = $7`,
-                [now, viewToken, resolvedHtml, clientEmail, JSON.stringify(timeline), now, contractId]
+                     access_token = $2,
+                     client_email = $3,
+                     custom_fields = $4,
+                     updated_at = $5
+                 WHERE id = $6`,
+                [now, viewToken, clientEmail, JSON.stringify(customFields), now, contractId]
             );
 
             // Generate signature link
@@ -342,15 +335,15 @@ module.exports = function(pool, r2FileManager) {
 
             await sendEmail({
                 to: clientEmail,
-                subject: `Contract Ready for Signature - ${contract.title}`,
+                subject: `Contract Ready for Signature - ${contract.contract_title}`,
                 html: emailHtml
             });
 
             // Send notification to photographer
             await sendEmail({
                 to: req.session.user.email,
-                subject: `Contract Sent - ${contract.title}`,
-                html: `<p>Your contract "${contract.title}" has been sent to ${clientEmail} for signature.</p>`
+                subject: `Contract Sent - ${contract.contract_title}`,
+                html: `<p>Your contract "${contract.contract_title}" has been sent to ${clientEmail} for signature.</p>`
             });
 
             res.json({ success: true, message: 'Contract sent successfully' });
@@ -374,7 +367,7 @@ module.exports = function(pool, r2FileManager) {
                  END,
                  viewed_at = $1,
                  updated_at = $2
-                 WHERE id = $3 AND view_token = $4
+                 WHERE id = $3 AND access_token = $4
                  RETURNING id`,
                 [now, now, req.params.id, token]
             );
@@ -398,7 +391,7 @@ module.exports = function(pool, r2FileManager) {
             // Get contract
             const contractResult = await pool.query(
                 `SELECT * FROM contracts 
-                 WHERE id = $1 AND view_token = $2`,
+                 WHERE id = $1 AND access_token = $2`,
                 [req.params.id, token]
             );
 
@@ -446,36 +439,38 @@ module.exports = function(pool, r2FileManager) {
                 by: signerEmail
             });
 
+            const customFields = contract.custom_fields || {};
+            customFields.pdfUrl = pdfUrl;
+            customFields.pdfHash = pdfHash;
+            customFields.signerIp = signerIp;
+            customFields.timeline = timeline;
+
             await pool.query(
                 `UPDATE contracts 
                  SET status = 'signed',
-                     signed_at = $1,
-                     signer_ip = $2,
-                     signer_name = $3,
-                     signer_email = $4,
-                     pdf_url = $5,
-                     pdf_hash = $6,
-                     signature_data = $7,
-                     timeline = $8,
-                     updated_at = $9
-                 WHERE id = $10`,
+                     signed_date = $1,
+                     client_name = $2,
+                     client_email = $3,
+                     client_signature = $4,
+                     client_signature_date = $5,
+                     custom_fields = $6,
+                     updated_at = $7
+                 WHERE id = $8`,
                 [
-                    now,
-                    signerIp,
+                    new Date(),
                     signerName,
                     signerEmail,
-                    pdfUrl,
-                    pdfHash,
                     signatureDataUrl,
-                    JSON.stringify(timeline),
-                    now,
+                    new Date(),
+                    JSON.stringify(customFields),
+                    new Date(),
                     req.params.id
                 ]
             );
 
             // Send emails with PDF attachment
             const emailAttachments = [{
-                filename: `${contract.title.replace(/[^a-z0-9]/gi, '_')}.pdf`,
+                filename: `${(contract.contract_title || 'contract').replace(/[^a-z0-9]/gi, '_')}.pdf`,
                 content: pdfBuffer,
                 contentType: 'application/pdf'
             }];
@@ -483,12 +478,12 @@ module.exports = function(pool, r2FileManager) {
             // Email to client
             await sendEmail({
                 to: signerEmail,
-                subject: `Signed Contract - ${contract.title}`,
+                subject: `Signed Contract - ${contract.contract_title}`,
                 html: `
                     <h2>Contract Signed Successfully</h2>
-                    <p>Thank you for signing the contract "${contract.title}".</p>
+                    <p>Thank you for signing the contract "${contract.contract_title}".</p>
                     <p>A copy of the signed contract is attached to this email for your records.</p>
-                    <p>Signed on: ${new Date(now).toLocaleString()}</p>
+                    <p>Signed on: ${new Date().toLocaleString()}</p>
                 `,
                 attachments: emailAttachments
             });
@@ -496,16 +491,16 @@ module.exports = function(pool, r2FileManager) {
             // Email to photographer
             const photographerResult = await pool.query(
                 `SELECT email, display_name FROM users WHERE uid = $1`,
-                [contract.photographer_id]
+                [contract.user_id]
             );
 
             if (photographerResult.rows.length > 0) {
                 await sendEmail({
                     to: photographerResult.rows[0].email,
-                    subject: `Contract Signed by ${signerName} - ${contract.title}`,
+                    subject: `Contract Signed by ${signerName} - ${contract.contract_title}`,
                     html: `
                         <h2>Contract Signed</h2>
-                        <p>Great news! Your contract "${contract.title}" has been signed.</p>
+                        <p>Great news! Your contract "${contract.contract_title}" has been signed.</p>
                         <p><strong>Signed by:</strong> ${signerName} (${signerEmail})</p>
                         <p><strong>Signed on:</strong> ${new Date(now).toLocaleString()}</p>
                         <p><strong>IP Address:</strong> ${signerIp}</p>
@@ -537,8 +532,8 @@ module.exports = function(pool, r2FileManager) {
 
         try {
             const result = await pool.query(
-                `SELECT pdf_url, title FROM contracts 
-                 WHERE id = $1 AND (photographer_id = $2 OR client_id = $2)`,
+                `SELECT custom_fields, contract_title FROM contracts 
+                 WHERE id = $1 AND user_id = $2`,
                 [req.params.id, req.session.user.uid]
             );
 
@@ -547,14 +542,16 @@ module.exports = function(pool, r2FileManager) {
             }
 
             const contract = result.rows[0];
+            const customFields = contract.custom_fields || {};
+            const pdfUrl = customFields.pdfUrl;
 
-            if (!contract.pdf_url) {
+            if (!pdfUrl) {
                 return res.status(404).json({ error: 'PDF not available' });
             }
 
             // If R2 URL, redirect to it
-            if (contract.pdf_url.startsWith('http')) {
-                res.redirect(contract.pdf_url);
+            if (pdfUrl.startsWith('http')) {
+                res.redirect(pdfUrl);
             } else {
                 res.status(404).json({ error: 'PDF file not found' });
             }
@@ -592,11 +589,12 @@ async function generateSignedPDF(contract, signatureDataUrl, signerName, signerI
             doc.on('end', () => resolve(Buffer.concat(chunks)));
 
             // Add content
-            doc.fontSize(20).text(contract.title, { align: 'center' });
+            doc.fontSize(20).text(contract.contract_title || 'Contract', { align: 'center' });
             doc.moveDown();
 
             // Convert HTML to plain text (simplified)
-            const plainText = (contract.resolved_html || contract.html)
+            const customFields = contract.custom_fields || {};
+            const plainText = (customFields.resolvedHtml || contract.contract_content || '')
                 .replace(/<h2[^>]*>(.*?)<\/h2>/gi, '\n\n$1\n')
                 .replace(/<h3[^>]*>(.*?)<\/h3>/gi, '\n$1\n')
                 .replace(/<p[^>]*>(.*?)<\/p>/gi, '$1\n')
