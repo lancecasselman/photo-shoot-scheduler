@@ -13,7 +13,7 @@ async function checkAuth() {
         console.log('Skipping auth check - logout in progress');
         return false;
     }
-    
+
     try {
         const response = await fetch('/api/auth/user');
         if (response.ok) {
@@ -40,13 +40,13 @@ function updateUserUI() {
     const userInfo = document.getElementById('userInfo');
     const userName = document.getElementById('userName');
     const userAvatar = document.getElementById('userAvatar');
-    
+
     // Check if elements exist before updating
     if (!userInfo || !userName) {
         console.log('User UI elements not found, skipping update');
         return;
     }
-    
+
     if (currentUser) {
         userName.textContent = currentUser.displayName || currentUser.email;
         if (userAvatar && currentUser.photoURL) {
@@ -76,15 +76,15 @@ function showMessage(message, type = 'info') {
             console.log(`${type}: ${message}`);
             return;
         }
-        
+
         const messageDiv = document.createElement('div');
         messageDiv.className = `message message-${type}`;
         messageDiv.textContent = message;
-        
+
         // Safe DOM manipulation with null checks
         if (messageContainer && messageDiv) {
             messageContainer.appendChild(messageDiv);
-            
+
             // Auto-remove after 5 seconds
             setTimeout(() => {
                 if (messageDiv && messageDiv.parentNode && messageDiv.parentNode.contains(messageDiv)) {
@@ -103,10 +103,10 @@ function showMessage(message, type = 'info') {
 function toggleMobileMenu() {
     const mobileMenu = document.getElementById('mobileMenu');
     const hamburgerMenu = document.querySelector('.hamburger-menu');
-    
+
     if (mobileMenu) {
         const isVisible = mobileMenu.classList.contains('show');
-        
+
         if (isVisible) {
             closeMobileMenu();
         } else {
@@ -118,7 +118,7 @@ function toggleMobileMenu() {
 function showMobileMenu() {
     const mobileMenu = document.getElementById('mobileMenu');
     const hamburgerMenu = document.querySelector('.hamburger-menu');
-    
+
     if (mobileMenu) {
         mobileMenu.classList.add('show');
         if (hamburgerMenu) {
@@ -130,7 +130,7 @@ function showMobileMenu() {
 function closeMobileMenu() {
     const mobileMenu = document.getElementById('mobileMenu');
     const hamburgerMenu = document.querySelector('.hamburger-menu');
-    
+
     if (mobileMenu) {
         mobileMenu.classList.remove('show');
         if (hamburgerMenu) {
@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('click', function(event) {
         const mobileMenu = document.getElementById('mobileMenu');
         const hamburgerMenu = document.querySelector('.hamburger-menu');
-        
+
         if (mobileMenu && mobileMenu.classList.contains('show')) {
             // Check if click is outside the mobile menu and hamburger button
             if (!mobileMenu.contains(event.target) && !hamburgerMenu.contains(event.target)) {
@@ -153,11 +153,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
-    
+
     // Close dropdown when any button in the page is clicked (except nav links)
     document.addEventListener('click', function(event) {
         const mobileMenu = document.getElementById('mobileMenu');
-        
+
         if (mobileMenu && mobileMenu.classList.contains('show')) {
             // Check if the clicked element is a button but not a nav link
             if ((event.target.tagName === 'BUTTON' || event.target.classList.contains('btn')) && 
@@ -167,7 +167,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
-    
+
     // Close dropdown when pressing Escape key
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
@@ -180,30 +180,30 @@ function showMobileTool(toolName) {
     // Hide all mobile tools first
     const allTools = document.querySelectorAll('.mobile-tool');
     allTools.forEach(tool => tool.style.display = 'none');
-    
+
     // Show the requested tool
     const tool = document.getElementById(`mobile-${toolName}`);
     if (tool) {
         tool.style.display = 'block';
     }
-    
+
     console.log(`Mobile tool activated: ${toolName}`);
 }
 
 // Add session to the list
 function addSession(sessionData) {
     console.log('Adding session:', sessionData);
-    
+
     // Create session object
     const session = {
         id: sessionIdCounter++,
         ...sessionData,
         createdAt: new Date().toISOString()
     };
-    
+
     sessions.push(session);
     console.log('Session added:', session);
-    
+
     // Re-render sessions
     if (typeof window.renderSessions === 'function') {
         window.renderSessions();
@@ -215,33 +215,33 @@ function addSession(sessionData) {
 async function createAPISession(sessionData) {
     try {
         console.log('Creating session via API:', sessionData);
-        
+
         const authToken = await getAuthToken();
         const headers = {
             'Content-Type': 'application/json'
         };
-        
+
         if (authToken) {
             headers['Authorization'] = `Bearer ${authToken}`;
         }
-        
+
         const response = await fetch('/api/sessions', {
             method: 'POST',
             headers,
             body: JSON.stringify(sessionData)
         });
-        
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const result = await response.json();
         console.log('API response:', result);
-        
+
         // Reload sessions to show the new one
         loadSessions();
         showMessage('Session created successfully!', 'success');
-        
+
     } catch (error) {
         console.error('Error creating session:', error);
         showMessage('Error creating session: ' + error.message, 'error');
@@ -252,31 +252,31 @@ async function createAPISession(sessionData) {
 async function loadSessions() {
     try {
         console.log('Loading sessions from API...');
-        
+
         const authToken = await getAuthToken();
         const headers = {};
-        
+
         if (authToken) {
             headers['Authorization'] = `Bearer ${authToken}`;
         }
-        
+
         const response = await fetch('/api/sessions', { headers });
-        
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const data = await response.json();
         console.log('Data type:', typeof data, 'Array:', Array.isArray(data));
         console.log('Raw API response:', data);
         console.log('Testing session deposit_amount from API:', data.find(s => s.clientName === 'Testing dammit')?.deposit_amount || 'NOT FOUND');
-        
+
         if (!Array.isArray(data)) {
             console.error('API returned non-array data:', data);
             showMessage('Error: Invalid data format from server', 'error');
             return;
         }
-        
+
         // Transform the data to match frontend format
         const transformedSessions = data.map(session => ({
             id: session.id,
@@ -301,13 +301,13 @@ async function loadSessions() {
             createdAt: session.created_at || session.createdAt,
             updatedAt: session.updated_at || session.updatedAt
         }));
-        
+
         console.log('Transformed sessions:', transformedSessions);
-        
+
         sessions = transformedSessions;
         window.sessions = sessions; // Ensure window.sessions is set for storage calculation
         window.sessionsData = transformedSessions; // Store sessions data for deposit function
-        
+
         // Call the index.html renderSessions function instead of the disabled script.js one
         if (typeof window.renderSessions === 'function') {
             window.renderSessions();
@@ -315,14 +315,14 @@ async function loadSessions() {
             console.error('renderSessions function not found in window scope');
         }
         console.log('Successfully loaded', sessions.length, 'sessions');
-        
+
         // Initialize business dashboard with real session data
         if (typeof window.initializeDashboard === 'function') {
             window.initializeDashboard();
         }
-        
+
         // Storage usage is now handled by loadStorageUsage() in index.html
-        
+
     } catch (error) {
         console.error('Error loading sessions:', error);
         showMessage('Error loading sessions: ' + error.message, 'error');
@@ -523,7 +523,7 @@ function createSessionCard(session) {
     paymentPlanBtn.style.backgroundColor = '#28a745';
     paymentPlanBtn.style.color = 'white';
     paymentPlanBtn.style.margin = '2px';
-    
+
     // Show payment plan status if exists
     if (session.hasPaymentPlan) {
         paymentPlanBtn.textContent = '📅 View Payment Plan';
@@ -558,7 +558,7 @@ function createSessionCard(session) {
     console.log('About to append buttons for:', session.clientName);
     console.log('Upload button created:', uploadBtn.textContent);
     console.log('Upload button onclick:', uploadBtn.onclick ? 'Set' : 'NOT SET');
-    
+
     actions.appendChild(editBtn);
     actions.appendChild(uploadBtn);
     actions.appendChild(calendarBtn);
@@ -578,7 +578,7 @@ function createSessionCard(session) {
     actions.appendChild(rawFolderBtn);
     console.log('🔴 DEBUG: RAW Folder button appended successfully');
     actions.appendChild(deleteBtn);
-    
+
     // Debug: Log all buttons in the actions container
     console.log('Actions container buttons:', actions.children.length);
     for (let i = 0; i < actions.children.length; i++) {
@@ -740,17 +740,17 @@ window.editSession = function(sessionId) {
         showMessage('Session not found', 'error');
         return;
     }
-    
+
     // Populate form with session data for editing
     const form = document.getElementById('sessionForm');
     form.elements.sessionType.value = session.sessionType;
     form.elements.clientName.value = session.clientName;
-    
+
     // Format datetime for input
     const dateTime = new Date(session.dateTime);
     const formattedDateTime = dateTime.toISOString().slice(0, 16);
     form.elements.dateTime.value = formattedDateTime;
-    
+
     form.elements.location.value = session.location;
     form.elements.phoneNumber.value = session.phoneNumber;
     form.elements.email.value = session.email;
@@ -763,14 +763,14 @@ window.editSession = function(sessionId) {
     form.elements.delivered.checked = session.delivered;
     form.elements.reminderEnabled.checked = session.reminderEnabled;
     form.elements.galleryReadyNotified.checked = session.galleryReadyNotified;
-    
+
     // Store the ID for updating
     form.dataset.editingId = sessionId;
-    
+
     // Change submit button text
     const submitBtn = form.querySelector('button[type="submit"]');
     submitBtn.textContent = 'Update Session';
-    
+
     // Scroll to form
     form.scrollIntoView({ behavior: 'smooth' });
 }
@@ -784,7 +784,7 @@ window.deleteSession = async function(sessionId) {
     try {
         const authToken = await getAuthToken();
         const headers = {};
-        
+
         if (authToken) {
             headers['Authorization'] = `Bearer ${authToken}`;
         }
@@ -804,7 +804,7 @@ window.deleteSession = async function(sessionId) {
             window.renderSessions();
         }
         showMessage('Session deleted successfully!', 'success');
-        
+
     } catch (error) {
         console.error('Error deleting session:', error);
         showMessage('Error deleting session: ' + error.message, 'error');
@@ -818,19 +818,19 @@ window.exportToCalendar = function(sessionId) {
         showMessage('Session not found', 'error');
         return;
     }
-    
+
     const startDate = new Date(session.dateTime);
     const endDate = new Date(startDate.getTime() + session.duration * 60000);
-    
+
     // Format date for .ics file (YYYYMMDDTHHMMSSZ)
     const formatICSDate = (date) => {
         return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
     };
-    
+
     // Generate unique ID for the event
     const eventUID = `photo-session-${sessionId}@thelegacyphotography.com`;
     const timestamp = formatICSDate(new Date());
-    
+
     // Create .ics file content
     const icsContent = [
         'BEGIN:VCALENDAR',
@@ -864,24 +864,24 @@ window.exportToCalendar = function(sessionId) {
         'END:VEVENT',
         'END:VCALENDAR'
     ].join('\r\n');
-    
+
     // Detect device type for optimal calendar integration
     const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
     const isMac = /Macintosh|MacIntel|MacPPC|Mac68K/i.test(navigator.userAgent);
     const isAndroid = /Android/i.test(navigator.userAgent);
     const isWindows = /Windows|Win32|Win64|WOW64/i.test(navigator.userAgent);
-    
+
     // Method 1: Direct calendar app integration (mobile devices)
     if (isIOS || isAndroid) {
         // Create a data URL for immediate calendar app recognition
         const dataUrl = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(icsContent);
-        
+
         // For mobile devices, use window.location.href for best calendar app integration
         showMessage('Opening calendar app...', 'success');
-        
+
         // Primary method: Use server URL which handles mobile browsers better
         window.location.href = `/api/sessions/${sessionId}/calendar.ics`;
-        
+
         // Fallback: Data URL method
         setTimeout(() => {
             try {
@@ -890,28 +890,28 @@ window.exportToCalendar = function(sessionId) {
                 console.log('Data URL fallback used');
             }
         }, 1000);
-        
+
     } else {
         // Method 2: Download .ics file (desktop)
         const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
         const url = URL.createObjectURL(blob);
-        
+
         // Create download link
         const link = document.createElement('a');
         link.href = url;
         link.download = `${session.clientName.replace(/[^a-zA-Z0-9]/g, '_')}_${session.sessionType.replace(/[^a-zA-Z0-9]/g, '_')}_Session.ics`;
         link.style.display = 'none';
-        
+
         // Add to page, click, and remove
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
+
         // Clean up the blob URL
         setTimeout(() => URL.revokeObjectURL(url), 100);
-        
+
         showMessage('Calendar event downloaded - double-click the .ics file to add to your calendar', 'success');
-        
+
         // Also provide server URL as additional option for desktop
         setTimeout(() => {
             const serverUrl = `/api/sessions/${sessionId}/calendar.ics`;
@@ -920,12 +920,12 @@ window.exportToCalendar = function(sessionId) {
             }
         }, 2000);
     }
-    
+
     // Universal fallback: Google Calendar (works on all devices)
     setTimeout(() => {
         const googleStartDate = formatICSDate(startDate);
         const googleEndDate = formatICSDate(endDate);
-        
+
         const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE` +
             `&text=${encodeURIComponent(session.sessionType + ' Photography Session - ' + session.clientName)}` +
             `&dates=${googleStartDate}/${googleEndDate}` +
@@ -938,14 +938,14 @@ window.exportToCalendar = function(sessionId) {
                 `Duration: ${session.duration} minutes\n\n` +
                 `${session.notes ? 'Notes: ' + session.notes : ''}`
             )}`;
-        
+
         // Show Google Calendar option based on device type
         const delay = (isIOS || isAndroid) ? 4000 : 3000;
         setTimeout(() => {
             const message = (isIOS || isAndroid) ? 
                 'Calendar app should have opened. Would you also like to add to Google Calendar?' :
                 'Calendar file downloaded. Would you also like to add to Google Calendar?';
-                
+
             if (confirm(message)) {
                 window.open(googleCalendarUrl, '_blank');
             }
@@ -966,7 +966,7 @@ window.openEmailClient = function(sessionOrId) {
     } else {
         session = sessionOrId;
     }
-    
+
     const subject = `Photography Session - ${session.sessionType} with ${session.clientName}`;
     const body = `Hi ${session.clientName},
 
@@ -991,7 +991,7 @@ Professional Photography Services
  Email: lance@thelegacyphotography.com`;
 
     const mailtoUrl = `mailto:${session.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    
+
     // Open email client
     const emailLink = document.createElement('a');
     emailLink.href = mailtoUrl;
@@ -1000,7 +1000,7 @@ Professional Photography Services
     document.body.appendChild(emailLink);
     emailLink.click();
     document.body.removeChild(emailLink);
-    
+
     showMessage(` Opening email client for ${session.clientName}`, 'success');
 }
 
@@ -1008,7 +1008,7 @@ Professional Photography Services
 async function copyGalleryUrl(sessionId) {
     try {
         showMessage('Generating gallery URL...', 'info');
-        
+
         // Generate gallery access if not already done
         const response = await fetch(`/api/sessions/${sessionId}/send-gallery-notification`, {
             method: 'POST',
@@ -1016,18 +1016,18 @@ async function copyGalleryUrl(sessionId) {
                 'Content-Type': 'application/json'
             }
         });
-        
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const result = await response.json();
-        
+
         if (result.galleryUrl) {
             // Copy URL to clipboard
             await navigator.clipboard.writeText(result.galleryUrl);
             showMessage(`📸 Gallery URL copied to clipboard! ${result.galleryUrl}`, 'success');
-            
+
             // Update the button text to show it's been generated
             const button = document.querySelector(`[data-session-id="${sessionId}"] .btn-warning`);
             if (button) {
@@ -1035,11 +1035,11 @@ async function copyGalleryUrl(sessionId) {
                 button.disabled = true;
                 button.style.backgroundColor = '#28a745';
             }
-            
+
             // Reload sessions to update UI
             loadSessions();
         }
-        
+
     } catch (error) {
         console.error('Error copying gallery URL:', error);
         showMessage('Error generating gallery URL: ' + error.message, 'error');
@@ -1049,27 +1049,27 @@ async function copyGalleryUrl(sessionId) {
 // Send gallery notification function
 async function sendGalleryNotification(sessionId) {
     console.log('Send gallery notification for session:', sessionId);
-    
+
     try {
         showMessage('Sending gallery notification...', 'info');
-        
+
         const response = await fetch(`/api/sessions/${sessionId}/send-gallery-notification`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             }
         });
-        
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const result = await response.json();
-        
+
         if (result.mailtoUrl) {
             // Open email client with pre-filled content
             showMessage(' Opening your email client with gallery notification...', 'info');
-            
+
             // Open mailto link
             const emailLink = document.createElement('a');
             emailLink.href = result.mailtoUrl;
@@ -1078,11 +1078,11 @@ async function sendGalleryNotification(sessionId) {
             document.body.appendChild(emailLink);
             emailLink.click();
             document.body.removeChild(emailLink);
-            
+
             // Show success message with preview option
             setTimeout(() => {
                 showMessage(' Email client opened! Or preview the email first:', 'success');
-                
+
                 // Add email preview button
                 setTimeout(() => {
                     if (confirm(' Want to see the email preview before sending? Click OK to open email preview.')) {
@@ -1093,14 +1093,14 @@ async function sendGalleryNotification(sessionId) {
         } else {
             showMessage('WARNING: Email notification prepared. Check console for details.', 'warning');
         }
-        
+
         // Always show SMS option
         if (result.smsSent) {
             setTimeout(() => {
                 showMessage('💬 SMS link prepared for manual sending if needed.', 'info');
             }, 2000);
         }
-        
+
     } catch (error) {
         console.error('Error sending gallery notification:', error);
         showMessage('Error sending notification: ' + error.message, 'error');
@@ -1111,18 +1111,18 @@ async function sendGalleryNotification(sessionId) {
 async function createInvoice(session) {
     try {
         console.log('Creating invoice for session:', session);
-        
+
         showMessage('Creating invoice...', 'info');
-        
+
         const authToken = await getAuthToken();
         const headers = {
             'Content-Type': 'application/json'
         };
-        
+
         if (authToken) {
             headers['Authorization'] = `Bearer ${authToken}`;
         }
-        
+
         const response = await fetch('/api/create-invoice', {
             method: 'POST',
             headers,
@@ -1135,28 +1135,28 @@ async function createInvoice(session) {
                 dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days from now
             })
         });
-        
+
         if (!response.ok) {
             const errorText = await response.text();
             throw new Error(`Failed to create invoice: ${errorText}`);
         }
-        
+
         const result = await response.json();
         console.log('Invoice creation result:', result);
-        
+
         if (result.success && result.invoice_url) {
             showMessage('Invoice created successfully!', 'success');
-            
+
             // Open the invoice URL in a new tab
             window.open(result.invoice_url, '_blank');
-            
+
             // Show a dialog with invoice details
             const message = `Invoice created successfully!\n\nInvoice URL: ${result.invoice_url}\n\nThe invoice has been sent to ${session.email}`;
             alert(message);
         } else {
             throw new Error(result.error || 'Unknown error creating invoice');
         }
-        
+
     } catch (error) {
         console.error('Error creating invoice:', error);
         showMessage('Error creating invoice: ' + error.message, 'error');
@@ -1168,7 +1168,7 @@ async function sendDepositInvoice(session) {
     try {
         console.log('DEBUG: sendDepositInvoice called with session:', session);
         console.log('DEBUG: Session type:', typeof session, 'Is string:', typeof session === 'string');
-        
+
         // If session is just an ID string, fetch the full session object
         if (typeof session === 'string') {
             console.log('DEBUG: Session is a string ID, need to find full session object');
@@ -1183,22 +1183,22 @@ async function sendDepositInvoice(session) {
                 return;
             }
         }
-        
+
         console.log('DEBUG: Session price:', session.price, 'Client name:', session.clientName);
-        
+
         // Ensure we have valid session data
         if (!session || !session.price) {
             showMessage('Error: Session data is missing. Please refresh the page and try again.', 'error');
             return;
         }
-        
+
         // Include existing deposits in the calculation
         const existingDeposits = session.depositAmount || 0;
         const remainingBalance = session.price - existingDeposits;
-        
+
         let promptText;
         let suggestedAmount;
-        
+
         if (existingDeposits > 0) {
             promptText = `Enter additional deposit amount for ${session.clientName}:\n\nSession Total: $${session.price}\nPrevious Deposits: $${existingDeposits.toFixed(2)}\nRemaining Balance: $${remainingBalance.toFixed(2)}\nSuggested 50% of remaining: $${(remainingBalance * 0.5).toFixed(2)}`;
             suggestedAmount = (remainingBalance * 0.5).toFixed(2);
@@ -1206,21 +1206,21 @@ async function sendDepositInvoice(session) {
             promptText = `Enter deposit/retainer amount for ${session.clientName}:\n\nSession Total: $${session.price}\nSuggested 50%: $${(session.price * 0.5).toFixed(2)}`;
             suggestedAmount = (session.price * 0.5).toFixed(2);
         }
-        
+
         // Prompt user for deposit amount
         const depositAmountInput = prompt(promptText, suggestedAmount);
-        
+
         if (!depositAmountInput) {
             return; // User cancelled
         }
-        
+
         const depositAmount = parseFloat(depositAmountInput);
-        
+
         if (isNaN(depositAmount) || depositAmount <= 0) {
             showMessage('Please enter a valid amount greater than $0', 'error');
             return;
         }
-        
+
         if (depositAmount > session.price) {
             const confirmOverage = confirm(
                 `Deposit amount ($${depositAmount}) is more than the session total ($${session.price}).\n\nDo you want to continue?`
@@ -1229,19 +1229,19 @@ async function sendDepositInvoice(session) {
                 return;
             }
         }
-        
+
         console.log('Creating deposit invoice for session:', session);
         showMessage('Creating deposit invoice...', 'info');
-        
+
         const authToken = await getAuthToken();
         const headers = {
             'Content-Type': 'application/json'
         };
-        
+
         if (authToken) {
             headers['Authorization'] = `Bearer ${authToken}`;
         }
-        
+
         const response = await fetch(`/api/sessions/${session.id}/send-invoice`, {
             method: 'POST',
             headers,
@@ -1250,21 +1250,21 @@ async function sendDepositInvoice(session) {
                 depositAmount: depositAmount
             })
         });
-        
+
         if (!response.ok) {
             const errorText = await response.text();
             throw new Error(`Failed to create deposit invoice: ${errorText}`);
         }
-        
+
         const result = await response.json();
         console.log('Deposit invoice creation result:', result);
-        
+
         if (result.invoice && result.invoice.hostedInvoiceUrl) {
             showMessage('Deposit invoice created successfully!', 'success');
-            
+
             // Open the invoice URL in a new tab
             window.open(result.invoice.hostedInvoiceUrl, '_blank');
-            
+
             // Show a dialog with invoice details
             const depositInfo = result.depositInfo;
             if (depositInfo) {
@@ -1275,7 +1275,7 @@ async function sendDepositInvoice(session) {
                 const message = `Deposit invoice created successfully!\n\nRetainer: $${depositAmount}\nRemaining Balance: $${remainingBalance.toFixed(2)}\n\nInvoice URL: ${result.invoice.hostedInvoiceUrl}\n\nThe invoice has been sent to ${session.email}`;
                 alert(message);
             }
-            
+
             // Wait a moment for database to update, then refresh sessions
             setTimeout(async () => {
                 await loadSessions();
@@ -1284,7 +1284,7 @@ async function sendDepositInvoice(session) {
         } else {
             throw new Error(result.error || 'Unknown error creating deposit invoice');
         }
-        
+
     } catch (error) {
         console.error('Error creating deposit invoice:', error);
         showMessage('Error creating deposit invoice: ' + error.message, 'error');
@@ -1297,10 +1297,10 @@ document.addEventListener('DOMContentLoaded', function() {
     if (form) {
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
-            
+
             const formData = new FormData(form);
             const sessionData = {};
-            
+
             // Extract form data
             for (let [key, value] of formData.entries()) {
                 if (key === 'contractSigned' || key === 'paid' || key === 'edited' || key === 'delivered' || key === 'reminderEnabled' || key === 'galleryReadyNotified') {
@@ -1313,7 +1313,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     sessionData[key] = value;
                 }
             }
-            
+
             // Handle checkboxes that aren't checked (they won't be in FormData)
             const checkboxes = ['contractSigned', 'paid', 'edited', 'delivered', 'reminderEnabled', 'galleryReadyNotified'];
             checkboxes.forEach(checkbox => {
@@ -1321,15 +1321,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     sessionData[checkbox] = false;
                 }
             });
-            
+
             console.log('Form data extracted:', sessionData);
-            
+
             // Check if we're editing or creating
             const editingId = form.dataset.editingId;
             if (editingId) {
                 // Update session
                 await updateAPISession(editingId, sessionData);
-                
+
                 // Reset form state
                 delete form.dataset.editingId;
                 const submitBtn = form.querySelector('button[type="submit"]');
@@ -1338,12 +1338,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Create new session
                 await createAPISession(sessionData);
             }
-            
+
             // Reset form
             form.reset();
         });
     }
-    
+
     // Load sessions on page load
     loadSessions();
 });
@@ -1352,33 +1352,33 @@ document.addEventListener('DOMContentLoaded', function() {
 async function updateAPISession(sessionId, sessionData) {
     try {
         console.log('Updating session via API:', sessionId, sessionData);
-        
+
         const authToken = await getAuthToken();
         const headers = {
             'Content-Type': 'application/json'
         };
-        
+
         if (authToken) {
             headers['Authorization'] = `Bearer ${authToken}`;
         }
-        
+
         const response = await fetch(`/api/sessions/${sessionId}`, {
             method: 'PUT',
             headers,
             body: JSON.stringify(sessionData)
         });
-        
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const result = await response.json();
         console.log('Update API response:', result);
-        
+
         // Reload sessions to show the updated one
         loadSessions();
         showMessage('Session updated successfully!', 'success');
-        
+
     } catch (error) {
         console.error('Error updating session:', error);
         showMessage('Error updating session: ' + error.message, 'error');
@@ -1392,32 +1392,32 @@ function createPhotoGallery(session) {
     const gallerySection = document.createElement('div');
     gallerySection.className = 'photo-gallery-section';
     gallerySection.setAttribute('data-session-id', session.id);
-    
+
     const galleryHeader = document.createElement('div');
     galleryHeader.className = 'gallery-header';
-    
+
     const galleryTitle = document.createElement('h4');
     galleryTitle.className = 'gallery-title';
     galleryTitle.textContent = 'Photo Gallery';
-    
+
     const photoCount = document.createElement('span');
     photoCount.className = 'photo-count';
     const count = session.photos ? session.photos.length : 0;
     photoCount.textContent = `${count} photos`;
-    
+
     galleryHeader.appendChild(galleryTitle);
     galleryHeader.appendChild(photoCount);
-    
+
     const galleryGrid = document.createElement('div');
     galleryGrid.className = 'gallery-grid';
     galleryGrid.setAttribute('data-session-id', session.id);
-    
+
     // Load photos for this session
     loadSessionPhotos(session.id, galleryGrid, photoCount);
-    
+
     gallerySection.appendChild(galleryHeader);
     gallerySection.appendChild(galleryGrid);
-    
+
     return gallerySection;
 }
 
@@ -1426,28 +1426,28 @@ async function loadSessionPhotos(sessionId, container, countElement) {
     try {
         const authToken = await getAuthToken();
         const headers = {};
-        
+
         if (authToken) {
             headers['Authorization'] = `Bearer ${authToken}`;
         }
-        
+
         const response = await fetch(`/api/sessions/${sessionId}/photos`, { headers });
-        
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const data = await response.json();
         const photos = data.photos || [];
-        
+
         // Update photo count
         if (countElement) {
             countElement.textContent = `${photos.length} photos`;
         }
-        
+
         // Clear container
         container.innerHTML = '';
-        
+
         if (photos.length === 0) {
             const emptyState = document.createElement('div');
             emptyState.className = 'gallery-empty';
@@ -1455,15 +1455,15 @@ async function loadSessionPhotos(sessionId, container, countElement) {
             container.appendChild(emptyState);
             return;
         }
-        
+
         // Create photo items
         photos.forEach((photo, index) => {
             const photoItem = createPhotoItem(photo, index, sessionId);
             container.appendChild(photoItem);
         });
-        
+
         console.log(`Loaded ${photos.length} photos for session ${sessionId}`);
-        
+
     } catch (error) {
         console.error('Error loading photos:', error);
         container.innerHTML = '<div class="gallery-error">Error loading photos</div>';
@@ -1475,13 +1475,13 @@ function createPhotoItem(photo, index, sessionId) {
     const photoItem = document.createElement('div');
     photoItem.className = 'gallery-photo-item';
     photoItem.setAttribute('data-photo-index', index);
-    
+
     const img = document.createElement('img');
     img.src = photo.url;
     img.alt = photo.fileName || `Photo ${index + 1}`;
     img.loading = 'lazy';
     img.onclick = () => openPhotoLightbox(photo.url, photo.fileName);
-    
+
     // Add delete button for admin users
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'photo-delete-btn';
@@ -1491,29 +1491,29 @@ function createPhotoItem(photo, index, sessionId) {
         e.stopPropagation();
         deletePhoto(sessionId, index);
     };
-    
+
     photoItem.appendChild(img);
     photoItem.appendChild(deleteBtn);
-    
+
     return photoItem;
 }
 
 // Open photo upload dialog - use existing HTML modal
 function openUploadDialog(sessionId) {
     console.log('Opening upload dialog for session:', sessionId);
-    
+
     // Use the existing HTML modal
     const modal = document.getElementById('uploadModal');
     const fileInput = document.getElementById('fileInput');
     const filePreview = document.getElementById('filePreview');
-    
+
     // Clear previous state
     fileInput.value = '';
     filePreview.innerHTML = '';
-    
+
     // Store session ID for upload
     window.currentUploadSessionId = sessionId;
-    
+
     // Show modal
     modal.classList.add('active');
 }
@@ -1523,38 +1523,38 @@ function setupUploadModal(sessionId) {
     // This function is no longer needed since we use HTML upload modal
     console.log('Using existing HTML upload modal for session:', sessionId);
     return; // Exit early - all functionality handled by HTML modal
-    
+
     // File input change handler
     fileInput.addEventListener('change', (e) => {
         handleFileSelection(e.target.files);
     });
-    
+
     // Drop zone click handler
     dropZone.addEventListener('click', () => {
         fileInput.click();
     });
-    
+
     // Drag and drop handlers
     dropZone.addEventListener('dragover', (e) => {
         e.preventDefault();
         dropZone.classList.add('drag-over');
     });
-    
+
     dropZone.addEventListener('dragleave', () => {
         dropZone.classList.remove('drag-over');
     });
-    
+
     dropZone.addEventListener('drop', (e) => {
         e.preventDefault();
         dropZone.classList.remove('drag-over');
         handleFileSelection(e.dataTransfer.files);
     });
-    
+
     // Upload button handler
     uploadBtn.addEventListener('click', () => {
         uploadPhotos(sessionId, selectedFiles);
     });
-    
+
     function handleFileSelection(files) {
         selectedFiles = Array.from(files).filter(file => {
             // Accept all file types - no restrictions for photographers
@@ -1564,36 +1564,36 @@ function setupUploadModal(sessionId) {
             }
             return true;
         });
-        
+
         // No file count limit for RAW backup - photographers need unlimited capacity
-        
+
         // Update preview
         updateUploadPreview();
-        
+
         // Enable/disable upload button
         uploadBtn.disabled = selectedFiles.length === 0;
         uploadBtn.textContent = selectedFiles.length > 0 ? `Upload ${selectedFiles.length} Files` : 'Upload Files';
     }
-    
+
     function updateUploadPreview() {
         previewContainer.innerHTML = '';
-        
+
         if (selectedFiles.length === 0) {
             return;
         }
-        
+
         selectedFiles.forEach((file, index) => {
             const previewItem = document.createElement('div');
             previewItem.className = 'upload-preview-item';
-            
+
             const img = document.createElement('img');
             img.src = URL.createObjectURL(file);
             img.alt = file.name;
-            
+
             const fileName = document.createElement('div');
             fileName.className = 'preview-file-name';
             fileName.textContent = file.name;
-            
+
             const removeBtn = document.createElement('button');
             removeBtn.className = 'preview-remove-btn';
             removeBtn.innerHTML = '×';
@@ -1603,34 +1603,34 @@ function setupUploadModal(sessionId) {
                 uploadBtn.disabled = selectedFiles.length === 0;
                 uploadBtn.textContent = selectedFiles.length > 0 ? `Upload ${selectedFiles.length} Files` : 'Upload Files';
             };
-            
+
             previewItem.appendChild(img);
             previewItem.appendChild(fileName);
             previewItem.appendChild(removeBtn);
             previewContainer.appendChild(previewItem);
         });
     }
-    
+
     async function uploadPhotos(sessionId, files) {
         if (files.length === 0) return;
-        
+
         try {
             // Show progress in HTML modal
             console.log('Starting upload process...');
-            
+
             const authToken = await getAuthToken();
             if (!authToken) {
                 throw new Error('Authentication required for photo upload');
             }
-            
+
             const formData = new FormData();
             files.forEach(file => {
                 formData.append('photos', file);
             });
-            
+
             // Remove old progress tracking - using HTML modal now
             console.log('Uploading photos...');
-            
+
             const response = await fetch(`/api/sessions/${sessionId}/upload-photos`, {
                 method: 'POST',
                 headers: {
@@ -1638,20 +1638,20 @@ function setupUploadModal(sessionId) {
                 },
                 body: formData
             });
-            
+
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.error || 'Upload failed');
             }
-            
+
             const result = await response.json();
-            
+
             // Upload complete - using HTML modal now
             console.log('Upload complete!');
-            
+
             console.log('Upload result:', result);
             showMessage(`Successfully uploaded ${result.uploaded} photos!`, 'success');
-            
+
             // Close HTML modal after upload
             setTimeout(() => {
                 const modal = document.getElementById('uploadModal');
@@ -1659,18 +1659,18 @@ function setupUploadModal(sessionId) {
                     modal.classList.remove('active');
                 }
             }, 1000);
-            
+
             // Reload photos for this session
             const galleryGrid = document.querySelector(`.gallery-grid[data-session-id="${sessionId}"]`);
             const photoCount = galleryGrid?.parentElement?.querySelector('.photo-count');
             if (galleryGrid) {
                 loadSessionPhotos(sessionId, galleryGrid, photoCount);
             }
-            
+
         } catch (error) {
             console.error('Upload error:', error);
             showMessage('Upload failed: ' + error.message, 'error');
-            
+
             console.log('Upload failed, hiding progress');
         }
     }
@@ -1681,25 +1681,25 @@ function openPhotoLightbox(imageUrl, fileName) {
     const overlay = document.createElement('div');
     overlay.className = 'lightbox-overlay';
     overlay.onclick = () => overlay.remove();
-    
+
     const lightbox = document.createElement('div');
     lightbox.className = 'lightbox';
     lightbox.onclick = (e) => e.stopPropagation();
-    
+
     const img = document.createElement('img');
     img.src = imageUrl;
     img.alt = fileName || 'Photo';
     img.className = 'lightbox-image';
-    
+
     const closeBtn = document.createElement('button');
     closeBtn.className = 'lightbox-close';
     closeBtn.innerHTML = '×';
     closeBtn.onclick = () => overlay.remove();
-    
+
     const title = document.createElement('div');
     title.className = 'lightbox-title';
     title.textContent = fileName || 'Photo';
-    
+
     lightbox.appendChild(closeBtn);
     lightbox.appendChild(img);
     lightbox.appendChild(title);
@@ -1712,32 +1712,32 @@ async function deletePhoto(sessionId, photoIndex) {
     if (!confirm('Are you sure you want to delete this photo?')) {
         return;
     }
-    
+
     try {
         const authToken = await getAuthToken();
         if (!authToken) {
             throw new Error('Authentication required for photo deletion');
         }
-        
+
         // Show loading indicator
         const deleteBtn = document.querySelector(`[data-photo-index="${photoIndex}"] .photo-delete-btn`);
         if (deleteBtn) {
             deleteBtn.innerHTML = '⏳';
             deleteBtn.disabled = true;
         }
-        
+
         // Get the photo filename first to use unified deletion
         const session = await fetch(`/api/sessions/${sessionId}`, {
             headers: { 'Authorization': `Bearer ${authToken}` }
         }).then(res => res.json());
-        
+
         const photo = session.photos[photoIndex];
         if (!photo) {
             throw new Error('Photo not found');
         }
-        
+
         const filename = photo.originalName || photo.filename;
-        
+
         // Use unified deletion endpoint that removes from both storage and database
         const response = await fetch(`/api/sessions/${sessionId}/files/gallery/${encodeURIComponent(filename)}`, {
             method: 'DELETE',
@@ -1745,7 +1745,7 @@ async function deletePhoto(sessionId, photoIndex) {
                 'Authorization': `Bearer ${authToken}`
             }
         });
-        
+
         if (!response.ok) {
             let errorMessage = `Delete failed (${response.status})`;
             try {
@@ -1756,27 +1756,27 @@ async function deletePhoto(sessionId, photoIndex) {
             }
             throw new Error(errorMessage);
         }
-        
+
         const result = await response.json();
         console.log('Photo deleted successfully:', result.message || result);
         showMessage(`Photo deleted successfully! ${result.reclaimedMB || ''}MB reclaimed`, 'success');
-        
+
         // Refresh storage stats immediately to update totals
         if (typeof refreshGlobalStorageStats === 'function') {
             refreshGlobalStorageStats();
         }
-        
+
         // Reload photos for this session
         const galleryGrid = document.querySelector(`.gallery-grid[data-session-id="${sessionId}"]`);
         const photoCount = galleryGrid?.parentElement?.querySelector('.photo-count');
         if (galleryGrid) {
             loadSessionPhotos(sessionId, galleryGrid, photoCount);
         }
-        
+
     } catch (error) {
         console.error('Failed to delete photo:', error.message);
         showMessage(`Delete failed: ${error.message}`, 'error');
-        
+
         // Reset delete button
         const deleteBtn = document.querySelector(`[data-photo-index="${photoIndex}"] .photo-delete-btn`);
         if (deleteBtn) {
@@ -1795,7 +1795,7 @@ async function firebaseLogout() {
                 'Content-Type': 'application/json'
             }
         });
-        
+
         if (response.ok) {
             // Clear user info and redirect to auth page
             currentUser = null;
@@ -1812,14 +1812,14 @@ async function firebaseLogout() {
 // Initialize page function
 async function initializePage() {
     console.log('Initializing page...');
-    
+
     // Check authentication first
     const isAuthenticated = await checkAuth();
     if (!isAuthenticated) {
         console.log('User not authenticated - attempting to load anyway');
         // Don't return - continue loading the page even if auth fails
     }
-    
+
     // Load sessions data regardless of auth status
     console.log('Loading sessions from API...');
     try {
@@ -1843,13 +1843,13 @@ async function triggerWorkflow(sessionId) {
         const response = await fetch(`/api/sessions/${sessionId}`, {
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
-        
+
         if (!response.ok) {
             throw new Error('Failed to fetch session data');
         }
-        
+
         const session = await response.json();
-        
+
         // Show workflow options
         const workflowTypes = [
             { id: 'galleryDelivery', name: '📸 Gallery Ready Notification', desc: 'Notify client their photos are ready' },
@@ -1858,7 +1858,7 @@ async function triggerWorkflow(sessionId) {
             { id: 'sessionPrep', name: '📋 Session Preparation', desc: 'Send session prep guide' },
             { id: 'feedbackRequest', name: '⭐ Feedback Request', desc: 'Request client review' }
         ];
-        
+
         let optionsHTML = workflowTypes.map(workflow => 
             `<div style="margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer;" 
                   onclick="executeWorkflow('${sessionId}', '${workflow.id}')">
@@ -1866,7 +1866,7 @@ async function triggerWorkflow(sessionId) {
                 <small style="color: #666;">${workflow.desc}</small>
              </div>`
         ).join('');
-        
+
         const modal = document.createElement('div');
         modal.className = 'modal-overlay';
         modal.innerHTML = `
@@ -1886,9 +1886,9 @@ async function triggerWorkflow(sessionId) {
                 </div>
             </div>
         `;
-        
+
         document.body.appendChild(modal);
-        
+
     } catch (error) {
         console.error('Error triggering workflow:', error);
         showMessage('Failed to load workflow options: ' + error.message, 'error');
@@ -1902,9 +1902,9 @@ async function executeWorkflow(sessionId, workflowType) {
         const sessionResponse = await fetch(`/api/sessions/${sessionId}`, {
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
-        
+
         const session = await sessionResponse.json();
-        
+
         const clientData = {
             clientName: session.clientName,
             email: session.email,
@@ -1912,7 +1912,7 @@ async function executeWorkflow(sessionId, workflowType) {
             sessionType: session.sessionType,
             sessionDate: new Date(session.dateTime).toLocaleDateString()
         };
-        
+
         const response = await fetch('/api/trigger-workflow', {
             method: 'POST',
             headers: {
@@ -1925,13 +1925,13 @@ async function executeWorkflow(sessionId, workflowType) {
                 clientData: clientData
             })
         });
-        
+
         if (!response.ok) {
             throw new Error('Failed to trigger workflow');
         }
-        
+
         const result = await response.json();
-        
+
         if (result.success) {
             // Show success with action options
             const modal = document.createElement('div');
@@ -1964,16 +1964,16 @@ async function executeWorkflow(sessionId, workflowType) {
                     </div>
                 </div>
             `;
-            
+
             // Close existing modal and show new one
             document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
             document.body.appendChild(modal);
-            
+
             showMessage('Workflow executed successfully!', 'success');
         } else {
             throw new Error(result.error || 'Workflow execution failed');
         }
-        
+
     } catch (error) {
         console.error('Error executing workflow:', error);
         showMessage('Failed to execute workflow: ' + error.message, 'error');
@@ -1998,22 +1998,22 @@ function openRawUploadDialog(sessionId) {
         background: rgba(0,0,0,0.5); z-index: 2000; 
         display: flex; align-items: center; justify-content: center;
     `;
-    
+
     modal.innerHTML = `
         <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 500px; width: 90%;">
             <h3 style="margin: 0 0 1rem 0; color: #333;">RAW Backup Upload</h3>
             <p style="margin-bottom: 1rem; color: #666;">Upload RAW files, high-resolution photos, and documents for cloud backup.</p>
-            
+
             <input type="file" id="rawFileInput-${sessionId}" multiple accept="*/*" 
                    style="margin-bottom: 1rem; padding: 0.5rem; width: 100%; border: 2px dashed #ddd; border-radius: 6px;">
-            
+
             <div id="rawUploadProgress-${sessionId}" style="display: none; margin: 1rem 0;">
                 <div style="background: #f0f0f0; border-radius: 10px; overflow: hidden; height: 20px;">
                     <div id="rawUploadProgressBar-${sessionId}" style="background: #17a2b8; height: 100%; width: 0%; transition: width 0.3s;"></div>
                 </div>
                 <p style="margin-top: 0.5rem; font-size: 0.9rem; color: #666;">Uploading files...</p>
             </div>
-            
+
             <div style="display: flex; justify-content: space-between; gap: 1rem;">
                 <button onclick="this.closest('div').remove()" style="flex: 1; padding: 0.75rem; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer;">
                     Cancel
@@ -2024,7 +2024,7 @@ function openRawUploadDialog(sessionId) {
             </div>
         </div>
     `;
-    
+
     document.body.appendChild(modal);
 }
 
@@ -2046,7 +2046,7 @@ function showToast(message, type = 'info') {
     `;
     toast.textContent = message;
     document.body.appendChild(toast);
-    
+
     setTimeout(() => toast.remove(), 3000);
 }
 
@@ -2065,7 +2065,7 @@ function getFileTypeIcon(type) {
 // Loading utility function
 function showLoading(show) {
     const existingLoader = document.getElementById('globalLoader');
-    
+
     if (show) {
         if (!existingLoader) {
             const loader = document.createElement('div');
@@ -2100,17 +2100,17 @@ function showLoading(show) {
 async function openRawFolder(sessionId, clientName) {
     try {
         showLoading(true);
-        
+
         const response = await fetch(`/api/r2/session/${sessionId}/files`);
         const data = await response.json();
-        
+
         if (!data.success) {
             throw new Error('Failed to load RAW files');
         }
-        
+
         showLoading(false);
         showRawGalleryModal(sessionId, clientName, data.filesByType);
-        
+
     } catch (error) {
         showLoading(false);
         console.error('RAW gallery error:', error);
@@ -2127,28 +2127,28 @@ function showRawGalleryModal(sessionId, clientName, filesByType) {
         display: flex; align-items: center; justify-content: center;
         overflow-y: auto;
     `;
-    
+
     // Close on background click
     modal.onclick = (e) => {
         if (e.target === modal) modal.remove();
     };
-    
+
     let totalFiles = 0;
     Object.values(filesByType).forEach(files => totalFiles += files.length);
-    
+
     let fileGridHtml = '';
     Object.entries(filesByType).forEach(([type, files]) => {
         if (files.length > 0) {
             fileGridHtml += `<h4 style="margin: 1rem 0 0.5rem 0; color: #333; text-transform: capitalize;">${getFileTypeIcon(type)} ${type} Files (${files.length})</h4>`;
-            
+
             files.forEach(file => {
                 const uploadDate = new Date(file.uploadedAt).toLocaleDateString();
                 const fileSizeMB = (file.fileSizeBytes / (1024 * 1024)).toFixed(1);
                 const isImage = file.contentType && file.contentType.startsWith('image/');
-                
+
                 // Generate preview URL for images
                 const previewUrl = isImage ? `/api/r2/preview/${sessionId}/${encodeURIComponent(file.filename)}` : null;
-                
+
                 fileGridHtml += `
                     <div style="margin-bottom: 1rem; padding: 1rem; border-radius: 8px; background: #f8f9fa; border: 1px solid #dee2e6;">
                         <div style="display: flex; gap: 1rem; align-items: flex-start;">
@@ -2197,7 +2197,7 @@ function showRawGalleryModal(sessionId, clientName, filesByType) {
             });
         }
     });
-    
+
     modal.innerHTML = `
         <div style="background: white; padding: 2rem; border-radius: 12px; max-width: 90vw; max-height: 90vh; width: 800px; overflow-y: auto;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 2px solid #dee2e6; padding-bottom: 1rem;">
@@ -2216,7 +2216,7 @@ function showRawGalleryModal(sessionId, clientName, filesByType) {
             </div>
         </div>
     `;
-    
+
     document.body.appendChild(modal);
 }
 
@@ -2224,10 +2224,10 @@ function showRawGalleryModal(sessionId, clientName, filesByType) {
 async function downloadRawFile(sessionId, filename) {
     try {
         showLoading(true);
-        
+
         // Get user ID with fallbacks
         const userId = currentUser?.uid || currentUser?.original_uid || 'BFZI4tzu4rdsiZZSK63cqZ5yohw2';
-        
+
         // Use the correct download endpoint format
         const response = await fetch(`/api/r2/download/${userId}/${sessionId}/${encodeURIComponent(filename)}`, {
             method: 'GET',
@@ -2235,12 +2235,12 @@ async function downloadRawFile(sessionId, filename) {
                 'Accept': 'application/octet-stream',
             }
         });
-        
+
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
         }
-        
+
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -2250,10 +2250,10 @@ async function downloadRawFile(sessionId, filename) {
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
-        
+
         showLoading(false);
         showToast(`Downloaded: ${filename}`, 'success');
-        
+
     } catch (error) {
         showLoading(false);
         console.error('Download error:', error);
@@ -2278,35 +2278,35 @@ async function deleteRawFile(sessionId, filename, clientName) {
     if (!confirm(`Are you sure you want to delete "${filename}"? This action cannot be undone.`)) {
         return;
     }
-    
+
     try {
         showLoading(true);
-        
+
         // Get user ID with fallbacks
         const userId = currentUser?.uid || currentUser?.original_uid || 'BFZI4tzu4rdsiZZSK63cqZ5yohw2';
-        
+
         const response = await fetch(`/api/r2/delete/${userId}/${sessionId}/${encodeURIComponent(filename)}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json'
             }
         });
-        
+
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
         }
-        
+
         showLoading(false);
         showToast(`Deleted: ${filename}`, 'success');
-        
+
         // Close current modal and reopen with updated data
         document.querySelector('.modal-parent')?.remove();
         setTimeout(() => openRawFolder(sessionId, clientName), 100);
-        
+
         // Update storage usage
         await updateStorageUsage();
-        
+
     } catch (error) {
         showLoading(false);
         console.error('Delete error:', error);
@@ -2319,37 +2319,37 @@ async function deleteAllRawFiles(sessionId, clientName) {
     if (!confirm(`Are you sure you want to delete ALL RAW files for ${clientName}? This action cannot be undone.`)) {
         return;
     }
-    
+
     try {
         showLoading(true);
-        
+
         // Get user ID with fallbacks
         const userId = currentUser?.uid || currentUser?.original_uid || 'BFZI4tzu4rdsiZZSK63cqZ5yohw2';
-        
+
         const response = await fetch(`/api/r2/delete-all/${userId}/${sessionId}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json'
             }
         });
-        
+
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
         }
-        
+
         const result = await response.json();
-        
+
         showLoading(false);
         showToast(`Deleted ${result.deletedCount || 'all'} RAW files`, 'success');
-        
+
         // Close current modal and reopen with updated data
         document.querySelector('.modal-parent')?.remove();
         setTimeout(() => openRawFolder(sessionId, clientName), 100);
-        
+
         // Update storage usage
         await updateStorageUsage();
-        
+
     } catch (error) {
         showLoading(false);
         console.error('Delete all error:', error);
@@ -2367,7 +2367,7 @@ function viewFullImage(imageUrl, filename) {
         display: flex; align-items: center; justify-content: center;
         cursor: pointer;
     `;
-    
+
     modal.innerHTML = `
         <div style="position: relative; max-width: 95vw; max-height: 95vh;">
             <img src="${imageUrl}" alt="${filename}" 
@@ -2381,11 +2381,11 @@ function viewFullImage(imageUrl, filename) {
             </button>
         </div>
     `;
-    
+
     modal.onclick = (e) => {
         if (e.target === modal) modal.remove();
     };
-    
+
     document.body.appendChild(modal);
 }
 
@@ -2395,7 +2395,7 @@ function showDownloadProgress(clientName) {
     modal.className = 'modal-parent';
     modal.id = 'downloadProgressModal';
     modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10000;';
-    
+
     modal.innerHTML = `
         <div style="background: white; padding: 2rem; border-radius: 12px; width: 400px; text-align: center;">
             <h3 style="margin: 0 0 1rem 0; color: #333;">📦 Creating ZIP File</h3>
@@ -2409,7 +2409,7 @@ function showDownloadProgress(clientName) {
             </div>
         </div>
     `;
-    
+
     document.body.appendChild(modal);
     return modal;
 }
@@ -2434,32 +2434,32 @@ function cancelDownload() {
 // Download all RAW files as ZIP with progress tracking
 async function downloadAllRawFiles(sessionId, clientName) {
     let progressModal = null;
-    
+
     try {
         console.log("📦 Starting download for session:", sessionId, "client:", clientName);
-        
+
         // Show progress modal immediately
         progressModal = showDownloadProgress(clientName);
         console.log("📦 Progress modal created:", progressModal);
-        
+
         // Force immediate display
         if (progressModal) {
             progressModal.style.display = 'flex';
             console.log("📦 Progress modal displayed");
         }
-        
+
         updateProgress(10, "Connecting to server...");
         console.log("📦 Initial progress set");
-        
+
         // Get user ID with fallbacks
         const userId = currentUser?.uid || currentUser?.original_uid || "BFZI4tzu4rdsiZZSK63cqZ5yohw2";
-        
+
         // Extended timeout for multi-GB downloads (30 minutes)
         window.downloadController = new AbortController();
         const timeoutId = setTimeout(() => window.downloadController.abort(), 1800000); // 30 minutes
-        
+
         updateProgress(20, "Requesting multi-GB ZIP creation from R2 storage...");
-        
+
         // Set up progress tracking simulation for ZIP creation phase
         let serverProgress = 20;
         const progressInterval = setInterval(() => {
@@ -2469,7 +2469,7 @@ async function downloadAllRawFiles(sessionId, clientName) {
                 updateProgress(serverProgress, `Creating ZIP... Processing file ${Math.min(fileNumber, 4)}/4 (${((serverProgress-20)/60*100).toFixed(0)}%)`);
             }
         }, 1000);
-        
+
         // Request ZIP download from server
         const response = await fetch(`/api/r2/download-all/${userId}/${sessionId}`, {
             method: "GET",
@@ -2478,34 +2478,34 @@ async function downloadAllRawFiles(sessionId, clientName) {
             },
             signal: window.downloadController.signal
         });
-        
+
         clearInterval(progressInterval);
-        
+
         clearTimeout(timeoutId);
-        
+
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
         }
-        
+
         updateProgress(50, "Downloading ZIP file...");
-        
+
         // Get content length for progress tracking
         const contentLength = response.headers.get('content-length');
         const total = contentLength ? parseInt(contentLength, 10) : 0;
-        
+
         let loaded = 0;
         const reader = response.body.getReader();
         const chunks = [];
-        
+
         while (true) {
             const { done, value } = await reader.read();
-            
+
             if (done) break;
-            
+
             chunks.push(value);
             loaded += value.length;
-            
+
             if (total > 0) {
                 const percent = Math.min(50 + (loaded / total) * 40, 90);
                 const loadedGB = (loaded / (1024*1024*1024)).toFixed(2);
@@ -2521,17 +2521,17 @@ async function downloadAllRawFiles(sessionId, clientName) {
                 }
             }
         }
-        
+
         updateProgress(95, "Preparing download...");
-        
+
         // Combine chunks into blob
         const blob = new Blob(chunks);
-        
+
         // Check if we actually got a ZIP file
         if (blob.size === 0) {
             throw new Error("Received empty ZIP file");
         }
-        
+
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
@@ -2540,23 +2540,23 @@ async function downloadAllRawFiles(sessionId, clientName) {
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
-        
+
         updateProgress(100, `Download complete: ${(blob.size / (1024*1024)).toFixed(1)} MB`);
-        
+
         // Close modal after success
         setTimeout(() => {
             if (progressModal) progressModal.remove();
             showToast(`ZIP downloaded successfully: ${(blob.size / (1024*1024)).toFixed(1)} MB`, "success");
         }, 1500);
-        
+
     } catch (error) {
         console.error("📦 ZIP download error:", error);
-        
+
         if (progressModal) {
             progressModal.remove();
             console.log("📦 Progress modal removed due to error");
         }
-        
+
         if (error.name === 'AbortError') {
             showToast("Download cancelled or timed out", "error");
         } else {
