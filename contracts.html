@@ -675,7 +675,7 @@
                 const session = await response.json();
                 
                 // Check if contract already exists for this session
-                const existingContract = contracts.find(c => c.sessionId === sessionId);
+                const existingContract = contracts.find(c => c.session_id === sessionId || c.sessionId === sessionId);
                 
                 if (existingContract) {
                     selectContract(existingContract.id);
@@ -700,6 +700,44 @@
             if (type.includes('model')) return 'model_release';
             
             return 'portrait'; // Default
+        }
+
+        // Create contract from template for a session
+        async function createContractFromTemplate(templateKey, session) {
+            const template = contractTemplates[templateKey];
+            if (!template) return;
+            
+            const html = template.sections.map(section => section.bodyHtml).join('\n');
+            
+            try {
+                const response = await fetch('/api/contracts/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        sessionId: session.id,
+                        templateKey,
+                        title: `${template.defaultTitle} - ${session.clientName}`,
+                        html: html,
+                        clientId: session.clientId
+                    })
+                });
+                
+                if (!response.ok) throw new Error('Failed to create contract');
+                
+                const contract = await response.json();
+                showNotification('Contract created from template', 'success');
+                
+                // Reload contracts and select the new one
+                await loadContracts();
+                selectContract(contract.id);
+                
+            } catch (error) {
+                console.error('Error creating contract:', error);
+                showNotification('Failed to create contract', 'error');
+            }
         }
 
         // Create new contract
@@ -831,12 +869,12 @@
                 <div class="contract-item ${currentContract?.id === contract.id ? 'active' : ''}" 
                      onclick="selectContract('${contract.id}')">
                     <div class="contract-item-header">
-                        <div class="contract-title">${contract.title}</div>
+                        <div class="contract-title">${contract.contract_title || contract.title || 'Untitled Contract'}</div>
                         <span class="contract-status status-${contract.status}">${contract.status}</span>
                     </div>
                     <div class="contract-meta">
-                        ${contract.clientName || 'No client assigned'}<br>
-                        Created ${formatDate(contract.createdAt)}
+                        ${contract.client_name || contract.clientName || 'No client assigned'}<br>
+                        Created ${formatDate(contract.created_at || contract.createdAt)}
                     </div>
                 </div>
             `).join('');
@@ -902,7 +940,7 @@
             contentArea.innerHTML = `
                 <div class="content-header">
                     <div>
-                        <h2>${currentContract.title}</h2>
+                        <h2>${currentContract.contract_title || currentContract.title || 'Untitled Contract'}</h2>
                         <span class="contract-status status-${currentContract.status}">${currentContract.status}</span>
                     </div>
                     <div class="content-actions">
@@ -921,12 +959,12 @@
                 <div class="editor-container">
                     <div class="contract-editor">
                         <div class="contract-content" ${isEditable ? 'contenteditable="true"' : ''}>
-                            ${currentContract.html}
+                            ${currentContract.contract_content || currentContract.html || ''}
                         </div>
-                        ${currentContract.timeline && currentContract.timeline.length > 0 ? `
+                        ${(currentContract.custom_fields?.timeline || currentContract.timeline) && (currentContract.custom_fields?.timeline || currentContract.timeline).length > 0 ? `
                             <div class="timeline">
                                 <div class="timeline-title">Activity Timeline</div>
-                                ${currentContract.timeline.map(item => `
+                                ${(currentContract.custom_fields?.timeline || currentContract.timeline || []).map(item => `
                                     <div class="timeline-item">
                                         <div class="timeline-dot"></div>
                                         <div class="timeline-content">
@@ -999,7 +1037,8 @@
 
         // Download PDF
         async function downloadPDF() {
-            if (!currentContract.pdfUrl) {
+            const pdfUrl = currentContract.custom_fields?.pdfUrl || currentContract.pdfUrl;
+            if (!pdfUrl) {
                 showNotification('PDF not available', 'error');
                 return;
             }
