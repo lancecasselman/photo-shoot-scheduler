@@ -394,10 +394,13 @@
                     }, 500);
                 } else if (error.message && !error.message.includes('Failed to fetch')) {
                     // Show alert only for non-network errors
+                    console.error('Authentication error:', error);
                     alert('Authentication failed: ' + error.message);
-                    document.getElementById('loadingIndicator').style.display = 'none';
+                    const loadingEl = document.getElementById('loadingIndicator');
+                    if (loadingEl) loadingEl.style.display = 'none';
                 } else {
                     // Unknown error, try to proceed anyway
+                    console.warn('Unknown authentication error, proceeding with redirect');
                     const urlParams = new URLSearchParams(window.location.search);
                     const returnTo = urlParams.get('return');
                     setTimeout(() => {

@@ -1064,34 +1064,7 @@ class R2FileManager {
     }
   }
 
-  /**
-   * Simple delete file by R2 key - used by deletion endpoints
-   */
-  async deleteFileByKey(r2Key) {
-    try {
-      if (!this.r2Available) {
-        console.log('⚠️ R2 not available, cannot delete file');
-        return false;
-      }
-
-      const deleteCommand = new DeleteObjectCommand({
-        Bucket: this.bucketName,
-        Key: r2Key
-      });
-      
-      await this.s3Client.send(deleteCommand);
-      console.log(`✅ File deleted from R2: ${r2Key}`);
-      return true;
-      
-    } catch (error) {
-      if (error.name === 'NoSuchKey' || error.Code === 'NoSuchKey') {
-        console.log(`⚠️ File not found in R2: ${r2Key}`);
-        return true; // Consider it successful if file doesn't exist
-      }
-      console.error('Error deleting file from R2:', error);
-      return false;
-    }
-  }
+  
 
   /**
    * Track download activity for analytics

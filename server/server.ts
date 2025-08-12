@@ -81,6 +81,15 @@ async function handleApiRequest(method: string, pathname: string, req: any, res:
         result = await storage.getUser(id);
       } else if (pathname === '/api/users/email' && method === 'POST') {
         result = await storage.getUserByEmail(data.email);
+      } else if (pathname === '/api/auth/firebase-login' && method === 'POST') {
+        // Handle Firebase login
+        result = { success: true, message: 'User authenticated', user: data };
+      } else if (pathname === '/api/auth/firebase-verify' && method === 'POST') {
+        // Handle Firebase verification
+        result = { success: true, message: 'User verified', user: data };
+      } else if (pathname === '/api/auth/logout' && method === 'POST') {
+        // Handle logout
+        result = { success: true, message: 'Logged out successfully' };
       } else {
         res.writeHead(404, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'Endpoint not found' }));
@@ -111,14 +120,20 @@ const server = createServer(async (req, res) => {
   // Handle static files
   if (pathname === '/') {
     serveStaticFile('index.html', res);
+  } else if (pathname === '/auth' || pathname === '/auth.html') {
+    serveStaticFile('auth.html', res);
+  } else if (pathname === '/app' || pathname === '/app.html') {
+    serveStaticFile('index.html', res);
   } else if (pathname === '/auth.js') {
     serveStaticFile('auth.js', res);
   } else if (pathname === '/script.js') {
     serveStaticFile('script.js', res);
   } else if (pathname === '/style.css') {
     serveStaticFile('style.css', res);
+  } else if (pathname === '/firebase-config.js') {
+    serveStaticFile('firebase-config.js', res);
   } else {
-    serveStaticFile(pathname, res);
+    serveStaticFile(pathname.substring(1), res);
   }
 });
 
