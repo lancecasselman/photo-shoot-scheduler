@@ -817,6 +817,15 @@
             return html.replace(/\{([^}]+)\}/g, '<span class="merge-field">{$1}</span>');
         }
 
+        // Cancel create contract
+        function cancelCreate() {
+            // Clear the content area and reload contracts list
+            document.getElementById('contentArea').innerHTML = '';
+            if (contracts.length > 0) {
+                selectContract(contracts[0].id);
+            }
+        }
+
         // Save contract
         async function saveContract(templateKey) {
             const title = document.getElementById('contractTitle').value;
@@ -922,8 +931,8 @@
             const searchTerm = document.getElementById('searchBox').value.toLowerCase();
             if (searchTerm) {
                 filtered = filtered.filter(c => 
-                    c.title.toLowerCase().includes(searchTerm) ||
-                    (c.clientName && c.clientName.toLowerCase().includes(searchTerm))
+                    (c.contract_title || c.title || '').toLowerCase().includes(searchTerm) ||
+                    (c.client_name || c.clientName || '').toLowerCase().includes(searchTerm)
                 );
             }
             
