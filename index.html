@@ -13655,6 +13655,21 @@ END:VCALENDAR`;
                                 <label>Background Color</label>
                                 <input type="color" id="wb-edit-bg" onchange="WebsiteBuilder.updateElement()">
                             </div>
+                            <div class="wb-edit-group" id="wb-gradient-group" style="display: none;">
+                                <label>Gradient Start Color</label>
+                                <input type="color" id="wb-edit-gradient-start" onchange="WebsiteBuilder.updateElement()">
+                                <label>Gradient End Color</label>
+                                <input type="color" id="wb-edit-gradient-end" onchange="WebsiteBuilder.updateElement()">
+                                <label>Gradient Direction</label>
+                                <select id="wb-edit-gradient-direction" onchange="WebsiteBuilder.updateElement()">
+                                    <option value="135deg">Diagonal ↘</option>
+                                    <option value="90deg">Top to Bottom ↓</option>
+                                    <option value="45deg">Diagonal ↗</option>
+                                    <option value="0deg">Left to Right →</option>
+                                    <option value="180deg">Bottom to Top ↑</option>
+                                    <option value="270deg">Right to Left ←</option>
+                                </select>
+                            </div>
                             <div class="wb-edit-group">
                                 <label>Padding (px)</label>
                                 <input type="number" id="wb-edit-padding" value="10" onchange="WebsiteBuilder.updateElement()">
@@ -13799,9 +13814,12 @@ END:VCALENDAR`;
                 element.classList.add('selected');
                 this.currentElement = element;
                 
-                // Check if it's an image wrapper
+                // Check element type
                 let targetElement = element;
-                if (element.classList.contains('wb-image-wrapper')) {
+                let isHeroSection = element.getAttribute('data-element-type') === 'hero-section';
+                let isImage = element.classList.contains('wb-image-wrapper');
+                
+                if (isImage) {
                     const img = element.querySelector('img');
                     if (img) {
                         targetElement = img;
@@ -13844,6 +13862,28 @@ END:VCALENDAR`;
                 } else {
                     imageGroup.style.display = 'none';
                 }
+                
+                // Show gradient options if it's a hero section with gradient background
+                const gradientGroup = document.getElementById('wb-gradient-group');
+                if (isHeroSection && targetElement.style.background && targetElement.style.background.includes('gradient')) {
+                    gradientGroup.style.display = 'block';
+                    
+                    // Extract gradient colors from current background
+                    const bgStyle = targetElement.style.background || targetElement.style.backgroundImage;
+                    const colorMatch = bgStyle.match(/#[0-9A-Fa-f]{6}/g);
+                    if (colorMatch && colorMatch.length >= 2) {
+                        document.getElementById('wb-edit-gradient-start').value = colorMatch[0];
+                        document.getElementById('wb-edit-gradient-end').value = colorMatch[1];
+                    }
+                    
+                    // Extract direction from current gradient
+                    const dirMatch = bgStyle.match(/(\d+deg)/);
+                    if (dirMatch) {
+                        document.getElementById('wb-edit-gradient-direction').value = dirMatch[1];
+                    }
+                } else {
+                    gradientGroup.style.display = 'none';
+                }
             },
 
             updateElement() {
@@ -13858,7 +13898,23 @@ END:VCALENDAR`;
                 const bg = document.getElementById('wb-edit-bg').value;
                 const padding = document.getElementById('wb-edit-padding').value;
                 const margin = document.getElementById('wb-edit-margin').value;
+                
+                // Check if gradient controls are visible (hero section)
+                const gradientGroup = document.getElementById('wb-gradient-group');
+                const isHeroSection = this.currentElement.getAttribute('data-element-type') === 'hero-section';
+                let backgroundStyle = bg;
                 const radius = document.getElementById('wb-edit-radius').value;
+                
+                // Handle gradient background for hero sections
+                if (isHeroSection && gradientGroup && gradientGroup.style.display !== 'none') {
+                    const gradientStart = document.getElementById('wb-edit-gradient-start').value;
+                    const gradientEnd = document.getElementById('wb-edit-gradient-end').value;
+                    const gradientDirection = document.getElementById('wb-edit-gradient-direction').value;
+                    
+                    if (gradientStart && gradientEnd) {
+                        backgroundStyle = `linear-gradient(${gradientDirection}, ${gradientStart}, ${gradientEnd})`;
+                    }
+                }
                 
                 if (this.currentElement.tagName !== 'IMG') {
                     this.currentElement.textContent = content;
@@ -13869,7 +13925,15 @@ END:VCALENDAR`;
                 this.currentElement.style.fontWeight = weight;
                 this.currentElement.style.textAlign = align;
                 this.currentElement.style.color = color;
-                this.currentElement.style.backgroundColor = bg;
+                
+                // Set background (solid color or gradient)
+                if (isHeroSection && backgroundStyle.includes('gradient')) {
+                    this.currentElement.style.background = backgroundStyle;
+                    this.currentElement.style.backgroundColor = ''; // Clear solid background
+                } else {
+                    this.currentElement.style.backgroundColor = bg;
+                    this.currentElement.style.background = ''; // Clear gradient background
+                }
                 this.currentElement.style.padding = padding + 'px';
                 this.currentElement.style.margin = margin + 'px';
                 this.currentElement.style.borderRadius = radius + 'px';
@@ -14094,7 +14158,7 @@ END:VCALENDAR`;
                                 <a href="#" class="wb-editable" style="color: #333; text-decoration: none;">Contact</a>
                             </div>
                         </nav>
-                        <div style="padding: 60px 20px; text-align: center; background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
+                        <div class="wb-editable" style="padding: 60px 20px; text-align: center; background: linear-gradient(135deg, #667eea, #764ba2); color: white;" data-element-type="hero-section">
                             <h1 class="wb-editable" style="font-size: 48px; margin-bottom: 20px; font-family: 'Playfair Display';">Capturing Life's Beautiful Moments</h1>
                             <p class="wb-editable" style="font-size: 18px; opacity: 0.9;">Professional photography services for all occasions</p>
                         </div>
