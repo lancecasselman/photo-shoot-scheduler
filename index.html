@@ -20,6 +20,46 @@
         const DEV_MODE = false; // 👉 Authentication enabled - production mode
         
         // Dev mode banner handled in main DOM ready event
+        
+        // Console error suppression for production
+        (function() {
+            const originalError = console.error;
+            const originalWarn = console.warn;
+            
+            // Suppress specific tracking prevention and framework warnings
+            const suppressedMessages = [
+                'Tracking Prevention blocked access to storage',
+                'Unrecognized feature:',
+                'Allow attribute will take precedence',
+                'Error while parsing the \'sandbox\' attribute',
+                'Failed to load resource: the server responded with a status of 404'
+            ];
+            
+            console.error = function(...args) {
+                const message = args.join(' ');
+                if (suppressedMessages.some(suppressed => message.includes(suppressed))) {
+                    return; // Suppress the error
+                }
+                originalError.apply(console, args);
+            };
+            
+            console.warn = function(...args) {
+                const message = args.join(' ');
+                if (suppressedMessages.some(suppressed => message.includes(suppressed))) {
+                    return; // Suppress the warning
+                }
+                originalWarn.apply(console, args);
+            };
+            
+            // Prevent gravatar 404 errors by intercepting image load failures
+            document.addEventListener('error', function(e) {
+                if (e.target.tagName === 'IMG' && e.target.src.includes('gravatar.com')) {
+                    e.target.style.display = 'none';
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+            }, true);
+        })();
     </script>
     
     <!-- Google Fonts - Photography Management System Theme -->
@@ -12182,6 +12222,12 @@ END:VCALENDAR`;
 
         </div> <!-- Close main-content -->
     </div> <!-- Close container -->
+    
+    <!-- Console cleanup and error suppression -->
+    <script src="static/js/console-cleanup.js"></script>
+    
+    <!-- Avatar Utilities to prevent Gravatar 404s -->
+    <script src="client/avatar-utils.js"></script>
     
     <!-- Firebase SDK for consistent loading across all pages -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>

@@ -49,11 +49,31 @@ function updateUserUI() {
 
     if (currentUser) {
         userName.textContent = currentUser.displayName || currentUser.email;
-        if (userAvatar && currentUser.photoURL) {
-            userAvatar.src = currentUser.photoURL;
-            userAvatar.style.display = 'block';
-        } else if (userAvatar) {
-            userAvatar.style.display = 'none';
+        if (userAvatar) {
+            if (currentUser.photoURL && !currentUser.photoURL.includes('gravatar.com')) {
+                userAvatar.src = currentUser.photoURL;
+                userAvatar.style.display = 'block';
+                // Add error handler in case the photo URL fails
+                userAvatar.onerror = () => {
+                    if (window.AvatarUtils) {
+                        userAvatar.src = AvatarUtils.generateInitialsAvatar(
+                            currentUser.displayName || currentUser.email, 
+                            40
+                        );
+                    } else {
+                        userAvatar.style.display = 'none';
+                    }
+                };
+            } else if (window.AvatarUtils) {
+                // Use initials avatar instead of gravatar
+                userAvatar.src = AvatarUtils.generateInitialsAvatar(
+                    currentUser.displayName || currentUser.email, 
+                    40
+                );
+                userAvatar.style.display = 'block';
+            } else {
+                userAvatar.style.display = 'none';
+            }
         }
         userInfo.style.display = 'flex';
     } else {

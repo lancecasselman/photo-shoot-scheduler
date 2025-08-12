@@ -64,9 +64,15 @@ router.get('/profile', requireAuth, async (req, res) => {
 
         const profile = await db.getOrCreateProfile(userId, displayName);
 
+        // Generate a safe avatar URL instead of gravatar to prevent 404s
+        const avatarUrl = profile.avatar_url && !profile.avatar_url.includes('gravatar.com') 
+            ? profile.avatar_url 
+            : null; // Will be handled client-side with initials
+
         // Return comprehensive user information
         res.json({
             ...profile,
+            avatar_url: avatarUrl, // Ensure no gravatar URLs
             userId,
             email: userEmail,
             displayName,
