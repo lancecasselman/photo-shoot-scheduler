@@ -20,7 +20,7 @@ let imageProcessor = null;
 
 function initializeCommunityServices(pool, r2Config) {
     db = new CommunityDatabase(pool);
-    
+
     // Pass R2 configuration to image processor
     imageProcessor = new CommunityImageProcessor({
         endpoint: process.env.CLOUDFLARE_R2_ENDPOINT || `https://${process.env.CLOUDFLARE_R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
@@ -29,10 +29,10 @@ function initializeCommunityServices(pool, r2Config) {
         bucketName: process.env.CLOUDFLARE_R2_BUCKET_NAME || 'photoappr2token',
         publicUrl: process.env.CLOUDFLARE_R2_PUBLIC_URL || 'https://pub-f4fb0dd444374c70b491e4a0adb6bb02.r2.dev'
     });
-    
+
     // Initialize database tables
     db.initializeTables().catch(console.error);
-    
+
     return router;
 }
 
@@ -49,7 +49,7 @@ router.get('/profile', requireAuth, async (req, res) => {
     try {
         const userId = req.session.user.uid || req.session.user.id;
         const userEmail = req.session.user.email;
-        
+
         // Set proper display name, especially for Lance (admin)
         let displayName = req.session.user.displayName || userEmail || 'Anonymous';
         if (!req.session.user.displayName || req.session.user.displayName === req.session.user.email) {
@@ -61,9 +61,9 @@ router.get('/profile', requireAuth, async (req, res) => {
                 displayName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
             }
         }
-        
+
         const profile = await db.getOrCreateProfile(userId, displayName);
-        
+
         // Return comprehensive user information
         res.json({
             ...profile,
@@ -84,7 +84,7 @@ router.put('/profile', requireAuth, async (req, res) => {
     try {
         const userId = req.session.user.uid || req.session.user.id;
         const updates = req.body;
-        
+
         const profile = await db.updateProfile(userId, updates);
         res.json(profile);
     } catch (error) {
@@ -97,7 +97,7 @@ router.put('/profile', requireAuth, async (req, res) => {
 router.get('/posts', async (req, res) => {
     try {
         const { type, userId, limit = 20, offset = 0, sortBy = 'created_at' } = req.query;
-        
+
         const posts = await db.getPosts({
             type,
             userId,
@@ -105,7 +105,7 @@ router.get('/posts', async (req, res) => {
             offset: parseInt(offset),
             sortBy
         });
-        
+
         res.json(posts);
     } catch (error) {
         console.error('Error getting posts:', error);
@@ -117,14 +117,14 @@ router.get('/posts', async (req, res) => {
 router.get('/posts/:postId', async (req, res) => {
     try {
         const post = await db.getPostById(req.params.postId);
-        
+
         if (!post) {
             return res.status(404).json({ error: 'Post not found' });
         }
-        
+
         // Increment view count
         await db.updatePostStats(req.params.postId, 'views_count');
-        
+
         res.json(post);
     } catch (error) {
         console.error('Error getting post:', error);
@@ -136,7 +136,7 @@ router.get('/posts/:postId', async (req, res) => {
 router.post('/posts', requireAuth, upload.array('images', 10), async (req, res) => {
     try {
         const userId = req.session.user.uid || req.session.user.id;
-        
+
         // Set proper display name, especially for Lance (admin)
         let userName = req.session.user.displayName || req.session.user.email || 'Anonymous';
         if (!req.session.user.displayName || req.session.user.displayName === req.session.user.email) {
@@ -148,7 +148,7 @@ router.post('/posts', requireAuth, upload.array('images', 10), async (req, res) 
                 userName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
             }
         }
-        
+
         const postData = {
             userId,
             userName,
@@ -160,11 +160,11 @@ router.post('/posts', requireAuth, upload.array('images', 10), async (req, res) 
             price: req.body.price ? parseFloat(req.body.price) : null,
             tags: req.body.tags ? req.body.tags.split(',').map(t => t.trim()) : []
         };
-        
+
         // Process images if uploaded
         if (req.files && req.files.length > 0) {
             console.log(`Processing ${req.files.length} images for post`);
-            
+
             if (req.body.type === 'before_after' && req.files.length >= 2) {
                 // Handle before/after comparison
                 const comparison = await imageProcessor.createBeforeAfterComparison(
@@ -180,9 +180,9 @@ router.post('/posts', requireAuth, upload.array('images', 10), async (req, res) 
                     req.files[0].originalname,
                     userId
                 );
-                
+
                 postData.imageUrls = processedImage;
-                
+
                 // Extract camera settings from EXIF
                 const cameraSettings = await imageProcessor.extractCameraSettings(req.files[0].buffer);
                 if (cameraSettings) {
@@ -190,7 +190,7 @@ router.post('/posts', requireAuth, upload.array('images', 10), async (req, res) 
                 }
             }
         }
-        
+
         // Parse camera settings if provided manually
         if (req.body.cameraSettings) {
             try {
@@ -199,12 +199,12 @@ router.post('/posts', requireAuth, upload.array('images', 10), async (req, res) 
                 console.error('Error parsing camera settings:', e);
             }
         }
-        
+
         const post = await db.createPost(postData);
-        
+
         // Update user's post count - will be handled by database trigger
         // or we can update it separately after post creation
-        
+
         res.json(post);
     } catch (error) {
         console.error('Error creating post:', error);
@@ -216,16 +216,16 @@ router.post('/posts', requireAuth, upload.array('images', 10), async (req, res) 
 router.put('/posts/:postId', requireAuth, async (req, res) => {
     try {
         const post = await db.getPostById(req.params.postId);
-        
+
         if (!post) {
             return res.status(404).json({ error: 'Post not found' });
         }
-        
+
         const userId = req.session.user.uid || req.session.user.id;
         if (post.user_id !== userId) {
             return res.status(403).json({ error: 'Not authorized to edit this post' });
         }
-        
+
         // Update post (implementation needed in database)
         res.json({ message: 'Post update not yet implemented' });
     } catch (error) {
@@ -238,19 +238,19 @@ router.put('/posts/:postId', requireAuth, async (req, res) => {
 router.delete('/posts/:postId', requireAuth, async (req, res) => {
     try {
         const post = await db.getPostById(req.params.postId);
-        
+
         if (!post) {
             return res.status(404).json({ error: 'Post not found' });
         }
-        
+
         const userId = req.session.user.uid || req.session.user.id;
         if (post.user_id !== userId) {
             return res.status(403).json({ error: 'Not authorized to delete this post' });
         }
-        
+
         // Delete the post from database
         await db.deletePost(req.params.postId);
-        
+
         res.json({ success: true, message: 'Post deleted successfully' });
     } catch (error) {
         console.error('Error deleting post:', error);
@@ -298,7 +298,7 @@ router.post('/posts/:postId/comments', requireAuth, async (req, res) => {
     try {
         const userId = req.session.user.uid || req.session.user.id;
         const userName = req.session.user.displayName || req.session.user.email || 'Anonymous';
-        
+
         const commentData = {
             postId: req.params.postId,
             userId,
@@ -307,7 +307,7 @@ router.post('/posts/:postId/comments', requireAuth, async (req, res) => {
             parentCommentId: req.body.parentCommentId || null,
             content: req.body.content
         };
-        
+
         const comment = await db.createComment(commentData);
         res.json(comment);
     } catch (error) {
@@ -320,11 +320,11 @@ router.post('/posts/:postId/comments', requireAuth, async (req, res) => {
 router.get('/search', async (req, res) => {
     try {
         const { q, type } = req.query;
-        
+
         if (!q) {
             return res.status(400).json({ error: 'Search query required' });
         }
-        
+
         const posts = await db.searchPosts(q, { type });
         res.json(posts);
     } catch (error) {
@@ -345,7 +345,7 @@ router.get('/trending/tags', async (req, res) => {
             ORDER BY count DESC
             LIMIT 10
         `;
-        
+
         const result = await db.pool.query(query);
         res.json(result.rows);
     } catch (error) {
@@ -366,7 +366,7 @@ router.get('/trending/contributors', async (req, res) => {
             ORDER BY total_likes DESC
             LIMIT 10
         `;
-        
+
         const result = await db.pool.query(query);
         res.json(result.rows);
     } catch (error) {
@@ -380,11 +380,11 @@ router.post('/users/:userId/follow', requireAuth, async (req, res) => {
     try {
         const followerId = req.session.user.uid || req.session.user.id;
         const followingId = req.params.userId;
-        
+
         if (followerId === followingId) {
             return res.status(400).json({ error: 'Cannot follow yourself' });
         }
-        
+
         const result = await db.toggleFollow(followerId, followingId);
         res.json(result);
     } catch (error) {
@@ -403,7 +403,7 @@ router.get('/users/:userId/followers', async (req, res) => {
             WHERE f.following_id = $1
             ORDER BY f.created_at DESC
         `;
-        
+
         const result = await db.pool.query(query, [req.params.userId]);
         res.json(result.rows);
     } catch (error) {
@@ -422,7 +422,7 @@ router.get('/users/:userId/following', async (req, res) => {
             WHERE f.follower_id = $1
             ORDER BY f.created_at DESC
         `;
-        
+
         const result = await db.pool.query(query, [req.params.userId]);
         res.json(result.rows);
     } catch (error) {
@@ -436,7 +436,7 @@ router.post('/messages', requireAuth, async (req, res) => {
     try {
         const senderId = req.session.user.uid || req.session.user.id;
         const senderName = req.session.user.displayName || req.session.user.email || 'Anonymous';
-        
+
         const messageData = {
             senderId,
             senderName,
@@ -444,7 +444,7 @@ router.post('/messages', requireAuth, async (req, res) => {
             receiverName: req.body.receiverName,
             message: req.body.message
         };
-        
+
         const message = await db.sendMessage(messageData);
         res.json(message);
     } catch (error) {
@@ -458,12 +458,12 @@ router.get('/messages/:userId', requireAuth, async (req, res) => {
     try {
         const currentUserId = req.session.user.uid || req.session.user.id;
         const otherUserId = req.params.userId;
-        
+
         const messages = await db.getMessages(currentUserId, otherUserId);
-        
+
         // Mark messages as read
         await db.markMessagesAsRead(currentUserId, otherUserId);
-        
+
         res.json(messages);
     } catch (error) {
         console.error('Error getting messages:', error);
@@ -475,13 +475,13 @@ router.get('/messages/:userId', requireAuth, async (req, res) => {
 router.get('/messages/unread/count', requireAuth, async (req, res) => {
     try {
         const userId = req.session.user.uid || req.session.user.id;
-        
+
         const query = `
             SELECT COUNT(*) as count
             FROM community_messages
             WHERE receiver_id = $1 AND is_read = false
         `;
-        
+
         const result = await db.pool.query(query, [userId]);
         res.json({ count: parseInt(result.rows[0].count) });
     } catch (error) {
@@ -494,7 +494,7 @@ router.get('/messages/unread/count', requireAuth, async (req, res) => {
 router.get('/saved', requireAuth, async (req, res) => {
     try {
         const userId = req.session.user.uid || req.session.user.id;
-        
+
         const query = `
             SELECT p.*
             FROM community_saves s
@@ -502,7 +502,7 @@ router.get('/saved', requireAuth, async (req, res) => {
             WHERE s.user_id = $1
             ORDER BY s.created_at DESC
         `;
-        
+
         const result = await db.pool.query(query, [userId]);
         res.json(result.rows);
     } catch (error) {
@@ -520,7 +520,7 @@ router.get('/challenges/current', async (req, res) => {
             ORDER BY created_at DESC
             LIMIT 1
         `;
-        
+
         const result = await db.pool.query(query);
         res.json(result.rows[0] || null);
     } catch (error) {
@@ -534,7 +534,7 @@ router.post('/challenges/:challengeId/submit', requireAuth, upload.single('image
     try {
         const userId = req.session.user.uid || req.session.user.id;
         const userName = req.session.user.displayName || req.session.user.email || 'Anonymous';
-        
+
         // Create a post for the challenge submission
         const postData = {
             userId,
@@ -545,7 +545,7 @@ router.post('/challenges/:challengeId/submit', requireAuth, upload.single('image
             content: req.body.description,
             tags: ['challenge', req.params.challengeId]
         };
-        
+
         // Process image
         if (req.file) {
             const processedImage = await imageProcessor.processImage(
@@ -555,7 +555,7 @@ router.post('/challenges/:challengeId/submit', requireAuth, upload.single('image
             );
             postData.imageUrls = processedImage;
         }
-        
+
         const post = await db.createPost(postData);
         res.json(post);
     } catch (error) {

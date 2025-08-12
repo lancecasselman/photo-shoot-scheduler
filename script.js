@@ -2577,3 +2577,199 @@ async function downloadAllRawFiles(sessionId, clientName) {
         console.log("📦 Download process finished");
     }
 }
+
+// Website Builder Functions
+        window.updatePreview = function() {
+            const theme = document.getElementById('websiteTheme')?.value || 'legacy';
+            const preview = document.getElementById('websitePreview');
+
+            if (!preview) return;
+
+            // Update preview based on selected theme
+            preview.className = `website-preview theme-${theme}`;
+            preview.innerHTML = `
+                <div class="preview-header">My Photography Studio</div>
+                <div class="preview-hero">Welcome to my world of photography</div>
+                <div class="preview-content">
+                    <div class="preview-section">About Me</div>
+                    <div class="preview-section">Portfolio</div>
+                    <div class="preview-section">Contact</div>
+                </div>
+            `;
+        };
+
+        window.handleHeroUpload = function() {
+            const fileInput = document.getElementById('heroImage');
+            const file = fileInput?.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const previewContainer = document.getElementById('heroPreview');
+                    if (previewContainer) {
+                        previewContainer.innerHTML = `
+                            <img src="${e.target.result}" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px;">
+                        `;
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        window.previewWebsite = function() {
+            showMessage('Opening website preview...', 'info');
+            // Open preview in new tab
+            window.open('/preview', '_blank');
+        };
+
+        window.publishWebsite = function() {
+            showMessage('Publishing website...', 'info');
+            // Implement website publishing
+        };
+
+        // Booking Agreement Functions
+        window.createBookingAgreement = async function() {
+            const sessionSelect = document.getElementById('contractSessionSelect');
+            const templateSelect = document.getElementById('contractTemplate');
+
+            if (!sessionSelect?.value) {
+                showMessage('Please select a session', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/booking-agreements', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        sessionId: sessionSelect.value,
+                        templateType: templateSelect?.value || 'standard'
+                    }),
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showMessage('Booking agreement created successfully!', 'success');
+                    loadContracts();
+                } else {
+                    const error = await response.json();
+                    showMessage(error.error || 'Failed to create booking agreement', 'error');
+                }
+            } catch (error) {
+                console.error('Error creating booking agreement:', error);
+                showMessage('Error creating booking agreement', 'error');
+            }
+        };
+
+        window.loadContracts = async function() {
+            try {
+                const response = await fetch('/api/booking-agreements', {
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const contracts = await response.json();
+                    renderContracts(contracts);
+                }
+            } catch (error) {
+                console.error('Error loading contracts:', error);
+            }
+        };
+
+        function renderContracts(contracts) {
+            const container = document.getElementById('contractsContainer');
+            if (!container) return;
+
+            if (contracts.length === 0) {
+                container.innerHTML = '<p>No contracts created yet.</p>';
+                return;
+            }
+
+            container.innerHTML = contracts.map(contract => `
+                <div class="contract-item" style="background: var(--bg-card); padding: 20px; margin: 10px 0; border-radius: 12px; border: 1px solid var(--accent-beige);">
+                    <h4>${contract.client_name}</h4>
+                    <p><strong>Session:</strong> ${contract.session_type}</p>
+                    <p><strong>Status:</strong> ${contract.status}</p>
+                    <p><strong>Created:</strong> ${new Date(contract.created_at).toLocaleDateString()}</p>
+                    <div class="contract-actions" style="margin-top: 15px;">
+                        <button class="btn btn-primary" onclick="viewContract('${contract.id}')">View</button>
+                        <button class="btn btn-secondary" onclick="sendContract('${contract.id}')">Send</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        window.viewContract = function(contractId) {
+            showMessage('Opening contract viewer...', 'info');
+            // Implement contract viewing
+        };
+
+        window.sendContract = function(contractId) {
+            showMessage('Sending contract to client...', 'info');
+            // Implement contract sending
+        };
+
+window.switchTab = function(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Remove active class from all nav tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab
+            const selectedTab = document.getElementById(tabName + 'Tab');
+            if (selectedTab) {
+                selectedTab.classList.add('active');
+            }
+
+            // Add active class to corresponding nav tab
+            const navTab = document.querySelector(`a[onclick*="${tabName}"]`);
+            if (navTab) {
+                navTab.classList.add('active');
+            }
+
+            // Load appropriate content
+            switch(tabName) {
+                case 'clients':
+                    // Already loaded on page load
+                    break;
+                case 'goldenHour':
+                    // Initialize golden hour calculator if needed
+                    break;
+                case 'businessManagement':
+                    loadBusinessManagement();
+                    break;
+                case 'websiteBuilder':
+                    // Initialize website builder
+                    setTimeout(() => updatePreview(), 100);
+                    break;
+                case 'contracts':
+                    // Load sessions for contract creation
+                    populateContractSessions();
+                    loadContracts();
+                    break;
+                default:
+                    break;
+            }
+        };
+
+        // Populate sessions dropdown for contract creation
+        function populateContractSessions() {
+            const select = document.getElementById('contractSessionSelect');
+            if (!select) return;
+
+            select.innerHTML = '<option value="">Choose a session...</option>';
+
+            sessions.forEach(session => {
+                const option = document.createElement('option');
+                option.value = session.id;
+                option.textContent = `${session.clientName} - ${session.sessionType} (${new Date(session.dateTime).toLocaleDateString()})`;
+                select.appendChild(option);
+            });
+        }
