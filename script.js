@@ -530,14 +530,6 @@ function createSessionCard(session) {
         paymentPlanBtn.style.backgroundColor = '#17a2b8';
     }
 
-    const contractBtn = document.createElement('button');
-    contractBtn.className = 'btn btn-contract';
-    contractBtn.textContent = '📝 Contract';
-    contractBtn.onclick = () => {
-        // Navigate to contracts page with session ID
-        window.location.href = `/contracts.html?sessionId=${encodeURIComponent(session.id)}`;
-    };
-
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn btn-danger';
     deleteBtn.textContent = '🗑️ Delete';
@@ -564,7 +556,6 @@ function createSessionCard(session) {
     console.log('🔴 DEBUG: About to append RAW Folder button:', rawFolderBtn.textContent);
     actions.appendChild(rawFolderBtn);
     console.log('🔴 DEBUG: RAW Folder button appended successfully');
-    actions.appendChild(contractBtn);
     actions.appendChild(deleteBtn);
     
     // Debug: Log all buttons in the actions container
@@ -632,7 +623,6 @@ function createSessionCard(session) {
     statusDiv.className = 'session-status';
 
     const statusItems = [
-        { key: 'contractSigned', label: 'Contract Signed', value: session.contractSigned },
         { key: 'paid', label: 'Paid', value: session.paid },
         { key: 'edited', label: 'Edited', value: session.edited },
         { key: 'delivered', label: 'Delivered', value: session.delivered }

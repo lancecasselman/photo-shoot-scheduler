@@ -43,7 +43,7 @@ A comprehensive social platform for photographers to connect, learn, and grow to
 A professional photography planning tool that calculates optimal lighting times for any location and date. Features include location search, current location detection, accurate sunrise/sunset and golden/blue hour calculations, responsive design, and photography tips.
 
 ### Feature Specifications
-The system supports chronological session sorting by appointment date (dateTime field), displaying sessions from oldest to newest appointment date rather than creation date. This ensures sessions appear in logical chronological order based on when they're scheduled to occur. A deposit system is fully integrated, tracking deposit amounts in the database, applying them to invoices, and displaying remaining balances. A professional contract management system generates three contract types per session (Photo Print Release, Service Agreement, Model Release) with automatic date insertion and integrates a signature system for client signatures, providing a professional viewing modal, print functionality, and PDF download options.
+The system supports chronological session sorting by appointment date (dateTime field), displaying sessions from oldest to newest appointment date rather than creation date. This ensures sessions appear in logical chronological order based on when they're scheduled to occur. A deposit system is fully integrated, tracking deposit amounts in the database, applying them to invoices, and displaying remaining balances.
 
 ### Storage Quota and Billing System
 A comprehensive storage quota and billing system provides freemium storage management with 5GB free storage and paid packages. The system includes real-time quota tracking, pre-upload validation, a visual storage dashboard with usage analytics, and automatic subscription management. The StorageQuotaManager service handles all quota calculations and billing operations with proper authentication middleware.
@@ -51,8 +51,10 @@ A comprehensive storage quota and billing system provides freemium storage manag
 ### Unified File Deletion System
 A robust unified deletion system ensures complete file cleanup with no orphaned records. It includes database lookup for exact folder type detection, enhanced logging, comprehensive verification checks, and pattern matching to catch all database entries. The service coordinates between cloud storage and database cleanup, preventing phantom file records. Delete buttons on thumbnails provide instant file removal with confirmation dialogs, progress feedback, and automatic file list refresh. The system features fallback mechanisms and comprehensive error handling to ensure reliable file deletion across all interfaces.
 
-## Recent Changes (August 11, 2025)
+## Recent Changes (August 12, 2025)
 - **CRITICAL**: Session sorting by appointment date is COMPLETE and WORKING - do not modify
+- **Removed**: Contract buttons and "Contract Signed" status from session cards per user request
+- **Fixed**: Template literal errors in contract system that were causing server crashes
 - **Added**: Photography Community Platform with full social features
 - **Integrated**: Community routes into main server at `/api/community`
 - **Created**: Advanced image processing system with automatic optimization
