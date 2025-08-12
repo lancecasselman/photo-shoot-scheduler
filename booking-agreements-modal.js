@@ -125,9 +125,13 @@ function closeBookingAgreementModal() {
 // Load agreement templates
 async function loadAgreementTemplates() {
     try {
+        console.log('Loading booking agreement templates...');
         const response = await fetch('/api/booking/templates');
+        console.log('Template response status:', response.status);
+        
         if (response.ok) {
             agreementTemplates = await response.json();
+            console.log('Loaded templates:', agreementTemplates.length);
             
             // Populate template dropdown
             const select = document.getElementById('agreementTemplate');
@@ -141,6 +145,8 @@ async function loadAgreementTemplates() {
                     select.appendChild(option);
                 });
             }
+        } else {
+            console.error('Failed to load templates, status:', response.status);
         }
     } catch (error) {
         console.error('Error loading templates:', error);
@@ -427,6 +433,12 @@ function getStatusText(status) {
 
 // Update all agreement statuses
 async function updateAllAgreementStatuses() {
+    // Make sure sessions exist
+    if (typeof sessions === 'undefined' || !sessions) {
+        console.log('Sessions not yet loaded for booking agreements');
+        return;
+    }
+    
     const sessionIds = sessions.map(s => s.id);
     if (sessionIds.length === 0) return;
     
@@ -529,5 +541,12 @@ async function resendAgreement() {
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeBookingAgreements);
 } else {
-    initializeBookingAgreements();
+    // Wait a bit for sessions to load
+    setTimeout(initializeBookingAgreements, 1000);
 }
+
+// Also make sure to update statuses when sessions are loaded
+window.addEventListener('sessionsLoaded', function() {
+    console.log('Sessions loaded event - updating booking agreement statuses');
+    updateAllAgreementStatuses();
+});

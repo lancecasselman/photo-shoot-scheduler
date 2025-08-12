@@ -532,9 +532,10 @@ function createSessionCard(session) {
 
     // Booking Agreement Button
     const bookingAgreementBtn = document.createElement('button');
-    bookingAgreementBtn.className = 'booking-agreement-btn';
-    bookingAgreementBtn.innerHTML = '<i class="fas fa-file-signature"></i> <span class="agreement-status">Create Agreement</span>';
+    bookingAgreementBtn.className = 'btn booking-agreement-btn';
+    bookingAgreementBtn.innerHTML = '📄 <span class="agreement-status">Booking Agreement</span>';
     bookingAgreementBtn.onclick = () => {
+        console.log('Booking agreement button clicked for session:', session.id);
         if (typeof window.openBookingAgreementModal === 'function') {
             window.openBookingAgreementModal(session.id);
         } else {
@@ -542,9 +543,12 @@ function createSessionCard(session) {
             showMessage('Booking agreement system is loading, please try again.', 'info');
         }
     };
+    bookingAgreementBtn.style.backgroundColor = '#9b59b6';
+    bookingAgreementBtn.style.color = 'white';
+    bookingAgreementBtn.style.margin = '2px';
     // Add data attribute for status updates
-    bookingAgreementBtn.parentElement = actions;
     header.setAttribute('data-session-id', session.id);
+    console.log('Booking Agreement button created for session:', session.id);
 
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn btn-danger';
