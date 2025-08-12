@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contract Signing - The Legacy Photography</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .contract-content {
+            padding: 40px;
+        }
+
+        .contract-title {
+            font-size: 1.5rem;
+            color: #2d3748;
+            margin-bottom: 30px;
+            text-align: center;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 15px;
+        }
+
+        .contract-text {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            font-size: 0.95rem;
+            line-height: 1.8;
+            white-space: pre-line;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .signature-section {
+            border-top: 2px solid #e2e8f0;
+            padding-top: 30px;
+            margin-top: 30px;
+        }
+
+        .signature-section h3 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .signature-pad {
+            border: 2px solid #cbd5e0;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            background: white;
+            cursor: crosshair;
+        }
+
+        .signature-controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-danger {
+            background: #fed7d7;
+            color: #e53e3e;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .signed-indicator {
+            background: #c6f6d5;
+            border: 2px solid #68d391;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            color: #22543d;
+            font-weight: 600;
+            margin-top: 20px;
+        }
+
+        .contract-info {
+            background: #e6fffa;
+            border: 1px solid #81e6d9;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .contract-info h4 {
+            color: #234e52;
+            margin-bottom: 10px;
+        }
+
+        .contract-info p {
+            color: #2c7a7b;
+            margin: 5px 0;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #4a5568;
+        }
+
+        .error {
+            background: #fed7d7;
+            border: 1px solid #feb2b2;
+            border-radius: 12px;
+            padding: 20px;
+            color: #c53030;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .contract-content {
+                padding: 20px;
+            }
+            
+            .signature-controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 Contract Signing</h1>
+            <p>The Legacy Photography</p>
+        </div>
+
+        <div id="loading" class="loading">
+            <h3>Loading contract...</h3>
+            <p>Please wait while we retrieve your contract details.</p>
+        </div>
+
+        <div id="error" class="error" style="display: none;"></div>
+
+        <div id="contractContent" class="contract-content" style="display: none;">
+            <div class="contract-info">
+                <h4 id="contractTitle">Contract Title</h4>
+                <p><strong>Client:</strong> <span id="clientName">Loading...</span></p>
+                <p><strong>Email:</strong> <span id="clientEmail">Loading...</span></p>
+                <p><strong>Photographer:</strong> <span id="photographerName">Loading...</span></p>
+                <p><strong>Created:</strong> <span id="contractDate">Loading...</span></p>
+            </div>
+
+            <div class="contract-text" id="contractText">
+                Loading contract content...
+            </div>
+
+            <div id="signatureSection" class="signature-section">
+                <h3>📝 Client Signature</h3>
+                <p style="text-align: center; margin-bottom: 20px; color: #4a5568;">
+                    Please sign below to accept the terms and conditions of this contract.
+                </p>
+                
+                <canvas id="signaturePad" class="signature-pad" width="600" height="200"></canvas>
+                
+                <div class="signature-controls">
+                    <button class="btn btn-secondary" onclick="clearSignature()">Clear Signature</button>
+                    <button class="btn btn-primary" onclick="signContract()">Sign Contract</button>
+                </div>
+            </div>
+
+            <div id="signedIndicator" class="signed-indicator" style="display: none;">
+                <h3>✅ Contract Signed Successfully!</h3>
+                <p>Thank you for signing the contract. A copy has been sent to your email.</p>
+                <p id="signedDate"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let contract = null;
+        let signaturePad = null;
+        let canvas = null;
+        let ctx = null;
+        let drawing = false;
+
+        // Initialize signature pad
+        function initSignaturePad() {
+            canvas = document.getElementById('signaturePad');
+            ctx = canvas.getContext('2d');
+            
+            // Set up canvas for high DPI displays
+            const rect = canvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+            canvas.style.width = rect.width + 'px';
+            canvas.style.height = rect.height + 'px';
+            
+            // Set up drawing styles
+            ctx.strokeStyle = '#2d3748';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            // Mouse events
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+
+            // Touch events for mobile
+            canvas.addEventListener('touchstart', handleTouch);
+            canvas.addEventListener('touchmove', handleTouch);
+            canvas.addEventListener('touchend', stopDrawing);
+        }
+
+        function startDrawing(e) {
+            drawing = true;
+            const rect = canvas.getBoundingClientRect();
+            ctx.beginPath();
+            ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+        }
+
+        function draw(e) {
+            if (!drawing) return;
+            const rect = canvas.getBoundingClientRect();
+            ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+            ctx.stroke();
+        }
+
+        function stopDrawing() {
+            drawing = false;
+        }
+
+        function handleTouch(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent(e.type === 'touchstart' ? 'mousedown' : 
+                                            e.type === 'touchmove' ? 'mousemove' : 'mouseup', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            canvas.dispatchEvent(mouseEvent);
+        }
+
+        function clearSignature() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        async function loadContract() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const token = urlParams.get('token');
+                
+                if (!token) {
+                    throw new Error('Contract access token not provided');
+                }
+
+                const response = await fetch(`/api/contracts/view/${token}`);
+                
+                if (!response.ok) {
+                    throw new Error('Contract not found or access denied');
+                }
+
+                contract = await response.json();
+                displayContract();
+                
+            } catch (error) {
+                console.error('Error loading contract:', error);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').innerHTML = `
+                    <h3>Error Loading Contract</h3>
+                    <p>${error.message}</p>
+                    <p>Please contact The Legacy Photography for assistance.</p>
+                `;
+                document.getElementById('error').style.display = 'block';
+            }
+        }
+
+        function displayContract() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('contractContent').style.display = 'block';
+
+            // Populate contract details
+            document.getElementById('contractTitle').textContent = contract.contract_title;
+            document.getElementById('clientName').textContent = contract.client_name;
+            document.getElementById('clientEmail').textContent = contract.client_email;
+            document.getElementById('photographerName').textContent = contract.photographer_name;
+            document.getElementById('contractDate').textContent = new Date(contract.created_at).toLocaleDateString();
+            document.getElementById('contractText').textContent = contract.contract_content;
+
+            // Check if already signed
+            if (contract.status === 'signed') {
+                document.getElementById('signatureSection').style.display = 'none';
+                document.getElementById('signedIndicator').style.display = 'block';
+                document.getElementById('signedDate').textContent = 
+                    `Signed on: ${new Date(contract.signed_date).toLocaleDateString()}`;
+            } else {
+                initSignaturePad();
+            }
+        }
+
+        async function signContract() {
+            try {
+                // Check if signature exists
+                const imageData = canvas.toDataURL();
+                const isBlank = isCanvasBlank();
+                
+                if (isBlank) {
+                    alert('Please provide your signature before signing the contract.');
+                    return;
+                }
+
+                const response = await fetch(`/api/contracts/${contract.id}/sign`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        signature: imageData,
+                        access_token: new URLSearchParams(window.location.search).get('token')
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to sign contract');
+                }
+
+                const result = await response.json();
+                
+                // Show success message
+                document.getElementById('signatureSection').style.display = 'none';
+                document.getElementById('signedIndicator').style.display = 'block';
+                document.getElementById('signedDate').textContent = 
+                    `Signed on: ${new Date().toLocaleDateString()}`;
+
+                // Celebrate milestone
+                setTimeout(() => {
+                    alert('🎉 Contract signed successfully! Thank you for your business.');
+                }, 500);
+
+            } catch (error) {
+                console.error('Error signing contract:', error);
+                alert('Error signing contract: ' + error.message);
+            }
+        }
+
+        function isCanvasBlank() {
+            const pixelBuffer = new Uint32Array(
+                ctx.getImageData(0, 0, canvas.width, canvas.height).data.buffer
+            );
+            return !pixelBuffer.some(color => color !== 0);
+        }
+
+        // Load contract when page loads
+        window.addEventListener('load', loadContract);
+    </script>
+</body>
+</html>
