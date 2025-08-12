@@ -144,7 +144,7 @@ class ContractSystem {
   }
 
   async createContract(sessionId, clientId, templateKey, title, userId) {
-    const client = await pool.connect();
+    const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
       
@@ -208,7 +208,7 @@ class ContractSystem {
   }
 
   async sendContract(contractId, sessionData, clientData, studioData) {
-    const client = await pool.connect();
+    const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
       
