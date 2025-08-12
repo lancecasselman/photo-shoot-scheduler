@@ -1,0 +1,101 @@
+You are my build engineer. Convert this web app into a Capacitor project for iOS and Android while keeping the existing Node/Express web app intact. Do not add secrets. Make code changes and create files as needed, then print a step‑by‑step README of what I need to run locally (Mac) to ship to TestFlight and Play Store internal testing.
+
+Project facts:
+
+Entry HTML is index.html in the repo root.
+
+We serve static assets from the root during dev.
+
+We may call APIs (Firebase/R2/Stripe) over HTTPS—no local servers inside the mobile app.
+
+Do these tasks:
+
+Capacitor bootstrap
+
+Add deps if missing: @capacitor/core, @capacitor/cli, @capacitor/ios, @capacitor/android.
+
+Create capacitor.config.ts with:
+
+appId: "com.yourco.photoshootscheduler" (leave as placeholder for me)
+
+appName: "Photo Shoot Scheduler" (can be placeholder)
+
+webDir: "." (we load the existing root for now; I can switch to dist later)
+
+server: { androidScheme: "https" }
+
+Do not commit any iOS/Android signing files or keys.
+
+Package.json scripts
+
+Add:
+
+json
+Copy
+Edit
+{
+  "scripts": {
+    "cap:init": "cap init 'Photo Shoot Scheduler' com.yourco.photoshootscheduler --web-dir . || true",
+    "cap:sync": "cap sync",
+    "ios": "cap open ios",
+    "android": "cap open android",
+    "build:ios": "cap sync ios",
+    "build:android": "cap sync android"
+  }
+}
+Keep all current scripts; don’t delete anything I already have.
+
+iOS configuration
+
+Add ios/App/App/Info.plist edits via Capacitor config or a patch file (document the steps) to include usage strings only if referenced in code. Add safe defaults:
+
+NSPhotoLibraryUsageDescription, NSPhotoLibraryAddUsageDescription
+
+NSCameraUsageDescription (if code references Camera)
+
+NSMicrophoneUsageDescription (only if recording/voice notes exist)
+
+Add LSApplicationQueriesSchemes for fb, instagram, mailto only if we link out; otherwise skip.
+
+Android configuration
+
+Ensure AndroidManifest.xml has minimal permissions:
+
+INTERNET
+
+READ_MEDIA_IMAGES (API 33+) or scoped storage equivalent if needed
+
+CAMERA only if Camera is used
+
+Target SDK 34; enable cleartext traffic false (we require HTTPS).
+
+Do NOT embed Stripe secret keys.
+
+If the client code expects STRIPE_SECRET_KEY, refactor so the mobile app uses only the publishable key and calls our existing server endpoints for any secret work. Leave notes if edits required.
+
+Mobile polish
+
+Add iOS/Android meta tags to index.html if missing: viewport, apple-mobile-web-app-capable, apple-mobile-web-app-status-bar-style.
+
+Create placeholder App Icon and Splash asset directories with README telling me sizes; wire them up in iOS/Android projects.
+
+Output a README at /MOBILE_BUILD_README.md with:
+
+Exact commands I run on my Mac:
+
+npm i
+
+npx cap sync ios && npx cap open ios (Xcode steps: set Team, Bundle ID, Archive → TestFlight)
+
+npx cap sync android && npx cap open android (Android Studio steps: generate keystore, sign, upload to Play Console internal testing)
+
+Where to set the Bundle ID / Package name.
+
+Which Info.plist and AndroidManifest permissions you added and why.
+
+What environment variables the mobile app expects (publishable keys only) and how to inject them at build time (e.g., .env → JS config; no secrets in native).
+
+A checklist for App Store Connect & Play Console metadata (privacy nutrition label, screenshots sizes, age rating, export compliance).
+
+Print the diff summary (files added/modified) at the end of your response.
+
