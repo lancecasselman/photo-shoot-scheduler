@@ -13681,6 +13681,19 @@ END:VCALENDAR`;
                                 <input type="text" id="wb-edit-image-url" placeholder="Enter image URL" onchange="WebsiteBuilder.updateElement()">
                                 <label>Or Upload Image</label>
                                 <input type="file" id="wb-edit-image-upload" accept="image/*" onchange="WebsiteBuilder.handleImageUpload(event)">
+                                <label>Object Fit</label>
+                                <select id="wb-edit-object-fit" onchange="WebsiteBuilder.updateImageCrop()">
+                                    <option value="cover">Cover (crop to fill)</option>
+                                    <option value="contain">Contain (fit entire image)</option>
+                                    <option value="fill">Fill (stretch to fit)</option>
+                                    <option value="none">None (original size)</option>
+                                </select>
+                                <label>Focal Point X (%)</label>
+                                <input type="range" id="wb-edit-focal-x" min="0" max="100" value="50" onchange="WebsiteBuilder.updateImageCrop()">
+                                <span id="wb-focal-x-value">50%</span>
+                                <label>Focal Point Y (%)</label>
+                                <input type="range" id="wb-edit-focal-y" min="0" max="100" value="50" onchange="WebsiteBuilder.updateImageCrop()">
+                                <span id="wb-focal-y-value">50%</span>
                                 <label>Width (px)</label>
                                 <input type="number" id="wb-edit-image-width" min="50" value="400" onchange="WebsiteBuilder.updateImageSize()">
                                 <label>Height</label>
@@ -13689,6 +13702,31 @@ END:VCALENDAR`;
                                     <option value="custom">Custom height</option>
                                 </select>
                                 <input type="number" id="wb-edit-image-height" min="50" value="300" style="display: none;" onchange="WebsiteBuilder.updateImageSize()">
+                            </div>
+                            <div class="wb-edit-group" id="wb-background-image-group" style="display: none;">
+                                <label>Background Image URL</label>
+                                <input type="text" id="wb-edit-bg-image-url" placeholder="Enter background image URL" onchange="WebsiteBuilder.updateBackgroundImage()">
+                                <label>Or Upload Background</label>
+                                <input type="file" id="wb-edit-bg-image-upload" accept="image/*" onchange="WebsiteBuilder.handleBackgroundImageUpload(event)">
+                                <label>Background Size</label>
+                                <select id="wb-edit-bg-size" onchange="WebsiteBuilder.updateBackgroundImage()">
+                                    <option value="cover">Cover</option>
+                                    <option value="contain">Contain</option>
+                                    <option value="100% 100%">Stretch</option>
+                                    <option value="auto">Original Size</option>
+                                </select>
+                                <label>Background Position</label>
+                                <select id="wb-edit-bg-position" onchange="WebsiteBuilder.updateBackgroundImage()">
+                                    <option value="center center">Center</option>
+                                    <option value="top center">Top</option>
+                                    <option value="bottom center">Bottom</option>
+                                    <option value="center left">Left</option>
+                                    <option value="center right">Right</option>
+                                    <option value="top left">Top Left</option>
+                                    <option value="top right">Top Right</option>
+                                    <option value="bottom left">Bottom Left</option>
+                                    <option value="bottom right">Bottom Right</option>
+                                </select>
                             </div>
                             <button class="wb-btn" style="background: #e53e3e; margin-top: 20px;" onclick="WebsiteBuilder.deleteElement()">Delete Element</button>
                         </div>
@@ -14216,7 +14254,7 @@ END:VCALENDAR`;
                             </div>
                             <div style="position: relative;">
                                 <div class="wb-image-wrapper wb-editable" style="position: relative; overflow: hidden; border-radius: 0;">
-                                    <img src="https://images.unsplash.com/photo-1554048612-b6a482b22e95?w=600&h=800&fit=crop" style="width: 100%; height: 600px; object-fit: cover; transition: transform 0.5s;">
+                                    <img class="wb-editable" src="https://images.unsplash.com/photo-1554048612-b6a482b22e95?w=600&h=800&fit=crop" style="width: 100%; height: 600px; object-fit: cover; object-position: 50% 50%; transition: transform 0.5s;">
                                 </div>
                                 <div style="position: absolute; top: -40px; right: -40px; width: 120px; height: 120px; border: 2px solid #d4af37; border-radius: 50%; z-index: -1;"></div>
                             </div>
@@ -14458,6 +14496,60 @@ END:VCALENDAR`;
                     }
                 };
                 reader.readAsDataURL(file);
+            },
+
+            handleBackgroundImageUpload(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('wb-edit-bg-image-url').value = e.target.result;
+                    this.updateBackgroundImage();
+                    this.showToast('Background image uploaded successfully');
+                };
+                reader.readAsDataURL(file);
+            },
+
+            updateImageCrop() {
+                if (!this.currentElement || this.currentElement.tagName !== 'IMG') return;
+                
+                const objectFit = document.getElementById('wb-edit-object-fit').value;
+                const focalX = document.getElementById('wb-edit-focal-x').value;
+                const focalY = document.getElementById('wb-edit-focal-y').value;
+                
+                // Update focal point value displays
+                document.getElementById('wb-focal-x-value').textContent = focalX + '%';
+                document.getElementById('wb-focal-y-value').textContent = focalY + '%';
+                
+                // Apply object-fit and object-position
+                this.currentElement.style.objectFit = objectFit;
+                if (objectFit === 'cover' || objectFit === 'contain') {
+                    this.currentElement.style.objectPosition = `${focalX}% ${focalY}%`;
+                }
+                
+                this.savePage();
+            },
+
+            updateBackgroundImage() {
+                if (!this.currentElement) return;
+                
+                const imageUrl = document.getElementById('wb-edit-bg-image-url').value;
+                const bgSize = document.getElementById('wb-edit-bg-size').value;
+                const bgPosition = document.getElementById('wb-edit-bg-position').value;
+                
+                if (imageUrl) {
+                    // Handle CSS background image URL format
+                    const formattedUrl = imageUrl.startsWith('url(') ? imageUrl : `url('${imageUrl}')`;
+                    this.currentElement.style.backgroundImage = formattedUrl;
+                    this.currentElement.style.backgroundSize = bgSize;
+                    this.currentElement.style.backgroundPosition = bgPosition;
+                    this.currentElement.style.backgroundRepeat = 'no-repeat';
+                } else {
+                    this.currentElement.style.backgroundImage = '';
+                }
+                
+                this.savePage();
             },
 
             initializeDragAndDrop() {
