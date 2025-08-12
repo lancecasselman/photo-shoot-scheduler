@@ -32,8 +32,7 @@ const { initializeNotificationServices, sendWelcomeEmail, sendBillingNotificatio
 const PaymentPlanManager = require('./server/paymentPlans');
 const PaymentScheduler = require('./server/paymentScheduler');
 
-// Import contract management
-const ContractManager = require('./server/contracts');
+
 
 // Import R2 storage services
 const R2FileManager = require('./server/r2-file-manager');
@@ -247,7 +246,7 @@ const localBackup = new LocalBackupFallback();
 const r2FileManager = new R2FileManager(localBackup, pool);
 const paymentPlanManager = new PaymentPlanManager();
 const paymentScheduler = new PaymentScheduler();
-const contractManager = new ContractManager();
+
 const aiServices = new AIServices();
 
 // Initialize new storage system
@@ -262,7 +261,7 @@ storageSystem.initializeTables().catch(error => {
 });
 
 console.log('✅ R2 File Manager initialized');
-console.log('✅ Payment and contract services initialized');
+console.log('✅ Payment services initialized');
 console.log('AI Services:', aiServices.status);
 console.log('💾 New storage system initialized');
 
@@ -1076,9 +1075,7 @@ app.post('/api/auth/logout', (req, res) => {
 // R2 Storage API Routes - Complete file management system
 app.use('/api/r2', createR2Routes());
 
-// Contract API routes
-const createContractRoutes = require('./server/contract-routes');
-app.use('/api/contracts', createContractRoutes(pool, r2FileManager));
+
 
 // Community Platform routes (initialized after Firebase)
 app.use('/api/community', (req, res, next) => {
@@ -2578,35 +2575,8 @@ async function initializeDatabase(retryCount = 0) {
 
 
 
-        // Create contracts table for contract management
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS contracts (
-                id VARCHAR(255) PRIMARY KEY,
-                photographer_id VARCHAR(255) NOT NULL,
-                session_id VARCHAR(255),
-                client_id VARCHAR(255),
-                template_key VARCHAR(50),
-                title VARCHAR(255) NOT NULL,
-                html TEXT NOT NULL,
-                resolved_html TEXT,
-                status VARCHAR(50) DEFAULT 'draft',
-                created_at BIGINT NOT NULL,
-                updated_at BIGINT NOT NULL,
-                sent_at BIGINT,
-                viewed_at BIGINT,
-                signed_at BIGINT,
-                signer_ip VARCHAR(45),
-                signer_name VARCHAR(255),
-                signer_email VARCHAR(255),
-                signature_data TEXT,
-                pdf_url TEXT,
-                pdf_hash VARCHAR(255),
-                view_token VARCHAR(255),
-                client_email VARCHAR(255),
-                timeline JSONB DEFAULT '[]',
-                metadata JSONB DEFAULT '{}'
-            )
-        `);
+        // Contracts table removed - no longer needed
+        /* Contracts table creation removed */
 
         // Create storefront_sites table for storefront builder
         await pool.query(`
@@ -7224,27 +7194,8 @@ app.get('/api/subscribers/stats', isAuthenticated, async (req, res) => {
     }
 });
 
-// Contract API Endpoints
-
-// Get contract templates
-app.get('/api/contracts/templates', isAuthenticated, async (req, res) => {
-    try {
-        const templates = contractManager.getContractTemplates();
-        res.json(templates);
-    } catch (error) {
-        console.error('Error getting contract templates:', error);
-        res.status(500).json({ error: 'Failed to get contract templates' });
-    }
-});
-
-// Create contract for session
-app.post('/api/sessions/:id/contracts', isAuthenticated, async (req, res) => {
-    const sessionId = req.params.id;
-    const { contractType } = req.body;
-    const user = req.user;
-
-    try {
-        const session = await getSessionById(sessionId);
+// Contract API Endpoints removed - no longer needed
+/* All contract endpoints have been removed from the system */
         if (!session) {
             return res.status(404).json({ error: 'Session not found' });
         }
