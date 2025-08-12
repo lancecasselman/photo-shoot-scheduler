@@ -102,6 +102,11 @@ async function openBookingAgreementModal(sessionId) {
         return;
     }
 
+    // Make sure templates are loaded
+    if (!agreementTemplates || agreementTemplates.length === 0) {
+        await loadAgreementTemplates();
+    }
+
     // Update modal title
     document.getElementById('agreementModalTitle').textContent = 
         `Booking Agreement for ${session.clientName}`;
@@ -199,6 +204,23 @@ function showCreateMode(session) {
 
     // Clear editor
     document.getElementById('agreementContent').innerHTML = '';
+
+    // Populate template dropdown if needed
+    const select = document.getElementById('agreementTemplate');
+    if (select && select.options.length <= 1) {
+        // Re-populate dropdown
+        select.innerHTML = '<option value="">Choose a template...</option>';
+        if (agreementTemplates && agreementTemplates.length > 0) {
+            agreementTemplates.forEach(template => {
+                const option = document.createElement('option');
+                option.value = template.id;
+                option.textContent = template.name;
+                option.dataset.category = template.category;
+                select.appendChild(option);
+            });
+            console.log('Populated dropdown with', agreementTemplates.length, 'templates');
+        }
+    }
 
     // Reset template selector
     document.getElementById('agreementTemplate').value = '';
