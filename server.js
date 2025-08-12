@@ -7196,79 +7196,8 @@ app.get('/api/subscribers/stats', isAuthenticated, async (req, res) => {
 
 // Contract API Endpoints removed - no longer needed
 /* All contract endpoints have been removed from the system */
-        if (!session) {
-            return res.status(404).json({ error: 'Session not found' });
-        }
 
-        // Verify user owns this session (use normalized user for unified account)
-        const normalizedUser = normalizeUserForLance(user);
-        if (session.userId !== normalizedUser.uid) {
-            console.log('Contract authorization check:', {
-                sessionUserId: session.userId,
-                originalUserUid: user.uid,
-                normalizedUserUid: normalizedUser.uid,
-                userEmail: user.email
-            });
-            return res.status(403).json({ error: 'Unauthorized access to session' });
-        }
 
-        // Prepare session data for contract template
-        const contractData = {
-            client_name: session.clientName,
-            client_email: session.email,
-            client_phone: session.phoneNumber,
-            photographer_name: 'Lance Casselman',
-            photographer_email: 'lance@thelegacyphotography.com',
-            session_type: session.sessionType,
-            session_date: new Date(session.dateTime).toLocaleDateString(),
-            location: session.location,
-            price: session.price,
-            duration: session.duration,
-            reception_location: session.location, // For wedding contracts
-            coverage_hours: Math.round(session.duration / 60), // Convert minutes to hours
-            payment_plan: session.hasPaymentPlan,
-            payment_schedule: session.hasPaymentPlan ? `${session.paymentsRemaining} monthly payments of $${session.monthlyPayment}` : null,
-            deposit_amount: session.hasPaymentPlan ? (session.price * 0.5).toFixed(2) : null,
-            balance_amount: session.hasPaymentPlan ? (session.price * 0.5).toFixed(2) : null,
-            min_photos: '25'
-        };
-
-        const contract = await contractManager.createContract(sessionId, user.uid, contractType, contractData);
-
-        res.json({
-            message: 'Contract created successfully',
-            contract: contract
-        });
-    } catch (error) {
-        console.error('Error creating contract:', error);
-        res.status(500).json({ error: 'Failed to create contract' });
-    }
-});
-
-// Get contracts for session
-app.get('/api/sessions/:id/contracts', isAuthenticated, async (req, res) => {
-    const sessionId = req.params.id;
-    const user = req.user; // Use req.user directly from isAuthenticated middleware
-
-    try {
-        const session = await getSessionById(sessionId);
-        if (!session) {
-            return res.status(404).json({ error: 'Session not found' });
-        }
-
-        // Verify user owns this session (use normalized user for unified account)
-        const normalizedUser = normalizeUserForLance(user);
-        if (session.userId !== normalizedUser.uid) {
-            return res.status(403).json({ error: 'Unauthorized access to session' });
-        }
-
-        const contracts = await contractManager.getContractsBySessionId(sessionId);
-        res.json(contracts);
-    } catch (error) {
-        console.error('Error getting session contracts:', error);
-        res.status(500).json({ error: 'Failed to get session contracts' });
-    }
-});
 
 // Send contract to client
 app.post('/api/contracts/:id/send', isAuthenticated, async (req, res) => {
