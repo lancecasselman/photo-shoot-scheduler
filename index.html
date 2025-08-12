@@ -4003,64 +4003,6 @@
             border-left-color: #28a745;
         }
 
-        /* Contracts Section Styles */
-        .contracts-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: var(--spacing-lg);
-            flex-wrap: wrap;
-            gap: var(--spacing-md);
-        }
-
-        .contract-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: var(--spacing-md);
-            margin-bottom: var(--spacing-xl);
-        }
-
-        .stat-card {
-            background: var(--bg-secondary);
-            border-radius: var(--border-radius);
-            padding: var(--spacing-lg);
-            box-shadow: var(--shadow-soft);
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-md);
-            border-left: 4px solid var(--gold-muted);
-        }
-
-        .stat-icon {
-            font-size: 2rem;
-        }
-
-        .stat-content h4 {
-            margin: 0 0 var(--spacing-xs) 0;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            font-weight: 500;
-        }
-
-        .stat-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-
-        .recent-contracts {
-            background: var(--bg-primary);
-            border-radius: var(--border-radius);
-            padding: var(--spacing-lg);
-            margin-top: var(--spacing-lg);
-        }
-
-        .recent-contracts h3 {
-            color: var(--text-primary);
-            margin-bottom: var(--spacing-md);
-            font-size: 1.2rem;
-        }
-
         .financial-card.expenses {
             border-left-color: #dc3545;
         }
@@ -4653,6 +4595,7 @@
                     <!-- Collapsible Filter Sections -->
                     <div id="status-filters" class="filter-dropdown" style="display: none; background: rgba(212,175,55,0.1); border-radius: 8px; padding: 15px; margin: 10px 0; border-left: 4px solid #d4af37;">
                         <div class="checkbox-filters" style="display: flex; gap: 20px; flex-wrap: wrap;">
+                            <label style="display: flex; align-items: center; gap: 8px; color: #333; font-weight: 500;"><input type="checkbox" id="filterContractSigned" onchange="filterSessions()" style="margin: 0;"> ✅ Contract Signed</label>
                             <label style="display: flex; align-items: center; gap: 8px; color: #333; font-weight: 500;"><input type="checkbox" id="filterPaid" onchange="filterSessions()" style="margin: 0;"> 💰 Paid</label>
                             <label style="display: flex; align-items: center; gap: 8px; color: #333; font-weight: 500;"><input type="checkbox" id="filterDelivered" onchange="filterSessions()" style="margin: 0;"> 📦 Delivered</label>
                         </div>
@@ -4755,7 +4698,10 @@
                 <div class="admin-checkboxes">
                     <h3>Admin Workflow Status</h3>
                     <div class="checkbox-grid">
-
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="contractSigned" name="contractSigned">
+                            <label for="contractSigned">Contract Signed</label>
+                        </div>
                         <div class="checkbox-group">
                             <input type="checkbox" id="paid" name="paid">
                             <label for="paid">Paid</label>
@@ -6005,8 +5951,7 @@ ${contract.contract_content}
                                 <button onclick="openUpdateSessionModal('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Update Session</button>
                                 <button onclick="addToCalendar('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Calendar</button>
                                 <button onclick="openEmailClient('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Email</button>
-                                <button onclick="openContractsPage('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Contracts</button>
-
+                                <button onclick="viewSessionContracts('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Contracts</button>
 
                                 ${session.hasPaymentPlan ? `
                                     <button onclick="viewPaymentPlan('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Payment Plan</button>
@@ -6084,11 +6029,6 @@ ${contract.contract_content}
                 expandIcon.textContent = '▼';
                 expandIcon.style.transform = 'rotate(0deg)';
             }
-        }
-
-        // Open contracts page for session
-        window.openContractsPage = function(sessionId) {
-            window.open(`/app/contracts.html?sessionId=${sessionId}`, '_blank');
         }
 
         // File Management Functions
@@ -7295,7 +7235,35 @@ lance@thelegacyphotography.com`;
             }
         }
 
-        // Contract functionality temporarily removed
+        // View session contracts
+        window.viewSessionContracts = async function(sessionId) {
+            try {
+                const authToken = await getAuthToken();
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                if (authToken) {
+                    headers['Authorization'] = `Bearer ${authToken}`;
+                }
+                
+                const response = await fetch(`/api/sessions/${sessionId}/contracts`, {
+                    method: 'GET',
+                    headers
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.text();
+                    throw new Error(`Failed to fetch contracts: ${response.status} - ${errorData}`);
+                }
+                
+                const contracts = await response.json();
+                displayContractsModal(sessionId, contracts);
+                
+            } catch (error) {
+                console.error('Error fetching contracts:', error);
+                showMessage('Failed to fetch contracts: ' + error.message, 'error');
+            }
+        }
 
         // Display contracts modal
         function displayContractsModal(sessionId, contracts) {

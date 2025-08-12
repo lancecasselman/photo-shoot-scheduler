@@ -51,18 +51,12 @@ A comprehensive storage quota and billing system provides freemium storage manag
 ### Unified File Deletion System
 A robust unified deletion system ensures complete file cleanup with no orphaned records. It includes database lookup for exact folder type detection, enhanced logging, comprehensive verification checks, and pattern matching to catch all database entries. The service coordinates between cloud storage and database cleanup, preventing phantom file records. Delete buttons on thumbnails provide instant file removal with confirmation dialogs, progress feedback, and automatic file list refresh. The system features fallback mechanisms and comprehensive error handling to ensure reliable file deletion across all interfaces.
 
-## Recent Changes (August 12, 2025)
+## Recent Changes (August 11, 2025)
 - **CRITICAL**: Session sorting by appointment date is COMPLETE and WORKING - do not modify
-- **NEW**: Complete In-App Contract System v2.0 with device-based sharing
-  - Seeds 5 editable templates (portrait, wedding, event, commercial, model release)
-  - Auto-fills merge fields from session/client data
-  - Device-based sharing (no server-side email/SMS) - uses mailto:, sms:, Web Share API
-  - Supports in-browser e-signature with touch/mouse
-  - Generates flattened PDF and uploads to Cloudflare R2
-  - Tracks status (Draft, Sent, Viewed, Signed) with timeline
-  - Frontend at /app/contracts.html and /app/sign.html (to be completed)
-  - Backend routes at /api/contracts/* fully implemented
-- **Removed**: Old contract system UI elements that were causing errors
+- **Added**: Photography Community Platform with full social features
+- **Integrated**: Community routes into main server at `/api/community`
+- **Created**: Advanced image processing system with automatic optimization
+- **Database**: Community tables added with proper indexes for performance
 
 ## External Dependencies
 

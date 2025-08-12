@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contract Management - Photography Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #C4962D;
+            --primary-light: #D4A843;
+            --primary-dark: #B4861D;
+            --secondary: #2C3E50;
+            --bg-light: #F9F7F5;
+            --bg-white: #FFFFFF;
+            --text-dark: #2C3E50;
+            --text-light: #6B7785;
+            --border: #E5E7EB;
+            --success: #22C55E;
+            --warning: #F59E0B;
+            --error: #EF4444;
+            --info: #3B82F6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--bg-light);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg-white);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-dark);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-light);
+        }
+
+        /* Main Layout */
+        .container {
+            display: flex;
+            height: calc(100vh - 80px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 350px;
+            background: var(--bg-white);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .filter-tab {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+
+        .filter-tab.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        /* Contract List */
+        .contract-list {
+            padding: 1rem;
+        }
+
+        .contract-item {
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            background: var(--bg-light);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .contract-item:hover {
+            border-color: var(--primary-light);
+            transform: translateX(5px);
+        }
+
+        .contract-item.active {
+            border-color: var(--primary);
+            background: white;
+        }
+
+        .contract-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 0.5rem;
+        }
+
+        .contract-title {
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 0.95rem;
+        }
+
+        .contract-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-draft {
+            background: #F3F4F6;
+            color: #6B7280;
+        }
+
+        .status-sent {
+            background: #DBEAFE;
+            color: #1E40AF;
+        }
+
+        .status-viewed {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+
+        .status-signed {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .contract-meta {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .content-header {
+            background: var(--bg-white);
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .content-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        /* Editor */
+        .editor-container {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+            background: var(--bg-white);
+        }
+
+        .contract-editor {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 3rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .contract-content {
+            min-height: 500px;
+            outline: none;
+            line-height: 1.8;
+        }
+
+        .contract-content h2 {
+            color: var(--text-dark);
+            margin: 2rem 0 1rem;
+            font-size: 1.5rem;
+        }
+
+        .contract-content h3 {
+            color: var(--text-dark);
+            margin: 1.5rem 0 0.75rem;
+            font-size: 1.1rem;
+        }
+
+        .contract-content p {
+            margin-bottom: 1rem;
+        }
+
+        .merge-field {
+            background: #FEF3C7;
+            color: #92400E;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        /* Template Selector */
+        .template-selector {
+            padding: 1rem;
+            background: var(--bg-light);
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .template-selector label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .template-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: flex-end;
+            margin-top: 2rem;
+        }
+
+        /* Timeline */
+        .timeline {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .timeline-title {
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .timeline-item {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            align-items: start;
+        }
+
+        .timeline-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--primary);
+            margin-top: 5px;
+            flex-shrink: 0;
+        }
+
+        .timeline-content {
+            flex: 1;
+        }
+
+        .timeline-action {
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+
+        .timeline-date {
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+
+        /* Loading */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+        }
+
+        .spinner {
+            border: 3px solid var(--border);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-dark);
+        }
+
+        .empty-text {
+            color: var(--text-light);
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: 40vh;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+            }
+
+            .contract-editor {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <h1>📝 Contract Management</h1>
+        <div class="header-actions">
+            <button class="btn btn-secondary" onclick="window.location.href='/'">
+                ← Back to Dashboard
+            </button>
+            <button class="btn btn-primary" onclick="createNewContract()">
+                + New Contract
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="filter-tabs">
+                    <button class="filter-tab active" data-filter="all">All</button>
+                    <button class="filter-tab" data-filter="draft">Drafts</button>
+                    <button class="filter-tab" data-filter="sent">Sent</button>
+                    <button class="filter-tab" data-filter="signed">Signed</button>
+                </div>
+                <input type="text" class="search-box" placeholder="Search contracts..." id="searchBox">
+            </div>
+            <div class="contract-list" id="contractList">
+                <!-- Contract items will be dynamically loaded here -->
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div id="contentArea">
+                <!-- Content will be dynamically loaded here -->
+                <div class="empty-state">
+                    <div class="empty-icon">📄</div>
+                    <div class="empty-title">Select a Contract</div>
+                    <div class="empty-text">Choose a contract from the list or create a new one</div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Send Contract Modal -->
+    <div class="modal" id="sendModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Send Contract for Signature</h3>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Client Email</label>
+                    <input type="email" id="sendClientEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>Message (optional)</label>
+                    <textarea id="sendMessage" rows="3" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; font-family: inherit;">Your contract is ready for review and signature. Please review the terms and sign at your earliest convenience.</textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeSendModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="sendContract()">Send Contract</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase and App Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    
+    <script>
+        // Global variables
+        let currentContract = null;
+        let contracts = [];
+        let sessions = [];
+        let currentFilter = 'all';
+        let currentUser = null;
+
+        // Contract Templates
+        const contractTemplates = {
+            portrait: {
+                name: "Portrait Photography Contract",
+                defaultTitle: "Portrait Photography Agreement",
+                sections: [
+                    { bodyHtml: "<h2>PORTRAIT PHOTOGRAPHY AGREEMENT</h2><p>This Portrait Photography Agreement (\"Agreement\") is made between {photographerName} (\"Photographer\") and {clientName} (\"Client\") as of {contractDate}.</p>" },
+                    { bodyHtml: "<h3>1. EVENT DETAILS</h3><p>Date: {eventDate}<br>Location: {eventLocation}<br>Package: {packageName}<br>Deliverables: {deliverableCount} edited images in online gallery.</p>" },
+                    { bodyHtml: "<h3>2. FEES & PAYMENT</h3><p>Total Fee: ${totalPrice}<br>Retainer: ${depositAmount} due at signing (non-refundable). Balance due on {balanceDueDate}.</p>" },
+                    { bodyHtml: "<h3>3. CANCELLATION & RESCHEDULING</h3><p>Client may reschedule once without fee if notice is given at least {rescheduleNoticeDays} days in advance. Retainer is non-refundable for cancellations.</p>" },
+                    { bodyHtml: "<h3>4. COPYRIGHT & USAGE</h3><p>Photographer retains full copyright to all images. Client is granted personal, non-commercial usage rights.</p>" },
+                    { bodyHtml: "<h3>5. LIABILITY</h3><p>Photographer is not liable for circumstances beyond control including weather, accidents, or equipment failure.</p>" },
+                    { bodyHtml: "<h3>6. DELIVERY TIMELINE</h3><p>Gallery delivered within {deliveryDays} days of session date.</p>" },
+                    { bodyHtml: "<p>Both parties acknowledge they have read and agree to the terms.</p><p>Signed: _____________________ (Photographer)<br>Signed: _____________________ (Client)<br>Date: _______________________</p>" }
+                ]
+            },
+            wedding: {
+                name: "Wedding Photography Contract",
+                defaultTitle: "Wedding Photography Agreement",
+                sections: [
+                    { bodyHtml: "<h2>WEDDING PHOTOGRAPHY AGREEMENT</h2><p>Entered on {contractDate} between {photographerName} (\"Photographer\") and {clientName} (\"Client\").</p>" },
+                    { bodyHtml: "<h3>1. WEDDING DETAILS</h3><p>Date: {eventDate}<br>Ceremony: {ceremonyLocation}<br>Reception: {receptionLocation}<br>Coverage Hours: {coverageHours}</p>" },
+                    { bodyHtml: "<h3>2. FEES</h3><p>Total Price: ${totalPrice}<br>Deposit: ${depositAmount} due at signing (non-refundable). Balance due {balanceDueDate}.</p>" },
+                    { bodyHtml: "<h3>3. SCHEDULE & COOPERATION</h3><p>Client will provide a timeline and a day-of contact. Photographer is not responsible for missed moments due to delays or uncooperative subjects.</p>" },
+                    { bodyHtml: "<h3>4. COPYRIGHT & LICENSE</h3><p>Photographer owns copyright. Client receives a personal-use license.</p>" },
+                    { bodyHtml: "<h3>5. MEALS & BREAKS</h3><p>Photographer(s) to receive {mealBreakTime} meal break for coverage exceeding 5 hours.</p>" },
+                    { bodyHtml: "<h3>6. LIABILITY & FORCE MAJEURE</h3><p>Photographer is not liable for failure to perform due to events beyond control.</p>" },
+                    { bodyHtml: "<h3>7. DELIVERY</h3><p>Final images delivered within {deliveryDays} days.</p>" }
+                ]
+            },
+            event: {
+                name: "Event Photography Contract",
+                defaultTitle: "Event Photography Agreement",
+                sections: [
+                    { bodyHtml: "<h2>EVENT PHOTOGRAPHY AGREEMENT</h2><p>Between {photographerName} and {clientName}, effective {contractDate}.</p>" },
+                    { bodyHtml: "<h3>1. EVENT INFO</h3><p>Date: {eventDate}<br>Location: {eventLocation}<br>Type: {eventType}<br>Coverage Hours: {coverageHours}</p>" },
+                    { bodyHtml: "<h3>2. PAYMENT</h3><p>Total: ${totalPrice}<br>Deposit: ${depositAmount} due at signing. Balance due {balanceDueDate}.</p>" },
+                    { bodyHtml: "<h3>3. COPYRIGHT</h3><p>Photographer retains copyright. Client has license for event promotion and personal use.</p>" },
+                    { bodyHtml: "<h3>4. RESCHEDULING & CANCELLATION</h3><p>At least {rescheduleNoticeDays} days notice required to reschedule. Retainer non-refundable.</p>" },
+                    { bodyHtml: "<h3>5. DELIVERY</h3><p>Images delivered within {deliveryDays} days.</p>" }
+                ]
+            },
+            commercial: {
+                name: "Commercial / Branding Contract",
+                defaultTitle: "Commercial Photography Agreement",
+                sections: [
+                    { bodyHtml: "<h2>COMMERCIAL PHOTOGRAPHY AGREEMENT</h2><p>Between {photographerName} and {clientName} on {contractDate}.</p>" },
+                    { bodyHtml: "<h3>1. PROJECT DETAILS</h3><p>Date: {eventDate}<br>Location: {eventLocation}<br>Scope: {shootScope}<br>Deliverables: {deliverableCount} images</p>" },
+                    { bodyHtml: "<h3>2. USAGE RIGHTS</h3><p>Client is granted a {licenseType} license for {usageTerm} years. All other rights remain with Photographer.</p>" },
+                    { bodyHtml: "<h3>3. PAYMENT</h3><p>Total: ${totalPrice}<br>Deposit: ${depositAmount} due at signing. Balance due {balanceDueDate}.</p>" },
+                    { bodyHtml: "<h3>4. LIABILITY</h3><p>Photographer is not liable for consequential damages from image use.</p>" },
+                    { bodyHtml: "<h3>5. DELIVERY</h3><p>Images delivered by {deliveryDate}.</p>" }
+                ]
+            },
+            model_release: {
+                name: "Model Release",
+                defaultTitle: "Model Release",
+                sections: [
+                    { bodyHtml: "<h2>MODEL RELEASE</h2><p>I, {modelName}, grant {photographerName} permission to use my likeness in photographs, videos, and other media taken on {shootDate} at {shootLocation}. I authorize editing, publication, distribution, and licensing of the images for commercial, promotional, or artistic purposes in any medium. I waive any right to royalties or compensation.</p>" },
+                    { bodyHtml: "<p>Signed: __________________ (Model)<br>Date: ___________________</p>" }
+                ]
+            }
+        };
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Check authentication
+            firebase.auth().onAuthStateChanged(async (user) => {
+                if (!user) {
+                    window.location.href = '/auth.html';
+                    return;
+                }
+                
+                currentUser = user;
+                
+                // Check for sessionId in URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const sessionId = urlParams.get('sessionId');
+                
+                if (sessionId) {
+                    await loadSessionAndCreateContract(sessionId);
+                }
+                
+                // Load contracts
+                await loadContracts();
+                
+                // Setup event listeners
+                setupEventListeners();
+            });
+        });
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Filter tabs
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                    e.target.classList.add('active');
+                    currentFilter = e.target.dataset.filter;
+                    filterContracts();
+                });
+            });
+
+            // Search box
+            document.getElementById('searchBox').addEventListener('input', (e) => {
+                filterContracts(e.target.value);
+            });
+        }
+
+        // Load session and create/open contract
+        async function loadSessionAndCreateContract(sessionId) {
+            try {
+                // Load session data
+                const response = await fetch(`/api/sessions/${sessionId}`, {
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) throw new Error('Failed to load session');
+                
+                const session = await response.json();
+                
+                // Check if contract already exists for this session
+                const existingContract = contracts.find(c => c.sessionId === sessionId);
+                
+                if (existingContract) {
+                    selectContract(existingContract.id);
+                } else {
+                    // Create new contract from template
+                    const templateKey = getTemplateForSession(session);
+                    await createContractFromTemplate(templateKey, session);
+                }
+            } catch (error) {
+                console.error('Error loading session:', error);
+                showNotification('Failed to load session data', 'error');
+            }
+        }
+
+        // Get appropriate template for session type
+        function getTemplateForSession(session) {
+            const type = session.sessionType?.toLowerCase() || '';
+            
+            if (type.includes('wedding')) return 'wedding';
+            if (type.includes('event')) return 'event';
+            if (type.includes('commercial') || type.includes('branding')) return 'commercial';
+            if (type.includes('model')) return 'model_release';
+            
+            return 'portrait'; // Default
+        }
+
+        // Create new contract
+        async function createNewContract() {
+            const contentArea = document.getElementById('contentArea');
+            
+            contentArea.innerHTML = `
+                <div class="content-header">
+                    <h2>Create New Contract</h2>
+                    <div class="content-actions">
+                        <button class="btn btn-secondary" onclick="cancelCreate()">Cancel</button>
+                    </div>
+                </div>
+                <div class="editor-container">
+                    <div class="template-selector">
+                        <label>Select Contract Template</label>
+                        <select class="template-select" id="templateSelect" onchange="loadTemplate(this.value)">
+                            <option value="">-- Choose Template --</option>
+                            ${Object.entries(contractTemplates).map(([key, template]) => 
+                                `<option value="${key}">${template.name}</option>`
+                            ).join('')}
+                        </select>
+                    </div>
+                    <div id="templatePreview"></div>
+                </div>
+            `;
+        }
+
+        // Load template
+        function loadTemplate(templateKey) {
+            if (!templateKey) return;
+            
+            const template = contractTemplates[templateKey];
+            const previewArea = document.getElementById('templatePreview');
+            
+            const html = template.sections.map(section => section.bodyHtml).join('\n');
+            
+            previewArea.innerHTML = `
+                <div class="contract-editor">
+                    <input type="text" class="form-control" placeholder="Contract Title" value="${template.defaultTitle}" id="contractTitle" style="width: 100%; padding: 0.75rem; margin-bottom: 1rem; border: 1px solid var(--border); border-radius: 6px; font-size: 1.1rem; font-weight: 600;">
+                    <div class="contract-content" contenteditable="true" id="contractContent">
+                        ${highlightMergeFields(html)}
+                    </div>
+                    <div style="margin-top: 2rem;">
+                        <button class="btn btn-primary" onclick="saveContract('${templateKey}')">Save as Draft</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Highlight merge fields
+        function highlightMergeFields(html) {
+            return html.replace(/\{([^}]+)\}/g, '<span class="merge-field">{$1}</span>');
+        }
+
+        // Save contract
+        async function saveContract(templateKey) {
+            const title = document.getElementById('contractTitle').value;
+            const content = document.getElementById('contractContent').innerHTML;
+            
+            if (!title || !content) {
+                showNotification('Please enter a title and content', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/contracts/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        templateKey,
+                        title,
+                        html: content
+                    })
+                });
+                
+                if (!response.ok) throw new Error('Failed to save contract');
+                
+                const contract = await response.json();
+                showNotification('Contract saved as draft', 'success');
+                
+                // Reload contracts and select the new one
+                await loadContracts();
+                selectContract(contract.id);
+                
+            } catch (error) {
+                console.error('Error saving contract:', error);
+                showNotification('Failed to save contract', 'error');
+            }
+        }
+
+        // Load contracts
+        async function loadContracts() {
+            try {
+                const response = await fetch('/api/contracts', {
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) throw new Error('Failed to load contracts');
+                
+                contracts = await response.json();
+                renderContractList();
+                
+            } catch (error) {
+                console.error('Error loading contracts:', error);
+                showNotification('Failed to load contracts', 'error');
+            }
+        }
+
+        // Render contract list
+        function renderContractList() {
+            const listContainer = document.getElementById('contractList');
+            const filteredContracts = getFilteredContracts();
+            
+            if (filteredContracts.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📄</div>
+                        <div class="empty-text">No contracts found</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            listContainer.innerHTML = filteredContracts.map(contract => `
+                <div class="contract-item ${currentContract?.id === contract.id ? 'active' : ''}" 
+                     onclick="selectContract('${contract.id}')">
+                    <div class="contract-item-header">
+                        <div class="contract-title">${contract.title}</div>
+                        <span class="contract-status status-${contract.status}">${contract.status}</span>
+                    </div>
+                    <div class="contract-meta">
+                        ${contract.clientName || 'No client assigned'}<br>
+                        Created ${formatDate(contract.createdAt)}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Filter contracts
+        function filterContracts(searchTerm = '') {
+            renderContractList();
+        }
+
+        // Get filtered contracts
+        function getFilteredContracts() {
+            let filtered = contracts;
+            
+            // Apply status filter
+            if (currentFilter !== 'all') {
+                filtered = filtered.filter(c => c.status === currentFilter);
+            }
+            
+            // Apply search filter
+            const searchTerm = document.getElementById('searchBox').value.toLowerCase();
+            if (searchTerm) {
+                filtered = filtered.filter(c => 
+                    c.title.toLowerCase().includes(searchTerm) ||
+                    (c.clientName && c.clientName.toLowerCase().includes(searchTerm))
+                );
+            }
+            
+            return filtered;
+        }
+
+        // Select contract
+        async function selectContract(contractId) {
+            try {
+                const response = await fetch(`/api/contracts/${contractId}`, {
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) throw new Error('Failed to load contract');
+                
+                currentContract = await response.json();
+                renderContractDetails();
+                
+                // Update list selection
+                document.querySelectorAll('.contract-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                event.currentTarget?.classList.add('active');
+                
+            } catch (error) {
+                console.error('Error loading contract:', error);
+                showNotification('Failed to load contract details', 'error');
+            }
+        }
+
+        // Render contract details
+        function renderContractDetails() {
+            if (!currentContract) return;
+            
+            const contentArea = document.getElementById('contentArea');
+            const isEditable = currentContract.status === 'draft';
+            
+            contentArea.innerHTML = `
+                <div class="content-header">
+                    <div>
+                        <h2>${currentContract.title}</h2>
+                        <span class="contract-status status-${currentContract.status}">${currentContract.status}</span>
+                    </div>
+                    <div class="content-actions">
+                        ${currentContract.status === 'draft' ? `
+                            <button class="btn btn-secondary" onclick="editContract()">Edit</button>
+                            <button class="btn btn-primary" onclick="openSendModal()">Send for Signature</button>
+                        ` : ''}
+                        ${currentContract.status === 'signed' ? `
+                            <button class="btn btn-primary" onclick="downloadPDF()">Download PDF</button>
+                        ` : ''}
+                        ${currentContract.status === 'sent' ? `
+                            <button class="btn btn-secondary" onclick="resendContract()">Resend</button>
+                        ` : ''}
+                    </div>
+                </div>
+                <div class="editor-container">
+                    <div class="contract-editor">
+                        <div class="contract-content" ${isEditable ? 'contenteditable="true"' : ''}>
+                            ${currentContract.html}
+                        </div>
+                        ${currentContract.timeline && currentContract.timeline.length > 0 ? `
+                            <div class="timeline">
+                                <div class="timeline-title">Activity Timeline</div>
+                                ${currentContract.timeline.map(item => `
+                                    <div class="timeline-item">
+                                        <div class="timeline-dot"></div>
+                                        <div class="timeline-content">
+                                            <div class="timeline-action">${item.action}</div>
+                                            <div class="timeline-date">${formatDate(item.at)} by ${item.by}</div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Open send modal
+        function openSendModal() {
+            const modal = document.getElementById('sendModal');
+            modal.classList.add('active');
+            
+            // Pre-fill client email if available
+            if (currentContract.clientEmail) {
+                document.getElementById('sendClientEmail').value = currentContract.clientEmail;
+            }
+        }
+
+        // Close send modal
+        function closeSendModal() {
+            document.getElementById('sendModal').classList.remove('active');
+        }
+
+        // Send contract
+        async function sendContract() {
+            const email = document.getElementById('sendClientEmail').value;
+            const message = document.getElementById('sendMessage').value;
+            
+            if (!email) {
+                showNotification('Please enter client email', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/contracts/send', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        contractId: currentContract.id,
+                        clientEmail: email,
+                        message
+                    })
+                });
+                
+                if (!response.ok) throw new Error('Failed to send contract');
+                
+                showNotification('Contract sent successfully', 'success');
+                closeSendModal();
+                
+                // Reload contract to get updated status
+                await loadContracts();
+                await selectContract(currentContract.id);
+                
+            } catch (error) {
+                console.error('Error sending contract:', error);
+                showNotification('Failed to send contract', 'error');
+            }
+        }
+
+        // Download PDF
+        async function downloadPDF() {
+            if (!currentContract.pdfUrl) {
+                showNotification('PDF not available', 'error');
+                return;
+            }
+            
+            window.open(`/api/contracts/${currentContract.id}/pdf`, '_blank');
+        }
+
+        // Format date
+        function formatDate(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.textContent = message;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 1rem 1.5rem;
+                background: ${type === 'error' ? 'var(--error)' : type === 'success' ? 'var(--success)' : 'var(--info)'};
+                color: white;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 9999;
+                animation: slideIn 0.3s ease;
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Add animation styles
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

@@ -530,7 +530,13 @@ function createSessionCard(session) {
         paymentPlanBtn.style.backgroundColor = '#17a2b8';
     }
 
-    // Contract button temporarily removed - will be re-added later
+    const contractBtn = document.createElement('button');
+    contractBtn.className = 'btn btn-contract';
+    contractBtn.textContent = '📝 Contract';
+    contractBtn.onclick = () => {
+        // Navigate to contracts page with session ID
+        window.location.href = `/contracts.html?sessionId=${encodeURIComponent(session.id)}`;
+    };
 
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn btn-danger';
@@ -558,7 +564,7 @@ function createSessionCard(session) {
     console.log('🔴 DEBUG: About to append RAW Folder button:', rawFolderBtn.textContent);
     actions.appendChild(rawFolderBtn);
     console.log('🔴 DEBUG: RAW Folder button appended successfully');
-    // Contract button temporarily removed from DOM
+    actions.appendChild(contractBtn);
     actions.appendChild(deleteBtn);
     
     // Debug: Log all buttons in the actions container
