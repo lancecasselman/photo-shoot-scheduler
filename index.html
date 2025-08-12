@@ -13564,10 +13564,9 @@ END:VCALENDAR`;
                         <div class="wb-sidebar">
                             <h3>Templates</h3>
                             <div class="wb-template-grid">
-                                <div class="wb-template-item" onclick="WebsiteBuilder.selectTemplate('minimal')">Minimal Portfolio</div>
-                                <div class="wb-template-item" onclick="WebsiteBuilder.selectTemplate('wedding')">Wedding Photography</div>
-                                <div class="wb-template-item" onclick="WebsiteBuilder.selectTemplate('fashion')">Fashion Portfolio</div>
-                                <div class="wb-template-item" onclick="WebsiteBuilder.selectTemplate('nature')">Nature & Landscape</div>
+                                <button class="wb-template-btn" onclick="WebsiteBuilder.selectTemplate('minimal')">Minimal Portfolio</button>
+                                <button class="wb-template-btn" onclick="WebsiteBuilder.selectTemplate('wedding')">Wedding Photography</button>
+                                <button class="wb-template-btn" onclick="WebsiteBuilder.selectTemplate('cinematic')" style="background: linear-gradient(45deg, #d4af37, #f4d03f); color: black; font-weight: bold;">🎬 Cinematic Studio</button>
                             </div>
                             
                             <h3>Add Elements</h3>
@@ -14175,6 +14174,57 @@ END:VCALENDAR`;
                         <div style="padding: 80px 20px; text-align: center; background: #f8f4f0;">
                             <h1 class="wb-editable" style="font-size: 56px; margin-bottom: 20px; font-family: 'Cormorant Garamond'; color: #2c1810;">Your Love Story, Beautifully Told</h1>
                             <p class="wb-editable" style="font-size: 18px; color: #666; font-family: 'Montserrat';">Timeless wedding photography that captures every precious moment</p>
+                        </div>
+                    `,
+                    cinematic: `
+                        <div class="wb-editable" style="position: relative; height: 100vh; background: linear-gradient(45deg, rgba(0,0,0,0.7), rgba(139,69,19,0.3)), url('https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=1920&h=1080&fit=crop') center/cover; display: flex; align-items: center; overflow: hidden;" data-element-type="hero-section">
+                            <div style="position: absolute; top: 30px; left: 50px; z-index: 100;">
+                                <h2 class="wb-editable" style="margin: 0; font-family: 'Raleway'; font-weight: 300; color: white; font-size: 24px; letter-spacing: 3px;">STUDIO</h2>
+                            </div>
+                            <div style="position: absolute; top: 30px; right: 50px; z-index: 100; display: flex; gap: 40px;">
+                                <a href="#" class="wb-editable" style="color: rgba(255,255,255,0.9); text-decoration: none; font-family: 'Raleway'; font-weight: 300; font-size: 14px; letter-spacing: 1px; transition: all 0.3s;">PORTFOLIO</a>
+                                <a href="#" class="wb-editable" style="color: rgba(255,255,255,0.9); text-decoration: none; font-family: 'Raleway'; font-weight: 300; font-size: 14px; letter-spacing: 1px; transition: all 0.3s;">ABOUT</a>
+                                <a href="#" class="wb-editable" style="color: rgba(255,255,255,0.9); text-decoration: none; font-family: 'Raleway'; font-weight: 300; font-size: 14px; letter-spacing: 1px; transition: all 0.3s;">CONTACT</a>
+                            </div>
+                            <div style="max-width: 800px; margin-left: 80px;">
+                                <div class="wb-editable" style="color: rgba(255,255,255,0.7); font-family: 'Raleway'; font-size: 16px; font-weight: 300; margin-bottom: 30px; letter-spacing: 2px;">AWARD-WINNING PHOTOGRAPHY</div>
+                                <h1 class="wb-editable" style="font-size: clamp(48px, 8vw, 120px); line-height: 0.9; margin: 0 0 40px 0; font-family: 'Playfair Display'; color: white; font-weight: 900; text-shadow: 0 4px 20px rgba(0,0,0,0.5);">
+                                    FRAMES<br>
+                                    <span style="font-style: italic; color: #d4af37;">OF LIFE</span>
+                                </h1>
+                                <p class="wb-editable" style="font-size: 20px; color: rgba(255,255,255,0.8); font-family: 'Raleway'; font-weight: 300; line-height: 1.6; max-width: 500px; margin-bottom: 50px;">Capturing the extraordinary in every ordinary moment. Where artistry meets emotion.</p>
+                                <div style="display: flex; gap: 30px; align-items: center;">
+                                    <button class="wb-editable" style="background: linear-gradient(45deg, #d4af37, #f4d03f); color: black; border: none; padding: 18px 40px; font-family: 'Raleway'; font-weight: 600; letter-spacing: 1px; cursor: pointer; transition: all 0.3s; border-radius: 0;">VIEW PORTFOLIO</button>
+                                    <div class="wb-editable" style="color: rgba(255,255,255,0.6); font-family: 'Raleway'; font-size: 14px; font-weight: 300;">EST. 2018 • BASED IN NYC</div>
+                                </div>
+                            </div>
+                            <div style="position: absolute; bottom: 50px; right: 50px; display: flex; flex-direction: column; align-items: end; gap: 15px;">
+                                <div class="wb-editable" style="writing-mode: vertical-rl; text-orientation: mixed; color: rgba(255,255,255,0.5); font-family: 'Raleway'; font-size: 12px; letter-spacing: 3px; font-weight: 300;">SCROLL TO EXPLORE</div>
+                                <div style="width: 1px; height: 60px; background: linear-gradient(to bottom, rgba(255,255,255,0.8), transparent);"></div>
+                            </div>
+                        </div>
+                        <div class="wb-editable" style="padding: 120px 80px; background: #0a0a0a; color: white; display: grid; grid-template-columns: 1fr 1fr; gap: 100px; align-items: center;" data-element-type="content-section">
+                            <div>
+                                <div class="wb-editable" style="color: #d4af37; font-family: 'Raleway'; font-size: 14px; font-weight: 300; letter-spacing: 2px; margin-bottom: 30px;">PHILOSOPHY</div>
+                                <h2 class="wb-editable" style="font-size: 48px; line-height: 1.2; margin: 0 0 40px 0; font-family: 'Playfair Display'; font-weight: 700;">Every moment tells a story worth preserving</h2>
+                                <p class="wb-editable" style="font-size: 18px; color: rgba(255,255,255,0.7); font-family: 'Raleway'; font-weight: 300; line-height: 1.7; margin-bottom: 40px;">Through the lens of creativity and passion, we transform fleeting moments into timeless art. Our approach combines technical mastery with emotional storytelling.</p>
+                                <div style="display: flex; gap: 40px; margin-top: 50px;">
+                                    <div>
+                                        <div class="wb-editable" style="font-size: 36px; font-family: 'Playfair Display'; color: #d4af37; font-weight: 700;">500+</div>
+                                        <div class="wb-editable" style="font-size: 12px; color: rgba(255,255,255,0.5); font-family: 'Raleway'; letter-spacing: 1px;">SESSIONS</div>
+                                    </div>
+                                    <div>
+                                        <div class="wb-editable" style="font-size: 36px; font-family: 'Playfair Display'; color: #d4af37; font-weight: 700;">50+</div>
+                                        <div class="wb-editable" style="font-size: 12px; color: rgba(255,255,255,0.5); font-family: 'Raleway'; letter-spacing: 1px;">AWARDS</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="position: relative;">
+                                <div class="wb-image-wrapper wb-editable" style="position: relative; overflow: hidden; border-radius: 0;">
+                                    <img src="https://images.unsplash.com/photo-1554048612-b6a482b22e95?w=600&h=800&fit=crop" style="width: 100%; height: 600px; object-fit: cover; transition: transform 0.5s;">
+                                </div>
+                                <div style="position: absolute; top: -40px; right: -40px; width: 120px; height: 120px; border: 2px solid #d4af37; border-radius: 50%; z-index: -1;"></div>
+                            </div>
                         </div>
                     `,
                     fashion: `
