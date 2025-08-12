@@ -13716,12 +13716,27 @@ END:VCALENDAR`;
                 const canvas = document.getElementById('wb-canvas');
                 if (!canvas) return;
 
-                canvas.addEventListener('click', (e) => {
+                // Remove existing event listeners to prevent duplicates
+                canvas.removeEventListener('click', this.canvasClickHandler);
+                
+                // Define the click handler
+                this.canvasClickHandler = (e) => {
+                    console.log('Canvas clicked:', e.target, 'Classes:', e.target.classList);
                     if (e.target.classList.contains('wb-editable') || 
                         e.target.closest('.wb-image-wrapper')) {
                         const element = e.target.closest('.wb-image-wrapper') || e.target;
+                        console.log('Editing element:', element);
                         this.editElement(element, e);
                     }
+                };
+                
+                // Add the click listener
+                canvas.addEventListener('click', this.canvasClickHandler);
+                
+                // Add visual indicators for editable elements
+                document.querySelectorAll('.wb-editable').forEach(el => {
+                    el.style.cursor = 'pointer';
+                    el.title = 'Click to edit';
                 });
                 
                 // Make all elements draggable
