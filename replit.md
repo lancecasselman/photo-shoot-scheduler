@@ -53,11 +53,16 @@ A robust unified deletion system ensures complete file cleanup with no orphaned 
 
 ## Recent Changes (August 12, 2025)
 - **CRITICAL**: Session sorting by appointment date is COMPLETE and WORKING - do not modify
-- **Added**: Complete Contract Management System with electronic signatures
-- **Fixed**: Contract database schema alignment - using correct column names (user_id, contract_title, contract_content, etc.)
-- **Integrated**: 5 pre-built contract templates (Portrait, Wedding, Event, Commercial, Model Release)
-- **Created**: PDF generation with signature embedding and R2 storage
-- **Updated**: Email notifications using SendGrid for contract signing workflow
+- **NEW**: Complete In-App Contract System v2.0 with device-based sharing
+  - Seeds 5 editable templates (portrait, wedding, event, commercial, model release)
+  - Auto-fills merge fields from session/client data
+  - Device-based sharing (no server-side email/SMS) - uses mailto:, sms:, Web Share API
+  - Supports in-browser e-signature with touch/mouse
+  - Generates flattened PDF and uploads to Cloudflare R2
+  - Tracks status (Draft, Sent, Viewed, Signed) with timeline
+  - Frontend at /app/contracts.html and /app/sign.html (to be completed)
+  - Backend routes at /api/contracts/* fully implemented
+- **Removed**: Old contract system UI elements that were causing errors
 
 ## External Dependencies
 
