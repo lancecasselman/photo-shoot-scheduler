@@ -13160,6 +13160,17 @@ END:VCALENDAR`;
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
         }
+        
+        .wb-btn[title*="Layer"] {
+            padding: 6px 12px;
+            font-size: 12px;
+            background: linear-gradient(135deg, #4a5568, #2d3748);
+            min-width: 60px;
+        }
+        
+        .wb-btn[title*="Layer"]:hover {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+        }
 
         .wb-main {
             flex: 1;
@@ -13676,6 +13687,15 @@ END:VCALENDAR`;
                                 <label>Border Radius (px)</label>
                                 <input type="number" id="wb-edit-radius" value="0" onchange="WebsiteBuilder.updateElement()">
                             </div>
+                            <div class="wb-edit-group">
+                                <label>Layer Position (Z-Index)</label>
+                                <div style="display: flex; gap: 10px; align-items: center;">
+                                    <button type="button" class="wb-btn" onclick="WebsiteBuilder.moveLayerDown()" title="Move Layer Down">↓ Down</button>
+                                    <input type="number" id="wb-edit-zindex" value="0" min="-999" max="999" onchange="WebsiteBuilder.updateElement()" style="width: 60px; text-align: center;">
+                                    <button type="button" class="wb-btn" onclick="WebsiteBuilder.moveLayerUp()" title="Move Layer Up">↑ Up</button>
+                                </div>
+                                <small style="color: #666; font-size: 12px;">Higher numbers appear on top</small>
+                            </div>
                             <div class="wb-edit-group" id="wb-image-group" style="display: none;">
                                 <label>Image URL</label>
                                 <input type="text" id="wb-edit-image-url" placeholder="Enter image URL" onchange="WebsiteBuilder.updateElement()">
@@ -13875,6 +13895,7 @@ END:VCALENDAR`;
                 document.getElementById('wb-edit-padding').value = parseInt(targetElement.style.padding) || 10;
                 document.getElementById('wb-edit-margin').value = parseInt(targetElement.style.margin) || 10;
                 document.getElementById('wb-edit-radius').value = parseInt(targetElement.style.borderRadius) || 0;
+                document.getElementById('wb-edit-zindex').value = parseInt(targetElement.style.zIndex) || 0;
                 
                 // Show image options if it's an image or image wrapper
                 const imageGroup = document.getElementById('wb-image-group');
@@ -13969,6 +13990,14 @@ END:VCALENDAR`;
                 this.currentElement.style.padding = padding + 'px';
                 this.currentElement.style.margin = margin + 'px';
                 this.currentElement.style.borderRadius = radius + 'px';
+                
+                // Handle z-index
+                const zIndex = document.getElementById('wb-edit-zindex').value;
+                if (zIndex && zIndex !== '0') {
+                    this.currentElement.style.zIndex = zIndex;
+                } else {
+                    this.currentElement.style.zIndex = '';
+                }
                 
                 document.getElementById('wb-size-value').textContent = size + 'px';
                 
@@ -15084,6 +15113,36 @@ END:VCALENDAR`;
                     this.saveToHistory();
                     this.savePage();
                 }
+            },
+            
+            // Layer management functions
+            moveLayerUp() {
+                if (!this.currentElement) return;
+                
+                const currentZIndex = parseInt(this.currentElement.style.zIndex) || 0;
+                const newZIndex = currentZIndex + 1;
+                
+                this.currentElement.style.zIndex = newZIndex;
+                document.getElementById('wb-edit-zindex').value = newZIndex;
+                
+                this.savePage();
+            },
+            
+            moveLayerDown() {
+                if (!this.currentElement) return;
+                
+                const currentZIndex = parseInt(this.currentElement.style.zIndex) || 0;
+                const newZIndex = Math.max(currentZIndex - 1, -999);
+                
+                if (newZIndex === 0) {
+                    this.currentElement.style.zIndex = '';
+                } else {
+                    this.currentElement.style.zIndex = newZIndex;
+                }
+                
+                document.getElementById('wb-edit-zindex').value = newZIndex;
+                
+                this.savePage();
             }
         };
 
