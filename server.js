@@ -3668,6 +3668,224 @@ app.post('/api/ai/process-page-request', isAuthenticated, async (req, res) => {
     }
 });
 
+// 🤖 AI WEBSITE EDITOR - Intelligent Website Modification
+app.post('/api/ai-website-edit', isAuthenticated, async (req, res) => {
+    try {
+        const { request, currentHTML, websiteType } = req.body;
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
+
+        if (!request || !request.trim()) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Request description is required' 
+            });
+        }
+
+        // Check AI credits (2 credits for website editing)
+        const creditsNeeded = 2;
+        const availableCredits = await getUserAiCredits(userId);
+
+        if (availableCredits < creditsNeeded) {
+            return res.status(402).json({
+                success: false,
+                error: 'Insufficient AI credits for website editing',
+                creditsNeeded,
+                availableCredits
+            });
+        }
+
+        console.log(`🤖 AI Website Edit Request from ${userId}: "${request}"`);
+
+        try {
+            // Use AI credits first
+            await useAiCredits(userId, creditsNeeded, 'website_edit', request);
+
+            // Prepare the AI prompt for website editing
+            const aiPrompt = `You are an expert web designer and developer specializing in photography portfolios. 
+
+CURRENT WEBSITE HTML:
+${currentHTML}
+
+USER REQUEST: "${request}"
+
+Your task is to modify the HTML to fulfill the user's request while maintaining:
+1. All existing wb-editable classes for interactive editing
+2. Professional photography portfolio aesthetics
+3. Responsive design principles
+4. Clean, modern styling
+5. Proper HTML structure
+
+IMPORTANT GUIDELINES:
+- Keep all wb-editable classes intact
+- Maintain existing JavaScript event handlers
+- Use inline styles for modifications
+- Ensure mobile responsiveness
+- Focus on ${websiteType} best practices
+- Add subtle animations where appropriate
+- Improve typography, spacing, and visual hierarchy
+- Use professional color schemes
+- Maintain accessibility standards
+
+Please return:
+1. The complete modified HTML
+2. A brief description of changes made
+3. Specific improvements implemented
+
+Return your response as a JSON object with:
+{
+  "newHTML": "complete modified HTML here",
+  "description": "brief description of changes made",
+  "improvements": ["list", "of", "specific", "improvements"]
+}`;
+
+            // Call OpenAI API through AIServices
+            const aiResponse = await AIServices.generateContent({
+                prompt: aiPrompt,
+                maxTokens: 4000,
+                temperature: 0.3
+            });
+
+            let result;
+            try {
+                result = JSON.parse(aiResponse);
+            } catch (parseError) {
+                // If JSON parsing fails, try to extract content differently
+                throw new Error('AI response format error');
+            }
+
+            if (!result.newHTML) {
+                throw new Error('AI did not provide modified HTML');
+            }
+
+            console.log(`✅ AI Website Edit Success: ${result.description}`);
+
+            res.json({
+                success: true,
+                newHTML: result.newHTML,
+                description: result.description || 'Website successfully modified',
+                improvements: result.improvements || [],
+                creditsUsed: creditsNeeded,
+                remainingCredits: availableCredits - creditsNeeded
+            });
+
+        } catch (aiError) {
+            // Refund credits if AI generation fails
+            await pool.query('UPDATE users SET ai_credits = ai_credits + $1 WHERE id = $2', [creditsNeeded, userId]);
+            throw aiError;
+        }
+
+    } catch (error) {
+        console.error('AI website edit error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to process website edit request: ' + error.message
+        });
+    }
+});
+
+// 🔍 AI WEBSITE ANALYZER - Design Analysis and Suggestions
+app.post('/api/ai-website-analyze', isAuthenticated, async (req, res) => {
+    try {
+        const { currentHTML, websiteType } = req.body;
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
+
+        if (!currentHTML || !currentHTML.trim()) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Website HTML is required for analysis' 
+            });
+        }
+
+        // Check AI credits (1 credit for analysis)
+        const creditsNeeded = 1;
+        const availableCredits = await getUserAiCredits(userId);
+
+        if (availableCredits < creditsNeeded) {
+            return res.status(402).json({
+                success: false,
+                error: 'Insufficient AI credits for website analysis',
+                creditsNeeded,
+                availableCredits
+            });
+        }
+
+        console.log(`🔍 AI Website Analysis Request from ${userId}`);
+
+        try {
+            // Use AI credits first
+            await useAiCredits(userId, creditsNeeded, 'website_analysis', 'Website design analysis');
+
+            // Prepare the AI prompt for website analysis
+            const aiPrompt = `You are an expert web designer analyzing a photography portfolio website. 
+
+WEBSITE HTML TO ANALYZE:
+${currentHTML}
+
+Please provide a comprehensive analysis of this ${websiteType} website covering:
+
+1. DESIGN STRENGTHS: What's working well visually
+2. AREAS FOR IMPROVEMENT: Specific design issues to address
+3. USER EXPERIENCE: Navigation and usability assessment
+4. VISUAL HIERARCHY: Typography, spacing, and layout analysis
+5. BRAND PERCEPTION: How professional/trustworthy it appears
+6. MOBILE RESPONSIVENESS: Potential mobile issues
+7. CONVERSION OPTIMIZATION: Elements that could drive bookings
+
+Based on your analysis, provide 3-5 specific, actionable suggestions for improvement.
+
+Return your response as a JSON object with:
+{
+  "analysis": "comprehensive analysis summary (2-3 sentences)",
+  "strengths": ["list", "of", "current", "strengths"],
+  "improvements": ["list", "of", "improvement", "areas"],
+  "suggestions": ["actionable suggestion 1", "actionable suggestion 2", "etc"],
+  "priority": "highest priority improvement recommendation"
+}`;
+
+            // Call OpenAI API
+            const aiResponse = await AIServices.generateContent({
+                prompt: aiPrompt,
+                maxTokens: 2000,
+                temperature: 0.4
+            });
+
+            let result;
+            try {
+                result = JSON.parse(aiResponse);
+            } catch (parseError) {
+                throw new Error('AI response format error');
+            }
+
+            console.log(`✅ AI Website Analysis Complete`);
+
+            res.json({
+                success: true,
+                analysis: result.analysis || 'Analysis completed successfully',
+                strengths: result.strengths || [],
+                improvements: result.improvements || [],
+                suggestions: result.suggestions || [],
+                priority: result.priority || 'Focus on visual hierarchy and spacing',
+                creditsUsed: creditsNeeded,
+                remainingCredits: availableCredits - creditsNeeded
+            });
+
+        } catch (aiError) {
+            // Refund credits if AI generation fails
+            await pool.query('UPDATE users SET ai_credits = ai_credits + $1 WHERE id = $2', [creditsNeeded, userId]);
+            throw aiError;
+        }
+
+    } catch (error) {
+        console.error('AI website analysis error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to analyze website: ' + error.message
+        });
+    }
+});
+
 // 💰 BUSINESS EXPENSE MANAGEMENT API
 app.get('/api/expenses', isAuthenticated, async (req, res) => {
     let client;
