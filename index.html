@@ -14087,6 +14087,47 @@ END:VCALENDAR`;
             padding-right: 0;
         }
 
+        /* Mobile toolbar smooth scrolling */
+        .wb-mobile-top-toolbar,
+        .wb-mobile-bottom-toolbar {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            scroll-behavior: smooth;
+        }
+
+        .wb-mobile-top-toolbar::-webkit-scrollbar,
+        .wb-mobile-bottom-toolbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Mobile canvas mobile-optimized styling */
+        .wb-mobile-canvas-wrapper .wb-editable {
+            border: 1px dashed transparent;
+            transition: border-color 0.2s ease;
+        }
+
+        .wb-mobile-canvas-wrapper .wb-editable:hover {
+            border-color: rgba(102, 126, 234, 0.5);
+        }
+
+        .wb-mobile-canvas-wrapper .wb-editable.selected {
+            border-color: #667eea;
+            border-style: solid;
+        }
+
+        /* Responsive adjustments for very small screens */
+        @media (max-width: 480px) {
+            .wb-mobile-btn {
+                padding: 6px 10px;
+                font-size: 10px;
+            }
+            
+            .wb-mobile-canvas-wrapper {
+                width: 320px;
+                min-height: 568px;
+            }
+        }
+
         @keyframes slideInUp {
             from {
                 transform: translateY(100px);
@@ -15021,6 +15062,11 @@ END:VCALENDAR`;
             },
 
             addElement(type) {
+                // Route to appropriate canvas based on current device
+                if (this.currentDevice === 'mobile') {
+                    return this.addElementToMobile(type);
+                }
+                
                 const canvas = document.getElementById('wb-canvas');
                 if (!canvas) return;
                 
@@ -17012,6 +17058,100 @@ END:VCALENDAR`;
                     tempDiv.innerHTML = html;
                     const element = tempDiv.firstElementChild;
                     
+                    mobileCanvas.appendChild(element);
+                    this.setupMobileEditableElements();
+                    this.saveMobileContent();
+                    this.saveToHistory();
+                }
+            },
+
+            addElementToMobile(type) {
+                const mobileCanvas = document.getElementById('wb-mobile-canvas');
+                if (!mobileCanvas) return;
+                
+                let element;
+                
+                switch(type) {
+                    case 'text':
+                        element = document.createElement('p');
+                        element.textContent = 'Tap to edit text';
+                        element.className = 'wb-editable';
+                        element.style.padding = '15px';
+                        element.style.cursor = 'pointer';
+                        element.style.fontSize = '16px';
+                        element.style.lineHeight = '1.5';
+                        break;
+                        
+                    case 'image':
+                        const imageWrapper = document.createElement('div');
+                        imageWrapper.className = 'wb-image-wrapper wb-editable';
+                        imageWrapper.style.position = 'relative';
+                        imageWrapper.style.margin = '15px 0';
+                        
+                        element = document.createElement('img');
+                        element.src = 'https://images.unsplash.com/photo-1452587925148-ce544e77e70d?w=350&h=200&fit=crop';
+                        element.style.width = '100%';
+                        element.style.height = 'auto';
+                        element.style.borderRadius = '8px';
+                        element.style.cursor = 'pointer';
+                        element.alt = 'Tap to change image';
+                        
+                        imageWrapper.appendChild(element);
+                        element = imageWrapper;
+                        break;
+                        
+                    case 'button':
+                        element = document.createElement('button');
+                        element.textContent = 'Tap Here';
+                        element.className = 'wb-editable';
+                        element.style.padding = '12px 24px';
+                        element.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
+                        element.style.color = 'white';
+                        element.style.border = 'none';
+                        element.style.borderRadius = '8px';
+                        element.style.cursor = 'pointer';
+                        element.style.fontSize = '16px';
+                        element.style.fontWeight = '600';
+                        element.style.width = '100%';
+                        element.style.margin = '10px 0';
+                        break;
+                        
+                    case 'gallery':
+                        element = document.createElement('div');
+                        element.className = 'wb-editable wb-gallery';
+                        element.style.display = 'grid';
+                        element.style.gridTemplateColumns = 'repeat(2, 1fr)';
+                        element.style.gap = '8px';
+                        element.style.margin = '15px 0';
+                        element.style.cursor = 'pointer';
+                        
+                        const mobileGalleryImages = [
+                            'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=175&h=175&fit=crop',
+                            'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=175&h=175&fit=crop',
+                            'https://images.unsplash.com/photo-1471341971476-ae15ff5dd4ea?w=175&h=175&fit=crop',
+                            'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=175&h=175&fit=crop'
+                        ];
+                        
+                        mobileGalleryImages.forEach((src, i) => {
+                            const img = document.createElement('img');
+                            img.className = 'wb-editable';
+                            img.src = src;
+                            img.style.width = '100%';
+                            img.style.height = '120px';
+                            img.style.objectFit = 'cover';
+                            img.style.borderRadius = '6px';
+                            img.style.cursor = 'pointer';
+                            img.alt = `Gallery image ${i+1}`;
+                            
+                            element.appendChild(img);
+                        });
+                        break;
+                        
+                    default:
+                        return;
+                }
+                
+                if (element) {
                     mobileCanvas.appendChild(element);
                     this.setupMobileEditableElements();
                     this.saveMobileContent();
