@@ -14096,6 +14096,179 @@ END:VCALENDAR`;
                     this.saveCurrentContent();
                 }, 30000); // Auto-save every 30 seconds
             },
+            
+            // Mobile-specific brainstorming components
+            addMobileContactForm() {
+                const contactHTML = `
+                    <div class="wb-mobile-contact wb-editable" data-type="mobile-contact" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 25px; border-radius: 15px; margin: 20px 0;">
+                        <h3 style="margin: 0 0 15px 0; font-size: 20px; text-align: center;">📱 Let's Connect!</h3>
+                        <div style="display: grid; gap: 12px;">
+                            <input type="text" placeholder="Your Name" style="padding: 12px; border: none; border-radius: 8px; font-size: 16px;">
+                            <input type="email" placeholder="Email Address" style="padding: 12px; border: none; border-radius: 8px; font-size: 16px;">
+                            <select style="padding: 12px; border: none; border-radius: 8px; font-size: 16px;">
+                                <option>Wedding Photography</option>
+                                <option>Portrait Session</option>
+                                <option>Event Coverage</option>
+                                <option>Other</option>
+                            </select>
+                            <textarea placeholder="Tell me about your vision..." style="padding: 12px; border: none; border-radius: 8px; font-size: 16px; min-height: 80px; resize: vertical;"></textarea>
+                            <button style="background: #d4af37; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;">Send Message ✨</button>
+                        </div>
+                    </div>
+                `;
+                this.addToCanvas(contactHTML);
+                this.saveToHistory();
+            },
+            
+            addMobileBookingWidget() {
+                const bookingHTML = `
+                    <div class="wb-mobile-booking wb-editable" data-type="mobile-booking" style="background: #fff; border: 2px solid #d4af37; border-radius: 15px; padding: 20px; margin: 20px 0; box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);">
+                        <div style="text-align: center; margin-bottom: 15px;">
+                            <h3 style="color: #d4af37; margin: 0; font-size: 18px;">📅 Quick Booking</h3>
+                            <p style="color: #666; font-size: 14px; margin: 5px 0 0 0;">Available dates this month</p>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px;">
+                            <button style="background: #f8f9fa; border: 1px solid #ddd; padding: 10px 5px; border-radius: 8px; font-size: 12px; cursor: pointer;">Aug 15</button>
+                            <button style="background: #f8f9fa; border: 1px solid #ddd; padding: 10px 5px; border-radius: 8px; font-size: 12px; cursor: pointer;">Aug 22</button>
+                            <button style="background: #d4af37; color: white; border: none; padding: 10px 5px; border-radius: 8px; font-size: 12px; cursor: pointer;">Aug 29</button>
+                            <button style="background: #f8f9fa; border: 1px solid #ddd; padding: 10px 5px; border-radius: 8px; font-size: 12px; cursor: pointer;">Sep 5</button>
+                            <button style="background: #f8f9fa; border: 1px solid #ddd; padding: 10px 5px; border-radius: 8px; font-size: 12px; cursor: pointer;">Sep 12</button>
+                            <button style="background: #f8f9fa; border: 1px solid #ddd; padding: 10px 5px; border-radius: 8px; font-size: 12px; cursor: pointer;">Sep 19</button>
+                        </div>
+                        <button style="background: linear-gradient(135deg, #d4af37, #f4d03f); color: black; border: none; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: bold; width: 100%; cursor: pointer;">Book Selected Date 🎯</button>
+                    </div>
+                `;
+                this.addToCanvas(bookingHTML);
+                this.saveToHistory();
+            },
+            
+            addSwipeableGallery() {
+                const galleryHTML = `
+                    <div class="wb-swipeable-gallery wb-editable" data-type="swipeable-gallery" style="margin: 20px 0; position: relative; overflow: hidden; border-radius: 15px;">
+                        <div style="display: flex; transition: transform 0.3s ease; height: 250px;" id="swipe-track-${Date.now()}">
+                            <div style="min-width: 100%; background: url('https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=400&h=250&fit=crop') center/cover;"></div>
+                            <div style="min-width: 100%; background: url('https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400&h=250&fit=crop') center/cover;"></div>
+                            <div style="min-width: 100%; background: url('https://images.unsplash.com/photo-1519741497674-611481863552?w=400&h=250&fit=crop') center/cover;"></div>
+                        </div>
+                        <div style="position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 5px;">
+                            <div style="width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.8);"></div>
+                            <div style="width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.4);"></div>
+                            <div style="width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.4);"></div>
+                        </div>
+                        <div style="position: absolute; top: 50%; right: 10px; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px;">›</div>
+                        <div style="position: absolute; top: 50%; left: 10px; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px;">‹</div>
+                    </div>
+                `;
+                this.addToCanvas(galleryHTML);
+                this.saveToHistory();
+            },
+            
+            addClickToCallButton() {
+                const callHTML = `
+                    <div class="wb-click-to-call wb-editable" data-type="click-to-call" style="text-align: center; margin: 20px 0;">
+                        <a href="tel:+1234567890" style="display: inline-block; background: linear-gradient(135deg, #25D366, #128C7E); color: white; text-decoration: none; padding: 15px 25px; border-radius: 25px; font-size: 16px; font-weight: bold; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);">
+                            📞 Call Now: (123) 456-7890
+                        </a>
+                        <p style="color: #666; font-size: 12px; margin: 8px 0 0 0;">Tap to call directly from your phone</p>
+                    </div>
+                `;
+                this.addToCanvas(callHTML);
+                this.saveToHistory();
+            },
+            
+            addInstagramFeed() {
+                const instaHTML = `
+                    <div class="wb-instagram-feed wb-editable" data-type="instagram-feed" style="margin: 20px 0;">
+                        <h3 style="text-align: center; color: #333; margin-bottom: 15px; font-size: 18px;">📸 Follow My Work</h3>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; margin-bottom: 15px;">
+                            <div style="aspect-ratio: 1; background: url('https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=150&h=150&fit=crop') center/cover; border-radius: 8px;"></div>
+                            <div style="aspect-ratio: 1; background: url('https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=150&h=150&fit=crop') center/cover; border-radius: 8px;"></div>
+                            <div style="aspect-ratio: 1; background: url('https://images.unsplash.com/photo-1519741497674-611481863552?w=150&h=150&fit=crop') center/cover; border-radius: 8px;"></div>
+                            <div style="aspect-ratio: 1; background: url('https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=150&h=150&fit=crop') center/cover; border-radius: 8px;"></div>
+                            <div style="aspect-ratio: 1; background: url('https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=150&h=150&fit=crop') center/cover; border-radius: 8px;"></div>
+                            <div style="aspect-ratio: 1; background: url('https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=150&h=150&fit=crop') center/cover; border-radius: 8px;"></div>
+                        </div>
+                        <div style="text-align: center;">
+                            <a href="https://instagram.com/yourhandle" style="background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); color: white; text-decoration: none; padding: 10px 20px; border-radius: 20px; font-size: 14px; font-weight: bold;">Follow @yourhandle</a>
+                        </div>
+                    </div>
+                `;
+                this.addToCanvas(instaHTML);
+                this.saveToHistory();
+            },
+            
+            addMobileHeroSection() {
+                const heroHTML = `
+                    <div class="wb-mobile-hero wb-editable" data-type="mobile-hero" style="background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=400&h=300&fit=crop') center/cover; color: white; padding: 40px 20px; text-align: center; margin: 20px 0; border-radius: 15px; min-height: 280px; display: flex; flex-direction: column; justify-content: center;">
+                        <h1 style="font-size: 24px; margin: 0 0 10px 0; font-weight: bold;">Capturing Your Story</h1>
+                        <p style="font-size: 16px; margin: 0 0 20px 0; opacity: 0.9;">Professional photography for life's most important moments</p>
+                        <div style="display: flex; flex-direction: column; gap: 10px; align-items: center;">
+                            <button style="background: #d4af37; color: white; border: none; padding: 12px 25px; border-radius: 25px; font-size: 14px; font-weight: bold; cursor: pointer;">View Portfolio</button>
+                            <button style="background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 10px 20px; border-radius: 20px; font-size: 13px; cursor: pointer;">Book Session</button>
+                        </div>
+                    </div>
+                `;
+                this.addToCanvas(heroHTML);
+                this.saveToHistory();
+            },
+            
+            addFloatingContactButton() {
+                const floatingHTML = `
+                    <div class="wb-floating-contact wb-editable" data-type="floating-contact" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
+                        <button style="background: linear-gradient(135deg, #d4af37, #f4d03f); color: black; border: none; width: 60px; height: 60px; border-radius: 50%; font-size: 20px; cursor: pointer; box-shadow: 0 4px 20px rgba(212, 175, 55, 0.4); animation: pulse 2s infinite;" onclick="this.parentElement.querySelector('.wb-contact-popup').style.display = 'block'">💬</button>
+                        <div class="wb-contact-popup" style="display: none; position: absolute; bottom: 70px; right: 0; background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 25px rgba(0,0,0,0.15); width: 250px;">
+                            <h4 style="margin: 0 0 10px 0; color: #333;">Quick Contact</h4>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <a href="tel:+1234567890" style="background: #25D366; color: white; text-decoration: none; padding: 10px; border-radius: 8px; text-align: center; font-size: 14px;">📞 Call</a>
+                                <a href="sms:+1234567890" style="background: #007AFF; color: white; text-decoration: none; padding: 10px; border-radius: 8px; text-align: center; font-size: 14px;">💬 Text</a>
+                                <a href="mailto:info@photographer.com" style="background: #FF3B30; color: white; text-decoration: none; padding: 10px; border-radius: 8px; text-align: center; font-size: 14px;">✉️ Email</a>
+                            </div>
+                            <button style="position: absolute; top: 5px; right: 8px; background: none; border: none; font-size: 16px; cursor: pointer;" onclick="this.parentElement.style.display = 'none'">✕</button>
+                        </div>
+                    </div>
+                    <style>
+                        @keyframes pulse {
+                            0% { transform: scale(1); }
+                            50% { transform: scale(1.1); }
+                            100% { transform: scale(1); }
+                        }
+                    </style>
+                `;
+                this.addToCanvas(floatingHTML);
+                this.saveToHistory();
+            },
+            
+            addMobileTestimonialCards() {
+                const testimonialHTML = `
+                    <div class="wb-mobile-testimonials wb-editable" data-type="mobile-testimonials" style="margin: 20px 0;">
+                        <h3 style="text-align: center; color: #333; margin-bottom: 20px; font-size: 18px;">💭 What Clients Say</h3>
+                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 12px; border-left: 4px solid #d4af37;">
+                                <p style="margin: 0 0 10px 0; font-style: italic; color: #555; font-size: 14px;">"Absolutely amazing! The photos captured our special day perfectly."</p>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="width: 30px; height: 30px; border-radius: 50%; background: #d4af37; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: bold;">JS</div>
+                                    <div>
+                                        <strong style="font-size: 13px; color: #333;">Jessica & Mark</strong>
+                                        <div style="color: #d4af37; font-size: 12px;">⭐⭐⭐⭐⭐</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="background: #f8f9fa; padding: 15px; border-radius: 12px; border-left: 4px solid #d4af37;">
+                                <p style="margin: 0 0 10px 0; font-style: italic; color: #555; font-size: 14px;">"Professional, creative, and so easy to work with!"</p>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="width: 30px; height: 30px; border-radius: 50%; background: #d4af37; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: bold;">AL</div>
+                                    <div>
+                                        <strong style="font-size: 13px; color: #333;">Anna L.</strong>
+                                        <div style="color: #d4af37; font-size: 12px;">⭐⭐⭐⭐⭐</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                this.addToCanvas(testimonialHTML);
+                this.saveToHistory();
+            }
 
             setupBuilder() {
                 const container = document.getElementById('website-builder-container');
@@ -16470,13 +16643,16 @@ END:VCALENDAR`;
                 const canvas = document.getElementById('wb-canvas');
                 canvas.className = `wb-canvas ${device}`;
                 
-                // Show/hide mobile indicator
+                // Show/hide mobile indicator and brainstorm section
                 const indicator = document.getElementById('wb-mobile-indicator');
+                const brainstormSection = document.getElementById('wb-mobile-brainstorm-section');
                 if (device === 'mobile' || device === 'tablet') {
                     indicator.style.display = 'block';
                     indicator.textContent = `✨ Editing ${device.charAt(0).toUpperCase() + device.slice(1)} Version Independently`;
+                    if (brainstormSection) brainstormSection.style.display = 'block';
                 } else {
                     indicator.style.display = 'none';
+                    if (brainstormSection) brainstormSection.style.display = 'none';
                 }
                 
                 // Load device-specific content
