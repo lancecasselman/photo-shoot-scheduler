@@ -7213,6 +7213,60 @@ app.post('/api/sessions/:id/send-invoice', async (req, res) => {
     }
 });
 
+// Create Stripe Checkout Session for tip system
+app.post('/api/create-checkout-session', async (req, res) => {
+    try {
+        const { paymentId, amount, tipAmount, totalAmount, clientName, sessionType } = req.body;
+        
+        if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY.length < 50) {
+            return res.json({
+                success: false,
+                message: 'Stripe not configured - this would redirect to Stripe Checkout in production'
+            });
+        }
+        
+        // Create Stripe checkout session
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            line_items: [
+                {
+                    price_data: {
+                        currency: 'usd',
+                        product_data: {
+                            name: `${sessionType || 'Photography Session'} - ${clientName}`,
+                            description: `Base amount: $${amount.toFixed(2)}${tipAmount > 0 ? `, Tip: $${tipAmount.toFixed(2)}` : ''}`
+                        },
+                        unit_amount: Math.round(totalAmount * 100) // Convert to cents
+                    },
+                    quantity: 1
+                }
+            ],
+            mode: 'payment',
+            success_url: `${req.headers.origin}/payment-success?session_id={CHECKOUT_SESSION_ID}&payment_id=${paymentId}`,
+            cancel_url: `${req.headers.origin}/invoice.html?payment=${paymentId}`,
+            metadata: {
+                paymentId: paymentId,
+                baseAmount: amount.toString(),
+                tipAmount: tipAmount.toString(),
+                totalAmount: totalAmount.toString()
+            }
+        });
+        
+        res.json({
+            success: true,
+            checkout_url: session.url,
+            session_id: session.id
+        });
+        
+    } catch (error) {
+        console.error('Checkout session creation error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to create payment session: ' + error.message
+        });
+    }
+});
+
 // Stripe Subscription Routes
 app.post('/api/create-subscription', isAuthenticated, async (req, res) => {
     try {

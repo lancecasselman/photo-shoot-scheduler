@@ -546,13 +546,44 @@
             }
         }
         
-        // Proceed to payment (simplified demo)
-        function proceedToPayment() {
-            const totalAmount = invoiceData.amount + selectedTipAmount;
-            const message = `🎉 Payment Processing Demo\n\nSession Amount: $${invoiceData.amount.toFixed(2)}\nTip Amount: $${selectedTipAmount.toFixed(2)}\nTotal: $${totalAmount.toFixed(2)}\n\nIn a real implementation, this would redirect to Stripe Checkout for secure payment processing.\n\nThank you for using the tip system!`;
-            
-            alert(message);
-            showSuccess('Payment system demo completed! Tip functionality is working correctly.');
+        // Proceed to payment via Stripe
+        async function proceedToPayment() {
+            try {
+                showLoading(true);
+                
+                const totalAmount = invoiceData.amount + selectedTipAmount;
+                const paymentId = getPaymentId();
+                
+                // Create Stripe checkout session
+                const response = await fetch('/api/create-checkout-session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        paymentId: paymentId,
+                        amount: invoiceData.amount,
+                        tipAmount: selectedTipAmount,
+                        totalAmount: totalAmount,
+                        clientName: invoiceData.session.clientName,
+                        sessionType: invoiceData.session.sessionType
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success && result.checkout_url) {
+                    // Redirect to Stripe Checkout
+                    window.location.href = result.checkout_url;
+                } else {
+                    throw new Error(result.message || 'Failed to create payment session');
+                }
+                
+            } catch (error) {
+                console.error('Payment error:', error);
+                showError('Payment processing failed: ' + error.message);
+                showLoading(false);
+            }
         }
         
         // Show success message
