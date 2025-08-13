@@ -9665,6 +9665,11 @@ function escapeHTML(text) {
         .replace(/'/g, '&#x27;');
 }
 
+// Serve invoice.html publicly without authentication (clients need to access invoices to pay)
+app.get('/invoice.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'invoice.html'));
+});
+
 // Serve public directory files directly at root level
 app.use(express.static(path.join(__dirname, 'public')));
 

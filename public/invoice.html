@@ -367,38 +367,19 @@
         
         // Load invoice data from localStorage (simplified approach)
         function loadInvoiceData(paymentId) {
+            console.log('🔥 Loading invoice data for payment ID:', paymentId);
+            
             try {
-                // Try to get data from localStorage first
-                const storedData = localStorage.getItem(`payment-${paymentId}`);
-                if (storedData) {
-                    const paymentData = JSON.parse(storedData);
-                    
-                    // Convert to invoice format
-                    invoiceData = {
-                        paymentNumber: paymentId.replace('payment-', '').slice(0, 8).toUpperCase(),
-                        amount: parseFloat(paymentData.amount),
-                        tipAmount: 0,
-                        dueDate: paymentData.dueDate,
-                        status: 'pending',
-                        session: {
-                            clientName: paymentData.clientName,
-                            sessionType: 'Photography Session',
-                            dateTime: new Date().toISOString()
-                        }
-                    };
-                    
-                    displayInvoiceData();
-                    return;
-                }
-                
-                // Fallback: get data from URL parameters
+                // Always try URL parameters first for public invoice access
                 const urlParams = new URLSearchParams(window.location.search);
                 const sessionId = urlParams.get('sessionId');
                 const amount = urlParams.get('amount');
                 
-                if (sessionId && amount) {
+                console.log('🔥 URL Parameters:', { sessionId, amount, paymentId });
+                
+                if (amount) {
                     invoiceData = {
-                        paymentNumber: paymentId.replace('payment-', '').slice(0, 8).toUpperCase(),
+                        paymentNumber: paymentId ? paymentId.replace('payment-', '').slice(-8).toUpperCase() : 'INV' + Date.now().toString().slice(-6),
                         amount: parseFloat(amount),
                         tipAmount: 0,
                         dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
@@ -410,13 +391,38 @@
                         }
                     };
                     
+                    console.log('✅ Invoice data created from URL:', invoiceData);
                     displayInvoiceData();
                     return;
                 }
                 
-                throw new Error('Invoice data not found');
+                // Fallback: try localStorage
+                const storedData = localStorage.getItem(`payment-${paymentId}`);
+                if (storedData) {
+                    const paymentData = JSON.parse(storedData);
+                    
+                    invoiceData = {
+                        paymentNumber: paymentId.replace('payment-', '').slice(-8).toUpperCase(),
+                        amount: parseFloat(paymentData.amount),
+                        tipAmount: 0,
+                        dueDate: paymentData.dueDate,
+                        status: 'pending',
+                        session: {
+                            clientName: paymentData.clientName,
+                            sessionType: 'Photography Session',
+                            dateTime: new Date().toISOString()
+                        }
+                    };
+                    
+                    console.log('✅ Invoice data loaded from localStorage:', invoiceData);
+                    displayInvoiceData();
+                    return;
+                }
+                
+                throw new Error('Invoice data not found - missing amount parameter');
                 
             } catch (error) {
+                console.error('❌ Error loading invoice data:', error);
                 showError('Failed to load invoice: ' + error.message);
             }
         }
