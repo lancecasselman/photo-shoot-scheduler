@@ -341,6 +341,29 @@
                     <button class="btn btn-primary" onclick="updateInvoice()">Update Invoice</button>
                     <button class="btn btn-success" onclick="proceedToPayment()" id="payment-btn" style="display: none;">Proceed to Payment</button>
                 </div>
+                
+                <!-- Send Invoice Section -->
+                <div class="send-section" id="send-section" style="display: none; margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; border-top: 3px solid #28a745;">
+                    <h4 style="margin: 0 0 15px 0; color: #333; font-size: 18px;">📤 Send Invoice</h4>
+                    <p style="margin: 0 0 20px 0; color: #666; font-size: 14px;">Share this invoice with your client via SMS or email</p>
+                    
+                    <div style="display: grid; gap: 12px;">
+                        <button onclick="sendInvoiceViaSMS()" 
+                                style="padding: 12px 20px; background: #28a745; color: white; border: none; border-radius: 6px; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            📱 Send via SMS
+                        </button>
+                        
+                        <button onclick="sendInvoiceViaEmail()" 
+                                style="padding: 12px 20px; background: #007bff; color: white; border: none; border-radius: 6px; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            📧 Send via Email
+                        </button>
+                        
+                        <button onclick="copyInvoiceURL()" 
+                                style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            📋 Copy Link
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -507,6 +530,7 @@
                 
                 showSuccess('Invoice updated with tip! Ready for payment.');
                 document.getElementById('payment-btn').style.display = 'inline-block';
+                document.getElementById('send-section').style.display = 'block';
                 
                 // Store updated invoice data
                 const paymentId = getPaymentId();
@@ -568,6 +592,93 @@
             errorDiv.textContent = message;
             errorDiv.style.display = 'block';
             document.getElementById('success-message').style.display = 'none';
+        }
+        
+        // Send invoice via SMS using device default SMS app
+        function sendInvoiceViaSMS() {
+            const currentURL = window.location.href;
+            const totalAmount = invoiceData.amount + selectedTipAmount;
+            
+            // Create a friendly message for SMS
+            const message = `Hi! Your photography invoice for $${invoiceData.amount.toFixed(2)}${selectedTipAmount > 0 ? ` (with $${selectedTipAmount.toFixed(2)} tip)` : ''} is ready for payment. Total: $${totalAmount.toFixed(2)}. Pay securely here: ${currentURL}`;
+            
+            // Create SMS URL that opens default SMS app
+            const smsUrl = `sms:?body=${encodeURIComponent(message)}`;
+            
+            // Open SMS app
+            window.location.href = smsUrl;
+            
+            showSuccess('SMS app opened with invoice message!');
+        }
+
+        // Send invoice via email using device default email app
+        function sendInvoiceViaEmail() {
+            const currentURL = window.location.href;
+            const totalAmount = invoiceData.amount + selectedTipAmount;
+            
+            const subject = `Photography Invoice - $${totalAmount.toFixed(2)}`;
+            const body = `Hi,
+
+Your photography session invoice is ready for payment!
+
+Invoice Details:
+• Base Amount: $${invoiceData.amount.toFixed(2)}
+${selectedTipAmount > 0 ? `• Optional Tip: $${selectedTipAmount.toFixed(2)}` : ''}
+• Total Amount: $${totalAmount.toFixed(2)}
+
+You can pay securely using the link below:
+${currentURL}
+
+Thank you for choosing our photography services!
+
+Best regards,
+The Legacy Photography`;
+            
+            // Create mailto URL that opens default email app
+            const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            
+            // Open email app
+            window.location.href = mailtoUrl;
+            
+            showSuccess('Email app opened with invoice message!');
+        }
+
+        // Copy invoice URL to clipboard
+        function copyInvoiceURL() {
+            const currentURL = window.location.href;
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(currentURL).then(() => {
+                    showSuccess('Invoice URL copied to clipboard!');
+                }).catch(err => {
+                    console.error('Clipboard copy failed:', err);
+                    fallbackCopyToClipboard(currentURL);
+                });
+            } else {
+                fallbackCopyToClipboard(currentURL);
+            }
+        }
+
+        // Fallback copy method for older browsers
+        function fallbackCopyToClipboard(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                showSuccess('Invoice URL copied to clipboard!');
+            } catch (err) {
+                console.error('Fallback copy failed:', err);
+                showError('Could not copy URL. Please copy manually from address bar.');
+            }
+            
+            document.body.removeChild(textArea);
         }
     </script>
 </body>
