@@ -415,7 +415,15 @@
                     };
                     
                     console.log('✅ Invoice data created from URL:', invoiceData);
-                    displayInvoiceData();
+                    
+                    // Always fetch complete session data from server to get email and proper client info
+                    if (sessionId) {
+                        fetchCompleteSessionData(sessionId).then(() => {
+                            displayInvoiceData();
+                        });
+                    } else {
+                        displayInvoiceData();
+                    }
                     return;
                 }
                 
