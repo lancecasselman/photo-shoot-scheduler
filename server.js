@@ -4049,7 +4049,7 @@ app.post('/api/payment-plans', isAuthenticated, async (req, res) => {
             });
         }
         
-        const result = await PaymentPlanManager.createPaymentPlan(
+        const result = await paymentPlanManager.createPaymentPlan(
             sessionId, 
             userId, 
             totalAmount, 
@@ -4078,7 +4078,7 @@ app.post('/api/payment-plans', isAuthenticated, async (req, res) => {
 app.get('/api/payment-plans/:sessionId', isAuthenticated, async (req, res) => {
     try {
         const { sessionId } = req.params;
-        const plan = await PaymentPlanManager.getPaymentPlan(sessionId);
+        const plan = await paymentPlanManager.getPaymentPlan(sessionId);
         
         if (!plan) {
             return res.status(404).json({
@@ -4106,7 +4106,7 @@ app.post('/api/payment-plans/:planId/payments/:paymentId/mark-paid', isAuthentic
         const { paymentId } = req.params;
         const { paymentMethod, notes } = req.body;
         
-        await PaymentPlanManager.markPaymentReceived(paymentId, paymentMethod || 'manual', notes || '');
+        await paymentPlanManager.markPaymentReceived(paymentId, paymentMethod || 'manual', notes || '');
         
         res.json({
             success: true,
@@ -4250,7 +4250,7 @@ app.post('/api/payment-plans/:planId/send-invoice', isAuthenticated, async (req,
         const { planId } = req.params;
         const { paymentNumber } = req.body;
         
-        const result = await PaymentPlanManager.sendPaymentInvoice(planId, paymentNumber);
+        const result = await paymentPlanManager.sendPaymentInvoice(planId, paymentNumber);
         
         res.json({
             success: true,
