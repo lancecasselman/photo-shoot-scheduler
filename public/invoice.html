@@ -342,6 +342,28 @@
                     <button class="btn btn-success" onclick="proceedToPayment()" id="payment-btn" style="display: none;">Proceed to Payment</button>
                 </div>
                 
+                <!-- Send Invoice Section - Only show for photographer creating invoices -->
+                <div class="send-section" id="send-section" style="display: none; margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; border-top: 3px solid #28a745;">
+                    <h4 style="margin: 0 0 15px 0; color: #333; font-size: 18px;">📤 Send Invoice</h4>
+                    <p style="margin: 0 0 20px 0; color: #666; font-size: 14px;">Share this invoice with your client via SMS or email</p>
+                    
+                    <div style="display: grid; gap: 12px;">
+                        <button onclick="sendInvoiceViaSMS()" 
+                                style="padding: 12px 20px; background: #28a745; color: white; border: none; border-radius: 6px; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            📱 Send via SMS
+                        </button>
+                        
+                        <button onclick="sendInvoiceViaEmail()" 
+                                style="padding: 12px 20px; background: #007bff; color: white; border: none; border-radius: 6px; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            📧 Send via Email
+                        </button>
+                        
+                        <button onclick="copyInvoiceURL()" 
+                                style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            📋 Copy Link
+                        </button>
+                    </div>
+                </div>
 
             </div>
         </div>
@@ -465,6 +487,21 @@
             selectedTipAmount = invoiceData.tipAmount;
             updateTipDisplay();
             updateTotal();
+            
+            // Check if this is photographer view (has referrer from main app) or client view
+            const referrer = document.referrer;
+            const hasAppReferrer = referrer && (referrer.includes('/app') || referrer.includes('index.html'));
+            const isPhotographerView = hasAppReferrer || window.opener;
+            
+            if (isPhotographerView) {
+                // Show send section for photographers
+                document.getElementById('send-section').style.display = 'block';
+                console.log('👨‍💼 Photographer view detected - showing send buttons');
+            } else {
+                // Hide send section for clients
+                document.getElementById('send-section').style.display = 'none';
+                console.log('👤 Client view detected - hiding send buttons');
+            }
             
             // Log final invoice data for debugging
             console.log('📄 Final invoice data displayed:', invoiceData);
