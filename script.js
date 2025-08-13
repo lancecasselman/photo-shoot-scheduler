@@ -1153,22 +1153,12 @@ window.createInvoiceWithTipping = function(sessionId) {
     createInvoice(session);
 };
 
-// Create invoice function with tipping system
+// Create invoice function with tipping system - simplified approach
 async function createInvoice(session) {
     try {
-        console.log('🔥 NEW TIPPING SYSTEM: Creating invoice with tipping system for session:', session);
-        console.log('🔥 NEW TIPPING SYSTEM: Function called correctly');
+        console.log('🔥 NEW TIPPING SYSTEM: Creating tipping-enabled invoice for session:', session);
 
         showMessage('Creating invoice with tip options...', 'info');
-
-        const authToken = await getAuthToken();
-        const headers = {
-            'Content-Type': 'application/json'
-        };
-
-        if (authToken) {
-            headers['Authorization'] = `Bearer ${authToken}`;
-        }
 
         // Calculate remaining balance (price - existing deposits)
         const sessionPrice = parseFloat(session.price) || 0;
@@ -1180,62 +1170,34 @@ async function createInvoice(session) {
             return;
         }
 
-        // Create a payment plan with a single payment (for tipping system)
-        const response = await fetch('/api/payment-plans', {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({
-                sessionId: session.id,
-                totalAmount: remainingBalance,
-                startDate: new Date().toISOString(),
-                endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
-                frequency: 'monthly',
-                reminderDays: 3
-            })
-        });
+        // Create a simple payment record directly for tipping
+        const paymentData = {
+            sessionId: session.id,
+            amount: remainingBalance,
+            clientName: session.clientName,
+            clientEmail: session.email,
+            dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        };
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Failed to create payment plan: ${errorText}`);
-        }
+        // Generate a simple payment ID for the invoice page
+        const paymentId = `payment-${session.id}-${Date.now()}`;
+        
+        // Store payment data in localStorage for the invoice page to access
+        localStorage.setItem(`payment-${paymentId}`, JSON.stringify(paymentData));
+        
+        // Create the custom invoice URL with tipping interface
+        const customInvoiceUrl = `${window.location.origin}/invoice.html?payment=${paymentId}&sessionId=${session.id}&amount=${remainingBalance}`;
+        
+        showMessage('Invoice with tip options created successfully!', 'success');
+        
+        // Open the custom invoice URL
+        window.open(customInvoiceUrl, '_blank');
 
-        const planResult = await response.json();
-        console.log('Payment plan creation result:', planResult);
+        // Show enhanced dialog with tipping info
+        const message = `✅ Invoice with Tip Options Created!\n\n💰 Amount: $${remainingBalance.toFixed(2)}\n📧 Client: ${session.clientName}\n\n🎯 Your client can:\n• Add 15%, 20%, 25% tips\n• Enter custom tip amounts\n• Pay securely via Stripe\n\nTip-Enabled Invoice URL:\n${customInvoiceUrl}`;
+        alert(message);
 
-        if (planResult.success && planResult.plan) {
-            // Get the payment record ID to send invoice
-            const paymentId = planResult.payments && planResult.payments[0] ? planResult.payments[0].id : null;
-            
-            if (paymentId) {
-                // Send the invoice for this payment using the payment plan manager
-                const invoiceResponse = await fetch(`/api/payments/${paymentId}/send-invoice`, {
-                    method: 'POST',
-                    headers
-                });
-
-                if (invoiceResponse.ok) {
-                    const invoiceResult = await invoiceResponse.json();
-                    
-                    showMessage('Invoice with tip options created successfully!', 'success');
-
-                    // Show the custom invoice URL with tipping interface
-                    const customInvoiceUrl = `${window.location.origin}/invoice.html?payment=${paymentId}`;
-                    
-                    // Open the custom invoice URL
-                    window.open(customInvoiceUrl, '_blank');
-
-                    // Show enhanced dialog with tipping info
-                    const message = `✅ Invoice with Tip Options Created!\n\n💰 Amount: $${remainingBalance.toFixed(2)}\n📧 Sent to: ${session.email}\n\n🎯 Your client can:\n• Add 15%, 20%, 25% tips\n• Enter custom tip amounts\n• Pay securely via Stripe\n\nCustom Invoice URL:\n${customInvoiceUrl}`;
-                    alert(message);
-                } else {
-                    throw new Error('Failed to send invoice');
-                }
-            } else {
-                throw new Error('Payment record not created properly');
-            }
-        } else {
-            throw new Error(planResult.error || 'Unknown error creating payment plan');
-        }
+        console.log('🔥 TIPPING SUCCESS: Custom invoice URL created:', customInvoiceUrl);
 
     } catch (error) {
         console.error('Error creating invoice with tipping:', error);

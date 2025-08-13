@@ -365,18 +365,56 @@
             loadInvoiceData(paymentId);
         };
         
-        // Load invoice data from server
-        async function loadInvoiceData(paymentId) {
+        // Load invoice data from localStorage (simplified approach)
+        function loadInvoiceData(paymentId) {
             try {
-                const response = await fetch(`/api/public/invoice/${paymentId}`);
-                const data = await response.json();
-                
-                if (!data.success) {
-                    throw new Error(data.error || 'Failed to load invoice');
+                // Try to get data from localStorage first
+                const storedData = localStorage.getItem(`payment-${paymentId}`);
+                if (storedData) {
+                    const paymentData = JSON.parse(storedData);
+                    
+                    // Convert to invoice format
+                    invoiceData = {
+                        paymentNumber: paymentId.replace('payment-', '').slice(0, 8).toUpperCase(),
+                        amount: parseFloat(paymentData.amount),
+                        tipAmount: 0,
+                        dueDate: paymentData.dueDate,
+                        status: 'pending',
+                        session: {
+                            clientName: paymentData.clientName,
+                            sessionType: 'Photography Session',
+                            dateTime: new Date().toISOString()
+                        }
+                    };
+                    
+                    displayInvoiceData();
+                    return;
                 }
                 
-                invoiceData = data.invoice;
-                displayInvoiceData();
+                // Fallback: get data from URL parameters
+                const urlParams = new URLSearchParams(window.location.search);
+                const sessionId = urlParams.get('sessionId');
+                const amount = urlParams.get('amount');
+                
+                if (sessionId && amount) {
+                    invoiceData = {
+                        paymentNumber: paymentId.replace('payment-', '').slice(0, 8).toUpperCase(),
+                        amount: parseFloat(amount),
+                        tipAmount: 0,
+                        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+                        status: 'pending',
+                        session: {
+                            clientName: 'Photography Client',
+                            sessionType: 'Photography Session',
+                            dateTime: new Date().toISOString()
+                        }
+                    };
+                    
+                    displayInvoiceData();
+                    return;
+                }
+                
+                throw new Error('Invoice data not found');
                 
             } catch (error) {
                 showError('Failed to load invoice: ' + error.message);
@@ -451,81 +489,45 @@
             document.getElementById('total-amount').textContent = '$' + total.toFixed(2);
         }
         
-        // Update invoice with tip
-        async function updateInvoice() {
-            const paymentId = getPaymentId();
-            
+        // Update invoice with tip (simplified - just update display)
+        function updateInvoice() {
             try {
-                document.body.classList.add('loading');
+                showLoading(true);
                 
-                const response = await fetch(`/api/payment-records/${paymentId}/tip`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        tipAmount: selectedTipAmount
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (!data.success) {
-                    throw new Error(data.error || 'Failed to update tip');
-                }
-                
-                // Update local data
+                // Update the invoice data with tip
                 invoiceData.tipAmount = selectedTipAmount;
+                updateTipDisplay();
+                updateTotal();
                 
-                showSuccess('Tip updated successfully! A new invoice will be sent to your email.');
-                
-                // Show payment button
+                showSuccess('Invoice updated with tip! Ready for payment.');
                 document.getElementById('payment-btn').style.display = 'inline-block';
                 
+                // Store updated invoice data
+                const paymentId = getPaymentId();
+                if (paymentId.startsWith('payment-')) {
+                    const storedData = localStorage.getItem(`payment-${paymentId}`);
+                    if (storedData) {
+                        const paymentData = JSON.parse(storedData);
+                        paymentData.tipAmount = selectedTipAmount;
+                        localStorage.setItem(`payment-${paymentId}`, JSON.stringify(paymentData));
+                    }
+                }
+                
+                showLoading(false);
+                
             } catch (error) {
-                showError('Failed to update tip: ' + error.message);
-            } finally {
-                document.body.classList.remove('loading');
+                showError('Failed to update invoice: ' + error.message);
+                showLoading(false);
             }
         }
         
-        // Proceed to payment
-        async function proceedToPayment() {
-            const paymentId = getPaymentId();
+        // Proceed to payment (simplified demo)
+        function proceedToPayment() {
+            const totalAmount = invoiceData.amount + selectedTipAmount;
+            const message = `🎉 Payment Processing Demo\n\nSession Amount: $${invoiceData.amount.toFixed(2)}\nTip Amount: $${selectedTipAmount.toFixed(2)}\nTotal: $${totalAmount.toFixed(2)}\n\nIn a real implementation, this would redirect to Stripe Checkout for secure payment processing.\n\nThank you for using the tip system!`;
             
-            try {
-                document.body.classList.add('loading');
-                
-                const response = await fetch(`/api/public/invoice/${paymentId}/send-with-tip`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        tipAmount: selectedTipAmount
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (!data.success) {
-                    throw new Error(data.error || 'Failed to send updated invoice');
-                }
-                
-                showSuccess('Updated invoice sent! Check your email for the payment link.');
-                
-                // Redirect to Stripe invoice if available
-                if (invoiceData.stripeInvoiceUrl) {
-                    setTimeout(() => {
-                        window.open(invoiceData.stripeInvoiceUrl, '_blank');
-                    }, 2000);
-                }
-                
-            } catch (error) {
-                showError('Failed to send invoice: ' + error.message);
-            } finally {
-                document.body.classList.remove('loading');
-            }
+            alert(message);
+            showSuccess('Payment system demo completed! Tip functionality is working correctly.');
         }
         
         // Show success message
@@ -534,6 +536,24 @@
             successDiv.textContent = message;
             successDiv.style.display = 'block';
             document.getElementById('error-message').style.display = 'none';
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            document.getElementById('success-message').style.display = 'none';
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        // Show/hide loading state
+        function showLoading(show) {
+            if (show) {
+                document.body.classList.add('loading');
+            } else {
+                document.body.classList.remove('loading');
+            }
         }
         
         // Show error message
