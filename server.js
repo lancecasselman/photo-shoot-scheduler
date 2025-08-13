@@ -7040,18 +7040,26 @@ app.post('/api/sessions/:id/send-invoice', async (req, res) => {
             }
         }
 
-        // First create a payment record for tip tracking
+        // First create a simple payment plan for tip tracking
         let paymentRecordId = null;
         try {
-            const paymentRecordResult = await pool.query(`
-                INSERT INTO payment_records (id, session_id, user_id, payment_number, amount, tip_amount, due_date, status, created_at, updated_at)
-                VALUES ($1, $2, $3, 1, $4, 0.00, $5, 'pending', NOW(), NOW())
-                RETURNING id
-            `, [require('uuid').v4(), sessionId, session.userId || '44735007', invoiceAmount, new Date(Date.now() + (isDeposit ? 14 : 30) * 24 * 60 * 60 * 1000)]);
+            const planId = require('uuid').v4();
+            paymentRecordId = require('uuid').v4();
             
-            paymentRecordId = paymentRecordResult.rows[0].id;
+            // Create a basic payment plan
+            await pool.query(`
+                INSERT INTO payment_plans (id, session_id, user_id, total_amount, payment_count, created_at, updated_at)
+                VALUES ($1, $2, $3, $4, 1, NOW(), NOW())
+            `, [planId, sessionId, session.userId || '44735007', invoiceAmount]);
+            
+            // Create payment record with the plan
+            await pool.query(`
+                INSERT INTO payment_records (id, plan_id, session_id, user_id, payment_number, amount, tip_amount, due_date, status, created_at, updated_at)
+                VALUES ($1, $2, $3, $4, 1, $5, 0.00, $6, 'pending', NOW(), NOW())
+            `, [paymentRecordId, planId, sessionId, session.userId || '44735007', invoiceAmount, new Date(Date.now() + (isDeposit ? 14 : 30) * 24 * 60 * 60 * 1000)]);
+            
         } catch (dbError) {
-            console.log('Could not create payment record for tip tracking:', dbError.message);
+            console.log('Could not create payment plan/record for tip tracking:', dbError.message);
             // Continue without payment record - use sessionId as fallback
             paymentRecordId = sessionId;
         }
