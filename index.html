@@ -13202,7 +13202,7 @@ END:VCALENDAR`;
             background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
             border-left: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: -5px 0 20px rgba(0, 0, 0, 0.3);
-            z-index: 1000;
+            z-index: 200;
             transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             overflow-y: auto;
         }
@@ -13723,6 +13723,7 @@ END:VCALENDAR`;
             background: #1a1a1a;
             border-right: 1px solid rgba(255, 255, 255, 0.1);
             overflow-y: auto;
+            z-index: 10;
             padding: 20px;
         }
 
@@ -13788,6 +13789,7 @@ END:VCALENDAR`;
             align-items: center;
             padding: 40px;
             overflow: auto;
+            z-index: 1;
         }
 
         .wb-canvas {
@@ -13797,6 +13799,7 @@ END:VCALENDAR`;
             transition: all 0.3s ease;
             overflow: hidden;
             position: relative;
+            z-index: 2;
         }
 
         .wb-canvas.desktop {
@@ -13828,7 +13831,7 @@ END:VCALENDAR`;
             right: 0;
             top: 0;
             bottom: 0;
-            z-index: 50;
+            z-index: 100;
         }
 
         .wb-edit-panel.active {
@@ -13897,7 +13900,7 @@ END:VCALENDAR`;
             border-radius: 4px;
             font-size: 11px;
             font-weight: 600;
-            z-index: 1000;
+            z-index: 50;
         }
         
         /* Image resize handles */
@@ -13915,7 +13918,7 @@ END:VCALENDAR`;
             border-radius: 50%;
             cursor: pointer;
             display: none;
-            z-index: 1001;
+            z-index: 51;
         }
         
         .wb-image-wrapper.selected .wb-resize-handle {
@@ -13938,7 +13941,7 @@ END:VCALENDAR`;
             font-size: 12px;
             cursor: move;
             display: none;
-            z-index: 1000;
+            z-index: 50;
         }
 
         .wb-editable:hover .wb-drag-handle {
@@ -13956,7 +13959,7 @@ END:VCALENDAR`;
             font-size: 12px;
             cursor: pointer;
             display: none;
-            z-index: 1000;
+            z-index: 50;
         }
 
         .wb-editable:hover .wb-delete-btn {
@@ -13972,9 +13975,18 @@ END:VCALENDAR`;
             padding: 12px 20px;
             border-radius: 8px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            z-index: 10000;
+            z-index: 300;
             animation: slideInUp 0.3s ease;
         }
+
+        /* Z-Index Hierarchy:
+           1-9: Base elements, canvas container
+           10-49: Sidebar, navigation
+           50-99: Edit handles, selection indicators
+           100-199: Edit panels, floating menus
+           200-299: AI panels, overlays
+           300+: Toasts, critical notifications
+        */
 
         @keyframes slideInUp {
             from {
