@@ -16959,12 +16959,36 @@ END:VCALENDAR`;
                     header.style.visibility = 'hidden';
                 }
                 
-                // Hide any edit panels or overlays
+                // Hide any edit panels or overlays that could cover the mobile interface
                 const editPanel = document.querySelector('.wb-edit-panel');
                 if (editPanel) editPanel.style.display = 'none';
                 
                 const aiEditor = document.querySelector('.wb-ai-editor');
                 if (aiEditor) aiEditor.style.display = 'none';
+                
+                // Hide ALL modal overlays that could be blocking the interface
+                const modals = document.querySelectorAll('.modal, [id*="Modal"], [class*="modal"]');
+                modals.forEach(modal => {
+                    modal.style.display = 'none';
+                    modal.style.visibility = 'hidden';
+                    modal.style.zIndex = '-1';
+                });
+                
+                // Hide any booking agreement modals specifically
+                const bookingModals = document.querySelectorAll('#contractSelectionModal, #contractsViewModal, #contractDetailsModal, #contractEditModal, #customContractModal, #updateSessionModal');
+                bookingModals.forEach(modal => {
+                    modal.style.display = 'none';
+                    modal.style.visibility = 'hidden';
+                });
+                
+                // Hide any overlay elements with high z-index
+                const overlays = document.querySelectorAll('[style*="z-index"][style*="10000"], [style*="z-index"][style*="9999"]');
+                overlays.forEach(overlay => {
+                    if (overlay.id !== 'wb-mobile-layout') {
+                        overlay.style.display = 'none';
+                        overlay.style.visibility = 'hidden';
+                    }
+                });
                 
                 // Show mobile layout with highest z-index and force visibility
                 mobileLayout.style.display = 'flex';
