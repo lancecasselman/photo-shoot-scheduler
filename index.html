@@ -14050,9 +14050,14 @@ END:VCALENDAR`;
             currentElement: null,
             currentDevice: 'desktop',
             pages: {
-                home: { name: 'Home', content: null, active: true }
+                home: { name: 'Home', content: null, mobileContent: null, active: true }
             },
             currentPage: 'home',
+            deviceContents: {
+                desktop: {},
+                tablet: {},
+                mobile: {}
+            },
             history: [],
             historyIndex: -1,
             maxHistory: 50,
@@ -14080,8 +14085,16 @@ END:VCALENDAR`;
                     this.loadGoogleFonts();
                     this.initializeAutoSave();
                     this.setupKeyboardShortcuts();
+                    this.autoSaveDeviceContent(); // Auto-save device-specific content
                     this.saveToHistory(); // Save initial state
                 }
+            },
+            
+            // Auto-save device content
+            autoSaveDeviceContent() {
+                setInterval(() => {
+                    this.saveCurrentContent();
+                }, 30000); // Auto-save every 30 seconds
             },
 
             setupBuilder() {
@@ -14092,9 +14105,12 @@ END:VCALENDAR`;
                     <div class="wb-header">
                         <div class="wb-logo">PhotoSite Builder</div>
                         <div class="wb-device-selector">
-                            <button class="wb-device-btn active" onclick="WebsiteBuilder.switchDevice('desktop')">Desktop</button>
-                            <button class="wb-device-btn" onclick="WebsiteBuilder.switchDevice('tablet')">Tablet</button>
-                            <button class="wb-device-btn" onclick="WebsiteBuilder.switchDevice('mobile')">Mobile</button>
+                            <button class="wb-device-btn active" onclick="WebsiteBuilder.switchDevice('desktop')">🖥️ Desktop</button>
+                            <button class="wb-device-btn" onclick="WebsiteBuilder.switchDevice('tablet')">📱 Tablet</button>
+                            <button class="wb-device-btn" onclick="WebsiteBuilder.switchDevice('mobile')">📱 Mobile</button>
+                        </div>
+                        <div class="wb-mobile-indicator" id="wb-mobile-indicator" style="display: none; background: #d4af37; color: white; padding: 5px 15px; border-radius: 15px; font-size: 12px; font-weight: bold;">
+                            ✨ Editing Mobile Version Independently
                         </div>
                         <div class="wb-actions">
                             <button class="wb-btn" onclick="WebsiteBuilder.undo()" title="Undo (Ctrl+Z)">↶</button>
@@ -15919,11 +15935,17 @@ END:VCALENDAR`;
                 }
             },
             
-            // Advanced Photography Components
+            // Advanced Photography Components (device-responsive)
             addPhotoSlider() {
                 const sliderId = 'slider-' + Date.now();
+                const isMobile = this.currentDevice === 'mobile';
+                const isTablet = this.currentDevice === 'tablet';
+                
+                const height = isMobile ? '250px' : isTablet ? '300px' : '400px';
+                const margin = isMobile ? '15px 0' : '20px 0';
+                
                 const sliderHTML = `
-                    <div class="wb-photo-slider wb-editable" data-type="photo-slider" style="margin: 20px 0;">
+                    <div class="wb-photo-slider wb-editable" data-type="photo-slider" style="margin: ${margin}; height: ${height};">
                         <div class="wb-slider-track" id="${sliderId}-track">
                             <div class="wb-slider-slide">
                                 <img src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=800&h=400&fit=crop" alt="Wedding Photography">
@@ -15935,8 +15957,8 @@ END:VCALENDAR`;
                                 <img src="https://images.unsplash.com/photo-1519741497674-611481863552?w=800&h=400&fit=crop" alt="Event Photography">
                             </div>
                         </div>
-                        <button class="wb-slider-nav wb-slider-prev" onclick="WebsiteBuilder.sliderPrev('${sliderId}')">‹</button>
-                        <button class="wb-slider-nav wb-slider-next" onclick="WebsiteBuilder.sliderNext('${sliderId}')">›</button>
+                        <button class="wb-slider-nav wb-slider-prev" onclick="WebsiteBuilder.sliderPrev('${sliderId}')" style="width: ${isMobile ? '40px' : '50px'}; height: ${isMobile ? '40px' : '50px'}; font-size: ${isMobile ? '16px' : '18px'};">‹</button>
+                        <button class="wb-slider-nav wb-slider-next" onclick="WebsiteBuilder.sliderNext('${sliderId}')" style="width: ${isMobile ? '40px' : '50px'}; height: ${isMobile ? '40px' : '50px'}; font-size: ${isMobile ? '16px' : '18px'};">›</button>
                         <div class="wb-slider-dots">
                             <div class="wb-slider-dot active" onclick="WebsiteBuilder.sliderGoto('${sliderId}', 0)"></div>
                             <div class="wb-slider-dot" onclick="WebsiteBuilder.sliderGoto('${sliderId}', 1)"></div>
@@ -16043,8 +16065,15 @@ END:VCALENDAR`;
             },
             
             addPricingTable() {
+                const isMobile = this.currentDevice === 'mobile';
+                const isTablet = this.currentDevice === 'tablet';
+                
+                const gridColumns = isMobile ? '1fr' : isTablet ? 'repeat(2, 1fr)' : 'repeat(auto-fit, minmax(300px, 1fr))';
+                const gap = isMobile ? '20px' : '30px';
+                const margin = isMobile ? '20px 0' : '40px 0';
+                
                 const pricingHTML = `
-                    <div class="wb-pricing-table wb-editable" data-type="pricing-table" style="margin: 40px 0;">
+                    <div class="wb-pricing-table wb-editable" data-type="pricing-table" style="margin: ${margin}; grid-template-columns: ${gridColumns}; gap: ${gap};">
                         <div class="wb-pricing-card">
                             <div class="wb-pricing-title">Portrait Session</div>
                             <div class="wb-pricing-price">$299</div>
@@ -16410,7 +16439,185 @@ END:VCALENDAR`;
                 this.saveToHistory();
             },
             
-            // Multi-page functionality
+            // Device switching functionality
+            switchDevice(device) {
+                // Save current content before switching
+                this.saveCurrentContent();
+                
+                // Update device state
+                this.currentDevice = device;
+                
+                // Update device button states
+                document.querySelectorAll('.wb-device-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.textContent.includes(device.charAt(0).toUpperCase() + device.slice(1)));
+                });
+                
+                // Update canvas size
+                const canvas = document.getElementById('wb-canvas');
+                canvas.className = `wb-canvas ${device}`;
+                
+                // Show/hide mobile indicator
+                const indicator = document.getElementById('wb-mobile-indicator');
+                if (device === 'mobile' || device === 'tablet') {
+                    indicator.style.display = 'block';
+                    indicator.textContent = `✨ Editing ${device.charAt(0).toUpperCase() + device.slice(1)} Version Independently`;
+                } else {
+                    indicator.style.display = 'none';
+                }
+                
+                // Load device-specific content
+                this.loadDeviceContent(device);
+                
+                // Show mobile editing tips
+                if (device === 'mobile' && !localStorage.getItem('wb-mobile-tip-shown')) {
+                    this.showMobileTip();
+                    localStorage.setItem('wb-mobile-tip-shown', 'true');
+                }
+            },
+            
+            saveCurrentContent() {
+                const canvas = document.getElementById('wb-canvas');
+                if (!canvas || !this.currentPage) return;
+                
+                const deviceKey = `${this.currentDevice}-${this.currentPage}`;
+                this.deviceContents[this.currentDevice][this.currentPage] = canvas.innerHTML;
+                
+                // Also save to localStorage
+                localStorage.setItem(`wb-content-${deviceKey}`, canvas.innerHTML);
+            },
+            
+            loadDeviceContent(device) {
+                const canvas = document.getElementById('wb-canvas');
+                if (!canvas) return;
+                
+                const deviceKey = `${device}-${this.currentPage}`;
+                
+                // Try to load from memory first
+                let content = this.deviceContents[device][this.currentPage];
+                
+                // If not in memory, try localStorage
+                if (!content) {
+                    content = localStorage.getItem(`wb-content-${deviceKey}`);
+                }
+                
+                // If no device-specific content exists, copy from desktop for mobile/tablet
+                if (!content && device !== 'desktop') {
+                    const desktopContent = this.deviceContents.desktop[this.currentPage] || 
+                                          localStorage.getItem(`wb-content-desktop-${this.currentPage}`);
+                    
+                    if (desktopContent) {
+                        // Create mobile-optimized version of desktop content
+                        content = this.optimizeForMobile(desktopContent);
+                        this.deviceContents[device][this.currentPage] = content;
+                        localStorage.setItem(`wb-content-${deviceKey}`, content);
+                    }
+                }
+                
+                // Load content or default
+                if (content) {
+                    canvas.innerHTML = content;
+                } else {
+                    // Default content based on device
+                    if (device === 'mobile') {
+                        canvas.innerHTML = `
+                            <div style="padding: 20px; text-align: center;">
+                                <h1 class="wb-editable" style="font-size: 28px; margin-bottom: 15px;">Mobile Portfolio</h1>
+                                <p class="wb-editable" style="font-size: 16px; line-height: 1.6; color: #666;">Optimized for mobile viewing. Tap to edit any element.</p>
+                            </div>
+                        `;
+                    } else if (device === 'tablet') {
+                        canvas.innerHTML = `
+                            <div style="padding: 30px; text-align: center;">
+                                <h1 class="wb-editable" style="font-size: 36px; margin-bottom: 20px;">Tablet Portfolio</h1>
+                                <p class="wb-editable" style="font-size: 18px; line-height: 1.6; color: #666;">Optimized for tablet viewing. Touch to edit any element.</p>
+                            </div>
+                        `;
+                    } else {
+                        canvas.innerHTML = `
+                            <div style="padding: 40px; text-align: center;">
+                                <h1 class="wb-editable" style="font-size: 48px; margin-bottom: 20px;">Desktop Portfolio</h1>
+                                <p class="wb-editable" style="font-size: 20px; line-height: 1.6; color: #666;">Click any element to edit or add new elements from the sidebar</p>
+                            </div>
+                        `;
+                    }
+                }
+                
+                this.setupEditableElements();
+            },
+            
+            optimizeForMobile(desktopContent) {
+                // Create a temporary element to parse content
+                const temp = document.createElement('div');
+                temp.innerHTML = desktopContent;
+                
+                // Mobile optimization rules
+                temp.querySelectorAll('h1').forEach(h1 => {
+                    h1.style.fontSize = '28px';
+                    h1.style.lineHeight = '1.2';
+                });
+                
+                temp.querySelectorAll('h2').forEach(h2 => {
+                    h2.style.fontSize = '24px';
+                    h2.style.lineHeight = '1.3';
+                });
+                
+                temp.querySelectorAll('p').forEach(p => {
+                    p.style.fontSize = '16px';
+                    p.style.lineHeight = '1.6';
+                });
+                
+                // Adjust grid layouts for mobile
+                temp.querySelectorAll('[style*="grid-template-columns"]').forEach(grid => {
+                    grid.style.gridTemplateColumns = '1fr';
+                    grid.style.gap = '15px';
+                });
+                
+                // Reduce padding for mobile
+                temp.querySelectorAll('[style*="padding"]').forEach(el => {
+                    const currentPadding = el.style.padding;
+                    if (currentPadding.includes('40px')) {
+                        el.style.padding = currentPadding.replace('40px', '20px');
+                    }
+                    if (currentPadding.includes('60px')) {
+                        el.style.padding = currentPadding.replace('60px', '30px');
+                    }
+                });
+                
+                // Optimize photo sliders for mobile
+                temp.querySelectorAll('.wb-photo-slider').forEach(slider => {
+                    slider.style.height = '250px';
+                });
+                
+                // Optimize pricing tables for mobile
+                temp.querySelectorAll('.wb-pricing-table').forEach(pricing => {
+                    pricing.style.gridTemplateColumns = '1fr';
+                    pricing.style.gap = '20px';
+                });
+                
+                return temp.innerHTML;
+            },
+            
+            showMobileTip() {
+                const tipHTML = `
+                    <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center;" onclick="this.remove()">
+                        <div style="background: white; padding: 40px; border-radius: 12px; max-width: 500px; margin: 20px; text-align: center;" onclick="event.stopPropagation()">
+                            <h3 style="color: #d4af37; font-size: 24px; margin-bottom: 20px;">📱 Mobile Editing Mode</h3>
+                            <p style="color: #666; margin-bottom: 20px; line-height: 1.6;">You're now editing the mobile version independently! Changes here won't affect your desktop design.</p>
+                            <ul style="text-align: left; color: #666; margin-bottom: 30px; line-height: 1.8;">
+                                <li>Mobile layouts are automatically optimized</li>
+                                <li>Font sizes and spacing adjusted for mobile</li>
+                                <li>Components stack vertically for better mobile UX</li>
+                                <li>Each device has completely separate content</li>
+                            </ul>
+                            <button style="background: #d4af37; color: white; border: none; padding: 12px 24px; border-radius: 20px; cursor: pointer;" onclick="this.parentElement.parentElement.remove()">Got it!</button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.insertAdjacentHTML('beforeend', tipHTML);
+            },
+            
+            // Multi-page functionality (updated for device support)
             addNewPage(pageId, pageName) {
                 if (!pageId) pageId = 'page-' + Date.now();
                 if (!pageName) pageName = 'New Page';
@@ -16418,7 +16625,9 @@ END:VCALENDAR`;
                 if (!this.pages) this.pages = {};
                 this.pages[pageId] = {
                     name: pageName,
-                    content: '<div style="padding: 40px; text-align: center;"><h1>New Page</h1><p>Start building your page content here.</p></div>'
+                    content: '<div style="padding: 40px; text-align: center;"><h1>New Page</h1><p>Start building your page content here.</p></div>',
+                    mobileContent: '<div style="padding: 20px; text-align: center;"><h1 style="font-size: 28px;">New Page</h1><p style="font-size: 16px;">Mobile optimized content.</p></div>',
+                    tabletContent: '<div style="padding: 30px; text-align: center;"><h1 style="font-size: 32px;">New Page</h1><p style="font-size: 18px;">Tablet optimized content.</p></div>'
                 };
                 
                 const pageList = document.getElementById('wb-page-list');
@@ -16435,11 +16644,8 @@ END:VCALENDAR`;
             switchPage(pageId, event) {
                 if (event) event.stopPropagation();
                 
-                // Save current page content
-                if (this.currentPage && this.pages && this.pages[this.currentPage]) {
-                    const canvas = document.getElementById('wb-canvas');
-                    this.pages[this.currentPage].content = canvas.innerHTML;
-                }
+                // Save current page content for current device
+                this.saveCurrentContent();
                 
                 // Switch to new page
                 this.currentPage = pageId;
@@ -16449,17 +16655,8 @@ END:VCALENDAR`;
                     item.classList.toggle('active', item.dataset.pageId === pageId);
                 });
                 
-                // Load page content
-                if (this.pages && this.pages[pageId]) {
-                    const canvas = document.getElementById('wb-canvas');
-                    canvas.innerHTML = this.pages[pageId].content;
-                    this.setupEditableElements();
-                } else if (pageId === 'home') {
-                    // Default home page content
-                    const canvas = document.getElementById('wb-canvas');
-                    canvas.innerHTML = '<div style="padding: 40px;"><h1 class="wb-editable" style="text-align: center; margin-bottom: 20px;">Welcome to Your Photography Portfolio</h1><p class="wb-editable" style="text-align: center; color: #666;">Click any element to edit or add new elements from the sidebar</p></div>';
-                    this.setupEditableElements();
-                }
+                // Load device-specific content for new page
+                this.loadDeviceContent(this.currentDevice);
                 
                 this.savePages();
             },
