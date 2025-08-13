@@ -610,11 +610,11 @@
             document.getElementById('success-message').style.display = 'none';
         }
         
-        // Fetch complete session data from server
+        // Fetch complete session data from server using public endpoint
         async function fetchCompleteSessionData(sessionId) {
             try {
                 console.log('🔍 Fetching complete session data from server for session:', sessionId);
-                const response = await fetch(`/api/sessions/${sessionId}`);
+                const response = await fetch(`/api/sessions/${sessionId}/public`);
                 if (response.ok) {
                     const sessionData = await response.json();
                     console.log('📋 Complete session data received:', sessionData);
@@ -634,9 +634,13 @@
                     }
                 } else {
                     console.warn('Failed to fetch session data:', response.status);
+                    // If public endpoint fails, still display with default data
+                    displayInvoiceData();
                 }
             } catch (error) {
                 console.error('Error fetching complete session data:', error);
+                // If fetch fails, still display with default data
+                displayInvoiceData();
             }
         }
         
@@ -644,7 +648,7 @@
         async function fetchSessionEmail(sessionId) {
             try {
                 console.log('📧 Fetching session email from server for session:', sessionId);
-                const response = await fetch(`/api/sessions/${sessionId}`);
+                const response = await fetch(`/api/sessions/${sessionId}/public`);
                 if (response.ok) {
                     const sessionData = await response.json();
                     if (sessionData.email) {

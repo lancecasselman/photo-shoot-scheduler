@@ -3041,7 +3041,47 @@ app.use('/uploads', (req, res, next) => {
 // Get all sessions
 // This endpoint is defined earlier in the file - removing duplicate
 
-// Get single session by ID
+// Public endpoint for session data for invoices (no authentication required)
+app.get('/api/sessions/:sessionId/public', async (req, res) => {
+    try {
+        const { sessionId } = req.params;
+
+        const result = await pool.query(
+            'SELECT * FROM photography_sessions WHERE id = $1',
+            [sessionId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        const row = result.rows[0];
+        // Return only essential session data for invoices (no sensitive data)
+        const session = {
+            id: row.id,
+            clientName: row.client_name,
+            sessionType: row.session_type,
+            dateTime: row.date_time,
+            location: row.location,
+            phoneNumber: row.phone_number,
+            email: row.email,
+            price: parseFloat(row.price),
+            depositAmount: parseFloat(row.deposit_amount || 0),
+            deposit_amount: parseFloat(row.deposit_amount || 0),
+            duration: row.duration,
+            notes: row.notes,
+            createdAt: row.created_at
+        };
+
+        console.log(`📋 Public session data requested for invoice: ${sessionId}`);
+        res.json(session);
+    } catch (error) {
+        console.error('Error fetching public session data:', error);
+        res.status(500).json({ error: 'Failed to fetch session data' });
+    }
+});
+
+// Get single session by ID (authenticated)
 app.get('/api/sessions/:sessionId', isAuthenticated, requireSubscription, async (req, res) => {
     try {
         const { sessionId } = req.params;
