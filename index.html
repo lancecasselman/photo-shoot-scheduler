@@ -16902,7 +16902,10 @@ END:VCALENDAR`;
                 
                 // Update device button states
                 document.querySelectorAll('.wb-device-btn').forEach(btn => {
-                    btn.classList.toggle('active', btn.textContent.includes(device.charAt(0).toUpperCase() + device.slice(1)));
+                    btn.classList.remove('active');
+                    if (btn.textContent.includes(device.charAt(0).toUpperCase() + device.slice(1))) {
+                        btn.classList.add('active');
+                    }
                 });
                 
                 // Update canvas size
@@ -16932,18 +16935,27 @@ END:VCALENDAR`;
             },
 
             enterMobileMode() {
+                console.log('Entering mobile mode...');
                 const mobileLayout = document.getElementById('wb-mobile-layout');
                 const regularLayout = document.querySelector('.wb-main');
+                const header = document.querySelector('.wb-header');
+                
+                if (!mobileLayout) {
+                    console.error('Mobile layout not found!');
+                    return;
+                }
                 
                 // Save current content before switching
                 this.saveCurrentContent();
                 
-                // Hide regular layout and show mobile layout
-                regularLayout.style.display = 'none';
+                // Hide regular layout and header, show mobile layout
+                if (regularLayout) regularLayout.style.display = 'none';
+                if (header) header.style.display = 'none';
                 mobileLayout.classList.add('active');
                 
                 // Update current device
                 this.currentDevice = 'mobile';
+                console.log('Device set to mobile:', this.currentDevice);
                 
                 // Load mobile-specific content
                 this.loadMobileContent();
@@ -16954,22 +16966,27 @@ END:VCALENDAR`;
             },
 
             exitMobileMode() {
+                console.log('Exiting mobile mode...');
                 const mobileLayout = document.getElementById('wb-mobile-layout');
                 const regularLayout = document.querySelector('.wb-main');
+                const header = document.querySelector('.wb-header');
                 
                 // Save mobile content before switching
                 this.saveMobileContent();
                 
-                // Show regular layout and hide mobile layout
-                regularLayout.style.display = 'flex';
+                // Show regular layout and header, hide mobile layout
+                if (regularLayout) regularLayout.style.display = 'flex';
+                if (header) header.style.display = 'flex';
                 mobileLayout.classList.remove('active');
                 
                 // Reset to desktop device
                 this.currentDevice = 'desktop';
+                console.log('Device set to desktop:', this.currentDevice);
                 
                 // Update device buttons
                 document.querySelectorAll('.wb-device-btn').forEach(btn => btn.classList.remove('active'));
-                document.querySelector('.wb-device-btn[onclick*="desktop"]').classList.add('active');
+                const desktopBtn = document.querySelector('.wb-device-btn[onclick*="desktop"]');
+                if (desktopBtn) desktopBtn.classList.add('active');
                 
                 // Load desktop content
                 this.loadDeviceContent('desktop');
