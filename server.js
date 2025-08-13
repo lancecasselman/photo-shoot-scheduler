@@ -6653,6 +6653,7 @@ app.post('/api/create-invoice', isAuthenticated, async (req, res) => {
 
         // Create invoice description based on type
         let invoiceDescription = description;
+        
         let customFooter = 'Thank you for choosing Lance - The Legacy Photography! Contact: lance@thelegacyphotography.com';
 
         if (isDeposit) {
@@ -7039,13 +7040,32 @@ app.post('/api/sessions/:id/send-invoice', async (req, res) => {
             }
         }
 
+        // First create a payment record for tip tracking
+        let paymentRecordId = null;
+        try {
+            const paymentRecordResult = await pool.query(`
+                INSERT INTO payment_records (id, session_id, user_id, payment_number, amount, tip_amount, due_date, status, created_at, updated_at)
+                VALUES ($1, $2, $3, 1, $4, 0.00, $5, 'pending', NOW(), NOW())
+                RETURNING id
+            `, [require('uuid').v4(), sessionId, session.userId || '44735007', invoiceAmount, new Date(Date.now() + (isDeposit ? 14 : 30) * 24 * 60 * 60 * 1000)]);
+            
+            paymentRecordId = paymentRecordResult.rows[0].id;
+        } catch (dbError) {
+            console.log('Could not create payment record for tip tracking:', dbError.message);
+            // Continue without payment record - use sessionId as fallback
+            paymentRecordId = sessionId;
+        }
+
+        // Create tip URL for this invoice using payment record ID
+        const invoiceCustomUrl = `${process.env.REPL_SLUG ? `https://${process.env.REPL_SLUG}.${process.env.REPLIT_DOMAINS}` : 'http://localhost:5000'}/invoice.html?payment=${paymentRecordId}`;
+        
         // Create invoice with proper collection method for manual sending
         const invoice = await stripe.invoices.create({
             customer: customer.id,
             description: `Lance - The Legacy Photography: ${invoiceDescription}`,
             collection_method: 'send_invoice',
             days_until_due: isDeposit ? 14 : 30, // Shorter due date for deposits
-            footer: 'Thank you for choosing Lance - The Legacy Photography! Contact: lance@thelegacyphotography.com',
+            footer: `Thank you for choosing Lance - The Legacy Photography!\n\nYou can add an optional tip and view full invoice details at:\n${invoiceCustomUrl}\n\nContact: lance@thelegacyphotography.com`,
             custom_fields: customFields,
             metadata: {
                 sessionId: sessionId,
@@ -7057,7 +7077,9 @@ app.post('/api/sessions/:id/send-invoice', async (req, res) => {
                 businessName: 'The Legacy Photography',
                 businessEmail: 'lance@thelegacyphotography.com',
                 isDeposit: isDeposit ? 'true' : 'false',
-                totalSessionPrice: session.price.toString()
+                totalSessionPrice: session.price.toString(),
+                paymentRecordId: paymentRecordId,
+                customInvoiceUrl: invoiceCustomUrl
             }
         });
 
