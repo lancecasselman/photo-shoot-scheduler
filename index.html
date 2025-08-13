@@ -14837,8 +14837,6 @@ END:VCALENDAR`;
                                 <button class="wb-element-btn" onclick="WebsiteBuilder.addElement('button')">+ Button</button>
                                 <button class="wb-element-btn" onclick="WebsiteBuilder.addContactForm()">📝 Contact Form</button>
                                 <button class="wb-element-btn" onclick="WebsiteBuilder.addSocialLinks()">🔗 Social Links</button>
-                                <button class="wb-element-btn" onclick="WebsiteBuilder.addContactForm()">📝 Contact Form</button>
-                                <button class="wb-element-btn" onclick="WebsiteBuilder.addSocialLinks()">🔗 Social Links</button>
                             </div>
                             
                             <h3>Photo Components</h3>
@@ -14882,13 +14880,13 @@ END:VCALENDAR`;
             // Initialize Website Builder when its tab is selected
             if (tabName === 'websiteBuilder') {
                 console.log('Initializing Website Builder...');
+                // Force refresh every time to avoid cache issues
+                WebsiteBuilder.initialized = false;
                 setTimeout(() => {
-                    if (!WebsiteBuilder.initialized) {
-                        WebsiteBuilder.setupBuilder();
-                        WebsiteBuilder.init();
-                        WebsiteBuilder.initialized = true;
-                        console.log('Website Builder initialized successfully');
-                    }
+                    WebsiteBuilder.setupBuilder();
+                    WebsiteBuilder.init();
+                    WebsiteBuilder.initialized = true;
+                    console.log('Website Builder initialized successfully - v2.0');
                 }, 100);
             }
         };
