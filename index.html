@@ -15252,6 +15252,92 @@ END:VCALENDAR`;
                 }
             },
 
+            // Canvas management functions
+            addToCanvas(htmlContent) {
+                const canvas = this.currentDevice === 'mobile' ? 
+                    document.getElementById('wb-mobile-canvas') : 
+                    document.getElementById('wb-canvas');
+                
+                if (!canvas) {
+                    console.error('Canvas not found for device:', this.currentDevice);
+                    return;
+                }
+                
+                // Create a temporary container to parse the HTML
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = htmlContent;
+                
+                // Append all child elements to the canvas
+                while (tempDiv.firstChild) {
+                    const element = tempDiv.firstChild;
+                    canvas.appendChild(element);
+                    
+                    // Setup editing capabilities for the element
+                    if (element.classList && element.classList.contains('wb-editable')) {
+                        this.setupElementEditing(element);
+                    }
+                }
+                
+                this.setupEditableElements();
+                this.saveToHistory();
+                this.savePage();
+            },
+
+            addToMobileCanvas(htmlContent) {
+                const mobileCanvas = document.getElementById('wb-mobile-canvas');
+                if (!mobileCanvas) {
+                    console.error('Mobile canvas not found!');
+                    return;
+                }
+                
+                // Create a temporary container to parse the HTML
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = htmlContent;
+                
+                // Append all child elements to the mobile canvas
+                while (tempDiv.firstChild) {
+                    const element = tempDiv.firstChild;
+                    mobileCanvas.appendChild(element);
+                    
+                    // Setup mobile editing capabilities
+                    if (element.classList && element.classList.contains('wb-editable')) {
+                        this.setupMobileElementEditing(element);
+                    }
+                }
+                
+                this.setupMobileEditableElements();
+                this.saveMobileContent();
+            },
+
+            addElementToMobile(elementType) {
+                // Route mobile element creation to mobile canvas
+                if (this.currentDevice === 'mobile') {
+                    this.addElement(elementType);
+                } else {
+                    console.warn('addElementToMobile called but not in mobile mode');
+                }
+            },
+
+            setupElementEditing(element) {
+                element.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (this.currentDevice === 'mobile') {
+                        this.selectMobileElement(element);
+                    } else {
+                        this.editElement(element, e);
+                    }
+                });
+            },
+
+            setupMobileElementEditing(element) {
+                element.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.selectMobileElement(element);
+                });
+            },
+
             deleteElement() {
                 if (!this.currentElement) return;
                 
