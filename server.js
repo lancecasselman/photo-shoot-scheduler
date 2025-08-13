@@ -3845,7 +3845,7 @@ Return your response as a JSON object with:
 }`;
 
             // Call OpenAI API
-            const aiResponse = await AIServices.generateContent({
+            const aiResponse = await aiServices.generateContent({
                 prompt: aiPrompt,
                 maxTokens: 2000,
                 temperature: 0.4
