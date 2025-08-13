@@ -14361,7 +14361,144 @@ END:VCALENDAR`;
                 this.setupCanvas();
                 this.setupEditing();
                 this.loadContent();
+                this.setupAI();
                 this.initialized = true;
+            },
+            
+            // AI Integration
+            setupAI() {
+                console.log('Setting up AI features...');
+                // AI panel will be available for natural language editing
+            },
+            
+            async aiEdit(instruction) {
+                const canvas = document.getElementById('wb-canvas');
+                if (!canvas) return;
+                
+                try {
+                    const response = await fetch('/api/ai/website-edit', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            instruction: instruction,
+                            currentContent: canvas.innerHTML,
+                            device: this.currentDevice
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.html) {
+                            canvas.innerHTML = data.html;
+                            this.saveContent();
+                            this.setupEditing();
+                            console.log('AI edit applied successfully');
+                        }
+                    }
+                } catch (error) {
+                    console.error('AI edit failed:', error);
+                }
+            },
+            
+            openAIEditor() {
+                const aiPanel = document.createElement('div');
+                aiPanel.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: white;
+                    padding: 30px;
+                    border-radius: 15px;
+                    box-shadow: 0 10px 50px rgba(0,0,0,0.3);
+                    z-index: 10000;
+                    width: 500px;
+                    max-width: 90%;
+                `;
+                
+                aiPanel.innerHTML = `
+                    <h3 style="margin: 0 0 20px 0; color: #333;">🤖 AI Website Editor</h3>
+                    <p style="color: #666; margin-bottom: 15px;">Describe what changes you want to make:</p>
+                    <textarea id="ai-instruction" style="width: 100%; height: 100px; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;" placeholder="e.g., 'Make the header gold with larger text' or 'Add a testimonial section with 3 reviews'"></textarea>
+                    <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                        <button onclick="this.parentElement.parentElement.remove()" style="padding: 10px 20px; border: 1px solid #ddd; background: white; border-radius: 8px; cursor: pointer;">Cancel</button>
+                        <button onclick="WebsiteBuilder.executeAIEdit()" style="padding: 10px 20px; background: #d4af37; color: white; border: none; border-radius: 8px; cursor: pointer;">Apply Changes</button>
+                    </div>
+                `;
+                
+                document.body.appendChild(aiPanel);
+            },
+            
+            executeAIEdit() {
+                const instruction = document.getElementById('ai-instruction')?.value;
+                if (instruction) {
+                    this.aiEdit(instruction);
+                    document.querySelector('[id*="ai-instruction"]')?.parentElement?.parentElement?.remove();
+                }
+            },
+            
+            // Add social media integration
+            addSocialLinks() {
+                const socialHTML = `
+                    <div class="wb-social-links wb-editable" data-type="social" style="text-align: center; padding: 40px 20px; margin: 20px 0;">
+                        <h3 class="wb-editable" style="margin-bottom: 20px; color: #333;">Follow My Work</h3>
+                        <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+                            <a href="https://instagram.com" style="text-decoration: none; color: #E4405F; font-size: 30px;">📷</a>
+                            <a href="https://facebook.com" style="text-decoration: none; color: #1877F2; font-size: 30px;">📘</a>
+                            <a href="https://twitter.com" style="text-decoration: none; color: #1DA1F2; font-size: 30px;">🐦</a>
+                            <a href="https://pinterest.com" style="text-decoration: none; color: #BD081C; font-size: 30px;">📌</a>
+                            <a href="https://youtube.com" style="text-decoration: none; color: #FF0000; font-size: 30px;">📺</a>
+                        </div>
+                    </div>
+                `;
+                
+                const canvas = document.getElementById('wb-canvas');
+                if (canvas) {
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = socialHTML;
+                    canvas.appendChild(tempDiv.firstElementChild);
+                    this.saveContent();
+                }
+            },
+            
+            // Add contact form
+            addContactForm() {
+                const contactHTML = `
+                    <div class="wb-contact-form wb-editable" data-type="contact" style="background: #f8f9fa; padding: 40px; margin: 40px 0; border-radius: 15px;">
+                        <h2 class="wb-editable" style="text-align: center; margin-bottom: 30px; color: #333;">Get In Touch</h2>
+                        <form style="max-width: 600px; margin: 0 auto;">
+                            <div style="margin-bottom: 20px;">
+                                <input type="text" placeholder="Your Name" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px;">
+                            </div>
+                            <div style="margin-bottom: 20px;">
+                                <input type="email" placeholder="Your Email" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px;">
+                            </div>
+                            <div style="margin-bottom: 20px;">
+                                <select style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px;">
+                                    <option>Select Session Type</option>
+                                    <option>Wedding Photography</option>
+                                    <option>Portrait Session</option>
+                                    <option>Event Coverage</option>
+                                    <option>Commercial Photography</option>
+                                </select>
+                            </div>
+                            <div style="margin-bottom: 20px;">
+                                <textarea placeholder="Tell me about your vision..." style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; min-height: 120px; resize: vertical;"></textarea>
+                            </div>
+                            <button type="submit" style="background: #d4af37; color: white; padding: 15px 40px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; width: 100%;">Send Message</button>
+                        </form>
+                    </div>
+                `;
+                
+                const canvas = document.getElementById('wb-canvas');
+                if (canvas) {
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = contactHTML;
+                    canvas.appendChild(tempDiv.firstElementChild);
+                    this.saveContent();
+                }
             },
 
             setupCanvas() {
@@ -14677,6 +14814,7 @@ END:VCALENDAR`;
                             <button class="wb-device-btn" onclick="WebsiteBuilder.switchDevice('mobile')">📱 Mobile</button>
                         </div>
                         <div class="wb-actions">
+                            <button class="wb-btn" onclick="WebsiteBuilder.openAIEditor()" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;">🤖 AI Edit</button>
                             <button class="wb-btn" onclick="WebsiteBuilder.clearCanvas()">Clear</button>
                             <button class="wb-btn" onclick="WebsiteBuilder.preview()">Preview</button>
                             <button class="wb-btn" onclick="WebsiteBuilder.save()">Save</button>
@@ -14697,6 +14835,10 @@ END:VCALENDAR`;
                                 <button class="wb-element-btn" onclick="WebsiteBuilder.addElement('image')">+ Image</button>
                                 <button class="wb-element-btn" onclick="WebsiteBuilder.addElement('gallery')">+ Gallery</button>
                                 <button class="wb-element-btn" onclick="WebsiteBuilder.addElement('button')">+ Button</button>
+                                <button class="wb-element-btn" onclick="WebsiteBuilder.addContactForm()">📝 Contact Form</button>
+                                <button class="wb-element-btn" onclick="WebsiteBuilder.addSocialLinks()">🔗 Social Links</button>
+                                <button class="wb-element-btn" onclick="WebsiteBuilder.addContactForm()">📝 Contact Form</button>
+                                <button class="wb-element-btn" onclick="WebsiteBuilder.addSocialLinks()">🔗 Social Links</button>
                             </div>
                             
                             <h3>Photo Components</h3>
@@ -14742,6 +14884,7 @@ END:VCALENDAR`;
                 console.log('Initializing Website Builder...');
                 setTimeout(() => {
                     if (!WebsiteBuilder.initialized) {
+                        WebsiteBuilder.setupBuilder();
                         WebsiteBuilder.init();
                         WebsiteBuilder.initialized = true;
                         console.log('Website Builder initialized successfully');
