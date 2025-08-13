@@ -432,12 +432,20 @@
                         status: 'pending',
                         session: {
                             clientName: paymentData.clientName,
+                            clientEmail: paymentData.clientEmail,
                             sessionType: 'Photography Session',
                             dateTime: new Date().toISOString()
                         }
                     };
                     
                     console.log('✅ Invoice data loaded from localStorage:', invoiceData);
+                    console.log('📧 Client email from invoice data:', invoiceData.session.clientEmail);
+                    
+                    // If we don't have the client email, try to fetch it from the server
+                    if (!invoiceData.session.clientEmail && sessionId) {
+                        fetchSessionEmail(sessionId);
+                    }
+                    
                     displayInvoiceData();
                     return;
                 }
@@ -593,6 +601,23 @@
             document.getElementById('success-message').style.display = 'none';
         }
         
+        // Fetch session email from server as fallback
+        async function fetchSessionEmail(sessionId) {
+            try {
+                console.log('📧 Fetching session email from server for session:', sessionId);
+                const response = await fetch(`/api/sessions/${sessionId}`);
+                if (response.ok) {
+                    const sessionData = await response.json();
+                    if (sessionData.email) {
+                        invoiceData.session.clientEmail = sessionData.email;
+                        console.log('📧 Session email fetched from server:', sessionData.email);
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching session email:', error);
+            }
+        }
+        
         // Send invoice via SMS using device default SMS app
         function sendInvoiceViaSMS() {
             const currentURL = window.location.href;
@@ -614,9 +639,10 @@
         function sendInvoiceViaEmail() {
             const currentURL = window.location.href;
             const totalAmount = invoiceData.amount + selectedTipAmount;
+            const clientEmail = invoiceData.session.clientEmail || '';
             
             const subject = `Photography Invoice - $${totalAmount.toFixed(2)}`;
-            const body = `Hi,
+            const body = `Hi ${invoiceData.session.clientName || ''},
 
 Your photography session invoice is ready for payment!
 
@@ -633,13 +659,13 @@ Thank you for choosing our photography services!
 Best regards,
 The Legacy Photography`;
             
-            // Create mailto URL that opens default email app
-            const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            // Create mailto URL that opens default email app with client's email pre-filled
+            const mailtoUrl = `mailto:${clientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
             
             // Open email app
             window.location.href = mailtoUrl;
             
-            showSuccess('Email app opened with invoice message!');
+            showSuccess(`Email app opened with invoice message${clientEmail ? ` for ${clientEmail}` : ''}!`);
         }
 
         // Copy invoice URL to clipboard
