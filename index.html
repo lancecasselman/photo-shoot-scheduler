@@ -13988,6 +13988,105 @@ END:VCALENDAR`;
            300+: Toasts, critical notifications
         */
 
+        /* Mobile-Optimized Website Builder Layout */
+        .wb-mobile-layout {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #f5f5f5;
+            z-index: 15;
+        }
+
+        .wb-mobile-layout.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .wb-mobile-top-toolbar {
+            background: #1a1a1a;
+            padding: 10px 0;
+            overflow-x: auto;
+            white-space: nowrap;
+            flex-shrink: 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .wb-mobile-toolbar-scroll {
+            display: flex;
+            gap: 8px;
+            padding: 0 15px;
+            min-width: max-content;
+        }
+
+        .wb-mobile-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        .wb-mobile-btn:hover {
+            background: rgba(102, 126, 234, 0.3);
+            border-color: #667eea;
+        }
+
+        .wb-mobile-btn.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-color: #667eea;
+        }
+
+        .wb-mobile-canvas-container {
+            flex: 1;
+            overflow: auto;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px 10px;
+        }
+
+        .wb-mobile-bottom-toolbar {
+            background: #1a1a1a;
+            padding: 10px 0;
+            overflow-x: auto;
+            white-space: nowrap;
+            flex-shrink: 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .wb-mobile-canvas-wrapper {
+            width: 375px;
+            min-height: 667px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Mobile toolbar sections */
+        .wb-mobile-toolbar-section {
+            display: flex;
+            gap: 6px;
+            padding-right: 15px;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            margin-right: 15px;
+        }
+
+        .wb-mobile-toolbar-section:last-child {
+            border-right: none;
+            margin-right: 0;
+            padding-right: 0;
+        }
+
         @keyframes slideInUp {
             from {
                 transform: translateY(100px);
@@ -14130,8 +14229,13 @@ END:VCALENDAR`;
                         </div>
                     </div>
                 `;
-                this.addToCanvas(contactHTML);
-                this.saveToHistory();
+                
+                if (this.currentDevice === 'mobile') {
+                    this.addToMobileCanvas(contactHTML);
+                } else {
+                    this.addToCanvas(contactHTML);
+                    this.saveToHistory();
+                }
             },
             
             addMobileBookingWidget() {
@@ -14152,8 +14256,12 @@ END:VCALENDAR`;
                         <button style="background: linear-gradient(135deg, #d4af37, #f4d03f); color: black; border: none; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: bold; width: 100%; cursor: pointer;">Book Selected Date 🎯</button>
                     </div>
                 `;
-                this.addToCanvas(bookingHTML);
-                this.saveToHistory();
+                if (this.currentDevice === 'mobile') {
+                    this.addToMobileCanvas(bookingHTML);
+                } else {
+                    this.addToCanvas(bookingHTML);
+                    this.saveToHistory();
+                }
             },
             
             addSwipeableGallery() {
@@ -14173,8 +14281,12 @@ END:VCALENDAR`;
                         <div style="position: absolute; top: 50%; left: 10px; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px;">‹</div>
                     </div>
                 `;
-                this.addToCanvas(galleryHTML);
-                this.saveToHistory();
+                if (this.currentDevice === 'mobile') {
+                    this.addToMobileCanvas(galleryHTML);
+                } else {
+                    this.addToCanvas(galleryHTML);
+                    this.saveToHistory();
+                }
             },
             
             addClickToCallButton() {
@@ -14186,8 +14298,12 @@ END:VCALENDAR`;
                         <p style="color: #666; font-size: 12px; margin: 8px 0 0 0;">Tap to call directly from your phone</p>
                     </div>
                 `;
-                this.addToCanvas(callHTML);
-                this.saveToHistory();
+                if (this.currentDevice === 'mobile') {
+                    this.addToMobileCanvas(callHTML);
+                } else {
+                    this.addToCanvas(callHTML);
+                    this.saveToHistory();
+                }
             },
             
             addInstagramFeed() {
@@ -14374,6 +14490,76 @@ END:VCALENDAR`;
                                 <div style="padding: 40px;">
                                     <h1 class="wb-editable" style="text-align: center; margin-bottom: 20px;">Welcome to Your Photography Portfolio</h1>
                                     <p class="wb-editable" style="text-align: center; color: #666;">Click any element to edit or add new elements from the sidebar</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mobile-Optimized Layout -->
+                        <div class="wb-mobile-layout" id="wb-mobile-layout">
+                            <!-- Top Toolbar -->
+                            <div class="wb-mobile-top-toolbar">
+                                <div class="wb-mobile-toolbar-scroll">
+                                    <div class="wb-mobile-toolbar-section">
+                                        <button class="wb-mobile-btn" onclick="WebsiteBuilder.exitMobileMode()">← Exit</button>
+                                        <button class="wb-mobile-btn active">📱 Mobile</button>
+                                    </div>
+                                    
+                                    <div class="wb-mobile-toolbar-section">
+                                        <button class="wb-mobile-btn" onclick="WebsiteBuilder.undo()">↶</button>
+                                        <button class="wb-mobile-btn" onclick="WebsiteBuilder.redo()">↷</button>
+                                        <button class="wb-mobile-btn" onclick="WebsiteBuilder.clearCanvas()">Clear</button>
+                                        <button class="wb-mobile-btn" onclick="WebsiteBuilder.save()">Save</button>
+                                    </div>
+                                    
+                                    <div class="wb-mobile-toolbar-section">
+                                        <button class="wb-mobile-btn" onclick="WebsiteBuilder.selectTemplate('minimal')">Minimal</button>
+                                        <button class="wb-mobile-btn" onclick="WebsiteBuilder.selectTemplate('wedding')">Wedding</button>
+                                        <button class="wb-mobile-btn" onclick="WebsiteBuilder.selectTemplate('cinematic')">Cinematic</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Mobile Canvas -->
+                            <div class="wb-mobile-canvas-container">
+                                <div class="wb-mobile-canvas-wrapper">
+                                    <div class="wb-canvas mobile" id="wb-mobile-canvas">
+                                        <div style="padding: 20px;">
+                                            <h1 class="wb-editable" style="text-align: center; margin-bottom: 15px; font-size: 24px;">Your Mobile Site</h1>
+                                            <p class="wb-editable" style="text-align: center; color: #666; font-size: 14px;">Tap elements to edit or use tools below</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Bottom Toolbar -->
+                            <div class="wb-mobile-bottom-toolbar">
+                                <div class="wb-mobile-toolbar-scroll">
+                                    <div class="wb-mobile-toolbar-section">
+                                        <button class="wb-mobile-btn" onclick="WebsiteBuilder.addElement('text')">+ Text</button>
+                                        <button class="wb-mobile-btn" onclick="WebsiteBuilder.addElement('image')">+ Image</button>
+                                        <button class="wb-mobile-btn" onclick="WebsiteBuilder.addElement('button')">+ Button</button>
+                                        <button class="wb-mobile-btn" onclick="WebsiteBuilder.addElement('gallery')">+ Gallery</button>
+                                    </div>
+                                    
+                                    <div class="wb-mobile-toolbar-section">
+                                        <button class="wb-mobile-btn" onclick="WebsiteBuilder.addMobileContactForm()">📱 Contact</button>
+                                        <button class="wb-mobile-btn" onclick="WebsiteBuilder.addMobileBookingWidget()">📅 Booking</button>
+                                        <button class="wb-mobile-btn" onclick="WebsiteBuilder.addClickToCallButton()">📞 Call</button>
+                                        <button class="wb-mobile-btn" onclick="WebsiteBuilder.addSwipeableGallery()">👆 Swipe</button>
+                                    </div>
+                                    
+                                    <div class="wb-mobile-toolbar-section">
+                                        <button class="wb-mobile-btn" onclick="WebsiteBuilder.addInstagramFeed()">📸 Insta</button>
+                                        <button class="wb-mobile-btn" onclick="WebsiteBuilder.addMobileHeroSection()">🌟 Hero</button>
+                                        <button class="wb-mobile-btn" onclick="WebsiteBuilder.addFloatingContactButton()">💬 Float</button>
+                                        <button class="wb-mobile-btn" onclick="WebsiteBuilder.addMobileTestimonialCards()">💭 Reviews</button>
+                                    </div>
+                                    
+                                    <div class="wb-mobile-toolbar-section">
+                                        <button class="wb-mobile-btn" onclick="WebsiteBuilder.addPhotoSlider()">📸 Slider</button>
+                                        <button class="wb-mobile-btn" onclick="WebsiteBuilder.addTestimonialSlider()">💬 Testimonials</button>
+                                        <button class="wb-mobile-btn" onclick="WebsiteBuilder.addPricingTable()">💰 Pricing</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -16659,6 +16845,12 @@ END:VCALENDAR`;
                 // Save current content before switching
                 this.saveCurrentContent();
                 
+                // If switching to mobile, use the new mobile layout
+                if (device === 'mobile') {
+                    this.enterMobileMode();
+                    return;
+                }
+                
                 // Update device state
                 this.currentDevice = device;
                 
@@ -16674,7 +16866,7 @@ END:VCALENDAR`;
                 // Show/hide mobile indicator and brainstorm section
                 const indicator = document.getElementById('wb-mobile-indicator');
                 const brainstormSection = document.getElementById('wb-mobile-brainstorm-section');
-                if (device === 'mobile' || device === 'tablet') {
+                if (device === 'tablet') {
                     indicator.style.display = 'block';
                     indicator.textContent = `✨ Editing ${device.charAt(0).toUpperCase() + device.slice(1)} Version Independently`;
                     if (brainstormSection) brainstormSection.style.display = 'block';
@@ -16686,10 +16878,144 @@ END:VCALENDAR`;
                 // Load device-specific content
                 this.loadDeviceContent(device);
                 
-                // Show mobile editing tips
-                if (device === 'mobile' && !localStorage.getItem('wb-mobile-tip-shown')) {
+                // Show mobile editing tips for tablet
+                if (device === 'tablet' && !localStorage.getItem('wb-tablet-tip-shown')) {
                     this.showMobileTip();
-                    localStorage.setItem('wb-mobile-tip-shown', 'true');
+                    localStorage.setItem('wb-tablet-tip-shown', 'true');
+                }
+            },
+
+            enterMobileMode() {
+                const mobileLayout = document.getElementById('wb-mobile-layout');
+                const regularLayout = document.querySelector('.wb-main');
+                
+                // Save current content before switching
+                this.saveCurrentContent();
+                
+                // Hide regular layout and show mobile layout
+                regularLayout.style.display = 'none';
+                mobileLayout.classList.add('active');
+                
+                // Update current device
+                this.currentDevice = 'mobile';
+                
+                // Load mobile-specific content
+                this.loadMobileContent();
+                this.setupMobileEditableElements();
+                
+                // Show toast notification
+                this.showToast('Mobile Editor - maximized screen space with scrollable toolbars');
+            },
+
+            exitMobileMode() {
+                const mobileLayout = document.getElementById('wb-mobile-layout');
+                const regularLayout = document.querySelector('.wb-main');
+                
+                // Save mobile content before switching
+                this.saveMobileContent();
+                
+                // Show regular layout and hide mobile layout
+                regularLayout.style.display = 'flex';
+                mobileLayout.classList.remove('active');
+                
+                // Reset to desktop device
+                this.currentDevice = 'desktop';
+                
+                // Update device buttons
+                document.querySelectorAll('.wb-device-btn').forEach(btn => btn.classList.remove('active'));
+                document.querySelector('.wb-device-btn[onclick*="desktop"]').classList.add('active');
+                
+                // Load desktop content
+                this.loadDeviceContent('desktop');
+                
+                this.showToast('Returned to Desktop Editor');
+            },
+
+            loadMobileContent() {
+                const mobileCanvas = document.getElementById('wb-mobile-canvas');
+                if (mobileCanvas) {
+                    // Load mobile-specific content or use existing mobile content
+                    const savedMobileContent = this.deviceContents.mobile[this.currentPage] || 
+                                             localStorage.getItem(`wb-content-mobile-${this.currentPage}`);
+                    if (savedMobileContent) {
+                        mobileCanvas.innerHTML = savedMobileContent;
+                    }
+                    this.setupMobileEditableElements();
+                }
+            },
+
+            saveMobileContent() {
+                const mobileCanvas = document.getElementById('wb-mobile-canvas');
+                if (mobileCanvas) {
+                    // Save mobile content to device-specific storage
+                    if (!this.deviceContents.mobile[this.currentPage]) {
+                        this.deviceContents.mobile[this.currentPage] = {};
+                    }
+                    this.deviceContents.mobile[this.currentPage] = mobileCanvas.innerHTML;
+                    
+                    // Also save to localStorage
+                    try {
+                        localStorage.setItem(`wb-content-mobile-${this.currentPage}`, mobileCanvas.innerHTML);
+                    } catch (e) {
+                        console.warn('Could not save mobile content to localStorage:', e);
+                    }
+                }
+            },
+
+            setupMobileEditableElements() {
+                const mobileCanvas = document.getElementById('wb-mobile-canvas');
+                if (!mobileCanvas) return;
+                
+                // Setup editable elements in mobile canvas
+                const editables = mobileCanvas.querySelectorAll('.wb-editable');
+                editables.forEach(element => {
+                    element.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        this.selectMobileElement(element);
+                    });
+                });
+            },
+
+            selectMobileElement(element) {
+                // Remove previous selection
+                const previousSelected = document.querySelector('#wb-mobile-canvas .wb-editable.selected');
+                if (previousSelected) {
+                    previousSelected.classList.remove('selected');
+                }
+                
+                // Select new element
+                element.classList.add('selected');
+                this.currentElement = element;
+                
+                // Show mobile edit options
+                this.showMobileEditOptions(element);
+            },
+
+            showMobileEditOptions(element) {
+                // Simple inline editing for mobile
+                if (element.tagName === 'H1' || element.tagName === 'P' || element.tagName === 'DIV') {
+                    const currentText = element.textContent;
+                    const newText = prompt('Edit text:', currentText);
+                    if (newText !== null && newText !== currentText) {
+                        element.textContent = newText;
+                        this.saveMobileContent();
+                        this.saveToHistory();
+                    }
+                }
+            },
+
+            addToMobileCanvas(html) {
+                const mobileCanvas = document.getElementById('wb-mobile-canvas');
+                if (mobileCanvas) {
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = html;
+                    const element = tempDiv.firstElementChild;
+                    
+                    mobileCanvas.appendChild(element);
+                    this.setupMobileEditableElements();
+                    this.saveMobileContent();
+                    this.saveToHistory();
                 }
             },
             
