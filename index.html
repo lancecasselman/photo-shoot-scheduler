@@ -14257,33 +14257,7 @@ END:VCALENDAR`;
                 }, 30000); // Auto-save every 30 seconds
             },
             
-            // Mobile-specific brainstorming components
-            addMobileContactForm() {
-                const contactHTML = `
-                    <div class="wb-mobile-contact wb-editable" data-type="mobile-contact" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 25px; border-radius: 15px; margin: 20px 0;">
-                        <h3 style="margin: 0 0 15px 0; font-size: 20px; text-align: center;">📱 Let's Connect!</h3>
-                        <div style="display: grid; gap: 12px;">
-                            <input type="text" placeholder="Your Name" style="padding: 12px; border: none; border-radius: 8px; font-size: 16px;">
-                            <input type="email" placeholder="Email Address" style="padding: 12px; border: none; border-radius: 8px; font-size: 16px;">
-                            <select style="padding: 12px; border: none; border-radius: 8px; font-size: 16px;">
-                                <option>Wedding Photography</option>
-                                <option>Portrait Session</option>
-                                <option>Event Coverage</option>
-                                <option>Other</option>
-                            </select>
-                            <textarea placeholder="Tell me about your vision..." style="padding: 12px; border: none; border-radius: 8px; font-size: 16px; min-height: 80px; resize: vertical;"></textarea>
-                            <button style="background: #d4af37; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;">Send Message ✨</button>
-                        </div>
-                    </div>
-                `;
-                
-                if (this.currentDevice === 'mobile') {
-                    this.addToMobileCanvas(contactHTML);
-                } else {
-                    this.addToCanvas(contactHTML);
-                    this.saveToHistory();
-                }
-            },
+
             
             addMobileBookingWidget() {
                 const bookingHTML = `
@@ -14491,19 +14465,7 @@ END:VCALENDAR`;
                                 <button class="wb-element-btn" onclick="WebsiteBuilder.addPricingTable()">💰 Pricing Table</button>
                             </div>
                             
-                            <div class="wb-mobile-brainstorm-section" id="wb-mobile-brainstorm-section" style="display: none;">
-                                <h3 style="color: #d4af37; font-size: 14px;">💡 Mobile Ideas</h3>
-                                <div class="wb-brainstorm-grid" style="display: grid; gap: 8px; margin-bottom: 15px;">
-                                    <button class="wb-element-btn" onclick="WebsiteBuilder.addMobileContactForm()" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; font-size: 11px; padding: 8px;">📱 Touch Contact</button>
-                                    <button class="wb-element-btn" onclick="WebsiteBuilder.addMobileBookingWidget()" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; font-size: 11px; padding: 8px;">📅 Quick Booking</button>
-                                    <button class="wb-element-btn" onclick="WebsiteBuilder.addSwipeableGallery()" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; font-size: 11px; padding: 8px;">👆 Swipe Gallery</button>
-                                    <button class="wb-element-btn" onclick="WebsiteBuilder.addClickToCallButton()" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; font-size: 11px; padding: 8px;">📞 Click-to-Call</button>
-                                    <button class="wb-element-btn" onclick="WebsiteBuilder.addInstagramFeed()" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; font-size: 11px; padding: 8px;">📸 Instagram Feed</button>
-                                    <button class="wb-element-btn" onclick="WebsiteBuilder.addMobileHeroSection()" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; font-size: 11px; padding: 8px;">🌟 Mobile Hero</button>
-                                    <button class="wb-element-btn" onclick="WebsiteBuilder.addFloatingContactButton()" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; font-size: 11px; padding: 8px;">💬 Floating Contact</button>
-                                    <button class="wb-element-btn" onclick="WebsiteBuilder.addMobileTestimonialCards()" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; font-size: 11px; padding: 8px;">💭 Mobile Reviews</button>
-                                </div>
-                            </div>
+
                             
                             <h3>Basic Elements</h3>
                             <div class="wb-elements-list">
@@ -14589,17 +14551,10 @@ END:VCALENDAR`;
                                     </div>
                                     
                                     <div class="wb-mobile-toolbar-section">
-                                        <button class="wb-mobile-btn" onclick="WebsiteBuilder.addMobileContactForm()">📱 Contact</button>
-                                        <button class="wb-mobile-btn" onclick="WebsiteBuilder.addMobileBookingWidget()">📅 Booking</button>
-                                        <button class="wb-mobile-btn" onclick="WebsiteBuilder.addClickToCallButton()">📞 Call</button>
-                                        <button class="wb-mobile-btn" onclick="WebsiteBuilder.addSwipeableGallery()">👆 Swipe</button>
-                                    </div>
-                                    
-                                    <div class="wb-mobile-toolbar-section">
-                                        <button class="wb-mobile-btn" onclick="WebsiteBuilder.addInstagramFeed()">📸 Insta</button>
-                                        <button class="wb-mobile-btn" onclick="WebsiteBuilder.addMobileHeroSection()">🌟 Hero</button>
-                                        <button class="wb-mobile-btn" onclick="WebsiteBuilder.addFloatingContactButton()">💬 Float</button>
-                                        <button class="wb-mobile-btn" onclick="WebsiteBuilder.addMobileTestimonialCards()">💭 Reviews</button>
+                                        <button class="wb-mobile-btn" onclick="WebsiteBuilder.addElement('contact')">📱 Contact</button>
+                                        <button class="wb-mobile-btn" onclick="WebsiteBuilder.addElement('button')">📅 Button</button>
+                                        <button class="wb-mobile-btn" onclick="WebsiteBuilder.addElement('button')">📞 Button</button>
+                                        <button class="wb-mobile-btn" onclick="WebsiteBuilder.addElement('gallery')">👆 Gallery</button>
                                     </div>
                                     
                                     <div class="wb-mobile-toolbar-section">
@@ -15480,35 +15435,7 @@ END:VCALENDAR`;
                 return templates[templateName] || '';
             },
 
-            switchDevice(device) {
-                this.currentDevice = device;
-                const canvas = document.getElementById('wb-canvas');
-                
-                // Update button states
-                document.querySelectorAll('.wb-device-btn').forEach(btn => {
-                    btn.classList.remove('active');
-                });
-                event.target.classList.add('active');
-                
-                // Update canvas size
-                canvas.className = `wb-canvas ${device}`;
-                
-                // Ensure mobile canvas has visible content
-                if (device === 'mobile' && (!canvas.innerHTML || canvas.innerHTML.trim() === '')) {
-                    canvas.innerHTML = `
-                        <div style="padding: 20px; background: white; min-height: 100%; display: flex; flex-direction: column;">
-                            <h1 class="wb-editable" style="font-size: 24px; color: #1a1a1a; margin-bottom: 20px; text-align: center;">Your Mobile Site</h1>
-                            <p class="wb-editable" style="color: #666; text-align: center; margin-bottom: 30px;">Tap to edit content</p>
-                            <div style="flex: 1; background: #f8f9fa; border-radius: 8px; padding: 20px; text-align: center;">
-                                <p class="wb-editable" style="color: #999;">Add your mobile content here</p>
-                            </div>
-                        </div>
-                    `;
-                    this.setupEditableElements();
-                }
-                
-                this.showToast(`Switched to ${device} view`);
-            },
+
 
             addPage(pageType) {
                 const pageKey = pageType.toLowerCase();
@@ -17011,16 +16938,13 @@ END:VCALENDAR`;
                 
                 // Show/hide device indicators
                 const indicator = document.getElementById('wb-mobile-indicator');
-                const brainstormSection = document.getElementById('wb-mobile-brainstorm-section');
                 if (device === 'tablet') {
                     if (indicator) {
                         indicator.style.display = 'block';
                         indicator.textContent = `✨ Editing ${device.charAt(0).toUpperCase() + device.slice(1)} Version Independently`;
                     }
-                    if (brainstormSection) brainstormSection.style.display = 'block';
                 } else {
                     if (indicator) indicator.style.display = 'none';
-                    if (brainstormSection) brainstormSection.style.display = 'none';
                 }
                 
                 // Load device-specific content
@@ -17221,19 +17145,7 @@ END:VCALENDAR`;
                 }
             },
 
-            addToMobileCanvas(html) {
-                const mobileCanvas = document.getElementById('wb-mobile-canvas');
-                if (mobileCanvas) {
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = html;
-                    const element = tempDiv.firstElementChild;
-                    
-                    mobileCanvas.appendChild(element);
-                    this.setupMobileEditableElements();
-                    this.saveMobileContent();
-                    this.saveToHistory();
-                }
-            },
+
 
             addElementToMobile(type) {
                 const mobileCanvas = document.getElementById('wb-mobile-canvas');
@@ -17451,25 +17363,7 @@ END:VCALENDAR`;
                 return temp.innerHTML;
             },
             
-            showMobileTip() {
-                const tipHTML = `
-                    <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center;" onclick="this.remove()">
-                        <div style="background: white; padding: 40px; border-radius: 12px; max-width: 500px; margin: 20px; text-align: center;" onclick="event.stopPropagation()">
-                            <h3 style="color: #d4af37; font-size: 24px; margin-bottom: 20px;">📱 Mobile Editing Mode</h3>
-                            <p style="color: #666; margin-bottom: 20px; line-height: 1.6;">You're now editing the mobile version independently! Changes here won't affect your desktop design.</p>
-                            <ul style="text-align: left; color: #666; margin-bottom: 30px; line-height: 1.8;">
-                                <li>Mobile layouts are automatically optimized</li>
-                                <li>Font sizes and spacing adjusted for mobile</li>
-                                <li>Components stack vertically for better mobile UX</li>
-                                <li>Each device has completely separate content</li>
-                            </ul>
-                            <button style="background: #d4af37; color: white; border: none; padding: 12px 24px; border-radius: 20px; cursor: pointer;" onclick="this.parentElement.parentElement.remove()">Got it!</button>
-                        </div>
-                    </div>
-                `;
-                
-                document.body.insertAdjacentHTML('beforeend', tipHTML);
-            },
+
             
             // Multi-page functionality (updated for device support)
             addNewPage(pageId, pageName) {
