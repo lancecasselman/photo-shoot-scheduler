@@ -1193,9 +1193,14 @@ async function createInvoice(session) {
         // Open the custom invoice URL
         window.open(customInvoiceUrl, '_blank');
 
-        // Show enhanced dialog with tipping info
-        const message = `✅ Invoice with Tip Options Created!\n\n💰 Amount: $${remainingBalance.toFixed(2)}\n📧 Client: ${session.clientName}\n\n🎯 Your client can:\n• Add 15%, 20%, 25% tips\n• Enter custom tip amounts\n• Pay securely via Stripe\n\nTip-Enabled Invoice URL:\n${customInvoiceUrl}`;
-        alert(message);
+        // Show enhanced dialog with send options
+        showInvoiceSendDialog({
+            amount: remainingBalance,
+            clientName: session.clientName,
+            clientPhone: session.phoneNumber,
+            clientEmail: session.email,
+            invoiceUrl: customInvoiceUrl
+        });
 
         console.log('🔥 TIPPING SUCCESS: Custom invoice URL created:', customInvoiceUrl);
 
@@ -1203,6 +1208,170 @@ async function createInvoice(session) {
         console.error('Error creating invoice with tipping:', error);
         showMessage('Error creating invoice: ' + error.message, 'error');
     }
+}
+
+// Show invoice send dialog with SMS and email options
+function showInvoiceSendDialog(data) {
+    const { amount, clientName, clientPhone, clientEmail, invoiceUrl } = data;
+    
+    // Remove existing dialog if present
+    const existingDialog = document.getElementById('invoice-send-dialog');
+    if (existingDialog) existingDialog.remove();
+    
+    // Create dialog HTML
+    const dialogHTML = `
+        <div id="invoice-send-dialog" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10000;">
+            <div style="background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 500px; box-shadow: 0 20px 40px rgba(0,0,0,0.3);">
+                <div style="text-align: center; margin-bottom: 25px;">
+                    <h2 style="margin: 0 0 10px 0; color: #333; font-size: 24px;">✅ Invoice Created Successfully!</h2>
+                    <div style="background: #f0f9ff; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                        <div style="font-size: 16px; color: #0369a1; margin-bottom: 8px;">💰 Amount: $${amount.toFixed(2)}</div>
+                        <div style="font-size: 16px; color: #0369a1;">📧 Client: ${clientName}</div>
+                    </div>
+                    <div style="background: #f0f9f0; padding: 12px; border-radius: 8px; font-size: 14px; color: #166534;">
+                        🎯 Client can add 15%, 20%, 25% tips or custom amounts
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 25px;">
+                    <h3 style="margin: 0 0 15px 0; color: #333; font-size: 18px;">Send Invoice to Client:</h3>
+                    
+                    <div style="display: grid; gap: 12px;">
+                        <button onclick="sendViaSMS('${clientPhone}', '${clientName}', '${amount}', '${invoiceUrl}')" 
+                                style="padding: 15px 20px; background: #22c55e; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                            📱 Send via SMS
+                        </button>
+                        
+                        <button onclick="sendViaEmail('${clientEmail}', '${clientName}', '${amount}', '${invoiceUrl}')" 
+                                style="padding: 15px 20px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                            📧 Send via Email
+                        </button>
+                    </div>
+                </div>
+                
+                <div style="border-top: 1px solid #e5e7eb; padding-top: 20px;">
+                    <div style="font-size: 14px; color: #6b7280; margin-bottom: 15px;">
+                        Invoice URL (you can copy this manually):
+                    </div>
+                    <div style="background: #f9fafb; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 12px; word-break: break-all; color: #374151; border: 1px solid #e5e7eb;">
+                        ${invoiceUrl}
+                    </div>
+                    <button onclick="copyToClipboard('${invoiceUrl}')" 
+                            style="margin-top: 10px; padding: 8px 15px; background: #6b7280; color: white; border: none; border-radius: 6px; font-size: 14px; cursor: pointer;">
+                        📋 Copy URL
+                    </button>
+                </div>
+                
+                <div style="text-align: center; margin-top: 25px;">
+                    <button onclick="closeInvoiceSendDialog()" 
+                            style="padding: 12px 30px; background: #ef4444; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer;">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add to page
+    document.body.insertAdjacentHTML('beforeend', dialogHTML);
+}
+
+// Send invoice via SMS using device default SMS app
+function sendViaSMS(phone, clientName, amount, invoiceUrl) {
+    if (!phone) {
+        alert('No phone number found for this client. Please add a phone number to the session.');
+        return;
+    }
+    
+    const message = `Hi ${clientName}! Your photography invoice for $${parseFloat(amount).toFixed(2)} is ready. You can add a tip and pay securely here: ${invoiceUrl}`;
+    
+    // Create SMS URL that opens default SMS app
+    const smsUrl = `sms:${phone}?body=${encodeURIComponent(message)}`;
+    
+    // Open SMS app
+    window.location.href = smsUrl;
+    
+    showMessage('SMS app opened with invoice message!', 'success');
+}
+
+// Send invoice via email using device default email app
+function sendViaEmail(email, clientName, amount, invoiceUrl) {
+    if (!email) {
+        alert('No email address found for this client. Please add an email to the session.');
+        return;
+    }
+    
+    const subject = `Photography Invoice - $${parseFloat(amount).toFixed(2)}`;
+    const body = `Hi ${clientName},
+
+Your photography session invoice is ready! 
+
+Invoice Amount: $${parseFloat(amount).toFixed(2)}
+
+You can review your invoice and add a tip (if you'd like) using the secure payment link below:
+
+${invoiceUrl}
+
+Features of your invoice:
+• Add 15%, 20%, or 25% tip with one click
+• Add custom tip amounts
+• Secure payment processing
+• Instant confirmation
+
+Thank you for choosing our photography services!
+
+Best regards,
+The Legacy Photography`;
+    
+    // Create mailto URL that opens default email app
+    const mailtoUrl = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    
+    // Open email app
+    window.location.href = mailtoUrl;
+    
+    showMessage('Email app opened with invoice message!', 'success');
+}
+
+// Copy URL to clipboard
+function copyToClipboard(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => {
+            showMessage('Invoice URL copied to clipboard!', 'success');
+        }).catch(err => {
+            console.error('Clipboard copy failed:', err);
+            fallbackCopyToClipboard(text);
+        });
+    } else {
+        fallbackCopyToClipboard(text);
+    }
+}
+
+// Fallback copy method for older browsers
+function fallbackCopyToClipboard(text) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+        document.execCommand('copy');
+        showMessage('Invoice URL copied to clipboard!', 'success');
+    } catch (err) {
+        console.error('Fallback copy failed:', err);
+        showMessage('Could not copy URL. Please copy manually.', 'error');
+    }
+    
+    document.body.removeChild(textArea);
+}
+
+// Close invoice send dialog
+function closeInvoiceSendDialog() {
+    const dialog = document.getElementById('invoice-send-dialog');
+    if (dialog) dialog.remove();
 }
 
 // Send deposit invoice with custom amount
