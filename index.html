@@ -13790,6 +13790,11 @@ END:VCALENDAR`;
             overflow: auto;
         }
 
+        .wb-canvas-container:has(.wb-canvas.mobile) {
+            background: #f0f0f0;
+            padding: 20px;
+        }
+
         .wb-canvas {
             background: white;
             border-radius: 8px;
@@ -13812,6 +13817,8 @@ END:VCALENDAR`;
         .wb-canvas.mobile {
             width: 375px;
             min-height: 667px;
+            background: white !important;
+            position: relative;
         }
 
         .wb-edit-panel {
@@ -15154,6 +15161,20 @@ END:VCALENDAR`;
                 
                 // Update canvas size
                 canvas.className = `wb-canvas ${device}`;
+                
+                // Ensure mobile canvas has visible content
+                if (device === 'mobile' && (!canvas.innerHTML || canvas.innerHTML.trim() === '')) {
+                    canvas.innerHTML = `
+                        <div style="padding: 20px; background: white; min-height: 100%; display: flex; flex-direction: column;">
+                            <h1 class="wb-editable" style="font-size: 24px; color: #1a1a1a; margin-bottom: 20px; text-align: center;">Your Mobile Site</h1>
+                            <p class="wb-editable" style="color: #666; text-align: center; margin-bottom: 30px;">Tap to edit content</p>
+                            <div style="flex: 1; background: #f8f9fa; border-radius: 8px; padding: 20px; text-align: center;">
+                                <p class="wb-editable" style="color: #999;">Add your mobile content here</p>
+                            </div>
+                        </div>
+                    `;
+                    this.setupEditableElements();
+                }
                 
                 this.showToast(`Switched to ${device} view`);
             },
