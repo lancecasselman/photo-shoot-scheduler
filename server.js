@@ -4122,6 +4122,97 @@ app.post('/api/payment-plans/:planId/payments/:paymentId/mark-paid', isAuthentic
     }
 });
 
+// Update tip amount for a payment record
+app.post('/api/payment-records/:paymentId/tip', async (req, res) => {
+    try {
+        const { paymentId } = req.params;
+        const { tipAmount } = req.body;
+        
+        if (!tipAmount || isNaN(parseFloat(tipAmount)) || parseFloat(tipAmount) < 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid tip amount'
+            });
+        }
+        
+        // Update tip amount in the database
+        const paymentManager = new PaymentPlanManager();
+        await paymentManager.updateTipAmount(paymentId, parseFloat(tipAmount));
+        
+        res.json({
+            success: true,
+            message: 'Tip amount updated successfully',
+            tipAmount: parseFloat(tipAmount)
+        });
+        
+    } catch (error) {
+        console.error('Error updating tip amount:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to update tip amount'
+        });
+    }
+});
+
+// Get invoice details for public viewing (no authentication required)
+app.get('/api/public/invoice/:paymentId', async (req, res) => {
+    try {
+        const { paymentId } = req.params;
+        const paymentManager = new PaymentPlanManager();
+        const invoiceDetails = await paymentManager.getPublicInvoiceDetails(paymentId);
+        
+        if (!invoiceDetails) {
+            return res.status(404).json({
+                success: false,
+                error: 'Invoice not found'
+            });
+        }
+        
+        res.json({
+            success: true,
+            invoice: invoiceDetails
+        });
+        
+    } catch (error) {
+        console.error('Error getting public invoice details:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to get invoice details'
+        });
+    }
+});
+
+// Create and send updated invoice with tip
+app.post('/api/public/invoice/:paymentId/send-with-tip', async (req, res) => {
+    try {
+        const { paymentId } = req.params;
+        const { tipAmount } = req.body;
+        
+        const paymentManager = new PaymentPlanManager();
+        
+        // Update tip amount first
+        if (tipAmount && parseFloat(tipAmount) > 0) {
+            await paymentManager.updateTipAmount(paymentId, parseFloat(tipAmount));
+        }
+        
+        // Send updated invoice
+        const result = await paymentManager.sendPaymentInvoice(paymentId, true); // force resend
+        
+        res.json({
+            success: true,
+            message: 'Invoice sent successfully with tip',
+            invoice: result
+        });
+        
+    } catch (error) {
+        console.error('Error sending invoice with tip:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to send invoice with tip'
+        });
+    }
+});
+
 app.post('/api/payment-plans/:planId/send-invoice', isAuthenticated, async (req, res) => {
     try {
         const { planId } = req.params;
@@ -4687,6 +4778,11 @@ app.get('/api/raw-backups/status', isAuthenticated, async (req, res) => {
 // Serve storefront builder page
 app.get('/storefront', isAuthenticated, (req, res) => {
     res.sendFile(path.join(__dirname, 'storefront.html'));
+});
+
+// Serve public invoice page (no authentication required)
+app.get('/invoice.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'invoice.html'));
 });
 
 // Serve storefront preview pages

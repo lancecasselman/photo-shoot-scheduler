@@ -271,6 +271,8 @@ class PaymentPlanManager {
           });
 
           // Create invoice
+          const invoiceCustomUrl = `${process.env.REPL_SLUG ? `https://${process.env.REPL_SLUG}.${process.env.REPLIT_DOMAINS}` : 'http://localhost:5000'}/invoice.html?payment=${payment.id}`;
+          
           const invoice = await stripe.invoices.create({
             customer: customer.id,
             collection_method: 'send_invoice',
@@ -280,12 +282,13 @@ class PaymentPlanManager {
               sessionId: session.id,
               paymentId: payment.id,
               paymentNumber: payment.paymentNumber.toString(),
-              photographerName: 'Lance - The Legacy Photography'
+              photographerName: 'Lance - The Legacy Photography',
+              customInvoiceUrl: invoiceCustomUrl
             },
-            footer: 'Thank you for choosing Lance - The Legacy Photography!\nContact: lance@thelegacyphotography.com'
+            footer: `Thank you for choosing Lance - The Legacy Photography!\n\nYou can add an optional tip and view full invoice details at:\n${invoiceCustomUrl}\n\nContact: lance@thelegacyphotography.com`
           });
 
-          // Add invoice item
+          // Add main invoice item
           await stripe.invoiceItems.create({
             customer: customer.id,
             invoice: invoice.id,
@@ -293,6 +296,18 @@ class PaymentPlanManager {
             currency: 'usd',
             description: `${session.sessionType} Session - Payment ${payment.paymentNumber} of ${session.paymentsRemaining + 1}`,
           });
+
+          // Add optional tip line if tip amount is specified
+          const tipAmount = parseFloat(payment.tipAmount || '0');
+          if (tipAmount > 0) {
+            await stripe.invoiceItems.create({
+              customer: customer.id,
+              invoice: invoice.id,
+              amount: Math.round(tipAmount * 100), // Convert to cents
+              currency: 'usd',
+              description: 'Optional Tip',
+            });
+          }
 
           // Finalize and send invoice
           const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
@@ -439,6 +454,62 @@ class PaymentPlanManager {
 
     } catch (error) {
       console.error('Error processing automated payments:', error);
+      throw error;
+    }
+  }
+
+  // Update tip amount for a payment record
+  async updateTipAmount(paymentId, tipAmount) {
+    try {
+      await db.update(paymentRecords)
+        .set({ tipAmount: tipAmount.toString() })
+        .where(eq(paymentRecords.id, paymentId));
+      
+      console.log(`SUCCESS: Tip amount updated for payment ${paymentId}: $${tipAmount}`);
+      return true;
+    } catch (error) {
+      console.error('Error updating tip amount:', error);
+      throw error;
+    }
+  }
+
+  // Get public invoice details (for client viewing)
+  async getPublicInvoiceDetails(paymentId) {
+    try {
+      const [payment] = await db.select()
+        .from(paymentRecords)
+        .where(eq(paymentRecords.id, paymentId));
+
+      if (!payment) {
+        return null;
+      }
+
+      // Get session details
+      const [session] = await db.select()
+        .from(photographySessions)
+        .where(eq(photographySessions.id, payment.sessionId));
+
+      if (!session) {
+        return null;
+      }
+
+      return {
+        id: payment.id,
+        paymentNumber: payment.paymentNumber,
+        amount: parseFloat(payment.amount),
+        tipAmount: parseFloat(payment.tipAmount || '0'),
+        dueDate: payment.dueDate,
+        status: payment.status,
+        session: {
+          clientName: session.clientName,
+          sessionType: session.sessionType,
+          dateTime: session.dateTime,
+          email: session.email
+        },
+        stripeInvoiceUrl: payment.stripeInvoiceUrl
+      };
+    } catch (error) {
+      console.error('Error getting public invoice details:', error);
       throw error;
     }
   }

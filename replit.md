@@ -51,8 +51,16 @@ A comprehensive storage quota and billing system provides freemium storage manag
 ### Unified File Deletion System
 A robust unified deletion system ensures complete file cleanup with no orphaned records. It includes database lookup for exact folder type detection, enhanced logging, comprehensive verification checks, and pattern matching to catch all database entries. The service coordinates between cloud storage and database cleanup, preventing phantom file records. Delete buttons on thumbnails provide instant file removal with confirmation dialogs, progress feedback, and automatic file list refresh. The system features fallback mechanisms and comprehensive error handling to ensure reliable file deletion across all interfaces.
 
-## Recent Changes (August 12, 2025)
+## Recent Changes (August 13, 2025)
 - **CRITICAL**: Session sorting by appointment date is COMPLETE and WORKING - do not modify
+- **NEW**: Client-Fillable Tip System for Stripe Invoices
+  - Added `tip_amount` column to `payment_records` table
+  - Created public invoice page at `/invoice.html` (no authentication required)
+  - Clients can add 15%, 20%, 25% tips or custom amounts before payment
+  - Stripe invoices include custom URL for tip interface in footer
+  - API endpoints for updating tips and sending updated invoices
+  - Real-time invoice total calculation with tip display
+  - Mobile-responsive tip selection interface
 - **Completed**: Full booking agreement system with e-signature capabilities
   - 6 professional templates (Wedding, Portrait, Commercial, Event, Mini Session, Newborn)
   - Purple "📄 Booking Agreement" button on each session card

@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photography Invoice - The Legacy Photography</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            line-height: 1.6;
+        }
+        
+        .invoice-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 40px;
+            margin: 20px 0;
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #007bff;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #007bff;
+            margin: 0;
+            font-size: 2.2em;
+        }
+        
+        .header p {
+            color: #666;
+            margin: 5px 0;
+        }
+        
+        .invoice-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .detail-section h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        
+        .detail-item {
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .detail-label {
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .detail-value {
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .payment-section {
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 30px 0;
+            background-color: #f8f9fa;
+        }
+        
+        .payment-items {
+            margin-bottom: 20px;
+        }
+        
+        .payment-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .payment-item:last-child {
+            border-bottom: none;
+        }
+        
+        .payment-item.total {
+            border-top: 2px solid #007bff;
+            margin-top: 15px;
+            padding-top: 15px;
+            font-weight: bold;
+            font-size: 1.2em;
+            color: #007bff;
+        }
+        
+        .tip-section {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 8px;
+            padding: 25px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .tip-section h3 {
+            color: #28a745;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .tip-options {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .tip-button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            min-width: 80px;
+        }
+        
+        .tip-button:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        
+        .tip-button.selected {
+            background: #007bff;
+            box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+        }
+        
+        .custom-tip {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            margin: 15px 0;
+        }
+        
+        .custom-tip input {
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 16px;
+            width: 100px;
+            text-align: center;
+        }
+        
+        .custom-tip input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 150px;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+        
+        .message {
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+            font-weight: 500;
+        }
+        
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .invoice-container {
+                padding: 25px;
+            }
+            
+            .invoice-details {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .tip-options {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="invoice-container">
+        <div class="header">
+            <h1>The Legacy Photography</h1>
+            <p>Professional Photography Services</p>
+            <p>Email: lance@thelegacyphotography.com</p>
+        </div>
+        
+        <div id="loading" class="message">Loading invoice details...</div>
+        <div id="error-message" class="message error" style="display: none;"></div>
+        <div id="success-message" class="message success" style="display: none;"></div>
+        
+        <div id="invoice-content" style="display: none;">
+            <div class="invoice-details">
+                <div class="detail-section">
+                    <h3>Invoice Information</h3>
+                    <div class="detail-item">
+                        <span class="detail-label">Invoice #:</span>
+                        <span class="detail-value" id="payment-number"></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Due Date:</span>
+                        <span class="detail-value" id="due-date"></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Status:</span>
+                        <span class="detail-value" id="status"></span>
+                    </div>
+                </div>
+                
+                <div class="detail-section">
+                    <h3>Session Information</h3>
+                    <div class="detail-item">
+                        <span class="detail-label">Client:</span>
+                        <span class="detail-value" id="client-name"></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Session Type:</span>
+                        <span class="detail-value" id="session-type"></span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Date:</span>
+                        <span class="detail-value" id="session-date"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="payment-section">
+                <h3>Payment Details</h3>
+                <div class="payment-items">
+                    <div class="payment-item">
+                        <span>Session Payment</span>
+                        <span id="session-amount"></span>
+                    </div>
+                    <div class="payment-item" id="tip-line" style="display: none;">
+                        <span>Optional Tip</span>
+                        <span id="tip-amount">$0.00</span>
+                    </div>
+                    <div class="payment-item total">
+                        <span>Total Amount</span>
+                        <span id="total-amount"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tip-section">
+                <h3>Add an Optional Tip</h3>
+                <p>Show your appreciation for exceptional service</p>
+                
+                <div class="tip-options">
+                    <button class="tip-button" onclick="selectTip(15)">15%</button>
+                    <button class="tip-button" onclick="selectTip(20)">20%</button>
+                    <button class="tip-button" onclick="selectTip(25)">25%</button>
+                </div>
+                
+                <div class="custom-tip">
+                    <label for="custom-tip-input">Custom amount: $</label>
+                    <input type="number" id="custom-tip-input" placeholder="0.00" step="0.01" min="0" onchange="selectCustomTip()">
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="updateInvoice()">Update Invoice</button>
+                    <button class="btn btn-success" onclick="proceedToPayment()" id="payment-btn" style="display: none;">Proceed to Payment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let invoiceData = null;
+        let selectedTipAmount = 0;
+        
+        // Get payment ID from URL parameters
+        function getPaymentId() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('payment') || urlParams.get('paymentId');
+        }
+        
+        // Load invoice data on page load
+        window.onload = function() {
+            const paymentId = getPaymentId();
+            if (!paymentId) {
+                showError('Invalid invoice link. Missing payment ID.');
+                return;
+            }
+            loadInvoiceData(paymentId);
+        };
+        
+        // Load invoice data from server
+        async function loadInvoiceData(paymentId) {
+            try {
+                const response = await fetch(`/api/public/invoice/${paymentId}`);
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to load invoice');
+                }
+                
+                invoiceData = data.invoice;
+                displayInvoiceData();
+                
+            } catch (error) {
+                showError('Failed to load invoice: ' + error.message);
+            }
+        }
+        
+        // Display invoice data on page
+        function displayInvoiceData() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('invoice-content').style.display = 'block';
+            
+            // Fill in invoice details
+            document.getElementById('payment-number').textContent = invoiceData.paymentNumber;
+            document.getElementById('due-date').textContent = new Date(invoiceData.dueDate).toLocaleDateString();
+            document.getElementById('status').textContent = invoiceData.status.charAt(0).toUpperCase() + invoiceData.status.slice(1);
+            
+            // Fill in session details
+            document.getElementById('client-name').textContent = invoiceData.session.clientName;
+            document.getElementById('session-type').textContent = invoiceData.session.sessionType;
+            document.getElementById('session-date').textContent = new Date(invoiceData.session.dateTime).toLocaleDateString();
+            
+            // Fill in payment details
+            document.getElementById('session-amount').textContent = '$' + invoiceData.amount.toFixed(2);
+            
+            // Set current tip amount
+            selectedTipAmount = invoiceData.tipAmount;
+            updateTipDisplay();
+            updateTotal();
+        }
+        
+        // Select percentage tip
+        function selectTip(percentage) {
+            selectedTipAmount = (invoiceData.amount * percentage / 100);
+            document.getElementById('custom-tip-input').value = '';
+            
+            // Update button states
+            document.querySelectorAll('.tip-button').forEach(btn => btn.classList.remove('selected'));
+            event.target.classList.add('selected');
+            
+            updateTipDisplay();
+            updateTotal();
+        }
+        
+        // Select custom tip amount
+        function selectCustomTip() {
+            const customAmount = parseFloat(document.getElementById('custom-tip-input').value) || 0;
+            selectedTipAmount = customAmount;
+            
+            // Clear button selections
+            document.querySelectorAll('.tip-button').forEach(btn => btn.classList.remove('selected'));
+            
+            updateTipDisplay();
+            updateTotal();
+        }
+        
+        // Update tip display
+        function updateTipDisplay() {
+            const tipLine = document.getElementById('tip-line');
+            const tipAmountSpan = document.getElementById('tip-amount');
+            
+            if (selectedTipAmount > 0) {
+                tipLine.style.display = 'flex';
+                tipAmountSpan.textContent = '$' + selectedTipAmount.toFixed(2);
+            } else {
+                tipLine.style.display = 'none';
+            }
+        }
+        
+        // Update total amount
+        function updateTotal() {
+            const total = invoiceData.amount + selectedTipAmount;
+            document.getElementById('total-amount').textContent = '$' + total.toFixed(2);
+        }
+        
+        // Update invoice with tip
+        async function updateInvoice() {
+            const paymentId = getPaymentId();
+            
+            try {
+                document.body.classList.add('loading');
+                
+                const response = await fetch(`/api/payment-records/${paymentId}/tip`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        tipAmount: selectedTipAmount
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to update tip');
+                }
+                
+                // Update local data
+                invoiceData.tipAmount = selectedTipAmount;
+                
+                showSuccess('Tip updated successfully! A new invoice will be sent to your email.');
+                
+                // Show payment button
+                document.getElementById('payment-btn').style.display = 'inline-block';
+                
+            } catch (error) {
+                showError('Failed to update tip: ' + error.message);
+            } finally {
+                document.body.classList.remove('loading');
+            }
+        }
+        
+        // Proceed to payment
+        async function proceedToPayment() {
+            const paymentId = getPaymentId();
+            
+            try {
+                document.body.classList.add('loading');
+                
+                const response = await fetch(`/api/public/invoice/${paymentId}/send-with-tip`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        tipAmount: selectedTipAmount
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to send updated invoice');
+                }
+                
+                showSuccess('Updated invoice sent! Check your email for the payment link.');
+                
+                // Redirect to Stripe invoice if available
+                if (invoiceData.stripeInvoiceUrl) {
+                    setTimeout(() => {
+                        window.open(invoiceData.stripeInvoiceUrl, '_blank');
+                    }, 2000);
+                }
+                
+            } catch (error) {
+                showError('Failed to send invoice: ' + error.message);
+            } finally {
+                document.body.classList.remove('loading');
+            }
+        }
+        
+        // Show success message
+        function showSuccess(message) {
+            const successDiv = document.getElementById('success-message');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            document.getElementById('error-message').style.display = 'none';
+        }
+        
+        // Show error message
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            document.getElementById('success-message').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

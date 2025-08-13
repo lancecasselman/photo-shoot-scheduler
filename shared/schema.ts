@@ -114,6 +114,7 @@ export const paymentRecords = pgTable("payment_records", {
   paymentNumber: integer("payment_number").notNull(),
   dueDate: timestamp("due_date").notNull(),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  tipAmount: decimal("tip_amount", { precision: 10, scale: 2 }).default("0.00"),
   status: varchar("status").notNull().default("pending"), // pending, paid, overdue, cancelled
   paidDate: timestamp("paid_date"),
   stripeInvoiceId: varchar("stripe_invoice_id"),
