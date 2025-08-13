@@ -14217,6 +14217,145 @@ END:VCALENDAR`;
                 tablet: '<div style="padding: 30px; text-align: center;"><h1 class="wb-editable">Tablet Portfolio</h1><p class="wb-editable" style="color: #666;">Tablet-optimized view</p></div>',
                 mobile: '<div style="padding: 20px; text-align: center;"><h1 class="wb-editable" style="font-size: 24px;">Mobile Portfolio</h1><p class="wb-editable" style="color: #666;">Mobile-friendly design</p></div>'
             },
+            
+            // Template definitions
+            templates: {
+                minimal: {
+                    name: 'Minimal Portfolio',
+                    desktop: `
+                        <div style="background: #ffffff; min-height: 100vh;">
+                            <header style="padding: 40px; text-align: center; border-bottom: 1px solid #eee;">
+                                <h1 class="wb-editable" style="font-family: 'Playfair Display', serif; font-size: 48px; margin: 0;">Minimal Photography</h1>
+                                <p class="wb-editable" style="color: #666; margin-top: 10px;">Capturing moments with simplicity</p>
+                            </header>
+                            <div style="padding: 60px 40px; max-width: 1200px; margin: 0 auto;">
+                                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                                    <img src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=400&h=400&fit=crop" style="width: 100%; border-radius: 8px;">
+                                    <img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400&h=400&fit=crop" style="width: 100%; border-radius: 8px;">
+                                    <img src="https://images.unsplash.com/photo-1519741497674-611481863552?w=400&h=400&fit=crop" style="width: 100%; border-radius: 8px;">
+                                </div>
+                                <div style="text-align: center; margin-top: 40px;">
+                                    <button class="wb-editable" style="background: #000; color: white; padding: 15px 40px; border: none; border-radius: 30px; font-size: 16px; cursor: pointer;">View Portfolio</button>
+                                </div>
+                            </div>
+                        </div>
+                    `,
+                    mobile: `
+                        <div style="background: #ffffff; min-height: 100vh;">
+                            <header style="padding: 30px 20px; text-align: center; border-bottom: 1px solid #eee;">
+                                <h1 class="wb-editable" style="font-family: 'Playfair Display', serif; font-size: 32px; margin: 0;">Minimal Photography</h1>
+                                <p class="wb-editable" style="color: #666; margin-top: 10px; font-size: 14px;">Capturing moments with simplicity</p>
+                            </header>
+                            <div style="padding: 30px 20px;">
+                                <div style="display: grid; grid-template-columns: 1fr; gap: 15px;">
+                                    <img src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=400&h=300&fit=crop" style="width: 100%; border-radius: 8px;">
+                                    <img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400&h=300&fit=crop" style="width: 100%; border-radius: 8px;">
+                                </div>
+                                <div style="text-align: center; margin-top: 30px;">
+                                    <button class="wb-editable" style="background: #000; color: white; padding: 12px 30px; border: none; border-radius: 25px; font-size: 14px; width: 100%; max-width: 200px;">View Portfolio</button>
+                                </div>
+                            </div>
+                        </div>
+                    `
+                },
+                wedding: {
+                    name: 'Wedding Photography',
+                    desktop: `
+                        <div style="background: linear-gradient(rgba(212,175,55,0.1), rgba(255,255,255,1)); min-height: 100vh;">
+                            <header style="padding: 60px; text-align: center;">
+                                <h1 class="wb-editable" style="font-family: 'Dancing Script', cursive; font-size: 64px; margin: 0; color: #d4af37;">Eternal Moments</h1>
+                                <p class="wb-editable" style="color: #8b7355; margin-top: 10px; font-size: 20px; font-style: italic;">Wedding Photography & Videography</p>
+                            </header>
+                            <div style="padding: 40px; max-width: 1200px; margin: 0 auto;">
+                                <div style="text-align: center; margin-bottom: 40px;">
+                                    <img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=800&h=500&fit=crop" style="width: 100%; max-width: 800px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                                </div>
+                                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; text-align: center;">
+                                    <div>
+                                        <h3 class="wb-editable" style="color: #d4af37;">500+</h3>
+                                        <p class="wb-editable" style="color: #666;">Weddings Captured</p>
+                                    </div>
+                                    <div>
+                                        <h3 class="wb-editable" style="color: #d4af37;">10 Years</h3>
+                                        <p class="wb-editable" style="color: #666;">Of Experience</p>
+                                    </div>
+                                    <div>
+                                        <h3 class="wb-editable" style="color: #d4af37;">5 Stars</h3>
+                                        <p class="wb-editable" style="color: #666;">Average Rating</p>
+                                    </div>
+                                </div>
+                                <div style="text-align: center; margin-top: 40px;">
+                                    <button class="wb-editable" style="background: #d4af37; color: white; padding: 15px 40px; border: none; border-radius: 30px; font-size: 16px; cursor: pointer; margin: 0 10px;">Book Consultation</button>
+                                    <button class="wb-editable" style="background: transparent; color: #d4af37; padding: 15px 40px; border: 2px solid #d4af37; border-radius: 30px; font-size: 16px; cursor: pointer; margin: 0 10px;">View Gallery</button>
+                                </div>
+                            </div>
+                        </div>
+                    `,
+                    mobile: `
+                        <div style="background: linear-gradient(rgba(212,175,55,0.1), rgba(255,255,255,1)); min-height: 100vh;">
+                            <header style="padding: 40px 20px; text-align: center;">
+                                <h1 class="wb-editable" style="font-family: 'Dancing Script', cursive; font-size: 36px; margin: 0; color: #d4af37;">Eternal Moments</h1>
+                                <p class="wb-editable" style="color: #8b7355; margin-top: 10px; font-size: 16px; font-style: italic;">Wedding Photography</p>
+                            </header>
+                            <div style="padding: 20px;">
+                                <img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400&h=300&fit=crop" style="width: 100%; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.2);">
+                                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: center; margin: 30px 0;">
+                                    <div>
+                                        <h4 class="wb-editable" style="color: #d4af37; margin: 0;">500+</h4>
+                                        <p class="wb-editable" style="color: #666; font-size: 12px;">Weddings</p>
+                                    </div>
+                                    <div>
+                                        <h4 class="wb-editable" style="color: #d4af37; margin: 0;">10 Yrs</h4>
+                                        <p class="wb-editable" style="color: #666; font-size: 12px;">Experience</p>
+                                    </div>
+                                    <div>
+                                        <h4 class="wb-editable" style="color: #d4af37; margin: 0;">5★</h4>
+                                        <p class="wb-editable" style="color: #666; font-size: 12px;">Rating</p>
+                                    </div>
+                                </div>
+                                <button class="wb-editable" style="background: #d4af37; color: white; padding: 12px 30px; border: none; border-radius: 25px; font-size: 14px; width: 100%; margin-bottom: 10px;">Book Consultation</button>
+                            </div>
+                        </div>
+                    `
+                },
+                cinematic: {
+                    name: 'Cinematic Studio',
+                    desktop: `
+                        <div style="background: #0a0a0a; color: white; min-height: 100vh;">
+                            <header style="padding: 80px 40px; text-align: center; background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.8)), url('https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=1600&h=600&fit=crop') center/cover;">
+                                <h1 class="wb-editable" style="font-family: 'Playfair Display', serif; font-size: 72px; margin: 0; color: #d4af37; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">CINEMATIC VISION</h1>
+                                <p class="wb-editable" style="color: #fff; margin-top: 20px; font-size: 24px; letter-spacing: 3px;">FILM • PHOTOGRAPHY • STORYTELLING</p>
+                            </header>
+                            <div style="padding: 80px 40px; max-width: 1400px; margin: 0 auto;">
+                                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 40px; align-items: center;">
+                                    <div>
+                                        <h2 class="wb-editable" style="font-size: 48px; color: #d4af37; margin-bottom: 20px;">Award-Winning Cinematography</h2>
+                                        <p class="wb-editable" style="font-size: 18px; line-height: 1.8; color: #ccc;">Creating visual stories that captivate audiences. From commercial productions to artistic documentaries, we bring cinematic excellence to every frame.</p>
+                                        <button class="wb-editable" style="background: #d4af37; color: black; padding: 15px 40px; border: none; font-size: 16px; margin-top: 30px; cursor: pointer; font-weight: bold;">EXPLORE PORTFOLIO</button>
+                                    </div>
+                                    <div>
+                                        <img src="https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=600&h=400&fit=crop" style="width: 100%; border: 2px solid #d4af37;">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `,
+                    mobile: `
+                        <div style="background: #0a0a0a; color: white; min-height: 100vh;">
+                            <header style="padding: 50px 20px; text-align: center; background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.8)), url('https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=800&h=400&fit=crop') center/cover;">
+                                <h1 class="wb-editable" style="font-family: 'Playfair Display', serif; font-size: 32px; margin: 0; color: #d4af37;">CINEMATIC VISION</h1>
+                                <p class="wb-editable" style="color: #fff; margin-top: 10px; font-size: 12px; letter-spacing: 2px;">FILM • PHOTO • STORY</p>
+                            </header>
+                            <div style="padding: 40px 20px;">
+                                <h2 class="wb-editable" style="font-size: 24px; color: #d4af37; margin-bottom: 15px;">Award-Winning</h2>
+                                <p class="wb-editable" style="font-size: 14px; line-height: 1.6; color: #ccc;">Creating visual stories that captivate audiences worldwide.</p>
+                                <img src="https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=400&h=250&fit=crop" style="width: 100%; margin: 20px 0; border: 1px solid #d4af37;">
+                                <button class="wb-editable" style="background: #d4af37; color: black; padding: 12px 30px; border: none; font-size: 14px; width: 100%; font-weight: bold;">VIEW PORTFOLIO</button>
+                            </div>
+                        </div>
+                    `
+                }
+            },
             init() {
                 console.log('Initializing Clean Website Builder...');
                 this.setupCanvas();
@@ -14366,6 +14505,164 @@ END:VCALENDAR`;
                 this.saveContent();
                 console.log('Content saved successfully');
             },
+            
+            // Template selection function
+            selectTemplate(templateName) {
+                const template = this.templates[templateName];
+                if (!template) {
+                    console.error('Template not found:', templateName);
+                    return;
+                }
+                
+                // Apply template to current device
+                const canvas = document.getElementById('wb-canvas');
+                if (canvas) {
+                    if (this.currentDevice === 'desktop' || this.currentDevice === 'tablet') {
+                        canvas.innerHTML = template.desktop || template.mobile;
+                    } else {
+                        canvas.innerHTML = template.mobile || template.desktop;
+                    }
+                    this.saveContent();
+                    this.setupEditing();
+                    console.log(`Applied ${template.name} template`);
+                }
+            },
+            
+            // Photography-specific components
+            addPhotoSlider() {
+                const sliderHTML = `
+                    <div class="wb-photo-slider wb-editable" data-type="photo-slider" style="margin: 40px 0; position: relative; overflow: hidden; border-radius: 15px; max-width: 100%;">
+                        <div style="display: flex; transition: transform 0.5s ease;" data-slider-track>
+                            <img src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=800&h=500&fit=crop" style="min-width: 100%; object-fit: cover;">
+                            <img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=800&h=500&fit=crop" style="min-width: 100%; object-fit: cover;">
+                            <img src="https://images.unsplash.com/photo-1519741497674-611481863552?w=800&h=500&fit=crop" style="min-width: 100%; object-fit: cover;">
+                        </div>
+                        <button onclick="WebsiteBuilder.slideLeft(this)" style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 20px;">‹</button>
+                        <button onclick="WebsiteBuilder.slideRight(this)" style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 20px;">›</button>
+                        <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px;">
+                            <span style="width: 10px; height: 10px; border-radius: 50%; background: white; opacity: 1;"></span>
+                            <span style="width: 10px; height: 10px; border-radius: 50%; background: white; opacity: 0.5;"></span>
+                            <span style="width: 10px; height: 10px; border-radius: 50%; background: white; opacity: 0.5;"></span>
+                        </div>
+                    </div>
+                `;
+                
+                const canvas = document.getElementById('wb-canvas');
+                if (canvas) {
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = sliderHTML;
+                    canvas.appendChild(tempDiv.firstElementChild);
+                    this.saveContent();
+                }
+            },
+            
+            slideLeft(button) {
+                const slider = button.parentElement.querySelector('[data-slider-track]');
+                const currentTransform = slider.style.transform;
+                const currentIndex = currentTransform ? parseInt(currentTransform.match(/-?\d+/)) / 100 : 0;
+                const newIndex = Math.max(currentIndex - 1, -2);
+                slider.style.transform = `translateX(${newIndex * 100}%)`;
+            },
+            
+            slideRight(button) {
+                const slider = button.parentElement.querySelector('[data-slider-track]');
+                const currentTransform = slider.style.transform;
+                const currentIndex = currentTransform ? parseInt(currentTransform.match(/-?\d+/)) / 100 : 0;
+                const newIndex = Math.min(currentIndex + 1, 0);
+                slider.style.transform = `translateX(${newIndex * 100}%)`;
+            },
+            
+            addTestimonialSlider() {
+                const testimonialHTML = `
+                    <div class="wb-testimonials wb-editable" data-type="testimonials" style="background: #f8f9fa; padding: 60px 40px; margin: 40px 0; border-radius: 15px; text-align: center;">
+                        <h2 class="wb-editable" style="font-size: 36px; margin-bottom: 40px; color: #333;">What Clients Say</h2>
+                        <div style="max-width: 800px; margin: 0 auto;">
+                            <div style="display: flex; overflow: hidden;" data-testimonial-track>
+                                <div style="min-width: 100%; padding: 0 20px;">
+                                    <p class="wb-editable" style="font-size: 20px; font-style: italic; color: #555; margin-bottom: 20px;">"Absolutely amazing! The photos captured our special day perfectly. Professional, creative, and so easy to work with!"</p>
+                                    <div style="display: flex; justify-content: center; align-items: center; gap: 15px;">
+                                        <div style="width: 50px; height: 50px; border-radius: 50%; background: #d4af37; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">JM</div>
+                                        <div style="text-align: left;">
+                                            <strong class="wb-editable">Jessica & Mark</strong>
+                                            <div style="color: #d4af37;">⭐⭐⭐⭐⭐</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="min-width: 100%; padding: 0 20px;">
+                                    <p class="wb-editable" style="font-size: 20px; font-style: italic; color: #555; margin-bottom: 20px;">"The best photographer we could have asked for! Captured every emotion and detail beautifully."</p>
+                                    <div style="display: flex; justify-content: center; align-items: center; gap: 15px;">
+                                        <div style="width: 50px; height: 50px; border-radius: 50%; background: #d4af37; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">AL</div>
+                                        <div style="text-align: left;">
+                                            <strong class="wb-editable">Anna & Lucas</strong>
+                                            <div style="color: #d4af37;">⭐⭐⭐⭐⭐</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                const canvas = document.getElementById('wb-canvas');
+                if (canvas) {
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = testimonialHTML;
+                    canvas.appendChild(tempDiv.firstElementChild);
+                    this.saveContent();
+                }
+            },
+            
+            addPricingTable() {
+                const pricingHTML = `
+                    <div class="wb-pricing wb-editable" data-type="pricing" style="padding: 60px 40px; margin: 40px 0; text-align: center;">
+                        <h2 class="wb-editable" style="font-size: 36px; margin-bottom: 40px; color: #333;">Investment Options</h2>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; max-width: 1000px; margin: 0 auto;">
+                            <div style="background: white; padding: 40px 30px; border-radius: 15px; box-shadow: 0 5px 30px rgba(0,0,0,0.1); border: 2px solid #f0f0f0;">
+                                <h3 class="wb-editable" style="color: #333; margin-bottom: 10px;">Portrait Session</h3>
+                                <p class="wb-editable" style="font-size: 36px; color: #d4af37; margin: 20px 0; font-weight: bold;">$350</p>
+                                <ul style="text-align: left; color: #666; list-style: none; padding: 0;">
+                                    <li class="wb-editable" style="margin: 10px 0;">✓ 2 Hour Session</li>
+                                    <li class="wb-editable" style="margin: 10px 0;">✓ 50+ Edited Photos</li>
+                                    <li class="wb-editable" style="margin: 10px 0;">✓ Online Gallery</li>
+                                    <li class="wb-editable" style="margin: 10px 0;">✓ Print Rights</li>
+                                </ul>
+                                <button class="wb-editable" style="background: #d4af37; color: white; border: none; padding: 12px 30px; border-radius: 25px; margin-top: 20px; cursor: pointer; width: 100%;">Book Now</button>
+                            </div>
+                            <div style="background: linear-gradient(135deg, #d4af37, #b8941f); padding: 40px 30px; border-radius: 15px; box-shadow: 0 5px 30px rgba(212,175,55,0.3); transform: scale(1.05); color: white;">
+                                <span style="background: white; color: #d4af37; padding: 5px 15px; border-radius: 20px; font-size: 12px; font-weight: bold;">MOST POPULAR</span>
+                                <h3 class="wb-editable" style="margin: 15px 0 10px 0;">Wedding Package</h3>
+                                <p class="wb-editable" style="font-size: 36px; margin: 20px 0; font-weight: bold;">$2,500</p>
+                                <ul style="text-align: left; list-style: none; padding: 0;">
+                                    <li class="wb-editable" style="margin: 10px 0;">✓ Full Day Coverage</li>
+                                    <li class="wb-editable" style="margin: 10px 0;">✓ 300+ Edited Photos</li>
+                                    <li class="wb-editable" style="margin: 10px 0;">✓ Second Photographer</li>
+                                    <li class="wb-editable" style="margin: 10px 0;">✓ Album Included</li>
+                                </ul>
+                                <button class="wb-editable" style="background: white; color: #d4af37; border: none; padding: 12px 30px; border-radius: 25px; margin-top: 20px; cursor: pointer; width: 100%; font-weight: bold;">Book Now</button>
+                            </div>
+                            <div style="background: white; padding: 40px 30px; border-radius: 15px; box-shadow: 0 5px 30px rgba(0,0,0,0.1); border: 2px solid #f0f0f0;">
+                                <h3 class="wb-editable" style="color: #333; margin-bottom: 10px;">Event Coverage</h3>
+                                <p class="wb-editable" style="font-size: 36px; color: #d4af37; margin: 20px 0; font-weight: bold;">$750</p>
+                                <ul style="text-align: left; color: #666; list-style: none; padding: 0;">
+                                    <li class="wb-editable" style="margin: 10px 0;">✓ 4 Hour Coverage</li>
+                                    <li class="wb-editable" style="margin: 10px 0;">✓ 150+ Edited Photos</li>
+                                    <li class="wb-editable" style="margin: 10px 0;">✓ Quick Turnaround</li>
+                                    <li class="wb-editable" style="margin: 10px 0;">✓ Download Link</li>
+                                </ul>
+                                <button class="wb-editable" style="background: #d4af37; color: white; border: none; padding: 12px 30px; border-radius: 25px; margin-top: 20px; cursor: pointer; width: 100%;">Book Now</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                const canvas = document.getElementById('wb-canvas');
+                if (canvas) {
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = pricingHTML;
+                    canvas.appendChild(tempDiv.firstElementChild);
+                    this.saveContent();
+                }
+            },
 
             setupBuilder() {
                 const container = document.getElementById('website-builder-container');
@@ -14387,6 +14684,13 @@ END:VCALENDAR`;
                     </div>
                     <div class="wb-main">
                         <div class="wb-sidebar">
+                            <h3>Templates</h3>
+                            <div class="wb-elements-list">
+                                <button class="wb-element-btn" onclick="WebsiteBuilder.selectTemplate('minimal')">🎨 Minimal</button>
+                                <button class="wb-element-btn" onclick="WebsiteBuilder.selectTemplate('wedding')">💒 Wedding</button>
+                                <button class="wb-element-btn" onclick="WebsiteBuilder.selectTemplate('cinematic')">🎬 Cinematic</button>
+                            </div>
+                            
                             <h3>Basic Elements</h3>
                             <div class="wb-elements-list">
                                 <button class="wb-element-btn" onclick="WebsiteBuilder.addElement('text')">+ Text Block</button>
@@ -14394,13 +14698,20 @@ END:VCALENDAR`;
                                 <button class="wb-element-btn" onclick="WebsiteBuilder.addElement('gallery')">+ Gallery</button>
                                 <button class="wb-element-btn" onclick="WebsiteBuilder.addElement('button')">+ Button</button>
                             </div>
+                            
+                            <h3>Photo Components</h3>
+                            <div class="wb-elements-list">
+                                <button class="wb-element-btn" onclick="WebsiteBuilder.addPhotoSlider()">📸 Photo Slider</button>
+                                <button class="wb-element-btn" onclick="WebsiteBuilder.addTestimonialSlider()">💬 Testimonials</button>
+                                <button class="wb-element-btn" onclick="WebsiteBuilder.addPricingTable()">💰 Pricing Table</button>
+                            </div>
                         </div>
                         
                         <div class="wb-canvas-container">
                             <div class="wb-canvas desktop" id="wb-canvas">
                                 <div style="padding: 40px; text-align: center;">
                                     <h1 class="wb-editable">Welcome to Your Photography Portfolio</h1>
-                                    <p class="wb-editable" style="color: #666;">Click any element to edit or add new elements from the sidebar</p>
+                                    <p class="wb-editable" style="color: #666;">Select a template or click any element to edit</p>
                                 </div>
                             </div>
                         </div>
