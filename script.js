@@ -518,7 +518,12 @@ function createSessionCard(session) {
     const invoiceBtn = document.createElement('button');
     invoiceBtn.className = 'btn btn-info';
     invoiceBtn.textContent = '💰 Send Invoice';
-    invoiceBtn.onclick = () => createInvoice(session);
+    invoiceBtn.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('🔥 INVOICE BUTTON CLICKED - USING NEW TIPPING SYSTEM');
+        createInvoice(session);
+    };
 
     console.log('DEBUG: Creating deposit button for session:', session.clientName);
     const depositBtn = document.createElement('button');
@@ -1136,10 +1141,23 @@ async function sendGalleryNotification(sessionId) {
     }
 }
 
+// Bridge function for HTML templates to use tipping system
+window.createInvoiceWithTipping = function(sessionId) {
+    console.log('🔥 BRIDGE: createInvoiceWithTipping called with sessionId:', sessionId);
+    const session = sessions.find(s => s.id === sessionId);
+    if (!session) {
+        showMessage('Session not found', 'error');
+        return;
+    }
+    console.log('🔥 BRIDGE: Found session, calling createInvoice with tipping system');
+    createInvoice(session);
+};
+
 // Create invoice function with tipping system
 async function createInvoice(session) {
     try {
-        console.log('Creating invoice with tipping system for session:', session);
+        console.log('🔥 NEW TIPPING SYSTEM: Creating invoice with tipping system for session:', session);
+        console.log('🔥 NEW TIPPING SYSTEM: Function called correctly');
 
         showMessage('Creating invoice with tip options...', 'info');
 
