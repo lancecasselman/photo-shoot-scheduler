@@ -13380,6 +13380,336 @@ END:VCALENDAR`;
             font-size: 12px;
             border-left: 3px solid #ff6b6b;
         }
+        
+        /* Advanced Photography Components Styling */
+        .wb-photo-slider {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            overflow: hidden;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .wb-slider-track {
+            display: flex;
+            transition: transform 0.5s ease;
+            height: 100%;
+        }
+        
+        .wb-slider-slide {
+            min-width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        
+        .wb-slider-slide img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .wb-slider-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+        
+        .wb-slider-nav:hover {
+            background: rgba(0, 0, 0, 0.9);
+            transform: translateY(-50%) scale(1.1);
+        }
+        
+        .wb-slider-prev { left: 20px; }
+        .wb-slider-next { right: 20px; }
+        
+        .wb-slider-dots {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+        }
+        
+        .wb-slider-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .wb-slider-dot.active {
+            background: #d4af37;
+            transform: scale(1.2);
+        }
+        
+        /* Lightbox Gallery */
+        .wb-lightbox-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .wb-lightbox-item {
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .wb-lightbox-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .wb-lightbox-item img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            transition: all 0.3s ease;
+        }
+        
+        .wb-lightbox-item:hover img {
+            transform: scale(1.1);
+        }
+        
+        .wb-lightbox-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(212, 175, 55, 0.8), rgba(244, 208, 63, 0.8));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+        }
+        
+        .wb-lightbox-item:hover .wb-lightbox-overlay {
+            opacity: 1;
+        }
+        
+        /* Video Background */
+        .wb-video-background {
+            position: relative;
+            height: 500px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+        }
+        
+        .wb-video-background video {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            transform: translateX(-50%) translateY(-50%);
+            z-index: -1;
+        }
+        
+        .wb-video-background::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 1;
+        }
+        
+        .wb-video-content {
+            position: relative;
+            z-index: 2;
+            max-width: 600px;
+            padding: 40px;
+        }
+        
+        /* Parallax Section */
+        .wb-parallax-section {
+            position: relative;
+            height: 500px;
+            background-attachment: fixed;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+        }
+        
+        .wb-parallax-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+        }
+        
+        .wb-parallax-content {
+            position: relative;
+            z-index: 2;
+            max-width: 600px;
+            padding: 40px;
+        }
+        
+        /* Testimonial Slider */
+        .wb-testimonial-slider {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            padding: 60px 40px;
+            border-radius: 12px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .wb-testimonial-track {
+            display: flex;
+            transition: transform 0.5s ease;
+        }
+        
+        .wb-testimonial-slide {
+            min-width: 100%;
+            padding: 0 20px;
+        }
+        
+        .wb-testimonial-content {
+            font-size: 18px;
+            font-style: italic;
+            color: #555;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        .wb-testimonial-author {
+            font-weight: bold;
+            color: #d4af37;
+            font-size: 16px;
+        }
+        
+        .wb-testimonial-title {
+            color: #888;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
+        /* Pricing Table */
+        .wb-pricing-table {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+        
+        .wb-pricing-card {
+            background: white;
+            border-radius: 12px;
+            padding: 40px 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .wb-pricing-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+        }
+        
+        .wb-pricing-card.featured {
+            border-color: #d4af37;
+            transform: scale(1.05);
+        }
+        
+        .wb-pricing-card.featured::before {
+            content: 'Most Popular';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #d4af37;
+            color: white;
+            padding: 5px 20px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .wb-pricing-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .wb-pricing-price {
+            font-size: 48px;
+            font-weight: bold;
+            color: #d4af37;
+            margin-bottom: 20px;
+        }
+        
+        .wb-pricing-features {
+            list-style: none;
+            padding: 0;
+            margin: 30px 0;
+        }
+        
+        .wb-pricing-features li {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            color: #666;
+        }
+        
+        .wb-pricing-features li:last-child {
+            border-bottom: none;
+        }
+        
+        .wb-pricing-button {
+            background: linear-gradient(135deg, #d4af37, #f4d03f);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        .wb-pricing-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(212, 175, 55, 0.3);
+        }
 
         .wb-main {
             flex: 1;
@@ -13785,7 +14115,17 @@ END:VCALENDAR`;
                                 <button class="wb-template-btn" onclick="WebsiteBuilder.selectTemplate('cinematic')" style="background: linear-gradient(45deg, #d4af37, #f4d03f); color: black; font-weight: bold;">🎬 Cinematic Studio</button>
                             </div>
                             
-                            <h3>Add Elements</h3>
+                            <h3>Photography Components</h3>
+                            <div class="wb-elements-list">
+                                <button class="wb-element-btn" onclick="WebsiteBuilder.addPhotoSlider()">📸 Photo Slider</button>
+                                <button class="wb-element-btn" onclick="WebsiteBuilder.addLightboxGallery()">🖼️ Lightbox Gallery</button>
+                                <button class="wb-element-btn" onclick="WebsiteBuilder.addVideoBackground()">🎥 Video Background</button>
+                                <button class="wb-element-btn" onclick="WebsiteBuilder.addParallaxSection()">✨ Parallax Section</button>
+                                <button class="wb-element-btn" onclick="WebsiteBuilder.addTestimonialSlider()">💬 Testimonials</button>
+                                <button class="wb-element-btn" onclick="WebsiteBuilder.addPricingTable()">💰 Pricing Table</button>
+                            </div>
+                            
+                            <h3>Basic Elements</h3>
                             <div class="wb-elements-list">
                                 <button class="wb-element-btn" onclick="WebsiteBuilder.addElement('text')">+ Text Block</button>
                                 <button class="wb-element-btn" onclick="WebsiteBuilder.addElement('image')">+ Image</button>
@@ -13802,6 +14142,14 @@ END:VCALENDAR`;
                                 </div>
                             </div>
                             <button class="wb-element-btn" onclick="WebsiteBuilder.showAddPageMenu()">+ Add Page</button>
+                            
+                            <h3>Page Templates</h3>
+                            <div class="wb-page-templates">
+                                <button class="wb-template-btn" onclick="WebsiteBuilder.generateAboutPage()">📝 Generate About</button>
+                                <button class="wb-template-btn" onclick="WebsiteBuilder.generateServicesPage()">💼 Generate Services</button>
+                                <button class="wb-template-btn" onclick="WebsiteBuilder.generatePortfolioPage()">📸 Generate Portfolio</button>
+                                <button class="wb-template-btn" onclick="WebsiteBuilder.generateContactPage()">📞 Generate Contact</button>
+                            </div>
                         </div>
                         
                         <div class="wb-canvas-container">
@@ -15568,6 +15916,594 @@ END:VCALENDAR`;
                 // Keep only last 10 items
                 while (historyList.children.length > 10) {
                     historyList.removeChild(historyList.lastChild);
+                }
+            },
+            
+            // Advanced Photography Components
+            addPhotoSlider() {
+                const sliderId = 'slider-' + Date.now();
+                const sliderHTML = `
+                    <div class="wb-photo-slider wb-editable" data-type="photo-slider" style="margin: 20px 0;">
+                        <div class="wb-slider-track" id="${sliderId}-track">
+                            <div class="wb-slider-slide">
+                                <img src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=800&h=400&fit=crop" alt="Wedding Photography">
+                            </div>
+                            <div class="wb-slider-slide">
+                                <img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=800&h=400&fit=crop" alt="Portrait Photography">
+                            </div>
+                            <div class="wb-slider-slide">
+                                <img src="https://images.unsplash.com/photo-1519741497674-611481863552?w=800&h=400&fit=crop" alt="Event Photography">
+                            </div>
+                        </div>
+                        <button class="wb-slider-nav wb-slider-prev" onclick="WebsiteBuilder.sliderPrev('${sliderId}')">‹</button>
+                        <button class="wb-slider-nav wb-slider-next" onclick="WebsiteBuilder.sliderNext('${sliderId}')">›</button>
+                        <div class="wb-slider-dots">
+                            <div class="wb-slider-dot active" onclick="WebsiteBuilder.sliderGoto('${sliderId}', 0)"></div>
+                            <div class="wb-slider-dot" onclick="WebsiteBuilder.sliderGoto('${sliderId}', 1)"></div>
+                            <div class="wb-slider-dot" onclick="WebsiteBuilder.sliderGoto('${sliderId}', 2)"></div>
+                        </div>
+                    </div>
+                `;
+                
+                this.addToCanvas(sliderHTML);
+                this.saveToHistory();
+            },
+            
+            addLightboxGallery() {
+                const galleryHTML = `
+                    <div class="wb-lightbox-gallery wb-editable" data-type="lightbox-gallery" style="margin: 20px 0;">
+                        <div class="wb-lightbox-item" onclick="WebsiteBuilder.openLightbox(this)">
+                            <img src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=400&h=300&fit=crop" alt="Portfolio Image 1">
+                            <div class="wb-lightbox-overlay">🔍</div>
+                        </div>
+                        <div class="wb-lightbox-item" onclick="WebsiteBuilder.openLightbox(this)">
+                            <img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400&h=300&fit=crop" alt="Portfolio Image 2">
+                            <div class="wb-lightbox-overlay">🔍</div>
+                        </div>
+                        <div class="wb-lightbox-item" onclick="WebsiteBuilder.openLightbox(this)">
+                            <img src="https://images.unsplash.com/photo-1519741497674-611481863552?w=400&h=300&fit=crop" alt="Portfolio Image 3">
+                            <div class="wb-lightbox-overlay">🔍</div>
+                        </div>
+                        <div class="wb-lightbox-item" onclick="WebsiteBuilder.openLightbox(this)">
+                            <img src="https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=400&h=300&fit=crop" alt="Portfolio Image 4">
+                            <div class="wb-lightbox-overlay">🔍</div>
+                        </div>
+                    </div>
+                `;
+                
+                this.addToCanvas(galleryHTML);
+                this.saveToHistory();
+            },
+            
+            addVideoBackground() {
+                const videoHTML = `
+                    <div class="wb-video-background wb-editable" data-type="video-background" style="margin: 20px 0;">
+                        <video autoplay muted loop>
+                            <source src="https://player.vimeo.com/external/371433846.sd.mp4?s=236da2f3c0fd273d2c6d9a064f3ae35579b2bbdf&profile_id=165&oauth2_token_id=57447761" type="video/mp4">
+                        </video>
+                        <div class="wb-video-content">
+                            <h2 style="font-size: 48px; margin-bottom: 20px; font-weight: bold;">Capturing Your Perfect Moments</h2>
+                            <p style="font-size: 20px; margin-bottom: 30px;">Professional photography that tells your unique story</p>
+                            <button style="background: #d4af37; color: white; border: none; padding: 15px 30px; border-radius: 25px; font-size: 16px; cursor: pointer;">Book Your Session</button>
+                        </div>
+                    </div>
+                `;
+                
+                this.addToCanvas(videoHTML);
+                this.saveToHistory();
+            },
+            
+            addParallaxSection() {
+                const parallaxHTML = `
+                    <div class="wb-parallax-section wb-editable" data-type="parallax" style="margin: 20px 0; background-image: url('https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=1200&h=600&fit=crop');">
+                        <div class="wb-parallax-content">
+                            <h2 style="font-size: 42px; margin-bottom: 20px; font-weight: bold;">Your Story Deserves Beautiful Photography</h2>
+                            <p style="font-size: 18px; margin-bottom: 30px;">From intimate moments to grand celebrations, we capture it all with artistic vision and technical excellence.</p>
+                            <button style="background: rgba(212, 175, 55, 0.9); color: white; border: none; padding: 15px 30px; border-radius: 25px; font-size: 16px; cursor: pointer;">View Our Work</button>
+                        </div>
+                    </div>
+                `;
+                
+                this.addToCanvas(parallaxHTML);
+                this.saveToHistory();
+            },
+            
+            addTestimonialSlider() {
+                const testimonialId = 'testimonial-' + Date.now();
+                const testimonialHTML = `
+                    <div class="wb-testimonial-slider wb-editable" data-type="testimonial-slider" style="margin: 20px 0;">
+                        <h2 style="text-align: center; margin-bottom: 40px; color: #333; font-size: 36px;">What Our Clients Say</h2>
+                        <div class="wb-testimonial-track" id="${testimonialId}-track">
+                            <div class="wb-testimonial-slide">
+                                <div class="wb-testimonial-content">"Absolutely stunning work! They captured our wedding day perfectly and we couldn't be happier with the results. Every photo tells a story."</div>
+                                <div class="wb-testimonial-author">Sarah & Michael Johnson</div>
+                                <div class="wb-testimonial-title">Wedding Photography</div>
+                            </div>
+                            <div class="wb-testimonial-slide">
+                                <div class="wb-testimonial-content">"Professional, creative, and so easy to work with. Our family portraits are now our most treasured possessions. Highly recommended!"</div>
+                                <div class="wb-testimonial-author">The Williams Family</div>
+                                <div class="wb-testimonial-title">Family Portraits</div>
+                            </div>
+                            <div class="wb-testimonial-slide">
+                                <div class="wb-testimonial-content">"The attention to detail and artistic vision is incredible. These photos exceeded all our expectations and captured the essence of our special day."</div>
+                                <div class="wb-testimonial-author">Emily & David Chen</div>
+                                <div class="wb-testimonial-title">Engagement Session</div>
+                            </div>
+                        </div>
+                        <div class="wb-slider-dots" style="margin-top: 30px;">
+                            <div class="wb-slider-dot active" onclick="WebsiteBuilder.testimonialGoto('${testimonialId}', 0)"></div>
+                            <div class="wb-slider-dot" onclick="WebsiteBuilder.testimonialGoto('${testimonialId}', 1)"></div>
+                            <div class="wb-slider-dot" onclick="WebsiteBuilder.testimonialGoto('${testimonialId}', 2)"></div>
+                        </div>
+                    </div>
+                `;
+                
+                this.addToCanvas(testimonialHTML);
+                this.saveToHistory();
+            },
+            
+            addPricingTable() {
+                const pricingHTML = `
+                    <div class="wb-pricing-table wb-editable" data-type="pricing-table" style="margin: 40px 0;">
+                        <div class="wb-pricing-card">
+                            <div class="wb-pricing-title">Portrait Session</div>
+                            <div class="wb-pricing-price">$299</div>
+                            <ul class="wb-pricing-features">
+                                <li>1 Hour Photo Session</li>
+                                <li>Multiple Outfit Changes</li>
+                                <li>20 Edited High-Res Images</li>
+                                <li>Online Gallery Access</li>
+                                <li>Print Release Included</li>
+                            </ul>
+                            <button class="wb-pricing-button">Book Now</button>
+                        </div>
+                        <div class="wb-pricing-card featured">
+                            <div class="wb-pricing-title">Wedding Package</div>
+                            <div class="wb-pricing-price">$2,499</div>
+                            <ul class="wb-pricing-features">
+                                <li>8 Hours Wedding Coverage</li>
+                                <li>Engagement Session Included</li>
+                                <li>500+ Edited Images</li>
+                                <li>Online Gallery & App</li>
+                                <li>USB Drive with All Photos</li>
+                                <li>Print Credits Included</li>
+                            </ul>
+                            <button class="wb-pricing-button">Book Now</button>
+                        </div>
+                        <div class="wb-pricing-card">
+                            <div class="wb-pricing-title">Event Coverage</div>
+                            <div class="wb-pricing-price">$899</div>
+                            <ul class="wb-pricing-features">
+                                <li>4 Hours Event Coverage</li>
+                                <li>Candid & Posed Photos</li>
+                                <li>100+ Edited Images</li>
+                                <li>Same Day Previews</li>
+                                <li>Online Gallery Access</li>
+                            </ul>
+                            <button class="wb-pricing-button">Book Now</button>
+                        </div>
+                    </div>
+                `;
+                
+                this.addToCanvas(pricingHTML);
+                this.saveToHistory();
+            },
+            
+            // Slider functionality
+            sliderPrev(sliderId) {
+                const track = document.getElementById(sliderId + '-track');
+                const slides = track.children;
+                const currentIndex = parseInt(track.dataset.currentIndex || '0');
+                const newIndex = currentIndex === 0 ? slides.length - 1 : currentIndex - 1;
+                
+                track.style.transform = `translateX(-${newIndex * 100}%)`;
+                track.dataset.currentIndex = newIndex;
+                
+                this.updateSliderDots(sliderId, newIndex);
+            },
+            
+            sliderNext(sliderId) {
+                const track = document.getElementById(sliderId + '-track');
+                const slides = track.children;
+                const currentIndex = parseInt(track.dataset.currentIndex || '0');
+                const newIndex = currentIndex === slides.length - 1 ? 0 : currentIndex + 1;
+                
+                track.style.transform = `translateX(-${newIndex * 100}%)`;
+                track.dataset.currentIndex = newIndex;
+                
+                this.updateSliderDots(sliderId, newIndex);
+            },
+            
+            sliderGoto(sliderId, index) {
+                const track = document.getElementById(sliderId + '-track');
+                track.style.transform = `translateX(-${index * 100}%)`;
+                track.dataset.currentIndex = index;
+                
+                this.updateSliderDots(sliderId, index);
+            },
+            
+            updateSliderDots(sliderId, activeIndex) {
+                const slider = document.getElementById(sliderId + '-track').parentElement;
+                const dots = slider.querySelectorAll('.wb-slider-dot');
+                
+                dots.forEach((dot, index) => {
+                    dot.classList.toggle('active', index === activeIndex);
+                });
+            },
+            
+            testimonialGoto(testimonialId, index) {
+                const track = document.getElementById(testimonialId + '-track');
+                track.style.transform = `translateX(-${index * 100}%)`;
+                
+                const slider = track.parentElement;
+                const dots = slider.querySelectorAll('.wb-slider-dot');
+                dots.forEach((dot, i) => {
+                    dot.classList.toggle('active', i === index);
+                });
+            },
+            
+            openLightbox(item) {
+                const img = item.querySelector('img');
+                const lightboxHTML = `
+                    <div class="wb-lightbox-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; display: flex; align-items: center; justify-content: center;" onclick="this.remove()">
+                        <img src="${img.src}" style="max-width: 90%; max-height: 90%; object-fit: contain;" onclick="event.stopPropagation()">
+                        <button style="position: absolute; top: 20px; right: 20px; background: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 20px;" onclick="this.parentElement.remove()">×</button>
+                    </div>
+                `;
+                
+                document.body.insertAdjacentHTML('beforeend', lightboxHTML);
+            },
+            
+            // Page Generation Functions
+            generateAboutPage() {
+                this.addNewPage('about', 'About');
+                this.switchPage('about');
+                
+                const aboutHTML = `
+                    <div style="padding: 60px 40px; max-width: 1200px; margin: 0 auto;">
+                        <div style="text-align: center; margin-bottom: 60px;">
+                            <h1 style="font-size: 48px; margin-bottom: 20px; color: #333;">About Our Studio</h1>
+                            <p style="font-size: 20px; color: #666; max-width: 600px; margin: 0 auto;">Passionate photographers dedicated to capturing life's most precious moments with artistry and authenticity.</p>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; margin-bottom: 80px;">
+                            <div>
+                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&h=600&fit=crop" style="width: 100%; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.1);">
+                            </div>
+                            <div>
+                                <h2 style="font-size: 36px; margin-bottom: 20px; color: #d4af37;">Our Story</h2>
+                                <p style="font-size: 16px; line-height: 1.8; color: #666; margin-bottom: 20px;">With over 10 years of experience, we've had the privilege of documenting thousands of special moments. From intimate weddings to corporate events, we bring the same level of passion and professionalism to every shoot.</p>
+                                <p style="font-size: 16px; line-height: 1.8; color: #666; margin-bottom: 30px;">Our approach combines technical expertise with genuine storytelling, ensuring that every image captures not just how you looked, but how you felt.</p>
+                                <button style="background: #d4af37; color: white; border: none; padding: 15px 30px; border-radius: 25px; font-size: 16px; cursor: pointer;">Contact Us</button>
+                            </div>
+                        </div>
+                        
+                        <div style="text-align: center; background: #f8f9fa; padding: 60px 40px; border-radius: 12px;">
+                            <h2 style="font-size: 36px; margin-bottom: 40px; color: #333;">Our Values</h2>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 40px;">
+                                <div>
+                                    <h3 style="font-size: 24px; margin-bottom: 15px; color: #d4af37;">Authenticity</h3>
+                                    <p style="color: #666;">We capture genuine emotions and natural moments that reflect your true personality.</p>
+                                </div>
+                                <div>
+                                    <h3 style="font-size: 24px; margin-bottom: 15px; color: #d4af37;">Excellence</h3>
+                                    <p style="color: #666;">Every image is carefully crafted with attention to detail and artistic vision.</p>
+                                </div>
+                                <div>
+                                    <h3 style="font-size: 24px; margin-bottom: 15px; color: #d4af37;">Service</h3>
+                                    <p style="color: #666;">Your experience matters as much as the final photos. We're here to serve you.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                const canvas = document.getElementById('wb-canvas');
+                canvas.innerHTML = aboutHTML;
+                this.setupEditableElements();
+                this.saveToHistory();
+            },
+            
+            generateServicesPage() {
+                this.addNewPage('services', 'Services');
+                this.switchPage('services');
+                
+                const servicesHTML = `
+                    <div style="padding: 60px 40px; max-width: 1200px; margin: 0 auto;">
+                        <div style="text-align: center; margin-bottom: 60px;">
+                            <h1 style="font-size: 48px; margin-bottom: 20px; color: #333;">Our Services</h1>
+                            <p style="font-size: 20px; color: #666; max-width: 600px; margin: 0 auto;">Professional photography services tailored to capture your most important moments with artistic excellence.</p>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 40px; margin-bottom: 60px;">
+                            <div style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); transition: transform 0.3s ease;">
+                                <img src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=400&h=250&fit=crop" style="width: 100%; height: 250px; object-fit: cover;">
+                                <div style="padding: 30px;">
+                                    <h3 style="font-size: 24px; margin-bottom: 15px; color: #333;">Wedding Photography</h3>
+                                    <p style="color: #666; margin-bottom: 20px; line-height: 1.6;">Complete wedding day coverage from getting ready to the final dance. Includes engagement session and online gallery.</p>
+                                    <div style="font-size: 28px; font-weight: bold; color: #d4af37; margin-bottom: 20px;">Starting at $2,499</div>
+                                    <button style="background: #d4af37; color: white; border: none; padding: 12px 24px; border-radius: 20px; cursor: pointer; width: 100%;">Learn More</button>
+                                </div>
+                            </div>
+                            
+                            <div style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); transition: transform 0.3s ease;">
+                                <img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400&h=250&fit=crop" style="width: 100%; height: 250px; object-fit: cover;">
+                                <div style="padding: 30px;">
+                                    <h3 style="font-size: 24px; margin-bottom: 15px; color: #333;">Portrait Sessions</h3>
+                                    <p style="color: #666; margin-bottom: 20px; line-height: 1.6;">Individual, couple, and family portraits in studio or on location. Perfect for personal branding or family memories.</p>
+                                    <div style="font-size: 28px; font-weight: bold; color: #d4af37; margin-bottom: 20px;">Starting at $299</div>
+                                    <button style="background: #d4af37; color: white; border: none; padding: 12px 24px; border-radius: 20px; cursor: pointer; width: 100%;">Learn More</button>
+                                </div>
+                            </div>
+                            
+                            <div style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); transition: transform 0.3s ease;">
+                                <img src="https://images.unsplash.com/photo-1519741497674-611481863552?w=400&h=250&fit=crop" style="width: 100%; height: 250px; object-fit: cover;">
+                                <div style="padding: 30px;">
+                                    <h3 style="font-size: 24px; margin-bottom: 15px; color: #333;">Event Coverage</h3>
+                                    <p style="color: #666; margin-bottom: 20px; line-height: 1.6;">Corporate events, parties, and celebrations. Professional documentation with quick turnaround times.</p>
+                                    <div style="font-size: 28px; font-weight: bold; color: #d4af37; margin-bottom: 20px;">Starting at $899</div>
+                                    <button style="background: #d4af37; color: white; border: none; padding: 12px 24px; border-radius: 20px; cursor: pointer; width: 100%;">Learn More</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="background: linear-gradient(135deg, #d4af37, #f4d03f); padding: 60px 40px; border-radius: 12px; text-align: center; color: white;">
+                            <h2 style="font-size: 36px; margin-bottom: 20px;">Ready to Book Your Session?</h2>
+                            <p style="font-size: 18px; margin-bottom: 30px; opacity: 0.9;">Let's discuss your vision and create something beautiful together.</p>
+                            <button style="background: white; color: #d4af37; border: none; padding: 15px 30px; border-radius: 25px; font-size: 16px; font-weight: bold; cursor: pointer;">Get In Touch</button>
+                        </div>
+                    </div>
+                `;
+                
+                const canvas = document.getElementById('wb-canvas');
+                canvas.innerHTML = servicesHTML;
+                this.setupEditableElements();
+                this.saveToHistory();
+            },
+            
+            generatePortfolioPage() {
+                this.addNewPage('portfolio', 'Portfolio');
+                this.switchPage('portfolio');
+                
+                const portfolioHTML = `
+                    <div style="padding: 60px 40px; max-width: 1400px; margin: 0 auto;">
+                        <div style="text-align: center; margin-bottom: 60px;">
+                            <h1 style="font-size: 48px; margin-bottom: 20px; color: #333;">Our Portfolio</h1>
+                            <p style="font-size: 20px; color: #666; max-width: 600px; margin: 0 auto;">A collection of our finest work, showcasing the beauty and emotion we capture in every session.</p>
+                        </div>
+                        
+                        <div style="margin-bottom: 40px; text-align: center;">
+                            <button style="background: #d4af37; color: white; border: none; padding: 10px 20px; margin: 0 5px; border-radius: 20px; cursor: pointer;">All</button>
+                            <button style="background: #f8f9fa; color: #666; border: none; padding: 10px 20px; margin: 0 5px; border-radius: 20px; cursor: pointer;">Weddings</button>
+                            <button style="background: #f8f9fa; color: #666; border: none; padding: 10px 20px; margin: 0 5px; border-radius: 20px; cursor: pointer;">Portraits</button>
+                            <button style="background: #f8f9fa; color: #666; border: none; padding: 10px 20px; margin: 0 5px; border-radius: 20px; cursor: pointer;">Events</button>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 60px;">
+                            <div style="position: relative; overflow: hidden; border-radius: 8px; cursor: pointer;" onclick="WebsiteBuilder.openLightbox(this)">
+                                <img src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=400&h=400&fit=crop" style="width: 100%; height: 300px; object-fit: cover; transition: transform 0.3s ease;">
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(45deg, rgba(212, 175, 55, 0.8), rgba(244, 208, 63, 0.8)); opacity: 0; transition: opacity 0.3s ease; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;">🔍</div>
+                            </div>
+                            <div style="position: relative; overflow: hidden; border-radius: 8px; cursor: pointer;" onclick="WebsiteBuilder.openLightbox(this)">
+                                <img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400&h=400&fit=crop" style="width: 100%; height: 300px; object-fit: cover; transition: transform 0.3s ease;">
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(45deg, rgba(212, 175, 55, 0.8), rgba(244, 208, 63, 0.8)); opacity: 0; transition: opacity 0.3s ease; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;">🔍</div>
+                            </div>
+                            <div style="position: relative; overflow: hidden; border-radius: 8px; cursor: pointer;" onclick="WebsiteBuilder.openLightbox(this)">
+                                <img src="https://images.unsplash.com/photo-1519741497674-611481863552?w=400&h=400&fit=crop" style="width: 100%; height: 300px; object-fit: cover; transition: transform 0.3s ease;">
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(45deg, rgba(212, 175, 55, 0.8), rgba(244, 208, 63, 0.8)); opacity: 0; transition: opacity 0.3s ease; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;">🔍</div>
+                            </div>
+                            <div style="position: relative; overflow: hidden; border-radius: 8px; cursor: pointer;" onclick="WebsiteBuilder.openLightbox(this)">
+                                <img src="https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=400&h=400&fit=crop" style="width: 100%; height: 300px; object-fit: cover; transition: transform 0.3s ease;">
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(45deg, rgba(212, 175, 55, 0.8), rgba(244, 208, 63, 0.8)); opacity: 0; transition: opacity 0.3s ease; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;">🔍</div>
+                            </div>
+                            <div style="position: relative; overflow: hidden; border-radius: 8px; cursor: pointer;" onclick="WebsiteBuilder.openLightbox(this)">
+                                <img src="https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=400&h=400&fit=crop" style="width: 100%; height: 300px; object-fit: cover; transition: transform 0.3s ease;">
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(45deg, rgba(212, 175, 55, 0.8), rgba(244, 208, 63, 0.8)); opacity: 0; transition: opacity 0.3s ease; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;">🔍</div>
+                            </div>
+                            <div style="position: relative; overflow: hidden; border-radius: 8px; cursor: pointer;" onclick="WebsiteBuilder.openLightbox(this)">
+                                <img src="https://images.unsplash.com/photo-1522673607200-164d1b6ce486?w=400&h=400&fit=crop" style="width: 100%; height: 300px; object-fit: cover; transition: transform 0.3s ease;">
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(45deg, rgba(212, 175, 55, 0.8), rgba(244, 208, 63, 0.8)); opacity: 0; transition: opacity 0.3s ease; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;">🔍</div>
+                            </div>
+                        </div>
+                        
+                        <div style="text-align: center; background: #f8f9fa; padding: 60px 40px; border-radius: 12px;">
+                            <h2 style="font-size: 36px; margin-bottom: 20px; color: #333;">Love What You See?</h2>
+                            <p style="font-size: 18px; margin-bottom: 30px; color: #666;">Let's create something beautiful together for your special occasion.</p>
+                            <button style="background: #d4af37; color: white; border: none; padding: 15px 30px; border-radius: 25px; font-size: 16px; cursor: pointer;">Book Your Session</button>
+                        </div>
+                    </div>
+                `;
+                
+                const canvas = document.getElementById('wb-canvas');
+                canvas.innerHTML = portfolioHTML;
+                this.setupEditableElements();
+                this.saveToHistory();
+            },
+            
+            generateContactPage() {
+                this.addNewPage('contact', 'Contact');
+                this.switchPage('contact');
+                
+                const contactHTML = `
+                    <div style="padding: 60px 40px; max-width: 1200px; margin: 0 auto;">
+                        <div style="text-align: center; margin-bottom: 60px;">
+                            <h1 style="font-size: 48px; margin-bottom: 20px; color: #333;">Get In Touch</h1>
+                            <p style="font-size: 20px; color: #666; max-width: 600px; margin: 0 auto;">Ready to capture your special moments? We'd love to hear from you and discuss your photography needs.</p>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start;">
+                            <div style="background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+                                <h2 style="font-size: 28px; margin-bottom: 30px; color: #333;">Send Us a Message</h2>
+                                <form style="display: grid; gap: 20px;">
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                                        <input type="text" placeholder="First Name" style="padding: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px;">
+                                        <input type="text" placeholder="Last Name" style="padding: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px;">
+                                    </div>
+                                    <input type="email" placeholder="Email Address" style="padding: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px;">
+                                    <input type="tel" placeholder="Phone Number" style="padding: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px;">
+                                    <select style="padding: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; color: #666;">
+                                        <option>Select Service Type</option>
+                                        <option>Wedding Photography</option>
+                                        <option>Portrait Session</option>
+                                        <option>Event Coverage</option>
+                                        <option>Other</option>
+                                    </select>
+                                    <input type="date" placeholder="Preferred Date" style="padding: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px;">
+                                    <textarea placeholder="Tell us about your vision..." rows="5" style="padding: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; resize: vertical;"></textarea>
+                                    <button type="submit" style="background: #d4af37; color: white; border: none; padding: 15px 30px; border-radius: 8px; font-size: 16px; cursor: pointer; transition: background 0.3s ease;">Send Message</button>
+                                </form>
+                            </div>
+                            
+                            <div>
+                                <div style="margin-bottom: 40px;">
+                                    <h3 style="font-size: 24px; margin-bottom: 20px; color: #333;">Contact Information</h3>
+                                    <div style="display: grid; gap: 20px;">
+                                        <div style="display: flex; align-items: center; gap: 15px;">
+                                            <div style="width: 50px; height: 50px; background: #d4af37; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px;">📧</div>
+                                            <div>
+                                                <div style="font-weight: bold; color: #333;">Email</div>
+                                                <div style="color: #666;">hello@studiophoto.com</div>
+                                            </div>
+                                        </div>
+                                        <div style="display: flex; align-items: center; gap: 15px;">
+                                            <div style="width: 50px; height: 50px; background: #d4af37; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px;">📞</div>
+                                            <div>
+                                                <div style="font-weight: bold; color: #333;">Phone</div>
+                                                <div style="color: #666;">(555) 123-4567</div>
+                                            </div>
+                                        </div>
+                                        <div style="display: flex; align-items: center; gap: 15px;">
+                                            <div style="width: 50px; height: 50px; background: #d4af37; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px;">📍</div>
+                                            <div>
+                                                <div style="font-weight: bold; color: #333;">Studio</div>
+                                                <div style="color: #666;">123 Photography Lane<br>Creative District, NY 10001</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div style="background: #f8f9fa; padding: 30px; border-radius: 12px;">
+                                    <h3 style="font-size: 20px; margin-bottom: 15px; color: #333;">Studio Hours</h3>
+                                    <div style="display: grid; gap: 10px; color: #666;">
+                                        <div style="display: flex; justify-content: space-between;">
+                                            <span>Monday - Friday</span>
+                                            <span>9:00 AM - 6:00 PM</span>
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between;">
+                                            <span>Saturday</span>
+                                            <span>10:00 AM - 4:00 PM</span>
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between;">
+                                            <span>Sunday</span>
+                                            <span>By Appointment</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                const canvas = document.getElementById('wb-canvas');
+                canvas.innerHTML = contactHTML;
+                this.setupEditableElements();
+                this.saveToHistory();
+            },
+            
+            // Multi-page functionality
+            addNewPage(pageId, pageName) {
+                if (!pageId) pageId = 'page-' + Date.now();
+                if (!pageName) pageName = 'New Page';
+                
+                if (!this.pages) this.pages = {};
+                this.pages[pageId] = {
+                    name: pageName,
+                    content: '<div style="padding: 40px; text-align: center;"><h1>New Page</h1><p>Start building your page content here.</p></div>'
+                };
+                
+                const pageList = document.getElementById('wb-page-list');
+                const pageItem = document.createElement('div');
+                pageItem.className = 'wb-page-item';
+                pageItem.textContent = pageName;
+                pageItem.onclick = (e) => this.switchPage(pageId, e);
+                pageItem.dataset.pageId = pageId;
+                pageList.appendChild(pageItem);
+                
+                this.savePages();
+            },
+            
+            switchPage(pageId, event) {
+                if (event) event.stopPropagation();
+                
+                // Save current page content
+                if (this.currentPage && this.pages && this.pages[this.currentPage]) {
+                    const canvas = document.getElementById('wb-canvas');
+                    this.pages[this.currentPage].content = canvas.innerHTML;
+                }
+                
+                // Switch to new page
+                this.currentPage = pageId;
+                
+                // Update page list active state
+                document.querySelectorAll('.wb-page-item').forEach(item => {
+                    item.classList.toggle('active', item.dataset.pageId === pageId);
+                });
+                
+                // Load page content
+                if (this.pages && this.pages[pageId]) {
+                    const canvas = document.getElementById('wb-canvas');
+                    canvas.innerHTML = this.pages[pageId].content;
+                    this.setupEditableElements();
+                } else if (pageId === 'home') {
+                    // Default home page content
+                    const canvas = document.getElementById('wb-canvas');
+                    canvas.innerHTML = '<div style="padding: 40px;"><h1 class="wb-editable" style="text-align: center; margin-bottom: 20px;">Welcome to Your Photography Portfolio</h1><p class="wb-editable" style="text-align: center; color: #666;">Click any element to edit or add new elements from the sidebar</p></div>';
+                    this.setupEditableElements();
+                }
+                
+                this.savePages();
+            },
+            
+            showAddPageMenu() {
+                const pageName = prompt('Enter page name:');
+                if (pageName) {
+                    const pageId = pageName.toLowerCase().replace(/\s+/g, '-');
+                    this.addNewPage(pageId, pageName);
+                    this.switchPage(pageId);
+                }
+            },
+            
+            savePages() {
+                if (this.pages) {
+                    localStorage.setItem('wb-pages', JSON.stringify(this.pages));
+                }
+            },
+            
+            loadPages() {
+                const saved = localStorage.getItem('wb-pages');
+                if (saved) {
+                    this.pages = JSON.parse(saved);
+                    
+                    // Rebuild page list
+                    const pageList = document.getElementById('wb-page-list');
+                    const homeItem = pageList.querySelector('[data-page-id="home"]') || pageList.children[0];
+                    
+                    // Clear existing pages except home
+                    Array.from(pageList.children).forEach(item => {
+                        if (item !== homeItem) item.remove();
+                    });
+                    
+                    // Add saved pages
+                    Object.entries(this.pages).forEach(([pageId, page]) => {
+                        if (pageId !== 'home') {
+                            const pageItem = document.createElement('div');
+                            pageItem.className = 'wb-page-item';
+                            pageItem.textContent = page.name;
+                            pageItem.onclick = (e) => this.switchPage(pageId, e);
+                            pageItem.dataset.pageId = pageId;
+                            pageList.appendChild(pageItem);
+                        }
+                    });
                 }
             }
         };
