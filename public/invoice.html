@@ -418,9 +418,7 @@
                     
                     // Always fetch complete session data from server to get email and proper client info
                     if (sessionId) {
-                        fetchCompleteSessionData(sessionId).then(() => {
-                            displayInvoiceData();
-                        });
+                        fetchCompleteSessionData(sessionId);
                     } else {
                         displayInvoiceData();
                     }
@@ -476,9 +474,9 @@
             document.getElementById('due-date').textContent = new Date(invoiceData.dueDate).toLocaleDateString();
             document.getElementById('status').textContent = invoiceData.status.charAt(0).toUpperCase() + invoiceData.status.slice(1);
             
-            // Fill in session details
-            document.getElementById('client-name').textContent = invoiceData.session.clientName;
-            document.getElementById('session-type').textContent = invoiceData.session.sessionType;
+            // Fill in session details (with fallbacks)
+            document.getElementById('client-name').textContent = invoiceData.session.clientName || 'Photography Client';
+            document.getElementById('session-type').textContent = invoiceData.session.sessionType || 'Photography Session';
             document.getElementById('session-date').textContent = new Date(invoiceData.session.dateTime).toLocaleDateString();
             
             // Fill in payment details
@@ -488,6 +486,9 @@
             selectedTipAmount = invoiceData.tipAmount;
             updateTipDisplay();
             updateTotal();
+            
+            // Log final invoice data for debugging
+            console.log('📄 Final invoice data displayed:', invoiceData);
         }
         
         // Select percentage tip
@@ -607,6 +608,36 @@
             errorDiv.textContent = message;
             errorDiv.style.display = 'block';
             document.getElementById('success-message').style.display = 'none';
+        }
+        
+        // Fetch complete session data from server
+        async function fetchCompleteSessionData(sessionId) {
+            try {
+                console.log('🔍 Fetching complete session data from server for session:', sessionId);
+                const response = await fetch(`/api/sessions/${sessionId}`);
+                if (response.ok) {
+                    const sessionData = await response.json();
+                    console.log('📋 Complete session data received:', sessionData);
+                    
+                    // Update invoice data with complete session information
+                    if (sessionData) {
+                        invoiceData.session.clientName = sessionData.clientName || sessionData.client_name || 'Photography Client';
+                        invoiceData.session.clientEmail = sessionData.email;
+                        invoiceData.session.sessionType = sessionData.sessionType || sessionData.session_type || 'Photography Session';
+                        invoiceData.session.dateTime = sessionData.dateTime || sessionData.date_time || new Date().toISOString();
+                        invoiceData.session.phoneNumber = sessionData.phoneNumber || sessionData.phone_number;
+                        
+                        console.log('✅ Invoice data updated with session details:', invoiceData.session);
+                        
+                        // Refresh the display with updated session data
+                        displayInvoiceData();
+                    }
+                } else {
+                    console.warn('Failed to fetch session data:', response.status);
+                }
+            } catch (error) {
+                console.error('Error fetching complete session data:', error);
+            }
         }
         
         // Fetch session email from server as fallback
