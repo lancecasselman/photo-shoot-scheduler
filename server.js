@@ -7047,10 +7047,13 @@ app.post('/api/sessions/:id/send-invoice', async (req, res) => {
             paymentRecordId = require('uuid').v4();
             
             // Create a basic payment plan
+            const startDate = new Date();
+            const endDate = new Date(Date.now() + (isDeposit ? 14 : 30) * 24 * 60 * 60 * 1000);
+            
             await pool.query(`
-                INSERT INTO payment_plans (id, session_id, user_id, total_amount, payment_count, created_at, updated_at)
-                VALUES ($1, $2, $3, $4, 1, NOW(), NOW())
-            `, [planId, sessionId, session.userId || '44735007', invoiceAmount]);
+                INSERT INTO payment_plans (id, session_id, user_id, total_amount, monthly_payment, start_date, end_date, total_payments, remaining_balance, next_payment_date, created_at, updated_at)
+                VALUES ($1, $2, $3, $4, $4, $5, $6, 1, $4, $6, NOW(), NOW())
+            `, [planId, sessionId, session.userId || '44735007', invoiceAmount, startDate, endDate]);
             
             // Create payment record with the plan
             await pool.query(`
