@@ -13997,12 +13997,13 @@ END:VCALENDAR`;
             right: 0;
             bottom: 0;
             background: #f5f5f5;
-            z-index: 15;
+            z-index: 9999;
         }
 
         .wb-mobile-layout.active {
-            display: flex;
+            display: flex !important;
             flex-direction: column;
+            visibility: visible !important;
         }
 
         .wb-mobile-top-toolbar {
@@ -16948,14 +16949,39 @@ END:VCALENDAR`;
                 // Save current content before switching
                 this.saveCurrentContent();
                 
-                // Hide regular layout and header, show mobile layout
-                if (regularLayout) regularLayout.style.display = 'none';
-                if (header) header.style.display = 'none';
+                // Hide ALL other interfaces completely
+                if (regularLayout) {
+                    regularLayout.style.display = 'none';
+                    regularLayout.style.visibility = 'hidden';
+                }
+                if (header) {
+                    header.style.display = 'none';
+                    header.style.visibility = 'hidden';
+                }
+                
+                // Hide any edit panels or overlays
+                const editPanel = document.querySelector('.wb-edit-panel');
+                if (editPanel) editPanel.style.display = 'none';
+                
+                const aiEditor = document.querySelector('.wb-ai-editor');
+                if (aiEditor) aiEditor.style.display = 'none';
+                
+                // Show mobile layout with highest z-index and force visibility
+                mobileLayout.style.display = 'flex';
+                mobileLayout.style.visibility = 'visible';
+                mobileLayout.style.zIndex = '9999';
+                mobileLayout.style.position = 'fixed';
+                mobileLayout.style.top = '0';
+                mobileLayout.style.left = '0';
+                mobileLayout.style.right = '0';
+                mobileLayout.style.bottom = '0';
+                mobileLayout.style.background = '#f5f5f5';
                 mobileLayout.classList.add('active');
                 
                 // Update current device
                 this.currentDevice = 'mobile';
                 console.log('Device set to mobile:', this.currentDevice);
+                console.log('Mobile layout displayed:', mobileLayout.style.display);
                 
                 // Load mobile-specific content
                 this.loadMobileContent();
@@ -16974,10 +17000,20 @@ END:VCALENDAR`;
                 // Save mobile content before switching
                 this.saveMobileContent();
                 
-                // Show regular layout and header, hide mobile layout
-                if (regularLayout) regularLayout.style.display = 'flex';
-                if (header) header.style.display = 'flex';
+                // Hide mobile layout completely
+                mobileLayout.style.display = 'none';
+                mobileLayout.style.visibility = 'hidden';
                 mobileLayout.classList.remove('active');
+                
+                // Show regular layout and header
+                if (regularLayout) {
+                    regularLayout.style.display = 'flex';
+                    regularLayout.style.visibility = 'visible';
+                }
+                if (header) {
+                    header.style.display = 'flex';
+                    header.style.visibility = 'visible';
+                }
                 
                 // Reset to desktop device
                 this.currentDevice = 'desktop';
