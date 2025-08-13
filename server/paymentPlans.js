@@ -460,57 +460,96 @@ class PaymentPlanManager {
 
   // Update tip amount for a payment record
   async updateTipAmount(paymentId, tipAmount) {
+    const { Pool } = require('pg');
+    const pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    });
+
+    let client;
     try {
-      await db.update(paymentRecords)
-        .set({ tipAmount: tipAmount.toString() })
-        .where(eq(paymentRecords.id, paymentId));
+      client = await pool.connect();
+      
+      await client.query(`
+        UPDATE payment_records 
+        SET tip_amount = $1
+        WHERE id = $2
+      `, [tipAmount.toString(), paymentId]);
       
       console.log(`SUCCESS: Tip amount updated for payment ${paymentId}: $${tipAmount}`);
       return true;
     } catch (error) {
       console.error('Error updating tip amount:', error);
       throw error;
+    } finally {
+      if (client) {
+        client.release();
+      }
+      await pool.end();
     }
   }
 
   // Get public invoice details (for client viewing)
   async getPublicInvoiceDetails(paymentId) {
-    try {
-      const [payment] = await db.select()
-        .from(paymentRecords)
-        .where(eq(paymentRecords.id, paymentId));
+    const { Pool } = require('pg');
+    const pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    });
 
-      if (!payment) {
+    let client;
+    try {
+      client = await pool.connect();
+      
+      // Get payment details
+      const paymentResult = await client.query(`
+        SELECT id, payment_number, amount, tip_amount, due_date, status, session_id, stripe_invoice_url
+        FROM payment_records 
+        WHERE id = $1
+      `, [paymentId]);
+
+      if (paymentResult.rows.length === 0) {
         return null;
       }
+
+      const payment = paymentResult.rows[0];
 
       // Get session details
-      const [session] = await db.select()
-        .from(photographySessions)
-        .where(eq(photographySessions.id, payment.sessionId));
+      const sessionResult = await client.query(`
+        SELECT client_name, session_type, date_time, email
+        FROM photography_sessions 
+        WHERE id = $1
+      `, [payment.session_id]);
 
-      if (!session) {
+      if (sessionResult.rows.length === 0) {
         return null;
       }
+
+      const session = sessionResult.rows[0];
 
       return {
         id: payment.id,
-        paymentNumber: payment.paymentNumber,
+        paymentNumber: payment.payment_number,
         amount: parseFloat(payment.amount),
-        tipAmount: parseFloat(payment.tipAmount || '0'),
-        dueDate: payment.dueDate,
+        tipAmount: parseFloat(payment.tip_amount || '0'),
+        dueDate: payment.due_date,
         status: payment.status,
         session: {
-          clientName: session.clientName,
-          sessionType: session.sessionType,
-          dateTime: session.dateTime,
+          clientName: session.client_name,
+          sessionType: session.session_type,
+          dateTime: session.date_time,
           email: session.email
         },
-        stripeInvoiceUrl: payment.stripeInvoiceUrl
+        stripeInvoiceUrl: payment.stripe_invoice_url
       };
     } catch (error) {
       console.error('Error getting public invoice details:', error);
       throw error;
+    } finally {
+      if (client) {
+        client.release();
+      }
+      await pool.end();
     }
   }
 }

@@ -4182,6 +4182,38 @@ app.get('/api/public/invoice/:paymentId', async (req, res) => {
     }
 });
 
+// Update tip amount for public invoice (no authentication required)
+app.post('/api/public/invoice/:paymentId/tip', async (req, res) => {
+    try {
+        const { paymentId } = req.params;
+        const { tipAmount } = req.body;
+        
+        if (!tipAmount || isNaN(parseFloat(tipAmount)) || parseFloat(tipAmount) < 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid tip amount'
+            });
+        }
+        
+        // Update tip amount in the database
+        const paymentManager = new PaymentPlanManager();
+        await paymentManager.updateTipAmount(paymentId, parseFloat(tipAmount));
+        
+        res.json({
+            success: true,
+            message: 'Tip amount updated successfully',
+            tipAmount: parseFloat(tipAmount)
+        });
+        
+    } catch (error) {
+        console.error('Error updating tip amount:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message || 'Failed to update tip amount'
+        });
+    }
+});
+
 // Create and send updated invoice with tip
 app.post('/api/public/invoice/:paymentId/send-with-tip', async (req, res) => {
     try {
@@ -9599,6 +9631,9 @@ function escapeHTML(text) {
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#x27;');
 }
+
+// Serve public directory files directly at root level
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Serve static files last to ensure routes run first
 app.use(express.static(__dirname));
