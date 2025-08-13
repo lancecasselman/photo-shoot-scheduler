@@ -450,6 +450,42 @@ Please format your response as JSON with an "ideas" array containing the list of
             throw new Error('Failed to generate ideas: ' + error.message);
         }
     }
+
+    // Generic content generation method for website builder
+    async generateContent({ prompt, maxTokens = 2000, temperature = 0.7 }) {
+        if (!this.initialized) {
+            throw new Error('AI services not available - OpenAI API key required');
+        }
+
+        try {
+            const completion = await openai.chat.completions.create({
+                model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+                messages: [
+                    {
+                        role: "system",
+                        content: "You are an expert web designer and content creator specializing in photography websites. Always provide helpful, professional responses in the requested format."
+                    },
+                    {
+                        role: "user",
+                        content: prompt
+                    }
+                ],
+                response_format: { type: "json_object" },
+                max_tokens: maxTokens,
+                temperature: temperature
+            });
+
+            return completion.choices[0].message.content;
+        } catch (error) {
+            console.error('AI Services: Error generating content:', error);
+            throw new Error('Failed to generate content: ' + error.message);
+        }
+    }
+
+    // Status getter for initialization checking
+    get status() {
+        return this.initialized ? 'OpenAI initialized successfully' : 'OpenAI not available';
+    }
 }
 
 module.exports = { AIServices };
