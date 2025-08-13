@@ -16897,10 +16897,15 @@ END:VCALENDAR`;
                 // Save current content before switching
                 this.saveCurrentContent();
                 
-                // If switching to mobile, use the new mobile layout
+                // For mobile device, use the dedicated mobile layout system
                 if (device === 'mobile') {
                     this.enterMobileMode();
                     return;
+                }
+                
+                // Ensure we're not in mobile mode for other devices
+                if (this.currentDevice === 'mobile') {
+                    this.exitMobileMode();
                 }
                 
                 // Update device state
@@ -16918,26 +16923,22 @@ END:VCALENDAR`;
                 const canvas = document.getElementById('wb-canvas');
                 canvas.className = `wb-canvas ${device}`;
                 
-                // Show/hide mobile indicator and brainstorm section
+                // Show/hide device indicators
                 const indicator = document.getElementById('wb-mobile-indicator');
                 const brainstormSection = document.getElementById('wb-mobile-brainstorm-section');
                 if (device === 'tablet') {
-                    indicator.style.display = 'block';
-                    indicator.textContent = `✨ Editing ${device.charAt(0).toUpperCase() + device.slice(1)} Version Independently`;
+                    if (indicator) {
+                        indicator.style.display = 'block';
+                        indicator.textContent = `✨ Editing ${device.charAt(0).toUpperCase() + device.slice(1)} Version Independently`;
+                    }
                     if (brainstormSection) brainstormSection.style.display = 'block';
                 } else {
-                    indicator.style.display = 'none';
+                    if (indicator) indicator.style.display = 'none';
                     if (brainstormSection) brainstormSection.style.display = 'none';
                 }
                 
                 // Load device-specific content
                 this.loadDeviceContent(device);
-                
-                // Show mobile editing tips for tablet
-                if (device === 'tablet' && !localStorage.getItem('wb-tablet-tip-shown')) {
-                    this.showMobileTip();
-                    localStorage.setItem('wb-tablet-tip-shown', 'true');
-                }
             },
 
             enterMobileMode() {
@@ -16954,70 +16955,71 @@ END:VCALENDAR`;
                 // Save current content before switching
                 this.saveCurrentContent();
                 
-                // Hide ALL other interfaces completely
+                // Step 1: Clean up all potential blocking elements
+                this.clearAllOverlays();
+                
+                // Step 2: Hide regular website builder interface
                 if (regularLayout) {
-                    regularLayout.style.display = 'none';
+                    regularLayout.style.display = 'none !important';
                     regularLayout.style.visibility = 'hidden';
                 }
                 if (header) {
-                    header.style.display = 'none';
+                    header.style.display = 'none !important';
                     header.style.visibility = 'hidden';
                 }
                 
-                // Hide any edit panels or overlays that could cover the mobile interface
-                const editPanel = document.querySelector('.wb-edit-panel');
-                if (editPanel) editPanel.style.display = 'none';
-                
-                const aiEditor = document.querySelector('.wb-ai-editor');
-                if (aiEditor) aiEditor.style.display = 'none';
-                
-                // Hide ALL modal overlays that could be blocking the interface
-                const modals = document.querySelectorAll('.modal, [id*="Modal"], [class*="modal"]');
-                modals.forEach(modal => {
-                    modal.style.display = 'none';
-                    modal.style.visibility = 'hidden';
-                    modal.style.zIndex = '-1';
-                });
-                
-                // Hide any booking agreement modals specifically
-                const bookingModals = document.querySelectorAll('#contractSelectionModal, #contractsViewModal, #contractDetailsModal, #contractEditModal, #customContractModal, #updateSessionModal');
-                bookingModals.forEach(modal => {
-                    modal.style.display = 'none';
-                    modal.style.visibility = 'hidden';
-                });
-                
-                // Hide any overlay elements with high z-index
-                const overlays = document.querySelectorAll('[style*="z-index"][style*="10000"], [style*="z-index"][style*="9999"]');
-                overlays.forEach(overlay => {
-                    if (overlay.id !== 'wb-mobile-layout') {
-                        overlay.style.display = 'none';
-                        overlay.style.visibility = 'hidden';
-                    }
-                });
-                
-                // Show mobile layout with highest z-index and force visibility
-                mobileLayout.style.display = 'flex';
-                mobileLayout.style.visibility = 'visible';
-                mobileLayout.style.zIndex = '9999';
-                mobileLayout.style.position = 'fixed';
-                mobileLayout.style.top = '0';
-                mobileLayout.style.left = '0';
-                mobileLayout.style.right = '0';
-                mobileLayout.style.bottom = '0';
-                mobileLayout.style.background = '#f5f5f5';
+                // Step 3: Force show mobile layout with clean styling
+                mobileLayout.style.cssText = `
+                    display: flex !important;
+                    flex-direction: column !important;
+                    position: fixed !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    right: 0 !important;
+                    bottom: 0 !important;
+                    width: 100vw !important;
+                    height: 100vh !important;
+                    background: #f5f5f5 !important;
+                    z-index: 99999 !important;
+                    visibility: visible !important;
+                    overflow: hidden !important;
+                `;
                 mobileLayout.classList.add('active');
                 
-                // Update current device
+                // Step 4: Update device state
                 this.currentDevice = 'mobile';
                 console.log('Device set to mobile:', this.currentDevice);
                 console.log('Mobile layout displayed:', mobileLayout.style.display);
                 
-                // Load mobile-specific content
+                // Step 5: Load mobile content and setup
                 this.loadMobileContent();
                 this.setupMobileEditableElements();
                 
                 // Show toast notification
-                this.showToast('Mobile Editor - maximized screen space with scrollable toolbars');
+                this.showToast('📱 Mobile Editor Active - Use horizontal toolbars to add elements');
+            },
+            
+            clearAllOverlays() {
+                // Remove all potential blocking overlays
+                const selectors = [
+                    '.modal', '[id*="Modal"]', '[class*="modal"]',
+                    '.wb-edit-panel', '.wb-ai-editor',
+                    '#contractSelectionModal', '#contractsViewModal', '#contractDetailsModal', 
+                    '#contractEditModal', '#customContractModal', '#updateSessionModal',
+                    '[style*="z-index: 10000"]', '[style*="z-index: 9999"]',
+                    '.overlay', '.backdrop', '.popup'
+                ];
+                
+                selectors.forEach(selector => {
+                    const elements = document.querySelectorAll(selector);
+                    elements.forEach(element => {
+                        if (element.id !== 'wb-mobile-layout') {
+                            element.style.display = 'none';
+                            element.style.visibility = 'hidden';
+                            element.style.zIndex = '-1';
+                        }
+                    });
+                });
             },
 
             exitMobileMode() {
