@@ -53,6 +53,13 @@ A robust unified deletion system ensures complete file cleanup with no orphaned 
 
 ## Recent Changes (August 14, 2025)
 - **CRITICAL**: Session sorting by appointment date is COMPLETE and WORKING - do not modify
+- **COMPLETED**: Authentication Redirect Loop Fix (August 14, 2025)
+  - Fixed persistent authentication redirect loop that prevented users from staying logged in
+  - Root cause: Redirects from auth.html were going to `/` instead of `/index.html`
+  - Changed all authentication redirects to explicitly use `/index.html` path
+  - Added comprehensive debugging to track session management and authentication flow
+  - Enhanced session establishment timing with 1.5 second delay before redirect
+  - Authentication system now works correctly with proper session persistence
 - **COMPLETED**: Stripe Connect Express Integration for Multi-Photographer Platform
   - Added stripe_connect_account_id and stripe_onboarding_complete fields to users table
   - Created comprehensive Stripe Connect API endpoints (/api/stripe-connect/onboard, /status, /refresh)
