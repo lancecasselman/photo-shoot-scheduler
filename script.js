@@ -24,7 +24,8 @@ async function checkAuth() {
     const fromAuth = document.referrer.includes('auth.html') || sessionStorage.getItem('fromAuth') === 'true';
     
     try {
-        console.log('Checking authentication with backend...');
+        console.log('🔍 AUTH CHECK: Checking authentication with backend...');
+        console.log('🔍 AUTH CHECK: About to call /api/auth/user');
         const response = await fetch('/api/auth/user', {
             credentials: 'include', // Ensure cookies are sent
             headers: {
@@ -32,7 +33,7 @@ async function checkAuth() {
             }
         });
         
-        console.log('Auth response status:', response.status, 'ok:', response.ok);
+        console.log('🔍 AUTH CHECK: Auth response status:', response.status, 'ok:', response.ok);
         
         if (response.ok) {
             const data = await response.json();
@@ -2191,7 +2192,15 @@ window.addEventListener('load', function() {
     console.log('🔄 MAIN APP: Current URL:', window.location.href);
     console.log('🔄 MAIN APP: Referrer:', document.referrer);
     console.log('🔄 MAIN APP: fromAuth flag:', sessionStorage.getItem('fromAuth'));
+    console.log('🔄 MAIN APP: Manual logout flag:', localStorage.getItem('manualLogout'));
+    console.log('🔄 MAIN APP: Logging out flag:', sessionStorage.getItem('loggingOut'));
     console.log('🔄 MAIN APP: Starting initializePage...');
+    
+    // Check if we're stuck in a redirect loop
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromAuth = document.referrer.includes('auth.html') || sessionStorage.getItem('fromAuth') === 'true';
+    console.log('🔄 MAIN APP: Coming from auth?', fromAuth);
+    
     initializePage();
 });
 
