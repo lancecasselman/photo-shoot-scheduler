@@ -4378,6 +4378,8 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (
         // Handle AI credits and photography session payments via checkout sessions
         if (event.type === 'checkout.session.completed') {
             const session = event.data.object;
+            console.log('🔔 Checkout session completed event received:', session.id);
+            console.log('💳 Session metadata:', JSON.stringify(session.metadata));
             
             // Check if this is an AI credits purchase
             if (session.metadata && session.metadata.type === 'ai_credits') {
