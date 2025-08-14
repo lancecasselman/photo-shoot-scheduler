@@ -1126,7 +1126,9 @@ Your Photography Team`;
                 }
 
                 const totalAmount = invoiceData.amount + selectedTipAmount;
-                const paymentType = isDeposit ? 'deposit' : 'invoice';
+                const urlParams = new URLSearchParams(window.location.search);
+                const isDepositPayment = urlParams.get('type') === 'deposit';
+                const paymentType = isDepositPayment ? 'deposit' : 'invoice';
                 
                 showLoading('Setting up payment...');
 
