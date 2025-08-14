@@ -380,7 +380,7 @@
                     // Check for return URL and redirect
                     const urlParams = new URLSearchParams(window.location.search);
                     const returnTo = urlParams.get('return');
-                    window.location.href = returnTo || '/app';
+                    window.location.href = returnTo || '/';
                 } else {
                     throw new Error(`Backend authentication failed: ${responseData.message || 'Unknown error'}`);
                 }
@@ -394,7 +394,7 @@
                     const urlParams = new URLSearchParams(window.location.search);
                     const returnTo = urlParams.get('return');
                     setTimeout(() => {
-                        window.location.href = returnTo || '/app';
+                        window.location.href = returnTo || '/';
                     }, 500);
                 } else if (error.message && !error.message.includes('Failed to fetch')) {
                     // Show alert only for non-network errors
@@ -408,7 +408,7 @@
                     const urlParams = new URLSearchParams(window.location.search);
                     const returnTo = urlParams.get('return');
                     setTimeout(() => {
-                        window.location.href = returnTo || '/app';
+                        window.location.href = returnTo || '/';
                     }, 500);
                 }
             }
@@ -525,25 +525,15 @@
                 }
             });
 
-            // Authentication guard based on DEV_MODE
-            if (!DEV_MODE) {
-                firebase.auth().onAuthStateChanged((user) => {
-                    if (!user) {
-                        console.log('Authentication required - no user signed in');
-                        // User will see login form
-                    } else if (localStorage.getItem('manualLogout') !== 'true') {
-                        // Only auto-redirect if user didn't manually log out
-                        console.log('User already signed in, redirecting to app...');
-                        window.location.href = '/';
-                    } else {
-                        console.log('User signed in but manual logout detected - staying on auth page');
-                    }
-                });
-            }
-
-            // Check if user is already signed in
+            // Single authentication state handler to prevent conflicts
             auth.onAuthStateChanged(async (user) => {
-                if (user) {
+                if (!user) {
+                    console.log('Authentication required - no user signed in');
+                    // User will see login form
+                } else if (localStorage.getItem('manualLogout') === 'true') {
+                    console.log('User signed in but manual logout detected - staying on auth page');
+                    return;
+                } else {
                     // User is signed in, verify with backend and redirect
                     try {
                         console.log('User signed in, verifying with backend:', user.email);
@@ -560,13 +550,21 @@
                         });
 
                         if (response.ok) {
+                            console.log('Backend verification successful, redirecting...');
                             const urlParams = new URLSearchParams(window.location.search);
                             const returnTo = urlParams.get('return');
-                            window.location.href = returnTo || '/app';
+                            window.location.href = returnTo || '/';
+                        } else {
+                            console.log('Backend verification failed, but user is signed in to Firebase. Continuing...');
+                            const urlParams = new URLSearchParams(window.location.search);
+                            const returnTo = urlParams.get('return');
+                            window.location.href = returnTo || '/';
                         }
                     } catch (error) {
                         console.log('Backend verification failed, but user is signed in to Firebase. Continuing...');
-                        // If user is authenticated with Firebase, proceed anyway
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const returnTo = urlParams.get('return');
+                        window.location.href = returnTo || '/';
                     }
                 }
             });
