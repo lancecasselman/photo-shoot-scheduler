@@ -1365,10 +1365,11 @@ function closeInvoiceSendDialog() {
     if (dialog) dialog.remove();
 }
 
-// Send deposit invoice with custom amount
+// Send deposit invoice with custom amount - NEW TIPPING SYSTEM VERSION
 async function sendDepositInvoice(session) {
     try {
-        console.log('🔥 DEPOSIT BRIDGE: sendDepositInvoice called with session:', session);
+        console.log('🚀 NEW DEPOSIT SYSTEM: sendDepositInvoice called with session:', session);
+        console.log('🚀 NEW CODE VERSION: Using deposit tipping system');
 
         // If session is just an ID string, fetch the full session object
         if (typeof session === 'string') {
