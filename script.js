@@ -15,7 +15,9 @@ async function checkAuth() {
     }
 
     try {
-        const response = await fetch('/api/auth/user');
+        const response = await fetch('/api/auth/user', {
+            credentials: 'include' // Ensure cookies are sent
+        });
         if (response.ok) {
             const data = await response.json();
             currentUser = data.user;
@@ -24,17 +26,23 @@ async function checkAuth() {
             return true;
         } else {
             console.log('Auth check failed - response not ok:', response.status);
-            // Don't redirect if user manually logged out
-            if (localStorage.getItem('manualLogout') !== 'true') {
-                redirectToAuth();
+            // Don't redirect if user manually logged out or if coming from auth page
+            if (localStorage.getItem('manualLogout') !== 'true' && !document.referrer.includes('auth.html')) {
+                // Add a small delay before redirect to handle race conditions
+                setTimeout(() => {
+                    redirectToAuth();
+                }, 500);
             }
             return false;
         }
     } catch (error) {
         console.error('Auth check failed:', error);
-        // Don't redirect if user manually logged out
-        if (localStorage.getItem('manualLogout') !== 'true') {
-            redirectToAuth();
+        // Don't redirect if user manually logged out or if coming from auth page
+        if (localStorage.getItem('manualLogout') !== 'true' && !document.referrer.includes('auth.html')) {
+            // Add a small delay before redirect to handle race conditions
+            setTimeout(() => {
+                redirectToAuth();
+            }, 500);
         }
         return false;
     }
@@ -2075,7 +2083,17 @@ async function firebaseLogout() {
 async function initializePage() {
     console.log('Initializing page...');
 
-    // Check authentication first
+    // Add delay if coming from auth page to allow session establishment
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromAuth = document.referrer.includes('auth.html') || sessionStorage.getItem('fromAuth') === 'true';
+    
+    if (fromAuth) {
+        console.log('Coming from auth page - waiting for session establishment...');
+        sessionStorage.removeItem('fromAuth'); // Clear flag
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+    }
+
+    // Check authentication
     const isAuthenticated = await checkAuth();
     if (!isAuthenticated) {
         console.log('User not authenticated - attempting to load anyway');

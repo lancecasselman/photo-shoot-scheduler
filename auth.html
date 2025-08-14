@@ -378,6 +378,7 @@
                 if (response.ok && responseData.success) {
                     console.log('Authentication successful, redirecting...');
                     // Check for return URL and redirect
+                    sessionStorage.setItem('fromAuth', 'true');
                     const urlParams = new URLSearchParams(window.location.search);
                     const returnTo = urlParams.get('return');
                     window.location.href = returnTo || '/';
@@ -391,6 +392,7 @@
                 if (error.message && error.message.includes('Failed to fetch')) {
                     console.log('Network fetch error detected, but Firebase authentication succeeded. Proceeding with redirect...');
                     // Firebase auth worked, so redirect anyway
+                    sessionStorage.setItem('fromAuth', 'true');
                     const urlParams = new URLSearchParams(window.location.search);
                     const returnTo = urlParams.get('return');
                     setTimeout(() => {
@@ -405,6 +407,7 @@
                 } else {
                     // Unknown error, try to proceed anyway
                     console.warn('Unknown authentication error, proceeding with redirect');
+                    sessionStorage.setItem('fromAuth', 'true');
                     const urlParams = new URLSearchParams(window.location.search);
                     const returnTo = urlParams.get('return');
                     setTimeout(() => {
@@ -551,17 +554,23 @@
 
                         if (response.ok) {
                             console.log('Backend verification successful, redirecting...');
+                            // Set flag to indicate coming from auth page
+                            sessionStorage.setItem('fromAuth', 'true');
                             const urlParams = new URLSearchParams(window.location.search);
                             const returnTo = urlParams.get('return');
                             window.location.href = returnTo || '/';
                         } else {
                             console.log('Backend verification failed, but user is signed in to Firebase. Continuing...');
+                            // Set flag to indicate coming from auth page
+                            sessionStorage.setItem('fromAuth', 'true');
                             const urlParams = new URLSearchParams(window.location.search);
                             const returnTo = urlParams.get('return');
                             window.location.href = returnTo || '/';
                         }
                     } catch (error) {
                         console.log('Backend verification failed, but user is signed in to Firebase. Continuing...');
+                        // Set flag to indicate coming from auth page
+                        sessionStorage.setItem('fromAuth', 'true');
                         const urlParams = new URLSearchParams(window.location.search);
                         const returnTo = urlParams.get('return');
                         window.location.href = returnTo || '/';
