@@ -4368,8 +4368,9 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (
 
     try {
         event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+        console.log('🔔 Webhook received:', event.type, 'Event ID:', event.id);
     } catch (err) {
-        console.log(`Webhook signature verification failed.`, err.message);
+        console.log(`❌ Webhook signature verification failed.`, err.message);
         return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
@@ -4445,6 +4446,7 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (
         if (event.type === 'payment_intent.succeeded') {
             const paymentIntent = event.data.object;
             console.log('💰 Payment succeeded:', paymentIntent.id, 'Amount:', paymentIntent.amount_received / 100);
+            console.log('💳 Payment metadata:', JSON.stringify(paymentIntent.metadata));
             
             // Check if this is a photography session payment by looking for session metadata
             if (paymentIntent.metadata && paymentIntent.metadata.sessionId) {
