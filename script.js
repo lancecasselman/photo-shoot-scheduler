@@ -1392,48 +1392,17 @@ async function sendDepositInvoice(session) {
             return;
         }
 
-        // Include existing deposits in the calculation
+        // Calculate suggested deposit amount (50% of session price or remaining balance)
         const existingDeposits = session.depositAmount || 0;
         const remainingBalance = session.price - existingDeposits;
+        const suggestedAmount = existingDeposits > 0 ? 
+            (remainingBalance * 0.5) : 
+            (session.price * 0.5);
 
-        let promptText;
-        let suggestedAmount;
+        console.log('🚀 DEPOSIT BRIDGE: Creating deposit invoice directly with tipping system');
+        console.log('🚀 Suggested deposit amount:', suggestedAmount.toFixed(2));
 
-        if (existingDeposits > 0) {
-            promptText = `Enter additional deposit amount for ${session.clientName}:\n\nSession Total: $${session.price}\nPrevious Deposits: $${existingDeposits.toFixed(2)}\nRemaining Balance: $${remainingBalance.toFixed(2)}\nSuggested 50% of remaining: $${(remainingBalance * 0.5).toFixed(2)}`;
-            suggestedAmount = (remainingBalance * 0.5).toFixed(2);
-        } else {
-            promptText = `Enter deposit/retainer amount for ${session.clientName}:\n\nSession Total: $${session.price}\nSuggested 50%: $${(session.price * 0.5).toFixed(2)}`;
-            suggestedAmount = (session.price * 0.5).toFixed(2);
-        }
-
-        // Prompt user for deposit amount
-        const depositAmountInput = prompt(promptText, suggestedAmount);
-
-        if (!depositAmountInput) {
-            return; // User cancelled
-        }
-
-        const depositAmount = parseFloat(depositAmountInput);
-
-        if (isNaN(depositAmount) || depositAmount <= 0) {
-            showMessage('Please enter a valid amount greater than $0', 'error');
-            return;
-        }
-
-        if (depositAmount > session.price) {
-            const confirmOverage = confirm(
-                `Deposit amount ($${depositAmount}) is more than the session total ($${session.price}).\n\nDo you want to continue?`
-            );
-            if (!confirmOverage) {
-                return;
-            }
-        }
-
-        console.log('🔥 DEPOSIT BRIDGE: Found session, calling createDepositInvoiceWithTipping');
-        console.log('🔥 NEW DEPOSIT TIPPING SYSTEM: Creating tipping-enabled deposit invoice for session:', session);
-
-        // Call the new deposit tipping system
+        // Create deposit invoice with tipping system using suggested amount
         const authToken = await getAuthToken();
         const headers = {
             'Content-Type': 'application/json'
@@ -1448,7 +1417,7 @@ async function sendDepositInvoice(session) {
             headers,
             body: JSON.stringify({
                 sessionId: session.id,
-                depositAmount: depositAmount,
+                depositAmount: suggestedAmount,
                 includeTipping: true
             })
         });
@@ -1459,18 +1428,18 @@ async function sendDepositInvoice(session) {
         }
 
         const result = await response.json();
-        console.log('🔥 DEPOSIT TIPPING SUCCESS: Custom deposit invoice URL created:', result.invoice_url);
+        console.log('🚀 DEPOSIT TIPPING SUCCESS: Custom deposit invoice URL created:', result.invoice_url);
 
         if (result.success && result.invoice_url) {
-            showMessage(`Deposit invoice created for $${depositAmount.toFixed(2)}! Opening in new window...`, 'success');
+            showMessage(`Deposit invoice created for $${suggestedAmount.toFixed(2)}! Opening in new window...`, 'success');
 
-            // Open deposit invoice in new window
+            // Open deposit invoice in new window - same approach as regular invoice
             window.open(result.invoice_url, '_blank');
 
             // Wait a moment for database to update, then refresh sessions
             setTimeout(async () => {
                 await loadSessions();
-                console.log('🔥 DEPOSIT BRIDGE: Sessions reloaded after deposit creation');
+                console.log('🚀 DEPOSIT BRIDGE: Sessions reloaded after deposit creation');
             }, 1000);
         } else {
             throw new Error(result.message || 'Unknown error creating deposit invoice');
