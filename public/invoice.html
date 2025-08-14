@@ -402,8 +402,30 @@
                 const urlParams = new URLSearchParams(window.location.search);
                 const sessionId = urlParams.get('sessionId');
                 const amount = urlParams.get('amount');
+                const type = urlParams.get('type');
                 
-                console.log('🔥 URL Parameters:', { sessionId, amount, paymentId });
+                console.log('🔥 URL Parameters:', { sessionId, amount, paymentId, type });
+                
+                // Hide tip section for deposit invoices
+                if (type === 'deposit') {
+                    console.log('🔥 DEPOSIT DETECTED: Hiding tip section');
+                    const tipSection = document.querySelector('.tip-section');
+                    if (tipSection) {
+                        tipSection.style.display = 'none';
+                    }
+                    
+                    // Update payment section header for deposits
+                    const paymentSectionH3 = document.querySelector('.payment-section h3');
+                    if (paymentSectionH3) {
+                        paymentSectionH3.textContent = 'Deposit Payment Details';
+                    }
+                    
+                    // Update session payment label for deposits
+                    const sessionPaymentLabel = document.querySelector('.payment-item:first-child span:first-child');
+                    if (sessionPaymentLabel) {
+                        sessionPaymentLabel.textContent = 'Deposit Amount';
+                    }
+                }
                 
                 if (amount) {
                     invoiceData = {
