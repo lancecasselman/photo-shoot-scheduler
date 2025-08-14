@@ -7291,7 +7291,19 @@ app.post('/api/create-checkout-session', async (req, res) => {
     try {
         const { paymentId, amount, tipAmount, totalAmount, clientName, sessionType } = req.body;
         
+        console.log('🔥 CREATE CHECKOUT SESSION REQUEST:', {
+            paymentId,
+            amount,
+            tipAmount,
+            totalAmount,
+            clientName,
+            sessionType,
+            hasStripeKey: !!process.env.STRIPE_SECRET_KEY,
+            stripeKeyLength: process.env.STRIPE_SECRET_KEY?.length
+        });
+        
         if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY.length < 50) {
+            console.log('❌ STRIPE NOT CONFIGURED');
             return res.json({
                 success: false,
                 message: 'Stripe not configured - this would redirect to Stripe Checkout in production'
@@ -7325,6 +7337,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
             }
         });
         
+        console.log('✅ STRIPE SESSION CREATED:', session.id);
         res.json({
             success: true,
             checkout_url: session.url,
@@ -7332,7 +7345,8 @@ app.post('/api/create-checkout-session', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Checkout session creation error:', error);
+        console.error('❌ CHECKOUT SESSION ERROR:', error.message);
+        console.error('Full error:', error);
         res.status(500).json({
             success: false,
             message: 'Failed to create payment session: ' + error.message
