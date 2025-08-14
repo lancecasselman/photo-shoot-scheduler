@@ -3472,10 +3472,10 @@
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.8);
-            display: flex;
+            display: none;
             justify-content: center;
             align-items: center;
-            z-index: 99999 !important;
+            z-index: 1000;
         }
         
         .payment-plan-modal {
@@ -3488,7 +3488,7 @@
             border-radius: 16px;
             box-shadow: 0 20px 60px rgba(212, 175, 55, 0.3);
             position: relative;
-            z-index: 100000 !important;
+            z-index: 1001;
         }
         
         .payment-plan-modal .modal-header {
@@ -5091,7 +5091,7 @@
             const modalTitle = isResend ? 'Resend Contract' : 'Send Contract';
             
             const modalHTML = `
-                <div id="contractSendModal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000;">
+                <div id="contractSendModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
                     <div class="modal-content" style="background: white; margin: 50px auto; padding: 30px; width: 90%; max-width: 600px; border-radius: 10px;">
                         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #d4af37; padding-bottom: 15px;">
                             <h2 style="color: #8b7355; margin: 0;">${modalTitle}</h2>
@@ -5250,7 +5250,7 @@ The Legacy Photography`);
             }
             
             const modalHTML = `
-                <div id="signedContractModal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10001;">
+                <div id="signedContractModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1001;">
                     <div class="modal-content" style="background: white; margin: 20px auto; padding: 30px; width: 95%; max-width: 900px; border-radius: 10px; max-height: 90vh; overflow-y: auto;">
                         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #d4af37; padding-bottom: 15px;">
                             <h2 style="color: #8b7355; margin: 0;">📄 Signed Contract - ${contract.contract_title}</h2>
@@ -7364,7 +7364,7 @@ lance@thelegacyphotography.com`;
         // Contract Selection Modal
         function showContractSelectionModal(sessionId, session, templates) {
             const modalHTML = `
-                <div id="contractSelectionModal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000;">
+                <div id="contractSelectionModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000;">
                     <div class="modal-content" style="background: white; margin: 50px auto; padding: 30px; width: 90%; max-width: 600px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
                         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 2px solid #d4af37; padding-bottom: 15px;">
                             <h2 style="color: #8b7355; margin: 0; font-size: 24px;">📄 Select Contract Template</h2>
@@ -7544,7 +7544,7 @@ lance@thelegacyphotography.com`;
             }
             
             const modalHTML = `
-                <div id="contractsViewModal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000;">
+                <div id="contractsViewModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
                     <div class="modal-content" style="background: white; margin: 50px auto; padding: 30px; width: 90%; max-width: 800px; border-radius: 10px; max-height: 80vh; overflow-y: auto;">
                         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #d4af37; padding-bottom: 15px;">
                             <h2 style="color: #8b7355; margin: 0;">Contracts for ${clientName}</h2>
@@ -7968,7 +7968,7 @@ lance@thelegacyphotography.com`;
         // Show contract details modal
         function showContractDetailsModal(contract) {
             const modalHTML = `
-                <div id="contractDetailsModal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10001;">
+                <div id="contractDetailsModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1001;">
                     <div class="modal-content" style="background: white; margin: 20px auto; padding: 30px; width: 95%; max-width: 900px; border-radius: 10px; max-height: 90vh; overflow-y: auto;">
                         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #d4af37; padding-bottom: 15px;">
                             <h2 style="color: #8b7355; margin: 0;">${contract.contract_title}</h2>
@@ -8049,7 +8049,7 @@ ${contract.contract_content}
         // Show contract edit modal
         function showContractEditModal(contract) {
             const modalHTML = `
-                <div id="contractEditModal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10002;">
+                <div id="contractEditModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1002;">
                     <div class="modal-content" style="background: white; margin: 20px auto; padding: 30px; width: 95%; max-width: 1000px; border-radius: 10px; max-height: 90vh; overflow-y: auto;">
                         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #d4af37; padding-bottom: 15px;">
                             <h2 style="color: #8b7355; margin: 0;">Edit Contract: ${contract.contract_title}</h2>
@@ -8134,7 +8134,7 @@ ${contract.contract_content}
             }
             
             const modalHTML = `
-                <div id="customContractModal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000;">
+                <div id="customContractModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
                     <div class="modal-content" style="background: white; margin: 20px auto; padding: 30px; width: 95%; max-width: 1000px; border-radius: 10px; max-height: 90vh; overflow-y: auto;">
                         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #d4af37; padding-bottom: 15px;">
                             <h2 style="color: #8b7355; margin: 0;">Create Custom Contract for ${session.clientName}</h2>
@@ -8224,7 +8224,7 @@ ${contract.contract_content}
             
             // Create modal HTML
             const modalHTML = `
-                <div id="updateSessionModal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000;">
+                <div id="updateSessionModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
                     <div class="modal-content" style="background: white; margin: 50px auto; padding: 30px; width: 90%; max-width: 600px; border-radius: 10px; max-height: 80vh; overflow-y: auto;">
                         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #d4af37; padding-bottom: 15px;">
                             <h2 style="color: #8b7355; margin: 0;">Update Session</h2>
