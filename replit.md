@@ -53,6 +53,13 @@ A robust unified deletion system ensures complete file cleanup with no orphaned 
 
 ## Recent Changes (August 14, 2025)
 - **CRITICAL**: Session sorting by appointment date is COMPLETE and WORKING - do not modify
+- **COMPLETED**: Black Screen Modal Overlay Fix (August 14, 2025)
+  - Fixed critical black screen issue caused by modal overlays incorrectly set to display: block
+  - Changed all contract modals from display: block to display: none by default
+  - Reduced excessive z-index values from 99999+ to normal 1000-1002 range
+  - Added emergency CSS rules to force hide any modal overlays causing screen blocking
+  - Used !important declarations to override any inline modal styles
+  - System now loads properly without black screen interference
 - **COMPLETED**: Authentication Redirect Loop Fix (August 14, 2025)
   - Fixed persistent authentication redirect loop that prevented users from staying logged in
   - Root cause: Redirects from auth.html were going to `/` instead of `/index.html`
