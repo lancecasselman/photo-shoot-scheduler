@@ -4374,7 +4374,7 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (
     }
 
     try {
-        // Handle AI credits payment success
+        // Handle AI credits and photography session payments via checkout sessions
         if (event.type === 'checkout.session.completed') {
             const session = event.data.object;
             
@@ -4401,6 +4401,43 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (
                 ]);
 
                 console.log(`✅ Added ${creditsAmount} AI credits to user ${userId} via Stripe payment (${session.id})`);
+            }
+            
+            // Check if this is a photography session payment (deposits use checkout sessions)
+            if (session.metadata && session.metadata.paymentId) {
+                console.log('📸 Processing photography session checkout session payment');
+                
+                try {
+                    // Extract session ID from paymentId (format: payment-sessionId-timestamp)
+                    const paymentId = session.metadata.paymentId;
+                    const sessionIdMatch = paymentId.match(/payment-([a-f0-9-]+)-\d+/);
+                    
+                    if (sessionIdMatch) {
+                        const sessionId = sessionIdMatch[1];
+                        
+                        // Create a payment intent-like object for notification processing
+                        const mockPaymentIntent = {
+                            id: session.payment_intent,
+                            amount_received: session.amount_total,
+                            metadata: {
+                                sessionId: sessionId,
+                                type: paymentId.includes('deposit') ? 'deposit' : 'invoice'
+                            },
+                            receipt_email: session.customer_details?.email
+                        };
+                        
+                        // Process the payment notification
+                        const PaymentNotificationManager = require('./server/payment-notifications');
+                        const notificationManager = new PaymentNotificationManager();
+                        await notificationManager.handlePaymentSuccess(mockPaymentIntent);
+                        
+                        console.log('✅ Photography checkout session payment processed:', sessionId);
+                    } else {
+                        console.log('⚠️ Could not extract session ID from payment ID:', paymentId);
+                    }
+                } catch (error) {
+                    console.error('❌ Error processing photography checkout session payment:', error);
+                }
             }
         }
 
@@ -7347,7 +7384,9 @@ app.post('/api/create-checkout-session', async (req, res) => {
                 paymentId: paymentId,
                 baseAmount: amount.toString(),
                 tipAmount: tipAmount.toString(),
-                totalAmount: totalAmount.toString()
+                totalAmount: totalAmount.toString(),
+                sessionId: paymentId.match(/payment-([a-f0-9-]+)-\d+/)?.[1] || 'unknown',
+                type: 'deposit' // Most checkout sessions are for deposits
             }
         });
         
