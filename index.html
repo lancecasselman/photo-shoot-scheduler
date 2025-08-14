@@ -60,6 +60,19 @@
                 }
             }, true);
         })();
+        
+        // Emergency error tracking for syntax issues
+        window.addEventListener('error', function(e) {
+            if (e.message && e.message.includes('Unexpected token')) {
+                console.error('SYNTAX ERROR DETECTED:', {
+                    message: e.message,
+                    filename: e.filename,
+                    lineno: e.lineno,
+                    colno: e.colno,
+                    error: e.error
+                });
+            }
+        });
     </script>
     
     <!-- Google Fonts - Photography Management System Theme -->
@@ -69,6 +82,31 @@
     
     <!-- Confetti Animation Styles -->
     <style>
+        /* Emergency fix for black screen overlay issue */
+        .modal[style*="display: block"] {
+            display: none !important;
+        }
+        
+        /* Ensure no modal overlays are visible by default */
+        .modal-overlay, 
+        .modal[style*="position: fixed"],
+        div[style*="position: fixed"][style*="background: rgba(0,0,0"],
+        div[style*="position:fixed"][style*="background:rgba(0,0,0"],
+        *[style*="position: fixed; top: 0; left: 0; width: 100%; height: 100%"],
+        *[style*="position:fixed;top:0;left:0;width:100%;height:100%"] {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            z-index: -9999 !important;
+        }
+        
+        /* Force show main content */
+        body, #app, .main-content, .container {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        
         .confetti-container {
             position: fixed;
             top: 0;
@@ -3472,10 +3510,10 @@
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.8);
-            display: flex;
+            display: none;
             justify-content: center;
             align-items: center;
-            z-index: 99999 !important;
+            z-index: 1000;
         }
         
         .payment-plan-modal {
@@ -3488,7 +3526,7 @@
             border-radius: 16px;
             box-shadow: 0 20px 60px rgba(212, 175, 55, 0.3);
             position: relative;
-            z-index: 100000 !important;
+            z-index: 1001;
         }
         
         .payment-plan-modal .modal-header {
@@ -5091,7 +5129,7 @@
             const modalTitle = isResend ? 'Resend Contract' : 'Send Contract';
             
             const modalHTML = `
-                <div id="contractSendModal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000;">
+                <div id="contractSendModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
                     <div class="modal-content" style="background: white; margin: 50px auto; padding: 30px; width: 90%; max-width: 600px; border-radius: 10px;">
                         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #d4af37; padding-bottom: 15px;">
                             <h2 style="color: #8b7355; margin: 0;">${modalTitle}</h2>
@@ -5250,7 +5288,7 @@ The Legacy Photography`);
             }
             
             const modalHTML = `
-                <div id="signedContractModal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10001;">
+                <div id="signedContractModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1001;">
                     <div class="modal-content" style="background: white; margin: 20px auto; padding: 30px; width: 95%; max-width: 900px; border-radius: 10px; max-height: 90vh; overflow-y: auto;">
                         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #d4af37; padding-bottom: 15px;">
                             <h2 style="color: #8b7355; margin: 0;">📄 Signed Contract - ${contract.contract_title}</h2>
@@ -7364,7 +7402,7 @@ lance@thelegacyphotography.com`;
         // Contract Selection Modal
         function showContractSelectionModal(sessionId, session, templates) {
             const modalHTML = `
-                <div id="contractSelectionModal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000;">
+                <div id="contractSelectionModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000;">
                     <div class="modal-content" style="background: white; margin: 50px auto; padding: 30px; width: 90%; max-width: 600px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
                         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 2px solid #d4af37; padding-bottom: 15px;">
                             <h2 style="color: #8b7355; margin: 0; font-size: 24px;">📄 Select Contract Template</h2>
@@ -7544,7 +7582,7 @@ lance@thelegacyphotography.com`;
             }
             
             const modalHTML = `
-                <div id="contractsViewModal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000;">
+                <div id="contractsViewModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
                     <div class="modal-content" style="background: white; margin: 50px auto; padding: 30px; width: 90%; max-width: 800px; border-radius: 10px; max-height: 80vh; overflow-y: auto;">
                         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #d4af37; padding-bottom: 15px;">
                             <h2 style="color: #8b7355; margin: 0;">Contracts for ${clientName}</h2>
@@ -7968,7 +8006,7 @@ lance@thelegacyphotography.com`;
         // Show contract details modal
         function showContractDetailsModal(contract) {
             const modalHTML = `
-                <div id="contractDetailsModal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10001;">
+                <div id="contractDetailsModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1001;">
                     <div class="modal-content" style="background: white; margin: 20px auto; padding: 30px; width: 95%; max-width: 900px; border-radius: 10px; max-height: 90vh; overflow-y: auto;">
                         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #d4af37; padding-bottom: 15px;">
                             <h2 style="color: #8b7355; margin: 0;">${contract.contract_title}</h2>
@@ -8049,7 +8087,7 @@ ${contract.contract_content}
         // Show contract edit modal
         function showContractEditModal(contract) {
             const modalHTML = `
-                <div id="contractEditModal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10002;">
+                <div id="contractEditModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1002;">
                     <div class="modal-content" style="background: white; margin: 20px auto; padding: 30px; width: 95%; max-width: 1000px; border-radius: 10px; max-height: 90vh; overflow-y: auto;">
                         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #d4af37; padding-bottom: 15px;">
                             <h2 style="color: #8b7355; margin: 0;">Edit Contract: ${contract.contract_title}</h2>
@@ -8134,7 +8172,7 @@ ${contract.contract_content}
             }
             
             const modalHTML = `
-                <div id="customContractModal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000;">
+                <div id="customContractModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
                     <div class="modal-content" style="background: white; margin: 20px auto; padding: 30px; width: 95%; max-width: 1000px; border-radius: 10px; max-height: 90vh; overflow-y: auto;">
                         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #d4af37; padding-bottom: 15px;">
                             <h2 style="color: #8b7355; margin: 0;">Create Custom Contract for ${session.clientName}</h2>
@@ -8224,7 +8262,7 @@ ${contract.contract_content}
             
             // Create modal HTML
             const modalHTML = `
-                <div id="updateSessionModal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000;">
+                <div id="updateSessionModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
                     <div class="modal-content" style="background: white; margin: 50px auto; padding: 30px; width: 90%; max-width: 600px; border-radius: 10px; max-height: 80vh; overflow-y: auto;">
                         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #d4af37; padding-bottom: 15px;">
                             <h2 style="color: #8b7355; margin: 0;">Update Session</h2>
@@ -12214,7 +12252,13 @@ END:VCALENDAR`;
     <script src="/static/js/storage-quota-checker.js"></script>
     
     <!-- Include main script file -->
-    <script src="script.js?v=1755136100&customizable=deposit"></script>
+    <script>
+        console.log('About to load main script...');
+    </script>
+    <script src="script.js?v=1755205200&nocache=true" onerror="console.error('Failed to load script.js:', event)"></script>
+    <script>
+        console.log('Main script should be loaded now.');
+    </script>
     
     <!-- Subscription onboarding removed - file was missing and causing 404 errors -->
     <script>
@@ -13058,6 +13102,44 @@ END:VCALENDAR`;
         };
 
         // Enhanced page initialization is handled by the main DOMContentLoaded event above
+
+        // Emergency black screen fix - force remove any overlay elements
+        function forceRemoveOverlays() {
+            // Remove any elements that might be causing black screen
+            const overlaySelectors = [
+                '.modal[style*="display: block"]',
+                '.modal[style*="display:block"]',
+                'div[style*="position: fixed"][style*="background: rgba(0,0,0"]',
+                'div[style*="position:fixed"][style*="background:rgba(0,0,0"]',
+                '*[style*="position: fixed; top: 0; left: 0; width: 100%; height: 100%"]',
+                '*[style*="position:fixed;top:0;left:0;width:100%;height:100%"]',
+                '.modal-overlay'
+            ];
+            
+            overlaySelectors.forEach(selector => {
+                try {
+                    const elements = document.querySelectorAll(selector);
+                    elements.forEach(el => {
+                        el.style.display = 'none';
+                        el.style.visibility = 'hidden';
+                        el.style.opacity = '0';
+                        el.style.zIndex = '-9999';
+                        // Also try to remove the element entirely
+                        if (el.classList.contains('modal') || el.classList.contains('modal-overlay')) {
+                            el.remove();
+                        }
+                    });
+                } catch (e) {
+                    console.log('Selector not valid:', selector);
+                }
+            });
+        }
+
+        // Run on page load
+        document.addEventListener('DOMContentLoaded', forceRemoveOverlays);
+        
+        // Run periodically to catch dynamically created overlays
+        setInterval(forceRemoveOverlays, 2000);
 
     </script>
 
@@ -15193,6 +15275,9 @@ END:VCALENDAR`;
         
         // Export WebsiteBuilder for global access
         window.WebsiteBuilder = WebsiteBuilder;
+    </script>
+    
+    <!-- Website Builder HTML Content Continues Here -->
                                         <button class="wb-suggestion-btn" onclick="WebsiteBuilder.quickAIEdit('Make this look more luxury and elegant')">Luxury Style</button>
                                         <button class="wb-suggestion-btn" onclick="WebsiteBuilder.quickAIEdit('Add modern animations and effects')">Modern Effects</button>
                                         <button class="wb-suggestion-btn" onclick="WebsiteBuilder.quickAIEdit('Improve typography and spacing')">Better Typography</button>
@@ -17527,37 +17612,37 @@ END:VCALENDAR`;
             console.log('Website Builder module loaded');
         });
 
-        // Hook into the existing switchTab function
-        const originalSwitchTabFunc = window.switchTab;
-        window.switchTab = function(tabName) {
-            console.log('Tab switch detected:', tabName);
-            
-            // Call the original function first
-            if (originalSwitchTabFunc) {
-                originalSwitchTabFunc.call(this, tabName);
-            }
-            
-            // Initialize Website Builder when its tab is selected
-            if (tabName === 'websiteBuilder') {
-                console.log('Initializing Website Builder...');
-                setTimeout(() => {
-                    if (!WebsiteBuilder.initialized) {
-                        WebsiteBuilder.init();
-                        WebsiteBuilder.loadSavedData();
-                        WebsiteBuilder.initialized = true;
-                        console.log('Website Builder initialized successfully');
+        // Add initialization hooks to the existing switchTab function
+        document.addEventListener('DOMContentLoaded', function() {
+            // Override the switchTab function to add our initialization logic
+            const originalSwitchTab = window.switchTab;
+            if (originalSwitchTab) {
+                window.switchTab = function(tabName) {
+                    // Call the original function
+                    originalSwitchTab.call(this, tabName);
+                    
+                    // Add our initialization logic
+                    if (tabName === 'websiteBuilder') {
+                        setTimeout(() => {
+                            if (typeof WebsiteBuilder !== 'undefined' && !WebsiteBuilder.initialized) {
+                                WebsiteBuilder.init();
+                                WebsiteBuilder.loadSavedData();
+                                WebsiteBuilder.initialized = true;
+                                console.log('Website Builder initialized successfully');
+                            }
+                        }, 100);
                     }
-                }, 100);
+                    
+                    if (tabName === 'paymentSettings') {
+                        setTimeout(() => {
+                            if (typeof PaymentSettings !== 'undefined') {
+                                PaymentSettings.init();
+                            }
+                        }, 100);
+                    }
+                };
             }
-            
-            // Initialize Payment Settings when its tab is selected
-            if (tabName === 'paymentSettings') {
-                console.log('Initializing Payment Settings...');
-                setTimeout(() => {
-                    PaymentSettings.init();
-                }, 100);
-            }
-        };
+        });
 
         // Payment Settings Manager
         const PaymentSettings = {
