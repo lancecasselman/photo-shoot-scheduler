@@ -574,24 +574,27 @@
                         sessionPaymentLabel.textContent = 'Deposit Amount';
                     }
                     
-                    // Check if user is authenticated (photographer) vs client
-                    // Only show send options for authenticated photographers
+                    // For deposit invoices, ALWAYS show the payment button for clients
+                    // The deposit button should always be visible regardless of authentication
+                    console.log('🔥 DEPOSIT: Showing payment button for deposit invoice');
+                    
+                    // Check if user is authenticated (photographer) vs client for SEND options only
                     fetch('/api/check-auth', { credentials: 'include' })
                         .then(response => {
                             if (response.ok) {
-                                // Authenticated photographer - show send options
-                                console.log('🔥 DEPOSIT: Photographer detected - showing send options');
+                                // Authenticated photographer - also show send options
+                                console.log('🔥 DEPOSIT: Photographer detected - showing send options too');
                                 const sendDepositSection = document.getElementById('send-deposit-section');
                                 if (sendDepositSection) {
                                     sendDepositSection.style.display = 'block';
                                 }
                             } else {
-                                // Anonymous client - hide send options, show only payment
-                                console.log('🔥 DEPOSIT: Client view - hiding send options, showing only payment button');
+                                // Anonymous client - only payment button (already visible)
+                                console.log('🔥 DEPOSIT: Client view - only payment button visible');
                             }
                         })
                         .catch(error => {
-                            console.log('🔥 DEPOSIT: Auth check failed - assuming client view');
+                            console.log('🔥 DEPOSIT: Auth check failed - client view with payment button');
                         });
                 }
                 
