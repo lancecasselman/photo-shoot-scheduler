@@ -8,7 +8,8 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 class StorageBilling {
     constructor(storageSystem) {
         this.storageSystem = storageSystem;
-        this.PACKAGE_PRICE = 25; // $25/month per TB
+        this.PROFESSIONAL_PLAN_PRICE = 39; // $39/month Professional plan with 100GB
+        this.STORAGE_ADD_ON_PRICE = 25; // $25/month per TB storage add-on
     }
 
     /**

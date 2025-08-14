@@ -10,9 +10,9 @@ class StorageSystem {
     constructor(pool, r2FileManager) {
         this.pool = pool;
         this.r2Manager = r2FileManager;
-        this.FREE_STORAGE_GB = 5;
+        this.BASE_STORAGE_GB = 100; // 100GB included with $39/month Professional plan
         this.PACKAGE_SIZE_TB = 1;
-        this.PACKAGE_PRICE_MONTHLY = 25; // $25/month per TB
+        this.PACKAGE_PRICE_MONTHLY = 25; // $25/month per TB storage add-on
         this.WARNING_THRESHOLD = 0.9; // 90% usage warning
     }
 
@@ -25,9 +25,9 @@ class StorageSystem {
             await this.pool.query(`
                 CREATE TABLE IF NOT EXISTS user_storage_quotas (
                     user_id VARCHAR(255) PRIMARY KEY,
-                    free_storage_gb DECIMAL(10,3) DEFAULT 5.0,
+                    base_storage_gb DECIMAL(10,3) DEFAULT 100.0,
                     purchased_tb INTEGER DEFAULT 0,
-                    total_quota_gb DECIMAL(10,3) DEFAULT 5.0,
+                    total_quota_gb DECIMAL(10,3) DEFAULT 100.0,
                     used_storage_bytes BIGINT DEFAULT 0,
                     last_calculated_at TIMESTAMP DEFAULT NOW(),
                     created_at TIMESTAMP DEFAULT NOW(),

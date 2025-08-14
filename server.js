@@ -2501,11 +2501,10 @@ app.post('/api/create-subscription', isAuthenticated, async (req, res) => {
         const { plan } = req.body;
         const user = req.user;
 
-        // Define price IDs for each plan
+        // Define price IDs for each plan - Updated to $39/month Professional plan
         const priceIds = {
-            monthly: 'price_monthly_25',     // $25/month
-            sixmonth: 'price_sixmonth_125',  // $125/6 months
-            yearly: 'price_yearly_200'        // $200/year
+            professional: 'price_professional_39',  // $39/month Professional
+            storage_1tb: 'price_storage_1tb_25'     // $25/month per 1TB storage add-on
         };
 
         // Create or retrieve Stripe customer
@@ -2535,22 +2534,18 @@ app.post('/api/create-subscription', isAuthenticated, async (req, res) => {
                 price_data: {
                     currency: 'usd',
                     product_data: {
-                        name: 'Photography Management System Subscription',
-                        description: plan === 'monthly' ? 'Monthly Plan' : 
-                                   plan === 'sixmonth' ? '6 Month Plan (1 month free)' : 
-                                   'Annual Plan (2 months free)'
+                        name: 'Photography Management System - Professional Plan',
+                        description: plan === 'professional' ? 'Professional Plan - All features + 100GB storage' : 
+                                   `Storage Add-on - Additional 1TB backed up to Cloudflare R2`
                     },
-                    unit_amount: plan === 'monthly' ? 2500 : 
-                               plan === 'sixmonth' ? 12500 : 
-                               20000,
+                    unit_amount: plan === 'professional' ? 3900 :  // $39/month
+                               2500,  // $25/month per 1TB storage
                     recurring: {
-                        interval: plan === 'monthly' ? 'month' : 
-                                plan === 'sixmonth' ? 'month' : 
-                                'year',
-                        interval_count: plan === 'sixmonth' ? 6 : 1
+                        interval: 'month',
+                        interval_count: 1
                     }
                 },
-                quantity: 1
+                quantity: req.body.quantity || 1
             }],
             mode: 'subscription',
             success_url: `${req.protocol}://${req.get('host')}/subscription-success`,
