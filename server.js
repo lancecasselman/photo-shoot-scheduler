@@ -1028,15 +1028,28 @@ app.post('/api/auth/firebase-login', async (req, res) => {
 app.post('/api/auth/firebase-verify', async (req, res) => {
     try {
         const { uid, email, displayName } = req.body;
+        console.log('🔍 FIREBASE VERIFY: Received request:', { uid, email, displayName });
+        console.log('🔍 FIREBASE VERIFY: Session ID:', req.sessionID);
+        console.log('🔍 FIREBASE VERIFY: Session before:', req.session);
 
         if (!uid || !email) {
+            console.log('🔍 FIREBASE VERIFY: Missing user information');
             return res.status(400).json({ message: 'Missing user information' });
         }
 
         // Verify user exists and update session
         req.session.user = { uid, email, displayName };
-
-        res.json({ success: true, user: req.session.user });
+        console.log('🔍 FIREBASE VERIFY: Session after setting user:', req.session);
+        
+        // Force session save
+        req.session.save((err) => {
+            if (err) {
+                console.error('🔍 FIREBASE VERIFY: Session save error:', err);
+                return res.status(500).json({ message: 'Session save failed' });
+            }
+            console.log('🔍 FIREBASE VERIFY: Session saved successfully');
+            res.json({ success: true, user: req.session.user });
+        });
     } catch (error) {
         console.error('Firebase verification error:', error);
         res.status(500).json({ message: 'Verification failed' });
@@ -1044,9 +1057,17 @@ app.post('/api/auth/firebase-verify', async (req, res) => {
 });
 
 app.get('/api/auth/user', (req, res) => {
+    console.log('🔍 AUTH USER: Request received');
+    console.log('🔍 AUTH USER: Session ID:', req.sessionID);
+    console.log('🔍 AUTH USER: Session:', req.session);
+    console.log('🔍 AUTH USER: req.session exists:', !!req.session);
+    console.log('🔍 AUTH USER: req.session.user exists:', !!(req.session && req.session.user));
+    
     if (req.session && req.session.user) {
+        console.log('🔍 AUTH USER: User authenticated, returning user data');
         res.json({ user: req.session.user });
     } else {
+        console.log('🔍 AUTH USER: User not authenticated');
         res.status(401).json({ message: 'Not authenticated' });
     }
 });
