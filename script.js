@@ -1193,15 +1193,6 @@ async function createInvoice(session) {
         // Open the custom invoice URL
         window.open(customInvoiceUrl, '_blank');
 
-        // Show enhanced dialog with send options
-        showInvoiceSendDialog({
-            amount: remainingBalance,
-            clientName: session.clientName,
-            clientPhone: session.phoneNumber,
-            clientEmail: session.email,
-            invoiceUrl: customInvoiceUrl
-        });
-
         console.log('🔥 TIPPING SUCCESS: Custom invoice URL created:', customInvoiceUrl);
 
     } catch (error) {
