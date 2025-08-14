@@ -574,9 +574,25 @@
                         sessionPaymentLabel.textContent = 'Deposit Amount';
                     }
                     
-                    // CLIENTS should only see the payment button, not the send options
-                    // Send section is only for photographers creating/managing deposits
-                    console.log('🔥 DEPOSIT: Client view - hiding send options, showing only payment button');
+                    // Check if user is authenticated (photographer) vs client
+                    // Only show send options for authenticated photographers
+                    fetch('/api/check-auth', { credentials: 'include' })
+                        .then(response => {
+                            if (response.ok) {
+                                // Authenticated photographer - show send options
+                                console.log('🔥 DEPOSIT: Photographer detected - showing send options');
+                                const sendDepositSection = document.getElementById('send-deposit-section');
+                                if (sendDepositSection) {
+                                    sendDepositSection.style.display = 'block';
+                                }
+                            } else {
+                                // Anonymous client - hide send options, show only payment
+                                console.log('🔥 DEPOSIT: Client view - hiding send options, showing only payment button');
+                            }
+                        })
+                        .catch(error => {
+                            console.log('🔥 DEPOSIT: Auth check failed - assuming client view');
+                        });
                 }
                 
                 if (amount) {
