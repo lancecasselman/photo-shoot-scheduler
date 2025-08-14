@@ -1464,23 +1464,42 @@ async function sendDepositInvoice(session) {
         if (result.success && result.invoice_url) {
             showMessage(`Deposit invoice created for $${depositAmount.toFixed(2)}! Opening in new window...`, 'success');
 
-            // Open deposit invoice in new window - same approach as regular invoice
+            // Open deposit invoice in new window
             console.log('🔥 Attempting to open window with URL:', result.invoice_url);
-            const newWindow = window.open(result.invoice_url, '_blank', 'noopener,noreferrer');
             
-            // Give window time to load before checking
-            setTimeout(() => {
-                // Check if popup was blocked
-                if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
-                    console.log('❌ Popup blocked or failed to open - showing fallback option');
-                    showMessage('Popup blocked! Opening deposit invoice in this tab...', 'warning');
-                    
-                    // Directly navigate to the invoice
-                    window.open(result.invoice_url, '_blank');
-                } else {
+            try {
+                // Use a simple approach that works better with popup blockers
+                const newWindow = window.open('', '_blank');
+                if (newWindow) {
+                    newWindow.location.href = result.invoice_url;
                     console.log('✅ Deposit invoice window opened successfully');
+                } else {
+                    throw new Error('Popup blocked');
                 }
-            }, 100);
+            } catch (error) {
+                console.log('❌ Popup blocked - using fallback');
+                showMessage('Browser blocked popup. Click this link to open deposit invoice:', 'warning');
+                
+                // Create a clickable link in the message area
+                setTimeout(() => {
+                    const linkDiv = document.createElement('div');
+                    linkDiv.innerHTML = `
+                        <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 10px; margin: 10px 0; border-radius: 5px;">
+                            <strong>Deposit Invoice Ready!</strong><br>
+                            <a href="${result.invoice_url}" target="_blank" style="color: #0066cc; text-decoration: underline;">
+                                Click here to open $${depositAmount.toFixed(2)} deposit invoice →
+                            </a>
+                        </div>
+                    `;
+                    
+                    // Insert after the sessions list
+                    const sessionsContainer = document.querySelector('.sessions-container') || document.body;
+                    sessionsContainer.appendChild(linkDiv);
+                    
+                    // Auto-remove after 30 seconds
+                    setTimeout(() => linkDiv.remove(), 30000);
+                }, 500);
+            }
 
             // Wait a moment for database to update, then refresh sessions
             setTimeout(async () => {
