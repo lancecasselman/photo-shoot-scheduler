@@ -37,28 +37,34 @@ async function checkAuth() {
         } else {
             console.log('Auth check failed - response not ok:', response.status);
             
-            // Be more lenient with redirects - only redirect if definitely NOT from auth
-            if (localStorage.getItem('manualLogout') !== 'true' && !fromAuth && !sessionStorage.getItem('fromAuth')) {
-                console.log('Scheduling redirect to auth page...');
+            // COMPLETELY disable redirects if coming from auth page
+            if (localStorage.getItem('manualLogout') !== 'true' && !fromAuth && !sessionStorage.getItem('fromAuth') && !document.referrer.includes('auth.html')) {
+                console.log('🔴 AUTH CHECK: Scheduling redirect to auth page...');
                 setTimeout(() => {
                     redirectToAuth();
-                }, 1000); // Longer delay
+                }, 2000); // Even longer delay
             } else {
-                console.log('Skipping redirect - either from auth page or manual logout');
+                console.log('🔴 AUTH CHECK: Skipping redirect - from auth page, manual logout, or has fromAuth flag');
+                console.log('🔴 AUTH CHECK: fromAuth:', fromAuth);
+                console.log('🔴 AUTH CHECK: sessionStorage fromAuth:', sessionStorage.getItem('fromAuth'));
+                console.log('🔴 AUTH CHECK: referrer:', document.referrer);
             }
             return false;
         }
     } catch (error) {
         console.error('Auth check failed:', error);
         
-        // Be more lenient with redirects - only redirect if definitely NOT from auth
-        if (localStorage.getItem('manualLogout') !== 'true' && !fromAuth && !sessionStorage.getItem('fromAuth')) {
-            console.log('Scheduling redirect to auth page due to error...');
+        // COMPLETELY disable redirects if coming from auth page
+        if (localStorage.getItem('manualLogout') !== 'true' && !fromAuth && !sessionStorage.getItem('fromAuth') && !document.referrer.includes('auth.html')) {
+            console.log('🔴 AUTH CHECK: Scheduling redirect to auth page due to error...');
             setTimeout(() => {
                 redirectToAuth();
-            }, 1000); // Longer delay
+            }, 2000); // Even longer delay
         } else {
-            console.log('Skipping redirect due to error - either from auth page or manual logout');
+            console.log('🔴 AUTH CHECK: Skipping redirect due to error - from auth page, manual logout, or has fromAuth flag');
+            console.log('🔴 AUTH CHECK: fromAuth:', fromAuth);
+            console.log('🔴 AUTH CHECK: sessionStorage fromAuth:', sessionStorage.getItem('fromAuth'));
+            console.log('🔴 AUTH CHECK: referrer:', document.referrer);
         }
         return false;
     }
@@ -2111,36 +2117,46 @@ async function firebaseLogout() {
 
 // Initialize page function
 async function initializePage() {
-    console.log('Initializing page...');
-    console.log('Document referrer:', document.referrer);
-    console.log('Session fromAuth flag:', sessionStorage.getItem('fromAuth'));
+    console.log('🟢 INIT PAGE: Starting initialization...');
+    console.log('🟢 INIT PAGE: Document referrer:', document.referrer);
+    console.log('🟢 INIT PAGE: Session fromAuth flag:', sessionStorage.getItem('fromAuth'));
 
     // Add delay if coming from auth page to allow session establishment
     const urlParams = new URLSearchParams(window.location.search);
     const fromAuth = document.referrer.includes('auth.html') || sessionStorage.getItem('fromAuth') === 'true';
     
     if (fromAuth) {
-        console.log('Coming from auth page - waiting for session establishment...');
+        console.log('🟢 INIT PAGE: Coming from auth page - waiting for session establishment...');
         sessionStorage.removeItem('fromAuth'); // Clear flag
-        console.log('Waiting 2 seconds for backend session to fully establish...');
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds instead of 1
+        console.log('🟢 INIT PAGE: Waiting 3 seconds for backend session to fully establish...');
+        await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3 seconds for more time
+    } else {
+        console.log('🟢 INIT PAGE: Not from auth page, proceeding immediately');
     }
 
     // Check authentication with explicit retry logic
-    console.log('Starting authentication check...');
+    console.log('🟢 INIT PAGE: Starting authentication check...');
     let isAuthenticated = await checkAuth();
+    console.log('🟢 INIT PAGE: First auth check result:', isAuthenticated);
     
-    // If auth fails but we just came from auth page, retry once more
+    // If auth fails but we just came from auth page, retry multiple times
     if (!isAuthenticated && fromAuth) {
-        console.log('Auth failed but coming from auth page - retrying once more...');
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        isAuthenticated = await checkAuth();
+        console.log('🟢 INIT PAGE: Auth failed but coming from auth page - retrying up to 3 times...');
+        for (let i = 1; i <= 3; i++) {
+            console.log(`🟢 INIT PAGE: Retry ${i}/3 - waiting 1 second...`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            isAuthenticated = await checkAuth();
+            console.log(`🟢 INIT PAGE: Retry ${i}/3 result:`, isAuthenticated);
+            if (isAuthenticated) break;
+        }
     }
     
     if (!isAuthenticated) {
-        console.log('User not authenticated after retries - returning early');
+        console.log('🟢 INIT PAGE: User not authenticated after retries - returning early');
         return; // Don't load app content if not authenticated
     }
+    
+    console.log('🟢 INIT PAGE: Authentication successful, proceeding with app initialization...');
 
     // Initialize main app content after successful authentication
     if (typeof window.initializeAppContent === 'function') {
