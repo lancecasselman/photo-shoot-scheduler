@@ -561,8 +561,9 @@
                             setTimeout(() => {
                                 const urlParams = new URLSearchParams(window.location.search);
                                 const returnTo = urlParams.get('return');
-                                console.log('Session established, redirecting to:', returnTo || '/');
-                                window.location.href = returnTo || '/';
+                                console.log('Session established, redirecting to:', returnTo || '/index.html');
+                                // Redirect to index.html explicitly instead of just '/'
+                                window.location.href = returnTo || '/index.html';
                             }, 1500); // Wait 1.5 seconds for session to be established
                         } else {
                             console.log('Backend verification failed, but user is signed in to Firebase. Continuing...');
@@ -570,7 +571,7 @@
                             sessionStorage.setItem('fromAuth', 'true');
                             const urlParams = new URLSearchParams(window.location.search);
                             const returnTo = urlParams.get('return');
-                            window.location.href = returnTo || '/';
+                            window.location.href = returnTo || '/index.html';
                         }
                     } catch (error) {
                         console.log('Backend verification failed, but user is signed in to Firebase. Continuing...');
@@ -578,7 +579,7 @@
                         sessionStorage.setItem('fromAuth', 'true');
                         const urlParams = new URLSearchParams(window.location.search);
                         const returnTo = urlParams.get('return');
-                        window.location.href = returnTo || '/';
+                        window.location.href = returnTo || '/index.html';
                     }
                 }
             });
