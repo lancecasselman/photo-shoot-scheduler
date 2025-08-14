@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stripe Account Connected - Photography Management</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .success-container {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 90%;
+        }
+        
+        .success-icon {
+            background: #28a745;
+            color: white;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 36px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .status-item:last-child {
+            border-bottom: none;
+        }
+        
+        .status-check {
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .btn {
+            background: #007bff;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 20px;
+            transition: background 0.3s ease;
+        }
+        
+        .btn:hover {
+            background: #0056b3;
+        }
+        
+        .loading {
+            display: none;
+            color: #666;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="success-container">
+        <div class="success-icon">✓</div>
+        <h1>Stripe Account Connected!</h1>
+        <p class="subtitle">Your payment account has been successfully connected. You can now receive payments directly from your clients.</p>
+        
+        <div id="account-status">
+            <div class="loading">
+                <p>Verifying account status...</p>
+            </div>
+        </div>
+        
+        <a href="../index.html" class="btn">Return to Dashboard</a>
+    </div>
+
+    <script>
+        // Check account status and display verification info
+        async function checkAccountStatus() {
+            try {
+                const response = await fetch('/api/stripe-connect/status', {
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                const statusContainer = document.getElementById('account-status');
+                
+                if (data.connected && data.onboardingComplete) {
+                    statusContainer.innerHTML = `
+                        <div class="status-item">
+                            <span>Account Connected</span>
+                            <span class="status-check">✓</span>
+                        </div>
+                        <div class="status-item">
+                            <span>Can Receive Payments</span>
+                            <span class="status-check">✓</span>
+                        </div>
+                        <div class="status-item">
+                            <span>Can Receive Payouts</span>
+                            <span class="status-check">✓</span>
+                        </div>
+                    `;
+                } else {
+                    statusContainer.innerHTML = `
+                        <p style="color: #ffc107; margin: 20px 0;">
+                            Your account is connected but may require additional information. 
+                            You can complete this later in your dashboard settings.
+                        </p>
+                    `;
+                }
+                
+                document.querySelector('.loading').style.display = 'none';
+                statusContainer.style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error checking status:', error);
+                document.querySelector('.loading').style.display = 'none';
+                document.getElementById('account-status').innerHTML = `
+                    <p style="color: #dc3545;">Unable to verify account status. Please check your dashboard.</p>
+                `;
+            }
+        }
+        
+        // Check status when page loads
+        window.addEventListener('load', checkAccountStatus);
+    </script>
+</body>
+</html>

@@ -4725,6 +4725,11 @@
                             📸 Community
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a href="#" class="nav-link" onclick="switchTab('paymentSettings'); closeMobileMenu();">
+                            💳 Payment Settings
+                        </a>
+                    </li>
 
 
 
@@ -12038,6 +12043,144 @@ END:VCALENDAR`;
             </div>
         </div>
 
+        <!-- Payment Settings Tab Content -->
+        <div id="paymentSettingsTab" class="tab-content">
+            <div class="content-header">
+                <h1>💳 Payment Settings</h1>
+                <p>Connect your Stripe account to receive payments directly from clients</p>
+            </div>
+
+            <div class="payment-settings-container">
+                <!-- Stripe Connect Status Card -->
+                <div class="setting-card" id="stripe-status-card">
+                    <div class="card-header">
+                        <h3>🔗 Stripe Connect</h3>
+                        <div class="status-indicator" id="stripe-status-indicator">
+                            <span class="status-dot checking"></span>
+                            <span class="status-text" id="stripe-status-text">Checking connection...</span>
+                        </div>
+                    </div>
+                    
+                    <div class="card-content" id="stripe-card-content">
+                        <div class="loading-state" id="stripe-loading">
+                            <div class="spinner"></div>
+                            <p>Checking your Stripe connection...</p>
+                        </div>
+                        
+                        <!-- Not Connected State -->
+                        <div class="connection-state" id="not-connected-state" style="display: none;">
+                            <div class="info-section">
+                                <h4>💰 Why Connect Stripe?</h4>
+                                <ul class="benefits-list">
+                                    <li>Receive payments directly to your bank account</li>
+                                    <li>Process credit cards, debit cards, and digital wallets</li>
+                                    <li>Automatic invoice generation and receipts</li>
+                                    <li>Real-time payment notifications</li>
+                                    <li>Industry-standard security and PCI compliance</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="action-section">
+                                <button id="connect-stripe-btn" class="btn btn-primary">
+                                    🚀 Connect Stripe Account
+                                </button>
+                                <p class="note">You'll be redirected to Stripe to set up your account. This is completely free and takes just a few minutes.</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Connected State -->
+                        <div class="connection-state" id="connected-state" style="display: none;">
+                            <div class="success-message">
+                                <div class="success-icon">✅</div>
+                                <h4>Account Connected Successfully!</h4>
+                                <p>Your Stripe account is connected and ready to receive payments.</p>
+                            </div>
+                            
+                            <div class="account-details" id="account-details">
+                                <div class="detail-row">
+                                    <span class="label">Account Status:</span>
+                                    <span class="value" id="account-status">Active</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="label">Payments Enabled:</span>
+                                    <span class="value" id="payments-enabled">Yes</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="label">Payouts Enabled:</span>
+                                    <span class="value" id="payouts-enabled">Yes</span>
+                                </div>
+                            </div>
+                            
+                            <div class="action-section">
+                                <button id="refresh-status-btn" class="btn btn-secondary">
+                                    🔄 Refresh Status
+                                </button>
+                                <button id="manage-account-btn" class="btn btn-outline">
+                                    ⚙️ Manage Stripe Account
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Incomplete State -->
+                        <div class="connection-state" id="incomplete-state" style="display: none;">
+                            <div class="warning-message">
+                                <div class="warning-icon">⚠️</div>
+                                <h4>Setup Incomplete</h4>
+                                <p>Your Stripe account needs additional information before you can receive payments.</p>
+                            </div>
+                            
+                            <div class="action-section">
+                                <button id="complete-setup-btn" class="btn btn-warning">
+                                    📋 Complete Setup
+                                </button>
+                                <p class="note">Complete your Stripe account setup to start receiving payments.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Processing Info -->
+                <div class="setting-card">
+                    <div class="card-header">
+                        <h3>💱 Payment Processing</h3>
+                    </div>
+                    <div class="card-content">
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <h4>Processing Fees</h4>
+                                <p>Stripe charges 2.9% + 30¢ per successful payment</p>
+                            </div>
+                            <div class="info-item">
+                                <h4>Platform Fees</h4>
+                                <p>No additional fees - you keep 100% minus Stripe's processing fee</p>
+                            </div>
+                            <div class="info-item">
+                                <h4>Payout Schedule</h4>
+                                <p>Daily automatic transfers to your connected bank account</p>
+                            </div>
+                            <div class="info-item">
+                                <h4>Supported Payment Methods</h4>
+                                <p>Credit cards, debit cards, Apple Pay, Google Pay, and more</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Test Payment Section -->
+                <div class="setting-card" id="test-payment-card" style="display: none;">
+                    <div class="card-header">
+                        <h3>🧪 Test Payment</h3>
+                    </div>
+                    <div class="card-content">
+                        <p>Test your payment setup with a small transaction to ensure everything works correctly.</p>
+                        <button id="test-payment-btn" class="btn btn-outline">
+                            🧪 Create Test Payment
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         </div> <!-- Close main-content -->
     </div> <!-- Close container -->
     
@@ -13858,6 +14001,275 @@ END:VCALENDAR`;
 
         .wb-drop-indicator.active {
             opacity: 1;
+        }
+
+        /* Payment Settings Styles */
+        .payment-settings-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .setting-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .setting-card:hover {
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            padding: 25px 30px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-header h3 {
+            margin: 0;
+            color: #2d3748;
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .status-dot.checking {
+            background: #fbbf24;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.connected {
+            background: #10b981;
+        }
+
+        .status-dot.disconnected {
+            background: #ef4444;
+        }
+
+        .status-dot.incomplete {
+            background: #f59e0b;
+        }
+
+        .status-text {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #4a5568;
+        }
+
+        .card-content {
+            padding: 30px;
+        }
+
+        .loading-state {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .loading-state .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        .connection-state {
+            animation: fadeIn 0.5s ease;
+        }
+
+        .info-section {
+            margin-bottom: 30px;
+        }
+
+        .info-section h4 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .benefits-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .benefits-list li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+            color: #4a5568;
+            line-height: 1.5;
+        }
+
+        .benefits-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #10b981;
+            font-weight: bold;
+        }
+
+        .success-message, .warning-message {
+            text-align: center;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .success-message {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+        }
+
+        .warning-message {
+            background: #fffbeb;
+            border: 1px solid #fed7aa;
+        }
+
+        .success-icon, .warning-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .success-message h4, .warning-message h4 {
+            margin: 0 0 10px 0;
+            color: #2d3748;
+        }
+
+        .account-details {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-row .label {
+            font-weight: 500;
+            color: #4a5568;
+        }
+
+        .detail-row .value {
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .action-section {
+            text-align: center;
+        }
+
+        .action-section .btn {
+            margin: 0 10px 10px 10px;
+            min-width: 160px;
+        }
+
+        .note {
+            font-size: 0.9rem;
+            color: #6b7280;
+            margin-top: 15px;
+            line-height: 1.4;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .info-item {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .info-item h4 {
+            margin: 0 0 10px 0;
+            color: #2d3748;
+            font-size: 1rem;
+        }
+
+        .info-item p {
+            margin: 0;
+            color: #6b7280;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .payment-settings-container {
+                padding: 10px;
+            }
+            
+            .card-header {
+                padding: 20px;
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .card-content {
+                padding: 20px;
+            }
+            
+            .action-section .btn {
+                display: block;
+                width: 100%;
+                margin: 10px 0;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 
@@ -16334,7 +16746,7 @@ END:VCALENDAR`;
         // Hook into the existing switchTab function
         const originalSwitchTabFunc = window.switchTab;
         window.switchTab = function(tabName) {
-            console.log('Website Builder: Tab switch detected:', tabName);
+            console.log('Tab switch detected:', tabName);
             
             // Call the original function first
             if (originalSwitchTabFunc) {
@@ -16352,6 +16764,224 @@ END:VCALENDAR`;
                         console.log('Website Builder initialized successfully');
                     }
                 }, 100);
+            }
+            
+            // Initialize Payment Settings when its tab is selected
+            if (tabName === 'paymentSettings') {
+                console.log('Initializing Payment Settings...');
+                setTimeout(() => {
+                    PaymentSettings.init();
+                }, 100);
+            }
+        };
+
+        // Payment Settings Manager
+        const PaymentSettings = {
+            initialized: false,
+            
+            init() {
+                if (this.initialized) return;
+                
+                console.log('Payment Settings: Initializing...');
+                this.setupEventListeners();
+                this.checkStripeStatus();
+                this.initialized = true;
+            },
+            
+            setupEventListeners() {
+                // Connect Stripe button
+                const connectBtn = document.getElementById('connect-stripe-btn');
+                if (connectBtn) {
+                    connectBtn.addEventListener('click', () => this.connectStripe());
+                }
+                
+                // Refresh status button
+                const refreshBtn = document.getElementById('refresh-status-btn');
+                if (refreshBtn) {
+                    refreshBtn.addEventListener('click', () => this.refreshStatus());
+                }
+                
+                // Complete setup button
+                const completeBtn = document.getElementById('complete-setup-btn');
+                if (completeBtn) {
+                    completeBtn.addEventListener('click', () => this.completeSetup());
+                }
+                
+                // Manage account button
+                const manageBtn = document.getElementById('manage-account-btn');
+                if (manageBtn) {
+                    manageBtn.addEventListener('click', () => this.manageAccount());
+                }
+            },
+            
+            async checkStripeStatus() {
+                console.log('Checking Stripe Connect status...');
+                
+                try {
+                    const response = await fetch('/api/stripe-connect/status', {
+                        credentials: 'include'
+                    });
+                    
+                    const data = await response.json();
+                    console.log('Stripe status:', data);
+                    
+                    this.updateUI(data);
+                    
+                } catch (error) {
+                    console.error('Error checking Stripe status:', error);
+                    this.showError('Failed to check Stripe connection status');
+                }
+            },
+            
+            updateUI(statusData) {
+                // Hide loading state
+                document.getElementById('stripe-loading').style.display = 'none';
+                
+                // Update status indicator
+                const statusDot = document.querySelector('.status-dot');
+                const statusText = document.getElementById('stripe-status-text');
+                
+                if (statusData.connected && statusData.onboardingComplete) {
+                    // Connected and ready
+                    statusDot.className = 'status-dot connected';
+                    statusText.textContent = 'Connected & Active';
+                    this.showConnectedState(statusData);
+                } else if (statusData.connected && !statusData.onboardingComplete) {
+                    // Connected but incomplete
+                    statusDot.className = 'status-dot incomplete';
+                    statusText.textContent = 'Setup Incomplete';
+                    this.showIncompleteState(statusData);
+                } else {
+                    // Not connected
+                    statusDot.className = 'status-dot disconnected';
+                    statusText.textContent = 'Not Connected';
+                    this.showNotConnectedState();
+                }
+            },
+            
+            showNotConnectedState() {
+                document.getElementById('not-connected-state').style.display = 'block';
+                document.getElementById('connected-state').style.display = 'none';
+                document.getElementById('incomplete-state').style.display = 'none';
+            },
+            
+            showConnectedState(data) {
+                document.getElementById('not-connected-state').style.display = 'none';
+                document.getElementById('connected-state').style.display = 'block';
+                document.getElementById('incomplete-state').style.display = 'none';
+                document.getElementById('test-payment-card').style.display = 'block';
+                
+                // Update account details
+                document.getElementById('account-status').textContent = 
+                    data.onboardingComplete ? 'Active' : 'Pending';
+                document.getElementById('payments-enabled').textContent = 
+                    data.canReceivePayments ? 'Yes' : 'No';
+                document.getElementById('payouts-enabled').textContent = 
+                    data.canReceivePayouts ? 'Yes' : 'No';
+            },
+            
+            showIncompleteState(data) {
+                document.getElementById('not-connected-state').style.display = 'none';
+                document.getElementById('connected-state').style.display = 'none';
+                document.getElementById('incomplete-state').style.display = 'block';
+            },
+            
+            async connectStripe() {
+                const btn = document.getElementById('connect-stripe-btn');
+                const originalText = btn.textContent;
+                
+                btn.disabled = true;
+                btn.textContent = '🔄 Connecting...';
+                
+                try {
+                    const response = await fetch('/api/stripe-connect/onboard', {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        console.log('Redirecting to Stripe onboarding...');
+                        window.location.href = data.onboardingUrl;
+                    } else {
+                        throw new Error(data.message || 'Failed to create Stripe account');
+                    }
+                    
+                } catch (error) {
+                    console.error('Error connecting Stripe:', error);
+                    this.showError('Failed to connect Stripe account: ' + error.message);
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                }
+            },
+            
+            async refreshStatus() {
+                const btn = document.getElementById('refresh-status-btn');
+                const originalText = btn.textContent;
+                
+                btn.disabled = true;
+                btn.textContent = '🔄 Refreshing...';
+                
+                await this.checkStripeStatus();
+                
+                btn.disabled = false;
+                btn.textContent = originalText;
+                
+                this.showMessage('Status refreshed successfully', 'success');
+            },
+            
+            async completeSetup() {
+                const btn = document.getElementById('complete-setup-btn');
+                const originalText = btn.textContent;
+                
+                btn.disabled = true;
+                btn.textContent = '🔄 Creating link...';
+                
+                try {
+                    const response = await fetch('/api/stripe-connect/refresh', {
+                        method: 'POST',
+                        credentials: 'include'
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        window.location.href = data.onboardingUrl;
+                    } else {
+                        throw new Error(data.message || 'Failed to create setup link');
+                    }
+                    
+                } catch (error) {
+                    console.error('Error creating setup link:', error);
+                    this.showError('Failed to create setup link: ' + error.message);
+                    btn.disabled = false;
+                    btn.textContent = originalText;
+                }
+            },
+            
+            manageAccount() {
+                // Open Stripe dashboard in new tab
+                window.open('https://dashboard.stripe.com/', '_blank');
+            },
+            
+            showError(message) {
+                if (typeof window.showMessage === 'function') {
+                    window.showMessage(message, 'error');
+                } else {
+                    alert(message);
+                }
+            },
+            
+            showMessage(message, type) {
+                if (typeof window.showMessage === 'function') {
+                    window.showMessage(message, type);
+                } else {
+                    alert(message);
+                }
             }
         };
     </script>

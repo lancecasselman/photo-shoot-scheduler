@@ -36,6 +36,8 @@ export const users = pgTable("users", {
   subscriptionExpiresAt: timestamp("subscription_expires_at"),
   stripeCustomerId: varchar("stripe_customer_id"),
   stripeSubscriptionId: varchar("stripe_subscription_id"),
+  stripeConnectAccountId: varchar("stripe_connect_account_id"),
+  stripeOnboardingComplete: boolean("stripe_onboarding_complete").default(false),
   aiCredits: integer("ai_credits").default(0),
   totalAiCreditsUsed: integer("total_ai_credits_used").default(0),
   lastAiCreditPurchase: timestamp("last_ai_credit_purchase"),

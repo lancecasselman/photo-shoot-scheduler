@@ -46,6 +46,9 @@ const { registerStorageRoutes } = require('./server/storage-routes');
 // Import payment notification system
 const PaymentNotificationManager = require('./server/payment-notifications');
 
+// Import Stripe Connect management
+const StripeConnectManager = require('./server/stripe-connect');
+
 // Import object storage services
 const { ObjectStorageService } = require('./server/objectStorage');
 
@@ -11602,8 +11605,18 @@ app.post('/api/create-payment-intent', async (req, res) => {
             return res.status(404).json({ error: 'Session not found' });
         }
 
-        // Create payment intent with session metadata for webhook processing
-        const paymentIntent = await stripe.paymentIntents.create({
+        // Get photographer's Stripe Connect account
+        const photographerResult = await pool.query(
+            'SELECT stripe_connect_account_id, stripe_onboarding_complete FROM users WHERE id = $1',
+            [session.userId]
+        );
+
+        const photographer = photographerResult.rows[0];
+        const connectedAccountId = photographer?.stripe_connect_account_id;
+        const onboardingComplete = photographer?.stripe_onboarding_complete;
+
+        // Create payment intent - use Stripe Connect if photographer has completed setup
+        let paymentIntentData = {
             amount: Math.round(parseFloat(amount) * 100), // Convert to cents
             currency: 'usd',
             automatic_payment_methods: {
@@ -11615,17 +11628,37 @@ app.post('/api/create-payment-intent', async (req, res) => {
                 clientName: session.clientName,
                 sessionType: session.sessionType,
                 sessionDate: session.dateTime,
-                sessionLocation: session.location
+                sessionLocation: session.location,
+                photographerId: session.userId,
+                connectedAccount: connectedAccountId || 'platform'
             },
             receipt_email: clientEmail || session.email,
             description: `${paymentType === 'deposit' ? 'Deposit' : 'Payment'} for ${session.sessionType} session - ${session.clientName}`
-        });
+        };
 
-        console.log('💰 Payment Intent created:', paymentIntent.id, 'Amount:', amount, 'Session:', sessionId, 'Type:', paymentType);
+        // If photographer has Stripe Connect account and onboarding is complete, route payment to them
+        if (connectedAccountId && onboardingComplete) {
+            console.log('🔗 Using Stripe Connect for payment - Account:', connectedAccountId);
+            
+            // Route payment to connected account using transfer_data
+            paymentIntentData.transfer_data = {
+                destination: connectedAccountId
+            };
+            
+            // Optional: Take platform fee (currently 0%)
+            // paymentIntentData.application_fee_amount = Math.round(parseFloat(amount) * 0.02 * 100); // 2% fee
+        } else {
+            console.log('💳 Using platform Stripe account - Connect account not ready');
+        }
+
+        const paymentIntent = await stripe.paymentIntents.create(paymentIntentData);
+
+        console.log('💰 Payment Intent created:', paymentIntent.id, 'Amount:', amount, 'Session:', sessionId, 'Type:', paymentType, 'Connect:', !!connectedAccountId);
 
         res.json({
             clientSecret: paymentIntent.client_secret,
-            paymentIntentId: paymentIntent.id
+            paymentIntentId: paymentIntent.id,
+            usingConnect: !!(connectedAccountId && onboardingComplete)
         });
 
     } catch (error) {
@@ -11676,6 +11709,188 @@ app.get('/api/stripe-config', async (req, res) => {
     } catch (error) {
         console.error('Error getting Stripe config:', error);
         res.status(500).json({ error: 'Failed to get payment configuration' });
+    }
+});
+
+// ================================
+// STRIPE CONNECT API ENDPOINTS
+// ================================
+
+// Initialize Stripe Connect manager
+const stripeConnectManager = new StripeConnectManager();
+
+// Start Connect onboarding for photographer
+app.post('/api/stripe-connect/onboard', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.session.user.uid;
+        const userEmail = req.session.user.email;
+        
+        console.log('🔗 Starting Stripe Connect onboarding for:', userEmail);
+        
+        // Check if user already has a connected account
+        const existingUser = await pool.query('SELECT stripe_connect_account_id FROM users WHERE id = $1', [userId]);
+        if (existingUser.rows[0]?.stripe_connect_account_id) {
+            return res.json({
+                success: false,
+                message: 'You already have a connected Stripe account',
+                accountId: existingUser.rows[0].stripe_connect_account_id
+            });
+        }
+        
+        // Create Express account
+        const accountResult = await stripeConnectManager.createExpressAccount(userEmail, 'Photography Business');
+        if (!accountResult.success) {
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to create Stripe account: ' + accountResult.error
+            });
+        }
+        
+        // Save account ID to database
+        await pool.query(
+            'UPDATE users SET stripe_connect_account_id = $1 WHERE id = $2',
+            [accountResult.accountId, userId]
+        );
+        
+        // Create onboarding link
+        const baseUrl = req.headers.origin || `https://${req.headers.host}`;
+        const refreshUrl = `${baseUrl}/stripe-connect/refresh`;
+        const returnUrl = `${baseUrl}/stripe-connect/success`;
+        
+        const linkResult = await stripeConnectManager.createAccountLink(
+            accountResult.accountId,
+            refreshUrl,
+            returnUrl
+        );
+        
+        if (!linkResult.success) {
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to create onboarding link: ' + linkResult.error
+            });
+        }
+        
+        console.log('✅ Onboarding link created for:', userEmail, 'Account:', accountResult.accountId);
+        
+        res.json({
+            success: true,
+            onboardingUrl: linkResult.onboardingUrl,
+            accountId: accountResult.accountId
+        });
+        
+    } catch (error) {
+        console.error('❌ Stripe Connect onboarding error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to start onboarding process'
+        });
+    }
+});
+
+// Check Connect account status
+app.get('/api/stripe-connect/status', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.session.user.uid;
+        
+        const userResult = await pool.query(
+            'SELECT stripe_connect_account_id, stripe_onboarding_complete FROM users WHERE id = $1',
+            [userId]
+        );
+        
+        if (!userResult.rows[0]?.stripe_connect_account_id) {
+            return res.json({
+                connected: false,
+                onboardingComplete: false,
+                message: 'No Stripe account connected'
+            });
+        }
+        
+        const accountId = userResult.rows[0].stripe_connect_account_id;
+        const statusResult = await stripeConnectManager.getAccountStatus(accountId);
+        
+        if (!statusResult.success) {
+            return res.json({
+                connected: false,
+                onboardingComplete: false,
+                error: statusResult.error
+            });
+        }
+        
+        // Update database if onboarding is now complete
+        if (statusResult.onboardingComplete && !userResult.rows[0].stripe_onboarding_complete) {
+            await pool.query(
+                'UPDATE users SET stripe_onboarding_complete = true WHERE id = $1',
+                [userId]
+            );
+        }
+        
+        res.json({
+            connected: true,
+            accountId: accountId,
+            onboardingComplete: statusResult.onboardingComplete,
+            canReceivePayments: statusResult.canReceivePayments,
+            canReceivePayouts: statusResult.canReceivePayouts,
+            requiresInfo: statusResult.requiresInfo
+        });
+        
+    } catch (error) {
+        console.error('❌ Error checking Connect status:', error);
+        res.status(500).json({
+            connected: false,
+            onboardingComplete: false,
+            error: 'Failed to check account status'
+        });
+    }
+});
+
+// Refresh onboarding link if expired
+app.post('/api/stripe-connect/refresh', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.session.user.uid;
+        
+        const userResult = await pool.query(
+            'SELECT stripe_connect_account_id FROM users WHERE id = $1',
+            [userId]
+        );
+        
+        if (!userResult.rows[0]?.stripe_connect_account_id) {
+            return res.status(404).json({
+                success: false,
+                message: 'No Stripe account found'
+            });
+        }
+        
+        const accountId = userResult.rows[0].stripe_connect_account_id;
+        
+        // Create new onboarding link
+        const baseUrl = req.headers.origin || `https://${req.headers.host}`;
+        const refreshUrl = `${baseUrl}/stripe-connect/refresh`;
+        const returnUrl = `${baseUrl}/stripe-connect/success`;
+        
+        const linkResult = await stripeConnectManager.createAccountLink(
+            accountId,
+            refreshUrl,
+            returnUrl
+        );
+        
+        if (!linkResult.success) {
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to create onboarding link: ' + linkResult.error
+            });
+        }
+        
+        res.json({
+            success: true,
+            onboardingUrl: linkResult.onboardingUrl
+        });
+        
+    } catch (error) {
+        console.error('❌ Error refreshing onboarding link:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to refresh onboarding link'
+        });
     }
 });
 

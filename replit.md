@@ -53,6 +53,16 @@ A robust unified deletion system ensures complete file cleanup with no orphaned 
 
 ## Recent Changes (August 14, 2025)
 - **CRITICAL**: Session sorting by appointment date is COMPLETE and WORKING - do not modify
+- **COMPLETED**: Stripe Connect Express Integration for Multi-Photographer Platform
+  - Added stripe_connect_account_id and stripe_onboarding_complete fields to users table
+  - Created comprehensive Stripe Connect API endpoints (/api/stripe-connect/onboard, /status, /refresh)
+  - Implemented StripeConnectManager service for Express account creation and management
+  - Added Payment Settings tab to main navigation with full Stripe Connect UI
+  - Enhanced payment intent creation to automatically route payments to connected photographer accounts
+  - Created success/refresh pages for Stripe Connect OAuth flow completion
+  - Payment system now supports direct payments to individual photographer bank accounts
+  - Platform operates with 0% transaction fees - photographers keep 100% minus Stripe's 2.9% + 30¢
+  - System designed to scale to thousands of photographers, each with individual Stripe merchant accounts
 - **COMPLETED**: Deposit Payment Notification System 
   - Fixed Stripe webhook handler to process checkout sessions for deposit payments
   - Added checkout.session.completed event handling for photography session notifications
