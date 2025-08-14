@@ -2970,15 +2970,34 @@ async function deleteSession(id, userId) {
     try {
         await client.query('BEGIN');
         
-        // First, delete any payment plans associated with this session
+        // First, get all payment plan IDs for this session
+        const paymentPlansQuery = 'SELECT id FROM payment_plans WHERE session_id = $1';
+        const paymentPlansResult = await client.query(paymentPlansQuery, [id]);
+        const paymentPlanIds = paymentPlansResult.rows.map(row => row.id);
+        
+        // Delete payment records for each payment plan
+        if (paymentPlanIds.length > 0) {
+            for (const planId of paymentPlanIds) {
+                const deletePaymentRecordsQuery = 'DELETE FROM payment_records WHERE plan_id = $1';
+                await client.query(deletePaymentRecordsQuery, [planId]);
+                console.log(`Deleted payment records for plan ${planId}`);
+            }
+        }
+        
+        // Then, delete any payment plans associated with this session
         const deletePaymentPlansQuery = 'DELETE FROM payment_plans WHERE session_id = $1';
         await client.query(deletePaymentPlansQuery, [id]);
         console.log(`Deleted payment plans for session ${id}`);
         
-        // Then, delete session files from the database
+        // Delete session files from the database
         const deleteFilesQuery = 'DELETE FROM session_files WHERE session_id = $1';
         await client.query(deleteFilesQuery, [id]);
         console.log(`Deleted session files for session ${id}`);
+        
+        // Delete any booking agreements for this session
+        const deleteBookingAgreementsQuery = 'DELETE FROM booking_agreements WHERE session_id = $1';
+        await client.query(deleteBookingAgreementsQuery, [id]);
+        console.log(`Deleted booking agreements for session ${id}`);
         
         // Finally, delete the session itself
         let sessionQuery, sessionParams;
