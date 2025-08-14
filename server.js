@@ -7086,6 +7086,207 @@ app.post('/api/ai/generate-alt-text', isAuthenticated, async (req, res) => {
     }
 });
 
+// BADASS MODE: Advanced AI API Endpoints
+app.post('/api/ai/badass/advanced-content', isAuthenticated, async (req, res) => {
+    try {
+        const { contentType, context, userPrompt } = req.body;
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
+        
+        if (!contentType || !userPrompt) {
+            return res.status(400).json({ error: 'Content type and user prompt are required' });
+        }
+
+        // Check AI credits (2 credits for advanced content)
+        const creditsNeeded = 2;
+        const availableCredits = await getUserAiCredits(userId);
+        
+        if (availableCredits < creditsNeeded) {
+            return res.status(402).json({
+                success: false,
+                error: 'Insufficient AI credits',
+                creditsNeeded,
+                availableCredits
+            });
+        }
+
+        // Deduct credits
+        await useAiCredits(userId, creditsNeeded, 'advanced_content', userPrompt);
+
+        const result = await aiServices.generateAdvancedContent(contentType, context, userPrompt);
+        
+        res.json({
+            success: true,
+            ...result,
+            creditsUsed: creditsNeeded,
+            remainingCredits: availableCredits - creditsNeeded
+        });
+    } catch (error) {
+        console.error('Advanced AI content generation error:', error);
+        res.status(500).json({ error: 'Failed to generate advanced content: ' + error.message });
+    }
+});
+
+app.post('/api/ai/badass/custom-component', isAuthenticated, async (req, res) => {
+    try {
+        const { componentType, requirements, designStyle } = req.body;
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
+        
+        if (!componentType || !requirements) {
+            return res.status(400).json({ error: 'Component type and requirements are required' });
+        }
+
+        // Check AI credits (3 credits for custom components)
+        const creditsNeeded = 3;
+        const availableCredits = await getUserAiCredits(userId);
+        
+        if (availableCredits < creditsNeeded) {
+            return res.status(402).json({
+                success: false,
+                error: 'Insufficient AI credits',
+                creditsNeeded,
+                availableCredits
+            });
+        }
+
+        // Deduct credits
+        await useAiCredits(userId, creditsNeeded, 'custom_component', componentType);
+
+        const result = await aiServices.generateCustomComponent(componentType, requirements, designStyle || 'modern');
+        
+        res.json({
+            success: true,
+            ...result,
+            creditsUsed: creditsNeeded,
+            remainingCredits: availableCredits - creditsNeeded
+        });
+    } catch (error) {
+        console.error('Custom component generation error:', error);
+        res.status(500).json({ error: 'Failed to generate custom component: ' + error.message });
+    }
+});
+
+app.post('/api/ai/badass/optimize-website', isAuthenticated, async (req, res) => {
+    try {
+        const { websiteHTML, optimizationType } = req.body;
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
+        
+        if (!websiteHTML || !optimizationType) {
+            return res.status(400).json({ error: 'Website HTML and optimization type are required' });
+        }
+
+        // Check AI credits (4 credits for website optimization)
+        const creditsNeeded = 4;
+        const availableCredits = await getUserAiCredits(userId);
+        
+        if (availableCredits < creditsNeeded) {
+            return res.status(402).json({
+                success: false,
+                error: 'Insufficient AI credits',
+                creditsNeeded,
+                availableCredits
+            });
+        }
+
+        // Deduct credits
+        await useAiCredits(userId, creditsNeeded, 'website_optimization', optimizationType);
+
+        const result = await aiServices.optimizeWebsite(websiteHTML, optimizationType);
+        
+        res.json({
+            success: true,
+            ...result,
+            creditsUsed: creditsNeeded,
+            remainingCredits: availableCredits - creditsNeeded
+        });
+    } catch (error) {
+        console.error('Website optimization error:', error);
+        res.status(500).json({ error: 'Failed to optimize website: ' + error.message });
+    }
+});
+
+app.post('/api/ai/badass/content-strategy', isAuthenticated, async (req, res) => {
+    try {
+        const { businessInfo, goals, timeframe } = req.body;
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
+        
+        if (!businessInfo || !goals || !timeframe) {
+            return res.status(400).json({ error: 'Business info, goals, and timeframe are required' });
+        }
+
+        // Check AI credits (5 credits for content strategy)
+        const creditsNeeded = 5;
+        const availableCredits = await getUserAiCredits(userId);
+        
+        if (availableCredits < creditsNeeded) {
+            return res.status(402).json({
+                success: false,
+                error: 'Insufficient AI credits',
+                creditsNeeded,
+                availableCredits
+            });
+        }
+
+        // Deduct credits
+        await useAiCredits(userId, creditsNeeded, 'content_strategy', goals);
+
+        const result = await aiServices.generateContentStrategy(businessInfo, goals, timeframe);
+        
+        res.json({
+            success: true,
+            ...result,
+            creditsUsed: creditsNeeded,
+            remainingCredits: availableCredits - creditsNeeded
+        });
+    } catch (error) {
+        console.error('Content strategy generation error:', error);
+        res.status(500).json({ error: 'Failed to generate content strategy: ' + error.message });
+    }
+});
+
+app.post('/api/ai/badass/smart-page', isAuthenticated, async (req, res) => {
+    try {
+        const { pageType, requirements, existingContent } = req.body;
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
+        
+        if (!pageType || !requirements) {
+            return res.status(400).json({ error: 'Page type and requirements are required' });
+        }
+
+        // Check AI credits (4 credits for smart page generation)
+        const creditsNeeded = 4;
+        const availableCredits = await getUserAiCredits(userId);
+        
+        if (availableCredits < creditsNeeded) {
+            return res.status(402).json({
+                success: false,
+                error: 'Insufficient AI credits',
+                creditsNeeded,
+                availableCredits
+            });
+        }
+
+        // Deduct credits
+        await useAiCredits(userId, creditsNeeded, 'smart_page', pageType);
+
+        const result = await aiServices.generateSmartPage(pageType, requirements, existingContent || '');
+        
+        res.json({
+            success: true,
+            ...result,
+            creditsUsed: creditsNeeded,
+            remainingCredits: availableCredits - creditsNeeded
+        });
+    } catch (error) {
+        console.error('Smart page generation error:', error);
+        res.status(500).json({ error: 'Failed to generate smart page: ' + error.message });
+    }
+});
+
 // Send invoice via Stripe (enhanced for deposits)
 app.post('/api/sessions/:id/send-invoice', async (req, res) => {
     const sessionId = req.params.id;

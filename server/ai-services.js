@@ -450,6 +450,431 @@ Please format your response as JSON with an "ideas" array containing the list of
             throw new Error('Failed to generate ideas: ' + error.message);
         }
     }
+
+    // BADASS MODE: Advanced AI Content Generation
+    async generateAdvancedContent(contentType, context, userPrompt) {
+        if (!this.initialized) {
+            throw new Error('AI services not available - OpenAI API key required');
+        }
+
+        try {
+            let systemPrompt = "";
+            let maxTokens = 2000;
+            let temperature = 0.8;
+
+            switch (contentType) {
+                case 'complete-website':
+                    systemPrompt = "You are a world-class web designer and copywriter who creates stunning, conversion-optimized photography websites. Generate complete HTML structure with inline CSS that's modern, responsive, and professional.";
+                    maxTokens = 4000;
+                    break;
+                case 'sales-copy':
+                    systemPrompt = "You are a direct-response copywriter specializing in high-converting photography business copy. Write compelling, emotional copy that drives bookings and sales.";
+                    temperature = 0.9;
+                    break;
+                case 'seo-content':
+                    systemPrompt = "You are an SEO expert and content strategist. Generate SEO-optimized content that ranks well while maintaining authentic, engaging copy for photography businesses.";
+                    break;
+                case 'social-media':
+                    systemPrompt = "You are a social media expert for photography businesses. Create engaging, shareable content that builds brand awareness and drives inquiries.";
+                    temperature = 0.9;
+                    break;
+                case 'email-templates':
+                    systemPrompt = "You are an email marketing specialist for photography businesses. Create professional, conversion-focused email templates for client communication.";
+                    break;
+                case 'brand-strategy':
+                    systemPrompt = "You are a brand strategist specializing in photography businesses. Create comprehensive brand positioning and messaging strategies.";
+                    break;
+                default:
+                    systemPrompt = "You are an expert content creator specializing in photography business marketing and web content.";
+            }
+
+            const prompt = `Context: ${JSON.stringify(context)}
+User Request: ${userPrompt}
+
+Create professional, high-quality content that exceeds expectations. Be creative, detailed, and ensure everything is optimized for conversion and user experience.`;
+
+            const completion = await openai.chat.completions.create({
+                model: "gpt-4o",
+                messages: [
+                    {
+                        role: "system",
+                        content: systemPrompt
+                    },
+                    {
+                        role: "user",
+                        content: prompt
+                    }
+                ],
+                max_tokens: maxTokens,
+                temperature: temperature
+            });
+
+            return {
+                content: completion.choices[0].message.content,
+                contentType: contentType,
+                generatedAt: new Date().toISOString()
+            };
+        } catch (error) {
+            console.error('Advanced AI content generation error:', error);
+            throw new Error('Failed to generate advanced content: ' + error.message);
+        }
+    }
+
+    // BADASS MODE: AI Code Generation for Custom Components
+    async generateCustomComponent(componentType, requirements, designStyle) {
+        if (!this.initialized) {
+            throw new Error('AI services not available - OpenAI API key required');
+        }
+
+        try {
+            const prompt = `Generate a custom HTML/CSS/JS component for a photography website:
+
+Component Type: ${componentType}
+Requirements: ${requirements}
+Design Style: ${designStyle}
+
+Create a complete, self-contained component with:
+1. Modern, responsive HTML structure
+2. Beautiful CSS styling with animations/interactions
+3. Vanilla JavaScript functionality (if needed)
+4. Mobile-first responsive design
+5. Professional typography and spacing
+6. Smooth transitions and hover effects
+
+The component should be production-ready and visually stunning. Include inline styles and scripts for easy integration.
+
+Return as JSON with keys: html, css, javascript, description, usage`;
+
+            const completion = await openai.chat.completions.create({
+                model: "gpt-4o",
+                messages: [
+                    {
+                        role: "system",
+                        content: "You are a senior frontend developer and designer specializing in creating stunning, interactive web components for photography websites. Your code is clean, modern, and follows best practices."
+                    },
+                    {
+                        role: "user",
+                        content: prompt
+                    }
+                ],
+                response_format: { type: "json_object" },
+                max_tokens: 3000,
+                temperature: 0.7
+            });
+
+            return JSON.parse(completion.choices[0].message.content);
+        } catch (error) {
+            console.error('Custom component generation error:', error);
+            throw new Error('Failed to generate custom component: ' + error.message);
+        }
+    }
+
+    // BADASS MODE: AI Website Optimization
+    async optimizeWebsite(websiteHTML, optimizationType) {
+        if (!this.initialized) {
+            throw new Error('AI services not available - OpenAI API key required');
+        }
+
+        try {
+            const optimizationPrompts = {
+                'conversion': 'Optimize this website for maximum conversion rate. Focus on compelling CTAs, trust signals, social proof, and user psychology.',
+                'speed': 'Optimize this website for page speed and performance. Minimize CSS/JS, optimize images, and improve loading times.',
+                'seo': 'Optimize this website for search engines. Improve meta tags, heading structure, semantic HTML, and keyword optimization.',
+                'accessibility': 'Optimize this website for accessibility. Ensure WCAG compliance, proper alt tags, keyboard navigation, and screen reader compatibility.',
+                'mobile': 'Optimize this website for mobile devices. Improve responsive design, touch interactions, and mobile user experience.',
+                'visual': 'Optimize this website\'s visual design. Improve typography, spacing, colors, and overall aesthetic appeal.'
+            };
+
+            const prompt = `${optimizationPrompts[optimizationType] || optimizationPrompts.conversion}
+
+Current Website HTML:
+${websiteHTML}
+
+Provide the optimized HTML with improvements. Explain what changes were made and why.
+
+Return as JSON with keys: optimizedHTML, changes, explanation, improvementScore`;
+
+            const completion = await openai.chat.completions.create({
+                model: "gpt-4o",
+                messages: [
+                    {
+                        role: "system",
+                        content: "You are a website optimization expert specializing in photography businesses. You understand conversion psychology, technical SEO, performance optimization, and modern web standards."
+                    },
+                    {
+                        role: "user",
+                        content: prompt
+                    }
+                ],
+                response_format: { type: "json_object" },
+                max_tokens: 4000,
+                temperature: 0.6
+            });
+
+            return JSON.parse(completion.choices[0].message.content);
+        } catch (error) {
+            console.error('Website optimization error:', error);
+            throw new Error('Failed to optimize website: ' + error.message);
+        }
+    }
+
+    // BADASS MODE: AI Content Strategy Generator
+    async generateContentStrategy(businessInfo, goals, timeframe) {
+        if (!this.initialized) {
+            throw new Error('AI services not available - OpenAI API key required');
+        }
+
+        try {
+            const prompt = `Create a comprehensive content strategy for a photography business:
+
+Business Info: ${JSON.stringify(businessInfo)}
+Goals: ${goals}
+Timeframe: ${timeframe}
+
+Generate a detailed content strategy including:
+1. Content calendar with specific post ideas
+2. Blog post topics and headlines
+3. Social media strategy
+4. Email marketing campaigns
+5. Website content updates
+6. SEO keyword strategy
+7. Content performance metrics to track
+
+Make it actionable and specific to photography businesses.
+
+Return as JSON with keys: strategy, contentCalendar, blogTopics, socialMedia, emailCampaigns, seoKeywords, metrics`;
+
+            const completion = await openai.chat.completions.create({
+                model: "gpt-4o",
+                messages: [
+                    {
+                        role: "system",
+                        content: "You are a digital marketing strategist specializing in photography businesses. You understand the unique challenges and opportunities in the photography industry."
+                    },
+                    {
+                        role: "user",
+                        content: prompt
+                    }
+                ],
+                response_format: { type: "json_object" },
+                max_tokens: 3500,
+                temperature: 0.7
+            });
+
+            return JSON.parse(completion.choices[0].message.content);
+        } catch (error) {
+            console.error('Content strategy generation error:', error);
+            throw new Error('Failed to generate content strategy: ' + error.message);
+        }
+    }
+
+    // BADASS MODE: Smart Page Builder
+    async generateSmartPage(pageType, requirements, existingContent) {
+        if (!this.initialized) {
+            throw new Error('AI services not available - OpenAI API key required');
+        }
+
+        try {
+            const prompt = `Generate a complete, professional webpage for a photography business:
+
+Page Type: ${pageType}
+Requirements: ${requirements}
+Existing Content Context: ${existingContent}
+
+Create a complete HTML page with:
+1. Modern, responsive design with inline CSS
+2. Professional typography and spacing
+3. High-converting layout optimized for photography businesses
+4. SEO-friendly structure with proper headings and meta elements
+5. Call-to-action buttons and contact forms where appropriate
+6. Image placeholders with proper alt text
+7. Smooth animations and hover effects
+8. Mobile-first responsive design
+
+Return as JSON with keys: html, title, description, features, seoTags`;
+
+            const completion = await openai.chat.completions.create({
+                model: "gpt-4o",
+                messages: [
+                    {
+                        role: "system",
+                        content: "You are a professional web developer and UX designer specializing in photography business websites. You create beautiful, converting pages that drive bookings and showcase photography work professionally."
+                    },
+                    {
+                        role: "user",
+                        content: prompt
+                    }
+                ],
+                response_format: { type: "json_object" },
+                max_tokens: 4000,
+                temperature: 0.7
+            });
+
+            return JSON.parse(completion.choices[0].message.content);
+        } catch (error) {
+            console.error('Smart page generation error:', error);
+            throw new Error('Failed to generate smart page: ' + error.message);
+        }
+    }
+
+    // Optimize entire website based on specific criteria
+    async optimizeWebsite(websiteHTML, optimizationType) {
+        if (!this.initialized) {
+            throw new Error('AI services not available - missing API key');
+        }
+
+        try {
+            const optimizations = {
+                'performance': 'Focus on loading speed, image optimization, code efficiency, and user experience',
+                'seo': 'Enhance search engine optimization with better meta tags, content structure, and keywords',
+                'conversion': 'Improve conversion rates with better calls-to-action, layout, and persuasive copy',
+                'accessibility': 'Make the website more accessible with proper ARIA labels, contrast, and navigation',
+                'mobile': 'Optimize for mobile devices with responsive design improvements'
+            };
+
+            const optimizationFocus = optimizations[optimizationType] || optimizations['performance'];
+
+            const prompt = `As a web development expert, optimize this photography website for ${optimizationType}:
+
+            CURRENT WEBSITE HTML:
+            ${websiteHTML}
+
+            OPTIMIZATION FOCUS: ${optimizationFocus}
+
+            Please provide:
+            1. Optimized HTML with inline CSS improvements
+            2. Specific optimizations made
+            3. Performance/usability improvements
+            4. SEO enhancements (if applicable)
+            5. Accessibility improvements (if applicable)
+
+            Maintain all existing wb-editable classes and JavaScript functionality.
+            Focus on professional photography aesthetics.
+
+            Return as JSON: { optimizedHTML, improvements, performanceGains, seoEnhancements, accessibilityFixes }`;
+
+            const completion = await openai.chat.completions.create({
+                model: "gpt-4o",
+                messages: [
+                    {
+                        role: "system", 
+                        content: "You are a web optimization expert specializing in photography websites. Provide practical, measurable improvements."
+                    },
+                    {
+                        role: "user",
+                        content: prompt
+                    }
+                ],
+                response_format: { type: "json_object" },
+                max_tokens: 4000,
+                temperature: 0.6
+            });
+
+            return JSON.parse(completion.choices[0].message.content);
+        } catch (error) {
+            console.error('AI Services: Error optimizing website:', error);
+            throw new Error('Failed to optimize website: ' + error.message);
+        }
+    }
+
+    // Generate custom components based on requirements
+    async generateCustomComponent(componentType, requirements, designStyle) {
+        if (!this.initialized) {
+            throw new Error('AI services not available - missing API key');
+        }
+
+        try {
+            const prompt = `Create a custom ${componentType} component for a photography website:
+
+            Requirements: ${requirements}
+            Design Style: ${designStyle}
+
+            Generate a professional, interactive component with:
+            1. Complete HTML structure with inline CSS
+            2. JavaScript functionality if needed
+            3. Mobile-responsive design
+            4. Photography-focused aesthetics
+            5. wb-editable classes for text elements
+            6. Professional color scheme and typography
+
+            Component types could include: gallery, slider, testimonial, pricing table, contact form, portfolio grid, etc.
+
+            Return as JSON: { componentHTML, description, features, instructions }`;
+
+            const completion = await openai.chat.completions.create({
+                model: "gpt-4o",
+                messages: [
+                    {
+                        role: "system",
+                        content: "You are a frontend component expert specializing in photography websites. Create beautiful, functional components."
+                    },
+                    {
+                        role: "user",
+                        content: prompt
+                    }
+                ],
+                response_format: { type: "json_object" },
+                max_tokens: 3500,
+                temperature: 0.7
+            });
+
+            return JSON.parse(completion.choices[0].message.content);
+        } catch (error) {
+            console.error('AI Services: Error generating custom component:', error);
+            throw new Error('Failed to generate custom component: ' + error.message);
+        }
+    }
+
+    // Generate content strategy for photography business
+    async generateContentStrategy(businessInfo, goals, timeframe) {
+        if (!this.initialized) {
+            throw new Error('AI services not available - missing API key');
+        }
+
+        try {
+            const prompt = `Create a comprehensive content strategy for a photography business:
+
+            Business Information: ${JSON.stringify(businessInfo)}
+            Goals: ${JSON.stringify(goals)}
+            Timeframe: ${timeframe}
+
+            Generate a detailed strategy including:
+            1. Content pillars and themes
+            2. Content calendar outline
+            3. Social media strategy
+            4. Blog post topics and frequency
+            5. Client engagement strategies
+            6. Brand voice and messaging
+            7. Content creation workflow
+            8. Performance metrics to track
+
+            Focus on practical, actionable strategies that can be implemented immediately.
+
+            Return as JSON: { contentPillars, calendar, socialStrategy, blogTopics, engagement, brandVoice, workflow, metrics }`;
+
+            const completion = await openai.chat.completions.create({
+                model: "gpt-4o",
+                messages: [
+                    {
+                        role: "system",
+                        content: "You are a digital marketing strategist specializing in photography businesses. Create actionable, results-driven strategies."
+                    },
+                    {
+                        role: "user",
+                        content: prompt
+                    }
+                ],
+                response_format: { type: "json_object" },
+                max_tokens: 3000,
+                temperature: 0.7
+            });
+
+            return JSON.parse(completion.choices[0].message.content);
+        } catch (error) {
+            console.error('AI Services: Error generating content strategy:', error);
+            throw new Error('Failed to generate content strategy: ' + error.message);
+        }
+    }
 }
 
 module.exports = { AIServices };
