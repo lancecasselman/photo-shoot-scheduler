@@ -3852,20 +3852,13 @@ Return your response as a JSON object with:
   "improvements": ["list", "of", "specific", "improvements"]
 }`;
 
-            // Call OpenAI API through AIServices
-            const aiResponse = await AIServices.generateContent({
-                prompt: aiPrompt,
-                maxTokens: 4000,
-                temperature: 0.3
-            });
-
-            let result;
-            try {
-                result = JSON.parse(aiResponse);
-            } catch (parseError) {
-                // If JSON parsing fails, try to extract content differently
-                throw new Error('AI response format error');
-            }
+            // Use OpenAI directly through aiServices with proper method
+            const result = await aiServices.generateAdvancedContent(
+                'website_edit', 
+                { currentHTML, websiteType, request },
+                request,
+                'photography clients'
+            );
 
             if (!result.newHTML) {
                 throw new Error('AI did not provide modified HTML');
@@ -3957,19 +3950,10 @@ Return your response as a JSON object with:
   "priority": "highest priority improvement recommendation"
 }`;
 
-            // Call OpenAI API
-            const aiResponse = await AIServices.generateContent({
-                prompt: aiPrompt,
-                maxTokens: 2000,
-                temperature: 0.4
-            });
-
-            let result;
-            try {
-                result = JSON.parse(aiResponse);
-            } catch (parseError) {
-                throw new Error('AI response format error');
-            }
+            // Call AI Services for website analysis
+            const result = await aiServices.generateAdvancedContent('website_analysis', {
+                currentHTML
+            }, 'Analyze this photography website for improvements', 'photography clients');
 
             console.log(`✅ AI Website Analysis Complete`);
 

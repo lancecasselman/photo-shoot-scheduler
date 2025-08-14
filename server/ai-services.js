@@ -463,6 +463,16 @@ Please format your response as JSON with an "ideas" array containing the list of
             let temperature = 0.8;
 
             switch (contentType) {
+                case 'website_edit':
+                    systemPrompt = "You are an expert web designer and developer specializing in photography portfolios. You modify HTML to fulfill user requests while maintaining professional aesthetics and functionality. Always return valid JSON with newHTML, description, and improvements fields.";
+                    maxTokens = 4000;
+                    temperature = 0.7;
+                    break;
+                case 'website_analysis':
+                    systemPrompt = "You are an expert web designer and UX analyst specializing in photography portfolios. Analyze websites for design, usability, and conversion optimization. Always return valid JSON with analysis, strengths, improvements, suggestions, and priority fields.";
+                    maxTokens = 2000;
+                    temperature = 0.4;
+                    break;
                 case 'complete-website':
                     systemPrompt = "You are a world-class web designer and copywriter who creates stunning, conversion-optimized photography websites. Generate complete HTML structure with inline CSS that's modern, responsive, and professional.";
                     maxTokens = 4000;
@@ -488,10 +498,70 @@ Please format your response as JSON with an "ideas" array containing the list of
                     systemPrompt = "You are an expert content creator specializing in photography business marketing and web content.";
             }
 
-            const prompt = `Context: ${JSON.stringify(context)}
+            let prompt;
+            
+            if (contentType === 'website_edit') {
+                prompt = `You are modifying a photography website. Here's the current HTML:
+
+${context.currentHTML}
+
+USER REQUEST: "${context.request}"
+WEBSITE TYPE: ${context.websiteType}
+
+Modify the HTML to fulfill the user's request while maintaining:
+1. All existing wb-editable classes for interactive editing
+2. Professional photography portfolio aesthetics
+3. Responsive design principles
+4. Clean, modern styling
+5. Proper HTML structure
+
+IMPORTANT GUIDELINES:
+- Keep all wb-editable classes intact
+- Maintain existing JavaScript event handlers
+- Use inline styles for modifications
+- Ensure mobile responsiveness
+- Focus on photography best practices
+- Add subtle animations where appropriate
+- Improve typography, spacing, and visual hierarchy
+- Use professional color schemes
+- Maintain accessibility standards
+
+Return your response as a JSON object with:
+{
+  "newHTML": "complete modified HTML here",
+  "description": "brief description of changes made",
+  "improvements": ["list", "of", "specific", "improvements"]
+}`;
+            } else if (contentType === 'website_analysis') {
+                prompt = `Analyze this photography portfolio website:
+
+${context.currentHTML}
+
+Please provide a comprehensive analysis covering:
+1. DESIGN STRENGTHS: What's working well visually
+2. AREAS FOR IMPROVEMENT: Specific design issues to address
+3. USER EXPERIENCE: Navigation and usability assessment
+4. VISUAL HIERARCHY: Typography, spacing, and layout analysis
+5. BRAND PERCEPTION: How professional/trustworthy it appears
+6. MOBILE RESPONSIVENESS: Potential mobile issues
+7. CONVERSION OPTIMIZATION: Elements that could drive bookings
+
+Based on your analysis, provide 3-5 specific, actionable suggestions for improvement.
+
+Return your response as a JSON object with:
+{
+  "analysis": "comprehensive analysis summary (2-3 sentences)",
+  "strengths": ["list", "of", "current", "strengths"],
+  "improvements": ["list", "of", "improvement", "areas"],
+  "suggestions": ["actionable suggestion 1", "actionable suggestion 2", "etc"],
+  "priority": "highest priority improvement recommendation"
+}`;
+            } else {
+                prompt = `Context: ${JSON.stringify(context)}
 User Request: ${userPrompt}
 
 Create professional, high-quality content that exceeds expectations. Be creative, detailed, and ensure everything is optimized for conversion and user experience.`;
+            }
 
             const completion = await openai.chat.completions.create({
                 model: "gpt-4o",
@@ -505,9 +575,15 @@ Create professional, high-quality content that exceeds expectations. Be creative
                         content: prompt
                     }
                 ],
+                response_format: { type: "json_object" },
                 max_tokens: maxTokens,
                 temperature: temperature
             });
+
+            // For website_edit and website_analysis, return the parsed JSON directly
+            if (contentType === 'website_edit' || contentType === 'website_analysis') {
+                return JSON.parse(completion.choices[0].message.content);
+            }
 
             return {
                 content: completion.choices[0].message.content,
