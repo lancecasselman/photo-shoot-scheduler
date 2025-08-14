@@ -556,6 +556,11 @@
                             console.log('Backend verification successful, redirecting...');
                             // Set flag to indicate coming from auth page
                             sessionStorage.setItem('fromAuth', 'true');
+                            
+                            // CRITICAL FIX: Clear logout flags since user successfully authenticated
+                            localStorage.removeItem('manualLogout');
+                            sessionStorage.removeItem('loggingOut');
+                            
                             const urlParams = new URLSearchParams(window.location.search);
                             const returnTo = urlParams.get('return');
                             window.location.href = returnTo || '/';

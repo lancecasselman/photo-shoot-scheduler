@@ -2120,15 +2120,21 @@ async function initializePage() {
     console.log('🟢 INIT PAGE: Starting initialization...');
     console.log('🟢 INIT PAGE: Document referrer:', document.referrer);
     console.log('🟢 INIT PAGE: Session fromAuth flag:', sessionStorage.getItem('fromAuth'));
+    console.log('🟢 INIT PAGE: Manual logout flag:', localStorage.getItem('manualLogout'));
 
     // Add delay if coming from auth page to allow session establishment
     const urlParams = new URLSearchParams(window.location.search);
     const fromAuth = document.referrer.includes('auth.html') || sessionStorage.getItem('fromAuth') === 'true';
     
     if (fromAuth) {
-        console.log('🟢 INIT PAGE: Coming from auth page - waiting for session establishment...');
+        console.log('🟢 INIT PAGE: Coming from auth page - clearing logout flags and waiting for session establishment...');
         sessionStorage.removeItem('fromAuth'); // Clear flag
-        console.log('🟢 INIT PAGE: Waiting 3 seconds for backend session to fully establish...');
+        
+        // CRITICAL FIX: Clear manual logout flag when successfully coming from auth page
+        localStorage.removeItem('manualLogout');
+        sessionStorage.removeItem('loggingOut');
+        
+        console.log('🟢 INIT PAGE: Logout flags cleared, waiting 3 seconds for backend session to fully establish...');
         await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3 seconds for more time
     } else {
         console.log('🟢 INIT PAGE: Not from auth page, proceeding immediately');
