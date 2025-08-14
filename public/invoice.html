@@ -338,8 +338,36 @@
                 </div>
                 
                 <div class="action-buttons">
-                    <button class="btn btn-primary" onclick="updateInvoice()">Update Invoice</button>
+                    <button class="btn btn-primary" onclick="updateInvoice()" id="update-btn">Update Invoice</button>
                     <button class="btn btn-success" onclick="proceedToPayment()" id="payment-btn">Pay Now</button>
+                </div>
+                
+                <!-- Deposit-specific action buttons -->
+                <div class="deposit-action-buttons" id="deposit-buttons" style="display: none; margin-top: 20px;">
+                    <button class="btn btn-success" onclick="proceedToPayment()" style="width: 100%; padding: 15px; font-size: 16px;">💳 Pay Deposit Now</button>
+                    
+                    <!-- Send Deposit Section - Only show for photographer creating deposits -->
+                    <div class="send-deposit-section" id="send-deposit-section" style="display: none; margin-top: 20px; padding: 20px; background: #fff3cd; border-radius: 8px; border-top: 3px solid #ffc107;">
+                        <h4 style="margin: 0 0 15px 0; color: #333; font-size: 18px;">💰 Send Deposit Request</h4>
+                        <p style="margin: 0 0 20px 0; color: #666; font-size: 14px;">Share this deposit request with your client via SMS or email</p>
+                        
+                        <div style="display: grid; gap: 12px;">
+                            <button onclick="sendDepositViaSMS()" 
+                                    style="padding: 12px 20px; background: #fd7e14; color: white; border: none; border-radius: 6px; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                📱 Send Deposit via SMS
+                            </button>
+                            
+                            <button onclick="sendDepositViaEmail()" 
+                                    style="padding: 12px 20px; background: #6f42c1; color: white; border: none; border-radius: 6px; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                📧 Send Deposit via Email
+                            </button>
+                            
+                            <button onclick="copyDepositURL()" 
+                                    style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                                📋 Copy Deposit Link
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- Send Invoice Section - Only show for photographer creating invoices -->
@@ -406,12 +434,20 @@
                 
                 console.log('🔥 URL Parameters:', { sessionId, amount, paymentId, type });
                 
-                // Hide tip section for deposit invoices
+                // Hide tip section and show deposit buttons for deposit invoices
                 if (type === 'deposit') {
-                    console.log('🔥 DEPOSIT DETECTED: Hiding tip section');
+                    console.log('🔥 DEPOSIT DETECTED: Customizing for deposit invoice');
+                    
+                    // Hide tip section
                     const tipSection = document.querySelector('.tip-section');
                     if (tipSection) {
                         tipSection.style.display = 'none';
+                    }
+                    
+                    // Show deposit action buttons instead
+                    const depositButtons = document.getElementById('deposit-buttons');
+                    if (depositButtons) {
+                        depositButtons.style.display = 'block';
                     }
                     
                     // Update payment section header for deposits
@@ -424,6 +460,19 @@
                     const sessionPaymentLabel = document.querySelector('.payment-item:first-child span:first-child');
                     if (sessionPaymentLabel) {
                         sessionPaymentLabel.textContent = 'Deposit Amount';
+                    }
+                    
+                    // Check if this is photographer's view (has Firebase auth) to show send section
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const isPhotographerView = urlParams.get('photographer') === 'true' || 
+                                             window.location.search.includes('send') ||
+                                             document.referrer.includes('8b52078f'); // From photographer's dashboard
+                    
+                    if (isPhotographerView) {
+                        const sendDepositSection = document.getElementById('send-deposit-section');
+                        if (sendDepositSection) {
+                            sendDepositSection.style.display = 'block';
+                        }
                     }
                 }
                 
@@ -825,6 +874,72 @@ The Legacy Photography`;
             }
             
             document.body.removeChild(textArea);
+        }
+
+        // Deposit-specific sending functions
+        function sendDepositViaSMS() {
+            const currentURL = window.location.href;
+            const clientPhone = invoiceData.session.phoneNumber || '';
+            
+            // Create a friendly message for deposit SMS
+            const message = `Hi ${invoiceData.session.clientName || ''}! A deposit of $${invoiceData.amount.toFixed(2)} is requested for your photography session. Pay securely here: ${currentURL}`;
+            
+            // Create SMS URL that opens default SMS app with client's phone number
+            const smsUrl = clientPhone ? `sms:${clientPhone}?body=${encodeURIComponent(message)}` : `sms:?body=${encodeURIComponent(message)}`;
+            
+            // Open SMS app
+            window.location.href = smsUrl;
+            
+            if (clientPhone) {
+                showSuccess(`SMS app opened to send deposit request to ${clientPhone}!`);
+            } else {
+                showSuccess('SMS app opened with deposit message! Please enter the recipient manually.');
+            }
+        }
+
+        function sendDepositViaEmail() {
+            const currentURL = window.location.href;
+            const clientEmail = invoiceData.session.clientEmail || '';
+            
+            const subject = `Deposit Request - $${invoiceData.amount.toFixed(2)}`;
+            const body = `Hi ${invoiceData.session.clientName || ''},
+
+A deposit is requested for your upcoming photography session!
+
+Deposit Details:
+• Amount: $${invoiceData.amount.toFixed(2)}
+• Session Type: ${invoiceData.session.sessionType || 'Photography Session'}
+
+You can pay your deposit securely using the link below:
+${currentURL}
+
+Thank you for choosing our photography services!
+
+Best regards,
+The Legacy Photography`;
+            
+            // Create mailto URL that opens default email app with client's email pre-filled
+            const mailtoUrl = `mailto:${clientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            
+            // Open email app
+            window.location.href = mailtoUrl;
+            
+            showSuccess(`Email app opened with deposit request${clientEmail ? ` for ${clientEmail}` : ''}!`);
+        }
+
+        function copyDepositURL() {
+            const currentURL = window.location.href;
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(currentURL).then(() => {
+                    showSuccess('Deposit URL copied to clipboard!');
+                }).catch(err => {
+                    console.error('Clipboard copy failed:', err);
+                    fallbackCopyToClipboard(currentURL);
+                });
+            } else {
+                fallbackCopyToClipboard(currentURL);
+            }
         }
         
         // Deposit invoice function removed - use separate Deposit button on session card instead
