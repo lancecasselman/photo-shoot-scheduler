@@ -3397,11 +3397,17 @@ window.switchTab = function(tabName) {
                     // Initialize golden hour calculator if needed
                     break;
                 case 'businessManagement':
-                    loadBusinessManagement();
+                    if (typeof loadBusinessManagement !== 'undefined') {
+                        loadBusinessManagement();
+                    }
                     break;
                 case 'websiteBuilder':
                     // Initialize website builder
-                    setTimeout(() => updatePreview(), 100);
+                    setTimeout(() => {
+                        if (typeof WebsiteBuilder !== 'undefined' && WebsiteBuilder.preview) {
+                            WebsiteBuilder.preview();
+                        }
+                    }, 100);
                     break;
                 case 'contracts':
                     // Load sessions for contract creation
