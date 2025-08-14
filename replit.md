@@ -51,14 +51,19 @@ A comprehensive storage quota and billing system provides freemium storage manag
 ### Unified File Deletion System
 A robust unified deletion system ensures complete file cleanup with no orphaned records. It includes database lookup for exact folder type detection, enhanced logging, comprehensive verification checks, and pattern matching to catch all database entries. The service coordinates between cloud storage and database cleanup, preventing phantom file records. Delete buttons on thumbnails provide instant file removal with confirmation dialogs, progress feedback, and automatic file list refresh. The system features fallback mechanisms and comprehensive error handling to ensure reliable file deletion across all interfaces.
 
-## Recent Changes (August 13, 2025)
+## Recent Changes (August 14, 2025)
 - **CRITICAL**: Session sorting by appointment date is COMPLETE and WORKING - do not modify
-- **NEW**: Client-Fillable Tip System for Stripe Invoices
+- **NEW**: Unified Tipping System for Both Invoice and Deposit Workflows
+  - Updated deposit system to use same tipping invoice approach as regular invoices
+  - Orange "💳 Send Deposit" button now opens clean invoice page with deposit amount
+  - Blue "💰 Send Invoice" button opens invoice page for final payment
+  - Complete functional separation between deposit and invoice workflows
+  - Pay Now button visible by default on recipient end for immediate payment option
+  - Both systems use `/invoice.html` with different payment IDs and amounts
+- **Client-Fillable Tip System**: Complete integration for Stripe invoices
   - Added `tip_amount` column to `payment_records` table
-  - Created public invoice page at `/invoice.html` (no authentication required)
+  - Public invoice page at `/invoice.html` (no authentication required)
   - Clients can add 15%, 20%, 25% tips or custom amounts before payment
-  - Stripe invoices include custom URL for tip interface in footer
-  - API endpoints for updating tips and sending updated invoices
   - Real-time invoice total calculation with tip display
   - Mobile-responsive tip selection interface
 - **Completed**: Full booking agreement system with e-signature capabilities

@@ -1368,25 +1368,22 @@ function closeInvoiceSendDialog() {
 // Send deposit invoice with custom amount
 async function sendDepositInvoice(session) {
     try {
-        console.log('DEBUG: sendDepositInvoice called with session:', session);
-        console.log('DEBUG: Session type:', typeof session, 'Is string:', typeof session === 'string');
+        console.log('🔥 DEPOSIT BRIDGE: sendDepositInvoice called with session:', session);
 
         // If session is just an ID string, fetch the full session object
         if (typeof session === 'string') {
-            console.log('DEBUG: Session is a string ID, need to find full session object');
+            console.log('🔥 DEPOSIT BRIDGE: Session is a string ID, need to find full session object');
             // Find session in the sessions array from the API response
             const fullSession = window.sessionsData ? window.sessionsData.find(s => s.id === session) : null;
             if (fullSession) {
                 session = fullSession;
-                console.log('DEBUG: Found full session object:', session);
+                console.log('🔥 DEPOSIT BRIDGE: Found full session object:', session);
             } else {
-                console.log('DEBUG: Could not find session in sessionsData, trying to fetch from API');
+                console.log('🔥 DEPOSIT BRIDGE: Could not find session in sessionsData');
                 showMessage('Error: Session data not found. Please refresh the page and try again.', 'error');
                 return;
             }
         }
-
-        console.log('DEBUG: Session price:', session.price, 'Client name:', session.clientName);
 
         // Ensure we have valid session data
         if (!session || !session.price) {
@@ -1432,9 +1429,10 @@ async function sendDepositInvoice(session) {
             }
         }
 
-        console.log('Creating deposit invoice for session:', session);
-        showMessage('Creating deposit invoice...', 'info');
+        console.log('🔥 DEPOSIT BRIDGE: Found session, calling createDepositInvoiceWithTipping');
+        console.log('🔥 NEW DEPOSIT TIPPING SYSTEM: Creating tipping-enabled deposit invoice for session:', session);
 
+        // Call the new deposit tipping system
         const authToken = await getAuthToken();
         const headers = {
             'Content-Type': 'application/json'
@@ -1444,12 +1442,13 @@ async function sendDepositInvoice(session) {
             headers['Authorization'] = `Bearer ${authToken}`;
         }
 
-        const response = await fetch(`/api/sessions/${session.id}/send-invoice`, {
+        const response = await fetch('/api/create-deposit-invoice-with-tipping', {
             method: 'POST',
             headers,
             body: JSON.stringify({
-                isDeposit: true,
-                depositAmount: depositAmount
+                sessionId: session.id,
+                depositAmount: depositAmount,
+                includeTipping: true
             })
         });
 
@@ -1459,32 +1458,21 @@ async function sendDepositInvoice(session) {
         }
 
         const result = await response.json();
-        console.log('Deposit invoice creation result:', result);
+        console.log('🔥 DEPOSIT TIPPING SUCCESS: Custom deposit invoice URL created:', result.invoice_url);
 
-        if (result.invoice && result.invoice.hostedInvoiceUrl) {
-            showMessage('Deposit invoice created successfully!', 'success');
+        if (result.success && result.invoice_url) {
+            showMessage(`Deposit invoice created for $${depositAmount.toFixed(2)}! Opening in new window...`, 'success');
 
-            // Open the invoice URL in a new tab
-            window.open(result.invoice.hostedInvoiceUrl, '_blank');
-
-            // Show a dialog with invoice details
-            const depositInfo = result.depositInfo;
-            if (depositInfo) {
-                const message = `Deposit invoice created successfully!\n\nDeposit: $${depositInfo.depositAmount}\nTotal Deposits: $${depositInfo.totalDeposits}\nRemaining Balance: $${depositInfo.remainingBalance.toFixed(2)}\n\nInvoice URL: ${result.invoice.hostedInvoiceUrl}\n\nThe invoice has been sent to ${session.email}`;
-                alert(message);
-            } else {
-                const remainingBalance = session.price - depositAmount;
-                const message = `Deposit invoice created successfully!\n\nRetainer: $${depositAmount}\nRemaining Balance: $${remainingBalance.toFixed(2)}\n\nInvoice URL: ${result.invoice.hostedInvoiceUrl}\n\nThe invoice has been sent to ${session.email}`;
-                alert(message);
-            }
+            // Open deposit invoice in new window
+            window.open(result.invoice_url, '_blank');
 
             // Wait a moment for database to update, then refresh sessions
             setTimeout(async () => {
                 await loadSessions();
-                console.log('DEBUG: Sessions reloaded after deposit creation');
+                console.log('🔥 DEPOSIT BRIDGE: Sessions reloaded after deposit creation');
             }, 1000);
         } else {
-            throw new Error(result.error || 'Unknown error creating deposit invoice');
+            throw new Error(result.message || 'Unknown error creating deposit invoice');
         }
 
     } catch (error) {
