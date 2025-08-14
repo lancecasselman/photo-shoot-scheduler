@@ -60,6 +60,19 @@
                 }
             }, true);
         })();
+        
+        // Emergency error tracking for syntax issues
+        window.addEventListener('error', function(e) {
+            if (e.message && e.message.includes('Unexpected token')) {
+                console.error('SYNTAX ERROR DETECTED:', {
+                    message: e.message,
+                    filename: e.filename,
+                    lineno: e.lineno,
+                    colno: e.colno,
+                    error: e.error
+                });
+            }
+        });
     </script>
     
     <!-- Google Fonts - Photography Management System Theme -->
@@ -12239,7 +12252,13 @@ END:VCALENDAR`;
     <script src="/static/js/storage-quota-checker.js"></script>
     
     <!-- Include main script file -->
-    <script src="script.js?v=1755204000&customizable=deposit"></script>
+    <script>
+        console.log('About to load main script...');
+    </script>
+    <script src="script.js?v=1755205200&nocache=true" onerror="console.error('Failed to load script.js:', event)"></script>
+    <script>
+        console.log('Main script should be loaded now.');
+    </script>
     
     <!-- Subscription onboarding removed - file was missing and causing 404 errors -->
     <script>
