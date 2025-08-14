@@ -1399,39 +1399,9 @@ async function sendDepositInvoice(session) {
             (remainingBalance * 0.5) : 
             (session.price * 0.5);
 
-        console.log('🚀 DEPOSIT BRIDGE: Prompting for deposit amount');
-
-        // Prompt for custom deposit amount
-        let promptText;
-        if (existingDeposits > 0) {
-            promptText = `Enter additional deposit amount for ${session.clientName}:\n\nSession Total: $${session.price}\nPrevious Deposits: $${existingDeposits.toFixed(2)}\nRemaining Balance: $${remainingBalance.toFixed(2)}\nSuggested 50%: $${suggestedAmount.toFixed(2)}`;
-        } else {
-            promptText = `Enter deposit amount for ${session.clientName}:\n\nSession Total: $${session.price}\nSuggested 50%: $${suggestedAmount.toFixed(2)}`;
-        }
-
-        const depositAmountInput = prompt(promptText, suggestedAmount.toFixed(2));
-
-        if (!depositAmountInput) {
-            return; // User cancelled
-        }
-
-        const depositAmount = parseFloat(depositAmountInput);
-
-        if (isNaN(depositAmount) || depositAmount <= 0) {
-            showMessage('Please enter a valid amount greater than $0', 'error');
-            return;
-        }
-
-        if (depositAmount > session.price) {
-            const confirmOverage = confirm(
-                `Deposit amount ($${depositAmount.toFixed(2)}) is more than the session total ($${session.price}).\n\nDo you want to continue?`
-            );
-            if (!confirmOverage) {
-                return;
-            }
-        }
-
-        console.log('🚀 DEPOSIT BRIDGE: Creating deposit invoice with amount:', depositAmount.toFixed(2));
+        console.log('🚀 DEPOSIT BRIDGE: Creating deposit invoice directly with suggested amount:', suggestedAmount.toFixed(2));
+        
+        const depositAmount = suggestedAmount;
 
         // Create deposit invoice with tipping system using suggested amount
         const authToken = await getAuthToken();
