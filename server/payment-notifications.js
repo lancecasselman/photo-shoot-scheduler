@@ -91,7 +91,7 @@ class PaymentNotificationManager {
     async recordPayment(client, paymentData) {
         try {
             await client.query(`
-                INSERT INTO payment_records (
+                INSERT INTO deposit_payments (
                     session_id, stripe_payment_intent_id, amount, payment_type, 
                     client_email, status, paid_at, created_at
                 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -106,7 +106,7 @@ class PaymentNotificationManager {
                 new Date()
             ]);
 
-            console.log('✅ Payment recorded in database:', paymentData.stripePaymentIntentId);
+            console.log('✅ Payment recorded in deposit_payments table:', paymentData.stripePaymentIntentId);
         } catch (error) {
             console.error('❌ Error recording payment:', error);
             throw error;
