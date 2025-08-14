@@ -53,6 +53,12 @@ A robust unified deletion system ensures complete file cleanup with no orphaned 
 
 ## Recent Changes (August 14, 2025)
 - **CRITICAL**: Session sorting by appointment date is COMPLETE and WORKING - do not modify
+- **COMPLETED**: Enhanced Deposit Invoice System with Authentication-Based UI
+  - Smart authentication detection distinguishes photographers from clients
+  - Photographers (authenticated): See send options to share deposit links via SMS/Email
+  - Clients (anonymous): Only see streamlined "Pay Deposit Now" button
+  - Added `/api/check-auth` endpoint for real-time authentication status
+  - Complete separation of creator vs payer experiences
 - **COMPLETED**: Full Stripe Payment Processing Integration
   - Complete Stripe Payment Intent system for session payments and deposits
   - Secure payment forms with Stripe Elements integration on invoice pages
