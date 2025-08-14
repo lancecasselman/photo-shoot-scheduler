@@ -730,17 +730,22 @@
         function sendInvoiceViaSMS() {
             const currentURL = window.location.href;
             const totalAmount = invoiceData.amount + selectedTipAmount;
+            const clientPhone = invoiceData.session.phoneNumber || '';
             
             // Create a friendly message for SMS
-            const message = `Hi! Your photography invoice for $${invoiceData.amount.toFixed(2)}${selectedTipAmount > 0 ? ` (with $${selectedTipAmount.toFixed(2)} tip)` : ''} is ready for payment. Total: $${totalAmount.toFixed(2)}. Pay securely here: ${currentURL}`;
+            const message = `Hi ${invoiceData.session.clientName || ''}! Your photography invoice for $${invoiceData.amount.toFixed(2)}${selectedTipAmount > 0 ? ` (with $${selectedTipAmount.toFixed(2)} tip)` : ''} is ready for payment. Total: $${totalAmount.toFixed(2)}. Pay securely here: ${currentURL}`;
             
-            // Create SMS URL that opens default SMS app
-            const smsUrl = `sms:?body=${encodeURIComponent(message)}`;
+            // Create SMS URL that opens default SMS app with client's phone number
+            const smsUrl = clientPhone ? `sms:${clientPhone}?body=${encodeURIComponent(message)}` : `sms:?body=${encodeURIComponent(message)}`;
             
             // Open SMS app
             window.location.href = smsUrl;
             
-            showSuccess('SMS app opened with invoice message!');
+            if (clientPhone) {
+                showSuccess(`SMS app opened to send invoice to ${clientPhone}!`);
+            } else {
+                showSuccess('SMS app opened with invoice message! Please enter the recipient manually.');
+            }
         }
 
         // Send invoice via email using device default email app
