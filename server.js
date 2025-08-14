@@ -7310,6 +7310,20 @@ app.post('/api/create-checkout-session', async (req, res) => {
             });
         }
         
+        // Determine the base URL for redirect URLs - force HTTPS for Stripe
+        const protocol = req.headers['x-forwarded-proto'] || 'https';
+        const host = req.headers.host || 'localhost:5000';
+        const baseUrl = req.headers.origin || `${protocol}://${host}`;
+        
+        console.log('🔥 STRIPE URL INFO:', { 
+            protocol, 
+            host, 
+            baseUrl, 
+            origin: req.headers.origin,
+            successUrl: `${baseUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}&payment_id=${paymentId}`,
+            cancelUrl: `${baseUrl}/invoice.html?payment=${paymentId}`
+        });
+        
         // Create Stripe checkout session
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
@@ -7327,8 +7341,8 @@ app.post('/api/create-checkout-session', async (req, res) => {
                 }
             ],
             mode: 'payment',
-            success_url: `${req.headers.origin}/payment-success?session_id={CHECKOUT_SESSION_ID}&payment_id=${paymentId}`,
-            cancel_url: `${req.headers.origin}/invoice.html?payment=${paymentId}`,
+            success_url: `${baseUrl}/payment-success?session_id={CHECKOUT_SESSION_ID}&payment_id=${paymentId}`,
+            cancel_url: `${baseUrl}/invoice.html?payment=${paymentId}`,
             metadata: {
                 paymentId: paymentId,
                 baseAmount: amount.toString(),
