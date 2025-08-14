@@ -8458,33 +8458,19 @@ END:VCALENDAR`;
                                 `}
                             </div>
                             
-                            <div class="invoice-options">
-                                <h4>Invoice Type</h4>
-                                <div class="radio-group">
-                                    ${remainingBalance > 0 ? `
-                                        <label class="radio-option">
-                                            <input type="radio" name="invoiceType" value="remaining" checked>
-                                            <span class="radio-text">
-                                                <strong>Final Payment</strong><br>
-                                                <small>Invoice for remaining balance: $${remainingBalance.toFixed(2)}</small>
-                                            </span>
-                                        </label>
-                                    ` : ''}
-                                    <label class="radio-option">
-                                        <input type="radio" name="invoiceType" value="deposit" ${remainingBalance <= 0 ? 'checked' : ''}>
-                                        <span class="radio-text">
-                                            <strong>Deposit Invoice</strong><br>
-                                            <small>Custom deposit amount</small>
-                                        </span>
-                                    </label>
+                            ${remainingBalance > 0 ? `
+                                <div class="invoice-info">
+                                    <p style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; color: #495057;">
+                                        This invoice will be for the remaining balance of <strong>$${remainingBalance.toFixed(2)}</strong>
+                                    </p>
                                 </div>
-                                
-                                <div id="depositAmountSection" style="margin-top: 15px; display: none;">
-                                    <label for="depositAmount">Deposit Amount:</label>
-                                    <input type="number" id="depositAmount" min="1" max="${session.price}" step="0.01" 
-                                           placeholder="Enter deposit amount" style="width: 100%; margin-top: 5px;">
+                            ` : `
+                                <div class="invoice-info">
+                                    <p style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; color: #495057;">
+                                        This invoice will be for the full session amount of <strong>$${session.price.toFixed(2)}</strong>
+                                    </p>
                                 </div>
-                            </div>
+                            `}
                         </div>
                         <div class="modal-footer">
                             <button class="btn btn-secondary" onclick="closeInvoiceModal()">Cancel</button>
@@ -8497,15 +8483,7 @@ END:VCALENDAR`;
             // Add modal to page
             document.body.insertAdjacentHTML('beforeend', modalHTML);
 
-            // Add event listeners
-            const radioButtons = document.querySelectorAll('input[name="invoiceType"]');
-            const depositSection = document.getElementById('depositAmountSection');
-            
-            radioButtons.forEach(radio => {
-                radio.addEventListener('change', function() {
-                    depositSection.style.display = this.value === 'deposit' ? 'block' : 'none';
-                });
-            });
+            // No additional event listeners needed for simplified invoice modal
         }
 
         window.closeInvoiceModal = function() {
@@ -8516,31 +8494,13 @@ END:VCALENDAR`;
         }
 
         window.confirmSendInvoice = async function(sessionId) {
-            const invoiceType = document.querySelector('input[name="invoiceType"]:checked').value;
             const session = sessions.find(s => s.id === sessionId);
+            const existingDeposit = session.depositAmount || 0;
+            const invoiceAmount = session.price - existingDeposit;
             
-            let requestData = {};
-            let confirmMessage = '';
-            
-            if (invoiceType === 'deposit') {
-                const depositAmountInput = document.getElementById('depositAmount');
-                const depositAmount = parseFloat(depositAmountInput.value);
-                
-                if (!depositAmount || depositAmount <= 0) {
-                    showMessage('Please enter a valid deposit amount', 'error');
-                    return;
-                }
-                
-                requestData = {
-                    isDeposit: true,
-                    depositAmount: depositAmount
-                };
-                confirmMessage = `Send deposit invoice for $${depositAmount.toFixed(2)} to ${session.clientName}?`;
-            } else {
-                const existingDeposit = session.depositAmount || 0;
-                const finalAmount = session.price - existingDeposit;
-                confirmMessage = `Send final payment invoice for $${finalAmount.toFixed(2)} to ${session.clientName}?`;
-            }
+            const confirmMessage = existingDeposit > 0 ? 
+                `Send final payment invoice for $${invoiceAmount.toFixed(2)} to ${session.clientName}?` :
+                `Send invoice for $${session.price.toFixed(2)} to ${session.clientName}?`;
             
             if (!confirm(confirmMessage)) {
                 return;
@@ -8553,7 +8513,7 @@ END:VCALENDAR`;
                 const response = await fetch(`/api/sessions/${sessionId}/send-invoice`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(requestData)
+                    body: JSON.stringify({})
                 });
                 
                 if (!response.ok) {
