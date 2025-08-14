@@ -1117,8 +1117,8 @@ Your Photography Team`;
             }
         }
 
-        // Create payment intent and setup payment form
-        async function proceedToPayment() {
+        // Create payment intent and setup payment form (alternative method)
+        async function proceedToPaymentWithElements() {
             try {
                 if (!stripe) {
                     showError('Payment system not ready. Please try again.');
