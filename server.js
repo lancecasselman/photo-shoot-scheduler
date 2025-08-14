@@ -2966,21 +2966,41 @@ async function updateSession(id, updates) {
 }
 
 async function deleteSession(id, userId) {
+    const client = await pool.connect();
     try {
-        let query, params;
+        await client.query('BEGIN');
+        
+        // First, delete any payment plans associated with this session
+        const deletePaymentPlansQuery = 'DELETE FROM payment_plans WHERE session_id = $1';
+        await client.query(deletePaymentPlansQuery, [id]);
+        console.log(`Deleted payment plans for session ${id}`);
+        
+        // Then, delete session files from the database
+        const deleteFilesQuery = 'DELETE FROM session_files WHERE session_id = $1';
+        await client.query(deleteFilesQuery, [id]);
+        console.log(`Deleted session files for session ${id}`);
+        
+        // Finally, delete the session itself
+        let sessionQuery, sessionParams;
         if (userId) {
-            query = 'DELETE FROM photography_sessions WHERE id = $1 AND user_id = $2 RETURNING *';
-            params = [id, userId];
+            sessionQuery = 'DELETE FROM photography_sessions WHERE id = $1 AND user_id = $2 RETURNING *';
+            sessionParams = [id, userId];
         } else {
-            query = 'DELETE FROM photography_sessions WHERE id = $1 RETURNING *';
-            params = [id];
+            sessionQuery = 'DELETE FROM photography_sessions WHERE id = $1 RETURNING *';
+            sessionParams = [id];
         }
 
-        const result = await pool.query(query, params);
+        const result = await client.query(sessionQuery, sessionParams);
+        
+        await client.query('COMMIT');
+        console.log(`Successfully deleted session ${id} with all related data`);
         return result.rows.length > 0;
     } catch (error) {
+        await client.query('ROLLBACK');
         console.error('Error deleting session:', error);
         throw error;
+    } finally {
+        client.release();
     }
 }
 
