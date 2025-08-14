@@ -110,8 +110,22 @@ function updateUserUI() {
 }
 
 function redirectToAuth() {
+    console.log('🚨 REDIRECT TO AUTH CALLED!');
+    console.log('🚨 Current location:', window.location.href);
+    console.log('🚨 Current pathname:', window.location.pathname);
+    console.log('🚨 Referrer:', document.referrer);
+    console.log('🚨 fromAuth flag:', sessionStorage.getItem('fromAuth'));
+    console.log('🚨 Manual logout flag:', localStorage.getItem('manualLogout'));
+    console.log('🚨 Logging out flag:', sessionStorage.getItem('loggingOut'));
+    
+    // Debug stack trace to see who called this function
+    console.log('🚨 REDIRECT STACK TRACE:', new Error().stack);
+    
     if (window.location.pathname !== '/auth.html') {
+        console.log('🚨 PERFORMING REDIRECT TO AUTH.HTML...');
         window.location.href = '/auth.html';
+    } else {
+        console.log('🚨 Already on auth page, skipping redirect');
     }
 }
 
@@ -2145,7 +2159,11 @@ async function initializePage() {
 
 // Initialize when page loads
 window.addEventListener('load', function() {
-    console.log('Page loaded, initializing...');
+    console.log('🔄 MAIN APP: Page loaded event fired');
+    console.log('🔄 MAIN APP: Current URL:', window.location.href);
+    console.log('🔄 MAIN APP: Referrer:', document.referrer);
+    console.log('🔄 MAIN APP: fromAuth flag:', sessionStorage.getItem('fromAuth'));
+    console.log('🔄 MAIN APP: Starting initializePage...');
     initializePage();
 });
 
