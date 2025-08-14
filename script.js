@@ -2938,23 +2938,281 @@ async function downloadAllRawFiles(sessionId, clientName) {
 }
 
 // Website Builder Functions
-        window.updatePreview = function() {
-            const theme = document.getElementById('websiteTheme')?.value || 'legacy';
+        let selectedTemplate = null;
+        let websiteData = {
+            template: null,
+            title: '',
+            subtitle: '',
+            email: '',
+            phone: '',
+            about: '',
+            heroImage: null,
+            colors: {
+                primary: '#d4af37',
+                secondary: '#8b7355'
+            }
+        };
+
+        // Template Selection
+        window.selectTemplate = function(templateName) {
+            selectedTemplate = templateName;
+            websiteData.template = templateName;
+            
+            // Hide template selection and show editor
+            document.getElementById('templateSection').style.display = 'none';
+            document.getElementById('websiteEditor').style.display = 'block';
+            
+            // Update template name in editor
+            document.getElementById('selectedTemplateName').textContent = `${templateName.charAt(0).toUpperCase() + templateName.slice(1)} Template Editor`;
+            
+            // Load template defaults
+            loadTemplateDefaults(templateName);
+            
+            // Update preview
+            updateLivePreview();
+            
+            showMessage(`${templateName.charAt(0).toUpperCase() + templateName.slice(1)} template selected! Customize your website below.`, 'success');
+        };
+
+        window.backToTemplates = function() {
+            document.getElementById('templateSection').style.display = 'block';
+            document.getElementById('websiteEditor').style.display = 'none';
+            selectedTemplate = null;
+        };
+
+        function loadTemplateDefaults(templateName) {
+            const defaults = {
+                legacy: {
+                    title: 'Legacy Photography',
+                    subtitle: 'Timeless Moments, Captured Forever',
+                    about: 'With over a decade of experience, I specialize in capturing the beauty and emotion of life\'s most precious moments.',
+                    colors: { primary: '#d4af37', secondary: '#8b7355' }
+                },
+                modern: {
+                    title: 'Modern Studio',
+                    subtitle: 'Creative Vision, Modern Style',
+                    about: 'Contemporary photography that tells your unique story through bold, artistic imagery.',
+                    colors: { primary: '#667eea', secondary: '#764ba2' }
+                },
+                elegant: {
+                    title: 'Elegant Gallery',
+                    subtitle: 'Sophisticated Photography',
+                    about: 'Luxury photography services for discerning clients who appreciate refined artistry.',
+                    colors: { primary: '#8B4513', secondary: '#D2B48C' }
+                },
+                minimal: {
+                    title: 'Minimal Portfolio',
+                    subtitle: 'Less is More',
+                    about: 'Clean, minimalist photography that focuses on the essence of each moment.',
+                    colors: { primary: '#333333', secondary: '#666666' }
+                }
+            };
+
+            const template = defaults[templateName] || defaults.legacy;
+            
+            // Set form values
+            document.getElementById('websiteTitle').value = template.title;
+            document.getElementById('websiteSubtitle').value = template.subtitle;
+            document.getElementById('aboutText').value = template.about;
+            document.getElementById('primaryColor').value = template.colors.primary;
+            document.getElementById('secondaryColor').value = template.colors.secondary;
+            
+            // Update websiteData
+            websiteData = { ...websiteData, ...template };
+        }
+
+        window.updateLivePreview = function() {
             const preview = document.getElementById('websitePreview');
+            if (!preview || !selectedTemplate) return;
 
-            if (!preview) return;
+            // Get current values
+            const title = document.getElementById('websiteTitle')?.value || 'My Photography Studio';
+            const subtitle = document.getElementById('websiteSubtitle')?.value || 'Professional Photography';
+            const email = document.getElementById('contactEmail')?.value || 'contact@studio.com';
+            const phone = document.getElementById('contactPhone')?.value || '(555) 123-4567';
+            const about = document.getElementById('aboutText')?.value || 'Welcome to my photography studio...';
+            const primaryColor = document.getElementById('primaryColor')?.value || '#d4af37';
+            const secondaryColor = document.getElementById('secondaryColor')?.value || '#8b7355';
 
-            // Update preview based on selected theme
-            preview.className = `website-preview theme-${theme}`;
-            preview.innerHTML = `
-                <div class="preview-header">My Photography Studio</div>
-                <div class="preview-hero">Welcome to my world of photography</div>
-                <div class="preview-content">
-                    <div class="preview-section">About Me</div>
-                    <div class="preview-section">Portfolio</div>
-                    <div class="preview-section">Contact</div>
+            // Update websiteData
+            websiteData = {
+                ...websiteData,
+                title,
+                subtitle,
+                email,
+                phone,
+                about,
+                colors: { primary: primaryColor, secondary: secondaryColor }
+            };
+
+            // Generate preview HTML based on template
+            let previewHTML = '';
+            
+            switch(selectedTemplate) {
+                case 'legacy':
+                    previewHTML = generateLegacyPreview(websiteData);
+                    break;
+                case 'modern':
+                    previewHTML = generateModernPreview(websiteData);
+                    break;
+                case 'elegant':
+                    previewHTML = generateElegantPreview(websiteData);
+                    break;
+                case 'minimal':
+                    previewHTML = generateMinimalPreview(websiteData);
+                    break;
+                default:
+                    previewHTML = '<div class="preview-placeholder">Select a template to see preview</div>';
+            }
+
+            preview.innerHTML = previewHTML;
+        };
+
+        function generateLegacyPreview(data) {
+            return `
+                <div style="background: linear-gradient(135deg, #1a1a1a 0%, #2c2c2c 100%); color: ${data.colors.primary}; min-height: 500px; font-family: 'Cormorant Garamond', serif;">
+                    <!-- Header -->
+                    <header style="padding: 20px; text-align: center; border-bottom: 2px solid ${data.colors.primary};">
+                        <h1 style="margin: 0; font-size: 2.5rem; color: ${data.colors.primary};">${data.title}</h1>
+                        <p style="margin: 10px 0 0 0; color: ${data.colors.secondary}; font-size: 1.2rem;">${data.subtitle}</p>
+                    </header>
+                    
+                    <!-- Hero Section -->
+                    <section style="padding: 60px 20px; text-align: center; background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 1200 600\"><rect fill=\"%23${data.colors.primary.slice(1)}\" opacity=\"0.1\" width=\"1200\" height=\"600\"/></svg>'); background-size: cover;">
+                        ${data.heroImage ? `<img src="${data.heroImage}" style="max-width: 100%; height: 300px; object-fit: cover; border-radius: 10px; margin-bottom: 30px;">` : ''}
+                        <h2 style="font-size: 3rem; margin-bottom: 20px; color: ${data.colors.primary};">Capturing Timeless Moments</h2>
+                        <p style="font-size: 1.3rem; max-width: 600px; margin: 0 auto; line-height: 1.6;">${data.about}</p>
+                    </section>
+                    
+                    <!-- Gallery Preview -->
+                    <section style="padding: 40px 20px;">
+                        <h3 style="text-align: center; font-size: 2rem; margin-bottom: 30px; color: ${data.colors.primary};">Featured Work</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; max-width: 800px; margin: 0 auto;">
+                            <div style="aspect-ratio: 1; background: linear-gradient(45deg, ${data.colors.primary}, ${data.colors.secondary}); border-radius: 8px;"></div>
+                            <div style="aspect-ratio: 1; background: linear-gradient(45deg, ${data.colors.secondary}, #2c1810); border-radius: 8px;"></div>
+                            <div style="aspect-ratio: 1; background: linear-gradient(45deg, ${data.colors.primary}, #f4e4bc); border-radius: 8px;"></div>
+                        </div>
+                    </section>
+                    
+                    <!-- Contact -->
+                    <footer style="padding: 40px 20px; text-align: center; border-top: 2px solid ${data.colors.primary};">
+                        <h3 style="margin-bottom: 20px; color: ${data.colors.primary};">Get In Touch</h3>
+                        <p style="margin: 5px 0;"><strong>Email:</strong> ${data.email}</p>
+                        <p style="margin: 5px 0;"><strong>Phone:</strong> ${data.phone}</p>
+                    </footer>
                 </div>
             `;
+        }
+
+        function generateModernPreview(data) {
+            return `
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; min-height: 500px; font-family: 'Quicksand', sans-serif;">
+                    <header style="padding: 20px; text-align: center; background: rgba(255,255,255,0.1);">
+                        <h1 style="margin: 0; font-size: 2.5rem; font-weight: 700;">${data.title}</h1>
+                        <p style="margin: 10px 0 0 0; font-size: 1.1rem; opacity: 0.9;">${data.subtitle}</p>
+                    </header>
+                    
+                    <section style="padding: 60px 20px; text-align: center;">
+                        ${data.heroImage ? `<img src="${data.heroImage}" style="max-width: 100%; height: 300px; object-fit: cover; border-radius: 15px; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">` : ''}
+                        <h2 style="font-size: 2.5rem; margin-bottom: 20px; font-weight: 300;">Creative Vision</h2>
+                        <p style="font-size: 1.2rem; max-width: 600px; margin: 0 auto; line-height: 1.6; opacity: 0.9;">${data.about}</p>
+                    </section>
+                    
+                    <section style="padding: 40px 20px; background: rgba(255,255,255,0.1);">
+                        <h3 style="text-align: center; font-size: 2rem; margin-bottom: 30px;">Portfolio</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; max-width: 900px; margin: 0 auto;">
+                            <div style="aspect-ratio: 4/3; background: rgba(255,255,255,0.2); border-radius: 10px;"></div>
+                            <div style="aspect-ratio: 4/3; background: rgba(255,255,255,0.2); border-radius: 10px;"></div>
+                            <div style="aspect-ratio: 4/3; background: rgba(255,255,255,0.2); border-radius: 10px;"></div>
+                        </div>
+                    </section>
+                    
+                    <footer style="padding: 40px 20px; text-align: center;">
+                        <h3 style="margin-bottom: 20px;">Contact</h3>
+                        <p style="margin: 5px 0; opacity: 0.9;"><strong>Email:</strong> ${data.email}</p>
+                        <p style="margin: 5px 0; opacity: 0.9;"><strong>Phone:</strong> ${data.phone}</p>
+                    </footer>
+                </div>
+            `;
+        }
+
+        function generateElegantPreview(data) {
+            return `
+                <div style="background: linear-gradient(135deg, #8B4513 0%, #D2B48C 100%); color: #FDF5E6; min-height: 500px; font-family: 'Cormorant Garamond', serif;">
+                    <header style="padding: 30px 20px; text-align: center; border-bottom: 1px solid rgba(253, 245, 230, 0.3);">
+                        <h1 style="margin: 0; font-size: 3rem; font-weight: 300; letter-spacing: 2px;">${data.title}</h1>
+                        <p style="margin: 15px 0 0 0; font-size: 1.3rem; font-style: italic; opacity: 0.9;">${data.subtitle}</p>
+                    </header>
+                    
+                    <section style="padding: 80px 20px; text-align: center;">
+                        ${data.heroImage ? `<img src="${data.heroImage}" style="max-width: 100%; height: 300px; object-fit: cover; border-radius: 5px; margin-bottom: 40px; border: 3px solid rgba(253, 245, 230, 0.3);">` : ''}
+                        <h2 style="font-size: 2.8rem; margin-bottom: 30px; font-weight: 300;">Sophisticated Artistry</h2>
+                        <p style="font-size: 1.4rem; max-width: 700px; margin: 0 auto; line-height: 1.8; opacity: 0.9;">${data.about}</p>
+                    </section>
+                    
+                    <section style="padding: 60px 20px; background: rgba(0,0,0,0.1);">
+                        <h3 style="text-align: center; font-size: 2.5rem; margin-bottom: 40px; font-weight: 300;">Gallery</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; max-width: 800px; margin: 0 auto;">
+                            <div style="aspect-ratio: 3/4; background: rgba(253, 245, 230, 0.2); border-radius: 5px;"></div>
+                            <div style="aspect-ratio: 3/4; background: rgba(253, 245, 230, 0.2); border-radius: 5px;"></div>
+                            <div style="aspect-ratio: 3/4; background: rgba(253, 245, 230, 0.2); border-radius: 5px;"></div>
+                        </div>
+                    </section>
+                    
+                    <footer style="padding: 50px 20px; text-align: center; border-top: 1px solid rgba(253, 245, 230, 0.3);">
+                        <h3 style="margin-bottom: 25px; font-size: 2rem; font-weight: 300;">Contact</h3>
+                        <p style="margin: 10px 0; font-size: 1.1rem;"><strong>Email:</strong> ${data.email}</p>
+                        <p style="margin: 10px 0; font-size: 1.1rem;"><strong>Phone:</strong> ${data.phone}</p>
+                    </footer>
+                </div>
+            `;
+        }
+
+        function generateMinimalPreview(data) {
+            return `
+                <div style="background: #f8f9fa; color: #333; min-height: 500px; font-family: 'Quicksand', sans-serif;">
+                    <header style="padding: 40px 20px; text-align: center; border-bottom: 1px solid #e9ecef;">
+                        <h1 style="margin: 0; font-size: 2rem; font-weight: 300; color: #333; letter-spacing: 3px; text-transform: uppercase;">${data.title}</h1>
+                        <p style="margin: 15px 0 0 0; font-size: 1rem; color: #666; font-weight: 300;">${data.subtitle}</p>
+                    </header>
+                    
+                    <section style="padding: 60px 20px; text-align: center; background: white;">
+                        ${data.heroImage ? `<img src="${data.heroImage}" style="max-width: 100%; height: 250px; object-fit: cover; margin-bottom: 40px;">` : ''}
+                        <h2 style="font-size: 1.8rem; margin-bottom: 30px; font-weight: 300; color: #333;">Less is More</h2>
+                        <p style="font-size: 1rem; max-width: 500px; margin: 0 auto; line-height: 1.8; color: #666;">${data.about}</p>
+                    </section>
+                    
+                    <section style="padding: 40px 20px;">
+                        <h3 style="text-align: center; font-size: 1.5rem; margin-bottom: 30px; font-weight: 300; color: #333; text-transform: uppercase; letter-spacing: 2px;">Work</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 2px; max-width: 600px; margin: 0 auto;">
+                            <div style="aspect-ratio: 1; background: #e9ecef;"></div>
+                            <div style="aspect-ratio: 1; background: #e9ecef;"></div>
+                            <div style="aspect-ratio: 1; background: #e9ecef;"></div>
+                            <div style="aspect-ratio: 1; background: #e9ecef;"></div>
+                        </div>
+                    </section>
+                    
+                    <footer style="padding: 40px 20px; text-align: center; border-top: 1px solid #e9ecef; background: white;">
+                        <h3 style="margin-bottom: 20px; font-size: 1.2rem; font-weight: 300; color: #333; text-transform: uppercase; letter-spacing: 1px;">Contact</h3>
+                        <p style="margin: 8px 0; color: #666; font-size: 0.9rem;">${data.email}</p>
+                        <p style="margin: 8px 0; color: #666; font-size: 0.9rem;">${data.phone}</p>
+                    </footer>
+                </div>
+            `;
+        }
+
+        window.setPreviewDevice = function(device) {
+            const preview = document.getElementById('websitePreview');
+            const controls = document.querySelectorAll('.preview-control');
+            
+            // Remove active class from all controls
+            controls.forEach(control => control.classList.remove('active'));
+            
+            // Add active class to clicked control
+            event.target.classList.add('active');
+            
+            // Update preview class
+            preview.className = `website-preview-frame ${device}`;
         };
 
         window.handleHeroUpload = function() {
@@ -2963,26 +3221,63 @@ async function downloadAllRawFiles(sessionId, clientName) {
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
+                    websiteData.heroImage = e.target.result;
                     const previewContainer = document.getElementById('heroPreview');
                     if (previewContainer) {
-                        previewContainer.innerHTML = `
-                            <img src="${e.target.result}" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px;">
-                        `;
+                        previewContainer.innerHTML = `<img src="${e.target.result}" style="max-width: 100%; max-height: 100px; border-radius: 6px;">`;
                     }
+                    updateLivePreview();
                 };
                 reader.readAsDataURL(file);
             }
         };
 
+        window.saveWebsite = function() {
+            try {
+                localStorage.setItem('websiteBuilderData', JSON.stringify(websiteData));
+                showMessage('Website saved to local storage!', 'success');
+            } catch (error) {
+                console.error('Save error:', error);
+                showMessage('Error saving website: ' + error.message, 'error');
+            }
+        };
+
         window.previewWebsite = function() {
-            showMessage('Opening website preview...', 'info');
-            // Open preview in new tab
-            window.open('/preview', '_blank');
+            if (!selectedTemplate) {
+                showMessage('Please select a template first', 'error');
+                return;
+            }
+            
+            // Create preview window with full website
+            const previewWindow = window.open('', '_blank', 'width=1200,height=800');
+            const previewHTML = `
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>${websiteData.title} - Preview</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+                </head>
+                <body style="margin: 0; padding: 0;">
+                    ${document.getElementById('websitePreview').innerHTML}
+                </body>
+                </html>
+            `;
+            
+            previewWindow.document.write(previewHTML);
+            previewWindow.document.close();
+            
+            showMessage('Website preview opened in new window!', 'success');
         };
 
         window.publishWebsite = function() {
-            showMessage('Publishing website...', 'info');
-            // Implement website publishing
+            if (!selectedTemplate) {
+                showMessage('Please select a template first', 'error');
+                return;
+            }
+            
+            showMessage('Publishing feature coming soon! For now, use the preview to see your website.', 'info');
         };
 
         // Booking Agreement Functions
