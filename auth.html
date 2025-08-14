@@ -549,7 +549,7 @@
                         });
 
                         if (response.ok) {
-                            console.log('Backend verification successful, redirecting...');
+                            console.log('Backend verification successful, waiting for session to establish before redirecting...');
                             // Set flag to indicate coming from auth page
                             sessionStorage.setItem('fromAuth', 'true');
                             
@@ -557,9 +557,13 @@
                             localStorage.removeItem('manualLogout');
                             sessionStorage.removeItem('loggingOut');
                             
-                            const urlParams = new URLSearchParams(window.location.search);
-                            const returnTo = urlParams.get('return');
-                            window.location.href = returnTo || '/';
+                            // Wait longer for session cookie to be set properly
+                            setTimeout(() => {
+                                const urlParams = new URLSearchParams(window.location.search);
+                                const returnTo = urlParams.get('return');
+                                console.log('Session established, redirecting to:', returnTo || '/');
+                                window.location.href = returnTo || '/';
+                            }, 1500); // Wait 1.5 seconds for session to be established
                         } else {
                             console.log('Backend verification failed, but user is signed in to Firebase. Continuing...');
                             // Set flag to indicate coming from auth page

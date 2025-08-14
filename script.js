@@ -2140,8 +2140,8 @@ async function initializePage() {
         localStorage.removeItem('manualLogout');
         sessionStorage.removeItem('loggingOut');
         
-        console.log('🟢 INIT PAGE: Logout flags cleared, waiting 3 seconds for backend session to fully establish...');
-        await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3 seconds for more time
+        console.log('🟢 INIT PAGE: Logout flags cleared, waiting 2 seconds for backend session to fully establish...');
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Reduced to 2 seconds since we now wait 1.5 in auth page
     } else {
         console.log('🟢 INIT PAGE: Not from auth page, proceeding immediately');
     }
