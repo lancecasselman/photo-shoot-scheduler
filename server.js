@@ -7267,6 +7267,95 @@ app.post('/api/create-checkout-session', async (req, res) => {
     }
 });
 
+// Create deposit invoice with tipping system
+app.post('/api/create-deposit-invoice-with-tipping', async (req, res) => {
+    try {
+        const { sessionId, depositAmount, includeTipping } = req.body;
+        
+        if (!sessionId || !depositAmount) {
+            return res.status(400).json({
+                success: false,
+                message: 'Session ID and deposit amount are required'
+            });
+        }
+        
+        // Get session data from database
+        const session = await getSessionById(sessionId);
+        if (!session) {
+            return res.status(404).json({
+                success: false,
+                message: 'Session not found'
+            });
+        }
+        
+        // Validate deposit amount
+        if (depositAmount <= 0 || depositAmount >= session.price) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid deposit amount'
+            });
+        }
+        
+        // Create unique payment ID for the deposit invoice
+        const paymentId = `payment-${sessionId}-${Date.now()}`;
+        
+        // Store payment data in memory for the invoice page
+        const paymentData = {
+            paymentId: paymentId,
+            sessionId: sessionId,
+            amount: depositAmount,
+            tipAmount: 0,
+            dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(), // 14 days
+            status: 'pending',
+            isDeposit: true,
+            clientName: session.clientName,
+            clientEmail: session.email,
+            sessionType: session.sessionType,
+            createdAt: new Date().toISOString()
+        };
+        
+        // Store in localStorage-compatible format for invoice page
+        if (!global.invoiceStorage) {
+            global.invoiceStorage = {};
+        }
+        global.invoiceStorage[`payment-${paymentId}`] = paymentData;
+        
+        // Create the invoice URL with tipping support
+        const baseURL = req.headers.origin || `https://${req.headers.host}`;
+        const invoiceURL = `${baseURL}/invoice.html?payment=${paymentId}&sessionId=${sessionId}&amount=${depositAmount}&type=deposit`;
+        
+        console.log(`🔥 DEPOSIT TIPPING SYSTEM: Creating deposit invoice for session:`, {
+            sessionId,
+            depositAmount,
+            clientName: session.clientName,
+            remainingBalance: session.price - depositAmount
+        });
+        
+        console.log(`🔥 DEPOSIT SUCCESS: Custom deposit invoice URL created:`, invoiceURL);
+        
+        res.json({
+            success: true,
+            message: `Deposit invoice created for $${depositAmount}`,
+            invoice_url: invoiceURL,
+            payment_id: paymentId,
+            deposit_info: {
+                depositAmount: depositAmount,
+                totalSessionPrice: session.price,
+                remainingBalance: session.price - depositAmount,
+                clientName: session.clientName,
+                sessionType: session.sessionType
+            }
+        });
+        
+    } catch (error) {
+        console.error('Deposit invoice creation error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to create deposit invoice: ' + error.message
+        });
+    }
+});
+
 // Stripe Subscription Routes
 app.post('/api/create-subscription', isAuthenticated, async (req, res) => {
     try {

@@ -344,6 +344,24 @@
                 
                 <!-- Send Invoice Section - Only show for photographer creating invoices -->
                 <div class="send-section" id="send-section" style="display: none; margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; border-top: 3px solid #28a745;">
+                    
+                    <!-- Deposit Invoice Option -->
+                    <div style="margin-bottom: 25px; padding: 15px; background: #fff; border-radius: 6px; border-left: 4px solid #ffc107;">
+                        <h5 style="margin: 0 0 10px 0; color: #333; font-size: 16px;">💰 Create Deposit Invoice</h5>
+                        <p style="margin: 0 0 15px 0; color: #666; font-size: 14px;">Request a deposit/retainer before the session</p>
+                        
+                        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px;">
+                            <label for="deposit-amount" style="font-weight: 500; color: #333;">Deposit Amount: $</label>
+                            <input type="number" id="deposit-amount" placeholder="50.00" step="0.01" min="1" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; width: 120px;">
+                        </div>
+                        
+                        <button onclick="createDepositInvoice()" 
+                                style="padding: 10px 20px; background: #ffc107; color: #333; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; font-weight: 500;">
+                            💳 Create Deposit Invoice
+                        </button>
+                    </div>
+                    
+                    <!-- Regular Send Options -->
                     <h4 style="margin: 0 0 15px 0; color: #333; font-size: 18px;">📤 Send Invoice</h4>
                     <p style="margin: 0 0 20px 0; color: #666; font-size: 14px;">Share this invoice with your client via SMS or email</p>
                     
@@ -794,6 +812,66 @@ The Legacy Photography`;
             }
             
             document.body.removeChild(textArea);
+        }
+        
+        // Create deposit invoice
+        async function createDepositInvoice() {
+            try {
+                const depositAmount = parseFloat(document.getElementById('deposit-amount').value);
+                
+                if (!depositAmount || depositAmount <= 0) {
+                    showError('Please enter a valid deposit amount');
+                    return;
+                }
+                
+                if (depositAmount >= invoiceData.amount) {
+                    showError('Deposit amount cannot be greater than or equal to the total session amount');
+                    return;
+                }
+                
+                showLoading(true);
+                
+                // Get session ID from URL parameters
+                const urlParams = new URLSearchParams(window.location.search);
+                const sessionId = urlParams.get('sessionId');
+                
+                if (!sessionId) {
+                    throw new Error('Session ID not found');
+                }
+                
+                // Create deposit invoice with tip system
+                const response = await fetch('/api/create-deposit-invoice-with-tipping', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        sessionId: sessionId,
+                        depositAmount: depositAmount,
+                        includeTipping: true
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showSuccess(`Deposit invoice created for $${depositAmount.toFixed(2)}! Opening in new window...`);
+                    
+                    // Open deposit invoice in new window
+                    window.open(result.invoice_url, '_blank');
+                    
+                    // Clear the deposit amount input
+                    document.getElementById('deposit-amount').value = '';
+                } else {
+                    throw new Error(result.message || 'Failed to create deposit invoice');
+                }
+                
+            } catch (error) {
+                console.error('Deposit invoice creation error:', error);
+                showError('Failed to create deposit invoice: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
         }
     </script>
 </body>
