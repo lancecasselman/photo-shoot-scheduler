@@ -60,19 +60,6 @@
                 }
             }, true);
         })();
-        
-        // Emergency error tracking for syntax issues
-        window.addEventListener('error', function(e) {
-            if (e.message && e.message.includes('Unexpected token')) {
-                console.error('SYNTAX ERROR DETECTED:', {
-                    message: e.message,
-                    filename: e.filename,
-                    lineno: e.lineno,
-                    colno: e.colno,
-                    error: e.error
-                });
-            }
-        });
     </script>
     
     <!-- Google Fonts - Photography Management System Theme -->
@@ -12252,13 +12239,7 @@ END:VCALENDAR`;
     <script src="/static/js/storage-quota-checker.js"></script>
     
     <!-- Include main script file -->
-    <script>
-        console.log('About to load main script...');
-    </script>
-    <script src="script.js?v=1755205200&nocache=true" onerror="console.error('Failed to load script.js:', event)"></script>
-    <script>
-        console.log('Main script should be loaded now.');
-    </script>
+    <script src="script.js?v=1755202900&customizable=deposit"></script>
     
     <!-- Subscription onboarding removed - file was missing and causing 404 errors -->
     <script>
@@ -13149,19 +13130,20 @@ END:VCALENDAR`;
         #website-builder-container {
             width: 100%;
             height: calc(100vh - 150px);
-            background: #0a0a0a;
+            background: #f8fafc;
             border-radius: 12px;
             overflow: hidden;
             position: relative;
             display: flex;
             flex-direction: column;
+            border: 1px solid #e2e8f0;
         }
 
         .wb-header {
             height: 60px;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
             backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid #e2e8f0;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -13395,18 +13377,19 @@ END:VCALENDAR`;
         
         .wb-template-btn {
             padding: 8px 16px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
             border-radius: 20px;
             font-size: 12px;
             cursor: pointer;
             transition: all 0.3s ease;
-            color: #fff;
+            color: #374151;
         }
         
         .wb-template-btn:hover {
-            background: #ff6b6b;
-            border-color: #ff6b6b;
+            background: #0ea5e9;
+            border-color: #0ea5e9;
+            color: white;
             transform: translateY(-1px);
         }
         
@@ -13940,19 +13923,19 @@ END:VCALENDAR`;
 
         .wb-sidebar {
             width: 280px;
-            background: #1a1a1a;
-            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            background: #ffffff;
+            border-right: 1px solid #e2e8f0;
             overflow-y: auto;
             padding: 20px;
         }
 
         .wb-sidebar h3 {
-            color: #fff;
+            color: #374151;
             font-size: 14px;
             font-weight: 600;
             text-transform: uppercase;
             margin-bottom: 15px;
-            opacity: 0.7;
+            opacity: 0.8;
         }
 
         .wb-template-grid {
@@ -13964,12 +13947,12 @@ END:VCALENDAR`;
 
         .wb-template-item {
             padding: 12px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s ease;
-            color: #fff;
+            color: #374151;
         }
 
         .wb-template-item:hover {
@@ -13986,23 +13969,24 @@ END:VCALENDAR`;
 
         .wb-element-btn {
             padding: 10px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
             border-radius: 6px;
-            color: #fff;
+            color: #374151;
             cursor: pointer;
             text-align: left;
             transition: all 0.3s ease;
         }
 
         .wb-element-btn:hover {
-            background: rgba(102, 126, 234, 0.2);
-            border-color: #667eea;
+            background: #e0f2fe;
+            border-color: #0284c7;
+            color: #0c4a6e;
         }
 
         .wb-canvas-container {
             flex: 1;
-            background: #0a0a0a;
+            background: #f1f5f9;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -15275,9 +15259,6 @@ END:VCALENDAR`;
         
         // Export WebsiteBuilder for global access
         window.WebsiteBuilder = WebsiteBuilder;
-    </script>
-    
-    <!-- Website Builder HTML Content Continues Here -->
                                         <button class="wb-suggestion-btn" onclick="WebsiteBuilder.quickAIEdit('Make this look more luxury and elegant')">Luxury Style</button>
                                         <button class="wb-suggestion-btn" onclick="WebsiteBuilder.quickAIEdit('Add modern animations and effects')">Modern Effects</button>
                                         <button class="wb-suggestion-btn" onclick="WebsiteBuilder.quickAIEdit('Improve typography and spacing')">Better Typography</button>
@@ -17612,37 +17593,37 @@ END:VCALENDAR`;
             console.log('Website Builder module loaded');
         });
 
-        // Add initialization hooks to the existing switchTab function
-        document.addEventListener('DOMContentLoaded', function() {
-            // Override the switchTab function to add our initialization logic
-            const originalSwitchTab = window.switchTab;
-            if (originalSwitchTab) {
-                window.switchTab = function(tabName) {
-                    // Call the original function
-                    originalSwitchTab.call(this, tabName);
-                    
-                    // Add our initialization logic
-                    if (tabName === 'websiteBuilder') {
-                        setTimeout(() => {
-                            if (typeof WebsiteBuilder !== 'undefined' && !WebsiteBuilder.initialized) {
-                                WebsiteBuilder.init();
-                                WebsiteBuilder.loadSavedData();
-                                WebsiteBuilder.initialized = true;
-                                console.log('Website Builder initialized successfully');
-                            }
-                        }, 100);
-                    }
-                    
-                    if (tabName === 'paymentSettings') {
-                        setTimeout(() => {
-                            if (typeof PaymentSettings !== 'undefined') {
-                                PaymentSettings.init();
-                            }
-                        }, 100);
-                    }
-                };
+        // Hook into the existing switchTab function
+        const originalSwitchTabFunc = window.switchTab;
+        window.switchTab = function(tabName) {
+            console.log('Tab switch detected:', tabName);
+            
+            // Call the original function first
+            if (originalSwitchTabFunc) {
+                originalSwitchTabFunc.call(this, tabName);
             }
-        });
+            
+            // Initialize Website Builder when its tab is selected
+            if (tabName === 'websiteBuilder') {
+                console.log('Initializing Website Builder...');
+                setTimeout(() => {
+                    if (!WebsiteBuilder.initialized) {
+                        WebsiteBuilder.init();
+                        WebsiteBuilder.loadSavedData();
+                        WebsiteBuilder.initialized = true;
+                        console.log('Website Builder initialized successfully');
+                    }
+                }, 100);
+            }
+            
+            // Initialize Payment Settings when its tab is selected
+            if (tabName === 'paymentSettings') {
+                console.log('Initializing Payment Settings...');
+                setTimeout(() => {
+                    PaymentSettings.init();
+                }, 100);
+            }
+        };
 
         // Payment Settings Manager
         const PaymentSettings = {
