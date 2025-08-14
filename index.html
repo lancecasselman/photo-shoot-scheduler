@@ -70,11 +70,17 @@
     <!-- Confetti Animation Styles -->
     <style>
         /* Emergency fix for black screen overlay issue */
-        .modal[style*="display: block"] {
+        .modal[style*="display: block"],
+        #contractModal[style*="display: block"],
+        .contract-modal[style*="display: block"] {
             display: none !important;
         }
         
-        /* Ensure no modal overlays are visible by default */
+        /* Target specific problematic elements */
+        .confetti-container,
+        .wb-lightbox-modal,
+        div[style*="z-index: 10000"],
+        div[style*="z-index: 9999"],
         .modal-overlay, 
         .modal[style*="position: fixed"],
         div[style*="position: fixed"][style*="background: rgba(0,0,0"],
@@ -88,10 +94,16 @@
         }
         
         /* Force show main content */
-        body, #app, .main-content, .container {
+        body, #app, .main-content, .container, .tab-content {
             display: block !important;
             visibility: visible !important;
             opacity: 1 !important;
+            background: transparent !important;
+        }
+        
+        /* Ensure tabs work properly */
+        .tab-content.active {
+            display: block !important;
         }
         
         .confetti-container {
@@ -13090,6 +13102,12 @@ END:VCALENDAR`;
             const overlaySelectors = [
                 '.modal[style*="display: block"]',
                 '.modal[style*="display:block"]',
+                '#contractModal[style*="display: block"]',
+                '.contract-modal[style*="display: block"]',
+                '.confetti-container',
+                '.wb-lightbox-modal',
+                'div[style*="z-index: 10000"]',
+                'div[style*="z-index: 9999"]',
                 'div[style*="position: fixed"][style*="background: rgba(0,0,0"]',
                 'div[style*="position:fixed"][style*="background:rgba(0,0,0"]',
                 '*[style*="position: fixed; top: 0; left: 0; width: 100%; height: 100%"]',
