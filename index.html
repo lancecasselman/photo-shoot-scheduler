@@ -5852,10 +5852,9 @@ ${contract.contract_content}
             }
         }
 
-        // UNIFIED APP INITIALIZATION
+        // UNIFIED APP INITIALIZATION - Only initialize UI, auth handled by script.js
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Page loaded, initializing...');
-            console.log('Initializing page...');
+            console.log('DOM loaded, preparing UI elements...');
             
             // Dev mode banner
             if (DEV_MODE) {
@@ -5864,6 +5863,9 @@ ${contract.contract_content}
                 banner.style = "position:fixed;top:0;width:100%;background:#ffc;padding:5px;text-align:center;z-index:10000;font-weight:bold;color:#333;";
                 document.body.appendChild(banner);
                 document.body.style.marginTop = "30px";
+                
+                // Only load app immediately in dev mode
+                initializeAppContent();
             }
             
             // Initialize hamburger menu
@@ -5872,17 +5874,25 @@ ${contract.contract_content}
                 mobileMenu.classList.remove('show');
             }
             
-            // Main app initialization - loading sessions
-            console.log('Loading sessions from API...');
-            loadSessions();
-            setupEventListeners();
-            setMinDateTime();
-            
             // Hide contract modal
             const contractModal = document.getElementById('contractModal');
             if (contractModal) {
                 contractModal.style.display = 'none';
             }
+            
+            // Set up event listeners immediately (doesn't require auth)
+            setupEventListeners();
+            setMinDateTime();
+            
+            console.log('UI elements prepared, waiting for authentication...');
+        });
+        
+        // Initialize app content after authentication
+        window.initializeAppContent = function() {
+            console.log('Loading authenticated app content...');
+            
+            // Main app initialization - loading sessions
+            loadSessions();
             
             console.log('Photography management system loaded');
             showMessage('Welcome to your photography management platform!', 'success');
@@ -5895,7 +5905,7 @@ ${contract.contract_content}
                     console.log('Dashboard initialization deferred - function not yet available');
                 }
             }, 500);
-        });
+        };
 
         window.setupEventListeners = function() {
             document.getElementById('sessionForm').addEventListener('submit', addSession);

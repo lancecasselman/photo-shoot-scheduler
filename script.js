@@ -2096,17 +2096,22 @@ async function initializePage() {
     // Check authentication
     const isAuthenticated = await checkAuth();
     if (!isAuthenticated) {
-        console.log('User not authenticated - attempting to load anyway');
-        // Don't return - continue loading the page even if auth fails
+        console.log('User not authenticated - returning early');
+        return; // Don't load app content if not authenticated
     }
 
-    // Load sessions data regardless of auth status
-    console.log('Loading sessions from API...');
-    try {
-        await loadSessions(); // Use loadSessions instead of loadSessionsFromAPI
-        console.log('Page initialization complete');
-    } catch (error) {
-        console.log('Session loading failed, but page initialized');
+    // Initialize main app content after successful authentication
+    if (typeof window.initializeAppContent === 'function') {
+        window.initializeAppContent();
+    } else {
+        console.log('App content initializer not available, loading sessions directly...');
+        // Fallback: load sessions data directly if main app function not available yet
+        try {
+            await loadSessions(); // Use loadSessions instead of loadSessionsFromAPI
+            console.log('Page initialization complete');
+        } catch (error) {
+            console.log('Session loading failed, but page initialized');
+        }
     }
 }
 
