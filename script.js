@@ -14,10 +14,20 @@ async function checkAuth() {
         return false;
     }
 
+    // Check if we just came from auth page
+    const fromAuth = document.referrer.includes('auth.html') || sessionStorage.getItem('fromAuth') === 'true';
+    
     try {
+        console.log('Checking authentication with backend...');
         const response = await fetch('/api/auth/user', {
-            credentials: 'include' // Ensure cookies are sent
+            credentials: 'include', // Ensure cookies are sent
+            headers: {
+                'Cache-Control': 'no-cache' // Prevent caching of auth responses
+            }
         });
+        
+        console.log('Auth response status:', response.status, 'ok:', response.ok);
+        
         if (response.ok) {
             const data = await response.json();
             currentUser = data.user;
@@ -26,23 +36,29 @@ async function checkAuth() {
             return true;
         } else {
             console.log('Auth check failed - response not ok:', response.status);
-            // Don't redirect if user manually logged out or if coming from auth page
-            if (localStorage.getItem('manualLogout') !== 'true' && !document.referrer.includes('auth.html')) {
-                // Add a small delay before redirect to handle race conditions
+            
+            // Be more lenient with redirects - only redirect if definitely NOT from auth
+            if (localStorage.getItem('manualLogout') !== 'true' && !fromAuth && !sessionStorage.getItem('fromAuth')) {
+                console.log('Scheduling redirect to auth page...');
                 setTimeout(() => {
                     redirectToAuth();
-                }, 500);
+                }, 1000); // Longer delay
+            } else {
+                console.log('Skipping redirect - either from auth page or manual logout');
             }
             return false;
         }
     } catch (error) {
         console.error('Auth check failed:', error);
-        // Don't redirect if user manually logged out or if coming from auth page
-        if (localStorage.getItem('manualLogout') !== 'true' && !document.referrer.includes('auth.html')) {
-            // Add a small delay before redirect to handle race conditions
+        
+        // Be more lenient with redirects - only redirect if definitely NOT from auth
+        if (localStorage.getItem('manualLogout') !== 'true' && !fromAuth && !sessionStorage.getItem('fromAuth')) {
+            console.log('Scheduling redirect to auth page due to error...');
             setTimeout(() => {
                 redirectToAuth();
-            }, 500);
+            }, 1000); // Longer delay
+        } else {
+            console.log('Skipping redirect due to error - either from auth page or manual logout');
         }
         return false;
     }
@@ -2082,6 +2098,8 @@ async function firebaseLogout() {
 // Initialize page function
 async function initializePage() {
     console.log('Initializing page...');
+    console.log('Document referrer:', document.referrer);
+    console.log('Session fromAuth flag:', sessionStorage.getItem('fromAuth'));
 
     // Add delay if coming from auth page to allow session establishment
     const urlParams = new URLSearchParams(window.location.search);
@@ -2090,13 +2108,23 @@ async function initializePage() {
     if (fromAuth) {
         console.log('Coming from auth page - waiting for session establishment...');
         sessionStorage.removeItem('fromAuth'); // Clear flag
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+        console.log('Waiting 2 seconds for backend session to fully establish...');
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds instead of 1
     }
 
-    // Check authentication
-    const isAuthenticated = await checkAuth();
+    // Check authentication with explicit retry logic
+    console.log('Starting authentication check...');
+    let isAuthenticated = await checkAuth();
+    
+    // If auth fails but we just came from auth page, retry once more
+    if (!isAuthenticated && fromAuth) {
+        console.log('Auth failed but coming from auth page - retrying once more...');
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        isAuthenticated = await checkAuth();
+    }
+    
     if (!isAuthenticated) {
-        console.log('User not authenticated - returning early');
+        console.log('User not authenticated after retries - returning early');
         return; // Don't load app content if not authenticated
     }
 
