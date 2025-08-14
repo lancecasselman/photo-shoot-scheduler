@@ -6161,6 +6161,7 @@ ${contract.contract_content}
                                     <button onclick="viewPaymentPlan('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Payment Plan</button>
                                 ` : `
                                     <button onclick="createInvoiceWithTipping('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">💰 Send Invoice</button>
+                                    <button onclick="sendDepositInvoice('${sessionId}'); event.stopPropagation();" class="btn btn-warning" style="background-color: #fd7e14; color: white;">💳 Send Deposit</button>
                                     <button onclick="openPaymentPlanModal('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Payment Plan</button>
                                 `}
                                 <button onclick="exportSessionPDF('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Export PDF</button>
