@@ -7347,6 +7347,15 @@ app.post('/api/create-checkout-session', async (req, res) => {
             });
         }
         
+        // Validate minimum amount requirement for Stripe
+        if (totalAmount < 0.50) {
+            console.log('❌ AMOUNT TOO SMALL:', totalAmount);
+            return res.json({
+                success: false,
+                message: 'Payment amount must be at least $0.50 due to Stripe requirements. Please enter a minimum deposit of $0.50.'
+            });
+        }
+        
         // Determine the base URL for redirect URLs - force HTTPS for Stripe
         const protocol = req.headers['x-forwarded-proto'] || 'https';
         const host = req.headers.host || 'localhost:5000';
