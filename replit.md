@@ -53,6 +53,12 @@ A robust unified deletion system ensures complete file cleanup with no orphaned 
 
 ## Recent Changes (August 14, 2025)
 - **CRITICAL**: Session sorting by appointment date is COMPLETE and WORKING - do not modify
+- **COMPLETED**: Fixed Deposit Payment Button Visibility Issue
+  - Moved deposit button outside tip section to prevent hiding when tip section is hidden
+  - Added prominent green styling and larger button size for better visibility
+  - Button now always visible for deposit invoices regardless of authentication status
+  - Photographers see both payment button and additional send options
+  - Clients see only the payment button for streamlined experience
 - **COMPLETED**: Enhanced Deposit Invoice System with Authentication-Based UI
   - Smart authentication detection distinguishes photographers from clients
   - Photographers (authenticated): See send options to share deposit links via SMS/Email

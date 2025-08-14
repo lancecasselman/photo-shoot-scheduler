@@ -449,11 +449,6 @@
                     <button class="btn btn-success" onclick="proceedToPayment()" id="payment-btn">Pay Now</button>
                 </div>
                 
-                <!-- Deposit-specific action buttons -->
-                <div class="deposit-action-buttons" id="deposit-buttons" style="display: none; margin-top: 20px;">
-                    <button class="btn btn-success" onclick="proceedToPayment()" style="width: 100%; padding: 15px; font-size: 16px;">💳 Pay Deposit Now</button>
-                </div>
-                
                 <!-- Send Invoice Section - Only show for photographer creating invoices -->
                 <div class="send-section" id="send-section" style="display: none; margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; border-top: 3px solid #28a745;">
                     
@@ -481,6 +476,11 @@
                     </div>
                 </div>
 
+            </div>
+            
+            <!-- Deposit-specific action buttons - OUTSIDE tip section so it's always visible -->
+            <div class="deposit-action-buttons" id="deposit-buttons" style="display: none; margin-top: 20px; padding: 20px; background: #d4edda; border-radius: 8px; text-align: center;">
+                <button class="btn btn-success" onclick="proceedToPayment()" style="width: 100%; padding: 15px; font-size: 18px; font-weight: bold;">💳 Pay Deposit Now</button>
             </div>
             
             <!-- Send Deposit Section - ONLY for photographers creating deposits, NOT for clients paying them -->
