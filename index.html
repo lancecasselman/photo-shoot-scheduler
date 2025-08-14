@@ -69,6 +69,18 @@
     
     <!-- Confetti Animation Styles -->
     <style>
+        /* Emergency fix for black screen overlay issue */
+        .modal[style*="display: block"] {
+            display: none !important;
+        }
+        
+        /* Ensure no modal overlays are visible by default */
+        .modal-overlay, 
+        .modal[style*="position: fixed"],
+        div[style*="position: fixed"][style*="background: rgba(0,0,0"] {
+            display: none !important;
+        }
+        
         .confetti-container {
             position: fixed;
             top: 0;
