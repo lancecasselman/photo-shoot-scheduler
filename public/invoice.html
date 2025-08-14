@@ -682,19 +682,25 @@
             updateTipDisplay();
             updateTotal();
             
-            // Check if this is photographer view (has referrer from main app) or client view
-            const referrer = document.referrer;
-            const hasAppReferrer = referrer && (referrer.includes('/app') || referrer.includes('index.html'));
-            const isPhotographerView = hasAppReferrer || window.opener;
+            // PRESERVE DEPOSIT STATE - check if deposit buttons are already visible
+            const depositButtons = document.getElementById('deposit-buttons');
+            const isDepositInvoice = depositButtons && depositButtons.style.display === 'block';
             
-            if (isPhotographerView) {
-                // Show send section for photographers
-                document.getElementById('send-section').style.display = 'block';
-                console.log('👨‍💼 Photographer view detected - showing send buttons');
-            } else {
-                // Hide send section for clients
-                document.getElementById('send-section').style.display = 'none';
-                console.log('👤 Client view detected - hiding send buttons');
+            if (!isDepositInvoice) {
+                // Only handle regular invoice view logic if this isn't a deposit
+                const referrer = document.referrer;
+                const hasAppReferrer = referrer && (referrer.includes('/app') || referrer.includes('index.html'));
+                const isPhotographerView = hasAppReferrer || window.opener;
+                
+                if (isPhotographerView) {
+                    // Show send section for photographers
+                    document.getElementById('send-section').style.display = 'block';
+                    console.log('👨‍💼 Photographer view detected - showing send buttons');
+                } else {
+                    // Hide send section for clients
+                    document.getElementById('send-section').style.display = 'none';
+                    console.log('👤 Client view detected - hiding send buttons');
+                }
             }
             
             // Log final invoice data for debugging
