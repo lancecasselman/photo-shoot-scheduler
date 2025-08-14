@@ -462,17 +462,11 @@
                         sessionPaymentLabel.textContent = 'Deposit Amount';
                     }
                     
-                    // Check if this is photographer's view (has Firebase auth) to show send section
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const isPhotographerView = urlParams.get('photographer') === 'true' || 
-                                             window.location.search.includes('send') ||
-                                             document.referrer.includes('8b52078f'); // From photographer's dashboard
-                    
-                    if (isPhotographerView) {
-                        const sendDepositSection = document.getElementById('send-deposit-section');
-                        if (sendDepositSection) {
-                            sendDepositSection.style.display = 'block';
-                        }
+                    // Always show send section for deposit invoices (photographer creates them)
+                    const sendDepositSection = document.getElementById('send-deposit-section');
+                    if (sendDepositSection) {
+                        sendDepositSection.style.display = 'block';
+                        console.log('🔥 DEPOSIT: Send section enabled for photographer');
                     }
                 }
                 
@@ -877,38 +871,64 @@ The Legacy Photography`;
         }
 
         // Deposit-specific sending functions
-        function sendDepositViaSMS() {
+        async function sendDepositViaSMS() {
             const currentURL = window.location.href;
+            
+            // Ensure we have the latest session data
+            const urlParams = new URLSearchParams(window.location.search);
+            const sessionId = urlParams.get('sessionId');
+            if (sessionId) {
+                await fetchCompleteSessionData(sessionId);
+            }
+            
             const clientPhone = invoiceData.session.phoneNumber || '';
+            const clientName = invoiceData.session.clientName || 'Valued Client';
+            
+            if (!clientPhone) {
+                showError('No phone number found for this client. Please add it to the session details first.');
+                return;
+            }
             
             // Create a friendly message for deposit SMS
-            const message = `Hi ${invoiceData.session.clientName || ''}! A deposit of $${invoiceData.amount.toFixed(2)} is requested for your photography session. Pay securely here: ${currentURL}`;
+            const message = `Hi ${clientName}! A deposit of $${invoiceData.amount.toFixed(2)} is requested for your photography session scheduled for ${new Date(invoiceData.session.dateTime).toLocaleDateString()}. Pay securely here: ${currentURL}`;
             
             // Create SMS URL that opens default SMS app with client's phone number
-            const smsUrl = clientPhone ? `sms:${clientPhone}?body=${encodeURIComponent(message)}` : `sms:?body=${encodeURIComponent(message)}`;
+            const smsUrl = `sms:${clientPhone}?body=${encodeURIComponent(message)}`;
             
             // Open SMS app
             window.location.href = smsUrl;
             
-            if (clientPhone) {
-                showSuccess(`SMS app opened to send deposit request to ${clientPhone}!`);
-            } else {
-                showSuccess('SMS app opened with deposit message! Please enter the recipient manually.');
-            }
+            showSuccess(`SMS app opened to send deposit request to ${clientPhone}!`);
         }
 
-        function sendDepositViaEmail() {
+        async function sendDepositViaEmail() {
             const currentURL = window.location.href;
-            const clientEmail = invoiceData.session.clientEmail || '';
             
-            const subject = `Deposit Request - $${invoiceData.amount.toFixed(2)}`;
-            const body = `Hi ${invoiceData.session.clientName || ''},
+            // Ensure we have the latest session data
+            const urlParams = new URLSearchParams(window.location.search);
+            const sessionId = urlParams.get('sessionId');
+            if (sessionId) {
+                await fetchCompleteSessionData(sessionId);
+            }
+            
+            const clientEmail = invoiceData.session.clientEmail || invoiceData.session.email || '';
+            const clientName = invoiceData.session.clientName || 'Valued Client';
+            
+            if (!clientEmail) {
+                showError('No email address found for this client. Please add it to the session details first.');
+                return;
+            }
+            
+            const subject = `Photography Deposit Request - $${invoiceData.amount.toFixed(2)}`;
+            const body = `Hi ${clientName},
 
 A deposit is requested for your upcoming photography session!
 
-Deposit Details:
-• Amount: $${invoiceData.amount.toFixed(2)}
-• Session Type: ${invoiceData.session.sessionType || 'Photography Session'}
+Session Details:
+• Date: ${new Date(invoiceData.session.dateTime).toLocaleDateString()}
+• Type: ${invoiceData.session.sessionType || 'Photography Session'}
+• Location: ${invoiceData.session.location || 'TBD'}
+• Deposit Amount: $${invoiceData.amount.toFixed(2)}
 
 You can pay your deposit securely using the link below:
 ${currentURL}
@@ -916,7 +936,7 @@ ${currentURL}
 Thank you for choosing our photography services!
 
 Best regards,
-The Legacy Photography`;
+Your Photography Team`;
             
             // Create mailto URL that opens default email app with client's email pre-filled
             const mailtoUrl = `mailto:${clientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
@@ -924,7 +944,7 @@ The Legacy Photography`;
             // Open email app
             window.location.href = mailtoUrl;
             
-            showSuccess(`Email app opened with deposit request${clientEmail ? ` for ${clientEmail}` : ''}!`);
+            showSuccess(`Email app opened with deposit request for ${clientEmail}!`);
         }
 
         function copyDepositURL() {

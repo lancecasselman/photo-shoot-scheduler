@@ -53,13 +53,13 @@ A robust unified deletion system ensures complete file cleanup with no orphaned 
 
 ## Recent Changes (August 14, 2025)
 - **CRITICAL**: Session sorting by appointment date is COMPLETE and WORKING - do not modify
-- **NEW**: Unified Tipping System for Both Invoice and Deposit Workflows
-  - Updated deposit system to use same tipping invoice approach as regular invoices
-  - Orange "💳 Send Deposit" button now opens clean invoice page with deposit amount
-  - Blue "💰 Send Invoice" button opens invoice page for final payment
-  - Complete functional separation between deposit and invoice workflows
-  - Pay Now button visible by default on recipient end for immediate payment option
-  - Both systems use `/invoice.html` with different payment IDs and amounts
+- **COMPLETED**: Enhanced Deposit System with Customizable Amounts and Sending Features
+  - Orange "💳 Send Deposit" button prompts for custom amount with helpful context (session total, existing deposits, suggested 50%)
+  - Deposit invoices automatically hide tip section via type=deposit parameter detection
+  - Deposit-specific send buttons (SMS/Email/Copy) with client contact information pre-filled
+  - Send messages include session details (date, type, location) and professional formatting
+  - Deposit invoices show "Deposit Payment Details" and "Deposit Amount" labels instead of regular payment terms
+  - Complete separation: deposits have no tip options, regular invoices retain full tipping functionality
 - **Client-Fillable Tip System**: Complete integration for Stripe invoices
   - Added `tip_amount` column to `payment_records` table
   - Public invoice page at `/invoice.html` (no authentication required)
