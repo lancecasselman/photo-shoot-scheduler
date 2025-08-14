@@ -52,6 +52,12 @@ A comprehensive storage quota and billing system provides subscription-based sto
 A robust unified deletion system ensures complete file cleanup with no orphaned records. It includes database lookup for exact folder type detection, enhanced logging, comprehensive verification checks, and pattern matching to catch all database entries. The service coordinates between cloud storage and database cleanup, preventing phantom file records. Delete buttons on thumbnails provide instant file removal with confirmation dialogs, progress feedback, and automatic file list refresh. The system features fallback mechanisms and comprehensive error handling to ensure reliable file deletion across all interfaces.
 
 ## Recent Changes (August 14, 2025)
+- **COMPLETED**: Fixed JavaScript `updatePreview` Function Error (August 14, 2025)
+  - Resolved critical JavaScript error where `updatePreview()` function was called but not defined
+  - Fixed `switchTab` function to properly call `WebsiteBuilder.preview()` instead of undefined `updatePreview`
+  - Added error checking for missing `loadBusinessManagement` function
+  - Updated script version timestamp to force browser cache refresh (v=1755202900)
+  - Website Builder tab now functions without JavaScript errors
 - **CRITICAL**: Session sorting by appointment date is COMPLETE and WORKING - do not modify
 - **COMPLETED**: Black Screen Modal Overlay Fix (August 14, 2025)
   - Fixed critical black screen issue caused by modal overlays incorrectly set to display: block
