@@ -12239,7 +12239,7 @@ END:VCALENDAR`;
     <script src="/static/js/storage-quota-checker.js"></script>
     
     <!-- Include main script file -->
-    <script src="script.js?v=1755202900&customizable=deposit"></script>
+    <script src="script.js?v=1755204000&customizable=deposit"></script>
     
     <!-- Subscription onboarding removed - file was missing and causing 404 errors -->
     <script>
@@ -17590,37 +17590,37 @@ END:VCALENDAR`;
             console.log('Website Builder module loaded');
         });
 
-        // Hook into the existing switchTab function
-        const originalSwitchTabFunc = window.switchTab;
-        window.switchTab = function(tabName) {
-            console.log('Tab switch detected:', tabName);
-            
-            // Call the original function first
-            if (originalSwitchTabFunc) {
-                originalSwitchTabFunc.call(this, tabName);
-            }
-            
-            // Initialize Website Builder when its tab is selected
-            if (tabName === 'websiteBuilder') {
-                console.log('Initializing Website Builder...');
-                setTimeout(() => {
-                    if (!WebsiteBuilder.initialized) {
-                        WebsiteBuilder.init();
-                        WebsiteBuilder.loadSavedData();
-                        WebsiteBuilder.initialized = true;
-                        console.log('Website Builder initialized successfully');
+        // Add initialization hooks to the existing switchTab function
+        document.addEventListener('DOMContentLoaded', function() {
+            // Override the switchTab function to add our initialization logic
+            const originalSwitchTab = window.switchTab;
+            if (originalSwitchTab) {
+                window.switchTab = function(tabName) {
+                    // Call the original function
+                    originalSwitchTab.call(this, tabName);
+                    
+                    // Add our initialization logic
+                    if (tabName === 'websiteBuilder') {
+                        setTimeout(() => {
+                            if (typeof WebsiteBuilder !== 'undefined' && !WebsiteBuilder.initialized) {
+                                WebsiteBuilder.init();
+                                WebsiteBuilder.loadSavedData();
+                                WebsiteBuilder.initialized = true;
+                                console.log('Website Builder initialized successfully');
+                            }
+                        }, 100);
                     }
-                }, 100);
+                    
+                    if (tabName === 'paymentSettings') {
+                        setTimeout(() => {
+                            if (typeof PaymentSettings !== 'undefined') {
+                                PaymentSettings.init();
+                            }
+                        }, 100);
+                    }
+                };
             }
-            
-            // Initialize Payment Settings when its tab is selected
-            if (tabName === 'paymentSettings') {
-                console.log('Initializing Payment Settings...');
-                setTimeout(() => {
-                    PaymentSettings.init();
-                }, 100);
-            }
-        };
+        });
 
         // Payment Settings Manager
         const PaymentSettings = {
