@@ -1462,10 +1462,23 @@ async function sendDepositInvoice(session) {
         console.log('🚀 DEPOSIT TIPPING SUCCESS: Custom deposit invoice URL created:', result.invoice_url);
 
         if (result.success && result.invoice_url) {
-            showMessage(`Deposit invoice created for $${suggestedAmount.toFixed(2)}! Opening in new window...`, 'success');
+            showMessage(`Deposit invoice created for $${depositAmount.toFixed(2)}! Opening in new window...`, 'success');
 
             // Open deposit invoice in new window - same approach as regular invoice
-            window.open(result.invoice_url, '_blank');
+            const newWindow = window.open(result.invoice_url, '_blank');
+            
+            // Check if popup was blocked
+            if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
+                console.log('❌ Popup blocked - showing fallback option');
+                showMessage(`Popup blocked! Click here to open deposit invoice: ${result.invoice_url}`, 'warning');
+                
+                // Create a clickable link as fallback
+                setTimeout(() => {
+                    if (confirm('Popup was blocked by your browser. Click OK to open the deposit invoice in this tab.')) {
+                        window.location.href = result.invoice_url;
+                    }
+                }, 1000);
+            }
 
             // Wait a moment for database to update, then refresh sessions
             setTimeout(async () => {
