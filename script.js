@@ -9,8 +9,8 @@ let currentUser = null;
 // Firebase Authentication functions
 async function checkAuth() {
     // Skip auth check if we're in the middle of logging out
-    if (sessionStorage.getItem('loggingOut') === 'true') {
-        console.log('Skipping auth check - logout in progress');
+    if (sessionStorage.getItem('loggingOut') === 'true' || localStorage.getItem('manualLogout') === 'true') {
+        console.log('Skipping auth check - logout in progress or manual logout detected');
         return false;
     }
 
@@ -24,14 +24,18 @@ async function checkAuth() {
             return true;
         } else {
             console.log('Auth check failed - response not ok:', response.status);
-            // Redirect to login instead of using hardcoded fallback
-            redirectToAuth();
+            // Don't redirect if user manually logged out
+            if (localStorage.getItem('manualLogout') !== 'true') {
+                redirectToAuth();
+            }
             return false;
         }
     } catch (error) {
         console.error('Auth check failed:', error);
-        // Redirect to login instead of using hardcoded fallback
-        redirectToAuth();
+        // Don't redirect if user manually logged out
+        if (localStorage.getItem('manualLogout') !== 'true') {
+            redirectToAuth();
+        }
         return false;
     }
 }
@@ -2014,23 +2018,56 @@ async function deletePhoto(sessionId, photoIndex) {
 // Firebase logout function
 async function firebaseLogout() {
     try {
+        // Set flag to prevent automatic re-authentication
+        sessionStorage.setItem('loggingOut', 'true');
+        localStorage.setItem('manualLogout', 'true');
+        
+        console.log('Starting logout process...');
+        
+        // First, clear server session
         const response = await fetch('/api/auth/logout', {
             method: 'POST',
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json'
             }
         });
+        
+        console.log('Server logout response:', response.status);
 
-        if (response.ok) {
-            // Clear user info and redirect to auth page
-            currentUser = null;
-            window.location.href = '/auth.html';
-        } else {
-            showMessage('Error logging out. Please try again.', 'error');
+        // Then clear Firebase auth if available
+        try {
+            if (typeof firebase !== 'undefined' && firebase.auth) {
+                await firebase.auth().signOut();
+                console.log('Firebase logout successful');
+            }
+        } catch (firebaseError) {
+            console.error('Firebase signout error:', firebaseError);
         }
+
+        // Clear all local data
+        currentUser = null;
+        localStorage.clear();
+        
+        // Keep the logout flags until redirect
+        sessionStorage.setItem('loggingOut', 'true');
+        localStorage.setItem('manualLogout', 'true');
+        
+        console.log('Logout complete, redirecting...');
+        
+        // Force redirect with page reload
+        window.location.replace('/auth.html');
+        
     } catch (error) {
         console.error('Logout error:', error);
-        showMessage('Error logging out. Please try again.', 'error');
+        
+        // Force logout even on error
+        currentUser = null;
+        localStorage.clear();
+        sessionStorage.clear();
+        localStorage.setItem('manualLogout', 'true');
+        
+        window.location.replace('/auth.html');
     }
 }
 

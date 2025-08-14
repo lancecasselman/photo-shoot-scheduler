@@ -412,8 +412,17 @@
 
         // Attach login behavior after DOM is ready
         document.addEventListener("DOMContentLoaded", function () {
-            // Clear logout flag when arriving at auth page
+            // Clear logout flags when arriving at auth page, but preserve manual logout flag temporarily
             sessionStorage.removeItem('loggingOut');
+            
+            // If user manually logged out, clear the flag after a short delay to prevent auto-login
+            if (localStorage.getItem('manualLogout') === 'true') {
+                console.log('Manual logout detected - preventing auto-login');
+                setTimeout(() => {
+                    localStorage.removeItem('manualLogout');
+                    console.log('Manual logout flag cleared');
+                }, 2000);
+            }
             // Google Sign-in with redirect fallback
             const googleLoginBtn = document.getElementById("google-login");
             if (googleLoginBtn) {
@@ -518,6 +527,12 @@
                     if (!user) {
                         console.log('Authentication required - no user signed in');
                         // User will see login form
+                    } else if (localStorage.getItem('manualLogout') !== 'true') {
+                        // Only auto-redirect if user didn't manually log out
+                        console.log('User already signed in, redirecting to app...');
+                        window.location.href = '/';
+                    } else {
+                        console.log('User signed in but manual logout detected - staying on auth page');
                     }
                 });
             }

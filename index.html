@@ -11447,8 +11447,9 @@ END:VCALENDAR`;
             try {
                 console.log('Starting logout process...');
                 
-                // Set a flag to prevent auth checks during logout
+                // Set flags to prevent automatic re-authentication
                 sessionStorage.setItem('loggingOut', 'true');
+                localStorage.setItem('manualLogout', 'true');
                 
                 // First, clear server session
                 try {
@@ -11478,24 +11479,26 @@ END:VCALENDAR`;
                 localStorage.clear();
                 sessionStorage.clear();
                 
+                // Keep logout flags after clearing
+                sessionStorage.setItem('loggingOut', 'true');
+                localStorage.setItem('manualLogout', 'true');
+                
                 // Clear any local user data
                 if (typeof currentUser !== 'undefined') {
                     currentUser = null;
                 }
                 
-                // Set flag again in case it was cleared
-                sessionStorage.setItem('loggingOut', 'true');
-                
-                // Force redirect to auth page with hard reload
+                // Force redirect to auth page with replace to prevent back button issues
                 console.log('Redirecting to auth page...');
-                window.location.href = '/auth.html';
+                window.location.replace('/auth.html');
                 
             } catch (error) {
                 console.error('Logout error:', error);
                 // Force redirect even on error
                 localStorage.clear();
                 sessionStorage.clear();
-                window.location.href = '/auth.html';
+                localStorage.setItem('manualLogout', 'true');
+                window.location.replace('/auth.html');
             }
         }
 
