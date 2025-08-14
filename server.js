@@ -4107,6 +4107,115 @@ app.delete('/api/expenses/:id', isAuthenticated, async (req, res) => {
     }
 });
 
+// Enhanced AI Website Builder Endpoints
+app.post('/api/ai/generate-custom-text', isAuthenticated, async (req, res) => {
+    try {
+        const { prompt, textType } = req.body;
+        
+        if (!prompt || !textType) {
+            return res.status(400).json({
+                success: false,
+                error: 'Prompt and textType are required'
+            });
+        }
+
+        const aiServices = new AIServices();
+        const result = await aiServices.generateCustomText(prompt, textType);
+
+        res.json({
+            success: true,
+            text: result
+        });
+    } catch (error) {
+        console.error('AI custom text generation error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to generate custom text: ' + error.message
+        });
+    }
+});
+
+app.post('/api/ai/generate-business-content', isAuthenticated, async (req, res) => {
+    try {
+        const { photographyStyle, businessInfo } = req.body;
+        
+        if (!photographyStyle || !businessInfo) {
+            return res.status(400).json({
+                success: false,
+                error: 'Photography style and business info are required'
+            });
+        }
+
+        const aiServices = new AIServices();
+        const result = await aiServices.generateBusinessContent(photographyStyle, businessInfo);
+
+        res.json({
+            success: true,
+            content: result
+        });
+    } catch (error) {
+        console.error('AI business content generation error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to generate business content: ' + error.message
+        });
+    }
+});
+
+app.post('/api/ai/apply-design-changes', isAuthenticated, async (req, res) => {
+    try {
+        const { instruction, currentHtml, currentCss } = req.body;
+        
+        if (!instruction) {
+            return res.status(400).json({
+                success: false,
+                error: 'Design instruction is required'
+            });
+        }
+
+        const aiServices = new AIServices();
+        const result = await aiServices.applyDesignChanges(instruction, currentHtml || '', currentCss || '');
+
+        res.json({
+            success: true,
+            changes: result
+        });
+    } catch (error) {
+        console.error('AI design changes error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to apply design changes: ' + error.message
+        });
+    }
+});
+
+app.post('/api/ai/generate-image', isAuthenticated, async (req, res) => {
+    try {
+        const { prompt, size } = req.body;
+        
+        if (!prompt) {
+            return res.status(400).json({
+                success: false,
+                error: 'Image prompt is required'
+            });
+        }
+
+        const aiServices = new AIServices();
+        const imageUrl = await aiServices.generateImage(prompt, size || "1024x1024");
+
+        res.json({
+            success: true,
+            imageUrl: imageUrl
+        });
+    } catch (error) {
+        console.error('AI image generation error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to generate image: ' + error.message
+        });
+    }
+});
+
 // 💰 AI CREDITS MANAGEMENT
 app.get('/api/ai/credits', isAuthenticated, async (req, res) => {
     try {

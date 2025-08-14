@@ -450,6 +450,147 @@ Please format your response as JSON with an "ideas" array containing the list of
             throw new Error('Failed to generate ideas: ' + error.message);
         }
     }
+    
+    // Enhanced AI methods for the new website builder interface
+    async generateCustomText(prompt, textType) {
+        if (!this.initialized) {
+            throw new Error('AI services not available - OpenAI API key required');
+        }
+
+        try {
+            // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+            const response = await openai.chat.completions.create({
+                model: "gpt-4o",
+                messages: [
+                    {
+                        role: "system",
+                        content: `You are a professional photography copywriter. Generate ${textType} content that is compelling, professional, and tailored for photographers. Keep the tone warm yet professional, focusing on emotion and storytelling.`
+                    },
+                    {
+                        role: "user",
+                        content: prompt
+                    }
+                ],
+                max_tokens: 500,
+                temperature: 0.7
+            });
+
+            return response.choices[0].message.content;
+        } catch (error) {
+            console.error('Error generating custom text:', error);
+            throw new Error('Failed to generate custom text: ' + error.message);
+        }
+    }
+    
+    async generateBusinessContent(photographyStyle, businessInfo) {
+        if (!this.initialized) {
+            throw new Error('AI services not available - OpenAI API key required');
+        }
+
+        try {
+            const prompt = `Create professional website content for a ${photographyStyle} photographer with the following details:
+            - Business Name: ${businessInfo.name}
+            - Location: ${businessInfo.location}
+            - Experience: ${businessInfo.experience} years
+            - Unique Selling Point: ${businessInfo.uniqueSellingPoint}
+            
+            Generate a complete set of website content including:
+            1. Hero headline
+            2. Hero subtitle
+            3. About section
+            4. Services description
+            5. Call to action text
+            
+            Make it compelling, professional, and emotion-driven.`;
+
+            // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+            const response = await openai.chat.completions.create({
+                model: "gpt-4o",
+                messages: [
+                    {
+                        role: "system",
+                        content: "You are a professional marketing copywriter specializing in photography businesses. Create compelling, emotion-driven content that converts visitors into clients. Return the response as a JSON object with keys: heroHeadline, heroSubtitle, aboutText, servicesText, ctaText."
+                    },
+                    {
+                        role: "user",
+                        content: prompt
+                    }
+                ],
+                response_format: { type: "json_object" },
+                max_tokens: 1000,
+                temperature: 0.7
+            });
+
+            return JSON.parse(response.choices[0].message.content);
+        } catch (error) {
+            console.error('Error generating business content:', error);
+            throw new Error('Failed to generate business content: ' + error.message);
+        }
+    }
+    
+    async applyDesignChanges(instruction, currentHtml, currentCss) {
+        if (!this.initialized) {
+            throw new Error('AI services not available - OpenAI API key required');
+        }
+
+        try {
+            const prompt = `You are a professional web designer. Based on the following instruction, modify the HTML and CSS to implement the requested changes:
+
+            Instruction: ${instruction}
+            
+            Current HTML:
+            ${currentHtml.substring(0, 2000)} // Truncate for token limits
+            
+            Current CSS:
+            ${currentCss.substring(0, 1000)} // Truncate for token limits
+            
+            Return a JSON object with the modified HTML and CSS, plus an explanation of what was changed. Focus on modern, elegant design principles suitable for photography websites.`;
+
+            // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+            const response = await openai.chat.completions.create({
+                model: "gpt-4o",
+                messages: [
+                    {
+                        role: "system",
+                        content: "You are a professional web designer specializing in photography websites. Apply the requested design changes and return a JSON object with keys: html, css, explanation."
+                    },
+                    {
+                        role: "user",
+                        content: prompt
+                    }
+                ],
+                response_format: { type: "json_object" },
+                max_tokens: 2000,
+                temperature: 0.5
+            });
+
+            return JSON.parse(response.choices[0].message.content);
+        } catch (error) {
+            console.error('Error applying design changes:', error);
+            throw new Error('Failed to apply design changes: ' + error.message);
+        }
+    }
+    
+    async generateImage(prompt, size = "1024x1024") {
+        if (!this.initialized) {
+            throw new Error('AI services not available - OpenAI API key required');
+        }
+
+        try {
+            const response = await openai.images.generate({
+                model: "dall-e-3",
+                prompt: `Professional photography style: ${prompt}. High quality, elegant, suitable for a photography website.`,
+                n: 1,
+                size: size,
+                quality: "standard",
+            });
+
+            return response.data[0].url;
+        } catch (error) {
+            console.error('Error generating image:', error);
+            throw new Error('Failed to generate image: ' + error.message);
+        }
+    }
 }
 
 module.exports = { AIServices };
