@@ -77,8 +77,21 @@
         /* Ensure no modal overlays are visible by default */
         .modal-overlay, 
         .modal[style*="position: fixed"],
-        div[style*="position: fixed"][style*="background: rgba(0,0,0"] {
+        div[style*="position: fixed"][style*="background: rgba(0,0,0"],
+        div[style*="position:fixed"][style*="background:rgba(0,0,0"],
+        *[style*="position: fixed; top: 0; left: 0; width: 100%; height: 100%"],
+        *[style*="position:fixed;top:0;left:0;width:100%;height:100%"] {
             display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            z-index: -9999 !important;
+        }
+        
+        /* Force show main content */
+        body, #app, .main-content, .container {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
         }
         
         .confetti-container {
@@ -13070,6 +13083,44 @@ END:VCALENDAR`;
         };
 
         // Enhanced page initialization is handled by the main DOMContentLoaded event above
+
+        // Emergency black screen fix - force remove any overlay elements
+        function forceRemoveOverlays() {
+            // Remove any elements that might be causing black screen
+            const overlaySelectors = [
+                '.modal[style*="display: block"]',
+                '.modal[style*="display:block"]',
+                'div[style*="position: fixed"][style*="background: rgba(0,0,0"]',
+                'div[style*="position:fixed"][style*="background:rgba(0,0,0"]',
+                '*[style*="position: fixed; top: 0; left: 0; width: 100%; height: 100%"]',
+                '*[style*="position:fixed;top:0;left:0;width:100%;height:100%"]',
+                '.modal-overlay'
+            ];
+            
+            overlaySelectors.forEach(selector => {
+                try {
+                    const elements = document.querySelectorAll(selector);
+                    elements.forEach(el => {
+                        el.style.display = 'none';
+                        el.style.visibility = 'hidden';
+                        el.style.opacity = '0';
+                        el.style.zIndex = '-9999';
+                        // Also try to remove the element entirely
+                        if (el.classList.contains('modal') || el.classList.contains('modal-overlay')) {
+                            el.remove();
+                        }
+                    });
+                } catch (e) {
+                    console.log('Selector not valid:', selector);
+                }
+            });
+        }
+
+        // Run on page load
+        document.addEventListener('DOMContentLoaded', forceRemoveOverlays);
+        
+        // Run periodically to catch dynamically created overlays
+        setInterval(forceRemoveOverlays, 2000);
 
     </script>
 
