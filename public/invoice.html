@@ -483,7 +483,7 @@
 
             </div>
             
-            <!-- Send Deposit Section - Outside tip section so it can be shown independently for deposit invoices -->
+            <!-- Send Deposit Section - ONLY for photographers creating deposits, NOT for clients paying them -->
             <div class="send-deposit-section" id="send-deposit-section" style="display: none; margin-top: 20px; padding: 20px; background: #fff3cd; border-radius: 8px; border-top: 3px solid #ffc107; border: 2px solid #ffc107;">
                 <h4 style="margin: 0 0 15px 0; color: #333; font-size: 18px;">💰 Send Deposit Request to Client</h4>
                 <p style="margin: 0 0 20px 0; color: #666; font-size: 14px;">Use the client's phone number and email from the session to send this deposit request</p>
@@ -574,23 +574,9 @@
                         sessionPaymentLabel.textContent = 'Deposit Amount';
                     }
                     
-                    // Always show send section for deposit invoices (photographer creates them)
-                    const sendDepositSection = document.getElementById('send-deposit-section');
-                    if (sendDepositSection) {
-                        sendDepositSection.style.display = 'block';
-                        console.log('🔥 DEPOSIT: Send section enabled for photographer');
-                    } else {
-                        console.log('🔥 DEPOSIT: Send section not found, trying again in 100ms');
-                        setTimeout(() => {
-                            const sendDepositSectionRetry = document.getElementById('send-deposit-section');
-                            if (sendDepositSectionRetry) {
-                                sendDepositSectionRetry.style.display = 'block';
-                                console.log('🔥 DEPOSIT: Send section enabled on retry');
-                            } else {
-                                console.log('🔥 DEPOSIT: Send section still not found');
-                            }
-                        }, 100);
-                    }
+                    // CLIENTS should only see the payment button, not the send options
+                    // Send section is only for photographers creating/managing deposits
+                    console.log('🔥 DEPOSIT: Client view - hiding send options, showing only payment button');
                 }
                 
                 if (amount) {
