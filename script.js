@@ -1465,20 +1465,22 @@ async function sendDepositInvoice(session) {
             showMessage(`Deposit invoice created for $${depositAmount.toFixed(2)}! Opening in new window...`, 'success');
 
             // Open deposit invoice in new window - same approach as regular invoice
-            const newWindow = window.open(result.invoice_url, '_blank');
+            console.log('🔥 Attempting to open window with URL:', result.invoice_url);
+            const newWindow = window.open(result.invoice_url, '_blank', 'noopener,noreferrer');
             
-            // Check if popup was blocked
-            if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
-                console.log('❌ Popup blocked - showing fallback option');
-                showMessage(`Popup blocked! Click here to open deposit invoice: ${result.invoice_url}`, 'warning');
-                
-                // Create a clickable link as fallback
-                setTimeout(() => {
-                    if (confirm('Popup was blocked by your browser. Click OK to open the deposit invoice in this tab.')) {
-                        window.location.href = result.invoice_url;
-                    }
-                }, 1000);
-            }
+            // Give window time to load before checking
+            setTimeout(() => {
+                // Check if popup was blocked
+                if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
+                    console.log('❌ Popup blocked or failed to open - showing fallback option');
+                    showMessage('Popup blocked! Opening deposit invoice in this tab...', 'warning');
+                    
+                    // Directly navigate to the invoice
+                    window.open(result.invoice_url, '_blank');
+                } else {
+                    console.log('✅ Deposit invoice window opened successfully');
+                }
+            }, 100);
 
             // Wait a moment for database to update, then refresh sessions
             setTimeout(async () => {
