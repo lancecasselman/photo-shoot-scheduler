@@ -526,12 +526,14 @@ IMPORTANT GUIDELINES:
 - Use professional color schemes
 - Maintain accessibility standards
 
-Return your response as a JSON object with:
+CRITICAL: Return ONLY valid JSON with no additional text or formatting. Structure:
 {
-  "newHTML": "complete modified HTML here",
+  "newHTML": "escaped HTML content here - use proper JSON string escaping",
   "description": "brief description of changes made",
   "improvements": ["list", "of", "specific", "improvements"]
-}`;
+}
+
+IMPORTANT: Properly escape all quotes, newlines, and special characters in the HTML string. Do not include any markdown formatting or code blocks in your response.`;
             } else if (contentType === 'website_analysis') {
                 prompt = `Analyze this photography portfolio website:
 
@@ -548,14 +550,16 @@ Please provide a comprehensive analysis covering:
 
 Based on your analysis, provide 3-5 specific, actionable suggestions for improvement.
 
-Return your response as a JSON object with:
+CRITICAL: Return ONLY valid JSON with no additional text or formatting. Structure:
 {
   "analysis": "comprehensive analysis summary (2-3 sentences)",
   "strengths": ["list", "of", "current", "strengths"],
   "improvements": ["list", "of", "improvement", "areas"],
   "suggestions": ["actionable suggestion 1", "actionable suggestion 2", "etc"],
   "priority": "highest priority improvement recommendation"
-}`;
+}
+
+IMPORTANT: Do not include any markdown formatting or code blocks in your response.`;
             } else {
                 prompt = `Context: ${JSON.stringify(context)}
 User Request: ${userPrompt}
@@ -582,7 +586,52 @@ Create professional, high-quality content that exceeds expectations. Be creative
 
             // For website_edit and website_analysis, return the parsed JSON directly
             if (contentType === 'website_edit' || contentType === 'website_analysis') {
-                return JSON.parse(completion.choices[0].message.content);
+                try {
+                    const rawContent = completion.choices[0].message.content;
+                    console.log('Raw OpenAI response length:', rawContent.length);
+                    
+                    // Clean the response to ensure valid JSON
+                    let cleanedContent = rawContent.trim();
+                    
+                    // Remove any markdown code blocks if present
+                    cleanedContent = cleanedContent.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+                    
+                    // Parse the JSON
+                    const parsedResult = JSON.parse(cleanedContent);
+                    
+                    // Validate required fields for website_edit
+                    if (contentType === 'website_edit') {
+                        if (!parsedResult.newHTML) {
+                            throw new Error('Missing newHTML field in response');
+                        }
+                        // Clean up any potential HTML escaping issues
+                        if (typeof parsedResult.newHTML === 'string') {
+                            parsedResult.newHTML = parsedResult.newHTML.replace(/\\"/g, '"').replace(/\\n/g, '\n');
+                        }
+                    }
+                    
+                    return parsedResult;
+                } catch (parseError) {
+                    console.error('JSON Parse Error:', parseError.message);
+                    console.error('Raw content preview:', completion.choices[0].message.content.substring(0, 500));
+                    
+                    // Return a fallback response for website_edit
+                    if (contentType === 'website_edit') {
+                        return {
+                            newHTML: context.currentHTML || '<div>Error: Could not process request</div>',
+                            description: 'AI response parsing failed - returned original content',
+                            improvements: ['Please try again with a simpler request']
+                        };
+                    } else {
+                        return {
+                            analysis: 'Analysis could not be completed due to response format error',
+                            strengths: [],
+                            improvements: ['Please try the analysis again'],
+                            suggestions: ['Retry the request'],
+                            priority: 'Fix response parsing'
+                        };
+                    }
+                }
             }
 
             return {
