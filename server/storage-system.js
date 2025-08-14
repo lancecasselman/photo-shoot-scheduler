@@ -386,12 +386,55 @@ class StorageSystem {
                     await this.handleSubscriptionCancelled(event.data.object);
                     break;
                     
+                case 'payment_intent.succeeded':
+                    // Handle photography session payments (not subscription payments)
+                    await this.handleSessionPaymentSuccess(event.data.object);
+                    break;
+                    
+                case 'payment_intent.payment_failed':
+                    // Handle photography session payment failures
+                    await this.handleSessionPaymentFailure(event.data.object);
+                    break;
+                    
                 default:
                     console.log('Unhandled webhook event:', event.type);
             }
         } catch (error) {
             console.error('Error handling Stripe webhook:', error);
             throw error;
+        }
+    }
+
+    /**
+     * Handle successful session payments (deposits and invoices)
+     */
+    async handleSessionPaymentSuccess(paymentIntent) {
+        console.log('💰 Session payment successful:', paymentIntent.id);
+        
+        try {
+            // Import payment notification manager here to avoid circular deps
+            const PaymentNotificationManager = require('./payment-notifications');
+            const paymentNotifier = new PaymentNotificationManager();
+            
+            await paymentNotifier.handlePaymentSuccess(paymentIntent);
+        } catch (error) {
+            console.error('Error handling session payment success:', error);
+        }
+    }
+
+    /**
+     * Handle failed session payments
+     */
+    async handleSessionPaymentFailure(paymentIntent) {
+        console.log('❌ Session payment failed:', paymentIntent.id);
+        
+        try {
+            const PaymentNotificationManager = require('./payment-notifications');
+            const paymentNotifier = new PaymentNotificationManager();
+            
+            await paymentNotifier.handlePaymentFailure(paymentIntent);
+        } catch (error) {
+            console.error('Error handling session payment failure:', error);
         }
     }
 

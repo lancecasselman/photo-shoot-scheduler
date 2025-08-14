@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Photography Invoice - The Legacy Photography</title>
+    <script src="https://js.stripe.com/v3/"></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -231,6 +232,107 @@
             border: 1px solid #f5c6cb;
         }
         
+        /* Payment form styles */
+        .payment-form-section {
+            text-align: center;
+        }
+
+        .payment-form-section h3 {
+            color: #007bff;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .payment-summary {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .payment-summary p {
+            margin: 5px 0;
+            font-size: 1.1em;
+        }
+
+        .payment-element {
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            background: #fff;
+        }
+
+        .payment-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .payment-buttons button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-success:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            color: white;
+            font-size: 18px;
+        }
+
+        .spinner {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid #fff;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin-right: 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         @media (max-width: 768px) {
             body {
                 padding: 10px;
@@ -251,6 +353,11 @@
             }
             
             .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .payment-buttons {
                 flex-direction: column;
                 align-items: center;
             }
@@ -397,6 +504,11 @@
                         📋 Copy Deposit Link
                     </button>
                 </div>
+            </div>
+            
+            <!-- Payment Form Container -->
+            <div id="payment-container" class="payment-form-container" style="display: none; margin-top: 30px; padding: 30px; background: white; border-radius: 12px; border: 2px solid #007bff; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+                <!-- Payment form will be dynamically inserted here -->
             </div>
         </div>
     </div>
@@ -972,6 +1084,202 @@ Your Photography Team`;
                 fallbackCopyToClipboard(currentURL);
             }
         }
+
+        // Stripe payment processing
+        let stripe;
+        let elements;
+        let currentPaymentIntent;
+
+        // Initialize Stripe
+        async function initializeStripe() {
+            try {
+                // Get Stripe public key from server
+                const response = await fetch('/api/stripe-config');
+                const config = await response.json();
+                stripe = Stripe(config.publicKey);
+                console.log('✅ Stripe initialized');
+            } catch (error) {
+                console.error('Error initializing Stripe:', error);
+                showError('Payment system initialization failed');
+            }
+        }
+
+        // Create payment intent and setup payment form
+        async function proceedToPayment() {
+            try {
+                if (!stripe) {
+                    showError('Payment system not ready. Please try again.');
+                    return;
+                }
+
+                const totalAmount = invoiceData.amount + selectedTipAmount;
+                const paymentType = isDeposit ? 'deposit' : 'invoice';
+                
+                showLoading('Setting up payment...');
+
+                // Create payment intent
+                const response = await fetch('/api/create-payment-intent', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        amount: totalAmount,
+                        sessionId: invoiceData.session.id,
+                        paymentType: paymentType,
+                        clientEmail: invoiceData.session.clientEmail
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to create payment intent');
+                }
+
+                const { clientSecret, paymentIntentId } = await response.json();
+                currentPaymentIntent = paymentIntentId;
+
+                // Create and mount payment element
+                elements = stripe.elements({
+                    clientSecret: clientSecret,
+                    appearance: {
+                        theme: 'stripe',
+                        variables: {
+                            colorPrimary: '#007bff',
+                            borderRadius: '6px'
+                        }
+                    }
+                });
+
+                const paymentElement = elements.create('payment');
+                
+                // Show payment form
+                showPaymentForm();
+                paymentElement.mount('#payment-element');
+
+                hideLoading();
+                console.log('💳 Payment form ready');
+
+            } catch (error) {
+                console.error('Error setting up payment:', error);
+                hideLoading();
+                showError('Failed to setup payment. Please try again.');
+            }
+        }
+
+        // Process the payment
+        async function confirmPayment() {
+            try {
+                if (!stripe || !elements) {
+                    showError('Payment system not ready');
+                    return;
+                }
+
+                showLoading('Processing payment...');
+
+                // Confirm payment with Stripe
+                const { error, paymentIntent } = await stripe.confirmPayment({
+                    elements,
+                    confirmParams: {
+                        return_url: window.location.origin + '/payment-success.html?payment_intent=' + currentPaymentIntent
+                    },
+                    redirect: 'if_required'
+                });
+
+                if (error) {
+                    console.error('Payment failed:', error);
+                    hideLoading();
+                    showError(`Payment failed: ${error.message}`);
+                } else if (paymentIntent && paymentIntent.status === 'succeeded') {
+                    // Payment succeeded
+                    console.log('💰 Payment succeeded:', paymentIntent.id);
+                    hideLoading();
+                    showPaymentSuccess();
+                } else {
+                    hideLoading();
+                    showError('Payment processing failed. Please try again.');
+                }
+
+            } catch (error) {
+                console.error('Error confirming payment:', error);
+                hideLoading();
+                showError('Payment processing error. Please try again.');
+            }
+        }
+
+        // Show payment form UI
+        function showPaymentForm() {
+            const paymentContainer = document.getElementById('payment-container');
+            const totalAmount = invoiceData.amount + selectedTipAmount;
+            
+            paymentContainer.innerHTML = `
+                <div class="payment-form-section">
+                    <h3>💳 Complete Payment</h3>
+                    <div class="payment-summary">
+                        <p><strong>Total Amount: $${totalAmount.toFixed(2)}</strong></p>
+                        ${selectedTipAmount > 0 ? `<p>Includes tip: $${selectedTipAmount.toFixed(2)}</p>` : ''}
+                    </div>
+                    <div id="payment-element" class="payment-element"></div>
+                    <div class="payment-buttons">
+                        <button id="submit-payment" onclick="confirmPayment()" class="btn btn-success">
+                            Pay $${totalAmount.toFixed(2)}
+                        </button>
+                        <button onclick="hidePaymentForm()" class="btn btn-secondary">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            paymentContainer.style.display = 'block';
+        }
+
+        // Hide payment form
+        function hidePaymentForm() {
+            const paymentContainer = document.getElementById('payment-container');
+            paymentContainer.style.display = 'none';
+            paymentContainer.innerHTML = '';
+        }
+
+        // Show payment success
+        function showPaymentSuccess() {
+            hidePaymentForm();
+            showSuccess('🎉 Payment successful! Thank you for your payment.');
+            
+            // Disable payment button and show paid status
+            const payNowBtn = document.querySelector('.btn-success');
+            if (payNowBtn) {
+                payNowBtn.innerHTML = '✅ Payment Completed';
+                payNowBtn.disabled = true;
+                payNowBtn.style.backgroundColor = '#28a745';
+            }
+        }
+
+        // Loading and error functions
+        function showLoading(message) {
+            const loadingDiv = document.getElementById('loading') || createLoadingDiv();
+            loadingDiv.innerHTML = `<div class="spinner"></div> ${message}`;
+            loadingDiv.style.display = 'block';
+        }
+
+        function hideLoading() {
+            const loadingDiv = document.getElementById('loading');
+            if (loadingDiv) {
+                loadingDiv.style.display = 'none';
+            }
+        }
+
+        function createLoadingDiv() {
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = 'loading';
+            loadingDiv.className = 'loading-overlay';
+            document.body.appendChild(loadingDiv);
+            return loadingDiv;
+        }
+
+        // Initialize Stripe when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeStripe();
+        });
         
         // Deposit invoice function removed - use separate Deposit button on session card instead
     </script>

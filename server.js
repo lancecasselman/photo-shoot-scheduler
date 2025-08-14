@@ -43,6 +43,9 @@ const createR2Routes = require('./server/r2-api-routes');
 const StorageSystem = require('./server/storage-system');
 const { registerStorageRoutes } = require('./server/storage-routes');
 
+// Import payment notification system
+const PaymentNotificationManager = require('./server/payment-notifications');
+
 // Import object storage services
 const { ObjectStorageService } = require('./server/objectStorage');
 
@@ -4389,10 +4392,29 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (
             }
         }
 
-        // Handle payment success for existing functionality
+        // Handle payment success for photography sessions and deposits
         if (event.type === 'payment_intent.succeeded') {
             const paymentIntent = event.data.object;
-            console.log('Payment succeeded:', paymentIntent.id);
+            console.log('💰 Payment succeeded:', paymentIntent.id, 'Amount:', paymentIntent.amount_received / 100);
+            
+            // Check if this is a photography session payment by looking for session metadata
+            if (paymentIntent.metadata && paymentIntent.metadata.sessionId) {
+                console.log('📸 Processing photography session payment notification');
+                
+                try {
+                    // Initialize payment notification manager and process the payment
+                    const PaymentNotificationManager = require('./server/payment-notifications');
+                    const notificationManager = new PaymentNotificationManager();
+                    await notificationManager.handlePaymentSuccess(paymentIntent);
+                    
+                    console.log('✅ Photography payment notification processed successfully');
+                } catch (error) {
+                    console.error('❌ Error processing photography payment notification:', error);
+                    // Don't throw here to avoid breaking other webhook processing
+                }
+            } else {
+                console.log('💳 Standard payment processed (no session metadata)');
+            }
         }
 
         res.json({received: true});
@@ -11470,6 +11492,98 @@ app.post('/api/export/multi-page-zip', isAuthenticated, async (req, res) => {
     } catch (error) {
         console.error('Multi-page ZIP export error:', error);
         res.status(500).json({ error: 'Failed to generate multi-page ZIP export' });
+    }
+});
+
+// Create Payment Intent for session payments (deposits and invoices)
+app.post('/api/create-payment-intent', async (req, res) => {
+    try {
+        const { amount, sessionId, paymentType = 'invoice', clientEmail } = req.body;
+        
+        if (!amount || !sessionId) {
+            return res.status(400).json({ error: 'Amount and sessionId are required' });
+        }
+
+        // Get session details for metadata
+        const session = await getSessionById(sessionId);
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        // Create payment intent with session metadata for webhook processing
+        const paymentIntent = await stripe.paymentIntents.create({
+            amount: Math.round(parseFloat(amount) * 100), // Convert to cents
+            currency: 'usd',
+            automatic_payment_methods: {
+                enabled: true,
+            },
+            metadata: {
+                sessionId: sessionId,
+                type: paymentType, // 'deposit' or 'invoice'
+                clientName: session.clientName,
+                sessionType: session.sessionType,
+                sessionDate: session.dateTime,
+                sessionLocation: session.location
+            },
+            receipt_email: clientEmail || session.email,
+            description: `${paymentType === 'deposit' ? 'Deposit' : 'Payment'} for ${session.sessionType} session - ${session.clientName}`
+        });
+
+        console.log('💰 Payment Intent created:', paymentIntent.id, 'Amount:', amount, 'Session:', sessionId, 'Type:', paymentType);
+
+        res.json({
+            clientSecret: paymentIntent.client_secret,
+            paymentIntentId: paymentIntent.id
+        });
+
+    } catch (error) {
+        console.error('Error creating payment intent:', error);
+        res.status(500).json({ error: 'Failed to create payment intent' });
+    }
+});
+
+// Confirm Payment Success (optional endpoint for immediate feedback)
+app.post('/api/confirm-payment', async (req, res) => {
+    try {
+        const { paymentIntentId } = req.body;
+        
+        if (!paymentIntentId) {
+            return res.status(400).json({ error: 'Payment Intent ID required' });
+        }
+
+        // Retrieve payment intent to check status
+        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+        
+        if (paymentIntent.status === 'succeeded') {
+            // Payment successful - webhook will handle the notification
+            res.json({ 
+                success: true, 
+                status: 'succeeded',
+                message: 'Payment processed successfully'
+            });
+        } else {
+            res.json({ 
+                success: false, 
+                status: paymentIntent.status,
+                message: 'Payment not yet completed'
+            });
+        }
+
+    } catch (error) {
+        console.error('Error confirming payment:', error);
+        res.status(500).json({ error: 'Failed to confirm payment' });
+    }
+});
+
+// Get Stripe configuration (public key only)
+app.get('/api/stripe-config', async (req, res) => {
+    try {
+        res.json({
+            publicKey: process.env.VITE_STRIPE_PUBLIC_KEY || process.env.STRIPE_PUBLIC_KEY
+        });
+    } catch (error) {
+        console.error('Error getting Stripe config:', error);
+        res.status(500).json({ error: 'Failed to get payment configuration' });
     }
 });
 
