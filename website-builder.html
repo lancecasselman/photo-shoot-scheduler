@@ -494,6 +494,16 @@
                     <div class="tools-scroll">
 
                     <div class="tool-section">
+                        <div class="tool-title">Page Management</div>
+                        <div class="component-list">
+                            <div class="component-item" onclick="addNewPage()" style="cursor: pointer; border: 2px dashed #667eea; background: #f7faff;">
+                                <div class="component-icon">➕</div>
+                                <span class="component-text">Add Page</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tool-section">
                         <div class="tool-title">Components</div>
                         <div class="component-list">
                             <div class="component-item" draggable="true" data-component="nav">
@@ -1963,6 +1973,113 @@
             
             return content;
         }
+        
+        function addNewPage() {
+            // Prompt for page name
+            const pageName = prompt('Enter page name (e.g., "About", "Services", "Contact"):');
+            if (!pageName || pageName.trim() === '') return;
+            
+            // Generate unique page ID
+            const pageId = pageName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+            
+            // Check if page already exists
+            if (pages[pageId]) {
+                alert('A page with this name already exists!');
+                return;
+            }
+            
+            // Save current page before switching
+            if (currentPage) {
+                savePage(currentPage);
+            }
+            
+            // Create new page
+            pages[pageId] = {
+                name: pageName,
+                template: 'modern',
+                elements: []
+            };
+            
+            console.log('Creating new page:', pageName, 'ID:', pageId);
+            
+            // Add page to navigation
+            const pagesList = document.querySelector('[data-panel="pages"] .pages-list');
+            if (pagesList) {
+                const pageItem = document.createElement('div');
+                pageItem.className = 'page-item';
+                pageItem.innerHTML = `
+                    <div class="page-preview">
+                        <div class="page-thumbnail">
+                            <div class="thumbnail-placeholder">📄</div>
+                        </div>
+                        <div class="page-info">
+                            <div class="page-name">${pageName}</div>
+                            <div class="page-status">Draft</div>
+                        </div>
+                        <div class="page-actions">
+                            <button class="btn-sm" onclick="switchToPage('${pageId}')">${pageName}</button>
+                            <button class="btn-sm btn-danger" onclick="deletePage('${pageId}')">×</button>
+                        </div>
+                    </div>
+                `;
+                pagesList.appendChild(pageItem);
+            }
+            
+            // Switch to new page
+            switchToPage(pageId);
+            
+            // Show success message
+            showMessage(`New page "${pageName}" created successfully!`, 'success');
+            
+            console.log('New page created and loaded:', pageId);
+        }
+        
+        function deletePage(pageId) {
+            if (pageId === 'home') {
+                alert('Cannot delete the home page!');
+                return;
+            }
+            
+            const pageName = pages[pageId]?.name || pageId;
+            if (confirm(`Are you sure you want to delete the page "${pageName}"?`)) {
+                delete pages[pageId];
+                
+                // Remove from navigation
+                const pageItem = document.querySelector(`[onclick="switchToPage('${pageId}')"]`)?.closest('.page-item');
+                if (pageItem) pageItem.remove();
+                
+                // Switch to home page if current page was deleted
+                if (currentPage === pageId) {
+                    switchToPage('home');
+                }
+                
+                showMessage(`Page "${pageName}" deleted successfully!`, 'success');
+                console.log('Page deleted:', pageId);
+            }
+        }
+        
+        function showMessage(message, type = 'info') {
+            // Simple message display - you can enhance this with better styling
+            const messageDiv = document.createElement('div');
+            messageDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? '#48bb78' : type === 'error' ? '#f56565' : '#4299e1'};
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                z-index: 10000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                max-width: 300px;
+            `;
+            messageDiv.textContent = message;
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 3000);
+        }
 
         // Floating Toolbar Functions
         let currentTextElement = null;
@@ -2029,15 +2146,18 @@
         }
         
         function showTextToolbar(element, event) {
-            // Don't show toolbar for toolbar elements, tab buttons, or builder tools
+            // Don't show toolbar for toolbar elements, tab buttons, component items, or builder tools
             if (element.closest('#text-toolbar') || 
                 element.closest('.toolbar') ||
                 element.closest('.builder-tools') ||
+                element.closest('.component-item') ||
                 element.classList.contains('toolbar-btn') ||
                 element.classList.contains('tool-tab') ||
+                element.classList.contains('component-item') ||
                 element.dataset.action ||
-                element.dataset.tab) {
-                console.log('Skipping toolbar display for toolbar/tab element');
+                element.dataset.tab ||
+                element.onclick) {
+                console.log('Skipping toolbar display for toolbar/tab/component element');
                 return;
             }
             
@@ -2159,31 +2279,37 @@
         function initializeTouchToEdit() {
             // Text editing with floating toolbar
             document.querySelectorAll('h1, h2, h3, p, span, button').forEach(element => {
-                // Skip if already initialized or is a toolbar element or toolbar button or tab button
+                // Skip if already initialized or is a toolbar element or toolbar button or tab button or component item
                 if (element.classList.contains('editable-text') || 
                     element.closest('#text-toolbar') || 
                     element.closest('.toolbar') ||
                     element.closest('.builder-tools') ||
+                    element.closest('.component-item') ||
                     element.classList.contains('toolbar-btn') ||
                     element.classList.contains('tool-tab') ||
+                    element.classList.contains('component-item') ||
                     element.dataset.action ||
-                    element.dataset.tab) return;
+                    element.dataset.tab ||
+                    element.onclick) return;
                 
                 element.classList.add('editable-text');
                 element.style.cursor = 'text';
                 
                 element.addEventListener('click', function(e) {
-                    // Don't trigger on toolbar buttons, tab buttons, or their children
+                    // Don't trigger on toolbar buttons, tab buttons, component items, or their children
                     if (e.target.closest('#text-toolbar') || 
                         e.target.closest('.toolbar') ||
                         e.target.closest('.builder-tools') ||
+                        e.target.closest('.component-item') ||
                         e.target.classList.contains('toolbar-btn') ||
                         e.target.classList.contains('tool-tab') ||
+                        e.target.classList.contains('component-item') ||
                         e.target.dataset.action ||
                         e.target.dataset.tab ||
                         e.target.closest('[data-action]') ||
-                        e.target.closest('[data-tab]')) {
-                        console.log('Skipping toolbar/tab element click');
+                        e.target.closest('[data-tab]') ||
+                        e.target.onclick) {
+                        console.log('Skipping toolbar/tab/component element click');
                         return;
                     }
                     
