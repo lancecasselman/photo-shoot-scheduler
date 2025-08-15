@@ -2024,6 +2024,15 @@
         }
         
         function showTextToolbar(element, event) {
+            // Don't show toolbar for toolbar elements themselves
+            if (element.closest('#text-toolbar') || 
+                element.closest('.toolbar') ||
+                element.classList.contains('toolbar-btn') ||
+                element.dataset.action) {
+                console.log('Skipping toolbar display for toolbar element');
+                return;
+            }
+            
             const toolbar = document.getElementById('text-toolbar');
             currentTextElement = element;
             
@@ -2142,13 +2151,27 @@
         function initializeTouchToEdit() {
             // Text editing with floating toolbar
             document.querySelectorAll('h1, h2, h3, p, span, button').forEach(element => {
-                // Skip if already initialized or is a toolbar element
-                if (element.classList.contains('editable-text') || element.closest('#text-toolbar')) return;
+                // Skip if already initialized or is a toolbar element or toolbar button
+                if (element.classList.contains('editable-text') || 
+                    element.closest('#text-toolbar') || 
+                    element.closest('.toolbar') ||
+                    element.classList.contains('toolbar-btn') ||
+                    element.dataset.action) return;
                 
                 element.classList.add('editable-text');
                 element.style.cursor = 'text';
                 
                 element.addEventListener('click', function(e) {
+                    // Don't trigger on toolbar buttons or their children
+                    if (e.target.closest('#text-toolbar') || 
+                        e.target.closest('.toolbar') ||
+                        e.target.classList.contains('toolbar-btn') ||
+                        e.target.dataset.action ||
+                        e.target.closest('[data-action]')) {
+                        console.log('Skipping toolbar element click');
+                        return;
+                    }
+                    
                     e.stopPropagation();
                     e.preventDefault();
                     
