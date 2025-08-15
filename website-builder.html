@@ -710,25 +710,25 @@
                         <div class="tool-title">Page Management</div>
                         <div id="pages-list" style="margin-bottom: 15px;">
                             <!-- Sortable pages list -->
-                            <div class="page-item active" data-page="home" draggable="true" style="display: flex; align-items: center; padding: 8px; background: #f7fafc; border-radius: 4px; margin-bottom: 4px; cursor: grab;">
+                            <div class="page-item active" data-page="home" draggable="true" onclick="switchToPageNew('home')" style="display: flex; align-items: center; padding: 8px; background: #f7fafc; border-radius: 4px; margin-bottom: 4px; cursor: grab;">
                                 <span style="color: #718096; margin-right: 8px;">☰</span>
                                 <span class="page-name" style="flex: 1;">Home</span>
-                                <button onclick="renamePage('home')" style="background: none; border: none; color: #667eea; cursor: pointer; padding: 4px; margin-right: 4px;">✏️</button>
+                                <button onclick="event.stopPropagation(); renamePageNew('home')" style="background: none; border: none; color: #667eea; cursor: pointer; padding: 4px; margin-right: 4px;">✏️</button>
                             </div>
-                            <div class="page-item" data-page="portfolio" draggable="true" style="display: flex; align-items: center; padding: 8px; background: #f7fafc; border-radius: 4px; margin-bottom: 4px; cursor: grab;">
+                            <div class="page-item" data-page="portfolio" draggable="true" onclick="switchToPageNew('portfolio')" style="display: flex; align-items: center; padding: 8px; background: #f7fafc; border-radius: 4px; margin-bottom: 4px; cursor: grab;">
                                 <span style="color: #718096; margin-right: 8px;">☰</span>
                                 <span class="page-name" style="flex: 1;">Portfolio</span>
-                                <button onclick="renamePage('portfolio')" style="background: none; border: none; color: #667eea; cursor: pointer; padding: 4px; margin-right: 4px;">✏️</button>
+                                <button onclick="event.stopPropagation(); renamePageNew('portfolio')" style="background: none; border: none; color: #667eea; cursor: pointer; padding: 4px; margin-right: 4px;">✏️</button>
                             </div>
-                            <div class="page-item" data-page="about" draggable="true" style="display: flex; align-items: center; padding: 8px; background: #f7fafc; border-radius: 4px; margin-bottom: 4px; cursor: grab;">
+                            <div class="page-item" data-page="about" draggable="true" onclick="switchToPageNew('about')" style="display: flex; align-items: center; padding: 8px; background: #f7fafc; border-radius: 4px; margin-bottom: 4px; cursor: grab;">
                                 <span style="color: #718096; margin-right: 8px;">☰</span>
                                 <span class="page-name" style="flex: 1;">About</span>
-                                <button onclick="renamePage('about')" style="background: none; border: none; color: #667eea; cursor: pointer; padding: 4px; margin-right: 4px;">✏️</button>
+                                <button onclick="event.stopPropagation(); renamePageNew('about')" style="background: none; border: none; color: #667eea; cursor: pointer; padding: 4px; margin-right: 4px;">✏️</button>
                             </div>
-                            <div class="page-item" data-page="contact" draggable="true" style="display: flex; align-items: center; padding: 8px; background: #f7fafc; border-radius: 4px; margin-bottom: 4px; cursor: grab;">
+                            <div class="page-item" data-page="contact" draggable="true" onclick="switchToPageNew('contact')" style="display: flex; align-items: center; padding: 8px; background: #f7fafc; border-radius: 4px; margin-bottom: 4px; cursor: grab;">
                                 <span style="color: #718096; margin-right: 8px;">☰</span>
                                 <span class="page-name" style="flex: 1;">Contact</span>
-                                <button onclick="renamePage('contact')" style="background: none; border: none; color: #667eea; cursor: pointer; padding: 4px; margin-right: 4px;">✏️</button>
+                                <button onclick="event.stopPropagation(); renamePageNew('contact')" style="background: none; border: none; color: #667eea; cursor: pointer; padding: 4px; margin-right: 4px;">✏️</button>
                             </div>
                         </div>
                         <button onclick="addNewPageFromPages()" style="width: 100%; padding: 8px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">+ Add New Page</button>
@@ -2067,14 +2067,14 @@
             pageItem.innerHTML = `
                 <span style="color: #718096; margin-right: 8px;">☰</span>
                 <span class="page-name" style="flex: 1;">${pageName}</span>
-                <button onclick="renamePage('${pageId}')" style="background: none; border: none; color: #667eea; cursor: pointer; padding: 4px; margin-right: 4px;">✏️</button>
+                <button onclick="event.stopPropagation(); renamePageNew('${pageId}')" style="background: none; border: none; color: #667eea; cursor: pointer; padding: 4px; margin-right: 4px;">✏️</button>
                 ${pageId !== 'home' && pageId !== 'portfolio' && pageId !== 'about' && pageId !== 'contact' ? 
-                  `<button onclick="deletePage('${pageId}')" style="background: none; border: none; color: #e53e3e; cursor: pointer; padding: 4px;">🗑️</button>` : ''}
+                  `<button onclick="event.stopPropagation(); deletePageNew('${pageId}')" style="background: none; border: none; color: #e53e3e; cursor: pointer; padding: 4px;">🗑️</button>` : ''}
             `;
             
             pageItem.addEventListener('click', function(e) {
                 if (e.target.tagName !== 'BUTTON') {
-                    switchToPage(pageId);
+                    switchToPageNew(pageId);
                 }
             });
             
@@ -2197,6 +2197,46 @@
             document.querySelectorAll('.page-item').forEach(initializePageDrag);
         }
         
+        // Toggle dropdown menu
+        function toggleDropdown() {
+            const dropdown = document.getElementById('dropdown-menu');
+            if (dropdown) {
+                dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+        
+        // Delete page functionality for new system
+        function deletePageNew(pageId) {
+            if (pageId === 'home') {
+                alert('Cannot delete the home page!');
+                return;
+            }
+            
+            if (confirm(`Are you sure you want to delete the page "${pages[pageId]?.name}"?`)) {
+                // Remove from pages object
+                delete pages[pageId];
+                
+                // Remove from navigation order
+                navOrder = navOrder.filter(id => id !== pageId);
+                
+                // Remove from UI
+                const pageItem = document.querySelector(`.page-item[data-page="${pageId}"]`);
+                if (pageItem) {
+                    pageItem.remove();
+                }
+                
+                // If deleting current page, switch to home
+                if (currentPage === pageId) {
+                    switchToPageNew('home');
+                }
+                
+                // Update navigation preview
+                updateNavigationPreview();
+                
+                console.log(`Page deleted: ${pageId}`);
+            }
+        }
+        
         // Update navigation preview in canvas
         function updateNavigationPreview() {
             const canvas = document.getElementById('canvas');
@@ -2215,19 +2255,19 @@
                 navElement.innerHTML = `
                     <div style="display: flex; justify-content: center; align-items: center; gap: 30px;">
                         ${navOrder.map(pageId => 
-                            `<a href="#${pageId}" onclick="switchToPageNew('${pageId}')" style="text-decoration: none; color: ${pageId === currentPage ? '#667eea' : '#2d3748'}; font-weight: ${pageId === currentPage ? '600' : '400'}; padding: 8px 12px; border-radius: 4px; transition: all 0.2s;">${pages[pageId]?.name || pageId}</a>`
+                            `<a href="javascript:void(0)" onclick="switchToPageNew('${pageId}'); return false;" style="text-decoration: none; color: ${pageId === currentPage ? '#667eea' : '#2d3748'}; font-weight: ${pageId === currentPage ? '600' : '400'}; padding: 8px 12px; border-radius: 4px; transition: all 0.2s; cursor: pointer;">${pages[pageId]?.name || pageId}</a>`
                         ).join('')}
                     </div>
                 `;
             } else {
                 navElement.innerHTML = `
                     <div style="position: relative; display: inline-block;">
-                        <button style="background: white; border: 1px solid #e2e8f0; padding: 10px 20px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                        <button onclick="toggleDropdown()" style="background: white; border: 1px solid #e2e8f0; padding: 10px 20px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
                             Menu <span style="font-size: 12px;">▼</span>
                         </button>
-                        <div style="position: absolute; top: 100%; left: 0; background: white; border: 1px solid #e2e8f0; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); min-width: 150px; z-index: 1001;">
+                        <div id="dropdown-menu" style="position: absolute; top: 100%; left: 0; background: white; border: 1px solid #e2e8f0; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); min-width: 150px; z-index: 1001; display: none;">
                             ${navOrder.map(pageId => 
-                                `<a href="#${pageId}" onclick="switchToPageNew('${pageId}')" style="display: block; padding: 10px 15px; text-decoration: none; color: ${pageId === currentPage ? '#667eea' : '#2d3748'}; border-bottom: 1px solid #f7fafc; transition: all 0.2s;">${pages[pageId]?.name || pageId}</a>`
+                                `<a href="javascript:void(0)" onclick="switchToPageNew('${pageId}'); toggleDropdown(); return false;" style="display: block; padding: 10px 15px; text-decoration: none; color: ${pageId === currentPage ? '#667eea' : '#2d3748'}; border-bottom: 1px solid #f7fafc; transition: all 0.2s; cursor: pointer;">${pages[pageId]?.name || pageId}</a>`
                             ).join('')}
                         </div>
                     </div>
