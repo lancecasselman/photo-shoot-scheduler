@@ -11470,6 +11470,30 @@ END:VCALENDAR`;
             }
         }
 
+        // Open Photographers Website in new window
+        function openPhotographersWebsite() {
+            const websiteWindow = window.open(
+                '/website-builder.html',
+                'PhotographersWebsite',
+                'width=1400,height=900,scrollbars=yes,resizable=yes,toolbar=no,menubar=no,location=no,status=no'
+            );
+            
+            if (websiteWindow) {
+                websiteWindow.focus();
+                
+                // Listen for messages from the website builder
+                window.addEventListener('message', function(event) {
+                    if (event.data && event.data.type === 'website-saved') {
+                        console.log('Website data saved:', event.data.data);
+                        // You can handle the saved website data here if needed
+                        showMessage('Website saved successfully!', 'success');
+                    }
+                });
+            } else {
+                showMessage('Please allow popups to use the Photographers Website feature', 'error');
+            }
+        }
+
         // Close menu when clicking outside
         document.addEventListener('click', function(event) {
             const mobileMenu = document.getElementById('mobileMenu');
