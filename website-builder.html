@@ -101,9 +101,51 @@
             height: 40px;
             display: flex;
             align-items: center;
-            padding: 0 20px;
+            padding: 0;
             border-bottom: 1px solid #f1f5f9;
             background: rgba(248, 250, 252, 0.8);
+        }
+
+        .tools-tabs {
+            display: flex;
+            align-items: center;
+            height: 100%;
+            padding: 0 20px;
+        }
+
+        .tool-tab {
+            padding: 0 20px;
+            height: 100%;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: #64748b;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+        }
+
+        .tool-tab:hover {
+            color: #2d3748;
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .tool-tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            background: white;
+        }
+
+        .tab-panel {
+            display: none;
+            height: 100%;
+        }
+
+        .tab-panel.active {
+            display: block;
         }
 
         .tools-content {
@@ -401,30 +443,18 @@
         <!-- Bottom Tools Bar -->
         <div class="builder-tools">
             <div class="tools-header">
-                <span style="font-weight: 600; color: #2d3748;">Design Tools</span>
+                <div class="tools-tabs">
+                    <button class="tool-tab active" data-tab="add">Add</button>
+                    <button class="tool-tab" data-tab="style">Style</button>
+                    <button class="tool-tab" data-tab="layout">Layout</button>
+                    <button class="tool-tab" data-tab="pages">Pages</button>
+                </div>
             </div>
             <div class="tools-content">
-                <div class="tools-scroll">
-                    <!-- Templates Section -->
-                    <div class="tool-section">
-                        <div class="tool-title">Templates</div>
-                        <div class="template-list">
-                            <div class="template-card active" onclick="selectTemplate('modern')">
-                                <div class="template-name">Modern</div>
-                            </div>
-                            <div class="template-card" onclick="selectTemplate('classic')">
-                                <div class="template-name">Classic</div>
-                            </div>
-                            <div class="template-card" onclick="selectTemplate('minimal')">
-                                <div class="template-name">Minimal</div>
-                            </div>
-                            <div class="template-card" onclick="selectTemplate('bold')">
-                                <div class="template-name">Bold</div>
-                            </div>
-                        </div>
-                    </div>
+                <!-- Add Tab Content -->
+                <div class="tab-panel active" data-panel="add">
+                    <div class="tools-scroll">
 
-                    <!-- Components Section -->
                     <div class="tool-section">
                         <div class="tool-title">Components</div>
                         <div class="component-list">
@@ -479,35 +509,26 @@
                         </div>
                     </div>
 
-                    <!-- Properties Section -->
-                    <div class="tool-section properties-section">
-                        <div class="tool-title">Properties</div>
-                        <div id="properties-panel-tools">
-                            <div style="color: #718096; font-size: 11px; padding: 10px 0;">
-                                Select an element to edit properties
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Colors Section -->
+                    <!-- Media Section -->
                     <div class="tool-section">
-                        <div class="tool-title">Colors</div>
+                        <div class="tool-title">Media</div>
                         <div class="property-controls">
-                            <div>
-                                <label class="property-label">Background</label>
-                                <input type="color" class="property-input" value="#ffffff" style="width: 60px; height: 30px; padding: 2px;">
-                            </div>
-                            <div>
-                                <label class="property-label">Text</label>
-                                <input type="color" class="property-input" value="#2d3748" style="width: 60px; height: 30px; padding: 2px;">
-                            </div>
-                            <div>
-                                <label class="property-label">Accent</label>
-                                <input type="color" class="property-input" value="#667eea" style="width: 60px; height: 30px; padding: 2px;">
-                            </div>
+                            <button class="btn btn-secondary" onclick="document.getElementById('image-upload').click();" style="padding: 8px 16px; font-size: 12px;">
+                                Upload Images
+                            </button>
+                            <input type="file" id="image-upload" accept="image/*" multiple style="display: none;">
+                            <button class="btn btn-secondary" onclick="document.getElementById('video-upload').click();" style="padding: 8px 16px; font-size: 12px;">
+                                Upload Videos
+                            </button>
+                            <input type="file" id="video-upload" accept="video/*" style="display: none;">
                         </div>
                     </div>
+                </div>
+            </div>
 
+            <!-- Style Tab Content -->
+            <div class="tab-panel" data-panel="style">
+                <div class="tools-scroll">
                     <!-- Typography Section -->
                     <div class="tool-section">
                         <div class="tool-title">Typography</div>
@@ -544,34 +565,26 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Layout Section -->
+
+                    <!-- Colors Section -->
                     <div class="tool-section">
-                        <div class="tool-title">Layout</div>
+                        <div class="tool-title">Colors</div>
                         <div class="property-controls">
                             <div>
-                                <label class="property-label">Padding</label>
-                                <input type="range" class="property-input" min="0" max="100" value="20" style="width: 80px;">
+                                <label class="property-label">Background</label>
+                                <input type="color" class="property-input" value="#ffffff" style="width: 60px; height: 30px; padding: 2px;">
                             </div>
                             <div>
-                                <label class="property-label">Margin</label>
-                                <input type="range" class="property-input" min="0" max="100" value="0" style="width: 80px;">
+                                <label class="property-label">Text</label>
+                                <input type="color" class="property-input" value="#2d3748" style="width: 60px; height: 30px; padding: 2px;">
                             </div>
                             <div>
-                                <label class="property-label">Gap</label>
-                                <input type="range" class="property-input" min="0" max="50" value="20" style="width: 80px;">
-                            </div>
-                            <div>
-                                <label class="property-label">Align</label>
-                                <select class="property-input" style="width: 80px;">
-                                    <option value="left">Left</option>
-                                    <option value="center">Center</option>
-                                    <option value="right">Right</option>
-                                </select>
+                                <label class="property-label">Accent</label>
+                                <input type="color" class="property-input" value="#667eea" style="width: 60px; height: 30px; padding: 2px;">
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Effects Section -->
                     <div class="tool-section">
                         <div class="tool-title">Effects</div>
@@ -601,6 +614,102 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Layout Tab Content -->
+            <div class="tab-panel" data-panel="layout">
+                <div class="tools-scroll">
+                    <!-- Layout Section -->
+                    <div class="tool-section">
+                        <div class="tool-title">Spacing</div>
+                        <div class="property-controls">
+                            <div>
+                                <label class="property-label">Padding</label>
+                                <input type="range" class="property-input" min="0" max="100" value="20" style="width: 80px;">
+                            </div>
+                            <div>
+                                <label class="property-label">Margin</label>
+                                <input type="range" class="property-input" min="0" max="100" value="0" style="width: 80px;">
+                            </div>
+                            <div>
+                                <label class="property-label">Gap</label>
+                                <input type="range" class="property-input" min="0" max="50" value="20" style="width: 80px;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Alignment Section -->
+                    <div class="tool-section">
+                        <div class="tool-title">Alignment</div>
+                        <div class="property-controls">
+                            <div>
+                                <label class="property-label">Horizontal</label>
+                                <select class="property-input" style="width: 80px;">
+                                    <option value="left">Left</option>
+                                    <option value="center">Center</option>
+                                    <option value="right">Right</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="property-label">Vertical</label>
+                                <select class="property-input" style="width: 80px;">
+                                    <option value="top">Top</option>
+                                    <option value="middle">Middle</option>
+                                    <option value="bottom">Bottom</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Size Section -->
+                    <div class="tool-section">
+                        <div class="tool-title">Size</div>
+                        <div class="property-controls">
+                            <div>
+                                <label class="property-label">Width</label>
+                                <input type="text" class="property-input" placeholder="auto" style="width: 80px;">
+                            </div>
+                            <div>
+                                <label class="property-label">Height</label>
+                                <input type="text" class="property-input" placeholder="auto" style="width: 80px;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pages Tab Content -->
+            <div class="tab-panel" data-panel="pages">
+                <div class="tools-scroll">
+                    <!-- Templates Section -->
+                    <div class="tool-section">
+                        <div class="tool-title">Templates</div>
+                        <div class="template-list">
+                            <div class="template-card active" onclick="selectTemplate('modern')">
+                                <div class="template-name">Modern</div>
+                            </div>
+                            <div class="template-card" onclick="selectTemplate('classic')">
+                                <div class="template-name">Classic</div>
+                            </div>
+                            <div class="template-card" onclick="selectTemplate('minimal')">
+                                <div class="template-name">Minimal</div>
+                            </div>
+                            <div class="template-card" onclick="selectTemplate('bold')">
+                                <div class="template-name">Bold</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Settings Section -->
+                    <div class="tool-section">
+                        <div class="tool-title">Settings</div>
+                        <div class="property-controls">
+                            <button class="btn btn-primary" onclick="saveWebsite()" style="padding: 8px 16px; font-size: 12px;">Save</button>
+                            <button class="btn btn-secondary" onclick="previewWebsite()" style="padding: 8px 16px; font-size: 12px;">Preview</button>
+                            <button class="btn btn-primary" onclick="publishWebsite()" style="padding: 8px 16px; font-size: 12px;">Publish</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -612,6 +721,31 @@
             template: 'modern',
             elements: []
         };
+
+        // Tab switching functionality
+        function initializeTabs() {
+            const tabButtons = document.querySelectorAll('.tool-tab');
+            const tabPanels = document.querySelectorAll('.tab-panel');
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const targetTab = button.dataset.tab;
+                    
+                    // Update active states for buttons
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    
+                    // Update active states for panels
+                    tabPanels.forEach(panel => {
+                        if (panel.dataset.panel === targetTab) {
+                            panel.classList.add('active');
+                        } else {
+                            panel.classList.remove('active');
+                        }
+                    });
+                });
+            });
+        }
 
         // Templates
         const templates = {
@@ -1110,6 +1244,13 @@
             
             window.close();
         }
+
+        // Initialize everything when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTabs();
+            initializeDragAndDrop();
+            selectTemplate('modern');
+        });
     </script>
 </body>
 </html>
