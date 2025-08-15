@@ -313,6 +313,14 @@ export type InsertR2StorageUsage = typeof r2StorageUsage.$inferInsert;
 export type R2StorageUsage = typeof r2StorageUsage.$inferSelect;
 export type InsertR2StorageBilling = typeof r2StorageBilling.$inferInsert;
 export type R2StorageBilling = typeof r2StorageBilling.$inferSelect;
+export type InsertAiCreditPurchase = typeof aiCreditPurchases.$inferInsert;
+export type AiCreditPurchase = typeof aiCreditPurchases.$inferSelect;
+export type InsertAiCreditUsage = typeof aiCreditUsage.$inferInsert;
+export type AiCreditUsage = typeof aiCreditUsage.$inferSelect;
+export type InsertAiCreditBillingCycle = typeof aiCreditBillingCycles.$inferInsert;
+export type AiCreditBillingCycle = typeof aiCreditBillingCycles.$inferSelect;
+export type InsertSubscriptionPlan = typeof subscriptionPlans.$inferInsert;
+export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
 
 // AI Credits purchase tracking
 export const aiCreditPurchases = pgTable("ai_credit_purchases", {
@@ -335,6 +343,37 @@ export const aiCreditUsage = pgTable("ai_credit_usage", {
   prompt: text("prompt"),
   success: boolean("success").default(true),
   usedAt: timestamp("used_at").defaultNow(),
+});
+
+// Monthly billing cycles for AI credits
+export const aiCreditBillingCycles = pgTable("ai_credit_billing_cycles", {
+  id: varchar("id").primaryKey().notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  cycleStart: timestamp("cycle_start").notNull(),
+  cycleEnd: timestamp("cycle_end").notNull(),
+  includedCredits: integer("included_credits").notNull().default(0), // Credits included in subscription
+  creditsUsed: integer("credits_used").notNull().default(0), // Total credits used this cycle
+  overageCredits: integer("overage_credits").notNull().default(0), // Credits over the included amount
+  overageCharges: decimal("overage_charges", { precision: 10, scale: 2 }).default("0.00"),
+  subscriptionPlan: varchar("subscription_plan").notNull(), // basic, pro, enterprise
+  status: varchar("status").notNull().default("active"), // active, billed, closed
+  billedAt: timestamp("billed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Subscription plan definitions
+export const subscriptionPlans = pgTable("subscription_plans", {
+  id: varchar("id").primaryKey().notNull(),
+  planName: varchar("plan_name").notNull(), // basic, pro, enterprise
+  monthlyPrice: decimal("monthly_price", { precision: 10, scale: 2 }).notNull(),
+  includedAiCredits: integer("included_ai_credits").notNull().default(0),
+  overagePricePerCredit: decimal("overage_price_per_credit", { precision: 6, scale: 4 }).notNull(), // e.g., 0.10
+  storageGB: integer("storage_gb").notNull().default(100),
+  features: jsonb("features").default([]), // Array of feature names
+  stripePriceId: varchar("stripe_price_id").notNull(),
+  active: boolean("active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Business expenses tracking
