@@ -5,6 +5,7 @@ A streamlined photography business management platform designed for professional
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.
+Website Builder Interface: CapCut-style with full-screen preview and bottom toolbar with horizontal scrolling tools.
 
 ## System Architecture
 
@@ -33,7 +34,7 @@ A comprehensive social platform for photographers to connect, learn, and and gro
 A professional photography planning tool that calculates optimal lighting times for any location and date. Features include location search, current location detection, accurate sunrise/sunset and golden/blue hour calculations, responsive design, and photography tips.
 
 ### Feature Specifications
-The system supports chronological session sorting by appointment date (dateTime field) and includes a fully integrated deposit system that tracks deposit amounts, applies them to invoices, and displays remaining balances. A comprehensive storage quota and billing system manages subscription-based storage, including real-time quota tracking, pre-upload validation, a visual storage dashboard, and automatic subscription management. A robust unified file deletion system ensures complete file cleanup across cloud storage and databases. The system also includes an AI Website Builder for generating complete website sections and a full booking agreement system with e-signature capabilities. Stripe Connect Express is integrated for multi-photographer payment routing.
+The system supports chronological session sorting by appointment date (dateTime field) and includes a fully integrated deposit system that tracks deposit amounts, applies them to invoices, and displays remaining balances. A comprehensive storage quota and billing system manages subscription-based storage, including real-time quota tracking, pre-upload validation, a visual storage dashboard, and automatic subscription management. A robust unified file deletion system ensures complete file cleanup across cloud storage and databases. The system also includes a professional CapCut-style Website Builder with full-screen preview editing, bottom toolbar with horizontal scrolling tools, and drag-and-drop functionality for creating photography websites. A full booking agreement system with e-signature capabilities is integrated. Stripe Connect Express is integrated for multi-photographer payment routing.
 
 ## External Dependencies
 
