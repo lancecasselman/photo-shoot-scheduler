@@ -31,11 +31,12 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
-  subscriptionStatus: varchar("subscription_status").default("trial"),
-  subscriptionPlan: varchar("subscription_plan").default("basic"),
-  subscriptionExpiresAt: timestamp("subscription_expires_at"),
+  // Credit-based billing system
+  credits: integer("credits").default(0),
+  totalCreditsUsed: integer("total_credits_used").default(0),
+  totalCreditsPurchased: integer("total_credits_purchased").default(0),
+  lastCreditPurchase: timestamp("last_credit_purchase"),
   stripeCustomerId: varchar("stripe_customer_id"),
-  stripeSubscriptionId: varchar("stripe_subscription_id"),
   stripeConnectAccountId: varchar("stripe_connect_account_id"),
   stripeOnboardingComplete: boolean("stripe_onboarding_complete").default(false),
   aiCredits: integer("ai_credits").default(0),
@@ -291,6 +292,46 @@ export const r2StorageBilling = pgTable("r2_storage_billing", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Credit packages available for purchase (replacing monthly subscriptions)
+export const creditPackages = pgTable("credit_packages", {
+  id: varchar("id").primaryKey().notNull(),
+  name: varchar("name").notNull(),
+  description: text("description"),
+  creditAmount: integer("credit_amount").notNull(),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  stripePriceId: varchar("stripe_price_id").notNull(),
+  isActive: boolean("is_active").default(true),
+  isPopular: boolean("is_popular").default(false),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Credit purchase history (replacing subscription billing)
+export const creditPurchases = pgTable("credit_purchases", {
+  id: varchar("id").primaryKey().notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  packageId: varchar("package_id").notNull().references(() => creditPackages.id),
+  creditAmount: integer("credit_amount").notNull(),
+  amountPaid: decimal("amount_paid", { precision: 10, scale: 2 }).notNull(),
+  stripePaymentIntentId: varchar("stripe_payment_intent_id"),
+  status: varchar("status").notNull().default("pending"), // pending, completed, failed, refunded
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Credit usage tracking for all platform features
+export const platformCreditUsage = pgTable("platform_credit_usage", {
+  id: varchar("id").primaryKey().notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  featureType: varchar("feature_type").notNull(), // ai_generation, storage_upgrade, premium_features, website_builder
+  creditsUsed: integer("credits_used").notNull(),
+  description: text("description"),
+  sessionId: varchar("session_id"), // Optional reference to photography session
+  metadata: jsonb("metadata").default({}),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type InsertPhotographySession = typeof photographySessions.$inferInsert;
@@ -321,6 +362,12 @@ export type InsertAiCreditBillingCycle = typeof aiCreditBillingCycles.$inferInse
 export type AiCreditBillingCycle = typeof aiCreditBillingCycles.$inferSelect;
 export type InsertSubscriptionPlan = typeof subscriptionPlans.$inferInsert;
 export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
+export type InsertCreditPackage = typeof creditPackages.$inferInsert;
+export type CreditPackage = typeof creditPackages.$inferSelect;
+export type InsertCreditPurchase = typeof creditPurchases.$inferInsert;
+export type CreditPurchase = typeof creditPurchases.$inferSelect;
+export type InsertPlatformCreditUsage = typeof platformCreditUsage.$inferInsert;
+export type PlatformCreditUsage = typeof platformCreditUsage.$inferSelect;
 
 // AI Credits purchase tracking
 export const aiCreditPurchases = pgTable("ai_credit_purchases", {
