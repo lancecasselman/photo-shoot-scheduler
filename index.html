@@ -853,22 +853,14 @@
         .session-list-item::before {
             content: '';
             position: absolute;
-            top: -1px;
-            left: -1px;
-            right: -1px;
-            bottom: -1px;
-            background: linear-gradient(45deg, #10b981, #3b82f6, #8b5cf6, #f59e0b, #10b981);
-            background-size: 400% 400%;
-            border-radius: 17px;
-            z-index: -1;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #10b981, transparent);
+            border-radius: 2px 2px 0 0;
             opacity: 0;
-            animation: gradientShift 3s ease infinite;
             transition: opacity 0.3s ease;
-        }
-        
-        @keyframes gradientShift {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
         }
 
         .session-list-item:hover {
@@ -877,6 +869,23 @@
         }
         
         .session-list-item:hover::before {
+            opacity: 1;
+        }
+        
+        .session-list-item::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.02) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        
+        .session-list-item:hover::after {
             opacity: 1;
         }
 
