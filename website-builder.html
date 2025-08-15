@@ -1970,9 +1970,14 @@
         function initializeFloatingToolbar() {
             const toolbar = document.getElementById('text-toolbar');
             
-            // Hide toolbar when clicking outside
+            // Hide toolbar when clicking outside (but not on tab buttons)
             document.addEventListener('click', function(e) {
-                if (!toolbar.contains(e.target) && !e.target.closest('.editable-text') && !e.target.classList.contains('editable-text')) {
+                if (!toolbar.contains(e.target) && 
+                    !e.target.closest('.editable-text') && 
+                    !e.target.classList.contains('editable-text') &&
+                    !e.target.closest('.builder-tools') &&
+                    !e.target.classList.contains('tool-tab') &&
+                    !e.target.dataset.tab) {
                     console.log('Hiding toolbar - clicked outside');
                     toolbar.style.display = 'none';
                     currentTextElement = null;
@@ -2024,12 +2029,15 @@
         }
         
         function showTextToolbar(element, event) {
-            // Don't show toolbar for toolbar elements themselves
+            // Don't show toolbar for toolbar elements, tab buttons, or builder tools
             if (element.closest('#text-toolbar') || 
                 element.closest('.toolbar') ||
+                element.closest('.builder-tools') ||
                 element.classList.contains('toolbar-btn') ||
-                element.dataset.action) {
-                console.log('Skipping toolbar display for toolbar element');
+                element.classList.contains('tool-tab') ||
+                element.dataset.action ||
+                element.dataset.tab) {
+                console.log('Skipping toolbar display for toolbar/tab element');
                 return;
             }
             
@@ -2151,24 +2159,31 @@
         function initializeTouchToEdit() {
             // Text editing with floating toolbar
             document.querySelectorAll('h1, h2, h3, p, span, button').forEach(element => {
-                // Skip if already initialized or is a toolbar element or toolbar button
+                // Skip if already initialized or is a toolbar element or toolbar button or tab button
                 if (element.classList.contains('editable-text') || 
                     element.closest('#text-toolbar') || 
                     element.closest('.toolbar') ||
+                    element.closest('.builder-tools') ||
                     element.classList.contains('toolbar-btn') ||
-                    element.dataset.action) return;
+                    element.classList.contains('tool-tab') ||
+                    element.dataset.action ||
+                    element.dataset.tab) return;
                 
                 element.classList.add('editable-text');
                 element.style.cursor = 'text';
                 
                 element.addEventListener('click', function(e) {
-                    // Don't trigger on toolbar buttons or their children
+                    // Don't trigger on toolbar buttons, tab buttons, or their children
                     if (e.target.closest('#text-toolbar') || 
                         e.target.closest('.toolbar') ||
+                        e.target.closest('.builder-tools') ||
                         e.target.classList.contains('toolbar-btn') ||
+                        e.target.classList.contains('tool-tab') ||
                         e.target.dataset.action ||
-                        e.target.closest('[data-action]')) {
-                        console.log('Skipping toolbar element click');
+                        e.target.dataset.tab ||
+                        e.target.closest('[data-action]') ||
+                        e.target.closest('[data-tab]')) {
+                        console.log('Skipping toolbar/tab element click');
                         return;
                     }
                     
