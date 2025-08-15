@@ -1974,8 +1974,10 @@
             // Toolbar button actions
             document.querySelectorAll('.toolbar-btn').forEach(btn => {
                 btn.addEventListener('click', function(e) {
+                    e.preventDefault();
                     e.stopPropagation();
                     const action = this.dataset.action;
+                    console.log('Toolbar button clicked:', action);
                     applyTextFormatting(action);
                 });
             });
@@ -1984,13 +1986,15 @@
             document.getElementById('toolbar-font-family').addEventListener('change', function() {
                 if (currentTextElement) {
                     currentTextElement.style.fontFamily = this.value;
+                    console.log('Font family changed to:', this.value);
                 }
             });
             
             // Font size change
-            document.getElementById('toolbar-font-size').addEventListener('change', function() {
+            document.getElementById('toolbar-font-size').addEventListener('input', function() {
                 if (currentTextElement) {
                     currentTextElement.style.fontSize = this.value + 'px';
+                    console.log('Font size changed to:', this.value + 'px');
                 }
             });
             
@@ -1998,6 +2002,7 @@
             document.getElementById('toolbar-text-color').addEventListener('input', function() {
                 if (currentTextElement) {
                     currentTextElement.style.color = this.value;
+                    console.log('Text color changed to:', this.value);
                 }
             });
             
@@ -2005,6 +2010,7 @@
             document.getElementById('toolbar-letter-spacing').addEventListener('input', function() {
                 if (currentTextElement) {
                     currentTextElement.style.letterSpacing = this.value + 'px';
+                    console.log('Letter spacing changed to:', this.value + 'px');
                 }
             });
         }
@@ -2012,6 +2018,8 @@
         function showTextToolbar(element, event) {
             const toolbar = document.getElementById('text-toolbar');
             currentTextElement = element;
+            
+            console.log('Showing toolbar for element:', element, 'Tag:', element.tagName);
             
             // Position toolbar above the clicked element
             const rect = element.getBoundingClientRect();
@@ -2025,7 +2033,7 @@
             const computedStyle = window.getComputedStyle(element);
             
             // Update font size
-            const fontSize = parseInt(computedStyle.fontSize);
+            const fontSize = parseInt(computedStyle.fontSize) || 16;
             document.getElementById('toolbar-font-size').value = fontSize;
             
             // Update text color
@@ -2036,52 +2044,79 @@
             const fontFamily = computedStyle.fontFamily;
             const fontSelect = document.getElementById('toolbar-font-family');
             for (let option of fontSelect.options) {
-                if (fontFamily.includes(option.text)) {
+                if (fontFamily.includes(option.text) || fontFamily.includes(option.value)) {
                     fontSelect.value = option.value;
                     break;
                 }
             }
             
+            // Update letter spacing
+            const letterSpacing = parseFloat(computedStyle.letterSpacing) || 0;
+            document.getElementById('toolbar-letter-spacing').value = letterSpacing;
+            
+            console.log('Toolbar updated with:', {
+                fontSize: fontSize,
+                color: color,
+                fontFamily: fontFamily,
+                letterSpacing: letterSpacing
+            });
+            
             event.stopPropagation();
         }
         
         function applyTextFormatting(action) {
-            if (!currentTextElement) return;
+            if (!currentTextElement) {
+                console.log('No current text element selected');
+                return;
+            }
+            
+            console.log('Applying formatting:', action, 'to element:', currentTextElement);
             
             switch(action) {
                 case 'bold':
                     const currentWeight = window.getComputedStyle(currentTextElement).fontWeight;
-                    currentTextElement.style.fontWeight = currentWeight === '700' || currentWeight === 'bold' ? 'normal' : 'bold';
+                    const isBold = currentWeight === '700' || currentWeight === 'bold' || parseInt(currentWeight) >= 700;
+                    currentTextElement.style.fontWeight = isBold ? 'normal' : 'bold';
+                    console.log('Bold toggled:', !isBold);
                     break;
                 case 'italic':
                     const currentStyle = window.getComputedStyle(currentTextElement).fontStyle;
                     currentTextElement.style.fontStyle = currentStyle === 'italic' ? 'normal' : 'italic';
+                    console.log('Italic toggled:', currentStyle !== 'italic');
                     break;
                 case 'underline':
                     const currentDecoration = window.getComputedStyle(currentTextElement).textDecoration;
                     currentTextElement.style.textDecoration = currentDecoration.includes('underline') ? 'none' : 'underline';
+                    console.log('Underline toggled:', !currentDecoration.includes('underline'));
                     break;
                 case 'align-left':
                     currentTextElement.style.textAlign = 'left';
+                    console.log('Text aligned left');
                     break;
                 case 'align-center':
                     currentTextElement.style.textAlign = 'center';
+                    console.log('Text aligned center');
                     break;
                 case 'align-right':
                     currentTextElement.style.textAlign = 'right';
+                    console.log('Text aligned right');
                     break;
                 case 'size-increase':
-                    const currentSize = parseInt(document.getElementById('toolbar-font-size').value);
+                    const currentSize = parseInt(document.getElementById('toolbar-font-size').value) || 16;
                     const newSize = Math.min(120, currentSize + 2);
                     document.getElementById('toolbar-font-size').value = newSize;
                     currentTextElement.style.fontSize = newSize + 'px';
+                    console.log('Font size increased to:', newSize);
                     break;
                 case 'size-decrease':
-                    const currSize = parseInt(document.getElementById('toolbar-font-size').value);
+                    const currSize = parseInt(document.getElementById('toolbar-font-size').value) || 16;
                     const smallerSize = Math.max(8, currSize - 2);
                     document.getElementById('toolbar-font-size').value = smallerSize;
                     currentTextElement.style.fontSize = smallerSize + 'px';
+                    console.log('Font size decreased to:', smallerSize);
                     break;
+                default:
+                    console.log('Unknown action:', action);
             }
         }
         
