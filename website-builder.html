@@ -17,27 +17,28 @@
             background: #f8fafc;
             overflow: hidden;
             position: relative;
+            margin: 0;
+            padding: 0;
         }
 
         .builder-container {
             display: flex;
+            flex-direction: column;
             height: 100vh;
         }
 
         /* Header */
         .builder-header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 60px;
-            background: white;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
             border-bottom: 1px solid #e2e8f0;
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 0 20px;
             z-index: 1000;
+            position: relative;
         }
 
         .builder-title {
@@ -79,43 +80,74 @@
             background: #cbd5e0;
         }
 
-        /* Sidebar */
-        .builder-sidebar {
-            width: 280px;
-            background: white;
-            border-right: 1px solid #e2e8f0;
-            margin-top: 60px;
-            overflow-y: auto;
-            z-index: 10;
-            position: relative;
+        /* Bottom Tools Bar */
+        .builder-tools {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(15px);
+            border-top: 1px solid #e2e8f0;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
         }
 
-        .sidebar-section {
-            padding: 20px;
+        .tools-header {
+            height: 40px;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
             border-bottom: 1px solid #f1f5f9;
+            background: rgba(248, 250, 252, 0.8);
         }
 
-        .sidebar-title {
-            font-size: 16px;
+        .tools-content {
+            flex: 1;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding: 10px 0;
+        }
+
+        .tools-scroll {
+            display: flex;
+            gap: 15px;
+            padding: 0 20px;
+            min-width: fit-content;
+        }
+
+        .tool-section {
+            flex-shrink: 0;
+            min-width: 200px;
+        }
+
+        .tool-title {
+            font-size: 12px;
             font-weight: 600;
-            color: #2d3748;
-            margin-bottom: 15px;
+            color: #4a5568;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         /* Templates */
-        .template-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
+        .template-list {
+            display: flex;
+            gap: 8px;
         }
 
         .template-card {
             border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 10px;
+            border-radius: 6px;
+            padding: 8px 12px;
             cursor: pointer;
             transition: all 0.2s;
             text-align: center;
+            min-width: 80px;
+            background: white;
         }
 
         .template-card:hover {
@@ -129,144 +161,122 @@
             color: white;
         }
 
-        .template-preview {
-            width: 100%;
-            height: 80px;
-            background: #f1f5f9;
-            border-radius: 4px;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            color: #718096;
-        }
-
         .template-name {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 500;
+            white-space: nowrap;
         }
 
         /* Components */
         .component-list {
             display: flex;
-            flex-direction: column;
             gap: 8px;
         }
 
         .component-item {
-            padding: 12px;
-            background: #f8fafc;
+            padding: 8px 12px;
+            background: white;
             border: 1px solid #e2e8f0;
             border-radius: 6px;
             cursor: grab;
             transition: all 0.2s;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 6px;
+            min-width: fit-content;
+            white-space: nowrap;
         }
 
         .component-item:hover {
             background: #f1f5f9;
             border-color: #cbd5e0;
+            transform: translateY(-1px);
         }
 
         .component-item:active {
             cursor: grabbing;
+            transform: translateY(0);
         }
 
         .component-icon {
-            width: 20px;
-            height: 20px;
+            width: 16px;
+            height: 16px;
             background: #667eea;
-            border-radius: 4px;
+            border-radius: 3px;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 10px;
+            font-size: 8px;
         }
 
-        /* Canvas */
+        .component-text {
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        /* Canvas - Full Screen Preview */
         .builder-canvas {
             flex: 1;
-            margin-top: 60px;
-            padding: 20px;
-            background: #f8fafc;
+            background: white;
             overflow-y: auto;
+            margin-bottom: 120px;
         }
 
         .canvas-container {
-            max-width: 800px;
-            margin: 0 auto;
+            width: 100%;
+            min-height: calc(100vh - 170px);
             background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            min-height: 600px;
             position: relative;
             z-index: 0;
         }
 
         .canvas-viewport {
-            padding: 40px;
+            padding: 0;
             position: relative;
             z-index: 0;
+            width: 100%;
+            min-height: 100%;
         }
 
-        /* Properties Panel */
-        .builder-properties {
-            width: 300px;
-            background: white;
-            border-left: 1px solid #e2e8f0;
-            margin-top: 60px;
-            overflow-y: auto;
-            z-index: 10;
-            position: relative;
+        /* Properties in Tools */
+        .properties-section {
+            min-width: 250px;
         }
 
-        .properties-content {
-            padding: 20px;
-        }
-
-        .properties-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: #2d3748;
-            margin-bottom: 20px;
-        }
-
-        .property-group {
-            margin-bottom: 20px;
-        }
-
-        .property-label {
-            display: block;
-            font-size: 14px;
-            font-weight: 500;
-            color: #4a5568;
-            margin-bottom: 8px;
+        .property-controls {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
         }
 
         .property-input {
-            width: 100%;
-            padding: 8px 12px;
+            padding: 6px 8px;
             border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            font-size: 14px;
+            border-radius: 4px;
+            font-size: 12px;
+            width: 120px;
+            background: white;
         }
 
         .property-input:focus {
             outline: none;
             border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+        }
+
+        .property-label {
+            font-size: 10px;
+            color: #4a5568;
+            margin-bottom: 4px;
+            display: block;
         }
 
         /* Canvas Elements */
         .element {
-            margin-bottom: 20px;
-            padding: 15px;
-            border: 2px dashed transparent;
-            border-radius: 6px;
+            margin: 0;
+            padding: 20px;
+            border: 2px solid transparent;
             cursor: pointer;
             transition: all 0.2s;
             position: relative;
@@ -274,14 +284,14 @@
         }
 
         .element:hover {
-            border-color: #cbd5e0;
-            background: #f8fafc;
+            border-color: rgba(102, 126, 234, 0.3);
+            box-shadow: inset 0 0 0 1px rgba(102, 126, 234, 0.2);
             z-index: 2;
         }
 
         .element.selected {
             border-color: #667eea;
-            background: #f7faff;
+            box-shadow: inset 0 0 0 1px #667eea, 0 0 0 3px rgba(102, 126, 234, 0.1);
             z-index: 3;
         }
 
@@ -373,93 +383,133 @@
     </div>
 
     <div class="builder-container">
-        <!-- Sidebar -->
-        <div class="builder-sidebar">
-            <!-- Templates Section -->
-            <div class="sidebar-section">
-                <div class="sidebar-title">Templates</div>
-                <div class="template-grid">
-                    <div class="template-card active" onclick="selectTemplate('modern')">
-                        <div class="template-preview">Modern</div>
-                        <div class="template-name">Modern</div>
-                    </div>
-                    <div class="template-card" onclick="selectTemplate('classic')">
-                        <div class="template-preview">Classic</div>
-                        <div class="template-name">Classic</div>
-                    </div>
-                    <div class="template-card" onclick="selectTemplate('minimal')">
-                        <div class="template-preview">Minimal</div>
-                        <div class="template-name">Minimal</div>
-                    </div>
-                    <div class="template-card" onclick="selectTemplate('bold')">
-                        <div class="template-preview">Bold</div>
-                        <div class="template-name">Bold</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Components Section -->
-            <div class="sidebar-section">
-                <div class="sidebar-title">Components</div>
-                <div class="component-list">
-                    <div class="component-item" draggable="true" data-component="header">
-                        <div class="component-icon">H</div>
-                        <span>Header</span>
-                    </div>
-                    <div class="component-item" draggable="true" data-component="hero">
-                        <div class="component-icon">🎯</div>
-                        <span>Hero Section</span>
-                    </div>
-                    <div class="component-item" draggable="true" data-component="about">
-                        <div class="component-icon">👤</div>
-                        <span>About</span>
-                    </div>
-                    <div class="component-item" draggable="true" data-component="gallery">
-                        <div class="component-icon">🖼️</div>
-                        <span>Photo Gallery</span>
-                    </div>
-                    <div class="component-item" draggable="true" data-component="services">
-                        <div class="component-icon">⚡</div>
-                        <span>Services</span>
-                    </div>
-                    <div class="component-item" draggable="true" data-component="testimonials">
-                        <div class="component-icon">💬</div>
-                        <span>Testimonials</span>
-                    </div>
-                    <div class="component-item" draggable="true" data-component="contact">
-                        <div class="component-icon">📧</div>
-                        <span>Contact</span>
-                    </div>
-                    <div class="component-item" draggable="true" data-component="footer">
-                        <div class="component-icon">⬇️</div>
-                        <span>Footer</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Canvas -->
+        <!-- Full Screen Canvas -->
         <div class="builder-canvas">
             <div class="canvas-container">
                 <div class="canvas-viewport" id="canvas">
                     <div class="drop-zone" id="drop-zone">
                         <div class="drop-message">
                             <h3>Start Building Your Photography Website</h3>
-                            <p>Drag components from the sidebar or choose a template to get started</p>
+                            <p>Drag components from the bottom toolbar or choose a template to get started</p>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Properties Panel -->
-        <div class="builder-properties">
-            <div class="properties-content">
-                <div class="properties-title">Properties</div>
-                <div id="properties-panel">
-                    <p style="color: #718096; text-align: center; margin-top: 40px;">
-                        Select an element to edit its properties
-                    </p>
+        <!-- Bottom Tools Bar -->
+        <div class="builder-tools">
+            <div class="tools-header">
+                <span style="font-weight: 600; color: #2d3748;">Design Tools</span>
+            </div>
+            <div class="tools-content">
+                <div class="tools-scroll">
+                    <!-- Templates Section -->
+                    <div class="tool-section">
+                        <div class="tool-title">Templates</div>
+                        <div class="template-list">
+                            <div class="template-card active" onclick="selectTemplate('modern')">
+                                <div class="template-name">Modern</div>
+                            </div>
+                            <div class="template-card" onclick="selectTemplate('classic')">
+                                <div class="template-name">Classic</div>
+                            </div>
+                            <div class="template-card" onclick="selectTemplate('minimal')">
+                                <div class="template-name">Minimal</div>
+                            </div>
+                            <div class="template-card" onclick="selectTemplate('bold')">
+                                <div class="template-name">Bold</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Components Section -->
+                    <div class="tool-section">
+                        <div class="tool-title">Components</div>
+                        <div class="component-list">
+                            <div class="component-item" draggable="true" data-component="header">
+                                <div class="component-icon">H</div>
+                                <span class="component-text">Header</span>
+                            </div>
+                            <div class="component-item" draggable="true" data-component="hero">
+                                <div class="component-icon">🎯</div>
+                                <span class="component-text">Hero</span>
+                            </div>
+                            <div class="component-item" draggable="true" data-component="about">
+                                <div class="component-icon">👤</div>
+                                <span class="component-text">About</span>
+                            </div>
+                            <div class="component-item" draggable="true" data-component="gallery">
+                                <div class="component-icon">🖼️</div>
+                                <span class="component-text">Gallery</span>
+                            </div>
+                            <div class="component-item" draggable="true" data-component="services">
+                                <div class="component-icon">⚡</div>
+                                <span class="component-text">Services</span>
+                            </div>
+                            <div class="component-item" draggable="true" data-component="testimonials">
+                                <div class="component-icon">💬</div>
+                                <span class="component-text">Reviews</span>
+                            </div>
+                            <div class="component-item" draggable="true" data-component="contact">
+                                <div class="component-icon">📧</div>
+                                <span class="component-text">Contact</span>
+                            </div>
+                            <div class="component-item" draggable="true" data-component="footer">
+                                <div class="component-icon">⬇️</div>
+                                <span class="component-text">Footer</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Properties Section -->
+                    <div class="tool-section properties-section">
+                        <div class="tool-title">Properties</div>
+                        <div id="properties-panel-tools">
+                            <div style="color: #718096; font-size: 11px; padding: 10px 0;">
+                                Select an element to edit properties
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Colors Section -->
+                    <div class="tool-section">
+                        <div class="tool-title">Colors</div>
+                        <div class="property-controls">
+                            <div>
+                                <label class="property-label">Background</label>
+                                <input type="color" class="property-input" value="#ffffff" style="width: 60px; height: 30px; padding: 2px;">
+                            </div>
+                            <div>
+                                <label class="property-label">Text</label>
+                                <input type="color" class="property-input" value="#2d3748" style="width: 60px; height: 30px; padding: 2px;">
+                            </div>
+                            <div>
+                                <label class="property-label">Accent</label>
+                                <input type="color" class="property-input" value="#667eea" style="width: 60px; height: 30px; padding: 2px;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Typography Section -->
+                    <div class="tool-section">
+                        <div class="tool-title">Typography</div>
+                        <div class="property-controls">
+                            <div>
+                                <label class="property-label">Font Size</label>
+                                <input type="range" class="property-input" min="10" max="72" value="16" style="width: 100px;">
+                            </div>
+                            <div>
+                                <label class="property-label">Font Weight</label>
+                                <select class="property-input" style="width: 100px;">
+                                    <option value="300">Light</option>
+                                    <option value="400" selected>Normal</option>
+                                    <option value="600">Semi Bold</option>
+                                    <option value="700">Bold</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -754,85 +804,72 @@
             selectedElement = null;
             
             // Clear properties panel
-            document.getElementById('properties-panel').innerHTML = `
-                <p style="color: #718096; text-align: center; margin-top: 40px;">
-                    Select an element to edit its properties
-                </p>
+            document.getElementById('properties-panel-tools').innerHTML = `
+                <div style="color: #718096; font-size: 11px; padding: 10px 0;">
+                    Select an element to edit properties
+                </div>
             `;
         }
 
         function showProperties(element) {
             const type = element.dataset.type;
-            const propertiesPanel = document.getElementById('properties-panel');
+            const propertiesPanel = document.getElementById('properties-panel-tools');
             
             let propertiesHTML = '';
             
             switch(type) {
                 case 'header':
                     propertiesHTML = `
-                        <div class="property-group">
-                            <label class="property-label">Title</label>
-                            <input type="text" class="property-input" value="Your Photography Studio" onchange="updateElementProperty('header', 'title', this.value)">
+                        <div class="property-controls">
+                            <div>
+                                <label class="property-label">Title</label>
+                                <input type="text" class="property-input" value="Your Photography Studio" onchange="updateElementProperty('header', 'title', this.value)">
+                            </div>
                         </div>
                     `;
                     break;
                 case 'hero':
                     propertiesHTML = `
-                        <div class="property-group">
-                            <label class="property-label">Title</label>
-                            <input type="text" class="property-input" value="Capturing Beautiful Moments" onchange="updateElementProperty('hero', 'title', this.value)">
-                        </div>
-                        <div class="property-group">
-                            <label class="property-label">Subtitle</label>
-                            <input type="text" class="property-input" value="Professional photography services" onchange="updateElementProperty('hero', 'subtitle', this.value)">
-                        </div>
-                        <div class="property-group">
-                            <label class="property-label">Background Image URL</label>
-                            <input type="url" class="property-input" value="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=1200" onchange="updateElementProperty('hero', 'backgroundImage', this.value)">
+                        <div class="property-controls">
+                            <div>
+                                <label class="property-label">Title</label>
+                                <input type="text" class="property-input" value="Capturing Beautiful Moments" onchange="updateElementProperty('hero', 'title', this.value)">
+                            </div>
+                            <div>
+                                <label class="property-label">Subtitle</label>
+                                <input type="text" class="property-input" value="Professional photography services" onchange="updateElementProperty('hero', 'subtitle', this.value)">
+                            </div>
                         </div>
                     `;
                     break;
                 case 'about':
                     propertiesHTML = `
-                        <div class="property-group">
-                            <label class="property-label">Title</label>
-                            <input type="text" class="property-input" value="About Me" onchange="updateElementProperty('about', 'title', this.value)">
-                        </div>
-                        <div class="property-group">
-                            <label class="property-label">Text</label>
-                            <textarea class="property-input" rows="4" onchange="updateElementProperty('about', 'text', this.value)">I'm a passionate photographer dedicated to capturing the essence of every moment.</textarea>
-                        </div>
-                        <div class="property-group">
-                            <label class="property-label">Image URL</label>
-                            <input type="url" class="property-input" value="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400" onchange="updateElementProperty('about', 'image', this.value)">
+                        <div class="property-controls">
+                            <div>
+                                <label class="property-label">Title</label>
+                                <input type="text" class="property-input" value="About Me" onchange="updateElementProperty('about', 'title', this.value)">
+                            </div>
                         </div>
                     `;
                     break;
                 case 'contact':
                     propertiesHTML = `
-                        <div class="property-group">
-                            <label class="property-label">Title</label>
-                            <input type="text" class="property-input" value="Get In Touch" onchange="updateElementProperty('contact', 'title', this.value)">
-                        </div>
-                        <div class="property-group">
-                            <label class="property-label">Email</label>
-                            <input type="email" class="property-input" value="hello@photographer.com" onchange="updateElementProperty('contact', 'email', this.value)">
-                        </div>
-                        <div class="property-group">
-                            <label class="property-label">Phone</label>
-                            <input type="tel" class="property-input" value="(555) 123-4567" onchange="updateElementProperty('contact', 'phone', this.value)">
-                        </div>
-                        <div class="property-group">
-                            <label class="property-label">Address</label>
-                            <input type="text" class="property-input" value="123 Photography Lane, Studio City, CA" onchange="updateElementProperty('contact', 'address', this.value)">
+                        <div class="property-controls">
+                            <div>
+                                <label class="property-label">Email</label>
+                                <input type="email" class="property-input" value="hello@photographer.com" onchange="updateElementProperty('contact', 'email', this.value)">
+                            </div>
+                            <div>
+                                <label class="property-label">Phone</label>
+                                <input type="tel" class="property-input" value="(555) 123-4567" onchange="updateElementProperty('contact', 'phone', this.value)">
+                            </div>
                         </div>
                     `;
                     break;
                 default:
                     propertiesHTML = `
-                        <div class="property-group">
-                            <label class="property-label">Element Type</label>
-                            <input type="text" class="property-input" value="${type}" readonly>
+                        <div style="color: #718096; font-size: 11px;">
+                            Element: ${type}
                         </div>
                     `;
             }
