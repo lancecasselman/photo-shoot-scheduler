@@ -14155,6 +14155,247 @@ END:VCALENDAR`;
             text-transform: uppercase;
         }
 
+        /* Full Power AI Interface Styles */
+        .wb-ai-mode-selector {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .wb-ai-mode-selector h4 {
+            color: #fff;
+            font-size: 14px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .wb-mode-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .wb-mode-btn {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 12px 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .wb-mode-btn:hover {
+            transform: translateY(-2px);
+            border-color: #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.1));
+        }
+
+        .wb-mode-btn.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-color: #667eea;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .mode-icon {
+            font-size: 20px;
+            margin-bottom: 2px;
+        }
+
+        .mode-title {
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+
+        .mode-desc {
+            font-size: 9px;
+            opacity: 0.8;
+            line-height: 1.2;
+        }
+
+        .wb-business-context {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .wb-business-context h4 {
+            color: #fff;
+            font-size: 14px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .wb-context-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+
+        .wb-context-grid select,
+        .wb-context-grid input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 8px 10px;
+            color: #fff;
+            font-size: 12px;
+        }
+
+        .wb-context-grid select:focus,
+        .wb-context-grid input:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+
+        .wb-ai-quick-actions {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .wb-ai-quick-actions h4 {
+            color: #fff;
+            font-size: 14px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .wb-quick-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .wb-quick-btn {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 12px 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+        }
+
+        .wb-quick-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .wb-quick-btn.luxury:hover {
+            border-color: #d4af37;
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(244, 208, 63, 0.1));
+        }
+
+        .wb-quick-btn.modern:hover {
+            border-color: #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.1));
+        }
+
+        .wb-quick-btn.dramatic:hover {
+            border-color: #ff6b35;
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.2), rgba(255, 142, 83, 0.1));
+        }
+
+        .wb-quick-btn.portfolio:hover {
+            border-color: #48bb78;
+            background: linear-gradient(135deg, rgba(72, 187, 120, 0.2), rgba(56, 161, 105, 0.1));
+        }
+
+        .wb-quick-btn.booking:hover {
+            border-color: #ed8936;
+            background: linear-gradient(135deg, rgba(237, 137, 54, 0.2), rgba(221, 107, 32, 0.1));
+        }
+
+        .wb-quick-btn.animations:hover {
+            border-color: #805ad5;
+            background: linear-gradient(135deg, rgba(128, 90, 213, 0.2), rgba(107, 70, 193, 0.1));
+        }
+
+        .quick-icon {
+            font-size: 18px;
+        }
+
+        .quick-text {
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .wb-primary-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2) !important;
+            border: none !important;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .wb-primary-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .wb-secondary-btn {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05)) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        }
+
+        .wb-secondary-btn:hover {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.1)) !important;
+            border-color: #667eea !important;
+        }
+
+        .btn-icon {
+            margin-right: 8px;
+        }
+
+        .wb-ai-credits {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.05));
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .credits-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .credits-icon {
+            font-size: 16px;
+            color: #667eea;
+        }
+
+        .credits-count {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold;
+        }
+
+        .credits-info {
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 5px;
+        }
+
         .wb-elements-list {
             display: flex;
             flex-direction: column;
@@ -15150,36 +15391,123 @@ END:VCALENDAR`;
                             </div>
                         </div>
                         
-                        <!-- AI Editor Panel -->
+                        <!-- FULL POWER AI Editor Panel -->
                         <div class="wb-ai-panel" id="wb-ai-panel">
                             <div class="wb-ai-header">
-                                <h3> AI Website Editor</h3>
+                                <h3>🚀 AI WEBSITE GENERATOR - FULL POWER</h3>
                                 <button class="wb-close-btn" onclick="WebsiteBuilder.closeAIEditor()">✕</button>
                             </div>
                             <div class="wb-ai-content">
+                                
+                                <!-- AI Power Mode Selector -->
+                                <div class="wb-ai-mode-selector">
+                                    <h4>AI Power Mode:</h4>
+                                    <div class="wb-mode-buttons">
+                                        <button class="wb-mode-btn active" onclick="WebsiteBuilder.setAIMode('standard')" data-mode="standard">
+                                            <span class="mode-icon">⚡</span>
+                                            <span class="mode-title">Standard</span>
+                                            <span class="mode-desc">Quick edits & improvements</span>
+                                        </button>
+                                        <button class="wb-mode-btn" onclick="WebsiteBuilder.setAIMode('advanced')" data-mode="advanced">
+                                            <span class="mode-icon">🔥</span>
+                                            <span class="mode-title">Advanced</span>
+                                            <span class="mode-desc">Complex redesigns & layouts</span>
+                                        </button>
+                                        <button class="wb-mode-btn" onclick="WebsiteBuilder.setAIMode('godmode')" data-mode="godmode">
+                                            <span class="mode-icon">🚀</span>
+                                            <span class="mode-title">God Mode</span>
+                                            <span class="mode-desc">Complete website generation</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Photography Business Context -->
+                                <div class="wb-business-context">
+                                    <h4>Photography Business Context:</h4>
+                                    <div class="wb-context-grid">
+                                        <select id="wb-photography-type" onchange="WebsiteBuilder.updateBusinessContext()">
+                                            <option value="wedding">Wedding Photography</option>
+                                            <option value="portrait">Portrait Studio</option>
+                                            <option value="commercial">Commercial Photography</option>
+                                            <option value="family">Family Photography</option>
+                                            <option value="event">Event Photography</option>
+                                            <option value="newborn">Newborn Photography</option>
+                                            <option value="fashion">Fashion Photography</option>
+                                            <option value="real-estate">Real Estate Photography</option>
+                                        </select>
+                                        <input type="text" id="wb-photographer-name" placeholder="Your Name/Studio" onchange="WebsiteBuilder.updateBusinessContext()">
+                                        <input type="text" id="wb-business-location" placeholder="City, State" onchange="WebsiteBuilder.updateBusinessContext()">
+                                    </div>
+                                </div>
+
+                                <!-- AI Command Interface -->
                                 <div class="wb-ai-input-section">
-                                    <label>Tell me what you want to change:</label>
-                                    <textarea id="wb-ai-input" placeholder="e.g., 'Make this look more elegant and professional' or 'Add golden accents and improve the typography' or 'Create a luxury wedding photographer vibe'"></textarea>
+                                    <label>AI Command:</label>
+                                    <textarea id="wb-ai-input" placeholder="Examples:&#10;• 'Create a luxury wedding photography website with gold accents and elegant typography'&#10;• 'Generate a complete homepage with hero section, portfolio gallery, testimonials, and contact form'&#10;• 'Transform this into a dark, moody commercial photography site'&#10;• 'Add animation effects and modern transitions throughout'&#10;• 'Create pricing packages section with 3-tier options'"></textarea>
                                     <div class="wb-ai-actions">
-                                        <button class="wb-btn" onclick="WebsiteBuilder.processAIRequest()"> Apply Changes</button>
-                                        <button class="wb-btn wb-btn-secondary" onclick="WebsiteBuilder.analyzeWebsite()"> Analyze Design</button>
+                                        <button class="wb-btn wb-primary-btn" onclick="WebsiteBuilder.processAIRequest()">
+                                            <span class="btn-icon">✨</span>
+                                            Execute AI Command
+                                        </button>
+                                        <button class="wb-btn wb-secondary-btn" onclick="WebsiteBuilder.generateFullWebsite()">
+                                            <span class="btn-icon">🌟</span>
+                                            Generate Complete Website
+                                        </button>
+                                        <button class="wb-btn wb-secondary-btn" onclick="WebsiteBuilder.analyzeWebsite()">
+                                            <span class="btn-icon">🔍</span>
+                                            Analyze & Optimize
+                                        </button>
                                     </div>
                                 </div>
-                                <div class="wb-ai-suggestions">
-                                    <h4>Quick Suggestions:</h4>
-                                    <div class="wb-suggestion-grid">
-                                        <button class="wb-suggestion-btn" onclick="WebsiteBuilder.quickAIEdit('Make this look more luxury and elegant')">Luxury Style</button>
-                                        <button class="wb-suggestion-btn" onclick="WebsiteBuilder.quickAIEdit('Add modern animations and effects')">Modern Effects</button>
-                                        <button class="wb-suggestion-btn" onclick="WebsiteBuilder.quickAIEdit('Improve typography and spacing')">Better Typography</button>
-                                        <button class="wb-suggestion-btn" onclick="WebsiteBuilder.quickAIEdit('Make colors more vibrant and bold')">Bold Colors</button>
-                                        <button class="wb-suggestion-btn" onclick="WebsiteBuilder.quickAIEdit('Create a minimalist clean design')">Minimalist</button>
-                                        <button class="wb-suggestion-btn" onclick="WebsiteBuilder.quickAIEdit('Add professional photography portfolio elements')">Pro Portfolio</button>
+
+                                <!-- AI Quick Actions -->
+                                <div class="wb-ai-quick-actions">
+                                    <h4>Quick AI Actions:</h4>
+                                    <div class="wb-quick-grid">
+                                        <button class="wb-quick-btn luxury" onclick="WebsiteBuilder.quickAIEdit('Transform into ultra-luxury photography website with gold accents, elegant typography, and sophisticated layout')">
+                                            <span class="quick-icon">💎</span>
+                                            <span class="quick-text">Luxury Transform</span>
+                                        </button>
+                                        <button class="wb-quick-btn modern" onclick="WebsiteBuilder.quickAIEdit('Create modern minimalist design with clean lines, perfect spacing, and contemporary typography')">
+                                            <span class="quick-icon">🎯</span>
+                                            <span class="quick-text">Modern Minimal</span>
+                                        </button>
+                                        <button class="wb-quick-btn dramatic" onclick="WebsiteBuilder.quickAIEdit('Design dramatic dark theme with bold typography, striking contrasts, and cinematic feeling')">
+                                            <span class="quick-icon">🎬</span>
+                                            <span class="quick-text">Dark Cinematic</span>
+                                        </button>
+                                        <button class="wb-quick-btn portfolio" onclick="WebsiteBuilder.quickAIEdit('Generate complete portfolio sections with image galleries, lightbox effects, and professional presentation')">
+                                            <span class="quick-icon">📸</span>
+                                            <span class="quick-text">Portfolio Pro</span>
+                                        </button>
+                                        <button class="wb-quick-btn booking" onclick="WebsiteBuilder.quickAIEdit('Add booking system elements, contact forms, pricing tables, and call-to-action buttons optimized for conversions')">
+                                            <span class="quick-icon">📅</span>
+                                            <span class="quick-text">Booking System</span>
+                                        </button>
+                                        <button class="wb-quick-btn animations" onclick="WebsiteBuilder.quickAIEdit('Add smooth animations, parallax effects, hover transitions, and modern interactive elements throughout')">
+                                            <span class="quick-icon">⚡</span>
+                                            <span class="quick-text">Add Animations</span>
+                                        </button>
                                     </div>
                                 </div>
+
+                                <!-- AI Status & History -->
                                 <div class="wb-ai-status" id="wb-ai-status"></div>
                                 <div class="wb-ai-history" id="wb-ai-history">
-                                    <h4>Recent Changes:</h4>
+                                    <h4>AI Generation History:</h4>
                                     <div class="wb-ai-history-list"></div>
+                                </div>
+                                
+                                <!-- AI Credits Display -->
+                                <div class="wb-ai-credits">
+                                    <div class="credits-display">
+                                        <span class="credits-icon">⚡</span>
+                                        <span class="credits-text">AI Power: </span>
+                                        <span class="credits-count" id="wb-ai-credits-count">Unlimited</span>
+                                    </div>
+                                    <div class="credits-info">
+                                        <small>Full Power Mode - No Restrictions</small>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -16958,6 +17286,110 @@ END:VCALENDAR`;
                 dots.forEach((dot, index) => {
                     dot.classList.toggle('active', index === this.carouselIndex);
                 });
+            },
+
+            // Full Power AI Functions
+            setAIMode(mode) {
+                this.currentAIMode = mode;
+                
+                // Update button states
+                document.querySelectorAll('.wb-mode-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.mode === mode);
+                });
+
+                // Update placeholder text based on mode
+                const textarea = document.getElementById('wb-ai-input');
+                const placeholders = {
+                    'standard': 'Examples:\n• "Make this look more elegant"\n• "Improve the colors and typography"\n• "Add a contact form section"',
+                    'advanced': 'Examples:\n• "Create a complete hero section with parallax background"\n• "Design a portfolio grid with lightbox effects"\n• "Add pricing packages with comparison table"',
+                    'godmode': 'Examples:\n• "Generate a complete luxury wedding photography website"\n• "Create a full commercial photography portfolio with 5 pages"\n• "Build an entire photography business site with booking system"'
+                };
+                
+                if (textarea && placeholders[mode]) {
+                    textarea.placeholder = placeholders[mode];
+                }
+
+                this.showAIStatus(`AI Mode switched to: ${mode.toUpperCase()}`, 'success');
+            },
+
+            updateBusinessContext() {
+                const photographyType = document.getElementById('wb-photography-type').value;
+                const photographerName = document.getElementById('wb-photographer-name').value;
+                const businessLocation = document.getElementById('wb-business-location').value;
+
+                this.businessContext = {
+                    type: photographyType,
+                    name: photographerName,
+                    location: businessLocation
+                };
+
+                console.log('Business context updated:', this.businessContext);
+            },
+
+            async generateFullWebsite() {
+                this.showAIStatus('🌟 Generating complete photography website...', 'loading');
+                
+                try {
+                    const businessContext = this.businessContext || {};
+                    const photographyType = businessContext.type || 'wedding';
+                    const businessName = businessContext.name || 'Professional Photography Studio';
+                    const location = businessContext.location || 'Your City';
+
+                    const fullWebsitePrompt = `Create a complete, professional photography website for a ${photographyType} photographer named "${businessName}" located in ${location}". 
+                    
+                    Requirements:
+                    - Hero section with stunning background and compelling headline
+                    - About section with photographer story
+                    - Portfolio/Gallery showcase with image placeholders
+                    - Services section with packages and pricing
+                    - Testimonials section with client reviews
+                    - Contact section with booking form
+                    - Professional typography and luxury design
+                    - Mobile-responsive layout
+                    - Modern animations and effects
+                    - Optimized for conversions and bookings
+                    
+                    Make it look like a $10,000+ custom photography website.`;
+
+                    const response = await fetch('/api/ai-website-edit', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            request: fullWebsitePrompt,
+                            currentHTML: '<div></div>', // Start fresh
+                            websiteType: `${photographyType} photography`,
+                            mode: 'godmode',
+                            businessContext: this.businessContext
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`Server error: ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        // Apply the complete website
+                        this.saveToHistory();
+                        const canvas = document.getElementById('wb-canvas');
+                        canvas.innerHTML = result.newHTML;
+                        
+                        this.setupEditableElements();
+                        this.showAIStatus('🌟 Complete website generated successfully!', 'success');
+                        this.addToAIHistory('Generate Complete Website', 'Full professional photography website created');
+                        this.savePage();
+                        
+                    } else {
+                        this.showAIStatus(`Error: ${result.error}`, 'error');
+                    }
+                    
+                } catch (error) {
+                    console.error('Full Website Generation Error:', error);
+                    this.showAIStatus('Failed to generate complete website. Please try again.', 'error');
+                }
             },
 
             switchBadassTab(tabName) {
