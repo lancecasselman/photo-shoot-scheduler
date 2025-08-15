@@ -1558,7 +1558,11 @@
 
             websiteData = { template: templateName, elements: template.elements };
             setupElementSelection();
-            initializeTouchToEdit();
+            
+            // Small delay to ensure DOM is updated before initializing touch-to-edit
+            setTimeout(() => {
+                initializeTouchToEdit();
+            }, 100);
         }
 
         // Drag and drop
@@ -1892,8 +1896,10 @@
                 loadTemplate(page.template || 'modern');
             }
             
-            // Reinitialize touch-to-edit
-            initializeTouchToEdit();
+            // Reinitialize touch-to-edit with delay
+            setTimeout(() => {
+                initializeTouchToEdit();
+            }, 100);
             
             console.log(`Switched to page: ${pageId}`);
         }
@@ -1966,8 +1972,10 @@
             
             // Hide toolbar when clicking outside
             document.addEventListener('click', function(e) {
-                if (!toolbar.contains(e.target) && !e.target.closest('.editable-text')) {
+                if (!toolbar.contains(e.target) && !e.target.closest('.editable-text') && !e.target.classList.contains('editable-text')) {
+                    console.log('Hiding toolbar - clicked outside');
                     toolbar.style.display = 'none';
+                    currentTextElement = null;
                 }
             });
             
@@ -2142,6 +2150,9 @@
                 
                 element.addEventListener('click', function(e) {
                     e.stopPropagation();
+                    e.preventDefault();
+                    
+                    console.log('Text element clicked:', this.tagName, this.textContent.substring(0, 50));
                     
                     // Show floating toolbar for text elements
                     showTextToolbar(this, e);
@@ -2152,11 +2163,13 @@
                         this.focus();
                         
                         // Select all text for easy replacement
-                        const range = document.createRange();
-                        range.selectNodeContents(this);
-                        const selection = window.getSelection();
-                        selection.removeAllRanges();
-                        selection.addRange(range);
+                        setTimeout(() => {
+                            const range = document.createRange();
+                            range.selectNodeContents(this);
+                            const selection = window.getSelection();
+                            selection.removeAllRanges();
+                            selection.addRange(range);
+                        }, 10);
                     }
                 });
                 
@@ -2259,10 +2272,10 @@
         document.addEventListener('DOMContentLoaded', function() {
             initializeTabs();
             initializeDragAndDrop();
+            initializeFloatingToolbar(); // Initialize toolbar first
             loadTemplate('modern');
             setupElementSelection();
             initializeTouchToEdit();
-            initializeFloatingToolbar();
         });
     </script>
 </body>
