@@ -15032,11 +15032,62 @@ END:VCALENDAR`;
                     </div>
                     <div class="wb-main">
                         <div class="wb-sidebar">
-                            <h3>Templates</h3>
-                            <div class="wb-template-grid">
-                                <button class="wb-template-btn" onclick="WebsiteBuilder.selectTemplate('minimal')">Minimal Portfolio</button>
-                                <button class="wb-template-btn" onclick="WebsiteBuilder.selectTemplate('wedding')">Wedding Photography</button>
-                                <button class="wb-template-btn" onclick="WebsiteBuilder.selectTemplate('cinematic')" style="background: linear-gradient(45deg, #d4af37, #f4d03f); color: black; font-weight: bold;">🎬 Cinematic Studio</button>
+                            <h3>Inspirational Templates</h3>
+                            <div class="wb-template-carousel">
+                                <div class="wb-carousel-container">
+                                    <div class="wb-carousel-track" id="wb-carousel-track">
+                                        <div class="wb-template-card" onclick="WebsiteBuilder.selectTemplate('minimal')">
+                                            <div class="wb-template-preview" style="background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                                <div class="wb-template-overlay">
+                                                    <h4 class="wb-template-title">Minimal Portfolio</h4>
+                                                    <p class="wb-template-description">Clean, elegant design perfect for showcasing your best work</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="wb-template-card" onclick="WebsiteBuilder.selectTemplate('wedding')">
+                                            <div class="wb-template-preview" style="background-image: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);">
+                                                <div class="wb-template-overlay">
+                                                    <h4 class="wb-template-title">Wedding Photography</h4>
+                                                    <p class="wb-template-description">Romantic and dreamy design for wedding photographers</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="wb-template-card" onclick="WebsiteBuilder.selectTemplate('cinematic')">
+                                            <div class="wb-template-preview" style="background-image: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);">
+                                                <div class="wb-template-badge">New</div>
+                                                <div class="wb-template-overlay">
+                                                    <h4 class="wb-template-title">Cinematic Studio</h4>
+                                                    <p class="wb-template-description">Dramatic, movie-inspired layout for creative professionals</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="wb-template-card" onclick="WebsiteBuilder.selectTemplate('portrait')">
+                                            <div class="wb-template-preview" style="background-image: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);">
+                                                <div class="wb-template-overlay">
+                                                    <h4 class="wb-template-title">Portrait Studio</h4>
+                                                    <p class="wb-template-description">Professional layout focused on headshots and portraits</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="wb-template-card" onclick="WebsiteBuilder.selectTemplate('commercial')">
+                                            <div class="wb-template-preview" style="background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                                <div class="wb-template-overlay">
+                                                    <h4 class="wb-template-title">Commercial Pro</h4>
+                                                    <p class="wb-template-description">Bold, business-focused design for commercial photographers</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button class="wb-carousel-nav wb-carousel-prev" onclick="WebsiteBuilder.carouselPrev()">‹</button>
+                                    <button class="wb-carousel-nav wb-carousel-next" onclick="WebsiteBuilder.carouselNext()">›</button>
+                                </div>
+                                <div class="wb-carousel-dots" id="wb-carousel-dots">
+                                    <div class="wb-carousel-dot active" onclick="WebsiteBuilder.carouselGoTo(0)"></div>
+                                    <div class="wb-carousel-dot" onclick="WebsiteBuilder.carouselGoTo(1)"></div>
+                                    <div class="wb-carousel-dot" onclick="WebsiteBuilder.carouselGoTo(2)"></div>
+                                    <div class="wb-carousel-dot" onclick="WebsiteBuilder.carouselGoTo(3)"></div>
+                                    <div class="wb-carousel-dot" onclick="WebsiteBuilder.carouselGoTo(4)"></div>
+                                </div>
                             </div>
                             
                             <h3>Photography Components</h3>
