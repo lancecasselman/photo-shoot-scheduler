@@ -39,19 +39,33 @@ function createR2Routes() {
 
   // Authentication middleware for all routes - compatible with main server auth
   router.use((req, res, next) => {
-    // Check for existing authentication from main server
-    if (req.isAuthenticated && req.isAuthenticated()) {
-      req.user = req.user || req.session.user;
+    // Strict authentication check - no fallbacks that could be bypassed
+    const isAuthenticated = req.isAuthenticated && req.isAuthenticated();
+    const hasValidSession = req.session && req.session.user && req.session.user.uid;
+    
+    if (isAuthenticated && req.user && req.user.uid) {
+      // Primary authentication method
       return next();
     }
     
-    // Fallback to session-based auth
-    if (req.session && req.session.user) {
+    if (hasValidSession) {
+      // Secondary authentication via session - but verify user ID exists
       req.user = req.session.user;
-      return next();
+      if (req.user.uid) {
+        return next();
+      }
     }
     
-    console.log('R2 API Auth failed - no valid session');
+    // Log failed authentication attempts for security monitoring
+    console.log('R2 API Auth failed - no valid session', {
+      hasIsAuthenticated: !!req.isAuthenticated,
+      isAuthenticated: isAuthenticated,
+      hasSession: !!req.session,
+      hasSessionUser: !!(req.session && req.session.user),
+      hasUserUid: !!(req.user && req.user.uid),
+      userAgent: req.get('User-Agent'),
+      ip: req.ip
+    });
     return res.status(401).json({ error: 'Authentication required' });
   });
 

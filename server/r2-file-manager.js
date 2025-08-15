@@ -133,8 +133,9 @@ class R2FileManager {
       const thumbnails = [];
 
       for (const size of thumbnailSizes) {
+        let sharpInstance = null;
         try {
-          // Process image with Sharp
+          // Process image with Sharp - create single instance to avoid memory leaks
           let processedBuffer;
           
           // Handle different file types
@@ -143,7 +144,8 @@ class R2FileManager {
           if (isRawFile) {
             // For RAW files, extract embedded JPEG if possible, otherwise convert
             try {
-              processedBuffer = await sharp(fileBuffer)
+              sharpInstance = sharp(fileBuffer);
+              processedBuffer = await sharpInstance
                 .jpeg({ quality: size.quality, progressive: true, mozjpeg: true })
                 .resize(size.width, size.height, { 
                   fit: 'inside', 
@@ -151,17 +153,32 @@ class R2FileManager {
                   background: { r: 255, g: 255, b: 255, alpha: 1 }
                 })
                 .toBuffer();
+              
+              // Clean up Sharp instance
+              sharpInstance.destroy();
+              sharpInstance = null;
             } catch (rawError) {
               console.warn(` RAW processing failed for ${originalFilename}, trying basic conversion`);
+              // Clean up failed instance
+              if (sharpInstance) {
+                sharpInstance.destroy();
+              }
+              
               // Fallback for difficult RAW formats
-              processedBuffer = await sharp(fileBuffer)
+              sharpInstance = sharp(fileBuffer);
+              processedBuffer = await sharpInstance
                 .resize(size.width, size.height, { fit: 'inside', withoutEnlargement: true })
                 .jpeg({ quality: size.quality })
                 .toBuffer();
+              
+              // Clean up Sharp instance
+              sharpInstance.destroy();
+              sharpInstance = null;
             }
           } else {
             // Standard image processing
-            processedBuffer = await sharp(fileBuffer)
+            sharpInstance = sharp(fileBuffer);
+            processedBuffer = await sharpInstance
               .resize(size.width, size.height, { 
                 fit: 'inside', 
                 withoutEnlargement: true,
@@ -169,6 +186,10 @@ class R2FileManager {
               })
               .jpeg({ quality: size.quality, progressive: true })
               .toBuffer();
+            
+            // Clean up Sharp instance
+            sharpInstance.destroy();
+            sharpInstance = null;
           }
 
           // Upload thumbnail to R2
@@ -200,6 +221,14 @@ class R2FileManager {
 
         } catch (sizeError) {
           console.warn(` Failed to generate ${size.suffix} thumbnail:`, sizeError.message);
+          // Ensure Sharp instance is cleaned up on error
+          if (sharpInstance) {
+            try {
+              sharpInstance.destroy();
+            } catch (destroyError) {
+              console.warn(` Error cleaning up Sharp instance:`, destroyError.message);
+            }
+          }
         }
       }
 

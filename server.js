@@ -77,11 +77,21 @@ async function getUserAiCredits(userId) {
         return result.rows[0]?.ai_credits || 0;
     } catch (error) {
         console.error('Error getting user AI credits:', error);
-        // Return a default credit amount on connection error to prevent blocking
-        return 10000;
+        // Log the specific error for debugging
+        console.error('Database error details:', {
+            code: error.code,
+            detail: error.detail,
+            hint: error.hint
+        });
+        // Return a conservative default instead of high amount
+        return 0;
     } finally {
         if (client) {
-            client.release();
+            try {
+                client.release();
+            } catch (releaseError) {
+                console.error('Error releasing database client:', releaseError);
+            }
         }
     }
 }
@@ -91,11 +101,15 @@ async function useAiCredits(userId, amount, operation, details) {
     try {
         client = await pool.connect();
         
+        // Use a transaction to ensure data consistency
+        await client.query('BEGIN');
+        
         // First check if user has enough credits
         const result = await client.query('SELECT ai_credits FROM users WHERE id = $1', [userId]);
         const currentCredits = result.rows[0]?.ai_credits || 0;
         
         if (currentCredits < amount) {
+            await client.query('ROLLBACK');
             throw new Error('Insufficient AI credits');
         }
 
@@ -108,13 +122,25 @@ async function useAiCredits(userId, amount, operation, details) {
             VALUES ($1, $2, $3, $4, NOW())
         `, [userId, -amount, operation, details]);
 
+        await client.query('COMMIT');
         return amount;
     } catch (error) {
         console.error('Error using AI credits:', error);
+        if (client) {
+            try {
+                await client.query('ROLLBACK');
+            } catch (rollbackError) {
+                console.error('Error rolling back transaction:', rollbackError);
+            }
+        }
         throw error;
     } finally {
         if (client) {
-            client.release();
+            try {
+                client.release();
+            } catch (releaseError) {
+                console.error('Error releasing database client:', releaseError);
+            }
         }
     }
 }
@@ -220,11 +246,11 @@ async function updateRawStorageUsage(userId, fileSizeTB, fileSizeMB, fileCount) 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    // Improved connection pool configuration for stability
-    max: 10, // Reduced pool size for better resource management
+    // Unified connection pool configuration to match server/db.ts
+    max: 20, // Increased to match db.ts for consistency
     min: 2, // Keep minimum connections alive
-    idleTimeoutMillis: 60000, // Increased idle timeout to 60 seconds
-    connectionTimeoutMillis: 10000, // Increased connection timeout to 10 seconds
+    idleTimeoutMillis: 30000, // Match db.ts configuration (30 seconds)
+    connectionTimeoutMillis: 5000, // Match db.ts configuration (5 seconds)
     acquireTimeoutMillis: 60000, // 60 second acquire timeout
     maxUses: 5000, // Reduced max uses before replacement
     keepAlive: true, // Keep connections alive
@@ -582,66 +608,7 @@ async function processRAWBackups(sessionId, rawFiles, userId) {
 
 // R2 backup processing is handled by processR2BackupsAsync() in background
 
-// Firebase Authentication middleware
-const isAuthenticated = async (req, res, next) => {
-    // DEV_MODE bypass for development
-    if (DEV_MODE) {
-        req.user = {
-            uid: 'dev-user-123',
-            email: 'dev@example.com',
-            displayName: 'Development User'
-        };
-        return next();
-    }
-
-    // Check if Firebase is available
-    if (!admin.apps.length) {
-        // Development testing bypass - set TEST_MODE=true to enable testing without auth
-        if (process.env.TEST_MODE === 'true') {
-            // Create a test user for development
-            req.user = {
-                uid: 'test-user-123',
-                email: 'test@example.com',
-                displayName: 'Test User'
-            };
-            return next();
-        }
-
-        return res.status(401).json({ message: 'Authentication service unavailable. Please configure Firebase credentials.' });
-    }
-
-    // Check session first
-    if (req.session && req.session.user) {
-        req.user = req.session.user;
-        console.log('Authentication via session successful for:', req.session.user.email);
-        return next();
-    }
-
-    // Check Authorization header for Firebase ID token
-    const authHeader = req.headers.authorization;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-        const idToken = authHeader.split('Bearer ')[1];
-
-        try {
-            const decodedToken = await admin.auth().verifyIdToken(idToken);
-            req.user = {
-                uid: decodedToken.uid,
-                email: decodedToken.email,
-                displayName: decodedToken.name || decodedToken.email
-            };
-
-            // Store in session for future requests
-            req.session.user = req.user;
-            return next();
-        } catch (error) {
-            console.error('Firebase token verification failed:', error);
-        }
-    }
-
-    // No valid authentication found
-    console.log('Authentication failed for:', req.url, 'Session exists:', !!req.session, 'User in session:', !!req.session?.user);
-    res.status(401).json({ message: 'Authentication required. Please log in.' });
-};
+// Firebase Authentication middleware (removed - using enhanced version below)
 
 // Get current user info
 const getCurrentUser = (req) => {
@@ -666,6 +633,42 @@ const normalizeUserForLance = (user) => {
     }
 
     return user;
+};
+
+// Enhanced authentication middleware with strict security
+const isAuthenticated = (req, res, next) => {
+    // DEV_MODE bypass for development
+    if (DEV_MODE) {
+        req.user = { uid: 'dev-user', email: 'dev@example.com' };
+        return next();
+    }
+
+    // Strict authentication check - multiple validation layers
+    const hasValidSession = req.session && req.session.user && req.session.user.uid;
+    const userHasValidId = req.session?.user?.uid && req.session.user.uid.length > 0;
+    const userHasValidEmail = req.session?.user?.email && req.session.user.email.includes('@');
+    
+    if (!hasValidSession || !userHasValidId || !userHasValidEmail) {
+        console.log('🚫 Authentication failed:', {
+            hasSession: !!req.session,
+            hasSessionUser: !!(req.session && req.session.user),
+            hasUserId: !!(req.session?.user?.uid),
+            hasUserEmail: !!(req.session?.user?.email),
+            sessionId: req.sessionID,
+            userAgent: req.get('User-Agent'),
+            ip: req.ip,
+            timestamp: new Date().toISOString()
+        });
+        
+        return res.status(401).json({ 
+            message: 'Authentication required',
+            redirectTo: '/auth.html'
+        });
+    }
+
+    // Set req.user for downstream middleware
+    req.user = req.session.user;
+    next();
 };
 
 // Subscription check middleware
@@ -12094,4 +12097,83 @@ app.post('/api/stripe-connect/refresh', isAuthenticated, async (req, res) => {
         });
     }
 });
+
+// Global error handlers to prevent server crashes
+app.use((err, req, res, next) => {
+    console.error('🔥 Unhandled application error:', {
+        error: err.message,
+        stack: err.stack,
+        url: req.url,
+        method: req.method,
+        userAgent: req.get('User-Agent'),
+        ip: req.ip,
+        timestamp: new Date().toISOString()
+    });
+    
+    // Send appropriate error response
+    if (res.headersSent) {
+        return next(err);
+    }
+    
+    res.status(500).json({
+        error: 'Internal server error',
+        message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
+    });
+});
+
+// Handle 404 errors
+app.use((req, res) => {
+    console.log('🚫 404 - Resource not found:', {
+        url: req.url,
+        method: req.method,
+        userAgent: req.get('User-Agent'),
+        ip: req.ip
+    });
+    
+    res.status(404).json({
+        error: 'Not found',
+        message: 'The requested resource was not found'
+    });
+});
+
+// Global process error handlers
+process.on('uncaughtException', (err) => {
+    console.error('💥 UNCAUGHT EXCEPTION - Server will shut down gracefully:', err);
+    console.error('Stack trace:', err.stack);
+    
+    // Close server gracefully
+    if (typeof server !== 'undefined' && server) {
+        server.close(() => {
+            console.log('💥 Process terminated due to uncaught exception');
+            process.exit(1);
+        });
+        
+        // Force close after 10 seconds
+        setTimeout(() => {
+            console.log('💥 Forcing process termination');
+            process.exit(1);
+        }, 10000).unref();
+    } else {
+        process.exit(1);
+    }
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('💥 UNHANDLED PROMISE REJECTION:', {
+        reason: reason,
+        promise: promise,
+        timestamp: new Date().toISOString()
+    });
+    
+    // For unhandled rejections, log but don't crash the server
+    // unless it's a critical database or auth failure
+    if (reason && (reason.message?.includes('ECONNREFUSED') || 
+                   reason.message?.includes('authentication') ||
+                   reason.message?.includes('connection'))) {
+        console.error('💥 Critical system error detected, shutting down gracefully');
+        process.exit(1);
+    }
+});
+
+// Note: Server startup and graceful shutdown handlers are already configured in the existing server startup code
 
