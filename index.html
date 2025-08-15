@@ -13381,22 +13381,25 @@ END:VCALENDAR`;
             background: #0a0a0a;
             border-radius: 0;
             overflow: hidden;
-            position: relative;
+            position: fixed;
+            top: 0;
+            left: 0;
             display: flex;
             flex-direction: column;
+            z-index: 1000;
         }
 
         .wb-header {
-            height: 50px;
+            height: 60px;
             background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
             backdrop-filter: blur(10px);
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 15px;
-            z-index: 10000;
+            padding: 0 20px;
             position: relative;
+            flex-shrink: 0;
         }
 
         .wb-logo {
@@ -13479,53 +13482,44 @@ END:VCALENDAR`;
             transition: all 0.3s ease;
         }
         
-        /* Website Builder Z-Index Management */
-        .wb-canvas, .wb-canvas * {
-            /* Ensure no AI-generated content can exceed website builder UI */
+        /* COMPLETE WEBSITE BUILDER LAYOUT RESET */
+        
+        /* Reset all z-index layering */
+        .wb-canvas,
+        .wb-canvas *,
+        .wb-canvas *::before,
+        .wb-canvas *::after {
+            z-index: auto !important;
+            position: static !important;
+        }
+        
+        /* Only allow specific positioning for essential elements */
+        .wb-canvas .wb-editable {
             position: relative !important;
-        }
-        
-        .wb-canvas * {
-            /* Limit z-index for all canvas content to prevent interference */
             z-index: 1 !important;
         }
         
-        .wb-canvas *.wb-editable:hover {
-            z-index: 5 !important;
+        .wb-canvas .wb-editable:hover {
+            z-index: 2 !important;
         }
         
-        .wb-canvas *.wb-editable.selected {
-            z-index: 10 !important;
-        }
-        
-        /* Ensure any AI-generated modals or overlays respect z-index hierarchy */
-        .wb-canvas [style*="position: fixed"],
-        .wb-canvas [style*="position: absolute"] {
-            z-index: 50 !important;
-        }
-        
-        /* Override any inline z-index styles from AI that might be too high */
-        .wb-canvas [style*="z-index"] {
-            z-index: 1 !important;
+        .wb-canvas .wb-editable.selected {
+            z-index: 3 !important;
         }
 
-        /* AI Editor Panel Styling - Higher z-index to always stay on top */
+        /* AI Editor Panel - Integrated into layout */
         .wb-ai-panel {
-            position: fixed;
-            top: 0;
-            right: -400px;
-            width: 400px;
-            height: 100vh;
+            width: 0;
             background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
             border-left: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: -5px 0 20px rgba(0, 0, 0, 0.3);
-            z-index: 9999;
-            transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            overflow-y: auto;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            flex-shrink: 0;
         }
         
         .wb-ai-panel.active {
-            right: 0;
+            width: 420px;
+            overflow-y: auto;
         }
         
         .wb-ai-header {
@@ -14300,21 +14294,24 @@ END:VCALENDAR`;
         .wb-main {
             flex: 1;
             display: flex;
-            position: relative;
             overflow: hidden;
-            height: calc(100vh - 50px);
-            min-height: 600px;
+            height: calc(100vh - 60px);
+        }
+        
+        .wb-content-area {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
         }
 
         .wb-sidebar {
-            width: 200px;
-            min-width: 200px;
+            width: 250px;
+            min-width: 250px;
             background: #1a1a1a;
             border-right: 1px solid rgba(255, 255, 255, 0.1);
             overflow-y: auto;
-            padding: 15px 10px;
-            position: relative;
-            z-index: 1000;
+            padding: 20px;
+            flex-shrink: 0;
         }
 
         .wb-sidebar h3 {
@@ -14726,57 +14723,53 @@ END:VCALENDAR`;
 
         .wb-canvas-container {
             flex: 1;
-            background: #0a0a0a;
+            background: #0f0f0f;
             display: flex;
             justify-content: center;
-            align-items: flex-start;
-            padding: 20px;
+            align-items: center;
+            padding: 30px;
             overflow: auto;
-            min-height: calc(100vh - 50px);
+            position: relative;
         }
 
         .wb-canvas {
             background: white;
-            border-radius: 8px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
             transition: all 0.3s ease;
-            overflow: visible;
+            overflow: hidden;
             position: relative;
-            margin: 20px auto;
         }
 
         .wb-canvas.desktop {
-            width: min(1200px, calc(100vw - 260px));
-            min-height: max(800px, calc(100vh - 120px));
+            width: 1200px;
+            height: 800px;
         }
 
         .wb-canvas.tablet {
-            width: min(768px, calc(100vw - 260px));
-            min-height: max(900px, calc(100vh - 120px));
+            width: 768px;
+            height: 1024px;
         }
 
         .wb-canvas.mobile {
-            width: min(375px, calc(100vw - 260px));
-            min-height: max(700px, calc(100vh - 120px));
+            width: 375px;
+            height: 667px;
         }
 
         .wb-edit-panel {
-            width: 400px;
+            width: 0;
             background: #1a1a1a;
             border-left: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            overflow-y: auto;
-            transform: translateX(100%);
-            transition: transform 0.3s ease;
-            position: absolute;
-            right: 0;
-            top: 0;
-            bottom: 0;
-            z-index: 9998;
+            padding: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
         }
 
         .wb-edit-panel.active {
-            transform: translateX(0);
+            width: 350px;
+            padding: 20px;
+            overflow-y: auto;
         }
 
         .wb-edit-panel h3 {
@@ -15693,16 +15686,26 @@ END:VCALENDAR`;
                             </div>
                         </div>
                         
-                        <div class="wb-canvas-container">
-                            <div class="wb-canvas desktop" id="wb-canvas">
-                                <div style="padding: 40px;">
-                                    <h1 class="wb-editable" style="text-align: center; margin-bottom: 20px;">Welcome to Your Photography Portfolio</h1>
-                                    <p class="wb-editable" style="text-align: center; color: #666;">Click any element to edit or add new elements from the sidebar</p>
+                        <div class="wb-content-area">
+                            <div class="wb-canvas-container">
+                                <div class="wb-canvas desktop" id="wb-canvas">
+                                    <div style="padding: 40px;">
+                                        <h1 class="wb-editable" style="text-align: center; margin-bottom: 20px;">Welcome to Your Photography Portfolio</h1>
+                                        <p class="wb-editable" style="text-align: center; color: #666;">Click any element to edit or add new elements from the sidebar</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Edit Panel -->
+                            <div class="wb-edit-panel" id="wb-edit-panel">
+                                <h3>Element Properties</h3>
+                                <div id="wb-edit-content">
+                                    <p>Select an element to edit its properties</p>
                                 </div>
                             </div>
                         </div>
                         
-                        <!-- FULL POWER AI Editor Panel -->
+                        <!-- AI Editor Panel -->
                         <div class="wb-ai-panel" id="wb-ai-panel">
                             <div class="wb-ai-header">
                                 <h3>🚀 AI WEBSITE GENERATOR - FULL POWER</h3>
