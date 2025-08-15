@@ -1580,25 +1580,26 @@
         }
 
         .invoice-card-modal .modal-footer .btn-primary {
-            background: linear-gradient(135deg, #d4af37 0%, #f4e4bc 100%);
-            color: #1a1a1a;
+            background: linear-gradient(135deg, var(--primary-accent), var(--primary-accent-hover));
+            color: white;
             border: none;
         }
 
         .invoice-card-modal .modal-footer .btn-primary:hover {
+            background: linear-gradient(135deg, var(--primary-accent-hover), var(--primary-accent-dark));
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
         }
 
         .invoice-card-modal .modal-footer .btn-secondary {
-            background: white;
-            color: #4a5568;
-            border: 2px solid #e2e8f0;
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+            border: 2px solid var(--border-secondary);
         }
 
         .invoice-card-modal .modal-footer .btn-secondary:hover {
-            border-color: #d4af37;
-            background: #fefdfb;
+            border-color: var(--primary-accent);
+            background: var(--bg-input);
         }
 
         /* Payment Plan Styles */
@@ -3281,13 +3282,13 @@
         }
 
         .btn-secondary {
-            background: linear-gradient(135deg, #666, #888);
+            background: linear-gradient(135deg, var(--primary-accent), var(--primary-accent-hover));
             color: white;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #d4af37, #ffd700);
-            color: #1a1a1a;
+            background: linear-gradient(135deg, var(--primary-accent), var(--primary-accent-hover));
+            color: white;
         }
 
 
@@ -3849,26 +3850,27 @@
         }
         
         .payment-plan-modal .btn-secondary {
-            background: rgba(102, 126, 234, 0.8);
+            background: linear-gradient(135deg, var(--primary-accent), var(--primary-accent-hover));
             color: white;
-            border: 2px solid #667eea;
+            border: 2px solid var(--primary-accent);
         }
         
         .payment-plan-modal .btn-secondary:hover {
-            background: #667eea;
+            background: linear-gradient(135deg, var(--primary-accent-hover), var(--primary-accent-dark));
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
         }
         
         .payment-plan-modal .btn-primary {
-            background: linear-gradient(135deg, #d4af37 0%, #f4e4bc 100%);
-            color: #1a1a1a;
-            border: 2px solid #d4af37;
+            background: linear-gradient(135deg, var(--primary-accent), var(--primary-accent-hover));
+            color: white;
+            border: 2px solid var(--primary-accent);
         }
         
         .payment-plan-modal .btn-primary:hover {
+            background: linear-gradient(135deg, var(--primary-accent-hover), var(--primary-accent-dark));
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(212, 175, 55, 0.4);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
         }
 
         .session-notes {
@@ -5723,12 +5725,12 @@ ${contract.contract_content}
                         </div>
                         
                         <div style="margin:20px 0;text-align:center;">
-                            <button onclick="createPaymentPlan('${session.id}')" style="background:#d4af37;color:#1a1a1a;border:none;padding:15px 30px;border-radius:8px;cursor:pointer;font-weight:600;margin-right:10px;"> Create Payment Plan</button>
+                            <button onclick="createPaymentPlan('${session.id}')" style="background:linear-gradient(135deg, var(--primary-accent), var(--primary-accent-hover));color:white;border:none;padding:15px 30px;border-radius:8px;cursor:pointer;font-weight:600;margin-right:10px;transition:all 0.3s ease;"> Create Payment Plan</button>
                             <button onclick="document.getElementById('paymentPlanModal').remove()" style="background:#666;color:white;border:none;padding:15px 30px;border-radius:8px;cursor:pointer;">Cancel</button>
                         </div>
                         
                         <div style="display:flex;gap:15px;justify-content:flex-end;margin-top:30px;">
-                            <button onclick="document.getElementById('paymentPlanModal').remove()" style="padding:12px 24px;background:rgba(102,126,234,0.8);color:white;border:2px solid #667eea;border-radius:8px;cursor:pointer;">Close</button>
+                            <button onclick="document.getElementById('paymentPlanModal').remove()" style="padding:12px 24px;background:var(--primary-accent);color:white;border:2px solid var(--primary-accent);border-radius:8px;cursor:pointer;transition:all 0.3s ease;">Close</button>
                         </div>
                     </div>
                 </div>
@@ -6342,8 +6344,8 @@ ${contract.contract_content}
                                 </div>
                                 <div class="detail-item">
                                     <strong>Phone:</strong> <span style="color: #d4af37;">${session.phoneNumber}</span>
-                                    <button onclick="callClient('${session.phoneNumber}'); event.stopPropagation();" class="quick-action-btn call-btn">Phone</button>
-                                    <button onclick="textClient('${session.phoneNumber}', '${session.clientName}', '${sessionId}'); event.stopPropagation();" class="quick-action-btn text-btn">Message</button>
+                                    <button onclick="callClient('${session.phoneNumber}'); event.stopPropagation();" class="btn btn-secondary">Phone</button>
+                                    <button onclick="textClient('${session.phoneNumber}', '${session.clientName}', '${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Message</button>
                                 </div>
                             </div>
                             
@@ -6419,7 +6421,7 @@ ${contract.contract_content}
                                     <button onclick="viewPaymentPlan('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Payment Plan</button>
                                 ` : `
                                     <button onclick="createInvoiceWithTipping('${sessionId}'); event.stopPropagation();" class="btn btn-secondary"> Send Invoice</button>
-                                    <button onclick="sendDepositInvoice('${sessionId}'); event.stopPropagation();" class="btn btn-warning" style="background-color: #fd7e14; color: white;"> Send Deposit</button>
+                                    <button onclick="sendDepositInvoice('${sessionId}'); event.stopPropagation();" class="btn btn-secondary" style="background: linear-gradient(135deg, #fd7e14, #ff9500); color: white; border: none;"> Send Deposit</button>
                                     <button onclick="openPaymentPlanModal('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Payment Plan</button>
                                 `}
                                 <button onclick="exportSessionPDF('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Export PDF</button>
@@ -6630,7 +6632,7 @@ ${contract.contract_content}
                             <div id="uploadStatus" style="text-align: center; color: #d4af37;"></div>
                         </div>
                         <div style="text-align: center; margin-top: 20px;">
-                            <button onclick="startUpload('${sessionId}', '${folderType}')" class="btn btn-success" style="margin-right: 10px;">Upload Files</button>
+                            <button onclick="startUpload('${sessionId}', '${folderType}')" class="btn btn-secondary" style="margin-right: 10px;">Upload Files</button>
                             <button onclick="closeFileUploadModal()" class="btn btn-secondary">Cancel</button>
                         </div>
                     </div>
@@ -7430,10 +7432,10 @@ lance@thelegacyphotography.com`;
                         <em>(totally optional and not expected!)</em>
                     </p>
                     <div class="tip-buttons" style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-                        <button onclick="processTip('${sessionId}', 10)" class="tip-btn" style="background: linear-gradient(135deg, #d4af37, #ffd700); color: #1a1a1a; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: bold; min-width: 80px;">$10</button>
-                        <button onclick="processTip('${sessionId}', 25)" class="tip-btn" style="background: linear-gradient(135deg, #d4af37, #ffd700); color: #1a1a1a; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: bold; min-width: 80px;">$25</button>
-                        <button onclick="processTip('${sessionId}', 50)" class="tip-btn" style="background: linear-gradient(135deg, #d4af37, #ffd700); color: #1a1a1a; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: bold; min-width: 80px;">$50</button>
-                        <button onclick="customTipAmount('${sessionId}')" class="tip-btn" style="background: linear-gradient(135deg, #28a745, #20c997); color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: bold; min-width: 80px;">Custom</button>
+                        <button onclick="processTip('${sessionId}', 10)" class="tip-btn" style="background: linear-gradient(135deg, var(--primary-accent), var(--primary-accent-hover)); color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: bold; min-width: 80px; transition: all 0.3s ease;">$10</button>
+                        <button onclick="processTip('${sessionId}', 25)" class="tip-btn" style="background: linear-gradient(135deg, var(--primary-accent), var(--primary-accent-hover)); color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: bold; min-width: 80px; transition: all 0.3s ease;">$25</button>
+                        <button onclick="processTip('${sessionId}', 50)" class="tip-btn" style="background: linear-gradient(135deg, var(--primary-accent), var(--primary-accent-hover)); color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: bold; min-width: 80px; transition: all 0.3s ease;">$50</button>
+                        <button onclick="customTipAmount('${sessionId}')" class="tip-btn" style="background: linear-gradient(135deg, var(--primary-accent-hover), var(--primary-accent-dark)); color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: bold; min-width: 80px; transition: all 0.3s ease;">Custom</button>
                     </div>
                     ${session.tipReceived ? `
                         <div style="margin-top: 15px; padding: 10px; background: rgba(40, 167, 69, 0.1); border-radius: 8px; color: #28a745;">
@@ -7798,7 +7800,7 @@ lance@thelegacyphotography.com`;
                         </div>
                         
                         <div style="margin-top: 25px; text-align: center; border-top: 1px solid #eee; padding-top: 20px;">
-                            <button onclick="openContractModal('${sessionId}'); closeModal('contractsViewModal');" class="btn btn-primary">
+                            <button onclick="openContractModal('${sessionId}'); closeModal('contractsViewModal');" class="btn btn-secondary">
                                 Create New Contract
                             </button>
                             <button onclick="openCustomContractModal('${sessionId}'); closeModal('contractsViewModal');" class="btn btn-secondary" style="margin-left: 10px;">
@@ -8398,7 +8400,7 @@ ${contract.contract_content}
                             </div>
                             
                             <div style="text-align: center;">
-                                <button type="button" onclick="createCustomContract('${sessionId}')" class="btn btn-primary" style="margin-right: 10px;">
+                                <button type="button" onclick="createCustomContract('${sessionId}')" class="btn btn-secondary" style="margin-right: 10px;">
                                     Create Contract
                                 </button>
                                 <button type="button" onclick="closeModal('customContractModal')" class="btn btn-secondary">
