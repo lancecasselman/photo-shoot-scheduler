@@ -14972,6 +14972,16 @@ END:VCALENDAR`;
                     name: 'Cinematic Studio',
                     colors: { primary: '#0a0a0a', secondary: '#ffffff', accent: '#d4af37' },
                     fonts: { heading: 'Playfair Display', body: 'Raleway' }
+                },
+                portrait: {
+                    name: 'Portrait Studio',
+                    colors: { primary: '#2d1b2e', secondary: '#f9f7fa', accent: '#a18cd1' },
+                    fonts: { heading: 'Lora', body: 'Open Sans' }
+                },
+                commercial: {
+                    name: 'Commercial Pro',
+                    colors: { primary: '#1a1a2e', secondary: '#eee', accent: '#667eea' },
+                    fonts: { heading: 'Montserrat', body: 'Source Sans Pro' }
                 }
             },
 
@@ -15011,6 +15021,10 @@ END:VCALENDAR`;
             setupBuilder() {
                 const container = document.getElementById('website-builder-container');
                 if (!container) return;
+
+                // Initialize carousel state
+                this.carouselIndex = 0;
+                this.carouselTotal = 5;
 
                 container.innerHTML = `
                     <div class="wb-header">
@@ -16913,6 +16927,37 @@ END:VCALENDAR`;
                 }
                 
                 this.updateAICredits();
+            },
+
+            // Carousel Navigation Functions
+            carouselNext() {
+                this.carouselIndex = (this.carouselIndex + 1) % this.carouselTotal;
+                this.updateCarousel();
+            },
+
+            carouselPrev() {
+                this.carouselIndex = (this.carouselIndex - 1 + this.carouselTotal) % this.carouselTotal;
+                this.updateCarousel();
+            },
+
+            carouselGoTo(index) {
+                this.carouselIndex = index;
+                this.updateCarousel();
+            },
+
+            updateCarousel() {
+                const track = document.getElementById('wb-carousel-track');
+                const dots = document.querySelectorAll('.wb-carousel-dot');
+                
+                if (track) {
+                    const translateX = -this.carouselIndex * 100;
+                    track.style.transform = `translateX(${translateX}%)`;
+                }
+                
+                // Update dots
+                dots.forEach((dot, index) => {
+                    dot.classList.toggle('active', index === this.carouselIndex);
+                });
             },
 
             switchBadassTab(tabName) {
