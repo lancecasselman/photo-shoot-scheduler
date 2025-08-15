@@ -4272,6 +4272,69 @@
             margin-bottom: var(--spacing-xs);
         }
 
+        /* Collapsible Session Form Styles */
+        .collapsible-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            padding: var(--spacing-lg);
+            background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-secondary) 100%);
+            border-radius: var(--border-radius);
+            margin-bottom: var(--spacing-md);
+            border: 2px solid var(--primary-accent);
+            transition: all 0.3s ease;
+        }
+
+        .collapsible-header:hover {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .collapsible-header h2 {
+            margin: 0;
+            color: var(--text-primary);
+            font-family: var(--font-heading);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .collapsible-header h2::before {
+            content: '📝';
+            font-size: 1.2em;
+        }
+
+        .collapse-icon {
+            font-size: 1.5rem;
+            color: var(--primary-accent);
+            transition: transform 0.3s ease;
+            font-weight: bold;
+        }
+
+        .collapse-icon.rotated {
+            transform: rotate(180deg);
+        }
+
+        .collapsible-content {
+            max-height: 1000px;
+            opacity: 1;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .collapsible-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+
+        .session-form {
+            margin-bottom: var(--spacing-xl);
+        }
+
         .loading-message, .error-message {
             text-align: center;
             padding: var(--spacing-lg);
@@ -5104,7 +5167,11 @@
         
         <!-- Session Form -->
         <div class="session-form">
-            <h2>Add New Session</h2>
+            <div class="collapsible-header" onclick="toggleSessionForm()">
+                <h2>Add New Session</h2>
+                <span class="collapse-icon rotated" id="sessionFormIcon">▲</span>
+            </div>
+            <div class="collapsible-content collapsed" id="sessionFormContent">
             <form id="sessionForm">
                 <div class="form-grid">
                     <div class="form-group">
@@ -5182,6 +5249,7 @@
                 <button type="submit" class="btn btn-primary">Add Session</button>
 
             </form>
+            </div>
         </div>
 
         <!-- Global Storage Overview -->

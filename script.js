@@ -265,6 +265,28 @@ function showMobileTool(toolName) {
     console.log(`Mobile tool activated: ${toolName}`);
 }
 
+// Collapsible Session Form Toggle Function
+function toggleSessionForm() {
+    const content = document.getElementById('sessionFormContent');
+    const icon = document.getElementById('sessionFormIcon');
+    
+    if (content && icon) {
+        const isCollapsed = content.classList.contains('collapsed');
+        
+        if (isCollapsed) {
+            // Expand the form
+            content.classList.remove('collapsed');
+            icon.classList.remove('rotated');
+            icon.textContent = '▼';
+        } else {
+            // Collapse the form
+            content.classList.add('collapsed');
+            icon.classList.add('rotated');
+            icon.textContent = '▲';
+        }
+    }
+}
+
 // Add session to the list
 function addSession(sessionData) {
     console.log('Adding session:', sessionData);
