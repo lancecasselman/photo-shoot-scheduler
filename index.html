@@ -608,8 +608,8 @@
         /* Removed user avatar styling */
         
         .logout-btn {
-            background: linear-gradient(135deg, var(--warning-accent), #e55028);
-            color: var(--text-primary);
+            background: linear-gradient(135deg, #dc3545, #ff6b7a);
+            color: var(--text-inverse);
             border: none;
             padding: 10px 20px;
             border-radius: var(--border-radius-sm);
@@ -618,19 +618,19 @@
             transition: all 0.3s ease;
             font-weight: 600;
             cursor: pointer;
-            box-shadow: 0 4px 12px rgba(255, 107, 53, 0.25);
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.25);
             white-space: nowrap;
         }
         
         .logout-btn:hover {
-            background: linear-gradient(135deg, #ff8055, var(--warning-accent));
+            background: linear-gradient(135deg, #c82333, #ff5161);
             transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.35);
+            box-shadow: 0 6px 20px rgba(220, 53, 69, 0.35);
         }
         
         .logout-btn:active {
             transform: translateY(0);
-            box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
+            box-shadow: 0 2px 8px rgba(220, 53, 69, 0.25);
         }
         
         .session-form {
@@ -1051,9 +1051,9 @@
         }
 
         .quick-action-btn {
-            background: var(--gold-muted);
-            color: var(--bg-primary);
-            border: 1px solid var(--accent-beige);
+            background: var(--primary-accent);
+            color: var(--text-inverse);
+            border: 1px solid var(--primary-accent-hover);
             padding: var(--spacing-xs) var(--spacing-sm);
             border-radius: var(--border-radius-full);
             margin-left: var(--spacing-sm);
@@ -1064,10 +1064,10 @@
         }
 
         .quick-action-btn:hover {
-            background: var(--cream-warm);
-            color: var(--gold-muted);
+            background: var(--primary-accent-hover);
+            color: var(--text-inverse);
             transform: translateY(-1px);
-            box-shadow: var(--shadow-soft);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
         }
 
         .action-buttons {
@@ -1078,8 +1078,8 @@
         }
 
         .action-btn {
-            background: linear-gradient(135deg, #d4af37, #f4d03f);
-            color: #000;
+            background: linear-gradient(135deg, var(--primary-accent) 0%, var(--primary-accent-hover) 100%);
+            color: var(--text-inverse);
             border: none;
             padding: 10px 15px;
             border-radius: 8px;
@@ -1108,21 +1108,22 @@
         }
 
         .action-btn:hover {
+            background: linear-gradient(135deg, var(--primary-accent-hover) 0%, var(--primary-accent-dark) 100%);
             transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.4);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
         }
 
         .action-btn.premium {
-            background: linear-gradient(135deg, #d4af37, #f4e4bc);
-            color: #1a1a1a;
-            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
-            border: 2px solid #d4af37;
+            background: linear-gradient(135deg, var(--primary-accent) 0%, var(--primary-accent-hover) 100%);
+            color: var(--text-inverse);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+            border: 2px solid var(--primary-accent);
         }
 
         .action-btn.premium:hover {
-            background: linear-gradient(135deg, #f4e4bc, #d4af37);
+            background: linear-gradient(135deg, var(--primary-accent-hover) 0%, var(--primary-accent-dark) 100%);
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
         }
 
         .action-btn.premium:disabled {
@@ -1920,7 +1921,7 @@
 
         .template-btn {
             padding: 12px 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--primary-accent) 0%, var(--primary-accent-hover) 100%);
             color: white;
             border: none;
             border-radius: 8px;
@@ -1930,8 +1931,9 @@
         }
 
         .template-btn:hover {
+            background: linear-gradient(135deg, var(--primary-accent-hover) 0%, var(--primary-accent-dark) 100%);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
 
         .template-btn.legacy-style {
@@ -1940,7 +1942,7 @@
         }
 
         .template-btn.modern-style {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--primary-accent) 0%, var(--primary-accent-hover) 100%);
         }
 
         .template-btn.elegant-style {
@@ -2229,10 +2231,10 @@
         }
 
         .mode-btn.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--primary-accent) 0%, var(--primary-accent-hover) 100%);
             color: white;
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
 
         .builder-actions {
@@ -2242,9 +2244,9 @@
 
         .action-btn {
             padding: 10px 20px;
-            border: 2px solid #667eea;
+            border: 2px solid var(--primary-accent);
             background: white;
-            color: #667eea;
+            color: var(--primary-accent);
             border-radius: 8px;
             cursor: pointer;
             font-weight: 500;
@@ -2252,13 +2254,16 @@
         }
 
         .action-btn.primary {
-            background: #667eea;
+            background: var(--primary-accent);
             color: white;
         }
 
         .action-btn:hover {
+            background: var(--primary-accent-hover);
+            color: white;
+            border-color: var(--primary-accent-hover);
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
 
             height: 250px;
@@ -2395,7 +2400,7 @@
         }
 
         .use-template-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--primary-accent) 0%, var(--primary-accent-hover) 100%);
             color: white;
             border: none;
             padding: 14px 24px;
@@ -2407,8 +2412,9 @@
         }
 
         .use-template-btn:hover {
+            background: linear-gradient(135deg, var(--primary-accent-hover) 0%, var(--primary-accent-dark) 100%);
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
         }
 
 
