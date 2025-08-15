@@ -61,10 +61,6 @@ const { eq, and, desc, asc, between } = require('drizzle-orm');
 const { AIServices } = require('./server/ai-services');
 const { AI_CREDIT_BUNDLES, isValidBundle } = require('./shared/ai-credit-bundles');
 
-// Import Credit Billing System
-const CreditBillingService = require('./server/services/CreditBillingService');
-
-
 // REMOVED: Old storage system - will be rebuilt from scratch
 const UnifiedFileDeletion = require('./server/unified-file-deletion');
 
@@ -5849,8 +5845,6 @@ app.get('/api/health', async (req, res) => {
         });
     }
 });
-
-
 
 // Get individual session
 app.get('/api/sessions/:id', isAuthenticated, async (req, res) => {
