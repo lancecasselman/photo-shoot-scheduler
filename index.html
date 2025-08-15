@@ -488,6 +488,24 @@
             text-align: center;
         }
         
+        /* Filter Button Hover Effects */
+        .filter-toggle-btn:hover {
+            background: linear-gradient(135deg, var(--primary-accent-hover) 0%, var(--primary-accent-dark) 100%) !important;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35) !important;
+        }
+        
+        .filter-dropdown label:hover {
+            color: var(--primary-accent) !important;
+        }
+        
+        .filter-dropdown input[type="date"]:focus,
+        .filter-dropdown select:focus {
+            border-color: var(--primary-accent-hover) !important;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+            outline: none;
+        }
+        
         /* Modern Dark Main Content */
         .main-content {
             background: radial-gradient(ellipse at top, rgba(16, 185, 129, 0.05) 0%, transparent 50%),
@@ -5008,46 +5026,46 @@
                 <!-- Compact Filter Controls with Dropdowns -->
                 <div class="filter-controls-compact">
                     <!-- Filter Toggle Buttons -->
-                    <div class="filter-toggle-row" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
-                        <button type="button" class="filter-toggle-btn" onclick="toggleFilterSection('status')" style="background: #d4af37; color: #1a1a1a; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600;">
-                             Status Filters <span id="status-indicator" style="opacity: 0.7;">▼</span>
+                    <div class="filter-toggle-row" style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px;">
+                        <button type="button" class="filter-toggle-btn" onclick="toggleFilterSection('status')" style="background: linear-gradient(135deg, var(--primary-accent) 0%, var(--primary-accent-hover) 100%); color: white; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);">
+                             Status Filters <span id="status-indicator" style="opacity: 0.8; margin-left: 6px;">▼</span>
                         </button>
-                        <button type="button" class="filter-toggle-btn" onclick="toggleFilterSection('date')" style="background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600;">
-                            Date Range <span id="date-indicator" style="opacity: 0.7;">▼</span>
+                        <button type="button" class="filter-toggle-btn" onclick="toggleFilterSection('date')" style="background: linear-gradient(135deg, var(--primary-accent) 0%, var(--primary-accent-hover) 100%); color: white; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);">
+                            Date Range <span id="date-indicator" style="opacity: 0.8; margin-left: 6px;">▼</span>
                         </button>
-                        <button type="button" class="filter-toggle-btn" onclick="toggleFilterSection('type')" style="background: #2196F3; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600;">
-                            Session Type <span id="type-indicator" style="opacity: 0.7;">▼</span>
+                        <button type="button" class="filter-toggle-btn" onclick="toggleFilterSection('type')" style="background: linear-gradient(135deg, var(--primary-accent) 0%, var(--primary-accent-hover) 100%); color: white; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);">
+                            Session Type <span id="type-indicator" style="opacity: 0.8; margin-left: 6px;">▼</span>
                         </button>
-                        <button type="button" class="filter-toggle-btn" onclick="toggleFilterSection('sort')" style="background: #9C27B0; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600;">
-                             Sort Options <span id="sort-indicator" style="opacity: 0.7;">▼</span>
+                        <button type="button" class="filter-toggle-btn" onclick="toggleFilterSection('sort')" style="background: linear-gradient(135deg, var(--primary-accent) 0%, var(--primary-accent-hover) 100%); color: white; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);">
+                             Sort Options <span id="sort-indicator" style="opacity: 0.8; margin-left: 6px;">▼</span>
                         </button>
                     </div>
 
                     <!-- Collapsible Filter Sections -->
-                    <div id="status-filters" class="filter-dropdown" style="display: none; background: rgba(212,175,55,0.1); border-radius: 8px; padding: 15px; margin: 10px 0; border-left: 4px solid #d4af37;">
-                        <div class="checkbox-filters" style="display: flex; gap: 20px; flex-wrap: wrap;">
-                            <label style="display: flex; align-items: center; gap: 8px; color: #333; font-weight: 500;"><input type="checkbox" id="filterContractSigned" onchange="filterSessions()" style="margin: 0;"> Contract Signed</label>
-                            <label style="display: flex; align-items: center; gap: 8px; color: #333; font-weight: 500;"><input type="checkbox" id="filterPaid" onchange="filterSessions()" style="margin: 0;"> Paid</label>
-                            <label style="display: flex; align-items: center; gap: 8px; color: #333; font-weight: 500;"><input type="checkbox" id="filterDelivered" onchange="filterSessions()" style="margin: 0;">  Delivered</label>
+                    <div id="status-filters" class="filter-dropdown" style="display: none; background: rgba(16, 185, 129, 0.08); border-radius: 12px; padding: 20px; margin: 10px 0; border-left: 4px solid var(--primary-accent); backdrop-filter: blur(10px); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);">
+                        <div class="checkbox-filters" style="display: flex; gap: 24px; flex-wrap: wrap;">
+                            <label style="display: flex; align-items: center; gap: 10px; color: var(--text-primary); font-weight: 500; cursor: pointer; transition: all 0.3s ease;"><input type="checkbox" id="filterContractSigned" onchange="filterSessions()" style="margin: 0; accent-color: var(--primary-accent); transform: scale(1.1);"> Contract Signed</label>
+                            <label style="display: flex; align-items: center; gap: 10px; color: var(--text-primary); font-weight: 500; cursor: pointer; transition: all 0.3s ease;"><input type="checkbox" id="filterPaid" onchange="filterSessions()" style="margin: 0; accent-color: var(--primary-accent); transform: scale(1.1);"> Paid</label>
+                            <label style="display: flex; align-items: center; gap: 10px; color: var(--text-primary); font-weight: 500; cursor: pointer; transition: all 0.3s ease;"><input type="checkbox" id="filterDelivered" onchange="filterSessions()" style="margin: 0; accent-color: var(--primary-accent); transform: scale(1.1);">  Delivered</label>
                         </div>
                     </div>
 
-                    <div id="date-filters" class="filter-dropdown" style="display: none; background: rgba(76,175,80,0.1); border-radius: 8px; padding: 15px; margin: 10px 0; border-left: 4px solid #4CAF50;">
-                        <div class="date-range-controls" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <label style="color: #333; font-weight: 600;">From:</label>
-                                <input type="date" id="dateFromFilter" onchange="filterSessions()" style="padding: 8px; border: 2px solid #4CAF50; border-radius: 4px; background: white;">
+                    <div id="date-filters" class="filter-dropdown" style="display: none; background: rgba(16, 185, 129, 0.08); border-radius: 12px; padding: 20px; margin: 10px 0; border-left: 4px solid var(--primary-accent); backdrop-filter: blur(10px); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);">
+                        <div class="date-range-controls" style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <label style="color: var(--text-primary); font-weight: 600;">From:</label>
+                                <input type="date" id="dateFromFilter" onchange="filterSessions()" style="padding: 10px; border: 2px solid var(--primary-accent); border-radius: 6px; background: var(--bg-elevated); color: var(--text-primary);">
                             </div>
-                            <span style="color: #333; font-weight: 600;">to</span>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <label style="color: #333; font-weight: 600;">To:</label>
-                                <input type="date" id="dateToFilter" onchange="filterSessions()" style="padding: 8px; border: 2px solid #4CAF50; border-radius: 4px; background: white;">
+                            <span style="color: var(--text-primary); font-weight: 600;">to</span>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <label style="color: var(--text-primary); font-weight: 600;">To:</label>
+                                <input type="date" id="dateToFilter" onchange="filterSessions()" style="padding: 10px; border: 2px solid var(--primary-accent); border-radius: 6px; background: var(--bg-elevated); color: var(--text-primary);">
                             </div>
                         </div>
                     </div>
 
-                    <div id="type-filters" class="filter-dropdown" style="display: none; background: rgba(33,150,243,0.1); border-radius: 8px; padding: 15px; margin: 10px 0; border-left: 4px solid #2196F3;">
-                        <select id="sessionTypeFilter" onchange="filterSessions()" style="width: 100%; max-width: 300px; padding: 10px; border: 2px solid #2196F3; border-radius: 6px; background: white; font-size: 14px;">
+                    <div id="type-filters" class="filter-dropdown" style="display: none; background: rgba(16, 185, 129, 0.08); border-radius: 12px; padding: 20px; margin: 10px 0; border-left: 4px solid var(--primary-accent); backdrop-filter: blur(10px); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);">
+                        <select id="sessionTypeFilter" onchange="filterSessions()" style="width: 100%; max-width: 350px; padding: 12px; border: 2px solid var(--primary-accent); border-radius: 8px; background: var(--bg-elevated); color: var(--text-primary); font-size: 15px; font-weight: 500;">
                             <option value=""> All Types</option>
                             <option value="Wedding"> Wedding</option>
                             <option value="Family"> Family</option>
@@ -5057,8 +5075,8 @@
                         </select>
                     </div>
 
-                    <div id="sort-filters" class="filter-dropdown" style="display: none; background: rgba(156,39,176,0.1); border-radius: 8px; padding: 15px; margin: 10px 0; border-left: 4px solid #9C27B0;">
-                        <select id="sortOptions" onchange="sortSessions()" style="width: 100%; max-width: 350px; padding: 10px; border: 2px solid #9C27B0; border-radius: 6px; background: white; font-size: 14px;">
+                    <div id="sort-filters" class="filter-dropdown" style="display: none; background: rgba(16, 185, 129, 0.08); border-radius: 12px; padding: 20px; margin: 10px 0; border-left: 4px solid var(--primary-accent); backdrop-filter: blur(10px); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);">
+                        <select id="sortOptions" onchange="sortSessions()" style="width: 100%; max-width: 400px; padding: 12px; border: 2px solid var(--primary-accent); border-radius: 8px; background: var(--bg-elevated); color: var(--text-primary); font-size: 15px; font-weight: 500;">
                             <option value="calendar-upcoming">Calendar (Upcoming First)</option>
                             <option value="date-desc">Date (Newest First)</option>
                             <option value="date-asc" selected>Date (Oldest First)</option>
