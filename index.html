@@ -310,6 +310,11 @@
             align-items: center;
             gap: 12px;
             letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #ffffff, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: none;
         }
         
         .logo::before {
@@ -453,7 +458,8 @@
         .mobile-menu .nav-link:hover {
             background: var(--accent-teal);
             color: var(--text-primary);
-            transform: translateX(4px);
+            transform: translateX(6px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
         }
 
         .mobile-menu .nav-link.active {
@@ -503,6 +509,8 @@
             margin-bottom: var(--spacing-lg);
             position: relative;
             z-index: 1001;
+            backdrop-filter: blur(20px);
+            background: linear-gradient(135deg, var(--bg-card) 0%, rgba(26, 26, 26, 0.95) 100%);
         }
 
         .header-left {
@@ -521,6 +529,37 @@
             margin-bottom: var(--spacing-xl);
             border-bottom: 1px solid var(--border-secondary);
             padding-bottom: var(--spacing-md);
+            position: relative;
+        }
+        
+        .content-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 60px;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary-accent), var(--secondary-accent));
+            border-radius: 1px;
+        }
+        
+        .content-header h1 {
+            background: linear-gradient(135deg, #ffffff, #e5e7eb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: fadeInDown 0.8s ease;
+        }
+        
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         
         .header h1 {
@@ -769,8 +808,8 @@
             background: var(--accent-teal);
             color: var(--text-primary);
             border-color: var(--border-accent);
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-medium);
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.2);
         }
         
         .sessions-grid {
@@ -792,6 +831,7 @@
             overflow: hidden;
             box-shadow: var(--shadow-soft);
             position: relative;
+            backdrop-filter: blur(10px);
         }
         
         .session-list-item::before {
@@ -808,8 +848,8 @@
 
         .session-list-item:hover {
             border-color: var(--border-accent);
-            box-shadow: var(--shadow-hover);
-            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(16, 185, 129, 0.15), 0 4px 16px rgba(0, 0, 0, 0.1);
+            transform: translateY(-4px) scale(1.01);
         }
         
         .session-list-item:hover::before {
@@ -836,7 +876,22 @@
             font-weight: 700;
             font-family: var(--font-heading);
             letter-spacing: -0.02em;
-            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s ease;
+        }
+        
+        .session-list-item:hover .client-name {
+            transform: translateX(2px);
+            text-shadow: 0 3px 12px rgba(0, 0, 0, 0.5);
+        }
+        
+        .session-meta {
+            transition: all 0.3s ease;
+        }
+        
+        .session-list-item:hover .session-meta {
+            transform: translateY(-1px);
+            color: rgba(255, 255, 255, 0.9);
         }
 
         .session-meta {
@@ -967,13 +1022,30 @@
             cursor: pointer;
             font-weight: bold;
             font-size: 0.9em;
-            transition: all 0.2s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.6s;
+        }
+        
+        .action-btn:hover::before {
+            left: 100%;
         }
 
         .action-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.4);
         }
 
         .action-btn.premium {
@@ -4652,6 +4724,59 @@
         .summary-item span {
             font-weight: 600;
             color: var(--gold-muted);
+        }
+
+        /* Add elegant page entrance animation */
+        .main-content > * {
+            animation: fadeInUp 0.8s ease forwards;
+            animation-delay: 0.2s;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        
+        .main-content > *:nth-child(1) { animation-delay: 0.1s; }
+        .main-content > *:nth-child(2) { animation-delay: 0.2s; }
+        .main-content > *:nth-child(3) { animation-delay: 0.3s; }
+        
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Add subtle input focus animations */
+        input, select, textarea {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.15);
+        }
+        
+        /* Enhanced button ripple effect */
+        .btn-primary, .action-btn, .quick-action-btn {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary::after, .action-btn::after, .quick-action-btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .btn-primary:active::after, .action-btn:active::after, .quick-action-btn:active::after {
+            width: 300px;
+            height: 300px;
         }
 
         /* Mobile Responsiveness */
