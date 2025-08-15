@@ -3817,63 +3817,81 @@ app.post('/api/ai-website-edit', isAuthenticated, async (req, res) => {
             // Use AI credits first
             await useAiCredits(userId, creditsNeeded, 'website_edit', request);
 
-            // Prepare the AI prompt for website editing
-            const aiPrompt = `You are an expert web designer and developer specializing in photography portfolios. 
+            // Enhanced AI prompt for complete section generation
+            const aiPrompt = `You are an expert web designer and developer specializing in photography portfolios with advanced content generation capabilities.
 
 CURRENT WEBSITE HTML:
 ${currentHTML}
 
 USER REQUEST: "${request}"
 
-Your task is to modify the HTML to fulfill the user's request while maintaining:
-1. All existing wb-editable classes for interactive editing
-2. Professional photography portfolio aesthetics
-3. Responsive design principles
-4. Clean, modern styling
-5. Proper HTML structure
+ENHANCED CAPABILITIES:
+You can now create complete website sections, not just modify existing content. Based on the request, determine if this needs:
+1. MODIFICATION: Update existing content/styles
+2. GENERATION: Create entirely new sections/components
+3. EXPANSION: Add new content blocks to existing sections
 
-IMPORTANT GUIDELINES:
-- Keep all wb-editable classes intact
-- Maintain existing JavaScript event handlers
-- Use inline styles for modifications
-- Ensure mobile responsiveness
-- Focus on ${websiteType} best practices
-- Add subtle animations where appropriate
-- Improve typography, spacing, and visual hierarchy
-- Use professional color schemes
-- Maintain accessibility standards
+For GENERATION requests, create complete, professional sections including:
+- Hero sections with compelling copy
+- About sections with photographer personality
+- Portfolio galleries with categorization
+- Services/pricing sections with clear value propositions
+- Contact sections with multiple touchpoints
+- Testimonial sections with social proof
+- Blog/news sections for SEO
+- Custom sections based on photography niche
 
-Please return:
-1. The complete modified HTML
-2. A brief description of changes made
-3. Specific improvements implemented
+PROFESSIONAL GUIDELINES:
+- Use wb-editable classes on all text content for easy editing
+- Include photography-specific terminology and copy
+- Create mobile-responsive designs with CSS Grid/Flexbox
+- Add subtle CSS animations and hover effects
+- Use professional photography color schemes
+- Include proper semantic HTML for SEO
+- Add accessibility attributes (alt text, ARIA labels)
+- Generate compelling, conversion-focused copy
 
-Return your response as a JSON object with:
+SECTION TEMPLATES TO REFERENCE:
+- Hero: Dramatic visuals with compelling headlines
+- About: Personal story connecting with ideal clients
+- Portfolio: Grid layouts with category filtering
+- Services: Clear packages with pricing transparency
+- Contact: Multiple ways to connect + booking integration
+
+Return a JSON object with:
 {
-  "newHTML": "complete modified HTML here",
-  "description": "brief description of changes made",
-  "improvements": ["list", "of", "specific", "improvements"]
+  "newHTML": "complete HTML (modified or entirely new section)",
+  "description": "detailed description of what was created/changed",
+  "improvements": ["specific enhancements made"],
+  "sectionType": "hero|about|portfolio|services|contact|testimonials|blog|custom",
+  "isNewSection": true/false,
+  "copyGenerated": ["list of new copy/content created"],
+  "designFeatures": ["visual/interaction features added"]
 }`;
 
-            // Use OpenAI directly through aiServices with proper method
+            // Use enhanced AI generation
             const result = await aiServices.generateAdvancedContent(
-                'website_edit', 
+                'website_section_generation', 
                 { currentHTML, websiteType, request },
-                request,
-                'photography clients'
+                aiPrompt,
+                'photography portfolio enhancement'
             );
 
             if (!result.newHTML) {
                 throw new Error('AI did not provide modified HTML');
             }
 
-            console.log(` AI Website Edit Success: ${result.description}`);
+            console.log(` AI Website Enhancement Success: ${result.description}`);
 
             res.json({
                 success: true,
                 newHTML: result.newHTML,
-                description: result.description || 'Website successfully modified',
+                description: result.description || 'Website successfully enhanced',
                 improvements: result.improvements || [],
+                sectionType: result.sectionType || 'custom',
+                isNewSection: result.isNewSection || false,
+                copyGenerated: result.copyGenerated || [],
+                designFeatures: result.designFeatures || [],
                 creditsUsed: creditsNeeded,
                 remainingCredits: availableCredits - creditsNeeded
             });
@@ -3889,6 +3907,267 @@ Return your response as a JSON object with:
         res.status(500).json({
             success: false,
             error: 'Failed to process website edit request: ' + error.message
+        });
+    }
+});
+
+//  AI COMPLETE SECTION GENERATOR - Create entire website sections
+app.post('/api/ai-generate-section', isAuthenticated, async (req, res) => {
+    try {
+        const { sectionType, businessInfo, stylePreferences, contentRequirements } = req.body;
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
+
+        if (!sectionType) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Section type is required' 
+            });
+        }
+
+        // Check AI credits (3 credits for complete section generation)
+        const creditsNeeded = 3;
+        const availableCredits = await getUserAiCredits(userId);
+
+        if (availableCredits < creditsNeeded) {
+            return res.status(402).json({
+                success: false,
+                error: 'Insufficient AI credits for section generation',
+                creditsNeeded,
+                availableCredits
+            });
+        }
+
+        console.log(`🤖 AI Section Generation Request from ${userId}: ${sectionType}`);
+
+        try {
+            await useAiCredits(userId, creditsNeeded, 'section_generation', sectionType);
+
+            const aiPrompt = `You are an expert web designer specializing in photography portfolio websites. Create a complete, professional ${sectionType} section.
+
+BUSINESS INFO: ${JSON.stringify(businessInfo || {})}
+STYLE PREFERENCES: ${JSON.stringify(stylePreferences || {})}
+CONTENT REQUIREMENTS: ${JSON.stringify(contentRequirements || {})}
+
+SECTION TYPE: ${sectionType}
+
+Create a complete HTML section with the following requirements:
+1. Professional photography portfolio aesthetics
+2. Mobile-responsive design using CSS Grid/Flexbox
+3. All text content wrapped in wb-editable classes for easy editing
+4. Inline CSS styling for immediate visual impact
+5. Subtle animations and hover effects
+6. Photography-specific copy and terminology
+7. Conversion-optimized content and layout
+8. Accessibility features (alt text, ARIA labels, semantic HTML)
+
+SECTION-SPECIFIC REQUIREMENTS:
+${getSectionRequirements(sectionType)}
+
+Return a JSON object with:
+{
+  "html": "complete HTML section ready to insert",
+  "description": "what this section accomplishes",
+  "features": ["list of key features included"],
+  "copyElements": ["list of content/copy generated"],
+  "styleFeatures": ["visual design elements included"],
+  "mobileOptimizations": ["responsive design features"],
+  "seoElements": ["SEO-friendly elements included"]
+}`;
+
+            const result = await aiServices.generateAdvancedContent(
+                'section_generation',
+                { sectionType, businessInfo, stylePreferences, contentRequirements },
+                aiPrompt,
+                'photography portfolio section'
+            );
+
+            if (!result.html) {
+                throw new Error('AI did not provide HTML section');
+            }
+
+            console.log(`✨ AI Section Generated Successfully: ${sectionType}`);
+
+            res.json({
+                success: true,
+                html: result.html,
+                description: result.description || `${sectionType} section generated successfully`,
+                features: result.features || [],
+                copyElements: result.copyElements || [],
+                styleFeatures: result.styleFeatures || [],
+                mobileOptimizations: result.mobileOptimizations || [],
+                seoElements: result.seoElements || [],
+                sectionType: sectionType,
+                creditsUsed: creditsNeeded,
+                remainingCredits: availableCredits - creditsNeeded
+            });
+
+        } catch (aiError) {
+            // Refund credits if AI generation fails
+            await pool.query('UPDATE users SET ai_credits = ai_credits + $1 WHERE id = $2', [creditsNeeded, userId]);
+            throw aiError;
+        }
+
+    } catch (error) {
+        console.error('AI section generation error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to generate section: ' + error.message
+        });
+    }
+});
+
+// Helper function for section-specific requirements
+function getSectionRequirements(sectionType) {
+    const requirements = {
+        hero: `
+        - Compelling headline that speaks to ideal photography clients
+        - Subheadline explaining unique value proposition
+        - High-impact call-to-action button
+        - Space for hero image/video background
+        - Optional trust indicators (awards, featured in, etc.)
+        - Mobile-optimized typography hierarchy`,
+        
+        about: `
+        - Personal story that connects with target clients
+        - Professional credentials and experience
+        - Photography philosophy and approach
+        - Personal photo placeholder with alt text
+        - Client connection points and personality elements
+        - Trust-building elements (certifications, experience)`,
+        
+        portfolio: `
+        - Grid layout for photography samples
+        - Category filtering tabs (wedding, portrait, commercial, etc.)
+        - Lightbox-ready image containers with proper alt text
+        - "View Full Portfolio" call-to-action
+        - Image lazy loading structure
+        - Responsive grid that works on all devices`,
+        
+        services: `
+        - Clear service packages with pricing
+        - What's included in each package
+        - Comparison highlighting most popular option
+        - Investment language (not just "price")
+        - "Book Now" or "Get Quote" buttons
+        - FAQ section addressing common concerns`,
+        
+        contact: `
+        - Multiple contact methods (phone, email, form)
+        - Contact form with essential fields
+        - Business hours and response time expectations
+        - Location information if relevant
+        - Social media links
+        - "Ready to book?" compelling call-to-action`,
+        
+        testimonials: `
+        - 3-5 authentic-sounding client testimonials
+        - Client names and session types
+        - Star ratings or review highlights
+        - Mix of different photography services
+        - Emotional impact focus (not just technical quality)
+        - "Read More Reviews" link`,
+        
+        blog: `
+        - Recent blog post previews (3-4 posts)
+        - Photography tips and client features
+        - Read time estimates
+        - Category tags (tips, sessions, behind-scenes)
+        - "View All Posts" navigation
+        - SEO-optimized structure with proper headings`,
+        
+        pricing: `
+        - Transparent pricing packages
+        - "Investment" language rather than "cost"
+        - What's included vs. add-ons
+        - Payment terms and booking process
+        - Most popular package highlighted
+        - "Custom packages available" option`
+    };
+    
+    return requirements[sectionType] || 'Create a professional, conversion-optimized section appropriate for photography portfolios.';
+}
+
+//  AI PORTFOLIO COPY GENERATOR - Create compelling portfolio descriptions
+app.post('/api/ai-generate-portfolio-copy', isAuthenticated, async (req, res) => {
+    try {
+        const { portfolioType, clientType, tone, photoDescriptions } = req.body;
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
+
+        // Check AI credits (2 credits for portfolio copy)
+        const creditsNeeded = 2;
+        const availableCredits = await getUserAiCredits(userId);
+
+        if (availableCredits < creditsNeeded) {
+            return res.status(402).json({
+                success: false,
+                error: 'Insufficient AI credits for portfolio copy generation',
+                creditsNeeded,
+                availableCredits
+            });
+        }
+
+        try {
+            await useAiCredits(userId, creditsNeeded, 'portfolio_copy', portfolioType);
+
+            const aiPrompt = `You are a professional copywriter specializing in photography portfolio descriptions.
+
+PORTFOLIO TYPE: ${portfolioType}
+CLIENT TYPE: ${clientType}
+TONE: ${tone}
+PHOTO DESCRIPTIONS: ${JSON.stringify(photoDescriptions || [])}
+
+Generate compelling portfolio copy that:
+1. Tells the story behind the photos
+2. Connects emotionally with potential clients
+3. Highlights the photographer's expertise
+4. Uses industry-appropriate terminology
+5. Optimizes for SEO with natural keyword usage
+6. Maintains the specified tone throughout
+
+Create copy for:
+- Portfolio section headline
+- Portfolio introduction paragraph
+- Individual photo/gallery descriptions
+- Call-to-action text
+- SEO meta description
+
+Return a JSON object with:
+{
+  "headline": "compelling portfolio section headline",
+  "introduction": "engaging introduction paragraph",
+  "photoDescriptions": ["array of individual photo descriptions"],
+  "callToAction": "compelling CTA text",
+  "metaDescription": "SEO-optimized meta description",
+  "keywords": ["relevant SEO keywords used"]
+}`;
+
+            const result = await aiServices.generateAdvancedContent(
+                'portfolio_copy',
+                { portfolioType, clientType, tone, photoDescriptions },
+                aiPrompt,
+                'photography portfolio copywriting'
+            );
+
+            res.json({
+                success: true,
+                ...result,
+                creditsUsed: creditsNeeded,
+                remainingCredits: availableCredits - creditsNeeded
+            });
+
+        } catch (aiError) {
+            // Refund credits if AI generation fails
+            await pool.query('UPDATE users SET ai_credits = ai_credits + $1 WHERE id = $2', [creditsNeeded, userId]);
+            throw aiError;
+        }
+
+    } catch (error) {
+        console.error('AI portfolio copy generation error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to generate portfolio copy: ' + error.message
         });
     }
 });
