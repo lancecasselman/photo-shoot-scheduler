@@ -53,15 +53,14 @@ const StripeConnectManager = require('./server/stripe-connect');
 const { ObjectStorageService } = require('./server/objectStorage');
 
 // Database schema imports
-const { businessExpenses, subscriptionPlans, aiCreditBillingCycles, aiCreditUsage } = require('./shared/schema');
+const { businessExpenses } = require('./shared/schema');
 const { eq, and, desc, asc, between } = require('drizzle-orm');
-// Remove postgres imports from here since AiCreditBillingService handles its own connections
 
 
 // Import AI services
 const { AIServices } = require('./server/ai-services');
 const { AI_CREDIT_BUNDLES, isValidBundle } = require('./shared/ai-credit-bundles');
-const { simpleBillingService } = require('./server/services/SimpleBillingService');
+
 
 // REMOVED: Old storage system - will be rebuilt from scratch
 const UnifiedFileDeletion = require('./server/unified-file-deletion');
@@ -5848,191 +5847,7 @@ app.get('/api/health', async (req, res) => {
     }
 });
 
-// AI Credit Billing System API Routes
 
-// Get user's current billing cycle and usage summary
-app.get('/api/billing/credits', isAuthenticated, async (req, res) => {
-    try {
-        const userId = req.session.user?.uid;
-        if (!userId) {
-            return res.status(401).json({ error: 'User not authenticated' });
-        }
-
-        const summary = await simpleBillingService.getUserUsageSummary(userId);
-        if (!summary) {
-            return res.status(404).json({ error: 'No active billing cycle found' });
-        }
-
-        res.json(summary);
-    } catch (error) {
-        console.error('Error fetching credit summary:', error);
-        res.status(500).json({ error: 'Failed to fetch credit usage summary' });
-    }
-});
-
-// Get subscription plans available for upgrade
-app.get('/api/billing/plans', async (req, res) => {
-    try {
-        const postgres = require('postgres');
-        const sql = postgres(process.env.DATABASE_URL);
-        
-        const plans = await sql`
-            SELECT * FROM subscription_plans 
-            WHERE active = true 
-            ORDER BY monthly_price
-        `;
-
-        res.json(plans);
-    } catch (error) {
-        console.error('Error fetching subscription plans:', error);
-        res.status(500).json({ error: 'Failed to fetch subscription plans' });
-    }
-});
-
-// Create a new billing cycle (typically called when subscription starts/renews)
-app.post('/api/billing/cycle', isAuthenticated, async (req, res) => {
-    try {
-        const userId = req.session.user?.uid;
-        const { subscriptionPlan } = req.body;
-
-        if (!userId) {
-            return res.status(401).json({ error: 'User not authenticated' });
-        }
-
-        if (!subscriptionPlan) {
-            return res.status(400).json({ error: 'Subscription plan is required' });
-        }
-
-        const cycleId = await simpleBillingService.createBillingCycle(userId, subscriptionPlan);
-        
-        res.json({ 
-            success: true, 
-            cycleId,
-            message: 'Billing cycle created successfully'
-        });
-    } catch (error) {
-        console.error('Error creating billing cycle:', error);
-        res.status(500).json({ error: 'Failed to create billing cycle: ' + error.message });
-    }
-});
-
-// Check if user can use AI credits for a specific request
-app.post('/api/billing/check-credits', isAuthenticated, async (req, res) => {
-    try {
-        const userId = req.session.user?.uid;
-        const { creditsNeeded = 1 } = req.body;
-
-        if (!userId) {
-            return res.status(401).json({ error: 'User not authenticated' });
-        }
-
-        const check = await simpleBillingService.canUseCredits(userId, creditsNeeded);
-        res.json(check);
-    } catch (error) {
-        console.error('Error checking credits:', error);
-        res.status(500).json({ error: 'Failed to check credit availability' });
-    }
-});
-
-// Use AI credits for a specific request (called by AI services)
-app.post('/api/billing/use-credits', isAuthenticated, async (req, res) => {
-    try {
-        const userId = req.session.user?.uid;
-        const { requestType, prompt, creditsNeeded = 1, success = true } = req.body;
-
-        if (!userId) {
-            return res.status(401).json({ error: 'User not authenticated' });
-        }
-
-        if (!requestType) {
-            return res.status(400).json({ error: 'Request type is required' });
-        }
-
-        const result = await simpleBillingService.useCredits(
-            userId, 
-            requestType, 
-            prompt, 
-            creditsNeeded, 
-            success
-        );
-        
-        res.json(result);
-    } catch (error) {
-        console.error('Error using credits:', error);
-        res.status(400).json({ error: error.message || 'Failed to use credits' });
-    }
-});
-
-// Get billing history for the user
-app.get('/api/billing/history', isAuthenticated, async (req, res) => {
-    try {
-        const userId = req.session.user?.uid;
-        if (!userId) {
-            return res.status(401).json({ error: 'User not authenticated' });
-        }
-
-        const postgres = require('postgres');
-        const sql = postgres(process.env.DATABASE_URL);
-        
-        // Get billing cycles
-        const cycles = await sql`
-            SELECT * FROM ai_credit_billing_cycles 
-            WHERE user_id = ${userId} 
-            ORDER BY cycle_start DESC 
-            LIMIT 12
-        `;
-
-        // Get recent usage
-        const recentUsage = await sql`
-            SELECT * FROM ai_credit_usage 
-            WHERE user_id = ${userId} 
-            ORDER BY used_at DESC 
-            LIMIT 50
-        `;
-
-        res.json({
-            cycles,
-            recentUsage
-        });
-    } catch (error) {
-        console.error('Error fetching billing history:', error);
-        res.status(500).json({ error: 'Failed to fetch billing history' });
-    }
-});
-
-// Initialize subscription plans (admin endpoint)
-app.post('/api/billing/init-plans', async (req, res) => {
-    try {
-        // Simple admin check - you might want to add proper admin authentication
-        const adminKey = req.headers['x-admin-key'];
-        if (adminKey !== process.env.ADMIN_SECRET_KEY) {
-            return res.status(403).json({ error: 'Admin access required' });
-        }
-
-        await simpleBillingService.initializeSubscriptionPlans();
-        res.json({ success: true, message: 'Subscription plans initialized' });
-    } catch (error) {
-        console.error('Error initializing plans:', error);
-        res.status(500).json({ error: 'Failed to initialize subscription plans' });
-    }
-});
-
-// Process monthly overage billing (cron endpoint)
-app.post('/api/billing/process-overages', async (req, res) => {
-    try {
-        // Simple admin check - you might want to add proper admin authentication
-        const adminKey = req.headers['x-admin-key'];
-        if (adminKey !== process.env.ADMIN_SECRET_KEY) {
-            return res.status(403).json({ error: 'Admin access required' });
-        }
-
-        await aiCreditBillingService.processMonthlyOverageBilling();
-        res.json({ success: true, message: 'Monthly overage billing processed' });
-    } catch (error) {
-        console.error('Error processing overages:', error);
-        res.status(500).json({ error: 'Failed to process monthly overages' });
-    }
-});
 
 // Get individual session
 app.get('/api/sessions/:id', isAuthenticated, async (req, res) => {
