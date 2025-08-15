@@ -25,7 +25,7 @@ class LocalBackupFallback {
       }
       
       this.initialized = true;
-      console.log('💾 Local backup fallback initialized');
+      console.log(' Local backup fallback initialized');
     } catch (error) {
       console.error('❌ Failed to initialize local backup:', error);
       throw error;
@@ -69,7 +69,7 @@ class LocalBackupFallback {
       metadata.files.push(fileRecord);
       await fs.writeFile(this.metadataFile, JSON.stringify(metadata, null, 2));
       
-      console.log(`💾 Local backup saved: ${filename} (${fileRecord.fileSizeMB}MB)`);
+      console.log(` Local backup saved: ${filename} (${fileRecord.fileSizeMB}MB)`);
       return fileRecord;
       
     } catch (error) {

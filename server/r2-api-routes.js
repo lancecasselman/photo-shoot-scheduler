@@ -122,7 +122,7 @@ function createR2Routes() {
         }
         
         totalBytes = galleryBytes + rawBytes;
-        console.log(`💾 Storage calculated: Gallery: ${(galleryBytes / (1024**3)).toFixed(2)} GB, RAW: ${(rawBytes / (1024**3)).toFixed(2)} GB`);
+        console.log(` Storage calculated: Gallery: ${(galleryBytes / (1024**3)).toFixed(2)} GB, RAW: ${(rawBytes / (1024**3)).toFixed(2)} GB`);
         
       } catch (dbError) {
         console.error('Database error calculating storage:', dbError);

@@ -140,7 +140,7 @@ class R2SyncService {
     }
 
     console.log(`🧹 Cleanup completed: ${cleanupResults.deleted.length} files removed`);
-    console.log(`💾 Space saved: ${(cleanupResults.spaceSaved / (1024 * 1024)).toFixed(2)}MB`);
+    console.log(` Space saved: ${(cleanupResults.spaceSaved / (1024 * 1024)).toFixed(2)}MB`);
 
     return cleanupResults;
   }

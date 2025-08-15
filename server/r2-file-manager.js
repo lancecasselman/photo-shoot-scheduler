@@ -418,7 +418,7 @@ class R2FileManager {
       
       // Fall back to local backup or throw error if not available
       if (this.localBackup) {
-        console.log('💾 Using local backup storage...');
+        console.log(' Using local backup storage...');
         const localResult = await this.localBackup.saveFile(fileBuffer, filename, userId, sessionId);
         
         return {

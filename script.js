@@ -3118,6 +3118,13 @@ window.switchTab = function(tabName) {
             }
         };
 
+        // Load business management functionality
+        function loadBusinessManagement() {
+            console.log('Loading business management section');
+            // Initialize any business management specific functionality
+            // The UI is already loaded in index.html, just ensure everything is ready
+        }
+
         // Populate sessions dropdown for contract creation
         function populateContractSessions() {
             const select = document.getElementById('contractSessionSelect');

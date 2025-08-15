@@ -4740,7 +4740,7 @@
                     </li>
                     <li class="nav-item">
                         <a href="#" class="nav-link" onclick="switchTab('businessManagement'); closeMobileMenu();">
-                            💼 Business Management
+                            Business Management
                         </a>
                     </li>
                     <li class="nav-item">
@@ -4755,7 +4755,7 @@
                     </li>
                     <li class="nav-item">
                         <a href="#" class="nav-link" onclick="switchTab('paymentSettings'); closeMobileMenu();">
-                            💳 Payment Settings
+                             Payment Settings
                         </a>
                     </li>
 
@@ -4765,7 +4765,7 @@
 
                     <li class="nav-item">
                         <a href="/storage-dashboard.html" target="_blank" class="nav-link">
-                            💾 Storage Manager
+                             Storage Manager
                         </a>
                     </li>
                     <li class="nav-item">
@@ -5043,7 +5043,7 @@
                 </div>
                 
                 <div class="payment-plan-info">
-                    <h4>ℹ️ How Payment Plans Work</h4>
+                    <h4> How Payment Plans Work</h4>
                     <ul>
                         <li>Automatically calculates equal monthly payments</li>
                         <li>Sends Stripe invoices each month via email</li>
@@ -5281,7 +5281,7 @@ The Legacy Photography`);
                 <div id="signedContractModal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10001;">
                     <div class="modal-content" style="background: white; margin: 20px auto; padding: 30px; width: 95%; max-width: 900px; border-radius: 10px; max-height: 90vh; overflow-y: auto;">
                         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #d4af37; padding-bottom: 15px;">
-                            <h2 style="color: #8b7355; margin: 0;">📄 Signed Contract - ${contract.contract_title}</h2>
+                            <h2 style="color: #8b7355; margin: 0;"> Signed Contract - ${contract.contract_title}</h2>
                             <button onclick="closeModal('signedContractModal')" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
                         </div>
                         
@@ -5308,10 +5308,10 @@ ${contract.contract_content}
                         <div style="text-align: center; background: #f8f9fa; padding: 20px; border-radius: 8px;">
                             <p style="margin: 0 0 15px 0; color: #666; font-style: italic;">This is a digitally signed copy stored for your records</p>
                             <button onclick="downloadSignedContractPDF('${contract.id}')" class="btn btn-primary" style="margin-right: 10px;">
-                                📄 Download PDF Copy
+                                 Download PDF Copy
                             </button>
                             <button onclick="printSignedContract('${contract.id}')" class="btn btn-secondary" style="margin-right: 10px;">
-                                🖨️ Print Contract
+                                 Print Contract
                             </button>
                             <button onclick="closeModal('signedContractModal')" class="btn btn-secondary">
                                 Close
@@ -5465,7 +5465,7 @@ ${contract.contract_content}
             modalDiv.innerHTML = `
                 <div style="background:#1a1a1a;border:2px solid #d4af37;border-radius:16px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;color:#f5f5f5;">
                     <div style="background:linear-gradient(135deg, #d4af37 0%, #f4e4bc 100%);color:#1a1a1a;padding:20px;border-radius:14px 14px 0 0;display:flex;justify-content:space-between;align-items:center;">
-                        <h3 style="margin:0;font-size:1.5rem;">💳 Payment Plan Setup</h3>
+                        <h3 style="margin:0;font-size:1.5rem;"> Payment Plan Setup</h3>
                         <button onclick="document.getElementById('paymentPlanModal').remove()" style="background:none;border:none;font-size:2rem;color:#1a1a1a;cursor:pointer;">&times;</button>
                     </div>
                     <div style="padding:30px;">
@@ -5509,7 +5509,7 @@ ${contract.contract_content}
                         </div>
                         
                         <div style="margin:20px 0;text-align:center;">
-                            <button onclick="createPaymentPlan('${session.id}')" style="background:#d4af37;color:#1a1a1a;border:none;padding:15px 30px;border-radius:8px;cursor:pointer;font-weight:600;margin-right:10px;">💳 Create Payment Plan</button>
+                            <button onclick="createPaymentPlan('${session.id}')" style="background:#d4af37;color:#1a1a1a;border:none;padding:15px 30px;border-radius:8px;cursor:pointer;font-weight:600;margin-right:10px;"> Create Payment Plan</button>
                             <button onclick="document.getElementById('paymentPlanModal').remove()" style="background:#666;color:white;border:none;padding:15px 30px;border-radius:8px;cursor:pointer;">Cancel</button>
                         </div>
                         
@@ -5661,7 +5661,7 @@ ${contract.contract_content}
                     <div><strong> Total Amount:</strong> $${totalAmount.toFixed(2)}</div>
                     <div><strong> Payment Frequency:</strong> ${frequency.charAt(0).toUpperCase() + frequency.slice(1)}</div>
                     <div><strong>🔢 Number of Payments:</strong> ${numberOfPayments}</div>
-                    <div><strong>💳 Each Payment:</strong> $${paymentAmount}</div>
+                    <div><strong> Each Payment:</strong> $${paymentAmount}</div>
                 </div>
                 <div style="background:rgba(26,26,26,0.8);padding:20px;border-radius:12px;border:2px solid #d4af37;margin-top:20px;">
                     <h6 style="color:#d4af37;margin:0 0 15px 0;font-size:1.1rem;"> Payment Schedule:</h6>
@@ -5912,8 +5912,8 @@ ${contract.contract_content}
             setupEventListeners();
             setMinDateTime();
             
-            console.log('🏠 INDEX PAGE: UI elements prepared, waiting for authentication...');
-            console.log('🏠 INDEX PAGE: Document loaded successfully');
+            console.log(' INDEX PAGE: UI elements prepared, waiting for authentication...');
+            console.log(' INDEX PAGE: Document loaded successfully');
         });
         
         // Initialize app content after authentication
@@ -6105,7 +6105,7 @@ ${contract.contract_content}
                             <div class="session-meta">
                                 <span class="session-date">Calendar ${formatDateTime(session.dateTime)}</span>
                                 <span class="session-location"> ${session.location}</span>
-                                <span class="session-duration">⏱️ ${formatDuration(session.duration)}</span>
+                                <span class="session-duration"> ${formatDuration(session.duration)}</span>
                                 <span class="session-price">Money $${session.price}</span>
                                 ${(session.depositAmount && session.depositAmount > 0) ? 
                                     `<span class="session-deposit" style="color: #28a745; font-weight: 600;">Deposit: $${session.depositAmount.toFixed(2)}</span>` : 
@@ -6198,14 +6198,14 @@ ${contract.contract_content}
                                 <button onclick="addToCalendar('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Calendar</button>
                                 <button onclick="openEmailClient('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Email</button>
                                 <button onclick="openBookingAgreementModal('${sessionId}'); event.stopPropagation();" class="btn btn-secondary" data-session-id="${sessionId}">
-                                    📄 <span class="agreement-status">Booking Agreement</span>
+                                     <span class="agreement-status">Booking Agreement</span>
                                 </button>
 
                                 ${session.hasPaymentPlan ? `
                                     <button onclick="viewPaymentPlan('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Payment Plan</button>
                                 ` : `
                                     <button onclick="createInvoiceWithTipping('${sessionId}'); event.stopPropagation();" class="btn btn-secondary"> Send Invoice</button>
-                                    <button onclick="sendDepositInvoice('${sessionId}'); event.stopPropagation();" class="btn btn-warning" style="background-color: #fd7e14; color: white;">💳 Send Deposit</button>
+                                    <button onclick="sendDepositInvoice('${sessionId}'); event.stopPropagation();" class="btn btn-warning" style="background-color: #fd7e14; color: white;"> Send Deposit</button>
                                     <button onclick="openPaymentPlanModal('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Payment Plan</button>
                                 `}
                                 <button onclick="exportSessionPDF('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Export PDF</button>
@@ -6236,7 +6236,7 @@ ${contract.contract_content}
                             <div class="file-action-buttons">
                                 <button onclick="openGalleryWindow('${sessionId}'); event.stopPropagation();" class="btn btn-primary"> Open Gallery</button>
                                 <button onclick="openRawStorageWindow('${sessionId}'); event.stopPropagation();" class="btn btn-primary">📁 Open Raw Storage</button>
-                                <button onclick="sendGalleryToClient('${sessionId}'); event.stopPropagation();" class="btn btn-success">✉️ Send to Client</button>
+                                <button onclick="sendGalleryToClient('${sessionId}'); event.stopPropagation();" class="btn btn-success"> Send to Client</button>
                             </div>
                         </div>
 
@@ -6333,7 +6333,7 @@ ${contract.contract_content}
                             };
                             img.onerror = () => {
                                 img.style.display = 'none';
-                                thumbnail.innerHTML = '<div class="file-icon">🖼️</div>';
+                                thumbnail.innerHTML = '<div class="file-icon"></div>';
                             };
                             
                             thumbnail.appendChild(img);
@@ -6368,7 +6368,7 @@ ${contract.contract_content}
                         
                         const deleteBtn = document.createElement('button');
                         deleteBtn.className = 'btn btn-danger';
-                        deleteBtn.textContent = '🗑️ Delete';
+                        deleteBtn.textContent = ' Delete';
                         deleteBtn.onclick = (e) => {
                             deleteFile(sessionId, folderType, file.name);
                             e.stopPropagation();
@@ -7057,12 +7057,12 @@ lance@thelegacyphotography.com`;
                         <div style="margin: 30px 0;">
                             <h2 style="color: #333;">Additional Checklist</h2>
                             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
-                                <p>🖨️ Prints Ordered: ${session.printsOrdered ? 'Success Yes' : 'Error No'}</p>
+                                <p> Prints Ordered: ${session.printsOrdered ? 'Success Yes' : 'Error No'}</p>
                                 <p>Star Special Edits: ${session.specialEdits ? 'Success Yes' : 'Error No'}</p>
                                 <p>Message Client Feedback: ${session.clientFeedback ? 'Success Yes' : 'Error No'}</p>
                                 <p>Mobile Social Media OK: ${session.socialMediaApproval ? 'Success Yes' : 'Error No'}</p>
                                 <p> Retouching Needed: ${session.retouchingNeeded ? 'Success Yes' : 'Error No'}</p>
-                                <p>💾 Backup Completed: ${session.backupCompleted ? 'Success Yes' : 'Error No'}</p>
+                                <p> Backup Completed: ${session.backupCompleted ? 'Success Yes' : 'Error No'}</p>
                             </div>
                         </div>
                         
@@ -7395,7 +7395,7 @@ lance@thelegacyphotography.com`;
                 <div id="contractSelectionModal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000;">
                     <div class="modal-content" style="background: white; margin: 50px auto; padding: 30px; width: 90%; max-width: 600px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
                         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 2px solid #d4af37; padding-bottom: 15px;">
-                            <h2 style="color: #8b7355; margin: 0; font-size: 24px;">📄 Select Contract Template</h2>
+                            <h2 style="color: #8b7355; margin: 0; font-size: 24px;"> Select Contract Template</h2>
                             <button onclick="closeModal('contractSelectionModal')" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666; padding: 5px;">&times;</button>
                         </div>
                         
@@ -7563,7 +7563,7 @@ lance@thelegacyphotography.com`;
                             ` : ''}
                             ${contract.status === 'signed' ? `
                                 <button onclick="viewSignedCopy('${contract.id}')" class="btn btn-info" style="margin-left: 10px;">
-                                    📄 View Signed Copy
+                                     View Signed Copy
                                 </button>
                             ` : ''}
                         </div>
@@ -8036,7 +8036,7 @@ ${contract.contract_content}
                             ` : ''}
                             ${contract.status === 'signed' ? `
                                 <button onclick="viewSignedCopy('${contract.id}')" class="btn btn-info" style="margin-left: 10px;">
-                                    📄 View Signed Copy
+                                     View Signed Copy
                                 </button>
                             ` : ''}
                         </div>
@@ -9988,11 +9988,11 @@ END:VCALENDAR`;
             if (button) {
                 if (homeBase) {
                     button.disabled = false;
-                    button.textContent = `🏠 Use Home Base`;
+                    button.textContent = ` Use Home Base`;
                     button.title = `Click to use: ${homeBase}`;
                 } else {
                     button.disabled = true;
-                    button.textContent = `🏠 No Home Base Set`;
+                    button.textContent = ` No Home Base Set`;
                     button.title = 'Set up your home base first';
                 }
             }
@@ -10553,7 +10553,7 @@ END:VCALENDAR`;
                     button.textContent = ' Calculate Round Trip';
                     button.title = 'Calculate total distance: Start → End → Start';
                 } else {
-                    button.textContent = '🗺️ Calculate Miles';
+                    button.textContent = ' Calculate Miles';
                     button.title = 'Calculate one-way distance';
                 }
             }
@@ -10617,7 +10617,7 @@ END:VCALENDAR`;
                     <td>${trip.startLocation}</td>
                     <td>${trip.endLocation}</td>
                     <td>${trip.miles.toFixed(1)}</td>
-                    <td>${trip.roundTrip ? ' Round Trip' : '➡️ One Way'}</td>
+                    <td>${trip.roundTrip ? ' Round Trip' : ' One Way'}</td>
                     <td>${trip.purpose.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</td>
                     <td>
                         <button onclick="deleteTrip(${trip.id})" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Delete</button>
@@ -10748,7 +10748,7 @@ END:VCALENDAR`;
                     </div>
                     
                     <div class="breakdown-section">
-                        <h5>🚗 Mileage Breakdown (${trips.length} trips)</h5>
+                        <h5>Mileage Breakdown (${trips.length} trips)</h5>
                         ${trips.length > 0 ? `
                             <div class="trip-details">
                                 ${trips.map(trip => `
@@ -11669,16 +11669,16 @@ END:VCALENDAR`;
         <!-- Business Management Tab Content -->
         <div id="businessManagementTab" class="tab-content">
             <div class="content-header">
-                <h1>💼 Business Management</h1>
+                <h1>Business Management</h1>
                 <p>Comprehensive business analytics, AI assistance, and financial tracking</p>
             </div>
             
             <!-- Business Management Navigation -->
             <div class="business-nav">
                 <button class="business-nav-btn active" onclick="showBusinessSection('dashboard')"> Dashboard</button>
-                <button class="business-nav-btn" onclick="showBusinessSection('aiAssistant')">🤖 AI Assistant</button>
+                <button class="business-nav-btn" onclick="showBusinessSection('aiAssistant')">AI Assistant</button>
                 <button class="business-nav-btn" onclick="showBusinessSection('expenses')"> Expense Tracker</button>
-                <button class="business-nav-btn" onclick="showBusinessSection('mileage')">🚗 Mileage Tracker</button>
+                <button class="business-nav-btn" onclick="showBusinessSection('mileage')">Mileage Tracker</button>
                 <button class="business-nav-btn" onclick="showBusinessSection('reports')"> Reports</button>
             </div>
 
@@ -11703,14 +11703,14 @@ END:VCALENDAR`;
                         </div>
                         <div class="dashboard-export-buttons">
                             <button onclick="exportDashboardCSV()" class="export-btn"> Export CSV</button>
-                            <button onclick="exportDashboardPDF()" class="export-btn">📄 Export PDF</button>
+                            <button onclick="exportDashboardPDF()" class="export-btn"> Export PDF</button>
                         </div>
                     </div>
                 </div>
                 
                 <div class="financial-overview">
                     <div class="financial-card earnings">
-                        <div class="card-icon">💵</div>
+                        <div class="card-icon">$</div>
                         <div class="card-content">
                             <h3>Total Earnings</h3>
                             <div class="amount" id="totalEarnings">$0.00</div>
@@ -11719,7 +11719,7 @@ END:VCALENDAR`;
                     </div>
                     
                     <div class="financial-card expenses">
-                        <div class="card-icon">💸</div>
+                        <div class="card-icon">-$</div>
                         <div class="card-content">
                             <h3>Total Expenses</h3>
                             <div class="amount" id="totalExpenses">$0.00</div>
@@ -11728,7 +11728,7 @@ END:VCALENDAR`;
                     </div>
                     
                     <div class="financial-card mileage">
-                        <div class="card-icon">🚗</div>
+                        <div class="card-icon">mi</div>
                         <div class="card-content">
                             <h3>Mileage Deduction</h3>
                             <div class="amount" id="totalMileage">$0.00</div>
@@ -11752,7 +11752,7 @@ END:VCALENDAR`;
             <!-- AI Assistant Section -->
             <div id="aiAssistantSection" class="business-section">
                 <div class="ai-header">
-                    <h2>🤖 AI Assistant</h2>
+                    <h2> AI Assistant</h2>
                     <p>Generate content for your photography business</p>
                 </div>
                 
@@ -11776,7 +11776,7 @@ END:VCALENDAR`;
                         <div id="blogOutput" class="rich-text-editor" contenteditable="true" placeholder="Generated blog post will appear here..."></div>
                         <div class="output-actions">
                             <button onclick="copyToClipboard('blogOutput')"> Copy</button>
-                            <button onclick="clearOutput('blogOutput')">🗑️ Clear</button>
+                            <button onclick="clearOutput('blogOutput')"> Clear</button>
                         </div>
                     </div>
                 </div>
@@ -11809,7 +11809,7 @@ END:VCALENDAR`;
                         <div id="socialOutput" class="social-output" placeholder="Generated social media post will appear here..."></div>
                         <div class="output-actions">
                             <button onclick="copyToClipboard('socialOutput')"> Copy</button>
-                            <button onclick="clearOutput('socialOutput')">🗑️ Clear</button>
+                            <button onclick="clearOutput('socialOutput')"> Clear</button>
                         </div>
                     </div>
                 </div>
@@ -11827,7 +11827,7 @@ END:VCALENDAR`;
                         <div id="ideasOutput" class="ideas-list"></div>
                         <div class="output-actions">
                             <button onclick="copyToClipboard('ideasOutput')"> Copy All</button>
-                            <button onclick="clearOutput('ideasOutput')">🗑️ Clear</button>
+                            <button onclick="clearOutput('ideasOutput')"> Clear</button>
                         </div>
                     </div>
                 </div>
@@ -11913,9 +11913,9 @@ END:VCALENDAR`;
             <!-- Mileage Tracker Section -->
             <div id="mileageSection" class="business-section">
                 <div class="mileage-header">
-                    <h2>🚗 Mileage Tracker</h2>
+                    <h2>Mileage Tracker</h2>
                     <div class="mileage-header-actions">
-                        <button onclick="showHomeBaseSetup()" class="setup-btn">🏠 Setup Home Base</button>
+                        <button onclick="showHomeBaseSetup()" class="setup-btn">Setup Home Base</button>
                         <button onclick="showAddTripForm()" class="add-btn">+ Add Trip</button>
                     </div>
                 </div>
@@ -11923,7 +11923,7 @@ END:VCALENDAR`;
                 <!-- Home Base Setup Section -->
                 <div id="homeBaseSetup" class="home-base-setup" style="display: none;">
                     <div class="setup-card">
-                        <h3>🏠 Set Your Home Base Location</h3>
+                        <h3> Set Your Home Base Location</h3>
                         <p>Configure your default start location to save time when adding trips.</p>
                         
                         <div class="location-setup">
@@ -11936,7 +11936,7 @@ END:VCALENDAR`;
                             </div>
                             <div class="location-actions">
                                 <button onclick="useCurrentLocation()" class="location-btn">📍 Use Current Location</button>
-                                <button onclick="saveHomeBase()" class="save-btn">💾 Save Home Base</button>
+                                <button onclick="saveHomeBase()" class="save-btn"> Save Home Base</button>
                                 <button onclick="cancelHomeBaseSetup()" class="cancel-btn">Cancel</button>
                             </div>
                         </div>
@@ -11975,7 +11975,7 @@ END:VCALENDAR`;
                                     <input type="text" id="startLocation" placeholder="Starting address" autocomplete="off">
                                     <div id="startLocationSuggestions" class="address-suggestions" style="display: none;"></div>
                                 </div>
-                                <button type="button" onclick="useHomeBaseForTrip()" class="home-base-btn" id="useHomeBaseBtn" disabled>🏠 Use Home Base</button>
+                                <button type="button" onclick="useHomeBaseForTrip()" class="home-base-btn" id="useHomeBaseBtn" disabled> Use Home Base</button>
                             </div>
                         </div>
                         <div class="form-group">
@@ -11996,7 +11996,7 @@ END:VCALENDAR`;
                                 <input type="checkbox" id="roundTrip" onchange="updateCalculateButton()">
                                 Round Trip (Start → End → Start)
                             </label>
-                            <button onclick="calculateMiles()" class="calculate-btn" id="calculateBtn">🗺️ Calculate Miles</button>
+                            <button onclick="calculateMiles()" class="calculate-btn" id="calculateBtn"> Calculate Miles</button>
                         </div>
                     </div>
                     <div class="form-actions">
@@ -12072,7 +12072,7 @@ END:VCALENDAR`;
                     
                     <div class="report-actions">
                         <button onclick="exportReportCSV()" class="export-btn"> Export CSV</button>
-                        <button onclick="exportReportPDF()" class="export-btn">📄 Export PDF</button>
+                        <button onclick="exportReportPDF()" class="export-btn"> Export PDF</button>
                     </div>
                 </div>
             </div>
@@ -12088,7 +12088,7 @@ END:VCALENDAR`;
         <!-- Payment Settings Tab Content -->
         <div id="paymentSettingsTab" class="tab-content">
             <div class="content-header">
-                <h1>💳 Payment Settings</h1>
+                <h1> Payment Settings</h1>
                 <p>Connect your Stripe account to receive payments directly from clients</p>
             </div>
 
@@ -14631,7 +14631,7 @@ END:VCALENDAR`;
                             <button class="wb-btn" onclick="WebsiteBuilder.clearCanvas()">Clear</button>
                             <button class="wb-btn" onclick="WebsiteBuilder.preview()">Preview</button>
                             <button class="wb-btn" onclick="WebsiteBuilder.save()">Save</button>
-                            <button class="wb-btn" onclick="WebsiteBuilder.showAIEditor()" style="background: linear-gradient(135deg, #ff6b6b, #ee5a24); margin-right: 10px;">🤖 AI Editor</button>
+                            <button class="wb-btn" onclick="WebsiteBuilder.showAIEditor()" style="background: linear-gradient(135deg, #ff6b6b, #ee5a24); margin-right: 10px;"> AI Editor</button>
                             <button class="wb-btn" onclick="WebsiteBuilder.publish()" style="background: linear-gradient(135deg, #48bb78, #38a169);">Publish</button>
                         </div>
                     </div>
@@ -14647,7 +14647,7 @@ END:VCALENDAR`;
                             <h3>Photography Components</h3>
                             <div class="wb-elements-list">
                                 <button class="wb-element-btn" onclick="WebsiteBuilder.addPhotoSlider()"> Photo Slider</button>
-                                <button class="wb-element-btn" onclick="WebsiteBuilder.addLightboxGallery()">🖼️ Lightbox Gallery</button>
+                                <button class="wb-element-btn" onclick="WebsiteBuilder.addLightboxGallery()"> Lightbox Gallery</button>
                                 <button class="wb-element-btn" onclick="WebsiteBuilder.addVideoBackground()">🎥 Video Background</button>
                                 <button class="wb-element-btn" onclick="WebsiteBuilder.addParallaxSection()"> Parallax Section</button>
                                 <button class="wb-element-btn" onclick="WebsiteBuilder.addTestimonialSlider()">💬 Testimonials</button>
@@ -14675,7 +14675,7 @@ END:VCALENDAR`;
                             <h3>Page Templates</h3>
                             <div class="wb-page-templates">
                                 <button class="wb-template-btn" onclick="WebsiteBuilder.generateAboutPage()"> Generate About</button>
-                                <button class="wb-template-btn" onclick="WebsiteBuilder.generateServicesPage()">💼 Generate Services</button>
+                                <button class="wb-template-btn" onclick="WebsiteBuilder.generateServicesPage()">Generate Services</button>
                                 <button class="wb-template-btn" onclick="WebsiteBuilder.generatePortfolioPage()"> Generate Portfolio</button>
                                 <button class="wb-template-btn" onclick="WebsiteBuilder.generateContactPage()"> Generate Contact</button>
                             </div>
@@ -14693,7 +14693,7 @@ END:VCALENDAR`;
                         <!-- AI Editor Panel -->
                         <div class="wb-ai-panel" id="wb-ai-panel">
                             <div class="wb-ai-header">
-                                <h3>🤖 AI Website Editor</h3>
+                                <h3> AI Website Editor</h3>
                                 <button class="wb-close-btn" onclick="WebsiteBuilder.closeAIEditor()">✕</button>
                             </div>
                             <div class="wb-ai-content">
@@ -16313,7 +16313,7 @@ END:VCALENDAR`;
                     return;
                 }
                 
-                this.showAIStatus('🤖 Analyzing your request and generating changes...', 'loading');
+                this.showAIStatus(' Analyzing your request and generating changes...', 'loading');
                 
                 try {
                     // Get current website HTML
@@ -16673,7 +16673,7 @@ END:VCALENDAR`;
                     return;
                 }
                 
-                this.showAIStatus('📄 Building smart page...', 'loading');
+                this.showAIStatus(' Building smart page...', 'loading');
                 
                 try {
                     const response = await fetch('/api/ai/badass/smart-page', {
