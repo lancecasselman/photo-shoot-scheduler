@@ -45,7 +45,7 @@ async function repairR2Backup() {
             ORDER BY sf.folder_type, sf.uploaded_at DESC
         `);
         
-        console.log(`📋 Found ${missingR2Result.rows.length} files missing R2 backup`);
+        console.log(` Found ${missingR2Result.rows.length} files missing R2 backup`);
         
         // Get all R2 objects for matching
         const r2Objects = [];
@@ -65,7 +65,7 @@ async function repairR2Backup() {
             continuationToken = response.NextContinuationToken;
         } while (continuationToken);
         
-        console.log(`📦 R2 contains ${r2Objects.length} objects to match against`);
+        console.log(` R2 contains ${r2Objects.length} objects to match against`);
         
         let matchedCount = 0;
         let unmatchedCount = 0;
@@ -96,7 +96,7 @@ async function repairR2Backup() {
                         WHERE id = $2
                     `, [match.Key, dbFile.id]);
                     
-                    console.log(`✅ Linked: ${dbFile.filename} -> ${match.Key}`);
+                    console.log(` Linked: ${dbFile.filename} -> ${match.Key}`);
                     matchedCount++;
                     
                 } else if (potentialMatches.length > 1) {
@@ -115,8 +115,8 @@ async function repairR2Backup() {
         }
         
         // Summary
-        console.log(`\n📊 REPAIR SUMMARY:`);
-        console.log(`   ✅ Successfully linked: ${matchedCount} files`);
+        console.log(`\n REPAIR SUMMARY:`);
+        console.log(`    Successfully linked: ${matchedCount} files`);
         console.log(`   ❌ Could not match: ${unmatchedCount} files`);
         
         // Verify repair results
@@ -130,7 +130,7 @@ async function repairR2Backup() {
             GROUP BY folder_type
         `);
         
-        console.log(`\n🔍 POST-REPAIR VERIFICATION:`);
+        console.log(`\n POST-REPAIR VERIFICATION:`);
         for (const row of verificationResult.rows) {
             console.log(`   ${row.folder_type.toUpperCase()}:`);
             console.log(`     Total: ${row.total_files} files`);
@@ -152,7 +152,7 @@ async function repairR2Backup() {
 
 // Run the repair
 repairR2Backup().then(() => {
-    console.log('\n🎯 Emergency R2 backup repair completed');
+    console.log('\n Emergency R2 backup repair completed');
     process.exit(0);
 }).catch(error => {
     console.error('💥 Repair script failed:', error);

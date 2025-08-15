@@ -18,7 +18,7 @@ class PaymentNotificationManager {
      * Handle successful payment events from Stripe webhooks
      */
     async handlePaymentSuccess(paymentIntent) {
-        console.log('💰 Payment successful:', paymentIntent.id, 'Amount:', paymentIntent.amount_received / 100);
+        console.log(' Payment successful:', paymentIntent.id, 'Amount:', paymentIntent.amount_received / 100);
         
         try {
             // Extract session info from payment metadata
@@ -27,7 +27,7 @@ class PaymentNotificationManager {
             const clientEmail = paymentIntent.receipt_email;
             
             if (!sessionId) {
-                console.log('⚠️ No session ID in payment metadata, skipping notification');
+                console.log(' No session ID in payment metadata, skipping notification');
                 return;
             }
 
@@ -40,7 +40,7 @@ class PaymentNotificationManager {
                 );
 
                 if (sessionResult.rows.length === 0) {
-                    console.log('⚠️ Session not found for payment:', sessionId);
+                    console.log(' Session not found for payment:', sessionId);
                     return;
                 }
 
@@ -73,7 +73,7 @@ class PaymentNotificationManager {
                     clientEmail: clientEmail
                 });
 
-                console.log('✅ Payment notification processing complete for session:', sessionId);
+                console.log(' Payment notification processing complete for session:', sessionId);
 
             } finally {
                 client.release();
@@ -106,7 +106,7 @@ class PaymentNotificationManager {
                 new Date()
             ]);
 
-            console.log('✅ Payment recorded in deposit_payments table:', paymentData.stripePaymentIntentId);
+            console.log(' Payment recorded in deposit_payments table:', paymentData.stripePaymentIntentId);
         } catch (error) {
             console.error('❌ Error recording payment:', error);
             throw error;
@@ -125,7 +125,7 @@ class PaymentNotificationManager {
                 WHERE id = $3
             `, [amount, new Date(), sessionId]);
 
-            console.log('✅ Deposit status updated for session:', sessionId, 'Amount:', amount);
+            console.log(' Deposit status updated for session:', sessionId, 'Amount:', amount);
         } catch (error) {
             console.error('❌ Error updating deposit status:', error);
             throw error;
@@ -144,7 +144,7 @@ class PaymentNotificationManager {
                 WHERE id = $2
             `, [new Date(), sessionId]);
 
-            console.log('✅ Invoice payment status updated for session:', sessionId);
+            console.log(' Invoice payment status updated for session:', sessionId);
         } catch (error) {
             console.error('❌ Error updating invoice status:', error);
             throw error;
@@ -159,7 +159,7 @@ class PaymentNotificationManager {
             const isDeposit = paymentDetails.type === 'deposit';
             const paymentTypeText = isDeposit ? 'Deposit' : 'Final Payment';
             
-            const subject = `💰 ${paymentTypeText} Received - ${session.client_name}`;
+            const subject = ` ${paymentTypeText} Received - ${session.client_name}`;
             
             const message = `
 Payment Notification - ${session.client_name}
@@ -177,7 +177,7 @@ Session Information:
 
 ${isDeposit ? 
     `Deposit received! Remaining balance: $${(parseFloat(session.price) - paymentDetails.amount).toFixed(2)}` :
-    'Session fully paid! 🎉'
+    'Session fully paid! '
 }
 
 You can view the session details in your photography management dashboard.
@@ -191,7 +191,7 @@ You can view the session details in your photography management dashboard.
                 html: message.replace(/\n/g, '<br>')
             });
 
-            console.log('✅ Photographer notification sent for payment:', paymentDetails.paymentId);
+            console.log(' Photographer notification sent for payment:', paymentDetails.paymentId);
 
         } catch (error) {
             console.error('❌ Error sending photographer notification:', error);
@@ -221,7 +221,7 @@ You can view the session details in your photography management dashboard.
                     const session = sessionResult.rows[0];
                     
                     // Notify photographer of payment failure
-                    const subject = `⚠️ Payment Failed - ${session.client_name}`;
+                    const subject = ` Payment Failed - ${session.client_name}`;
                     const message = `
 Payment failure notification for ${session.client_name}
 

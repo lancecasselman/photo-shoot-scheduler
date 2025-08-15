@@ -60,7 +60,7 @@
     </style>
 </head>
 <body>
-    <h1>🔍 R2 Backup Verification Test</h1>
+    <h1> R2 Backup Verification Test</h1>
     <p>This tool verifies that photos are properly backed up to Cloudflare R2 when uploaded.</p>
 
     <div class="test-container">
@@ -74,7 +74,7 @@
         <p>Upload a small test photo to verify it gets backed up to R2 cloud storage:</p>
         
         <div class="upload-area" id="uploadArea">
-            <p>📸 Click to select a test photo or drag and drop here</p>
+            <p> Click to select a test photo or drag and drop here</p>
             <input type="file" id="fileInput" accept="image/*" multiple>
             <button onclick="document.getElementById('fileInput').click()">Select Photo</button>
         </div>
@@ -93,7 +93,7 @@
         <h2>Step 3: Verify R2 Backup</h2>
         <p>Check if uploaded photos are actually stored in R2:</p>
         <div id="backupVerification" class="result">Verification results will appear here...</div>
-        <button onclick="verifyR2Backup()">🔍 Verify R2 Backup</button>
+        <button onclick="verifyR2Backup()"> Verify R2 Backup</button>
     </div>
 
     <script>
@@ -141,7 +141,7 @@
                 const stats = await response.json();
                 
                 statusDiv.className = 'result success';
-                statusDiv.textContent = `✅ R2 CONNECTION VERIFIED
+                statusDiv.textContent = ` R2 CONNECTION VERIFIED
                 
 Current R2 Storage:
 - Total Files: ${stats.combined.fileCount}
@@ -219,7 +219,7 @@ This indicates photos may not be backing up to R2 properly.`;
                 
                 if (result.success) {
                     uploadResult.className = 'result success';
-                    uploadResult.textContent = `✅ UPLOAD SUCCESSFUL!
+                    uploadResult.textContent = ` UPLOAD SUCCESSFUL!
                     
 File: ${file.name}
 Size: ${(file.size / 1024 / 1024).toFixed(2)}MB
@@ -261,7 +261,7 @@ Now check Step 3 to verify R2 backup.`;
                 const storage = await response.json();
                 
                 verifyDiv.className = 'result success';
-                verifyDiv.textContent = `🔍 R2 BACKUP VERIFICATION
+                verifyDiv.textContent = ` R2 BACKUP VERIFICATION
                 
 Session: ${selectedSession}
                 
@@ -278,8 +278,8 @@ Total Backed Up:
 - Size: ${storage.combined.totalSizeFormatted}
 
 ${storage.combined.fileCount > 0 ? 
-'✅ Photos are being backed up to R2!' : 
-'⚠️ No files found in R2 backup for this session.'}`;
+' Photos are being backed up to R2!' : 
+' No files found in R2 backup for this session.'}`;
                 
             } catch (error) {
                 verifyDiv.className = 'result error';

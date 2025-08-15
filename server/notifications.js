@@ -27,7 +27,7 @@ function initializeNotificationServices() {
 // Email Templates for Subscribers
 const emailTemplates = {
     welcome: (photographerName, businessName) => ({
-        subject: '🎉 Welcome to The Client Management Area!',
+        subject: ' Welcome to The Client Management Area!',
         html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px; text-align: center;">
@@ -41,8 +41,8 @@ const emailTemplates = {
                     
                     <ul style="color: #666; line-height: 1.8;">
                         <li>Schedule: <strong>Session Scheduling</strong> - Manage all your photography sessions</li>
-                        <li>📸 <strong>Photo Gallery System</strong> - Share galleries with clients securely</li>
-                        <li>💰 <strong>Stripe Invoicing</strong> - Professional billing and payment processing</li>
+                        <li> <strong>Photo Gallery System</strong> - Share galleries with clients securely</li>
+                        <li> <strong>Stripe Invoicing</strong> - Professional billing and payment processing</li>
                         <li>📱 <strong>Mobile Optimization</strong> - Manage your business from anywhere</li>
                         <li>🔐 <strong>Secure Client Access</strong> - Private gallery links for each session</li>
                     </ul>
@@ -104,11 +104,11 @@ const emailTemplates = {
     }),
 
     featureUpdate: (title, features) => ({
-        subject: `✨ New Features Available - ${title}`,
+        subject: ` New Features Available - ${title}`,
         html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 10px;">
-                    <h1 style="margin: 0; font-size: 24px;">✨ ${title}</h1>
+                    <h1 style="margin: 0; font-size: 24px;"> ${title}</h1>
                     <p style="margin: 10px 0 0; opacity: 0.9;">New features to enhance your photography business</p>
                 </div>
                 
@@ -137,11 +137,11 @@ const emailTemplates = {
     }),
 
     reminder: (photographerName, message) => ({
-        subject: '📝 Reminder from The Client Management Area',
+        subject: ' Reminder from The Client Management Area',
         html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                 <div style="background: #f39c12; color: white; padding: 20px; border-radius: 10px;">
-                    <h1 style="margin: 0; font-size: 24px;">📝 Reminder</h1>
+                    <h1 style="margin: 0; font-size: 24px;"> Reminder</h1>
                 </div>
                 
                 <div style="padding: 30px; background: #f8f9fa; border-radius: 10px; margin: 20px 0;">

@@ -13,7 +13,7 @@ const s3Client = new S3Client({
 
 async function listR2Contents() {
   try {
-    console.log('🔍 Scanning R2 bucket contents...');
+    console.log(' Scanning R2 bucket contents...');
     
     const listCommand = new ListObjectsV2Command({
       Bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME,
@@ -23,7 +23,7 @@ async function listR2Contents() {
     const response = await s3Client.send(listCommand);
     
     if (response.Contents && response.Contents.length > 0) {
-      console.log(`✅ Found ${response.Contents.length} objects in R2:`);
+      console.log(` Found ${response.Contents.length} objects in R2:`);
       console.log('\n📂 Directory Structure:');
       
       const paths = new Set();

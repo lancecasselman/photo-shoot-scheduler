@@ -187,7 +187,7 @@
                 });
                 
                 if (response.ok) {
-                    addLog('✅ Authentication successful', 'success');
+                    addLog(' Authentication successful', 'success');
                     return true;
                 } else {
                     addLog('❌ Backend verification failed', 'error');
@@ -216,7 +216,7 @@
                 const result = await response.json();
                 
                 if (response.ok) {
-                    addLog(`✅ Upload successful!`, 'success');
+                    addLog(` Upload successful!`, 'success');
                     addLog(`   Filename: ${result.fileName}`, 'success');
                     addLog(`   R2 Key: ${result.r2Key}`, 'success');
                     addLog(`   Size: ${result.size} MB`, 'success');
@@ -242,13 +242,13 @@
                 const files = await response.json();
                 
                 if (response.ok && files.length > 0) {
-                    addLog(`✅ Found ${files.length} file(s) in gallery`, 'success');
+                    addLog(` Found ${files.length} file(s) in gallery`, 'success');
                     files.forEach(file => {
                         addLog(`   - ${file.originalName || file.fileName} (${file.size})`, 'info');
                     });
                     return true;
                 } else {
-                    addLog('⚠️ No files found in gallery', 'warning');
+                    addLog(' No files found in gallery', 'warning');
                     return false;
                 }
             } catch (error) {
@@ -284,10 +284,10 @@
                 const verified = await verifyUpload(sessionId);
                 
                 if (verified) {
-                    updateStatus('✅ Test completed successfully! File uploaded and verified.', 'success');
+                    updateStatus(' Test completed successfully! File uploaded and verified.', 'success');
                     addLog('=== Test Completed Successfully ===', 'success');
                 } else {
-                    updateStatus('⚠️ Test completed with warnings: File uploaded but not found in listing', 'warning');
+                    updateStatus(' Test completed with warnings: File uploaded but not found in listing', 'warning');
                     addLog('=== Test Completed with Warnings ===', 'warning');
                 }
             }, 2000); // Wait 2 seconds for database to update

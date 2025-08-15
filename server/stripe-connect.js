@@ -29,7 +29,7 @@ class StripeConnectManager {
                 }
             });
 
-            console.log('✅ Express account created:', account.id, 'for:', email);
+            console.log(' Express account created:', account.id, 'for:', email);
             return {
                 success: true,
                 accountId: account.id,

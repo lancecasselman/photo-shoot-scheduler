@@ -79,7 +79,7 @@ async function cleanupOrphanedFiles() {
             });
         });
         
-        console.log(`\n📊 SESSION ANALYSIS:`);
+        console.log(`\n SESSION ANALYSIS:`);
         sessionAnalysis.forEach(session => {
             console.log(`${session.clientName} (${session.sessionId.substring(0,8)}): ${session.files.length} tracked files`);
             session.files.forEach(file => {
@@ -106,7 +106,7 @@ async function cleanupOrphanedFiles() {
         });
         
         if (orphanedFiles.length > 0) {
-            console.log(`\n⚠️ Total orphaned storage: ${orphanedFiles.reduce((total, file) => {
+            console.log(`\n Total orphaned storage: ${orphanedFiles.reduce((total, file) => {
                 const filePath = path.join(uploadsDir, file);
                 return total + fs.statSync(filePath).size;
             }, 0) / 1024 / 1024} MB`);
@@ -116,12 +116,12 @@ async function cleanupOrphanedFiles() {
             // orphanedFiles.forEach(file => {
             //     const filePath = path.join(uploadsDir, file);
             //     fs.unlinkSync(filePath);
-            //     console.log(`  ✅ Deleted: ${file}`);
+            //     console.log(`   Deleted: ${file}`);
             // });
             
-            console.log('\n⚠️ Files NOT deleted (safety check). Uncomment deletion code to actually remove them.');
+            console.log('\n Files NOT deleted (safety check). Uncomment deletion code to actually remove them.');
         } else {
-            console.log('\n✅ No orphaned files found!');
+            console.log('\n No orphaned files found!');
         }
         
     } catch (error) {

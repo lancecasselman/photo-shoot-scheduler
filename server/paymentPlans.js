@@ -389,7 +389,7 @@ class PaymentPlanManager {
 
   // Process automated monthly invoices and reminders
   async processAutomatedPayments() {
-    console.log('🔄 Processing automated payment invoices and reminders...');
+    console.log(' Processing automated payment invoices and reminders...');
     
     try {
       // Send invoices for payments due today
@@ -402,7 +402,7 @@ class PaymentPlanManager {
           eq(paymentRecords.invoiceSent, false)
         ));
 
-      console.log(`📋 Found ${paymentsDueToday.length} payments due for invoicing`);
+      console.log(` Found ${paymentsDueToday.length} payments due for invoicing`);
 
       for (const payment of paymentsDueToday) {
         try {
@@ -415,7 +415,7 @@ class PaymentPlanManager {
 
       // Send reminders for upcoming payments
       const upcomingPayments = await this.getPaymentsDueSoon(3);
-      console.log(`📋 Found ${upcomingPayments.length} payments due for reminders`);
+      console.log(` Found ${upcomingPayments.length} payments due for reminders`);
 
       for (const payment of upcomingPayments) {
         try {

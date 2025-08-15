@@ -12,11 +12,11 @@ async function debugTemplates() {
     const client = await pool.connect();
     
     try {
-        console.log('🔍 Debugging Booking Agreement Templates...\n');
+        console.log(' Debugging Booking Agreement Templates...\n');
         
         // Check what's in the database
         const dbResult = await client.query('SELECT * FROM booking_agreement_templates ORDER BY created_at');
-        console.log(`📊 Found ${dbResult.rows.length} templates in database:`);
+        console.log(` Found ${dbResult.rows.length} templates in database:`);
         
         dbResult.rows.forEach((template, index) => {
             console.log(`${index + 1}. Name: "${template.name}"`);
@@ -51,12 +51,12 @@ async function debugTemplates() {
         }
         
         if (extraInDb.length > 0) {
-            console.log(`\n⚠️ Extra templates in database (not in file):`);
+            console.log(`\n Extra templates in database (not in file):`);
             extraInDb.forEach(name => console.log(`   - ${name}`));
         }
         
         if (missingInDb.length === 0 && extraInDb.length === 0) {
-            console.log(`\n✅ All templates are synchronized between file and database`);
+            console.log(`\n All templates are synchronized between file and database`);
         }
         
     } catch (error) {

@@ -36,7 +36,7 @@
             
             try {
                 // First, check current storage
-                statusDiv.textContent = '📊 Checking current storage status...';
+                statusDiv.textContent = ' Checking current storage status...';
                 statusDiv.className = 'status info';
                 
                 const storageResponse = await fetch('/api/global-storage-stats', {
@@ -49,7 +49,7 @@
                 
                 const storageData = await storageResponse.json();
                 
-                statusDiv.textContent = `📊 CURRENT STORAGE:
+                statusDiv.textContent = ` CURRENT STORAGE:
 Database shows: ${storageData.combined.fileCount} files (${storageData.combined.totalSizeFormatted})
 - Gallery: ${storageData.gallery.fileCount} files (${storageData.gallery.totalSizeFormatted})  
 - Raw: ${storageData.raw.fileCount} files (${storageData.raw.totalSizeFormatted})
@@ -73,7 +73,7 @@ Database shows: ${storageData.combined.fileCount} files (${storageData.combined.
                 
                 if (cleanupResult.success) {
                     statusDiv.className = 'status success';
-                    statusDiv.textContent = `✅ CLEANUP COMPLETE!
+                    statusDiv.textContent = ` CLEANUP COMPLETE!
 
 BEFORE:
 - Files: ${cleanupResult.beforeFiles}
@@ -88,7 +88,7 @@ RESULT:
 - Space reclaimed: ${cleanupResult.reclaimedMB} MB
 
 ${cleanupResult.cleaned > 0 ? 
-'🎉 Orphaned files have been deleted! Your storage is now clean.' : 
+' Orphaned files have been deleted! Your storage is now clean.' : 
 'ℹ️ No orphaned files were found to clean up.'}
 
 Now when you delete photos in the gallery, they will be completely removed from everywhere and your storage usage will decrease immediately.`;

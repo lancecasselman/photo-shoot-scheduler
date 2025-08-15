@@ -25,7 +25,7 @@ class StorageBilling {
                 }
             });
 
-            console.log(`✅ Created Stripe customer for ${email}: ${customer.id}`);
+            console.log(` Created Stripe customer for ${email}: ${customer.id}`);
             return customer;
         } catch (error) {
             console.error('Error creating Stripe customer:', error);
@@ -61,7 +61,7 @@ class StorageBilling {
                 }
             });
 
-            console.log(`✅ Created storage subscription: ${subscription.id} for ${tbCount}TB`);
+            console.log(` Created storage subscription: ${subscription.id} for ${tbCount}TB`);
             return subscription;
         } catch (error) {
             console.error('Error creating storage subscription:', error);
@@ -104,7 +104,7 @@ class StorageBilling {
                 }
             });
 
-            console.log(`✅ Updated subscription ${subscriptionId} to ${newTbCount}TB`);
+            console.log(` Updated subscription ${subscriptionId} to ${newTbCount}TB`);
             return updated;
         } catch (error) {
             console.error('Error updating subscription:', error);
@@ -118,7 +118,7 @@ class StorageBilling {
     async cancelSubscription(subscriptionId) {
         try {
             const cancelled = await stripe.subscriptions.del(subscriptionId);
-            console.log(`✅ Cancelled subscription: ${subscriptionId}`);
+            console.log(` Cancelled subscription: ${subscriptionId}`);
             return cancelled;
         } catch (error) {
             console.error('Error cancelling subscription:', error);
@@ -146,7 +146,7 @@ class StorageBilling {
      */
     async processWebhook(event) {
         try {
-            console.log(`📧 Processing webhook: ${event.type}`);
+            console.log(` Processing webhook: ${event.type}`);
 
             switch (event.type) {
                 case 'invoice.payment_succeeded':
@@ -222,7 +222,7 @@ class StorageBilling {
             const userId = subscription.metadata.userId;
             const tbCount = parseInt(subscription.metadata.tbCount);
 
-            console.log(`✅ Subscription created for user ${userId}: ${tbCount}TB`);
+            console.log(` Subscription created for user ${userId}: ${tbCount}TB`);
 
             // Storage system will handle this via other webhooks
         } catch (error) {
@@ -235,7 +235,7 @@ class StorageBilling {
             const userId = subscription.metadata.userId;
             const tbCount = parseInt(subscription.metadata.tbCount);
 
-            console.log(`🔄 Subscription updated for user ${userId}: ${tbCount}TB`);
+            console.log(` Subscription updated for user ${userId}: ${tbCount}TB`);
 
             // Update storage system quotas
             // This should trigger recalculation of user's total quota

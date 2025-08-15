@@ -33,7 +33,7 @@ async function createTestImage() {
     const filename = 'test-upload-image.jpg';
     fs.writeFileSync(filename, buffer);
     
-    console.log(`✅ Created test image: ${filename}`);
+    console.log(` Created test image: ${filename}`);
     console.log(`   Size: ${(buffer.length / 1024).toFixed(2)} KB`);
     
     return filename;

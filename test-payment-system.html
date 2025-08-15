@@ -115,7 +115,7 @@
                 if (response.ok && config.publicKey) {
                     resultDiv.innerHTML = `
                         <div class="log success">
-                            ✅ Stripe configuration successful<br>
+                             Stripe configuration successful<br>
                             Public Key: ${config.publicKey.substring(0, 20)}... (${config.publicKey.length} chars)
                         </div>
                     `;
@@ -151,7 +151,7 @@
                 if (response.status === 404 && result.error === 'Session not found') {
                     resultDiv.innerHTML = `
                         <div class="log success">
-                            ✅ Payment intent validation working correctly<br>
+                             Payment intent validation working correctly<br>
                             Expected error for non-existent session: "${result.error}"
                         </div>
                     `;
@@ -159,7 +159,7 @@
                 } else if (response.ok && result.clientSecret) {
                     resultDiv.innerHTML = `
                         <div class="log success">
-                            ✅ Payment intent created successfully<br>
+                             Payment intent created successfully<br>
                             Client Secret: ${result.clientSecret.substring(0, 20)}...
                         </div>
                     `;
@@ -187,10 +187,10 @@
                     
                     resultDiv.innerHTML = `
                         <div class="log success">
-                            ✅ Invoice page loads successfully<br>
-                            Stripe SDK: ${hasStripe ? '✅' : '❌'}<br>
-                            Payment Function: ${hasPayment ? '✅' : '❌'}<br>
-                            Config Endpoint: ${hasConfig ? '✅' : '❌'}
+                             Invoice page loads successfully<br>
+                            Stripe SDK: ${hasStripe ? '' : '❌'}<br>
+                            Payment Function: ${hasPayment ? '' : '❌'}<br>
+                            Config Endpoint: ${hasConfig ? '' : '❌'}
                         </div>
                     `;
                     

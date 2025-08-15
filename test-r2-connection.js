@@ -25,7 +25,7 @@ async function test() {
     });
     
     await s3Client.send(putCommand);
-    console.log('✅ Test file uploaded successfully');
+    console.log(' Test file uploaded successfully');
     
     // List files
     const listCommand = new ListObjectsV2Command({

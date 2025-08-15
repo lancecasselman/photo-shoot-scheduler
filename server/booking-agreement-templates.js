@@ -386,7 +386,7 @@ async function initializeTemplates(pool) {
                 );
             }
         }
-        console.log('✅ Booking agreement templates initialized');
+        console.log(' Booking agreement templates initialized');
     } catch (error) {
         console.error('Error initializing templates:', error);
     } finally {

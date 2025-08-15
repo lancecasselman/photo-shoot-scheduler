@@ -1,4 +1,4 @@
-// 🔄 TOGGLEABLE AUTH GUARD SYSTEM
+//  TOGGLEABLE AUTH GUARD SYSTEM
 const DEV_MODE = false; // 👉 Authentication enabled - production mode
 
 // SUCCESS: PREMIUM MODE IMPLEMENTATION
@@ -271,8 +271,8 @@ storageSystem.initializeTables().catch(error => {
     console.error('Failed to initialize storage tables:', error);
 });
 
-console.log('✅ R2 File Manager initialized');
-console.log('✅ Payment and contract services initialized');
+console.log(' R2 File Manager initialized');
+console.log(' Payment and contract services initialized');
 console.log('AI Services:', aiServices.status);
 console.log('💾 New storage system initialized');
 
@@ -328,7 +328,7 @@ try {
             bucketName: process.env.CLOUDFLARE_R2_BUCKET_NAME,
             publicUrl: process.env.CLOUDFLARE_R2_PUBLIC_URL || 'https://pub-f4fb0dd444374c70b491e4a0adb6bb02.r2.dev'
         });
-        console.log('✅ Community Platform initialized with R2 Storage');
+        console.log(' Community Platform initialized with R2 Storage');
     } else {
         console.log('WARNING: Firebase credentials not provided - authentication disabled');
     }
@@ -429,7 +429,7 @@ async function processWorkflow(workflowType, clientData, messageTemplate, sessio
                     message: `Dear ${clientData.clientName}, your ${clientData.sessionType} session is approaching! Please review the attached preparation guide to ensure a smooth experience.`
                 },
                 galleryDelivery: {
-                    subject: `Your Photos Are Ready! 📸`,
+                    subject: `Your Photos Are Ready! `,
                     message: `Dear ${clientData.clientName}, we're excited to share that your ${clientData.sessionType} photos are ready for viewing and download. Access your private gallery here: ${process.env.APP_URL}/gallery/${sessionId}`
                 },
                 feedbackRequest: {
@@ -439,7 +439,7 @@ async function processWorkflow(workflowType, clientData, messageTemplate, sessio
             },
             friendly: {
                 galleryDelivery: {
-                    subject: `Your amazing photos are ready! 🌟`,
+                    subject: `Your amazing photos are ready! `,
                     message: `Hey ${clientData.clientName}! Your ${clientData.sessionType} photos turned out absolutely stunning! Can't wait for you to see them: ${process.env.APP_URL}/gallery/${sessionId}`
                 }
             },
@@ -505,10 +505,10 @@ async function processR2BackupsAsync(sessionId, uploadedFiles, userId) {
                         sessionId
                     );
                     
-                    console.log(`✅ R2 backup successful: ${fileData.originalName} (${result.storageType})`);
+                    console.log(` R2 backup successful: ${fileData.originalName} (${result.storageType})`);
                     
                 } else {
-                    console.log(`⚠️ File not found for backup: ${fileData.originalName}`);
+                    console.log(` File not found for backup: ${fileData.originalName}`);
                 }
                 
             } catch (fileError) {
@@ -516,7 +516,7 @@ async function processR2BackupsAsync(sessionId, uploadedFiles, userId) {
             }
         }
         
-        console.log(`🎉 R2 backup process completed for session ${sessionId}`);
+        console.log(` R2 backup process completed for session ${sessionId}`);
         
     } catch (error) {
         console.error('R2 backup process error:', error);
@@ -550,7 +550,7 @@ async function processRAWBackups(sessionId, rawFiles, userId) {
                 new Date()
             ]);
 
-            console.log(`📝 RAW backup record created for ${photo.originalName}`);
+            console.log(` RAW backup record created for ${photo.originalName}`);
 
             // Queue for background R2 upload (async)
             setImmediate(async () => {
@@ -1028,26 +1028,26 @@ app.post('/api/auth/firebase-login', async (req, res) => {
 app.post('/api/auth/firebase-verify', async (req, res) => {
     try {
         const { uid, email, displayName } = req.body;
-        console.log('🔍 FIREBASE VERIFY: Received request:', { uid, email, displayName });
-        console.log('🔍 FIREBASE VERIFY: Session ID:', req.sessionID);
-        console.log('🔍 FIREBASE VERIFY: Session before:', req.session);
+        console.log(' FIREBASE VERIFY: Received request:', { uid, email, displayName });
+        console.log(' FIREBASE VERIFY: Session ID:', req.sessionID);
+        console.log(' FIREBASE VERIFY: Session before:', req.session);
 
         if (!uid || !email) {
-            console.log('🔍 FIREBASE VERIFY: Missing user information');
+            console.log(' FIREBASE VERIFY: Missing user information');
             return res.status(400).json({ message: 'Missing user information' });
         }
 
         // Verify user exists and update session
         req.session.user = { uid, email, displayName };
-        console.log('🔍 FIREBASE VERIFY: Session after setting user:', req.session);
+        console.log(' FIREBASE VERIFY: Session after setting user:', req.session);
         
         // Force session save
         req.session.save((err) => {
             if (err) {
-                console.error('🔍 FIREBASE VERIFY: Session save error:', err);
+                console.error(' FIREBASE VERIFY: Session save error:', err);
                 return res.status(500).json({ message: 'Session save failed' });
             }
-            console.log('🔍 FIREBASE VERIFY: Session saved successfully');
+            console.log(' FIREBASE VERIFY: Session saved successfully');
             res.json({ success: true, user: req.session.user });
         });
     } catch (error) {
@@ -1057,17 +1057,17 @@ app.post('/api/auth/firebase-verify', async (req, res) => {
 });
 
 app.get('/api/auth/user', (req, res) => {
-    console.log('🔍 AUTH USER: Request received');
-    console.log('🔍 AUTH USER: Session ID:', req.sessionID);
-    console.log('🔍 AUTH USER: Session:', req.session);
-    console.log('🔍 AUTH USER: req.session exists:', !!req.session);
-    console.log('🔍 AUTH USER: req.session.user exists:', !!(req.session && req.session.user));
+    console.log(' AUTH USER: Request received');
+    console.log(' AUTH USER: Session ID:', req.sessionID);
+    console.log(' AUTH USER: Session:', req.session);
+    console.log(' AUTH USER: req.session exists:', !!req.session);
+    console.log(' AUTH USER: req.session.user exists:', !!(req.session && req.session.user));
     
     if (req.session && req.session.user) {
-        console.log('🔍 AUTH USER: User authenticated, returning user data');
+        console.log(' AUTH USER: User authenticated, returning user data');
         res.json({ user: req.session.user });
     } else {
-        console.log('🔍 AUTH USER: User not authenticated');
+        console.log(' AUTH USER: User not authenticated');
         res.status(401).json({ message: 'Not authenticated' });
     }
 });
@@ -1174,7 +1174,7 @@ app.post('/api/sessions/:sessionId/files/upload', isAuthenticated, async (req, r
 
             // Warning if near limit
             if (quotaCheck.isNearLimit) {
-                console.log(`⚠️ User ${normalizedUserId} is approaching storage limit: ${quotaCheck.currentUsageGB}GB / ${quotaCheck.quotaGB}GB`);
+                console.log(` User ${normalizedUserId} is approaching storage limit: ${quotaCheck.currentUsageGB}GB / ${quotaCheck.quotaGB}GB`);
             }
         }
         
@@ -1219,7 +1219,7 @@ app.post('/api/sessions/:sessionId/files/upload', isAuthenticated, async (req, r
         // Generate presigned URL with 1 hour expiration
         const uploadURL = await getSignedUrl(r2FileManager.s3Client, putCommand, { expiresIn: 3600 });
         
-        console.log(`✅ Generated R2 presigned upload URL`);
+        console.log(` Generated R2 presigned upload URL`);
         console.log(`   File: ${fileName} -> ${uniqueFileName}`);
         console.log(`   R2 Path: ${r2Key}`);
         console.log(`   Content-Type: ${contentType}`);
@@ -1305,7 +1305,7 @@ app.post('/api/sessions/:sessionId/files/:folderType/upload-direct', isAuthentic
         });
         
         await r2FileManager.s3Client.send(putCommand);
-        console.log(`✅ File uploaded to R2: ${r2Key}`);
+        console.log(` File uploaded to R2: ${r2Key}`);
         
         // Track in database using pool
         const fileSizeMB = file.size / (1024 * 1024);
@@ -1329,7 +1329,7 @@ app.post('/api/sessions/:sessionId/files/:folderType/upload-direct', isAuthentic
                 r2Key,
                 now
             ]);
-            console.log(`✅ File tracked in database: ${file.originalname} (${fileSizeMB.toFixed(2)}MB)`);
+            console.log(` File tracked in database: ${file.originalname} (${fileSizeMB.toFixed(2)}MB)`);
         } finally {
             if (client) client.release();
         }
@@ -1751,7 +1751,7 @@ app.post('/api/sessions/:sessionId/files/:folderType/update-metadata', isAuthent
             fileSizeBytes = headResponse.ContentLength || 0;
             fileSizeMB = fileSizeBytes / (1024 * 1024);
             
-            console.log(`✅ R2 file confirmed: ${fileName} (${fileSizeMB.toFixed(2)}MB)`);
+            console.log(` R2 file confirmed: ${fileName} (${fileSizeMB.toFixed(2)}MB)`);
         } catch (r2Error) {
             console.error('Error checking R2 file:', r2Error);
             // File might not be ready yet, use a default size
@@ -1788,7 +1788,7 @@ app.post('/api/sessions/:sessionId/files/:folderType/update-metadata', isAuthent
                     uploaded_at = CURRENT_TIMESTAMP
             `, [userId, sessionId, folderType, fileName, fileSizeBytes, fileSizeMB]);
             
-            console.log(`✅ File tracked in database: ${fileName} (${fileSizeMB.toFixed(2)}MB) for user ${userId}`);
+            console.log(` File tracked in database: ${fileName} (${fileSizeMB.toFixed(2)}MB) for user ${userId}`);
         } catch (trackingError) {
             console.error('Storage tracking error:', trackingError);
         }
@@ -1930,7 +1930,7 @@ app.get('/api/global-storage-stats', isAuthenticated, async (req, res) => {
         };
         
         // Calculate storage from database (consistent with individual session stats)
-        console.log('📊 Using database calculation method');
+        console.log(' Using database calculation method');
         
         // Get all files from database for this user's sessions
         let client;
@@ -1972,7 +1972,7 @@ app.get('/api/global-storage-stats', isAuthenticated, async (req, res) => {
         const totalCombinedSize = (totalGallerySize || 0) + (totalRawSize || 0);
         const totalCombinedFiles = (totalGalleryFiles || 0) + (totalRawFiles || 0);
         
-        console.log(`📊 Final calculation - Total: ${formatBytes(totalCombinedSize)}, Gallery: ${formatBytes(totalGallerySize)}, RAW: ${formatBytes(totalRawSize)}`);
+        console.log(` Final calculation - Total: ${formatBytes(totalCombinedSize)}, Gallery: ${formatBytes(totalGallerySize)}, RAW: ${formatBytes(totalRawSize)}`);
         
         const result = {
             totalSessions,
@@ -2154,7 +2154,7 @@ app.delete('/api/sessions/:sessionId/files/:folderType/:filename', isAuthenticat
         const result = await unifiedDeletion.deletePhotoCompletely(userId, sessionId, filename);
         
         if (result.success) {
-            console.log(`✅ DELETION SUCCESS: ${filename} - ${result.fileSizeMB}MB reclaimed`);
+            console.log(` DELETION SUCCESS: ${filename} - ${result.fileSizeMB}MB reclaimed`);
             res.json({
                 success: true,
                 message: `Photo deleted successfully: ${filename}`,
@@ -2215,7 +2215,7 @@ app.delete('/api/sessions/:sessionId/files/:folderType', isAuthenticated, async 
         const unifiedDeletion = new UnifiedFileDeletion();
         const result = await unifiedDeletion.deleteMultiplePhotos(userId, sessionId, filenames);
         
-        console.log(`📊 BATCH DELETION RESULT: ${result.successCount}/${result.totalFiles} success, ${result.totalReclaimedMB}MB reclaimed`);
+        console.log(` BATCH DELETION RESULT: ${result.successCount}/${result.totalFiles} success, ${result.totalReclaimedMB}MB reclaimed`);
         
         res.json({
             success: result.success,
@@ -2249,7 +2249,7 @@ app.get('/api/sessions/:sessionId/files/:folderType/:filename/verify-deletion', 
             });
         }
 
-        console.log(`🔍 VERIFYING DELETION: ${filename} from ${folderType}/${sessionId}`);
+        console.log(` VERIFYING DELETION: ${filename} from ${folderType}/${sessionId}`);
         
         const unifiedDeletion = new UnifiedFileDeletion();
         const result = await unifiedDeletion.verifyDeletionComplete(userId, sessionId, filename);
@@ -2280,7 +2280,7 @@ app.get('/api/sessions/:sessionId/files/:folderType/download-zip', isAuthenticat
             return res.status(400).json({ error: 'Invalid folder type' });
         }
         
-        console.log(`📦 Creating ZIP for session ${sessionId}, folder ${folderType}`);
+        console.log(` Creating ZIP for session ${sessionId}, folder ${folderType}`);
         
         // Get files from database (R2 system)
         let client;
@@ -2342,14 +2342,14 @@ app.get('/api/sessions/:sessionId/files/:folderType/download-zip', isAuthenticat
                         processedFiles++;
                         totalSize += parseInt(file.file_size_bytes);
                     } else {
-                        console.warn(`⚠️  Could not get stream for ${file.filename}, skipping`);
+                        console.warn(`  Could not get stream for ${file.filename}, skipping`);
                     }
                 } catch (fileError) {
                     console.error(`❌ Error processing file ${file.filename}:`, fileError.message);
                 }
             }
             
-            console.log(`📦 ZIP creation complete: ${processedFiles} files, ${Math.round(totalSize/1024/1024)}MB total`);
+            console.log(` ZIP creation complete: ${processedFiles} files, ${Math.round(totalSize/1024/1024)}MB total`);
             
             await archive.finalize();
             
@@ -3146,7 +3146,7 @@ app.get('/api/sessions/:sessionId/public', async (req, res) => {
             createdAt: row.created_at
         };
 
-        console.log(`📋 Public session data requested for invoice: ${sessionId}`);
+        console.log(` Public session data requested for invoice: ${sessionId}`);
         res.json(session);
     } catch (error) {
         console.error('Error fetching public session data:', error);
@@ -3385,7 +3385,7 @@ app.post('/api/sessions/:id/upload-photos', isAuthenticated, async (req, res) =>
 
         // QUOTA ENFORCEMENT: Check total upload size against user's storage limit
         const totalUploadSize = req.files.reduce((sum, file) => sum + file.size, 0);
-        console.log(`📊 Total upload size: ${(totalUploadSize / 1024 / 1024).toFixed(2)}MB`);
+        console.log(` Total upload size: ${(totalUploadSize / 1024 / 1024).toFixed(2)}MB`);
         
         try {
             const quotaCheck = await storageSystem.canUpload(userId, totalUploadSize);
@@ -3407,7 +3407,7 @@ app.post('/api/sessions/:id/upload-photos', isAuthenticated, async (req, res) =>
 
             // Warning if near limit
             if (quotaCheck.isNearLimit) {
-                console.log(`⚠️ User ${userId} approaching storage limit: ${quotaCheck.currentUsageGB}GB / ${quotaCheck.quotaGB}GB`);
+                console.log(` User ${userId} approaching storage limit: ${quotaCheck.currentUsageGB}GB / ${quotaCheck.quotaGB}GB`);
             }
         } catch (quotaError) {
             console.error('Quota check failed, allowing upload (fail-safe):', quotaError);
@@ -3561,7 +3561,7 @@ app.post('/api/sessions/:id/upload-photos', isAuthenticated, async (req, res) =>
                             console.error('Storage quota logging failed:', logError);
                         }
                     }
-                    console.log(`📊 Added ${uploadedPhotos.length} files to session_files database and logged storage usage`);
+                    console.log(` Added ${uploadedPhotos.length} files to session_files database and logged storage usage`);
                 } catch (trackingError) {
                     console.error('Error adding files to session_files table:', trackingError);
                 }
@@ -3864,7 +3864,7 @@ Return your response as a JSON object with:
                 throw new Error('AI did not provide modified HTML');
             }
 
-            console.log(`✅ AI Website Edit Success: ${result.description}`);
+            console.log(` AI Website Edit Success: ${result.description}`);
 
             res.json({
                 success: true,
@@ -3890,7 +3890,7 @@ Return your response as a JSON object with:
     }
 });
 
-// 🔍 AI WEBSITE ANALYZER - Design Analysis and Suggestions
+//  AI WEBSITE ANALYZER - Design Analysis and Suggestions
 app.post('/api/ai-website-analyze', isAuthenticated, async (req, res) => {
     try {
         const { currentHTML, websiteType } = req.body;
@@ -3917,7 +3917,7 @@ app.post('/api/ai-website-analyze', isAuthenticated, async (req, res) => {
             });
         }
 
-        console.log(`🔍 AI Website Analysis Request from ${userId}`);
+        console.log(` AI Website Analysis Request from ${userId}`);
 
         try {
             // Use AI credits first
@@ -3955,7 +3955,7 @@ Return your response as a JSON object with:
                 currentHTML
             }, 'Analyze this photography website for improvements', 'photography clients');
 
-            console.log(`✅ AI Website Analysis Complete`);
+            console.log(` AI Website Analysis Complete`);
 
             res.json({
                 success: true,
@@ -3983,7 +3983,7 @@ Return your response as a JSON object with:
     }
 });
 
-// 💰 BUSINESS EXPENSE MANAGEMENT API
+//  BUSINESS EXPENSE MANAGEMENT API
 app.get('/api/expenses', isAuthenticated, async (req, res) => {
     let client;
     try {
@@ -4091,7 +4091,7 @@ app.delete('/api/expenses/:id', isAuthenticated, async (req, res) => {
     }
 });
 
-// 💰 AI CREDITS MANAGEMENT
+//  AI CREDITS MANAGEMENT
 app.get('/api/ai/credits', isAuthenticated, async (req, res) => {
     try {
         const normalizedUser = normalizeUserForLance(req.user);
@@ -4406,12 +4406,12 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (
                     'completed'
                 ]);
 
-                console.log(`✅ Added ${creditsAmount} AI credits to user ${userId} via Stripe payment (${session.id})`);
+                console.log(` Added ${creditsAmount} AI credits to user ${userId} via Stripe payment (${session.id})`);
             }
             
             // Check if this is a photography session payment (deposits use checkout sessions)
             if (session.metadata && session.metadata.paymentId) {
-                console.log('📸 Processing photography session checkout session payment');
+                console.log(' Processing photography session checkout session payment');
                 
                 try {
                     // Extract session ID from paymentId (format: payment-sessionId-timestamp)
@@ -4437,9 +4437,9 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (
                         const notificationManager = new PaymentNotificationManager();
                         await notificationManager.handlePaymentSuccess(mockPaymentIntent);
                         
-                        console.log('✅ Photography checkout session payment processed:', sessionId);
+                        console.log(' Photography checkout session payment processed:', sessionId);
                     } else {
-                        console.log('⚠️ Could not extract session ID from payment ID:', paymentId);
+                        console.log(' Could not extract session ID from payment ID:', paymentId);
                     }
                 } catch (error) {
                     console.error('❌ Error processing photography checkout session payment:', error);
@@ -4450,12 +4450,12 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (
         // Handle payment success for photography sessions and deposits
         if (event.type === 'payment_intent.succeeded') {
             const paymentIntent = event.data.object;
-            console.log('💰 Payment succeeded:', paymentIntent.id, 'Amount:', paymentIntent.amount_received / 100);
+            console.log(' Payment succeeded:', paymentIntent.id, 'Amount:', paymentIntent.amount_received / 100);
             console.log('💳 Payment metadata:', JSON.stringify(paymentIntent.metadata));
             
             // Check if this is a photography session payment by looking for session metadata
             if (paymentIntent.metadata && paymentIntent.metadata.sessionId) {
-                console.log('📸 Processing photography session payment notification');
+                console.log(' Processing photography session payment notification');
                 
                 try {
                     // Initialize payment notification manager and process the payment
@@ -4463,7 +4463,7 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (
                     const notificationManager = new PaymentNotificationManager();
                     await notificationManager.handlePaymentSuccess(paymentIntent);
                     
-                    console.log('✅ Photography payment notification processed successfully');
+                    console.log(' Photography payment notification processed successfully');
                 } catch (error) {
                     console.error('❌ Error processing photography payment notification:', error);
                     // Don't throw here to avoid breaking other webhook processing
@@ -5027,7 +5027,7 @@ app.get('/website-preview/:userId', async (req, res) => {
         // Get pages from site data
         const pages = siteData.pages || [
             { id: 'home', name: 'Home', icon: '🏠' },
-            { id: 'about', name: 'About', icon: '👤' },
+            { id: 'about', name: 'About', icon: '' },
             { id: 'portfolio', name: 'Portfolio', icon: '' },
             { id: 'contact', name: 'Contact', icon: '' }
         ];
@@ -5297,7 +5297,7 @@ app.get('/website-preview/:userId', async (req, res) => {
                         <section style="padding: 60px 30px; text-align: center; background: var(--beige);">
                             <h2 style="font-family: var(--font-serif); font-size: 3em; margin-bottom: 30px; color: var(--deep-charcoal);">${block.content.title}</h2>
                             <div style="margin: 30px 0; max-width: 600px; margin-left: auto; margin-right: auto;">
-                                ${block.content.awards.map(award => `<p style="margin: 15px 0; font-size: 1.2em; color: var(--soft-brown);"><span style="color: var(--muted-gold);">🏆</span> ${award}</p>`).join('')}
+                                ${block.content.awards.map(award => `<p style="margin: 15px 0; font-size: 1.2em; color: var(--soft-brown);"><span style="color: var(--muted-gold);"></span> ${award}</p>`).join('')}
                             </div>
                             <p style="font-size: 1.5em; font-weight: 600; margin-top: 30px; color: var(--muted-gold);">${block.content.experience}</p>
                         </section>
@@ -5348,11 +5348,11 @@ app.get('/website-preview/:userId', async (req, res) => {
                     <h1 style="font-family: var(--font-serif); font-size: 3em; margin-bottom: 20px; color: var(--deep-charcoal);">Your Website Preview</h1>
                     <p style="font-size: 1.4em; color: var(--soft-brown); margin-bottom: 30px;">Go back to the editor and add luxury components to see your preview.</p>
                     <div style="background: var(--beige); padding: 40px; border-radius: 15px; margin: 30px auto; max-width: 600px;">
-                        <p style="font-size: 1.2em; color: var(--soft-brown);">💎 Add luxury components like:</p>
+                        <p style="font-size: 1.2em; color: var(--soft-brown);"> Add luxury components like:</p>
                         <ul style="list-style: none; margin: 20px 0; padding: 0;">
-                            <li style="margin: 10px 0; font-size: 1.1em;">🎭 Massive Hero Text</li>
-                            <li style="margin: 10px 0; font-size: 1.1em;">✨ Transformational Experience</li>
-                            <li style="margin: 10px 0; font-size: 1.1em;">🏆 Award-Winning Positioning</li>
+                            <li style="margin: 10px 0; font-size: 1.1em;"> Massive Hero Text</li>
+                            <li style="margin: 10px 0; font-size: 1.1em;"> Transformational Experience</li>
+                            <li style="margin: 10px 0; font-size: 1.1em;"> Award-Winning Positioning</li>
                         </ul>
                     </div>
                 </section>
@@ -5775,7 +5775,7 @@ app.delete('/api/sessions/:sessionId/files/:folderType/:filename', isAuthenticat
         const deleteResult = await unifiedDeletion.deletePhotoCompletely(currentUserId, sessionId, decodeURIComponent(filename));
         
         if (deleteResult.success) {
-            console.log(`✅ Photo deleted: ${filename} - ${deleteResult.fileSizeMB}MB reclaimed`);
+            console.log(` Photo deleted: ${filename} - ${deleteResult.fileSizeMB}MB reclaimed`);
             res.json({
                 success: true,
                 message: `Photo ${filename} deleted successfully`,
@@ -6171,7 +6171,7 @@ app.get('/gallery/:id', async (req, res) => {
 
                     <div class="bulk-actions">
                         <button class="bulk-download-btn" onclick="downloadAllPhotos()">
-                            📦 Download All Photos (ZIP)
+                             Download All Photos (ZIP)
                         </button>
                     </div>
                 </div>
@@ -6867,7 +6867,7 @@ app.post('/api/create-invoice', isAuthenticated, async (req, res) => {
                 invoice: invoice.id,
                 amount: 0, // $0 default - client can add custom tip amount
                 currency: 'usd',
-                description: '💰 Optional Gratuity (Add Custom Amount)',
+                description: ' Optional Gratuity (Add Custom Amount)',
                 metadata: {
                     sessionId: sessionId,
                     tipItem: 'true',
@@ -7536,7 +7536,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
     try {
         const { paymentId, amount, tipAmount, totalAmount, clientName, sessionType } = req.body;
         
-        console.log('🔥 CREATE CHECKOUT SESSION REQUEST:', {
+        console.log(' CREATE CHECKOUT SESSION REQUEST:', {
             paymentId,
             amount,
             tipAmount,
@@ -7569,7 +7569,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
         const host = req.headers.host || 'localhost:5000';
         const baseUrl = req.headers.origin || `${protocol}://${host}`;
         
-        console.log('🔥 STRIPE URL INFO:', { 
+        console.log(' STRIPE URL INFO:', { 
             protocol, 
             host, 
             baseUrl, 
@@ -7607,7 +7607,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
             }
         });
         
-        console.log('✅ STRIPE SESSION CREATED:', session.id);
+        console.log(' STRIPE SESSION CREATED:', session.id);
         res.json({
             success: true,
             checkout_url: session.url,
@@ -7681,14 +7681,14 @@ app.post('/api/create-deposit-invoice-with-tipping', async (req, res) => {
         const baseURL = req.headers.origin || `https://${req.headers.host}`;
         const invoiceURL = `${baseURL}/invoice.html?payment=${paymentId}&sessionId=${sessionId}&amount=${depositAmount}&type=deposit`;
         
-        console.log(`🔥 DEPOSIT TIPPING SYSTEM: Creating deposit invoice for session:`, {
+        console.log(` DEPOSIT TIPPING SYSTEM: Creating deposit invoice for session:`, {
             sessionId,
             depositAmount,
             clientName: session.clientName,
             remainingBalance: session.price - depositAmount
         });
         
-        console.log(`🔥 DEPOSIT SUCCESS: Custom deposit invoice URL created:`, invoiceURL);
+        console.log(` DEPOSIT SUCCESS: Custom deposit invoice URL created:`, invoiceURL);
         
         res.json({
             success: true,
@@ -8529,7 +8529,7 @@ app.post('/api/contracts/send-email', isAuthenticated, async (req, res) => {
                         
                         <div style="text-align: center; margin: 30px 0;">
                             <a href="${signingUrl}" style="display: inline-block; background: linear-gradient(135deg, #8b7355 0%, #a08968 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-size: 16px; font-weight: bold;">
-                                📝 Review & Sign Contract
+                                 Review & Sign Contract
                             </a>
                         </div>
                         
@@ -8542,7 +8542,7 @@ app.post('/api/contracts/send-email', isAuthenticated, async (req, res) => {
                                 Best regards,<br>
                                 Lance Casselman<br>
                                 The Legacy Photography<br>
-                                📧 lance@thelegacyphotography.com
+                                 lance@thelegacyphotography.com
                             </p>
                         </div>
                     </div>
@@ -8562,7 +8562,7 @@ app.post('/api/contracts/send-email', isAuthenticated, async (req, res) => {
             WHERE id = $1
         `, [contractId]);
         
-        console.log(`✅ Contract email sent successfully to ${clientEmail}`);
+        console.log(` Contract email sent successfully to ${clientEmail}`);
         res.json({ 
             success: true, 
             message: 'Contract email sent successfully!',
@@ -8624,7 +8624,7 @@ app.post('/api/contracts/send-sms', isAuthenticated, async (req, res) => {
             WHERE id = $1
         `, [contractId]);
         
-        console.log(`✅ Contract SMS sent successfully to ${formattedPhone}. SID: ${twilioMessage.sid}`);
+        console.log(` Contract SMS sent successfully to ${formattedPhone}. SID: ${twilioMessage.sid}`);
         res.json({ 
             success: true, 
             message: 'Contract SMS sent successfully!',
@@ -8678,7 +8678,7 @@ app.post('/api/setup-wizard', isAuthenticated, async (req, res) => {
         const userId = req.user.uid;
         const wizardData = req.body;
 
-        console.log('📋 Processing onboarding wizard data for user:', userId);
+        console.log(' Processing onboarding wizard data for user:', userId);
 
         // Create business_settings table if it doesn't exist
         await pool.query(`
@@ -8841,7 +8841,7 @@ app.get('/business-profile', (req, res) => {
         </head>
         <body>
             <div class="container">
-                <h2>📋 Business Profile Setup</h2>
+                <h2> Business Profile Setup</h2>
                 <form action="/api/save-business-profile" method="POST">
                     <div class="form-group">
                         <label>Business Name</label>
@@ -8937,11 +8937,11 @@ app.post('/api/save-business-profile', express.urlencoded({ extended: true }), a
             </head>
             <body>
                 <div class="success">
-                    <h1>✅ Business Profile Saved!</h1>
+                    <h1> Business Profile Saved!</h1>
                     <h2>Welcome, ${ownerName}!</h2>
                     <p><strong>${businessName}</strong> profile is complete.</p>
                     ${location ? `<p>📍 ${location}</p>` : ''}
-                    ${specialties ? `<p>📸 ${specialties}</p>` : ''}
+                    ${specialties ? `<p> ${specialties}</p>` : ''}
                     <a href="/" class="btn">Start Managing Sessions</a>
                 </div>
             </body>
@@ -9012,7 +9012,7 @@ app.post('/api/poses', isAuthenticated, upload.single('poseImage'), async (req, 
         `, [userId, imageUrl, JSON.stringify(categoryArray), JSON.stringify(tagArray)]);
 
         const newPose = result.rows[0];
-        console.log('🎯 New pose submitted:', newPose.id);
+        console.log(' New pose submitted:', newPose.id);
 
         res.json({ 
             success: true, 
@@ -9106,7 +9106,7 @@ app.post('/api/setup-complete', express.urlencoded({ extended: true }), async (r
     try {
         const { businessName, ownerName, email, phone, location, specialties, experience } = req.body;
 
-        console.log('🎯 Processing business setup:', { businessName, ownerName, email });
+        console.log(' Processing business setup:', { businessName, ownerName, email });
 
         // Simple success response
         res.send(`
@@ -9120,7 +9120,7 @@ app.post('/api/setup-complete', express.urlencoded({ extended: true }), async (r
             </head>
             <body>
                 <div class="success">
-                    <h1>🎉 Setup Complete!</h1>
+                    <h1> Setup Complete!</h1>
                     <h2>Welcome, ${ownerName}!</h2>
                     <p><strong>${businessName}</strong> is now ready to go.</p>
                     <p>Location: ${location}</p>
@@ -9173,7 +9173,7 @@ app.post('/api/complete-onboarding', express.urlencoded({ extended: true }), asy
             req.user?.uid || 'anonymous'
         ]);
 
-        console.log('✅ Onboarding completed:', result.rows[0]);
+        console.log(' Onboarding completed:', result.rows[0]);
 
         // Success page
         res.send(`
@@ -9504,7 +9504,7 @@ function generatePublicWebsite(websiteData) {
                 <p>Ready to capture your special moments? Let's create something beautiful together.</p>
                 <br>
                 <a href="mailto:lance@thelegacyphotography.com" class="contact-btn"> Send Email</a>
-                <a href="tel:8434851315" class="contact-btn">📞 Call Now</a>
+                <a href="tel:8434851315" class="contact-btn"> Call Now</a>
                 <a href="sms:8434851315" class="contact-btn">💬 Text Message</a>
             </div>
         </main>
@@ -9654,7 +9654,7 @@ function generatePremiumStaticSite(config, username) {
                 <p>Ready to capture your special moments? Let's create something beautiful together.</p>
                 <div class="contact-buttons">
                     <a href="mailto:lance@thelegacyphotography.com" class="contact-btn email"> Send Email</a>
-                    <a href="tel:8434851315" class="contact-btn phone">📞 Call Now</a>
+                    <a href="tel:8434851315" class="contact-btn phone"> Call Now</a>
                     <a href="sms:8434851315" class="contact-btn sms">💬 Text Message</a>
                 </div>
             </div>
@@ -10156,7 +10156,7 @@ function generateStaticHTML(siteConfig, theme, username) {
                          Email Me
                     </a>
                     <a href="tel:843-485-1315" class="contact-btn">
-                        📞 Call Now
+                         Call Now
                     </a>
                     <a href="sms:843-485-1315" class="contact-btn">
                         💬 Text Message
@@ -11854,7 +11854,7 @@ app.post('/api/create-payment-intent', async (req, res) => {
 
         const paymentIntent = await stripe.paymentIntents.create(paymentIntentData);
 
-        console.log('💰 Payment Intent created:', paymentIntent.id, 'Amount:', amount, 'Session:', sessionId, 'Type:', paymentType, 'Connect:', !!connectedAccountId);
+        console.log(' Payment Intent created:', paymentIntent.id, 'Amount:', amount, 'Session:', sessionId, 'Type:', paymentType, 'Connect:', !!connectedAccountId);
 
         res.json({
             clientSecret: paymentIntent.client_secret,
@@ -11971,7 +11971,7 @@ app.post('/api/stripe-connect/onboard', isAuthenticated, async (req, res) => {
             });
         }
         
-        console.log('✅ Onboarding link created for:', userEmail, 'Account:', accountResult.accountId);
+        console.log(' Onboarding link created for:', userEmail, 'Account:', accountResult.accountId);
         
         res.json({
             success: true,

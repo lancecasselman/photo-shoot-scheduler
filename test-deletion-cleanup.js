@@ -23,7 +23,7 @@ async function testDeletionCleanup() {
   
   try {
     // Step 1: Create test files in database
-    console.log('📝 Step 1: Creating test database records...');
+    console.log(' Step 1: Creating test database records...');
     
     const testFiles = [
       {
@@ -45,7 +45,7 @@ async function testDeletionCleanup() {
         'INSERT INTO session_files (user_id, session_id, folder_type, filename, file_size_bytes, file_size_mb) VALUES ($1, $2, $3, $4, $5, $6)',
         [TEST_USER_ID, TEST_SESSION_ID, file.folderType, file.filename, file.sizeBytes, file.sizeMB]
       );
-      console.log(`   ✅ Created database record: ${file.filename} (${file.folderType})`);
+      console.log(`    Created database record: ${file.filename} (${file.folderType})`);
     }
     
     // Step 2: Create test files in cloud storage
@@ -61,17 +61,17 @@ async function testDeletionCleanup() {
         ContentType: 'application/octet-stream'
       }).promise();
       
-      console.log(`   ✅ Created cloud file: ${cloudPath}`);
+      console.log(`    Created cloud file: ${cloudPath}`);
     }
     
     // Step 3: Verify files exist before deletion
-    console.log('\n🔍 Step 3: Verifying files exist before deletion...');
+    console.log('\n Step 3: Verifying files exist before deletion...');
     
     const beforeQuery = await dbPool.query(
       'SELECT COUNT(*) as count FROM session_files WHERE session_id = $1',
       [TEST_SESSION_ID]
     );
-    console.log(`   📊 Database records before: ${beforeQuery.rows[0].count}`);
+    console.log(`    Database records before: ${beforeQuery.rows[0].count}`);
     
     for (const file of testFiles) {
       const cloudPath = `.private/sessions/${TEST_SESSION_ID}/${file.folderType}/${file.filename}`;
@@ -95,20 +95,20 @@ async function testDeletionCleanup() {
       });
       
       if (response.ok) {
-        console.log(`   ✅ API deletion successful: ${file.filename}`);
+        console.log(`    API deletion successful: ${file.filename}`);
       } else {
         console.log(`   ❌ API deletion failed: ${file.filename} (${response.status})`);
       }
     }
     
     // Step 5: Verify complete cleanup
-    console.log('\n🔍 Step 5: Verifying complete cleanup...');
+    console.log('\n Step 5: Verifying complete cleanup...');
     
     const afterQuery = await dbPool.query(
       'SELECT COUNT(*) as count FROM session_files WHERE session_id = $1',
       [TEST_SESSION_ID]
     );
-    console.log(`   📊 Database records after: ${afterQuery.rows[0].count}`);
+    console.log(`    Database records after: ${afterQuery.rows[0].count}`);
     
     let cloudFilesRemaining = 0;
     for (const file of testFiles) {
@@ -118,18 +118,18 @@ async function testDeletionCleanup() {
         console.log(`   ❌ Cloud file still exists: ${file.filename}`);
         cloudFilesRemaining++;
       } catch (error) {
-        console.log(`   ✅ Cloud file deleted: ${file.filename}`);
+        console.log(`    Cloud file deleted: ${file.filename}`);
       }
     }
     
     // Step 6: Test results
-    console.log('\n📋 Test Results:');
+    console.log('\n Test Results:');
     const dbCleanupSuccess = afterQuery.rows[0].count === '0';
     const cloudCleanupSuccess = cloudFilesRemaining === 0;
     
-    console.log(`   Database cleanup: ${dbCleanupSuccess ? '✅ PASS' : '❌ FAIL'}`);
-    console.log(`   Cloud storage cleanup: ${cloudCleanupSuccess ? '✅ PASS' : '❌ FAIL'}`);
-    console.log(`   Overall test: ${dbCleanupSuccess && cloudCleanupSuccess ? '✅ PASS' : '❌ FAIL'}`);
+    console.log(`   Database cleanup: ${dbCleanupSuccess ? ' PASS' : '❌ FAIL'}`);
+    console.log(`   Cloud storage cleanup: ${cloudCleanupSuccess ? ' PASS' : '❌ FAIL'}`);
+    console.log(`   Overall test: ${dbCleanupSuccess && cloudCleanupSuccess ? ' PASS' : '❌ FAIL'}`);
     
     // Cleanup any remaining test data
     await dbPool.query('DELETE FROM session_files WHERE session_id = $1', [TEST_SESSION_ID]);

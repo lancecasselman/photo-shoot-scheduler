@@ -83,7 +83,7 @@ class StorageSystem {
                 )
             `);
 
-            console.log('✅ Storage system tables initialized');
+            console.log(' Storage system tables initialized');
             return true;
         } catch (error) {
             console.error('❌ Failed to initialize storage tables:', error);
@@ -137,7 +137,7 @@ class StorageSystem {
             let galleryBytes = 0;
             let rawBytes = 0;
 
-            console.log(`📊 Calculating storage for user ${userId} across ${sessionsResult.rows.length} sessions`);
+            console.log(` Calculating storage for user ${userId} across ${sessionsResult.rows.length} sessions`);
 
             // For each session, get storage data from the actual storage endpoints
             for (const session of sessionsResult.rows) {
@@ -170,7 +170,7 @@ class StorageSystem {
             totalBytes = galleryBytes + rawBytes;
             const totalGB = parseFloat((totalBytes / (1024 * 1024 * 1024)).toFixed(3));
 
-            console.log(`📊 Storage calculation complete: ${totalGB}GB total (${(galleryBytes / 1024 / 1024).toFixed(2)}MB gallery + ${(rawBytes / 1024 / 1024).toFixed(2)}MB raw)`);
+            console.log(` Storage calculation complete: ${totalGB}GB total (${(galleryBytes / 1024 / 1024).toFixed(2)}MB gallery + ${(rawBytes / 1024 / 1024).toFixed(2)}MB raw)`);
 
             // Update cached usage in user_storage_quotas
             await this.pool.query(`
@@ -227,7 +227,7 @@ class StorageSystem {
                 VALUES ($1, $2, $3, $4, $5, $6)
             `, [userId, sessionId, action, fileSizeBytes, folderType, filename]);
 
-            console.log(`📊 Logged ${action}: ${filename} (${(fileSizeBytes / 1024 / 1024).toFixed(2)}MB)`);
+            console.log(` Logged ${action}: ${filename} (${(fileSizeBytes / 1024 / 1024).toFixed(2)}MB)`);
         } catch (error) {
             console.error('Error logging storage change:', error);
             // Don't throw - logging failure shouldn't block operations
@@ -409,7 +409,7 @@ class StorageSystem {
      * Handle successful session payments (deposits and invoices)
      */
     async handleSessionPaymentSuccess(paymentIntent) {
-        console.log('💰 Session payment successful:', paymentIntent.id);
+        console.log(' Session payment successful:', paymentIntent.id);
         
         try {
             // Import payment notification manager here to avoid circular deps
@@ -460,7 +460,7 @@ class StorageSystem {
                 'succeeded'
             ]);
 
-            console.log(`✅ Storage payment succeeded for user ${userId}: ${tbCount}TB`);
+            console.log(` Storage payment succeeded for user ${userId}: ${tbCount}TB`);
         } catch (error) {
             console.error('Error handling payment success:', error);
         }

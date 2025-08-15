@@ -10,7 +10,7 @@ class PaymentScheduler {
   // Start the automated payment scheduler
   start() {
     if (this.isRunning) {
-      console.log('💰 Payment scheduler already running');
+      console.log(' Payment scheduler already running');
       return;
     }
 
@@ -21,7 +21,7 @@ class PaymentScheduler {
       console.log('⏰ Daily payment processing started at', new Date().toLocaleString());
       try {
         const results = await this.paymentManager.processAutomatedPayments();
-        console.log('📊 Daily payment processing results:', results);
+        console.log(' Daily payment processing results:', results);
       } catch (error) {
         console.error('❌ Error in daily payment processing:', error);
       }
@@ -39,7 +39,7 @@ class PaymentScheduler {
 
     // Run every 4 hours during business hours for urgent payments
     cron.schedule('0 9,13,17 * * *', async () => {
-      console.log('🔄 Business hours payment check at', new Date().toLocaleString());
+      console.log(' Business hours payment check at', new Date().toLocaleString());
       try {
         const overduePayments = await this.paymentManager.getOverduePayments();
         if (overduePayments.length > 0) {
@@ -53,7 +53,7 @@ class PaymentScheduler {
 
     // Manual trigger for immediate processing (for testing)
     this.manualTrigger = async () => {
-      console.log('🔧 Manual payment processing triggered');
+      console.log(' Manual payment processing triggered');
       try {
         const results = await this.paymentManager.processAutomatedPayments();
         console.log('SUCCESS: Manual processing completed:', results);
@@ -74,7 +74,7 @@ class PaymentScheduler {
 
   // Weekly comprehensive payment plan review
   async weeklyPaymentReview() {
-    console.log('🔍 Starting weekly payment plan review...');
+    console.log(' Starting weekly payment plan review...');
     
     try {
       const { db } = require('./db');
@@ -86,7 +86,7 @@ class PaymentScheduler {
         .from(paymentPlans)
         .where(eq(paymentPlans.status, 'active'));
 
-      console.log(`📋 Reviewing ${activePlans.length} active payment plans`);
+      console.log(` Reviewing ${activePlans.length} active payment plans`);
 
       let plansUpdated = 0;
       let invoicesSent = 0;
@@ -142,7 +142,7 @@ class PaymentScheduler {
         }
       }
 
-      console.log('📊 Weekly review completed:', {
+      console.log(' Weekly review completed:', {
         plansReviewed: activePlans.length,
         plansUpdated,
         invoicesSent,
@@ -158,7 +158,7 @@ class PaymentScheduler {
   // Stop the scheduler
   stop() {
     if (!this.isRunning) {
-      console.log('💰 Payment scheduler not running');
+      console.log(' Payment scheduler not running');
       return;
     }
 

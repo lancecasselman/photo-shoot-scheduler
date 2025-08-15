@@ -17,7 +17,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>🎉 Photography Invoice - Tip System Working!</h1>
+        <h1> Photography Invoice - Tip System Working!</h1>
         
         <div class="amount">Session Amount: $<span id="session-amount">200.00</span></div>
         <div class="amount">Tip Amount: $<span id="tip-amount">0.00</span></div>
@@ -68,7 +68,7 @@
         }
 
         function showTotal() {
-            alert(`✅ Tip System Working Perfectly!\n\nSession: $${sessionAmount.toFixed(2)}\nTip: $${selectedTipAmount.toFixed(2)}\nTotal: $${(sessionAmount + selectedTipAmount).toFixed(2)}\n\nThis would redirect to Stripe for payment!`);
+            alert(` Tip System Working Perfectly!\n\nSession: $${sessionAmount.toFixed(2)}\nTip: $${selectedTipAmount.toFixed(2)}\nTotal: $${(sessionAmount + selectedTipAmount).toFixed(2)}\n\nThis would redirect to Stripe for payment!`);
         }
 
         // Get amount from URL if provided
@@ -80,7 +80,7 @@
             document.getElementById('total-amount').textContent = sessionAmount.toFixed(2);
         }
         
-        console.log('🔥 Tip system demo loaded with amount:', sessionAmount);
+        console.log(' Tip system demo loaded with amount:', sessionAmount);
     </script>
 </body>
 </html>

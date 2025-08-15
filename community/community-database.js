@@ -139,7 +139,7 @@ class CommunityDatabase {
                 CREATE INDEX IF NOT EXISTS idx_likes_post_id ON community_likes(post_id);
             `);
 
-            console.log('✅ Community database tables initialized successfully');
+            console.log(' Community database tables initialized successfully');
         } catch (error) {
             console.error('Error initializing community database:', error);
             throw error;

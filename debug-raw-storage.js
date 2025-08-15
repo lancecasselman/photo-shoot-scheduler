@@ -18,7 +18,7 @@ class RawStorageDebugger {
     }
 
     async runDiagnostics() {
-        console.log('🔧 RAW STORAGE MANAGER DEBUG REPORT');
+        console.log(' RAW STORAGE MANAGER DEBUG REPORT');
         console.log('=====================================\n');
 
         try {
@@ -53,8 +53,8 @@ class RawStorageDebugger {
         try {
             const isConnected = await this.r2Manager.testConnection();
             if (isConnected) {
-                console.log('   ✅ R2 connection successful');
-                console.log(`   📦 Bucket: ${this.r2Manager.bucketName}`);
+                console.log('    R2 connection successful');
+                console.log(`    Bucket: ${this.r2Manager.bucketName}`);
                 console.log(`   🔑 Endpoint: https://${this.r2Manager.accountId}.r2.cloudflarestorage.com`);
             } else {
                 console.log('   ❌ R2 connection failed');
@@ -70,7 +70,7 @@ class RawStorageDebugger {
         
         try {
             const result = await this.pool.query('SELECT NOW() as current_time');
-            console.log('   ✅ Database connection successful');
+            console.log('    Database connection successful');
             console.log('   🕒 Current time:', result.rows[0].current_time);
             
             // Check session_files table
@@ -83,7 +83,7 @@ class RawStorageDebugger {
             `);
             
             const stats = tableCheck.rows[0];
-            console.log('   📊 Session Files Table:');
+            console.log('    Session Files Table:');
             console.log(`      Total files: ${stats.total_files}`);
             console.log(`      Raw files: ${stats.raw_files}`);
             console.log(`      Gallery files: ${stats.gallery_files}`);
@@ -110,7 +110,7 @@ class RawStorageDebugger {
             console.log(`   Found ${sessions.rows.length} recent sessions:`);
             
             for (const session of sessions.rows) {
-                console.log(`   📸 Session: ${session.client_name} (${session.id})`);
+                console.log(`    Session: ${session.client_name} (${session.id})`);
                 
                 // Check files for this session
                 const files = await this.pool.query(`
@@ -148,7 +148,7 @@ class RawStorageDebugger {
             
             const storageUsage = await this.r2Manager.getUserStorageUsage(userId);
             
-            console.log('   📊 Storage Usage Results:');
+            console.log('    Storage Usage Results:');
             console.log(`      Total: ${storageUsage.totalGB} GB (${storageUsage.totalBytes} bytes)`);
             console.log(`      Gallery: ${storageUsage.galleryGB} GB (${storageUsage.galleryCount} files)`);
             console.log(`      Raw: ${storageUsage.rawGB} GB (${storageUsage.rawCount} files)`);
@@ -162,7 +162,7 @@ class RawStorageDebugger {
     }
 
     async testFileTypeDetection() {
-        console.log('5. 🔍 Testing File Type Detection...');
+        console.log('5.  Testing File Type Detection...');
         
         const testFiles = [
             'IMG_001.NEF',
@@ -184,7 +184,7 @@ class RawStorageDebugger {
     }
 
     async checkBackupIndices() {
-        console.log('6. 📋 Checking R2 Backup Indices...');
+        console.log('6.  Checking R2 Backup Indices...');
         
         try {
             // Get sessions to check their backup indices
@@ -197,7 +197,7 @@ class RawStorageDebugger {
             `);
             
             for (const session of sessions.rows) {
-                console.log(`   📸 Checking backup index for: ${session.client_name}`);
+                console.log(`    Checking backup index for: ${session.client_name}`);
                 
                 try {
                     const backupIndex = await this.r2Manager.getSessionBackupIndex(session.user_id, session.id);
@@ -226,7 +226,7 @@ class RawStorageDebugger {
 // Run the diagnostics
 const debugTool = new RawStorageDebugger();
 debugTool.runDiagnostics().then(() => {
-    console.log('🎯 DEBUG COMPLETE');
+    console.log(' DEBUG COMPLETE');
     process.exit(0);
 }).catch(error => {
     console.error('❌ Debug failed:', error);

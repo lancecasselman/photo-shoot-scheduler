@@ -24,8 +24,8 @@ async function checkAuth() {
     const fromAuth = document.referrer.includes('auth.html') || sessionStorage.getItem('fromAuth') === 'true';
     
     try {
-        console.log('🔍 AUTH CHECK: Checking authentication with backend...');
-        console.log('🔍 AUTH CHECK: About to call /api/auth/user');
+        console.log(' AUTH CHECK: Checking authentication with backend...');
+        console.log(' AUTH CHECK: About to call /api/auth/user');
         const response = await fetch('/api/auth/user', {
             credentials: 'include', // Ensure cookies are sent
             headers: {
@@ -33,7 +33,7 @@ async function checkAuth() {
             }
         });
         
-        console.log('🔍 AUTH CHECK: Auth response status:', response.status, 'ok:', response.ok);
+        console.log(' AUTH CHECK: Auth response status:', response.status, 'ok:', response.ok);
         
         if (response.ok) {
             const data = await response.json();
@@ -532,7 +532,7 @@ function createSessionCard(session) {
 
     const galleryBtn = document.createElement('button');
     galleryBtn.className = 'btn btn-warning';
-    galleryBtn.textContent = '📸 Copy Gallery URL';
+    galleryBtn.textContent = ' Copy Gallery URL';
     galleryBtn.onclick = () => copyGalleryUrl(session.id);
 
     // RAW Backup Upload Button
@@ -572,11 +572,11 @@ function createSessionCard(session) {
 
     const invoiceBtn = document.createElement('button');
     invoiceBtn.className = 'btn btn-info';
-    invoiceBtn.textContent = '💰 Send Invoice';
+    invoiceBtn.textContent = ' Send Invoice';
     invoiceBtn.onclick = (e) => {
         e.preventDefault();
         e.stopPropagation();
-        console.log('🔥 INVOICE BUTTON CLICKED - USING NEW TIPPING SYSTEM');
+        console.log(' INVOICE BUTTON CLICKED - USING NEW TIPPING SYSTEM');
         createInvoice(session);
     };
 
@@ -596,7 +596,7 @@ function createSessionCard(session) {
     // Payment Plan Button
     const paymentPlanBtn = document.createElement('button');
     paymentPlanBtn.className = 'btn btn-success';
-    paymentPlanBtn.textContent = '📅 Payment Plan';
+    paymentPlanBtn.textContent = ' Payment Plan';
     paymentPlanBtn.onclick = function() {
         console.log('DEBUG: Payment plan button clicked with session:', session);
         if (typeof window.openPaymentPlanModal === 'function') {
@@ -612,7 +612,7 @@ function createSessionCard(session) {
 
     // Show payment plan status if exists
     if (session.hasPaymentPlan) {
-        paymentPlanBtn.textContent = '📅 View Payment Plan';
+        paymentPlanBtn.textContent = ' View Payment Plan';
         paymentPlanBtn.style.backgroundColor = '#17a2b8';
     }
 
@@ -786,7 +786,7 @@ function createPhoneDetailItem(label, phoneNumber) {
     const callBtn = document.createElement('a');
     callBtn.href = `tel:${phoneNumber}`;
     callBtn.className = 'phone-action-btn';
-    callBtn.textContent = '📞';
+    callBtn.textContent = '';
     callBtn.title = 'Call';
     callBtn.style.cssText = `
         text-decoration: none;
@@ -1064,7 +1064,7 @@ I hope this email finds you well! I wanted to reach out regarding your upcoming 
 Session Details:
 Schedule: Date & Time: ${new Date(session.dateTime).toLocaleDateString()} at ${new Date(session.dateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
 📍 Location: ${session.location}
-💰 Investment: $${session.price}
+ Investment: $${session.price}
 ⏱️ Duration: ${session.duration} minutes
 
 ${session.notes ? `Additional Notes: ${session.notes}` : ''}
@@ -1076,7 +1076,7 @@ Looking forward to capturing some beautiful moments with you!
 Best regards,
 Lance - The Legacy Photography
 Professional Photography Services
-📞 Call/Text: ${session.phoneNumber}
+ Call/Text: ${session.phoneNumber}
  Email: lance@thelegacyphotography.com`;
 
     const mailtoUrl = `mailto:${session.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
@@ -1115,7 +1115,7 @@ async function copyGalleryUrl(sessionId) {
         if (result.galleryUrl) {
             // Copy URL to clipboard
             await navigator.clipboard.writeText(result.galleryUrl);
-            showMessage(`📸 Gallery URL copied to clipboard! ${result.galleryUrl}`, 'success');
+            showMessage(` Gallery URL copied to clipboard! ${result.galleryUrl}`, 'success');
 
             // Update the button text to show it's been generated
             const button = document.querySelector(`[data-session-id="${sessionId}"] .btn-warning`);
@@ -1198,20 +1198,20 @@ async function sendGalleryNotification(sessionId) {
 
 // Bridge function for HTML templates to use tipping system
 window.createInvoiceWithTipping = function(sessionId) {
-    console.log('🔥 BRIDGE: createInvoiceWithTipping called with sessionId:', sessionId);
+    console.log(' BRIDGE: createInvoiceWithTipping called with sessionId:', sessionId);
     const session = sessions.find(s => s.id === sessionId);
     if (!session) {
         showMessage('Session not found', 'error');
         return;
     }
-    console.log('🔥 BRIDGE: Found session, calling createInvoice with tipping system');
+    console.log(' BRIDGE: Found session, calling createInvoice with tipping system');
     createInvoice(session);
 };
 
 // Create invoice function with tipping system - simplified approach
 async function createInvoice(session) {
     try {
-        console.log('🔥 NEW TIPPING SYSTEM: Creating tipping-enabled invoice for session:', session);
+        console.log(' NEW TIPPING SYSTEM: Creating tipping-enabled invoice for session:', session);
 
         showMessage('Creating invoice with tip options...', 'info');
 
@@ -1248,7 +1248,7 @@ async function createInvoice(session) {
         // Open the custom invoice URL
         window.open(customInvoiceUrl, '_blank');
 
-        console.log('🔥 TIPPING SUCCESS: Custom invoice URL created:', customInvoiceUrl);
+        console.log(' TIPPING SUCCESS: Custom invoice URL created:', customInvoiceUrl);
 
     } catch (error) {
         console.error('Error creating invoice with tipping:', error);
@@ -1269,13 +1269,13 @@ function showInvoiceSendDialog(data) {
         <div id="invoice-send-dialog" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10000;">
             <div style="background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 500px; box-shadow: 0 20px 40px rgba(0,0,0,0.3);">
                 <div style="text-align: center; margin-bottom: 25px;">
-                    <h2 style="margin: 0 0 10px 0; color: #333; font-size: 24px;">✅ Invoice Created Successfully!</h2>
+                    <h2 style="margin: 0 0 10px 0; color: #333; font-size: 24px;"> Invoice Created Successfully!</h2>
                     <div style="background: #f0f9ff; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-                        <div style="font-size: 16px; color: #0369a1; margin-bottom: 8px;">💰 Amount: $${amount.toFixed(2)}</div>
-                        <div style="font-size: 16px; color: #0369a1;">📧 Client: ${clientName}</div>
+                        <div style="font-size: 16px; color: #0369a1; margin-bottom: 8px;"> Amount: $${amount.toFixed(2)}</div>
+                        <div style="font-size: 16px; color: #0369a1;"> Client: ${clientName}</div>
                     </div>
                     <div style="background: #f0f9f0; padding: 12px; border-radius: 8px; font-size: 14px; color: #166534;">
-                        🎯 Client can add 15%, 20%, 25% tips or custom amounts
+                         Client can add 15%, 20%, 25% tips or custom amounts
                     </div>
                 </div>
                 
@@ -1290,7 +1290,7 @@ function showInvoiceSendDialog(data) {
                         
                         <button onclick="sendViaEmail('${clientEmail}', '${clientName}', '${amount}', '${invoiceUrl}')" 
                                 style="padding: 15px 20px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
-                            📧 Send via Email
+                             Send via Email
                         </button>
                     </div>
                 </div>
@@ -1304,7 +1304,7 @@ function showInvoiceSendDialog(data) {
                     </div>
                     <button onclick="copyToClipboard('${invoiceUrl}')" 
                             style="margin-top: 10px; padding: 8px 15px; background: #6b7280; color: white; border: none; border-radius: 6px; font-size: 14px; cursor: pointer;">
-                        📋 Copy URL
+                         Copy URL
                     </button>
                 </div>
                 
@@ -1423,19 +1423,19 @@ function closeInvoiceSendDialog() {
 // Send deposit invoice with custom amount - NEW TIPPING SYSTEM VERSION
 async function sendDepositInvoice(session) {
     try {
-        console.log('🚀 NEW DEPOSIT SYSTEM: sendDepositInvoice called with session:', session);
-        console.log('🚀 NEW CODE VERSION: Using deposit tipping system');
+        console.log(' NEW DEPOSIT SYSTEM: sendDepositInvoice called with session:', session);
+        console.log(' NEW CODE VERSION: Using deposit tipping system');
 
         // If session is just an ID string, fetch the full session object
         if (typeof session === 'string') {
-            console.log('🔥 DEPOSIT BRIDGE: Session is a string ID, need to find full session object');
+            console.log(' DEPOSIT BRIDGE: Session is a string ID, need to find full session object');
             // Find session in the sessions array from the API response
             const fullSession = window.sessionsData ? window.sessionsData.find(s => s.id === session) : null;
             if (fullSession) {
                 session = fullSession;
-                console.log('🔥 DEPOSIT BRIDGE: Found full session object:', session);
+                console.log(' DEPOSIT BRIDGE: Found full session object:', session);
             } else {
-                console.log('🔥 DEPOSIT BRIDGE: Could not find session in sessionsData');
+                console.log(' DEPOSIT BRIDGE: Could not find session in sessionsData');
                 showMessage('Error: Session data not found. Please refresh the page and try again.', 'error');
                 return;
             }
@@ -1454,7 +1454,7 @@ async function sendDepositInvoice(session) {
             (remainingBalance * 0.5) : 
             (session.price * 0.5);
 
-        console.log('🚀 DEPOSIT BRIDGE: Prompting for customizable deposit amount');
+        console.log(' DEPOSIT BRIDGE: Prompting for customizable deposit amount');
         
         // Prompt for custom deposit amount with helpful context
         let promptText;
@@ -1486,7 +1486,7 @@ async function sendDepositInvoice(session) {
             }
         }
 
-        console.log('🚀 DEPOSIT BRIDGE: Creating deposit invoice with custom amount:', depositAmount.toFixed(2));
+        console.log(' DEPOSIT BRIDGE: Creating deposit invoice with custom amount:', depositAmount.toFixed(2));
 
         // Create deposit invoice with tipping system using suggested amount
         const authToken = await getAuthToken();
@@ -1514,20 +1514,20 @@ async function sendDepositInvoice(session) {
         }
 
         const result = await response.json();
-        console.log('🚀 DEPOSIT TIPPING SUCCESS: Custom deposit invoice URL created:', result.invoice_url);
+        console.log(' DEPOSIT TIPPING SUCCESS: Custom deposit invoice URL created:', result.invoice_url);
 
         if (result.success && result.invoice_url) {
             showMessage(`Deposit invoice created for $${depositAmount.toFixed(2)}! Opening in new window...`, 'success');
 
             // Open deposit invoice in new window
-            console.log('🔥 Attempting to open window with URL:', result.invoice_url);
+            console.log(' Attempting to open window with URL:', result.invoice_url);
             
             try {
                 // Use a simple approach that works better with popup blockers
                 const newWindow = window.open('', '_blank');
                 if (newWindow) {
                     newWindow.location.href = result.invoice_url;
-                    console.log('✅ Deposit invoice window opened successfully');
+                    console.log(' Deposit invoice window opened successfully');
                 } else {
                     throw new Error('Popup blocked');
                 }
@@ -1559,7 +1559,7 @@ async function sendDepositInvoice(session) {
             // Wait a moment for database to update, then refresh sessions
             setTimeout(async () => {
                 await loadSessions();
-                console.log('🚀 DEPOSIT BRIDGE: Sessions reloaded after deposit creation');
+                console.log(' DEPOSIT BRIDGE: Sessions reloaded after deposit creation');
             }, 1000);
         } else {
             throw new Error(result.message || 'Unknown error creating deposit invoice');
@@ -2124,52 +2124,52 @@ async function firebaseLogout() {
 
 // Initialize page function
 async function initializePage() {
-    console.log('🟢 INIT PAGE: Starting initialization...');
-    console.log('🟢 INIT PAGE: Document referrer:', document.referrer);
-    console.log('🟢 INIT PAGE: Session fromAuth flag:', sessionStorage.getItem('fromAuth'));
-    console.log('🟢 INIT PAGE: Manual logout flag:', localStorage.getItem('manualLogout'));
+    console.log(' INIT PAGE: Starting initialization...');
+    console.log(' INIT PAGE: Document referrer:', document.referrer);
+    console.log(' INIT PAGE: Session fromAuth flag:', sessionStorage.getItem('fromAuth'));
+    console.log(' INIT PAGE: Manual logout flag:', localStorage.getItem('manualLogout'));
 
     // Add delay if coming from auth page to allow session establishment
     const urlParams = new URLSearchParams(window.location.search);
     const fromAuth = document.referrer.includes('auth.html') || sessionStorage.getItem('fromAuth') === 'true';
     
     if (fromAuth) {
-        console.log('🟢 INIT PAGE: Coming from auth page - clearing logout flags and waiting for session establishment...');
+        console.log(' INIT PAGE: Coming from auth page - clearing logout flags and waiting for session establishment...');
         sessionStorage.removeItem('fromAuth'); // Clear flag
         
         // CRITICAL FIX: Clear manual logout flag when successfully coming from auth page
         localStorage.removeItem('manualLogout');
         sessionStorage.removeItem('loggingOut');
         
-        console.log('🟢 INIT PAGE: Logout flags cleared, waiting 2 seconds for backend session to fully establish...');
+        console.log(' INIT PAGE: Logout flags cleared, waiting 2 seconds for backend session to fully establish...');
         await new Promise(resolve => setTimeout(resolve, 2000)); // Reduced to 2 seconds since we now wait 1.5 in auth page
     } else {
-        console.log('🟢 INIT PAGE: Not from auth page, proceeding immediately');
+        console.log(' INIT PAGE: Not from auth page, proceeding immediately');
     }
 
     // Check authentication with explicit retry logic
-    console.log('🟢 INIT PAGE: Starting authentication check...');
+    console.log(' INIT PAGE: Starting authentication check...');
     let isAuthenticated = await checkAuth();
-    console.log('🟢 INIT PAGE: First auth check result:', isAuthenticated);
+    console.log(' INIT PAGE: First auth check result:', isAuthenticated);
     
     // If auth fails but we just came from auth page, retry multiple times
     if (!isAuthenticated && fromAuth) {
-        console.log('🟢 INIT PAGE: Auth failed but coming from auth page - retrying up to 3 times...');
+        console.log(' INIT PAGE: Auth failed but coming from auth page - retrying up to 3 times...');
         for (let i = 1; i <= 3; i++) {
-            console.log(`🟢 INIT PAGE: Retry ${i}/3 - waiting 1 second...`);
+            console.log(` INIT PAGE: Retry ${i}/3 - waiting 1 second...`);
             await new Promise(resolve => setTimeout(resolve, 1000));
             isAuthenticated = await checkAuth();
-            console.log(`🟢 INIT PAGE: Retry ${i}/3 result:`, isAuthenticated);
+            console.log(` INIT PAGE: Retry ${i}/3 result:`, isAuthenticated);
             if (isAuthenticated) break;
         }
     }
     
     if (!isAuthenticated) {
-        console.log('🟢 INIT PAGE: User not authenticated after retries - returning early');
+        console.log(' INIT PAGE: User not authenticated after retries - returning early');
         return; // Don't load app content if not authenticated
     }
     
-    console.log('🟢 INIT PAGE: Authentication successful, proceeding with app initialization...');
+    console.log(' INIT PAGE: Authentication successful, proceeding with app initialization...');
 
     // Initialize main app content after successful authentication
     if (typeof window.initializeAppContent === 'function') {
@@ -2188,18 +2188,18 @@ async function initializePage() {
 
 // Initialize when page loads
 window.addEventListener('load', function() {
-    console.log('🔄 MAIN APP: Page loaded event fired');
-    console.log('🔄 MAIN APP: Current URL:', window.location.href);
-    console.log('🔄 MAIN APP: Referrer:', document.referrer);
-    console.log('🔄 MAIN APP: fromAuth flag:', sessionStorage.getItem('fromAuth'));
-    console.log('🔄 MAIN APP: Manual logout flag:', localStorage.getItem('manualLogout'));
-    console.log('🔄 MAIN APP: Logging out flag:', sessionStorage.getItem('loggingOut'));
-    console.log('🔄 MAIN APP: Starting initializePage...');
+    console.log(' MAIN APP: Page loaded event fired');
+    console.log(' MAIN APP: Current URL:', window.location.href);
+    console.log(' MAIN APP: Referrer:', document.referrer);
+    console.log(' MAIN APP: fromAuth flag:', sessionStorage.getItem('fromAuth'));
+    console.log(' MAIN APP: Manual logout flag:', localStorage.getItem('manualLogout'));
+    console.log(' MAIN APP: Logging out flag:', sessionStorage.getItem('loggingOut'));
+    console.log(' MAIN APP: Starting initializePage...');
     
     // Check if we're stuck in a redirect loop
     const urlParams = new URLSearchParams(window.location.search);
     const fromAuth = document.referrer.includes('auth.html') || sessionStorage.getItem('fromAuth') === 'true';
-    console.log('🔄 MAIN APP: Coming from auth?', fromAuth);
+    console.log(' MAIN APP: Coming from auth?', fromAuth);
     
     initializePage();
 });
@@ -2220,11 +2220,11 @@ async function triggerWorkflow(sessionId) {
 
         // Show workflow options
         const workflowTypes = [
-            { id: 'galleryDelivery', name: '📸 Gallery Ready Notification', desc: 'Notify client their photos are ready' },
-            { id: 'contractReminder', name: '📝 Contract Reminder', desc: 'Remind client to sign contract' },
-            { id: 'paymentFollowup', name: '💰 Payment Follow-up', desc: 'Send payment reminder' },
-            { id: 'sessionPrep', name: '📋 Session Preparation', desc: 'Send session prep guide' },
-            { id: 'feedbackRequest', name: '⭐ Feedback Request', desc: 'Request client review' }
+            { id: 'galleryDelivery', name: ' Gallery Ready Notification', desc: 'Notify client their photos are ready' },
+            { id: 'contractReminder', name: ' Contract Reminder', desc: 'Remind client to sign contract' },
+            { id: 'paymentFollowup', name: ' Payment Follow-up', desc: 'Send payment reminder' },
+            { id: 'sessionPrep', name: ' Session Preparation', desc: 'Send session prep guide' },
+            { id: 'feedbackRequest', name: ' Feedback Request', desc: 'Request client review' }
         ];
 
         let optionsHTML = workflowTypes.map(workflow =>
@@ -2307,7 +2307,7 @@ async function executeWorkflow(sessionId, workflowType) {
             modal.innerHTML = `
                 <div class="modal-content" style="max-width: 600px;">
                     <div class="modal-header">
-                        <h3>✅ Workflow Ready</h3>
+                        <h3> Workflow Ready</h3>
                         <button onclick="this.closest('.modal-overlay').remove()" class="close-button">&times;</button>
                     </div>
                     <div class="modal-body">
@@ -2318,7 +2318,7 @@ async function executeWorkflow(sessionId, workflowType) {
                         </div>
                         <div style="text-align: center; margin-top: 20px;">
                             <button onclick="window.open('${result.mailtoLink}')" class="btn btn-primary" style="margin: 5px;">
-                                📧 Open Email Client
+                                 Open Email Client
                             </button>
                             ${result.smsLink ? `
                                 <button onclick="window.open('${result.smsLink}')" class="btn btn-secondary" style="margin: 5px;">
@@ -2326,7 +2326,7 @@ async function executeWorkflow(sessionId, workflowType) {
                                 </button>
                             ` : ''}
                             <button onclick="copyToClipboard(\`${result.template.message}\`)" class="btn btn-secondary" style="margin: 5px;">
-                                📋 Copy Message
+                                 Copy Message
                             </button>
                         </div>
                     </div>
@@ -2538,7 +2538,7 @@ function showRawGalleryModal(sessionId, clientName, filesByType) {
                             <div style="flex: 1; min-width: 0;">
                                 <div style="font-weight: bold; margin-bottom: 0.5rem; word-break: break-word;">${file.filename}</div>
                                 <div style="font-size: 0.9rem; color: #6c757d; line-height: 1.4;">
-                                    📏 ${fileSizeMB} MB | 📅 ${uploadDate}<br>
+                                    📏 ${fileSizeMB} MB |  ${uploadDate}<br>
                                     💾 R2 Cloud Backup<br>
                                     🔗 ${(file.r2Key || '').substring(0, 45)}...
                                 </div>
@@ -2550,7 +2550,7 @@ function showRawGalleryModal(sessionId, clientName, filesByType) {
                                     ${isImage ? `
                                         <button onclick="viewFullImage('${previewUrl}', '${file.filename}')"
                                                 style="padding: 0.5rem 1rem; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin-right: 0.5rem;">
-                                            🔍 View Full
+                                             View Full
                                         </button>
                                     ` : ''}
                                     <button onclick="deleteRawFile('${sessionId}', '${file.filename}', '${clientName}')"
@@ -2571,7 +2571,7 @@ function showRawGalleryModal(sessionId, clientName, filesByType) {
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 2px solid #dee2e6; padding-bottom: 1rem;">
                 <h2 style="margin: 0; color: #333;">🖼️ ${clientName} - RAW Files</h2>
                 <div style="display: flex; gap: 0.5rem;">
-                    <button onclick="downloadAllRawFiles('${sessionId}', '${clientName}')" style="background: #28a745; color: white; border: none; border-radius: 4px; padding: 0.5rem 1rem; cursor: pointer; font-size: 1rem;">📦 Download All</button>
+                    <button onclick="downloadAllRawFiles('${sessionId}', '${clientName}')" style="background: #28a745; color: white; border: none; border-radius: 4px; padding: 0.5rem 1rem; cursor: pointer; font-size: 1rem;"> Download All</button>
                     <button onclick="deleteAllRawFiles('${sessionId}', '${clientName}')" style="background: #dc3545; color: white; border: none; border-radius: 4px; padding: 0.5rem 1rem; cursor: pointer; font-size: 1rem;">🗑️ Delete All</button>
                     <button onclick="this.closest('.modal-parent').remove()" style="background: #6c757d; color: white; border: none; border-radius: 4px; padding: 0.5rem 1rem; cursor: pointer; font-size: 1rem;">✕ Close</button>
                 </div>
@@ -2632,7 +2632,7 @@ async function downloadRawFile(sessionId, filename) {
 function getFileTypeIcon(fileType) {
     const icons = {
         'images': '🖼️',
-        'raw': '📸',
+        'raw': '',
         'videos': '🎬',
         'documents': '📄',
         'audio': '🎵',
@@ -2766,7 +2766,7 @@ function showDownloadProgress(clientName) {
 
     modal.innerHTML = `
         <div style="background: white; padding: 2rem; border-radius: 12px; width: 400px; text-align: center;">
-            <h3 style="margin: 0 0 1rem 0; color: #333;">📦 Creating ZIP File</h3>
+            <h3 style="margin: 0 0 1rem 0; color: #333;"> Creating ZIP File</h3>
             <p style="margin: 0 0 1rem 0; color: #666;">${clientName} - RAW Files</p>
             <div style="background: #f0f0f0; border-radius: 10px; height: 20px; margin: 1rem 0; overflow: hidden;">
                 <div id="progressBar" style="background: linear-gradient(45deg, #28a745, #20c997); height: 100%; width: 0%; transition: width 0.3s ease; border-radius: 10px;"></div>
@@ -2804,20 +2804,20 @@ async function downloadAllRawFiles(sessionId, clientName) {
     let progressModal = null;
 
     try {
-        console.log("📦 Starting download for session:", sessionId, "client:", clientName);
+        console.log(" Starting download for session:", sessionId, "client:", clientName);
 
         // Show progress modal immediately
         progressModal = showDownloadProgress(clientName);
-        console.log("📦 Progress modal created:", progressModal);
+        console.log(" Progress modal created:", progressModal);
 
         // Force immediate display
         if (progressModal) {
             progressModal.style.display = 'flex';
-            console.log("📦 Progress modal displayed");
+            console.log(" Progress modal displayed");
         }
 
         updateProgress(10, "Connecting to server...");
-        console.log("📦 Initial progress set");
+        console.log(" Initial progress set");
 
         // Get user ID with fallbacks
         const userId = currentUser?.uid || currentUser?.original_uid || "BFZI4tzu4rdsiZZSK63cqZ5yohw2";
@@ -2918,22 +2918,22 @@ async function downloadAllRawFiles(sessionId, clientName) {
         }, 1500);
 
     } catch (error) {
-        console.error("📦 ZIP download error:", error);
+        console.error(" ZIP download error:", error);
 
         if (progressModal) {
             progressModal.remove();
-            console.log("📦 Progress modal removed due to error");
+            console.log(" Progress modal removed due to error");
         }
 
         if (error.name === 'AbortError') {
             showToast("Download cancelled or timed out", "error");
         } else {
             showToast(`ZIP download failed: ${error.message}`, "error");
-            console.error("📦 Full error details:", error);
+            console.error(" Full error details:", error);
         }
     } finally {
         window.downloadController = null;
-        console.log("📦 Download process finished");
+        console.log(" Download process finished");
     }
 }
 

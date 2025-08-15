@@ -70,7 +70,7 @@ async function uploadImage(filename, sessionId) {
         
         if (uploadResponse.ok) {
             const data = JSON.parse(result);
-            console.log('✅ Upload successful!');
+            console.log(' Upload successful!');
             console.log('File uploaded as:', data.fileName);
             console.log('R2 Key:', data.r2Key);
             console.log('Size:', data.size, 'MB');

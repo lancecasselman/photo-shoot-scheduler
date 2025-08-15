@@ -15,9 +15,9 @@ class R2FileManager {
     
     // Debug database connection
     if (pool) {
-      console.log('✅ R2FileManager: Database pool connected');
+      console.log(' R2FileManager: Database pool connected');
     } else {
-      console.log('⚠️ R2FileManager: No database pool provided');
+      console.log(' R2FileManager: No database pool provided');
     }
     
     // File type categories for organization
@@ -32,7 +32,7 @@ class R2FileManager {
     };
 
     if (!this.bucketName || !this.accountId || !this.accessKeyId || !this.secretAccessKey) {
-      console.log('⚠️ R2 credentials missing - using local backup only');
+      console.log(' R2 credentials missing - using local backup only');
       return;
     }
 
@@ -57,21 +57,21 @@ class R2FileManager {
     try {
       const headCommand = new HeadBucketCommand({ Bucket: this.bucketName });
       await this.s3Client.send(headCommand);
-      console.log('✅ R2 connection successful - cloud backup active');
+      console.log(' R2 connection successful - cloud backup active');
       this.r2Available = true;
       return true;
     } catch (error) {
-      console.log('⚠️ R2 unavailable - using local backup fallback');
+      console.log(' R2 unavailable - using local backup fallback');
       console.log(`   Error: ${error.code} - ${error.message?.substring(0, 50)}`);
       this.r2Available = false;
       
       // Try to create bucket if it doesn't exist
       if (error.name === 'NotFound' || error.$metadata?.httpStatusCode === 404) {
-        console.log('📦 Bucket not found, attempting to create...');
+        console.log(' Bucket not found, attempting to create...');
         try {
           const createCommand = new CreateBucketCommand({ Bucket: this.bucketName });
           await this.s3Client.send(createCommand);
-          console.log('✅ Bucket created successfully');
+          console.log(' Bucket created successfully');
           this.r2Available = true;
           return true;
         } catch (createError) {
@@ -152,7 +152,7 @@ class R2FileManager {
                 })
                 .toBuffer();
             } catch (rawError) {
-              console.warn(`⚠️ RAW processing failed for ${originalFilename}, trying basic conversion`);
+              console.warn(` RAW processing failed for ${originalFilename}, trying basic conversion`);
               // Fallback for difficult RAW formats
               processedBuffer = await sharp(fileBuffer)
                 .resize(size.width, size.height, { fit: 'inside', withoutEnlargement: true })
@@ -196,10 +196,10 @@ class R2FileManager {
             sizeBytes: processedBuffer.length
           });
 
-          console.log(`✅ Generated ${size.suffix} thumbnail: ${thumbnailKey}`);
+          console.log(` Generated ${size.suffix} thumbnail: ${thumbnailKey}`);
 
         } catch (sizeError) {
-          console.warn(`⚠️ Failed to generate ${size.suffix} thumbnail:`, sizeError.message);
+          console.warn(` Failed to generate ${size.suffix} thumbnail:`, sizeError.message);
         }
       }
 
@@ -255,7 +255,7 @@ class R2FileManager {
     } catch (error) {
       // If thumbnail doesn't exist, try to generate it on-demand
       if (error.name === 'NoSuchKey' || error.$metadata?.httpStatusCode === 404) {
-        console.log(`⚠️ Thumbnail not found, attempting on-demand generation for: ${originalFilename}`);
+        console.log(` Thumbnail not found, attempting on-demand generation for: ${originalFilename}`);
         return this.generateThumbnailOnDemand(userId, sessionId, originalFilename, size);
       }
       
@@ -270,7 +270,7 @@ class R2FileManager {
   // Generate thumbnail on-demand if it doesn't exist
   async generateThumbnailOnDemand(userId, sessionId, originalFilename, requestedSize = '_md') {
     try {
-      console.log(`🔄 Generating thumbnail on-demand for: ${originalFilename}`);
+      console.log(` Generating thumbnail on-demand for: ${originalFilename}`);
       
       // First download the original file
       const originalFile = await this.downloadFile(userId, sessionId, originalFilename);
@@ -369,7 +369,7 @@ class R2FileManager {
       });
       
       await this.s3Client.send(putCommand);
-      console.log(`✅ Backup index updated for session ${sessionId}: ${backupIndex.totalFiles} files`);
+      console.log(` Backup index updated for session ${sessionId}: ${backupIndex.totalFiles} files`);
       
       return backupIndex;
     } catch (error) {
@@ -396,14 +396,14 @@ class R2FileManager {
           console.log('☁️ Attempting R2 cloud upload...');
           return await this.uploadToR2(fileBuffer, filename, userId, sessionId, actualFileType);
         } catch (r2Error) {
-          console.error('⚠️ R2 upload failed:', r2Error.message);
+          console.error(' R2 upload failed:', r2Error.message);
           
           // Check if it's a credential/connection issue
           if (r2Error.message?.includes('credentials') || r2Error.message?.includes('Access Denied') || r2Error.message?.includes('SignatureDoesNotMatch')) {
             console.error('❌ R2 credentials issue detected - marking R2 as unavailable');
             this.r2Available = false;
           } else {
-            console.warn('⚠️ Temporary R2 issue, retrying...');
+            console.warn(' Temporary R2 issue, retrying...');
             // Try one more time for temporary network issues
             try {
               await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
@@ -483,7 +483,7 @@ class R2FileManager {
       const putCommand = new PutObjectCommand(uploadParams);
       await this.s3Client.send(putCommand);
       
-      console.log(`✅ R2 upload successful: ${filename}`);
+      console.log(` R2 upload successful: ${filename}`);
       
       // Update backup index
       const fileInfo = {
@@ -512,9 +512,9 @@ class R2FileManager {
               uploaded_at = EXCLUDED.uploaded_at
           `, [userId, sessionId, fileType, filename, fileSizeBytes, fileSizeMB, r2Key, new Date(), filename]);
           
-          console.log(`✅ Database record updated for file: ${filename}`);
+          console.log(` Database record updated for file: ${filename}`);
         } catch (dbError) {
-          console.warn('⚠️ Failed to update database record:', dbError.message);
+          console.warn(' Failed to update database record:', dbError.message);
           // Continue with success since R2 upload worked
         }
       }
@@ -524,7 +524,7 @@ class R2FileManager {
         try {
           await this.generateThumbnail(fileBuffer, filename, userId, sessionId, fileType);
         } catch (thumbnailError) {
-          console.warn(`⚠️ Failed to generate thumbnail for ${filename}:`, thumbnailError.message);
+          console.warn(` Failed to generate thumbnail for ${filename}:`, thumbnailError.message);
           // Continue - thumbnail generation failure shouldn't fail the main upload
         }
       }
@@ -608,7 +608,7 @@ class R2FileManager {
       // Convert stream to buffer
       const fileBuffer = await fileResponse.Body.transformToByteArray();
       
-      console.log(`✅ Downloaded from R2: ${filename} (${fileBuffer.length} bytes)`);
+      console.log(` Downloaded from R2: ${filename} (${fileBuffer.length} bytes)`);
       
       return {
         success: true,
@@ -724,7 +724,7 @@ class R2FileManager {
       const response = await this.s3Client.send(getCommand);
       const backupIndex = JSON.parse(await response.Body.transformToString());
       
-      console.log(`📋 Retrieved backup index for session ${sessionId}: ${backupIndex.totalFiles} files`);
+      console.log(` Retrieved backup index for session ${sessionId}: ${backupIndex.totalFiles} files`);
       return backupIndex;
       
     } catch (error) {
@@ -749,9 +749,9 @@ class R2FileManager {
       try {
         const storageUsage = await this.getUserStorageUsage(userId);
         currentUsageBytes = storageUsage.totalBytes || 0;
-        console.log(`📊 Current storage usage: ${(currentUsageBytes / (1024**3)).toFixed(2)} GB`);
+        console.log(` Current storage usage: ${(currentUsageBytes / (1024**3)).toFixed(2)} GB`);
       } catch (usageError) {
-        console.warn('⚠️ Could not get current storage usage, using safe default:', usageError.message);
+        console.warn(' Could not get current storage usage, using safe default:', usageError.message);
         currentUsageBytes = 0; // Safe default - allow upload
       }
       
@@ -820,7 +820,7 @@ class R2FileManager {
           return { success: false, error: 'File not found in backup index' };
         }
         
-        console.log(`✅ Found file with alternative search: ${altFileInfo.filename}`);
+        console.log(` Found file with alternative search: ${altFileInfo.filename}`);
         // Use the found file info
         fileInfo = altFileInfo;
       }
@@ -833,11 +833,11 @@ class R2FileManager {
       
       try {
         await this.s3Client.send(deleteCommand);
-        console.log(`✅ File deleted from R2: ${fileInfo.r2Key}`);
+        console.log(` File deleted from R2: ${fileInfo.r2Key}`);
       } catch (s3Error) {
         // Handle case where file might not exist in R2 but is in index
         if (s3Error.name === 'NoSuchKey' || s3Error.Code === 'NoSuchKey') {
-          console.log(`⚠️ File not found in R2, but removing from index: ${fileInfo.r2Key}`);
+          console.log(` File not found in R2, but removing from index: ${fileInfo.r2Key}`);
         } else {
           throw s3Error; // Re-throw if it's a different error
         }
@@ -865,7 +865,7 @@ class R2FileManager {
         console.log(`🗑️ Removed ${totalDeleted} entries from database for file: ${filename}`);
         
       } catch (dbError) {
-        console.error('⚠️ Failed to remove file from database (storage calculation may be incorrect):', dbError.message);
+        console.error(' Failed to remove file from database (storage calculation may be incorrect):', dbError.message);
         // Continue with success since R2 deletion worked
       }
       
@@ -903,7 +903,7 @@ class R2FileManager {
       });
       
       await this.s3Client.send(deleteCommand);
-      console.log(`✅ Directly deleted from R2: ${r2Key}`);
+      console.log(` Directly deleted from R2: ${r2Key}`);
       
       return { success: true, message: `File ${r2Key} deleted directly from R2` };
       
@@ -919,7 +919,7 @@ class R2FileManager {
   async getFileStream(r2Key) {
     try {
       if (!this.r2Available) {
-        console.log('⚠️ R2 not available for file stream');
+        console.log(' R2 not available for file stream');
         return null;
       }
 
@@ -933,16 +933,16 @@ class R2FileManager {
       const response = await this.s3Client.send(getCommand);
       
       if (response.Body) {
-        console.log(`✅ File stream retrieved: ${r2Key}`);
+        console.log(` File stream retrieved: ${r2Key}`);
         return response.Body;
       } else {
-        console.warn(`⚠️ No body in response for: ${r2Key}`);
+        console.warn(` No body in response for: ${r2Key}`);
         return null;
       }
       
     } catch (error) {
       if (error.name === 'NoSuchKey' || error.Code === 'NoSuchKey') {
-        console.warn(`⚠️ File not found in R2: ${r2Key}`);
+        console.warn(` File not found in R2: ${r2Key}`);
       } else {
         console.error(`❌ Error getting file stream for ${r2Key}:`, error.message);
       }
@@ -955,10 +955,10 @@ class R2FileManager {
    */
   async getUserStorageUsage(userId) {
     try {
-      console.log(`📊 Calculating storage usage for user: ${userId}`);
+      console.log(` Calculating storage usage for user: ${userId}`);
       
       // Get all sessions for the user - try multiple path patterns
-      console.log(`🔍 Scanning R2 storage for user ${userId} with path patterns...`);
+      console.log(` Scanning R2 storage for user ${userId} with path patterns...`);
       
       // First try the current format, then try other possible formats
       const pathPatterns = [
@@ -978,7 +978,7 @@ class R2FileManager {
       let rawCount = 0;
       
       for (const prefix of pathPatterns) {
-        console.log(`🔍 Checking path pattern: ${prefix}`);
+        console.log(` Checking path pattern: ${prefix}`);
         
         const listCommand = new ListObjectsV2Command({
           Bucket: this.bucketName,
@@ -988,7 +988,7 @@ class R2FileManager {
         const response = await this.s3Client.send(listCommand);
         
         if (response.Contents && response.Contents.length > 0) {
-          console.log(`✅ Found ${response.Contents.length} objects with prefix: ${prefix}`);
+          console.log(` Found ${response.Contents.length} objects with prefix: ${prefix}`);
           
           for (const object of response.Contents) {
             // Skip backup index files from size calculation
@@ -1022,7 +1022,7 @@ class R2FileManager {
       const usedPercentage = (totalGB / maxStorageGB) * 100;
       const remainingGB = maxStorageGB - totalGB;
       
-      console.log(`📊 Storage usage: ${totalGB.toFixed(2)} GB total (Gallery: ${galleryGB.toFixed(2)} GB, RAW: ${rawGB.toFixed(2)} GB) of ${maxStorageGB} GB (${usedPercentage.toFixed(1)}%)`);
+      console.log(` Storage usage: ${totalGB.toFixed(2)} GB total (Gallery: ${galleryGB.toFixed(2)} GB, RAW: ${rawGB.toFixed(2)} GB) of ${maxStorageGB} GB (${usedPercentage.toFixed(1)}%)`);
       
       return {
         totalBytes: Math.round(totalBytes),
@@ -1037,7 +1037,7 @@ class R2FileManager {
         percentUsed: Math.round(usedPercentage * 10) / 10,
         remainingGB: Math.round(remainingGB * 100) / 100,
         fileCount: fileCount,
-        displayText: `${totalGB.toFixed(2)} GB of ${maxStorageGB} GB used (📸 ${galleryGB.toFixed(2)} GB + 📷 ${rawGB.toFixed(2)} GB)`,
+        displayText: `${totalGB.toFixed(2)} GB of ${maxStorageGB} GB used ( ${galleryGB.toFixed(2)} GB + 📷 ${rawGB.toFixed(2)} GB)`,
         monthlyStorageCost: Math.round(totalGB * 0.015 * 100) / 100, // $0.015 per GB/month
         additionalStorageTB: 0,
         storageStatus: usedPercentage > 90 ? "Near Limit" : "Active",

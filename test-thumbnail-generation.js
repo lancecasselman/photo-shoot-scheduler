@@ -20,7 +20,7 @@ class ThumbnailTester {
     }
 
     async runThumbnailTests() {
-        console.log('🔧 THUMBNAIL GENERATION TEST');
+        console.log(' THUMBNAIL GENERATION TEST');
         console.log('============================\n');
 
         try {
@@ -29,7 +29,7 @@ class ThumbnailTester {
             if (!connectionTest) {
                 throw new Error('R2 connection failed');
             }
-            console.log('✅ R2 connection successful\n');
+            console.log(' R2 connection successful\n');
 
             // 2. Test file type detection
             await this.testFileTypeDetection();
@@ -48,7 +48,7 @@ class ThumbnailTester {
     }
 
     async testFileTypeDetection() {
-        console.log('1. 🔍 Testing File Type Detection...');
+        console.log('1.  Testing File Type Detection...');
         
         const testFiles = [
             'IMG_001.NEF',     // RAW Nikon
@@ -99,7 +99,7 @@ class ThumbnailTester {
                 console.log(`   Testing thumbnails for ${imageFiles.length} image files:`);
                 
                 for (const file of imageFiles) {
-                    console.log(`   📸 Testing thumbnails for: ${file.filename}`);
+                    console.log(`    Testing thumbnails for: ${file.filename}`);
                     
                     // Test each thumbnail size
                     const sizes = ['_sm', '_md', '_lg'];
@@ -109,9 +109,9 @@ class ThumbnailTester {
                             
                             if (thumbnail.success) {
                                 const sizeKB = (thumbnail.buffer.length / 1024).toFixed(1);
-                                console.log(`      ✅ ${size}: ${sizeKB}KB`);
+                                console.log(`       ${size}: ${sizeKB}KB`);
                             } else {
-                                console.log(`      ⚠️ ${size}: ${thumbnail.error}`);
+                                console.log(`       ${size}: ${thumbnail.error}`);
                             }
                         } catch (thumbError) {
                             console.log(`      ❌ ${size}: ${thumbError.message}`);
@@ -119,7 +119,7 @@ class ThumbnailTester {
                     }
                 }
             } else {
-                console.log('   ⚠️ No files found in test session');
+                console.log('    No files found in test session');
             }
             
         } catch (error) {
@@ -160,16 +160,16 @@ class ThumbnailTester {
                             const result = await this.r2Manager.getThumbnail(testUserId, testSessionId, testFile.filename, size);
                             
                             if (result.success) {
-                                console.log(`   ✅ ${size}: Retrieved ${(result.buffer.length / 1024).toFixed(1)}KB thumbnail`);
+                                console.log(`    ${size}: Retrieved ${(result.buffer.length / 1024).toFixed(1)}KB thumbnail`);
                             } else {
-                                console.log(`   ⚠️ ${size}: ${result.error}`);
+                                console.log(`    ${size}: ${result.error}`);
                             }
                         } catch (error) {
                             console.log(`   ❌ ${size}: ${error.message}`);
                         }
                     }
                 } else {
-                    console.log('   ⚠️ No image files found for testing');
+                    console.log('    No image files found for testing');
                 }
             }
             
@@ -184,7 +184,7 @@ class ThumbnailTester {
 // Run the tests
 const tester = new ThumbnailTester();
 tester.runThumbnailTests().then(() => {
-    console.log('🎯 THUMBNAIL TESTS COMPLETE');
+    console.log(' THUMBNAIL TESTS COMPLETE');
     process.exit(0);
 }).catch(error => {
     console.error('❌ Thumbnail tests failed:', error);

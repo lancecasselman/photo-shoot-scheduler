@@ -14702,7 +14702,7 @@ END:VCALENDAR`;
                                     <textarea id="wb-ai-input" placeholder="e.g., 'Make this look more elegant and professional' or 'Add golden accents and improve the typography' or 'Create a luxury wedding photographer vibe'"></textarea>
                                     <div class="wb-ai-actions">
                                         <button class="wb-btn" onclick="WebsiteBuilder.processAIRequest()"> Apply Changes</button>
-                                        <button class="wb-btn wb-btn-secondary" onclick="WebsiteBuilder.analyzeWebsite()">🔍 Analyze Design</button>
+                                        <button class="wb-btn wb-btn-secondary" onclick="WebsiteBuilder.analyzeWebsite()"> Analyze Design</button>
                                     </div>
                                 </div>
                                 <div class="wb-ai-suggestions">
@@ -16375,7 +16375,7 @@ END:VCALENDAR`;
             },
             
             async analyzeWebsite() {
-                this.showAIStatus('🔍 Analyzing your website design...', 'loading');
+                this.showAIStatus(' Analyzing your website design...', 'loading');
                 
                 try {
                     const canvas = document.getElementById('wb-canvas');
@@ -16761,19 +16761,19 @@ END:VCALENDAR`;
                     <div class="wb-lightbox-gallery wb-editable" data-type="lightbox-gallery" style="margin: 20px 0;">
                         <div class="wb-lightbox-item" onclick="WebsiteBuilder.openLightbox(this)">
                             <img src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=400&h=300&fit=crop" alt="Portfolio Image 1">
-                            <div class="wb-lightbox-overlay">🔍</div>
+                            <div class="wb-lightbox-overlay"></div>
                         </div>
                         <div class="wb-lightbox-item" onclick="WebsiteBuilder.openLightbox(this)">
                             <img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400&h=300&fit=crop" alt="Portfolio Image 2">
-                            <div class="wb-lightbox-overlay">🔍</div>
+                            <div class="wb-lightbox-overlay"></div>
                         </div>
                         <div class="wb-lightbox-item" onclick="WebsiteBuilder.openLightbox(this)">
                             <img src="https://images.unsplash.com/photo-1519741497674-611481863552?w=400&h=300&fit=crop" alt="Portfolio Image 3">
-                            <div class="wb-lightbox-overlay">🔍</div>
+                            <div class="wb-lightbox-overlay"></div>
                         </div>
                         <div class="wb-lightbox-item" onclick="WebsiteBuilder.openLightbox(this)">
                             <img src="https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=400&h=300&fit=crop" alt="Portfolio Image 4">
-                            <div class="wb-lightbox-overlay">🔍</div>
+                            <div class="wb-lightbox-overlay"></div>
                         </div>
                     </div>
                 `;
@@ -17089,27 +17089,27 @@ END:VCALENDAR`;
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 60px;">
                             <div style="position: relative; overflow: hidden; border-radius: 8px; cursor: pointer;" onclick="WebsiteBuilder.openLightbox(this)">
                                 <img src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=400&h=400&fit=crop" style="width: 100%; height: 300px; object-fit: cover; transition: transform 0.3s ease;">
-                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(45deg, rgba(212, 175, 55, 0.8), rgba(244, 208, 63, 0.8)); opacity: 0; transition: opacity 0.3s ease; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;">🔍</div>
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(45deg, rgba(212, 175, 55, 0.8), rgba(244, 208, 63, 0.8)); opacity: 0; transition: opacity 0.3s ease; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;"></div>
                             </div>
                             <div style="position: relative; overflow: hidden; border-radius: 8px; cursor: pointer;" onclick="WebsiteBuilder.openLightbox(this)">
                                 <img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400&h=400&fit=crop" style="width: 100%; height: 300px; object-fit: cover; transition: transform 0.3s ease;">
-                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(45deg, rgba(212, 175, 55, 0.8), rgba(244, 208, 63, 0.8)); opacity: 0; transition: opacity 0.3s ease; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;">🔍</div>
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(45deg, rgba(212, 175, 55, 0.8), rgba(244, 208, 63, 0.8)); opacity: 0; transition: opacity 0.3s ease; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;"></div>
                             </div>
                             <div style="position: relative; overflow: hidden; border-radius: 8px; cursor: pointer;" onclick="WebsiteBuilder.openLightbox(this)">
                                 <img src="https://images.unsplash.com/photo-1519741497674-611481863552?w=400&h=400&fit=crop" style="width: 100%; height: 300px; object-fit: cover; transition: transform 0.3s ease;">
-                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(45deg, rgba(212, 175, 55, 0.8), rgba(244, 208, 63, 0.8)); opacity: 0; transition: opacity 0.3s ease; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;">🔍</div>
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(45deg, rgba(212, 175, 55, 0.8), rgba(244, 208, 63, 0.8)); opacity: 0; transition: opacity 0.3s ease; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;"></div>
                             </div>
                             <div style="position: relative; overflow: hidden; border-radius: 8px; cursor: pointer;" onclick="WebsiteBuilder.openLightbox(this)">
                                 <img src="https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=400&h=400&fit=crop" style="width: 100%; height: 300px; object-fit: cover; transition: transform 0.3s ease;">
-                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(45deg, rgba(212, 175, 55, 0.8), rgba(244, 208, 63, 0.8)); opacity: 0; transition: opacity 0.3s ease; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;">🔍</div>
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(45deg, rgba(212, 175, 55, 0.8), rgba(244, 208, 63, 0.8)); opacity: 0; transition: opacity 0.3s ease; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;"></div>
                             </div>
                             <div style="position: relative; overflow: hidden; border-radius: 8px; cursor: pointer;" onclick="WebsiteBuilder.openLightbox(this)">
                                 <img src="https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=400&h=400&fit=crop" style="width: 100%; height: 300px; object-fit: cover; transition: transform 0.3s ease;">
-                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(45deg, rgba(212, 175, 55, 0.8), rgba(244, 208, 63, 0.8)); opacity: 0; transition: opacity 0.3s ease; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;">🔍</div>
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(45deg, rgba(212, 175, 55, 0.8), rgba(244, 208, 63, 0.8)); opacity: 0; transition: opacity 0.3s ease; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;"></div>
                             </div>
                             <div style="position: relative; overflow: hidden; border-radius: 8px; cursor: pointer;" onclick="WebsiteBuilder.openLightbox(this)">
                                 <img src="https://images.unsplash.com/photo-1522673607200-164d1b6ce486?w=400&h=400&fit=crop" style="width: 100%; height: 300px; object-fit: cover; transition: transform 0.3s ease;">
-                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(45deg, rgba(212, 175, 55, 0.8), rgba(244, 208, 63, 0.8)); opacity: 0; transition: opacity 0.3s ease; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;">🔍</div>
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(45deg, rgba(212, 175, 55, 0.8), rgba(244, 208, 63, 0.8)); opacity: 0; transition: opacity 0.3s ease; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;"></div>
                             </div>
                         </div>
                         

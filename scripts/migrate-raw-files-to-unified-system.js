@@ -13,7 +13,7 @@ const pool = new Pool({
 });
 
 async function migrateRawFiles() {
-    console.log('🔄 Starting raw files migration to unified session_files system...');
+    console.log(' Starting raw files migration to unified session_files system...');
     
     let client;
     try {
@@ -28,7 +28,7 @@ async function migrateRawFiles() {
             ORDER BY upload_completed_at
         `);
         
-        console.log(`📋 Found ${rawFilesResult.rows.length} raw files to migrate`);
+        console.log(` Found ${rawFilesResult.rows.length} raw files to migrate`);
         
         let migratedCount = 0;
         let skippedCount = 0;
@@ -64,7 +64,7 @@ async function migrateRawFiles() {
                     rawFile.upload_completed_at
                 ]);
                 
-                console.log(`✅ Migrated: ${rawFile.original_filename} (${Math.round(rawFile.file_size_bytes/1024/1024)}MB)`);
+                console.log(` Migrated: ${rawFile.original_filename} (${Math.round(rawFile.file_size_bytes/1024/1024)}MB)`);
                 migratedCount++;
                 
             } catch (error) {
@@ -72,8 +72,8 @@ async function migrateRawFiles() {
             }
         }
         
-        console.log(`\n📊 Migration Summary:`);
-        console.log(`   ✅ Migrated: ${migratedCount} files`);
+        console.log(`\n Migration Summary:`);
+        console.log(`    Migrated: ${migratedCount} files`);
         console.log(`   ⏭️  Skipped: ${skippedCount} files`);
         console.log(`   📁 Total files processed: ${rawFilesResult.rows.length}`);
         
@@ -85,7 +85,7 @@ async function migrateRawFiles() {
             GROUP BY folder_type
         `);
         
-        console.log(`\n🔍 Post-migration verification:`);
+        console.log(`\n Post-migration verification:`);
         for (const row of verificationResult.rows) {
             console.log(`   ${row.folder_type}: ${row.count} files, ${Math.round(row.total_mb)}MB`);
         }
@@ -101,7 +101,7 @@ async function migrateRawFiles() {
 
 // Run the migration
 migrateRawFiles().then(() => {
-    console.log('🎉 Raw files migration completed successfully!');
+    console.log(' Raw files migration completed successfully!');
     process.exit(0);
 }).catch(error => {
     console.error('💥 Migration script failed:', error);

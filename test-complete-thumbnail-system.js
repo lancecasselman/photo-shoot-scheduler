@@ -23,7 +23,7 @@ class CompleteThumbnailSystemTest {
     }
 
     async runCompleteTests() {
-        console.log('🔧 COMPLETE THUMBNAIL SYSTEM TEST');
+        console.log(' COMPLETE THUMBNAIL SYSTEM TEST');
         console.log('==================================\n');
 
         try {
@@ -56,14 +56,14 @@ class CompleteThumbnailSystemTest {
         console.log('1. 🔗 Testing R2 Connection...');
         const connection = await this.r2Manager.testConnection();
         if (connection) {
-            console.log('   ✅ R2 connection successful\n');
+            console.log('    R2 connection successful\n');
         } else {
             throw new Error('R2 connection failed');
         }
     }
 
     async testFileTypeDetection() {
-        console.log('2. 🔍 Testing File Type Detection...');
+        console.log('2.  Testing File Type Detection...');
         
         const testCases = [
             { file: 'IMG_001.NEF', expected: { category: 'raw', isImage: true } },
@@ -86,14 +86,14 @@ class CompleteThumbnailSystemTest {
             const imageMatch = isImage === test.expected.isImage;
             
             if (categoryMatch && imageMatch) {
-                console.log(`   ✅ ${test.file}: Category=${category}, IsImage=${isImage}`);
+                console.log(`    ${test.file}: Category=${category}, IsImage=${isImage}`);
                 passed++;
             } else {
                 console.log(`   ❌ ${test.file}: Expected category=${test.expected.category}, isImage=${test.expected.isImage}, Got category=${category}, isImage=${isImage}`);
             }
         }
         
-        console.log(`   📊 File type detection: ${passed}/${testCases.length} tests passed\n`);
+        console.log(`    File type detection: ${passed}/${testCases.length} tests passed\n`);
     }
 
     async testExistingThumbnails() {
@@ -116,7 +116,7 @@ class CompleteThumbnailSystemTest {
                 console.log(`   Testing thumbnail retrieval for ${imageFiles.length} image files:`);
                 
                 for (const file of imageFiles) {
-                    console.log(`   📸 ${file.filename}:`);
+                    console.log(`    ${file.filename}:`);
                     
                     const sizes = ['_sm', '_md', '_lg'];
                     let available = 0;
@@ -132,17 +132,17 @@ class CompleteThumbnailSystemTest {
                             
                             if (thumbnail.success) {
                                 const sizeKB = (thumbnail.buffer.length / 1024).toFixed(1);
-                                console.log(`      ✅ ${size}: ${sizeKB}KB`);
+                                console.log(`       ${size}: ${sizeKB}KB`);
                                 available++;
                             } else {
-                                console.log(`      ⚠️ ${size}: Not available`);
+                                console.log(`       ${size}: Not available`);
                             }
                         } catch (error) {
                             console.log(`      ❌ ${size}: Error - ${error.message}`);
                         }
                     }
                     
-                    console.log(`      📊 ${available}/3 thumbnail sizes available`);
+                    console.log(`       ${available}/3 thumbnail sizes available`);
                 }
             }
         } catch (error) {
@@ -197,9 +197,9 @@ class CompleteThumbnailSystemTest {
                         console.log(`      Compression Ratio: ${compressionRatio}:1`);
                         
                         if (processingTime < 5000) {
-                            console.log(`      ✅ Performance: Good (< 5 seconds)`);
+                            console.log(`       Performance: Good (< 5 seconds)`);
                         } else {
-                            console.log(`      ⚠️ Performance: Slow (> 5 seconds)`);
+                            console.log(`       Performance: Slow (> 5 seconds)`);
                         }
                     }
                 }
@@ -248,7 +248,7 @@ class CompleteThumbnailSystemTest {
                     }
                 }
                 
-                console.log('   📊 Format Support Summary:');
+                console.log('    Format Support Summary:');
                 for (const [format, stats] of Object.entries(formatStats)) {
                     const coverage = ((stats.thumbnailsAvailable / stats.count) * 100).toFixed(1);
                     console.log(`      ${format.toUpperCase()}: ${stats.count} files, ${coverage}% have thumbnails`);
@@ -310,11 +310,11 @@ class CompleteThumbnailSystemTest {
                 console.log(`      Avg Thumbnail Size: ${avgThumbnailKB}KB`);
                 
                 if (parseFloat(storageOverhead) < 5) {
-                    console.log(`      ✅ Efficiency: Excellent (< 5% overhead)`);
+                    console.log(`       Efficiency: Excellent (< 5% overhead)`);
                 } else if (parseFloat(storageOverhead) < 10) {
-                    console.log(`      ✅ Efficiency: Good (< 10% overhead)`);
+                    console.log(`       Efficiency: Good (< 10% overhead)`);
                 } else {
-                    console.log(`      ⚠️ Efficiency: Could be improved (> 10% overhead)`);
+                    console.log(`       Efficiency: Could be improved (> 10% overhead)`);
                 }
             }
         } catch (error) {
@@ -328,7 +328,7 @@ class CompleteThumbnailSystemTest {
 // Run the complete tests
 const tester = new CompleteThumbnailSystemTest();
 tester.runCompleteTests().then(() => {
-    console.log('🎯 COMPLETE THUMBNAIL SYSTEM TESTS FINISHED');
+    console.log(' COMPLETE THUMBNAIL SYSTEM TESTS FINISHED');
     console.log('==========================================');
     process.exit(0);
 }).catch(error => {

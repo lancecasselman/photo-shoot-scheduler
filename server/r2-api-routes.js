@@ -87,11 +87,11 @@ function createR2Routes() {
         
         const sessionsResult = await pool.query(sessionsQuery, queryParams);
         
-        console.log(`📊 Calculating storage for ${sessionsResult.rows.length} sessions`);
+        console.log(` Calculating storage for ${sessionsResult.rows.length} sessions`);
         
         // Calculate storage for each session
         for (const session of sessionsResult.rows) {
-          console.log(`📊 Calculating storage for session: ${session.id}`);
+          console.log(` Calculating storage for session: ${session.id}`);
           
           try {
             const sessionFiles = await r2Manager.getSessionFiles(userId, session.id);
@@ -259,9 +259,9 @@ function createR2Routes() {
           )
         ).then(thumbResults => {
           const successfulThumbs = thumbResults.filter(r => r.status === 'fulfilled' && r.value.success).length;
-          console.log(`✅ Generated thumbnails for ${successfulThumbs}/${thumbnailTasks.length} images`);
+          console.log(` Generated thumbnails for ${successfulThumbs}/${thumbnailTasks.length} images`);
         }).catch(thumbError => {
-          console.warn('⚠️ Background thumbnail generation error:', thumbError.message);
+          console.warn(' Background thumbnail generation error:', thumbError.message);
         });
       }
 
@@ -366,9 +366,9 @@ function createR2Routes() {
           )
         ).then(thumbResults => {
           const successfulThumbs = thumbResults.filter(r => r.status === 'fulfilled' && r.value.success).length;
-          console.log(`✅ Generated RAW thumbnails for ${successfulThumbs}/${thumbnailTasks.length} images`);
+          console.log(` Generated RAW thumbnails for ${successfulThumbs}/${thumbnailTasks.length} images`);
         }).catch(thumbError => {
-          console.warn('⚠️ Background RAW thumbnail generation error:', thumbError.message);
+          console.warn(' Background RAW thumbnail generation error:', thumbError.message);
         });
       }
 
@@ -408,7 +408,7 @@ function createR2Routes() {
         return res.status(400).json({ error: 'No files provided' });
       }
 
-      console.log(`📸 Gallery Upload: Processing ${req.files.length} files for user ${userId}, session ${sessionId}`);
+      console.log(` Gallery Upload: Processing ${req.files.length} files for user ${userId}, session ${sessionId}`);
 
       // Check total upload size against storage limit
       const totalUploadSize = req.files.reduce((sum, file) => sum + file.size, 0);
@@ -534,10 +534,10 @@ function createR2Routes() {
           res.setHeader('Cache-Control', 'public, max-age=86400'); // 24 hours cache
           res.setHeader('X-Thumbnail-Size', thumbnailSize);
           res.send(thumbnailResult.buffer);
-          console.log(`✅ Served thumbnail ${thumbnailSize} for ${filename}`);
+          console.log(` Served thumbnail ${thumbnailSize} for ${filename}`);
           return;
         }
-        console.log(`⚠️ Thumbnail not available for ${filename}, using fallback processing`);
+        console.log(` Thumbnail not available for ${filename}, using fallback processing`);
       }
       
       // Fallback: Get original file and process if needed
@@ -562,9 +562,9 @@ function createR2Routes() {
           res.setHeader('Cache-Control', 'public, max-age=3600');
           res.setHeader('X-Processed', 'fallback');
           res.send(processedBuffer);
-          console.log(`✅ Processed ${filename} with fallback Sharp processing`);
+          console.log(` Processed ${filename} with fallback Sharp processing`);
         } catch (sharpError) {
-          console.warn(`⚠️ Sharp processing failed for ${filename}, serving original`);
+          console.warn(` Sharp processing failed for ${filename}, serving original`);
           res.setHeader('Content-Type', downloadResult.contentType || 'application/octet-stream');
           res.setHeader('Cache-Control', 'public, max-age=3600');
           res.send(downloadResult.buffer);
@@ -574,7 +574,7 @@ function createR2Routes() {
         res.setHeader('Content-Type', downloadResult.contentType || 'application/octet-stream');
         res.setHeader('Cache-Control', 'public, max-age=3600');
         res.send(downloadResult.buffer);
-        console.log(`✅ Served original ${filename} (non-image file)`);
+        console.log(` Served original ${filename} (non-image file)`);
       }
       
     } catch (error) {
@@ -608,7 +608,7 @@ function createR2Routes() {
         res.setHeader('X-Thumbnail-Size', thumbnailSize);
         res.setHeader('X-Original-File', filename);
         res.send(thumbnailResult.buffer);
-        console.log(`✅ Served thumbnail ${thumbnailSize} for ${filename}`);
+        console.log(` Served thumbnail ${thumbnailSize} for ${filename}`);
       } else {
         res.status(404).json({ 
           error: 'Thumbnail not available',
@@ -636,7 +636,7 @@ function createR2Routes() {
       const currentUserId = req.user.normalized_uid || req.user.uid || req.user.id;
       const { userId, sessionId } = req.params;
       
-      console.log(`📦 ZIP download request for session ${sessionId} by user ${currentUserId}`);
+      console.log(` ZIP download request for session ${sessionId} by user ${currentUserId}`);
       
       // Allow download if user IDs match
       const userIdMatch = currentUserId === userId || 
@@ -669,7 +669,7 @@ function createR2Routes() {
         });
       }
       
-      console.log(`📊 Total ZIP size estimate: ${(totalSize / (1024*1024*1024)).toFixed(2)} GB`);
+      console.log(` Total ZIP size estimate: ${(totalSize / (1024*1024*1024)).toFixed(2)} GB`);
       
       // Set headers optimized for huge downloads (no Content-Length for streaming)
       res.setHeader('Content-Type', 'application/zip');
@@ -739,14 +739,14 @@ function createR2Routes() {
             const progressPercent = totalSize > 0 ? ((processedSize / totalSize) * 100).toFixed(1) : '0.0';
             const processedGB = (processedSize/(1024*1024*1024)).toFixed(2);
             const totalGB = (totalSize/(1024*1024*1024)).toFixed(2);
-            console.log(`✅ Added ${file.filename} | Progress: ${progressPercent}% (${processedGB}GB/${totalGB}GB)`);
+            console.log(` Added ${file.filename} | Progress: ${progressPercent}% (${processedGB}GB/${totalGB}GB)`);
             
             // Force garbage collection hint for huge files
             if (global.gc && file.size > 500 * 1024 * 1024) { // 500MB+
               global.gc();
             }
           } else {
-            console.warn(`⚠️ Failed to download ${file.filename} for ZIP`);
+            console.warn(` Failed to download ${file.filename} for ZIP`);
           }
         } catch (fileError) {
           console.error(`Error adding ${file.filename} to ZIP:`, fileError);
@@ -754,12 +754,12 @@ function createR2Routes() {
       }
       
       // Finalize the archive and wait for completion
-      console.log('📦 Finalizing ZIP archive...');
+      console.log(' Finalizing ZIP archive...');
       
       // Set up promise to wait for archive completion
       const archivePromise = new Promise((resolve, reject) => {
         archive.on('end', () => {
-          console.log(`✅ ZIP download completed for session ${sessionId}`);
+          console.log(` ZIP download completed for session ${sessionId}`);
           clearTimeout(timeoutId);
           resolve();
         });
@@ -821,7 +821,7 @@ function createR2Routes() {
       // Send the file buffer
       res.send(downloadResult.buffer);
       
-      console.log(`✅ File downloaded: ${filename} by user ${currentUserId}`);
+      console.log(` File downloaded: ${filename} by user ${currentUserId}`);
       
     } catch (error) {
       console.error('❌ Download error:', error);
@@ -944,7 +944,7 @@ function createR2Routes() {
       const deleteResult = await unifiedDeletion.deleteFile(sessionId, folderType, cleanFilename, currentUserId);
       
       if (deleteResult.success) {
-        console.log(`✅ File deleted: ${filename}`);
+        console.log(` File deleted: ${filename}`);
         res.json({
           success: true,
           message: `File ${filename} deleted successfully`
@@ -1004,7 +1004,7 @@ function createR2Routes() {
       const deleteResult = await unifiedDeletion.deleteFile(sessionId, folderType, cleanFilename, currentUserId);
       
       if (deleteResult.success) {
-        console.log(`✅ File deleted: ${filename}`);
+        console.log(` File deleted: ${filename}`);
         res.json({
           success: true,
           message: `File ${filename} deleted successfully`

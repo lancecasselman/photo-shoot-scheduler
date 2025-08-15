@@ -191,7 +191,7 @@ class ObjectStorageService {
       console.log(`🗑️ Removed ${totalDeleted} entries from database for file: ${fileName} (${folderType})`);
       
     } catch (dbError) {
-      console.error('⚠️ Failed to remove file from database (storage calculation may be incorrect):', dbError.message);
+      console.error(' Failed to remove file from database (storage calculation may be incorrect):', dbError.message);
       // Continue with success since Object Storage deletion worked
     }
   }

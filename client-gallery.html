@@ -277,7 +277,7 @@
         <div id="galleryActions" class="gallery-actions" style="display: none;">
             <div class="photo-count" id="photoCount">0 photos</div>
             <button class="download-all-btn" id="downloadAllBtn" onclick="downloadAllPhotos()">
-                📦 Download All Photos
+                 Download All Photos
             </button>
         </div>
         
@@ -445,7 +445,7 @@
             
             try {
                 downloadBtn.disabled = true;
-                downloadBtn.innerHTML = '📦 Preparing Download...';
+                downloadBtn.innerHTML = ' Preparing Download...';
                 
                 // Create progress bar
                 const progressBar = document.createElement('div');
@@ -460,7 +460,7 @@
                 
                 for (let i = 0; i < photos.length; i++) {
                     const photo = photos[i];
-                    downloadBtn.innerHTML = `📦 Adding Photo ${i + 1}/${photos.length}...`;
+                    downloadBtn.innerHTML = ` Adding Photo ${i + 1}/${photos.length}...`;
                     progressFill.style.width = ((i / photos.length) * 100) + '%';
                     
                     try {
@@ -472,7 +472,7 @@
                     }
                 }
                 
-                downloadBtn.innerHTML = '📦 Creating ZIP file...';
+                downloadBtn.innerHTML = ' Creating ZIP file...';
                 progressFill.style.width = '100%';
                 
                 const zipBlob = await zip.generateAsync({type: 'blob'});
@@ -489,7 +489,7 @@
                 
                 // Clean up
                 progressBar.remove();
-                downloadBtn.innerHTML = '✅ Download Complete!';
+                downloadBtn.innerHTML = ' Download Complete!';
                 setTimeout(() => {
                     downloadBtn.innerHTML = originalText;
                     downloadBtn.disabled = false;

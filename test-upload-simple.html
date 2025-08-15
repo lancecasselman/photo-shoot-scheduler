@@ -56,7 +56,7 @@
     <p>Test photo upload with R2 backup (Firebase disabled)</p>
 
     <div class="upload-container" id="uploadArea">
-        <p>📸 Drop a photo here or click to select</p>
+        <p> Drop a photo here or click to select</p>
         <input type="file" id="fileInput" accept="image/*">
         <button onclick="document.getElementById('fileInput').click()">Select Photo</button>
     </div>
@@ -155,7 +155,7 @@
                 
                 if (response.ok && uploadResult.uploaded) {
                     result.className = 'result success';
-                    result.textContent = `✅ UPLOAD SUCCESSFUL!
+                    result.textContent = ` UPLOAD SUCCESSFUL!
 
 File: ${file.name}
 Size: ${(file.size/1024/1024).toFixed(2)}MB

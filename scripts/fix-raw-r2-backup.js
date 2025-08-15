@@ -15,7 +15,7 @@ const pool = new Pool({
 });
 
 async function repairRawBackup() {
-    console.log('🔍 Checking raw files R2 backup status...');
+    console.log(' Checking raw files R2 backup status...');
     
     let client;
     try {
@@ -34,18 +34,18 @@ async function repairRawBackup() {
         `);
         
         if (rawFilesResult.rows.length === 0) {
-            console.log('✅ All raw files have proper R2 backup keys!');
+            console.log(' All raw files have proper R2 backup keys!');
             return;
         }
         
-        console.log(`⚠️  Found ${rawFilesResult.rows.length} raw files missing R2 backup keys:`);
+        console.log(`  Found ${rawFilesResult.rows.length} raw files missing R2 backup keys:`);
         
         for (const file of rawFilesResult.rows) {
             const sizeMB = Math.round(file.file_size_bytes / 1024 / 1024);
             console.log(`   📁 ${file.filename} (${sizeMB}MB) - Session: ${file.client_name}`);
         }
         
-        console.log('\n🔧 To fix this, we need to:');
+        console.log('\n To fix this, we need to:');
         console.log('1. Check if files exist in local uploads folder');
         console.log('2. Upload missing files to R2 cloud storage');
         console.log('3. Update database with R2 keys');
@@ -69,10 +69,10 @@ async function repairRawBackup() {
         }
         
         if (foundLocalFiles > 0) {
-            console.log(`\n💡 Found ${foundLocalFiles} files in local uploads that can be backed up to R2`);
+            console.log(`\n Found ${foundLocalFiles} files in local uploads that can be backed up to R2`);
             console.log('   Run the R2 backup repair process to upload these files');
         } else {
-            console.log('\n⚠️  No local files found. Raw files may have been uploaded to R2 but database entries are missing R2 keys');
+            console.log('\n  No local files found. Raw files may have been uploaded to R2 but database entries are missing R2 keys');
             console.log('   This suggests the upload process completed but database update failed');
         }
         
@@ -86,7 +86,7 @@ async function repairRawBackup() {
 
 // Run the check
 repairRawBackup().then(() => {
-    console.log('\n🎯 Raw files backup check completed');
+    console.log('\n Raw files backup check completed');
     process.exit(0);
 }).catch(error => {
     console.error('💥 Backup check failed:', error);

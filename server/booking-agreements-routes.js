@@ -60,7 +60,7 @@ function createBookingAgreementRoutes(pool) {
             await client.query('CREATE INDEX IF NOT EXISTS idx_agreements_user ON booking_agreements(user_id)');
             await client.query('CREATE INDEX IF NOT EXISTS idx_agreements_token ON booking_agreements(access_token)');
 
-            console.log('✅ Booking agreement tables initialized');
+            console.log(' Booking agreement tables initialized');
         } catch (error) {
             console.error('Error initializing booking agreement tables:', error);
         } finally {

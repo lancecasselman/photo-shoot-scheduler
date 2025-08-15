@@ -42,7 +42,7 @@ class UnifiedFileDeletion {
                 ];
                 r2FilesToDelete = allR2Files.filter(f => f.filename === filename);
             } catch (r2Error) {
-                console.log(`⚠️ Could not check R2 for additional files: ${r2Error.message}`);
+                console.log(` Could not check R2 for additional files: ${r2Error.message}`);
             }
 
             if (fileQuery.rows.length === 0) {
@@ -55,7 +55,7 @@ class UnifiedFileDeletion {
             const fileSizeMB = fileRecord.file_size_mb || 0;
 
             deletionLog.push(`✓ Verified ownership and access for ${filename} (${fileSizeMB}MB)`);
-            console.log(`📋 File details: ${filename} - ${fileSizeMB}MB - Type: ${folderType}`);
+            console.log(` File details: ${filename} - ${fileSizeMB}MB - Type: ${folderType}`);
 
             // Step 2: Delete from Cloud Storage (R2) - Use direct R2 key deletion
             try {
@@ -78,9 +78,9 @@ class UnifiedFileDeletion {
                 }
                 
             } catch (cloudError) {
-                console.warn(`⚠️ Cloud deletion failed (continuing with database cleanup): ${cloudError.message}`);
+                console.warn(` Cloud deletion failed (continuing with database cleanup): ${cloudError.message}`);
                 errors.push(`Cloud storage: ${cloudError.message}`);
-                deletionLog.push(`⚠️ Cloud deletion failed: ${cloudError.message}`);
+                deletionLog.push(` Cloud deletion failed: ${cloudError.message}`);
             }
 
             // Step 3: Delete thumbnails and cached versions
@@ -103,7 +103,7 @@ class UnifiedFileDeletion {
                 deletionLog.push(`✓ Removed from session_files database (${deleteDbResult.rowCount} record)`);
                 console.log(`🗄️ Database record removed: ${filename}`);
             } else {
-                console.warn(`⚠️ No database record found to delete for: ${filename}`);
+                console.warn(` No database record found to delete for: ${filename}`);
             }
 
             // Step 5: Update storage tracking tables
@@ -132,7 +132,7 @@ class UnifiedFileDeletion {
                     deletionLog.push(`✓ Updated raw storage tracking (-${fileSizeMB}MB)`);
                 }
             } catch (trackingError) {
-                console.warn(`⚠️ Storage tracking update failed: ${trackingError.message}`);
+                console.warn(` Storage tracking update failed: ${trackingError.message}`);
                 errors.push(`Storage tracking: ${trackingError.message}`);
             }
 
@@ -154,7 +154,7 @@ class UnifiedFileDeletion {
 
             } catch (metadataError) {
                 // These tables may not exist, continue
-                console.log(`📝 Metadata cleanup (tables may not exist): ${metadataError.message}`);
+                console.log(` Metadata cleanup (tables may not exist): ${metadataError.message}`);
             }
 
             // Step 7: Log the deletion for audit trail
@@ -167,11 +167,11 @@ class UnifiedFileDeletion {
                 deletionLog.push(`✓ Logged deletion for audit trail`);
             } catch (auditError) {
                 // Audit logging failure shouldn't block deletion
-                console.warn(`📋 Audit logging failed: ${auditError.message}`);
+                console.warn(` Audit logging failed: ${auditError.message}`);
             }
 
-            console.log(`🎯 COMPLETE DELETION SUCCESS: ${filename}`);
-            console.log(`📊 Steps completed: ${deletionLog.length}`);
+            console.log(` COMPLETE DELETION SUCCESS: ${filename}`);
+            console.log(` Steps completed: ${deletionLog.length}`);
             
             return {
                 success: true,
@@ -220,7 +220,7 @@ class UnifiedFileDeletion {
             }
         }
 
-        console.log(`📊 Batch deletion complete: ${successCount} success, ${errorCount} errors, ${totalReclaimed.toFixed(2)}MB reclaimed`);
+        console.log(` Batch deletion complete: ${successCount} success, ${errorCount} errors, ${totalReclaimed.toFixed(2)}MB reclaimed`);
 
         return {
             success: errorCount === 0,

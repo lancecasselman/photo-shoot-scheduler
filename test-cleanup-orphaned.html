@@ -63,7 +63,7 @@
             Click "Check Storage Status" to see current file counts...
         </div>
         
-        <button onclick="checkStorageStatus()">📊 Check Storage Status</button>
+        <button onclick="checkStorageStatus()"> Check Storage Status</button>
     </div>
     
     <div class="container">
@@ -74,7 +74,7 @@
             Cleanup results will appear here...
         </div>
         
-        <button class="danger" onclick="cleanupOrphanedFiles()">🔥 Clean Up Orphaned Files</button>
+        <button class="danger" onclick="cleanupOrphanedFiles()"> Clean Up Orphaned Files</button>
     </div>
     
     <script>
@@ -95,7 +95,7 @@
                 const stats = await response.json();
                 
                 statusDiv.className = 'result success';
-                statusDiv.textContent = `📊 CURRENT STORAGE STATUS:
+                statusDiv.textContent = ` CURRENT STORAGE STATUS:
                 
 Total Files: ${stats.combined.fileCount}
 Total Size: ${stats.combined.totalSizeFormatted}
@@ -108,7 +108,7 @@ Raw Size: ${stats.raw.totalSizeFormatted}
 
 Total Sessions: ${stats.totalSessions}
 
-${stats.combined.fileCount > 1 ? '⚠️ You have more files in R2 than in database - cleanup needed!' : '✅ Storage appears clean'}`;
+${stats.combined.fileCount > 1 ? ' You have more files in R2 than in database - cleanup needed!' : ' Storage appears clean'}`;
                 
             } catch (error) {
                 statusDiv.className = 'result error';
@@ -143,7 +143,7 @@ ${stats.combined.fileCount > 1 ? '⚠️ You have more files in R2 than in datab
                 
                 if (result.success) {
                     resultDiv.className = 'result success';
-                    resultDiv.textContent = `✅ CLEANUP COMPLETE!
+                    resultDiv.textContent = ` CLEANUP COMPLETE!
 
 Files Removed: ${result.cleaned}
 Space Reclaimed: ${result.reclaimedMB} MB

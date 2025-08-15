@@ -466,12 +466,12 @@
                         
                         <button onclick="sendInvoiceViaEmail()" 
                                 style="padding: 12px 20px; background: #007bff; color: white; border: none; border-radius: 6px; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                            📧 Send via Email
+                             Send via Email
                         </button>
                         
                         <button onclick="copyInvoiceURL()" 
                                 style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                            📋 Copy Link
+                             Copy Link
                         </button>
                     </div>
                 </div>
@@ -485,7 +485,7 @@
             
             <!-- Send Deposit Section - ONLY for photographers creating deposits, NOT for clients paying them -->
             <div class="send-deposit-section" id="send-deposit-section" style="display: none; margin-top: 20px; padding: 20px; background: #fff3cd; border-radius: 8px; border-top: 3px solid #ffc107; border: 2px solid #ffc107;">
-                <h4 style="margin: 0 0 15px 0; color: #333; font-size: 18px;">💰 Send Deposit Request to Client</h4>
+                <h4 style="margin: 0 0 15px 0; color: #333; font-size: 18px;"> Send Deposit Request to Client</h4>
                 <p style="margin: 0 0 20px 0; color: #666; font-size: 14px;">Use the client's phone number and email from the session to send this deposit request</p>
                 
                 <div style="display: grid; gap: 12px;">
@@ -496,12 +496,12 @@
                     
                     <button onclick="sendDepositViaEmail()" 
                             style="padding: 12px 20px; background: #6f42c1; color: white; border: none; border-radius: 6px; font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                        📧 Send Deposit via Email
+                         Send Deposit via Email
                     </button>
                     
                     <button onclick="copyDepositURL()" 
                             style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                        📋 Copy Deposit Link
+                         Copy Deposit Link
                     </button>
                 </div>
             </div>
@@ -535,7 +535,7 @@
         
         // Load invoice data from localStorage (simplified approach)
         function loadInvoiceData(paymentId) {
-            console.log('🔥 Loading invoice data for payment ID:', paymentId);
+            console.log(' Loading invoice data for payment ID:', paymentId);
             
             try {
                 // Always try URL parameters first for public invoice access
@@ -544,11 +544,11 @@
                 const amount = urlParams.get('amount');
                 const type = urlParams.get('type');
                 
-                console.log('🔥 URL Parameters:', { sessionId, amount, paymentId, type });
+                console.log(' URL Parameters:', { sessionId, amount, paymentId, type });
                 
                 // Hide tip section and show deposit buttons for deposit invoices
                 if (type === 'deposit') {
-                    console.log('🔥 DEPOSIT DETECTED: Customizing for deposit invoice');
+                    console.log(' DEPOSIT DETECTED: Customizing for deposit invoice');
                     
                     // Hide tip section
                     const tipSection = document.querySelector('.tip-section');
@@ -576,25 +576,25 @@
                     
                     // For deposit invoices, ALWAYS show the payment button for clients
                     // The deposit button should always be visible regardless of authentication
-                    console.log('🔥 DEPOSIT: Showing payment button for deposit invoice');
+                    console.log(' DEPOSIT: Showing payment button for deposit invoice');
                     
                     // Check if user is authenticated (photographer) vs client for SEND options only
                     fetch('/api/check-auth', { credentials: 'include' })
                         .then(response => {
                             if (response.ok) {
                                 // Authenticated photographer - also show send options
-                                console.log('🔥 DEPOSIT: Photographer detected - showing send options too');
+                                console.log(' DEPOSIT: Photographer detected - showing send options too');
                                 const sendDepositSection = document.getElementById('send-deposit-section');
                                 if (sendDepositSection) {
                                     sendDepositSection.style.display = 'block';
                                 }
                             } else {
                                 // Anonymous client - only payment button (already visible)
-                                console.log('🔥 DEPOSIT: Client view - only payment button visible');
+                                console.log(' DEPOSIT: Client view - only payment button visible');
                             }
                         })
                         .catch(error => {
-                            console.log('🔥 DEPOSIT: Auth check failed - client view with payment button');
+                            console.log(' DEPOSIT: Auth check failed - client view with payment button');
                         });
                 }
                 
@@ -612,7 +612,7 @@
                         }
                     };
                     
-                    console.log('✅ Invoice data created from URL:', invoiceData);
+                    console.log(' Invoice data created from URL:', invoiceData);
                     
                     // Always fetch complete session data from server to get email and proper client info
                     if (sessionId) {
@@ -642,8 +642,8 @@
                         }
                     };
                     
-                    console.log('✅ Invoice data loaded from localStorage:', invoiceData);
-                    console.log('📧 Client email from invoice data:', invoiceData.session.clientEmail);
+                    console.log(' Invoice data loaded from localStorage:', invoiceData);
+                    console.log(' Client email from invoice data:', invoiceData.session.clientEmail);
                     
                     // If we don't have the client email, try to fetch it from the server
                     if (!invoiceData.session.clientEmail && sessionId) {
@@ -702,7 +702,7 @@
                 } else {
                     // Hide send section for clients
                     document.getElementById('send-section').style.display = 'none';
-                    console.log('👤 Client view detected - hiding send buttons');
+                    console.log(' Client view detected - hiding send buttons');
                 }
             }
             
@@ -865,11 +865,11 @@
         // Fetch complete session data from server using public endpoint
         async function fetchCompleteSessionData(sessionId) {
             try {
-                console.log('🔍 Fetching complete session data from server for session:', sessionId);
+                console.log(' Fetching complete session data from server for session:', sessionId);
                 const response = await fetch(`/api/sessions/${sessionId}/public`);
                 if (response.ok) {
                     const sessionData = await response.json();
-                    console.log('📋 Complete session data received:', sessionData);
+                    console.log(' Complete session data received:', sessionData);
                     
                     // Update invoice data with complete session information
                     if (sessionData) {
@@ -879,7 +879,7 @@
                         invoiceData.session.dateTime = sessionData.dateTime || sessionData.date_time || new Date().toISOString();
                         invoiceData.session.phoneNumber = sessionData.phoneNumber || sessionData.phone_number;
                         
-                        console.log('✅ Invoice data updated with session details:', invoiceData.session);
+                        console.log(' Invoice data updated with session details:', invoiceData.session);
                         
                         // Refresh the display with updated session data
                         displayInvoiceData();
@@ -899,13 +899,13 @@
         // Fetch session email from server as fallback
         async function fetchSessionEmail(sessionId) {
             try {
-                console.log('📧 Fetching session email from server for session:', sessionId);
+                console.log(' Fetching session email from server for session:', sessionId);
                 const response = await fetch(`/api/sessions/${sessionId}/public`);
                 if (response.ok) {
                     const sessionData = await response.json();
                     if (sessionData.email) {
                         invoiceData.session.clientEmail = sessionData.email;
-                        console.log('📧 Session email fetched from server:', sessionData.email);
+                        console.log(' Session email fetched from server:', sessionData.email);
                     }
                 }
             } catch (error) {
@@ -1110,7 +1110,7 @@ Your Photography Team`;
                 const response = await fetch('/api/stripe-config');
                 const config = await response.json();
                 stripe = Stripe(config.publicKey);
-                console.log('✅ Stripe initialized');
+                console.log(' Stripe initialized');
             } catch (error) {
                 console.error('Error initializing Stripe:', error);
                 showError('Payment system initialization failed');
@@ -1206,7 +1206,7 @@ Your Photography Team`;
                     showError(`Payment failed: ${error.message}`);
                 } else if (paymentIntent && paymentIntent.status === 'succeeded') {
                     // Payment succeeded
-                    console.log('💰 Payment succeeded:', paymentIntent.id);
+                    console.log(' Payment succeeded:', paymentIntent.id);
                     hideLoading();
                     showPaymentSuccess();
                 } else {
@@ -1258,12 +1258,12 @@ Your Photography Team`;
         // Show payment success
         function showPaymentSuccess() {
             hidePaymentForm();
-            showSuccess('🎉 Payment successful! Thank you for your payment.');
+            showSuccess(' Payment successful! Thank you for your payment.');
             
             // Disable payment button and show paid status
             const payNowBtn = document.querySelector('.btn-success');
             if (payNowBtn) {
-                payNowBtn.innerHTML = '✅ Payment Completed';
+                payNowBtn.innerHTML = ' Payment Completed';
                 payNowBtn.disabled = true;
                 payNowBtn.style.backgroundColor = '#28a745';
             }

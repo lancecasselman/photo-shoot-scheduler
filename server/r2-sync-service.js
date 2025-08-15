@@ -25,7 +25,7 @@ class R2SyncService {
     }
 
     this.syncInProgress = true;
-    console.log('🔄 Starting local backup to R2 sync...');
+    console.log(' Starting local backup to R2 sync...');
 
     try {
       const metadata = await this.localBackup.getMetadata();
@@ -50,7 +50,7 @@ class R2SyncService {
       for (let i = 0; i < filesToSync.length; i += batchSize) {
         const batch = filesToSync.slice(i, i + batchSize);
         
-        console.log(`🔄 Syncing batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(filesToSync.length/batchSize)}`);
+        console.log(` Syncing batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(filesToSync.length/batchSize)}`);
 
         const batchPromises = batch.map(async (file) => {
           try {
@@ -74,7 +74,7 @@ class R2SyncService {
 
             results.totalSize += file.fileSizeBytes;
 
-            console.log(`✅ Synced: ${file.originalFilename} (${file.fileSizeMB}MB)`);
+            console.log(` Synced: ${file.originalFilename} (${file.fileSizeMB}MB)`);
             return { success: true, file };
 
           } catch (error) {
@@ -95,8 +95,8 @@ class R2SyncService {
         }
       }
 
-      console.log(`🎉 Sync completed: ${results.successful.length}/${results.total} files uploaded`);
-      console.log(`📊 Total synced: ${(results.totalSize / (1024 * 1024 * 1024)).toFixed(2)}GB`);
+      console.log(` Sync completed: ${results.successful.length}/${results.total} files uploaded`);
+      console.log(` Total synced: ${(results.totalSize / (1024 * 1024 * 1024)).toFixed(2)}GB`);
 
       return results;
 
@@ -131,7 +131,7 @@ class R2SyncService {
         cleanupResults.spaceSaved += syncedFile.originalFile.fileSizeBytes;
 
       } catch (error) {
-        console.error(`⚠️ Failed to cleanup ${syncedFile.originalFile.originalFilename}:`, error.message);
+        console.error(` Failed to cleanup ${syncedFile.originalFile.originalFilename}:`, error.message);
         cleanupResults.failed.push({
           filename: syncedFile.originalFile.originalFilename,
           error: error.message

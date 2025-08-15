@@ -40,7 +40,7 @@ class PhotoDeletion {
             const result = await response.json();
 
             if (result.success) {
-                console.log(`✅ Deletion success: ${filename} - ${result.reclaimedMB}MB reclaimed`);
+                console.log(` Deletion success: ${filename} - ${result.reclaimedMB}MB reclaimed`);
                 
                 // Show success message
                 showMessage(`Photo deleted successfully: ${filename} (${result.reclaimedMB}MB reclaimed)`, 'success');
@@ -110,7 +110,7 @@ class PhotoDeletion {
             const result = await response.json();
 
             if (result.success || result.successCount > 0) {
-                console.log(`📊 Batch deletion result: ${result.successCount}/${result.totalFiles} success`);
+                console.log(` Batch deletion result: ${result.successCount}/${result.totalFiles} success`);
                 
                 showMessage(
                     `Batch deletion complete: ${result.successCount}/${result.totalFiles} photos deleted, ${result.totalReclaimedMB}MB reclaimed`, 
@@ -234,10 +234,10 @@ class PhotoDeletion {
             const result = await response.json();
             
             if (result.success && result.deletionComplete) {
-                console.log(`✅ Deletion verified complete: ${filename}`);
+                console.log(` Deletion verified complete: ${filename}`);
                 return true;
             } else {
-                console.warn(`⚠️ Deletion verification issues: ${filename}`, result.issues);
+                console.warn(` Deletion verification issues: ${filename}`, result.issues);
                 return false;
             }
         } catch (error) {

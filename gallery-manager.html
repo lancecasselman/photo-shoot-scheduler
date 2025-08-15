@@ -422,7 +422,7 @@
 </head>
 <body>
     <div class="header">
-        <h1 id="folderTitle">📸 Gallery Manager</h1>
+        <h1 id="folderTitle"> Gallery Manager</h1>
         <div class="folder-type" id="folderType">Gallery</div>
     </div>
 
@@ -430,16 +430,16 @@
 
     <div class="toolbar">
         <button class="btn btn-secondary" onclick="downloadAllFiles()">
-            📦 Download All ZIP
+             Download All ZIP
         </button>
         <button class="btn btn-danger" onclick="deleteAllFiles()">
             🗑️ Delete All
         </button>
         <button class="btn btn-success" onclick="sendToClient()" id="sendClientBtn" style="display: none;">
-            📧 Send to Client
+             Send to Client
         </button>
         <button class="btn btn-secondary" onclick="refreshFiles()">
-            🔄 Refresh
+             Refresh
         </button>
     </div>
 
@@ -539,7 +539,7 @@
             
             // Update UI
             document.getElementById('folderTitle').textContent = 
-                folderType === 'gallery' ? '📸 Gallery Manager' : '📁 Raw Storage Manager';
+                folderType === 'gallery' ? ' Gallery Manager' : '📁 Raw Storage Manager';
             document.getElementById('folderType').textContent = 
                 folderType === 'gallery' ? 'Gallery' : 'Raw Storage';
             
@@ -778,7 +778,7 @@
                 uploadedBytes += file.size;
                 updateProgressDisplay();
                 updateProgressText(`Uploaded ${file.name}`);
-                updateUploadItem(file.name, 'completed', '✅');
+                updateUploadItem(file.name, 'completed', '');
                 
                 // Wait a moment for upload to propagate, then reload files
                 setTimeout(() => {
@@ -842,7 +842,7 @@
                 // Show warning if approaching limit (90%+)
                 if (quotaData.usagePercentage >= 90) {
                     const warningMessage = `
-                        ⚠️ Storage nearly full!
+                         Storage nearly full!
                         
                         You're using ${quotaData.usagePercentage.toFixed(1)}% of your storage quota.
                         Consider upgrading soon to avoid future upload issues.
@@ -909,7 +909,7 @@
                 }
                 
                 storageDiv.innerHTML = 
-                    '<h3 style="margin: 0 0 10px 0; font-size: 18px;">📊 Session Storage Overview</h3>' +
+                    '<h3 style="margin: 0 0 10px 0; font-size: 18px;"> Session Storage Overview</h3>' +
                     '<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-top: 10px;">' +
                         '<div style="text-align: center;">' +
                             '<div style="font-size: 20px; font-weight: bold;">' + stats.gallery.fileCount + '</div>' +
@@ -1095,9 +1095,9 @@
             if (contentType.startsWith('video/')) return '🎥';
             if (contentType.startsWith('audio/')) return '🎵';
             if (contentType.includes('pdf')) return '📕';
-            if (contentType.includes('document') || contentType.includes('word')) return '📝';
-            if (contentType.includes('spreadsheet') || contentType.includes('excel')) return '📊';
-            if (contentType.includes('zip') || contentType.includes('archive')) return '📦';
+            if (contentType.includes('document') || contentType.includes('word')) return '';
+            if (contentType.includes('spreadsheet') || contentType.includes('excel')) return '';
+            if (contentType.includes('zip') || contentType.includes('archive')) return '';
             
             return '📄';
         }
@@ -1130,7 +1130,7 @@
 
         // Download all files as ZIP
         async function downloadAllFiles() {
-            console.log('🔥 Download All button clicked!');
+            console.log(' Download All button clicked!');
             
             if (!files || files.length === 0) {
                 console.error('❌ No files available for download');
@@ -1138,7 +1138,7 @@
                 return;
             }
             
-            console.log(`📦 Attempting to download ${files.length} files as ZIP`);
+            console.log(` Attempting to download ${files.length} files as ZIP`);
             console.log('📍 Request details:', {
                 sessionId,
                 folderType,
@@ -1176,7 +1176,7 @@
                 
                 // Get the blob data
                 const blob = await response.blob();
-                console.log('📦 ZIP blob received:', {
+                console.log(' ZIP blob received:', {
                     size: blob.size,
                     type: blob.type
                 });
@@ -1199,7 +1199,7 @@
                     a.style.display = 'none';
                     
                     document.body.appendChild(a);
-                    console.log('🚀 Method 1: Triggering blob download for:', filename);
+                    console.log(' Method 1: Triggering blob download for:', filename);
                     a.click();
                     
                     // Cleanup
@@ -1223,7 +1223,7 @@
                     form.style.display = 'none';
                     
                     document.body.appendChild(form);
-                    console.log('🚀 Method 2: Triggering form download');
+                    console.log(' Method 2: Triggering form download');
                     form.submit();
                     
                     setTimeout(() => {
@@ -1237,7 +1237,7 @@
                     window.URL.revokeObjectURL(url);
                 }, 1000);
                 
-                console.log(`✅ Successfully triggered ZIP download for ${folderType} folder`);
+                console.log(` Successfully triggered ZIP download for ${folderType} folder`);
                 
                 // Give user feedback about the download
                 setTimeout(() => {
@@ -1256,7 +1256,7 @@
                 
                 // Restore button on error
                 const downloadBtn = document.querySelector('button[onclick="downloadAllFiles()"]');
-                downloadBtn.innerHTML = '📦 Download All ZIP';
+                downloadBtn.innerHTML = ' Download All ZIP';
                 downloadBtn.disabled = false;
             }
         }
@@ -1302,7 +1302,7 @@
                 }
                 
                 const result = await response.json();
-                console.log('✅ Delete all result:', result);
+                console.log(' Delete all result:', result);
                 
                 // Show success message
                 alert(`Successfully deleted ${result.successCount || result.deletedCount || files.length} files from ${folderType} folder. Reclaimed ${result.totalReclaimedMB || 0}MB of storage.`);
@@ -1345,7 +1345,7 @@
                     
                     <div style="display: flex; gap: 15px; margin-bottom: 20px;">
                         <button onclick="sendViaEmail()" style="flex: 1; padding: 15px; background: #4285f4; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px;">
-                            📧 Email
+                             Email
                         </button>
                         <button onclick="sendViaSMS()" style="flex: 1; padding: 15px; background: #0d9488; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px;">
                             📱 SMS
@@ -1374,7 +1374,7 @@
 
 Your photography gallery is ready for viewing and download!
 
-📸 View Your Gallery: ${clientGalleryUrl}
+ View Your Gallery: ${clientGalleryUrl}
 
 You can:
 • View all your photos in high resolution
@@ -1447,9 +1447,9 @@ Lance - The Legacy Photography`;
             if (type === 'error') {
                 alert(`Error: ${message}`);
             } else if (type === 'success') {
-                console.log(`✅ Success: ${message}`);
+                console.log(` Success: ${message}`);
             } else if (type === 'warning') {
-                console.log(`⚠️ Warning: ${message}`);
+                console.log(` Warning: ${message}`);
             } else {
                 console.log(`ℹ️ Info: ${message}`);
             }

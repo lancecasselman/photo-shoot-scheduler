@@ -28,7 +28,7 @@ class BackupIndexRebuilder {
     }
 
     async rebuildIndices() {
-        console.log('🔧 REBUILDING BACKUP INDICES');
+        console.log(' REBUILDING BACKUP INDICES');
         console.log('=============================\n');
 
         try {
@@ -49,7 +49,7 @@ class BackupIndexRebuilder {
     }
 
     async scanAllR2Objects() {
-        console.log('1. 🔍 Scanning R2 storage...');
+        console.log('1.  Scanning R2 storage...');
         
         const allObjects = [];
         let continuationToken = null;
@@ -134,7 +134,7 @@ class BackupIndexRebuilder {
     }
 
     async createBackupIndices(sessionMap) {
-        console.log('3. 📝 Creating backup indices...');
+        console.log('3.  Creating backup indices...');
         
         let created = 0;
         
@@ -165,7 +165,7 @@ class BackupIndexRebuilder {
                 
                 await this.s3Client.send(putCommand);
                 
-                console.log(`   ✅ Created index for session ${sessionId} (${files.length} files, ${backupIndex.totalSizeMB}MB)`);
+                console.log(`    Created index for session ${sessionId} (${files.length} files, ${backupIndex.totalSizeMB}MB)`);
                 created++;
                 
             } catch (error) {
@@ -173,7 +173,7 @@ class BackupIndexRebuilder {
             }
         }
         
-        console.log(`\n✅ Successfully created ${created} backup indices`);
+        console.log(`\n Successfully created ${created} backup indices`);
     }
 
     guessContentType(filename) {
@@ -203,7 +203,7 @@ class BackupIndexRebuilder {
 // Run the rebuilder
 const rebuilder = new BackupIndexRebuilder();
 rebuilder.rebuildIndices().then(() => {
-    console.log('🎯 BACKUP INDEX REBUILD COMPLETE');
+    console.log(' BACKUP INDEX REBUILD COMPLETE');
     process.exit(0);
 }).catch(error => {
     console.error('❌ Rebuild failed:', error);

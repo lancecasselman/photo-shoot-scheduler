@@ -129,7 +129,7 @@ class LocalBackupFallback {
       try {
         await fs.unlink(file.localPath);
       } catch (error) {
-        console.warn(`⚠️ Could not delete physical file: ${error.message}`);
+        console.warn(` Could not delete physical file: ${error.message}`);
       }
       
       // Remove from metadata

@@ -958,9 +958,9 @@
             <div class="sidebar-section">
                 <h3 class="sidebar-title">Quick Links</h3>
                 <ul class="quick-links">
-                    <li><a href="#" onclick="showMyProfile()">👤 My Profile</a></li>
+                    <li><a href="#" onclick="showMyProfile()"> My Profile</a></li>
                     <li><a href="#" onclick="showSavedPosts()">💾 Saved Posts</a></li>
-                    <li><a href="#" onclick="showMyPosts()">📝 My Posts</a></li>
+                    <li><a href="#" onclick="showMyPosts()"> My Posts</a></li>
                     <li><a href="#" onclick="showFollowing()">👥 Following</a></li>
                     <li><a href="#" onclick="showSettings()">⚙️ Settings</a></li>
                 </ul>
@@ -994,7 +994,7 @@
                             ❓ Ask for Help
                         </button>
                         <button class="post-type-btn tip" onclick="openCreatePost('tip')">
-                            💡 Share Tip
+                             Share Tip
                         </button>
                     </div>
                 </div>
@@ -1010,14 +1010,14 @@
         <!-- Right Sidebar -->
         <aside class="right-sidebar">
             <div class="trending-section">
-                <h3 class="trending-title">🔥 Trending Topics</h3>
+                <h3 class="trending-title"> Trending Topics</h3>
                 <div id="trendingTopics">
                     <!-- Trending topics will be loaded here -->
                 </div>
             </div>
 
             <div class="trending-section">
-                <h3 class="trending-title">🌟 Top Contributors</h3>
+                <h3 class="trending-title"> Top Contributors</h3>
                 <div id="topContributors">
                     <!-- Top contributors will be loaded here -->
                 </div>
@@ -1060,7 +1060,7 @@
                     <div class="form-group" id="imageUploadGroup">
                         <label class="form-label">Upload Images</label>
                         <div class="image-upload-area" id="imageUploadArea" onclick="selectImages()">
-                            <div class="upload-icon">📸</div>
+                            <div class="upload-icon"></div>
                             <div class="upload-text">Click to upload or drag and drop</div>
                             <div class="upload-subtext">Any size accepted - we'll optimize it for you!</div>
                         </div>
@@ -1312,7 +1312,7 @@
             return `
                 <div class="camera-settings">
                     ${settings.camera ? `<span class="camera-setting">📷 ${settings.camera}</span>` : ''}
-                    ${settings.lens ? `<span class="camera-setting">🔍 ${settings.lens}</span>` : ''}
+                    ${settings.lens ? `<span class="camera-setting"> ${settings.lens}</span>` : ''}
                     ${settings.aperture ? `<span class="camera-setting">f/${settings.aperture}</span>` : ''}
                     ${settings.shutterSpeed ? `<span class="camera-setting">⏱ ${settings.shutterSpeed}s</span>` : ''}
                     ${settings.iso ? `<span class="camera-setting">ISO ${settings.iso}</span>` : ''}

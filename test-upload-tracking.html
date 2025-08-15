@@ -80,7 +80,7 @@
         <p>Upload a photo and track where it gets stored:</p>
         
         <div class="upload-area" id="uploadArea">
-            <p>📸 Drop a test photo here or click to select</p>
+            <p> Drop a test photo here or click to select</p>
             <input type="file" id="fileInput" accept="image/*">
             <button onclick="document.getElementById('fileInput').click()">Select Photo</button>
         </div>
@@ -212,7 +212,7 @@
                 
                 if (response.ok && result.uploaded) {
                     uploadResult.className = 'result success';
-                    uploadResult.textContent = `✅ UPLOAD SUCCESSFUL!
+                    uploadResult.textContent = ` UPLOAD SUCCESSFUL!
 
 File: ${file.name}
 Size: ${(file.size/1024/1024).toFixed(2)}MB
@@ -271,8 +271,8 @@ Combined:
 - Total Size: ${storage.combined.totalSizeFormatted}
 
 ${storage.combined.fileCount > 0 ? 
-'✅ File found in storage system' : 
-'⚠️ File not found in storage system'}`;
+' File found in storage system' : 
+' File not found in storage system'}`;
                 } else {
                     throw new Error(`Storage check failed: ${storageResponse.status}`);
                 }
@@ -311,13 +311,13 @@ Session: ${targetSession.clientName}
 Photos in session.photos: ${photoCount}
 
 ${photoCount > 0 ? 
-`✅ File tracked in database
+` File tracked in database
 
 Recent Photos:
 ${targetSession.photos.slice(-3).map(p => 
 `- ${p.originalName || p.filename} (${(p.originalSize/1024/1024).toFixed(2)}MB)`
 ).join('\n')}` : 
-'⚠️ File not found in session.photos array'}`;
+' File not found in session.photos array'}`;
                 } else {
                     throw new Error('Session not found');
                 }
@@ -356,8 +356,8 @@ Global Storage Stats:
 - Raw: ${globalStats.raw.fileCount} files (${globalStats.raw.totalSizeFormatted})
 
 ${globalStats.combined.fileCount > 0 ? 
-'✅ Files detected in R2 backup system' : 
-'⚠️ No files detected in R2 backup system'}
+' Files detected in R2 backup system' : 
+' No files detected in R2 backup system'}
 
 Note: R2 backup happens asynchronously after upload.
 Check the server console logs for "R2 backup successful" messages.`;
