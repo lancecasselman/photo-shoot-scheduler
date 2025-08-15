@@ -46,15 +46,15 @@ async function checkAuth() {
             
             // COMPLETELY disable redirects if coming from auth page
             if (localStorage.getItem('manualLogout') !== 'true' && !fromAuth && !sessionStorage.getItem('fromAuth') && !document.referrer.includes('auth.html')) {
-                console.log('🔴 AUTH CHECK: Scheduling redirect to auth page...');
+                console.log(' AUTH CHECK: Scheduling redirect to auth page...');
                 setTimeout(() => {
                     redirectToAuth();
                 }, 2000); // Even longer delay
             } else {
-                console.log('🔴 AUTH CHECK: Skipping redirect - from auth page, manual logout, or has fromAuth flag');
-                console.log('🔴 AUTH CHECK: fromAuth:', fromAuth);
-                console.log('🔴 AUTH CHECK: sessionStorage fromAuth:', sessionStorage.getItem('fromAuth'));
-                console.log('🔴 AUTH CHECK: referrer:', document.referrer);
+                console.log(' AUTH CHECK: Skipping redirect - from auth page, manual logout, or has fromAuth flag');
+                console.log(' AUTH CHECK: fromAuth:', fromAuth);
+                console.log(' AUTH CHECK: sessionStorage fromAuth:', sessionStorage.getItem('fromAuth'));
+                console.log(' AUTH CHECK: referrer:', document.referrer);
             }
             return false;
         }
@@ -63,15 +63,15 @@ async function checkAuth() {
         
         // COMPLETELY disable redirects if coming from auth page
         if (localStorage.getItem('manualLogout') !== 'true' && !fromAuth && !sessionStorage.getItem('fromAuth') && !document.referrer.includes('auth.html')) {
-            console.log('🔴 AUTH CHECK: Scheduling redirect to auth page due to error...');
+            console.log(' AUTH CHECK: Scheduling redirect to auth page due to error...');
             setTimeout(() => {
                 redirectToAuth();
             }, 2000); // Even longer delay
         } else {
-            console.log('🔴 AUTH CHECK: Skipping redirect due to error - from auth page, manual logout, or has fromAuth flag');
-            console.log('🔴 AUTH CHECK: fromAuth:', fromAuth);
-            console.log('🔴 AUTH CHECK: sessionStorage fromAuth:', sessionStorage.getItem('fromAuth'));
-            console.log('🔴 AUTH CHECK: referrer:', document.referrer);
+            console.log(' AUTH CHECK: Skipping redirect due to error - from auth page, manual logout, or has fromAuth flag');
+            console.log(' AUTH CHECK: fromAuth:', fromAuth);
+            console.log(' AUTH CHECK: sessionStorage fromAuth:', sessionStorage.getItem('fromAuth'));
+            console.log(' AUTH CHECK: referrer:', document.referrer);
         }
         return false;
     }
@@ -475,7 +475,7 @@ async function getAuthToken() {
 function createSessionCard(session) {
     console.log('=== CRITICAL DEBUG: Creating session card for:', session.clientName);
     console.log('Session object:', session);
-    console.log('🔴 RAW BUTTONS DEBUG: Starting button creation process');
+    console.log(' RAW BUTTONS DEBUG: Starting button creation process');
 
     // Create main card container
     const card = document.createElement('div');
@@ -660,12 +660,12 @@ function createSessionCard(session) {
     actions.appendChild(paymentPlanBtn);
     actions.appendChild(bookingAgreementBtn);
     console.log('DEBUG: Deposit button appended successfully');
-    console.log('🔴 DEBUG: About to append RAW Upload button:', rawUploadBtn.textContent);
+    console.log(' DEBUG: About to append RAW Upload button:', rawUploadBtn.textContent);
     actions.appendChild(rawUploadBtn);
-    console.log('🔴 DEBUG: RAW Upload button appended successfully');
-    console.log('🔴 DEBUG: About to append RAW Folder button:', rawFolderBtn.textContent);
+    console.log(' DEBUG: RAW Upload button appended successfully');
+    console.log(' DEBUG: About to append RAW Folder button:', rawFolderBtn.textContent);
     actions.appendChild(rawFolderBtn);
-    console.log('🔴 DEBUG: RAW Folder button appended successfully');
+    console.log(' DEBUG: RAW Folder button appended successfully');
     actions.appendChild(deleteBtn);
 
     // Debug: Log all buttons in the actions container
@@ -2539,7 +2539,7 @@ function showRawGalleryModal(sessionId, clientName, filesByType) {
                                 <div style="font-weight: bold; margin-bottom: 0.5rem; word-break: break-word;">${file.filename}</div>
                                 <div style="font-size: 0.9rem; color: #6c757d; line-height: 1.4;">
                                     📏 ${fileSizeMB} MB |  ${uploadDate}<br>
-                                    💾 R2 Cloud Backup<br>
+                                     R2 Cloud Backup<br>
                                     🔗 ${(file.r2Key || '').substring(0, 45)}...
                                 </div>
                                 <div style="margin-top: 0.75rem;">

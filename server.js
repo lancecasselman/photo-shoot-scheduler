@@ -274,7 +274,7 @@ storageSystem.initializeTables().catch(error => {
 console.log(' R2 File Manager initialized');
 console.log(' Payment and contract services initialized');
 console.log('AI Services:', aiServices.status);
-console.log('💾 New storage system initialized');
+console.log(' New storage system initialized');
 
 // Initialize Firebase Admin SDK with latest service account
 try {
@@ -490,7 +490,7 @@ async function processWorkflow(workflowType, clientData, messageTemplate, sessio
 
 // Process all uploaded files for R2 backup (comprehensive system)
 async function processR2BackupsAsync(sessionId, uploadedFiles, userId) {
-    console.log(`💾 Starting comprehensive R2 backup for ${uploadedFiles.length} files`);
+    console.log(` Starting comprehensive R2 backup for ${uploadedFiles.length} files`);
     
     try {
         for (const fileData of uploadedFiles) {
@@ -525,7 +525,7 @@ async function processR2BackupsAsync(sessionId, uploadedFiles, userId) {
 
 // Legacy RAW backup process (kept for compatibility)
 async function processRAWBackups(sessionId, rawFiles, userId) {
-    console.log(`💾 Starting RAW backup process for ${rawFiles.length} files`);
+    console.log(` Starting RAW backup process for ${rawFiles.length} files`);
 
     for (const photo of rawFiles) {
         try {
@@ -3623,7 +3623,7 @@ app.post('/api/automation-settings', isAuthenticated, async (req, res) => {
                 updated_at = CURRENT_TIMESTAMP
         `, [userId, JSON.stringify(settings), messageTemplate]);
 
-        console.log(`💾 Automation settings saved for user ${userId}`);
+        console.log(` Automation settings saved for user ${userId}`);
         res.json({ success: true });
 
     } catch (error) {
