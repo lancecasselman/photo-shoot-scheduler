@@ -918,6 +918,51 @@
                     startEditingImage(this);
                 });
             });
+            
+            // Also handle background images (like in hero sections)
+            const elementsWithBackgrounds = document.querySelectorAll('#canvas .element[data-type="hero"] > div, #canvas .element[data-type="hero-minimal"] > div > div');
+            
+            elementsWithBackgrounds.forEach(element => {
+                const bgStyle = window.getComputedStyle(element).backgroundImage;
+                if (bgStyle && bgStyle !== 'none') {
+                    // Add overlay indicator on hover
+                    element.style.position = 'relative';
+                    element.style.cursor = 'pointer';
+                    
+                    // Create overlay for hover effect
+                    const overlay = document.createElement('div');
+                    overlay.style.cssText = `
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background: rgba(0,0,0,0.3);
+                        display: none;
+                        align-items: center;
+                        justify-content: center;
+                        z-index: 1;
+                        pointer-events: none;
+                    `;
+                    overlay.innerHTML = '<span style="background: white; color: black; padding: 10px 20px; border-radius: 4px;">Click to change background image</span>';
+                    element.appendChild(overlay);
+                    
+                    // Show overlay on hover
+                    element.addEventListener('mouseenter', () => {
+                        overlay.style.display = 'flex';
+                    });
+                    
+                    element.addEventListener('mouseleave', () => {
+                        overlay.style.display = 'none';
+                    });
+                    
+                    // Click to replace background
+                    element.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        startEditingBackgroundImage(this);
+                    });
+                }
+            });
         }
 
         function startEditingImage(img) {
@@ -939,6 +984,45 @@
                         img.style.opacity = '0.5';
                         setTimeout(() => {
                             img.style.opacity = '1';
+                        }, 300);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            // Trigger file selection
+            fileInput.click();
+        }
+        
+        function startEditingBackgroundImage(element) {
+            // Create hidden file input
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = 'image/*';
+            
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        // Parse existing background to keep gradient overlay if present
+                        const currentBg = window.getComputedStyle(element).backgroundImage;
+                        const hasGradient = currentBg.includes('linear-gradient');
+                        
+                        if (hasGradient) {
+                            // Keep the gradient overlay, just replace the image URL
+                            element.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('${event.target.result}')`;
+                        } else {
+                            element.style.backgroundImage = `url('${event.target.result}')`;
+                        }
+                        
+                        console.log('Background image replaced:', file.name);
+                        
+                        // Flash effect to show image was updated
+                        element.style.transition = 'opacity 0.3s';
+                        element.style.opacity = '0.7';
+                        setTimeout(() => {
+                            element.style.opacity = '1';
                         }, 300);
                     };
                     reader.readAsDataURL(file);
