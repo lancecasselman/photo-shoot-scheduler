@@ -567,46 +567,9 @@
             <!-- Style Tab Content -->
             <div class="tab-panel" data-panel="style">
                 <div class="tools-scroll">
-                    <!-- Typography Section -->
+                    <!-- Theme Colors Section -->
                     <div class="tool-section">
-                        <div class="tool-title">Typography</div>
-                        <div class="property-controls">
-                            <div>
-                                <label class="property-label">Font Family</label>
-                                <select class="property-input" style="width: 120px;">
-                                    <option value="'Playfair Display', serif">Playfair</option>
-                                    <option value="'Montserrat', sans-serif">Montserrat</option>
-                                    <option value="'Raleway', sans-serif">Raleway</option>
-                                    <option value="'Cormorant Garamond', serif">Cormorant</option>
-                                    <option value="'Josefin Sans', sans-serif">Josefin</option>
-                                    <option value="'Lato', sans-serif">Lato</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="property-label">Size</label>
-                                <input type="range" class="property-input" min="10" max="120" value="16" style="width: 80px;">
-                            </div>
-                            <div>
-                                <label class="property-label">Weight</label>
-                                <select class="property-input" style="width: 80px;">
-                                    <option value="100">Thin</option>
-                                    <option value="300">Light</option>
-                                    <option value="400" selected>Regular</option>
-                                    <option value="600">Semi</option>
-                                    <option value="700">Bold</option>
-                                    <option value="900">Black</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="property-label">Letter Spacing</label>
-                                <input type="range" class="property-input" min="-2" max="10" value="0" style="width: 80px;">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Colors Section -->
-                    <div class="tool-section">
-                        <div class="tool-title">Colors</div>
+                        <div class="tool-title">Theme Colors</div>
                         <div class="property-controls">
                             <div>
                                 <label class="property-label">Background</label>
@@ -759,6 +722,54 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Text Toolbar -->
+    <div id="text-toolbar" style="display: none; position: fixed; background: white; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); padding: 8px; z-index: 10000; border: 1px solid #e2e8f0;">
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <!-- Text Format Buttons -->
+            <div style="display: flex; gap: 4px; border-right: 1px solid #e2e8f0; padding-right: 8px;">
+                <button class="toolbar-btn" data-action="bold" title="Bold" style="width: 32px; height: 32px; border: none; background: white; cursor: pointer; border-radius: 4px; font-weight: bold;">B</button>
+                <button class="toolbar-btn" data-action="italic" title="Italic" style="width: 32px; height: 32px; border: none; background: white; cursor: pointer; border-radius: 4px; font-style: italic;">I</button>
+                <button class="toolbar-btn" data-action="underline" title="Underline" style="width: 32px; height: 32px; border: none; background: white; cursor: pointer; border-radius: 4px; text-decoration: underline;">U</button>
+            </div>
+            
+            <!-- Text Alignment -->
+            <div style="display: flex; gap: 4px; border-right: 1px solid #e2e8f0; padding-right: 8px;">
+                <button class="toolbar-btn" data-action="align-left" title="Align Left" style="width: 32px; height: 32px; border: none; background: white; cursor: pointer; border-radius: 4px;">☰</button>
+                <button class="toolbar-btn" data-action="align-center" title="Center" style="width: 32px; height: 32px; border: none; background: white; cursor: pointer; border-radius: 4px;">≡</button>
+                <button class="toolbar-btn" data-action="align-right" title="Align Right" style="width: 32px; height: 32px; border: none; background: white; cursor: pointer; border-radius: 4px;">≣</button>
+            </div>
+            
+            <!-- Font Family -->
+            <select id="toolbar-font-family" style="height: 32px; border: 1px solid #e2e8f0; border-radius: 4px; padding: 0 8px; background: white; cursor: pointer;">
+                <option value="'Playfair Display', serif">Playfair</option>
+                <option value="'Montserrat', sans-serif">Montserrat</option>
+                <option value="'Raleway', sans-serif">Raleway</option>
+                <option value="'Cormorant Garamond', serif">Cormorant</option>
+                <option value="'Josefin Sans', sans-serif">Josefin</option>
+                <option value="'Lato', sans-serif">Lato</option>
+            </select>
+            
+            <!-- Font Size -->
+            <div style="display: flex; align-items: center; gap: 4px; border-left: 1px solid #e2e8f0; padding-left: 8px;">
+                <button class="toolbar-btn" data-action="size-decrease" style="width: 24px; height: 24px; border: none; background: white; cursor: pointer; border-radius: 4px;">-</button>
+                <input type="number" id="toolbar-font-size" value="16" min="8" max="120" style="width: 40px; height: 32px; border: 1px solid #e2e8f0; border-radius: 4px; text-align: center;">
+                <button class="toolbar-btn" data-action="size-increase" style="width: 24px; height: 24px; border: none; background: white; cursor: pointer; border-radius: 4px;">+</button>
+            </div>
+            
+            <!-- Text Color -->
+            <div style="display: flex; align-items: center; gap: 4px; border-left: 1px solid #e2e8f0; padding-left: 8px;">
+                <label style="font-size: 12px;">Color:</label>
+                <input type="color" id="toolbar-text-color" value="#000000" style="width: 32px; height: 32px; border: 1px solid #e2e8f0; border-radius: 4px; cursor: pointer;">
+            </div>
+            
+            <!-- Letter Spacing -->
+            <div style="display: flex; align-items: center; gap: 4px; border-left: 1px solid #e2e8f0; padding-left: 8px;">
+                <label style="font-size: 12px;">Spacing:</label>
+                <input type="range" id="toolbar-letter-spacing" min="-2" max="10" value="0" style="width: 60px;">
             </div>
         </div>
     </div>
@@ -1947,6 +1958,268 @@
             return content;
         }
 
+        // Floating Toolbar Functions
+        let currentTextElement = null;
+        
+        function initializeFloatingToolbar() {
+            const toolbar = document.getElementById('text-toolbar');
+            
+            // Hide toolbar when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!toolbar.contains(e.target) && !e.target.closest('.editable-text')) {
+                    toolbar.style.display = 'none';
+                }
+            });
+            
+            // Toolbar button actions
+            document.querySelectorAll('.toolbar-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const action = this.dataset.action;
+                    applyTextFormatting(action);
+                });
+            });
+            
+            // Font family change
+            document.getElementById('toolbar-font-family').addEventListener('change', function() {
+                if (currentTextElement) {
+                    currentTextElement.style.fontFamily = this.value;
+                }
+            });
+            
+            // Font size change
+            document.getElementById('toolbar-font-size').addEventListener('change', function() {
+                if (currentTextElement) {
+                    currentTextElement.style.fontSize = this.value + 'px';
+                }
+            });
+            
+            // Text color change
+            document.getElementById('toolbar-text-color').addEventListener('input', function() {
+                if (currentTextElement) {
+                    currentTextElement.style.color = this.value;
+                }
+            });
+            
+            // Letter spacing change
+            document.getElementById('toolbar-letter-spacing').addEventListener('input', function() {
+                if (currentTextElement) {
+                    currentTextElement.style.letterSpacing = this.value + 'px';
+                }
+            });
+        }
+        
+        function showTextToolbar(element, event) {
+            const toolbar = document.getElementById('text-toolbar');
+            currentTextElement = element;
+            
+            // Position toolbar above the clicked element
+            const rect = element.getBoundingClientRect();
+            const toolbarHeight = 50; // Approximate height
+            
+            toolbar.style.left = Math.max(10, rect.left) + 'px';
+            toolbar.style.top = Math.max(10, rect.top - toolbarHeight - 10) + 'px';
+            toolbar.style.display = 'block';
+            
+            // Update toolbar values based on current element
+            const computedStyle = window.getComputedStyle(element);
+            
+            // Update font size
+            const fontSize = parseInt(computedStyle.fontSize);
+            document.getElementById('toolbar-font-size').value = fontSize;
+            
+            // Update text color
+            const color = rgbToHex(computedStyle.color);
+            document.getElementById('toolbar-text-color').value = color;
+            
+            // Update font family if matches
+            const fontFamily = computedStyle.fontFamily;
+            const fontSelect = document.getElementById('toolbar-font-family');
+            for (let option of fontSelect.options) {
+                if (fontFamily.includes(option.text)) {
+                    fontSelect.value = option.value;
+                    break;
+                }
+            }
+            
+            event.stopPropagation();
+        }
+        
+        function applyTextFormatting(action) {
+            if (!currentTextElement) return;
+            
+            switch(action) {
+                case 'bold':
+                    const currentWeight = window.getComputedStyle(currentTextElement).fontWeight;
+                    currentTextElement.style.fontWeight = currentWeight === '700' || currentWeight === 'bold' ? 'normal' : 'bold';
+                    break;
+                case 'italic':
+                    const currentStyle = window.getComputedStyle(currentTextElement).fontStyle;
+                    currentTextElement.style.fontStyle = currentStyle === 'italic' ? 'normal' : 'italic';
+                    break;
+                case 'underline':
+                    const currentDecoration = window.getComputedStyle(currentTextElement).textDecoration;
+                    currentTextElement.style.textDecoration = currentDecoration.includes('underline') ? 'none' : 'underline';
+                    break;
+                case 'align-left':
+                    currentTextElement.style.textAlign = 'left';
+                    break;
+                case 'align-center':
+                    currentTextElement.style.textAlign = 'center';
+                    break;
+                case 'align-right':
+                    currentTextElement.style.textAlign = 'right';
+                    break;
+                case 'size-increase':
+                    const currentSize = parseInt(document.getElementById('toolbar-font-size').value);
+                    const newSize = Math.min(120, currentSize + 2);
+                    document.getElementById('toolbar-font-size').value = newSize;
+                    currentTextElement.style.fontSize = newSize + 'px';
+                    break;
+                case 'size-decrease':
+                    const currSize = parseInt(document.getElementById('toolbar-font-size').value);
+                    const smallerSize = Math.max(8, currSize - 2);
+                    document.getElementById('toolbar-font-size').value = smallerSize;
+                    currentTextElement.style.fontSize = smallerSize + 'px';
+                    break;
+            }
+        }
+        
+        function rgbToHex(rgb) {
+            const match = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+            if (!match) return '#000000';
+            
+            function hex(x) {
+                return ("0" + parseInt(x).toString(16)).slice(-2);
+            }
+            return "#" + hex(match[1]) + hex(match[2]) + hex(match[3]);
+        }
+        
+        // Update initializeTouchToEdit to include toolbar
+        function initializeTouchToEdit() {
+            // Text editing with floating toolbar
+            document.querySelectorAll('h1, h2, h3, p, span, button').forEach(element => {
+                // Skip if already initialized or is a toolbar element
+                if (element.classList.contains('editable-text') || element.closest('#text-toolbar')) return;
+                
+                element.classList.add('editable-text');
+                element.style.cursor = 'text';
+                
+                element.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    
+                    // Show floating toolbar for text elements
+                    showTextToolbar(this, e);
+                    
+                    // Make text editable
+                    if (this.contentEditable !== 'true') {
+                        this.contentEditable = 'true';
+                        this.focus();
+                        
+                        // Select all text for easy replacement
+                        const range = document.createRange();
+                        range.selectNodeContents(this);
+                        const selection = window.getSelection();
+                        selection.removeAllRanges();
+                        selection.addRange(range);
+                    }
+                });
+                
+                element.addEventListener('blur', function() {
+                    this.contentEditable = 'false';
+                    console.log('Text saved:', this.textContent);
+                });
+                
+                element.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.blur();
+                    }
+                });
+            });
+            
+            // Image replacement (existing code)
+            document.querySelectorAll('img').forEach(img => {
+                if (img.dataset.editableImage === 'true') return;
+                img.dataset.editableImage = 'true';
+                img.style.cursor = 'pointer';
+                
+                img.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.onchange = function(event) {
+                        const file = event.target.files[0];
+                        if (file) {
+                            const reader = new FileReader();
+                            reader.onload = function(e) {
+                                img.src = e.target.result;
+                                console.log('Image replaced');
+                            };
+                            reader.readAsDataURL(file);
+                        }
+                    };
+                    input.click();
+                });
+            });
+            
+            // Background image editing (existing code)
+            document.querySelectorAll('[style*="background-image"]').forEach(element => {
+                if (element.dataset.editableBg === 'true') return;
+                element.dataset.editableBg = 'true';
+                
+                const overlay = document.createElement('div');
+                overlay.style.cssText = `
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0,0,0,0.5);
+                    display: none;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    z-index: 10;
+                `;
+                overlay.innerHTML = '<button style="background: white; padding: 10px 20px; border-radius: 4px; border: none; cursor: pointer;">Change Background</button>';
+                
+                element.style.position = 'relative';
+                element.appendChild(overlay);
+                
+                element.addEventListener('mouseenter', () => {
+                    overlay.style.display = 'flex';
+                });
+                
+                element.addEventListener('mouseleave', () => {
+                    overlay.style.display = 'none';
+                });
+                
+                overlay.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.onchange = function(event) {
+                        const file = event.target.files[0];
+                        if (file) {
+                            const reader = new FileReader();
+                            reader.onload = function(e) {
+                                element.style.backgroundImage = `url('${e.target.result}')`;
+                                console.log('Background image changed');
+                            };
+                            reader.readAsDataURL(file);
+                        }
+                    };
+                    input.click();
+                });
+            });
+            
+            // Initialize block dragging (existing code)
+            initializeBlockDragging();
+        }
+        
         // Initialize everything when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
             initializeTabs();
@@ -1954,6 +2227,7 @@
             loadTemplate('modern');
             setupElementSelection();
             initializeTouchToEdit();
+            initializeFloatingToolbar();
         });
     </script>
 </body>
