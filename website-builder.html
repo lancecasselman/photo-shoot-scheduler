@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Photographers Website - Portfolio Creator</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Montserrat:wght@100;300;400;600;700;900&family=Raleway:wght@100;300;400;600;700;900&family=Cormorant+Garamond:wght@300;400;600;700&family=Josefin+Sans:wght@100;300;400;600;700&family=Lato:wght@100;300;400;700;900&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -427,25 +428,41 @@
                     <div class="tool-section">
                         <div class="tool-title">Components</div>
                         <div class="component-list">
-                            <div class="component-item" draggable="true" data-component="header">
-                                <div class="component-icon">H</div>
-                                <span class="component-text">Header</span>
+                            <div class="component-item" draggable="true" data-component="nav">
+                                <div class="component-icon">☰</div>
+                                <span class="component-text">Nav Menu</span>
                             </div>
-                            <div class="component-item" draggable="true" data-component="hero">
-                                <div class="component-icon">🎯</div>
-                                <span class="component-text">Hero</span>
+                            <div class="component-item" draggable="true" data-component="hero-carousel">
+                                <div class="component-icon">🎞️</div>
+                                <span class="component-text">Image Carousel</span>
+                            </div>
+                            <div class="component-item" draggable="true" data-component="hero-text">
+                                <div class="component-icon">✨</div>
+                                <span class="component-text">Hero Text</span>
+                            </div>
+                            <div class="component-item" draggable="true" data-component="featured-gallery">
+                                <div class="component-icon">⭐</div>
+                                <span class="component-text">Featured</span>
+                            </div>
+                            <div class="component-item" draggable="true" data-component="gallery-grid">
+                                <div class="component-icon">⚏</div>
+                                <span class="component-text">Gallery Grid</span>
+                            </div>
+                            <div class="component-item" draggable="true" data-component="masonry">
+                                <div class="component-icon">🧱</div>
+                                <span class="component-text">Masonry</span>
                             </div>
                             <div class="component-item" draggable="true" data-component="about">
                                 <div class="component-icon">👤</div>
                                 <span class="component-text">About</span>
                             </div>
-                            <div class="component-item" draggable="true" data-component="gallery">
-                                <div class="component-icon">🖼️</div>
-                                <span class="component-text">Gallery</span>
-                            </div>
                             <div class="component-item" draggable="true" data-component="services">
                                 <div class="component-icon">⚡</div>
                                 <span class="component-text">Services</span>
+                            </div>
+                            <div class="component-item" draggable="true" data-component="workshops">
+                                <div class="component-icon">🎓</div>
+                                <span class="component-text">Workshops</span>
                             </div>
                             <div class="component-item" draggable="true" data-component="testimonials">
                                 <div class="component-icon">💬</div>
@@ -496,16 +513,88 @@
                         <div class="tool-title">Typography</div>
                         <div class="property-controls">
                             <div>
-                                <label class="property-label">Font Size</label>
-                                <input type="range" class="property-input" min="10" max="72" value="16" style="width: 100px;">
+                                <label class="property-label">Font Family</label>
+                                <select class="property-input" style="width: 120px;">
+                                    <option value="'Playfair Display', serif">Playfair</option>
+                                    <option value="'Montserrat', sans-serif">Montserrat</option>
+                                    <option value="'Raleway', sans-serif">Raleway</option>
+                                    <option value="'Cormorant Garamond', serif">Cormorant</option>
+                                    <option value="'Josefin Sans', sans-serif">Josefin</option>
+                                    <option value="'Lato', sans-serif">Lato</option>
+                                </select>
                             </div>
                             <div>
-                                <label class="property-label">Font Weight</label>
-                                <select class="property-input" style="width: 100px;">
+                                <label class="property-label">Size</label>
+                                <input type="range" class="property-input" min="10" max="120" value="16" style="width: 80px;">
+                            </div>
+                            <div>
+                                <label class="property-label">Weight</label>
+                                <select class="property-input" style="width: 80px;">
+                                    <option value="100">Thin</option>
                                     <option value="300">Light</option>
-                                    <option value="400" selected>Normal</option>
-                                    <option value="600">Semi Bold</option>
+                                    <option value="400" selected>Regular</option>
+                                    <option value="600">Semi</option>
                                     <option value="700">Bold</option>
+                                    <option value="900">Black</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="property-label">Letter Spacing</label>
+                                <input type="range" class="property-input" min="-2" max="10" value="0" style="width: 80px;">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Layout Section -->
+                    <div class="tool-section">
+                        <div class="tool-title">Layout</div>
+                        <div class="property-controls">
+                            <div>
+                                <label class="property-label">Padding</label>
+                                <input type="range" class="property-input" min="0" max="100" value="20" style="width: 80px;">
+                            </div>
+                            <div>
+                                <label class="property-label">Margin</label>
+                                <input type="range" class="property-input" min="0" max="100" value="0" style="width: 80px;">
+                            </div>
+                            <div>
+                                <label class="property-label">Gap</label>
+                                <input type="range" class="property-input" min="0" max="50" value="20" style="width: 80px;">
+                            </div>
+                            <div>
+                                <label class="property-label">Align</label>
+                                <select class="property-input" style="width: 80px;">
+                                    <option value="left">Left</option>
+                                    <option value="center">Center</option>
+                                    <option value="right">Right</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Effects Section -->
+                    <div class="tool-section">
+                        <div class="tool-title">Effects</div>
+                        <div class="property-controls">
+                            <div>
+                                <label class="property-label">Overlay</label>
+                                <input type="range" class="property-input" min="0" max="100" value="40" style="width: 80px;">
+                            </div>
+                            <div>
+                                <label class="property-label">Blur</label>
+                                <input type="range" class="property-input" min="0" max="20" value="0" style="width: 80px;">
+                            </div>
+                            <div>
+                                <label class="property-label">Shadow</label>
+                                <input type="range" class="property-input" min="0" max="50" value="10" style="width: 80px;">
+                            </div>
+                            <div>
+                                <label class="property-label">Animation</label>
+                                <select class="property-input" style="width: 80px;">
+                                    <option value="none">None</option>
+                                    <option value="fade">Fade In</option>
+                                    <option value="slide">Slide</option>
+                                    <option value="zoom">Zoom</option>
                                 </select>
                             </div>
                         </div>
@@ -688,6 +777,106 @@
                     <div style="background: #2d3748; color: white; padding: 30px 0; text-align: center; border-radius: 8px;">
                         <p style="margin-bottom: 10px; color: white;">&copy; 2024 ${data.businessName || 'Your Photography Studio'}. All rights reserved.</p>
                         <p style="color: rgba(255,255,255,0.7);">Professional photography services</p>
+                    </div>
+                </div>
+            `,
+            nav: (data = {}) => `
+                <div class="element" data-type="nav">
+                    <nav style="position: fixed; top: 0; left: 0; right: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); z-index: 100; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                        <div style="font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 700; letter-spacing: 2px;">${data.title || 'STUDIO NAME'}</div>
+                        <div style="display: flex; gap: 30px;">
+                            ${(data.navigation || ['Portfolio', 'About', 'Services', 'Contact']).map(item => `<a href="#" style="color: #2d3748; text-decoration: none; font-size: 13px; letter-spacing: 1px; text-transform: uppercase;">${item}</a>`).join('')}
+                        </div>
+                    </nav>
+                </div>
+            `,
+            'hero-carousel': (data = {}) => `
+                <div class="element" data-type="hero-carousel">
+                    <div style="position: relative; height: 100vh; overflow: hidden;">
+                        <div style="position: absolute; width: 100%; height: 100%; background: url('${data.images?.[0] || 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=1920'}') center/cover;"></div>
+                        <div style="position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px;">
+                            <span style="width: 40px; height: 3px; background: white; opacity: 1;"></span>
+                            <span style="width: 40px; height: 3px; background: white; opacity: 0.3;"></span>
+                            <span style="width: 40px; height: 3px; background: white; opacity: 0.3;"></span>
+                        </div>
+                    </div>
+                </div>
+            `,
+            'hero-text': (data = {}) => `
+                <div class="element" data-type="hero-text">
+                    <div style="position: relative; height: 100vh; display: flex; align-items: center; justify-content: center; background: ${data.background || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'};">
+                        <div style="text-align: center; color: white; z-index: 10;">
+                            <h1 style="font-family: 'Playfair Display', serif; font-size: ${data.fontSize || '80px'}; font-weight: 300; letter-spacing: 8px; margin-bottom: 20px;">${data.title || 'PHOTOGRAPHER'}</h1>
+                            <div style="width: 100px; height: 1px; background: white; margin: 30px auto;"></div>
+                            <p style="font-family: 'Montserrat', sans-serif; font-size: 14px; letter-spacing: 3px; text-transform: uppercase;">${data.subtitle || 'Natural Light Photography'}</p>
+                        </div>
+                    </div>
+                </div>
+            `,
+            'featured-gallery': (data = {}) => `
+                <div class="element" data-type="featured-gallery">
+                    <div style="padding: 80px 40px; background: #fafafa;">
+                        <div style="max-width: 1200px; margin: 0 auto;">
+                            <div style="text-align: center; margin-bottom: 50px;">
+                                <h3 style="font-family: 'Montserrat', sans-serif; font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: #718096; margin-bottom: 15px;">Featured Gallery</h3>
+                                <h2 style="font-family: 'Playfair Display', serif; font-size: 48px; color: #2d3748;">${data.title || 'Cuba Collection'}</h2>
+                            </div>
+                            <div style="position: relative; overflow: hidden; border-radius: 2px;">
+                                <img src="${data.image || 'https://images.unsplash.com/photo-1570168007204-dfb528c6958f?w=1200'}" style="width: 100%; height: 600px; object-fit: cover;">
+                                <div style="position: absolute; bottom: 30px; left: 30px;">
+                                    <button style="background: white; color: #2d3748; padding: 15px 40px; border: none; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer;">View Gallery</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            'gallery-grid': (data = {}) => `
+                <div class="element" data-type="gallery-grid">
+                    <div style="padding: 80px 40px;">
+                        <h2 style="font-family: 'Playfair Display', serif; font-size: 48px; text-align: center; margin-bottom: 60px; color: #2d3748;">${data.title || 'Galleries'}</h2>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 40px; max-width: 1200px; margin: 0 auto;">
+                            ${(data.galleries || [
+                                {name: 'Burma', category: 'Travel Photography', image: 'https://images.unsplash.com/photo-1503249023995-51b0f3778ccf?w=600'},
+                                {name: 'India', category: 'Cultural Photography', image: 'https://images.unsplash.com/photo-1524721696987-b9527df9e512?w=600'},
+                                {name: 'Cityscapes', category: 'Urban Photography', image: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?w=600'}
+                            ]).map(gallery => `
+                                <div style="cursor: pointer;">
+                                    <div style="overflow: hidden; margin-bottom: 20px;">
+                                        <img src="${gallery.image}" style="width: 100%; height: 400px; object-fit: cover; transition: transform 0.3s;">
+                                    </div>
+                                    <h3 style="font-family: 'Montserrat', sans-serif; font-size: 14px; letter-spacing: 2px; text-transform: uppercase;">${gallery.name}</h3>
+                                    <p style="color: #718096; font-size: 14px; margin-top: 5px;">${gallery.category}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `,
+            masonry: (data = {}) => `
+                <div class="element" data-type="masonry">
+                    <div style="padding: 80px 40px; background: white;">
+                        <div style="columns: 3; column-gap: 20px; max-width: 1200px; margin: 0 auto;">
+                            ${(data.images || [
+                                'https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=400',
+                                'https://images.unsplash.com/photo-1518098268026-4e89f1a2cd8e?w=400&h=600',
+                                'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=400',
+                                'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=500',
+                                'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400',
+                                'https://images.unsplash.com/photo-1532274402911-5a369e4c4bb5?w=400&h=600'
+                            ]).map(img => `<img src="${img}" style="width: 100%; margin-bottom: 20px; display: block;">`).join('')}
+                        </div>
+                    </div>
+                </div>
+            `,
+            workshops: (data = {}) => `
+                <div class="element" data-type="workshops">
+                    <div style="padding: 80px 40px; background: #1a202c; color: white;">
+                        <div style="max-width: 800px; margin: 0 auto; text-align: center;">
+                            <h2 style="font-family: 'Playfair Display', serif; font-size: 48px; margin-bottom: 30px;">${data.title || 'Upcoming Workshops'}</h2>
+                            <p style="font-size: 18px; line-height: 1.8; margin-bottom: 40px; opacity: 0.9;">${data.description || 'In-person, virtual, or travel workshops: learn everything from essentials to master level concepts.'}</p>
+                            <button style="background: white; color: #1a202c; padding: 15px 40px; border: none; font-size: 14px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer;">View All Workshops</button>
+                        </div>
                     </div>
                 </div>
             `
