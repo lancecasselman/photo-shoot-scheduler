@@ -16,7 +16,7 @@
     <title>Photography Management System - Professional Photography Business Platform</title>
     
     <script>
-        // 🔄 TOGGLEABLE AUTH GUARD SYSTEM
+        //  TOGGLEABLE AUTH GUARD SYSTEM
         const DEV_MODE = false; // 👉 Authentication enabled - production mode
         
         // Dev mode banner handled in main DOM ready event
@@ -4750,7 +4750,7 @@
                     </li>
                     <li class="nav-item">
                         <a href="/community/community-dashboard.html" target="_blank" class="nav-link">
-                            📸 Community
+                            Community
                         </a>
                     </li>
                     <li class="nav-item">
@@ -4814,25 +4814,25 @@
                     <!-- Filter Toggle Buttons -->
                     <div class="filter-toggle-row" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
                         <button type="button" class="filter-toggle-btn" onclick="toggleFilterSection('status')" style="background: #d4af37; color: #1a1a1a; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600;">
-                            📋 Status Filters <span id="status-indicator" style="opacity: 0.7;">▼</span>
+                             Status Filters <span id="status-indicator" style="opacity: 0.7;">▼</span>
                         </button>
                         <button type="button" class="filter-toggle-btn" onclick="toggleFilterSection('date')" style="background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600;">
-                            📅 Date Range <span id="date-indicator" style="opacity: 0.7;">▼</span>
+                            Date Range <span id="date-indicator" style="opacity: 0.7;">▼</span>
                         </button>
                         <button type="button" class="filter-toggle-btn" onclick="toggleFilterSection('type')" style="background: #2196F3; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600;">
-                            🎯 Session Type <span id="type-indicator" style="opacity: 0.7;">▼</span>
+                            Session Type <span id="type-indicator" style="opacity: 0.7;">▼</span>
                         </button>
                         <button type="button" class="filter-toggle-btn" onclick="toggleFilterSection('sort')" style="background: #9C27B0; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600;">
-                            🔄 Sort Options <span id="sort-indicator" style="opacity: 0.7;">▼</span>
+                             Sort Options <span id="sort-indicator" style="opacity: 0.7;">▼</span>
                         </button>
                     </div>
 
                     <!-- Collapsible Filter Sections -->
                     <div id="status-filters" class="filter-dropdown" style="display: none; background: rgba(212,175,55,0.1); border-radius: 8px; padding: 15px; margin: 10px 0; border-left: 4px solid #d4af37;">
                         <div class="checkbox-filters" style="display: flex; gap: 20px; flex-wrap: wrap;">
-                            <label style="display: flex; align-items: center; gap: 8px; color: #333; font-weight: 500;"><input type="checkbox" id="filterContractSigned" onchange="filterSessions()" style="margin: 0;"> ✅ Contract Signed</label>
-                            <label style="display: flex; align-items: center; gap: 8px; color: #333; font-weight: 500;"><input type="checkbox" id="filterPaid" onchange="filterSessions()" style="margin: 0;"> 💰 Paid</label>
-                            <label style="display: flex; align-items: center; gap: 8px; color: #333; font-weight: 500;"><input type="checkbox" id="filterDelivered" onchange="filterSessions()" style="margin: 0;"> 📦 Delivered</label>
+                            <label style="display: flex; align-items: center; gap: 8px; color: #333; font-weight: 500;"><input type="checkbox" id="filterContractSigned" onchange="filterSessions()" style="margin: 0;"> Contract Signed</label>
+                            <label style="display: flex; align-items: center; gap: 8px; color: #333; font-weight: 500;"><input type="checkbox" id="filterPaid" onchange="filterSessions()" style="margin: 0;"> Paid</label>
+                            <label style="display: flex; align-items: center; gap: 8px; color: #333; font-weight: 500;"><input type="checkbox" id="filterDelivered" onchange="filterSessions()" style="margin: 0;">  Delivered</label>
                         </div>
                     </div>
 
@@ -4852,24 +4852,24 @@
 
                     <div id="type-filters" class="filter-dropdown" style="display: none; background: rgba(33,150,243,0.1); border-radius: 8px; padding: 15px; margin: 10px 0; border-left: 4px solid #2196F3;">
                         <select id="sessionTypeFilter" onchange="filterSessions()" style="width: 100%; max-width: 300px; padding: 10px; border: 2px solid #2196F3; border-radius: 6px; background: white; font-size: 14px;">
-                            <option value="">📋 All Types</option>
-                            <option value="Wedding">💒 Wedding</option>
-                            <option value="Family">👨‍👩‍👧‍👦 Family</option>
-                            <option value="Senior">🎓 Senior</option>
-                            <option value="Portrait">👤 Portrait</option>
-                            <option value="Event">🎉 Event</option>
+                            <option value=""> All Types</option>
+                            <option value="Wedding"> Wedding</option>
+                            <option value="Family"> Family</option>
+                            <option value="Senior"> Senior</option>
+                            <option value="Portrait"> Portrait</option>
+                            <option value="Event">Event</option>
                         </select>
                     </div>
 
                     <div id="sort-filters" class="filter-dropdown" style="display: none; background: rgba(156,39,176,0.1); border-radius: 8px; padding: 15px; margin: 10px 0; border-left: 4px solid #9C27B0;">
                         <select id="sortOptions" onchange="sortSessions()" style="width: 100%; max-width: 350px; padding: 10px; border: 2px solid #9C27B0; border-radius: 6px; background: white; font-size: 14px;">
-                            <option value="calendar-upcoming">📅 Calendar (Upcoming First)</option>
-                            <option value="date-desc">📅 Date (Newest First)</option>
-                            <option value="date-asc" selected>📅 Date (Oldest First)</option>
-                            <option value="calendar-past">📅 Calendar (Most Recent Past)</option>
-                            <option value="name-asc">👤 Client Name (A-Z)</option>
-                            <option value="name-desc">👤 Client Name (Z-A)</option>
-                            <option value="unpaid-first">💰 Unpaid First</option>
+                            <option value="calendar-upcoming">Calendar (Upcoming First)</option>
+                            <option value="date-desc">Date (Newest First)</option>
+                            <option value="date-asc" selected>Date (Oldest First)</option>
+                            <option value="calendar-past">Calendar (Most Recent Past)</option>
+                            <option value="name-asc"> Client Name (A-Z)</option>
+                            <option value="name-desc"> Client Name (Z-A)</option>
+                            <option value="unpaid-first">Unpaid First</option>
                         </select>
                     </div>
                 </div>
@@ -4971,8 +4971,8 @@
         <!-- Global Storage Overview -->
         <div id="globalStorageOverview" class="global-storage-section">
             <div class="storage-header">
-                <h2>📊 Platform Storage Overview</h2>
-                <button class="btn btn-secondary" onclick="refreshGlobalStorage()">🔄 Refresh</button>
+                <h2>Platform Storage Overview</h2>
+                <button class="btn btn-secondary" onclick="refreshGlobalStorage()"> Refresh</button>
             </div>
             <div class="storage-stats-grid">
                 <div class="storage-stat-card">
@@ -5037,7 +5037,7 @@
                 </div>
                 
                 <div class="payment-plan-summary" id="paymentPlanSummary" style="display: none;">
-                    <h4>📋 Payment Plan Summary</h4>
+                    <h4> Payment Plan Summary</h4>
                     <div id="paymentSummaryDetails"></div>
                     <div class="payment-schedule" id="paymentSchedulePreview"></div>
                 </div>
@@ -5153,7 +5153,7 @@
                         <div class="send-options">
                             <button onclick="sendViaEmail('${contractId}', '${contractData.contract?.client_email}', '${contractData.signingUrl}', event)" 
                                     class="btn btn-primary" style="width: 100%; margin-bottom: 15px; padding: 15px; font-size: 16px;">
-                                📧 Open Email Client
+                                Open Email Client
                             </button>
                             
                             <button onclick="sendViaText('${contractId}', '${contractData.signingUrl}', '${contractData.contract?.client_name}', '${contractData.contract?.client_phone}', event)" 
@@ -5185,12 +5185,12 @@
         async function sendViaEmail(contractId, clientEmail, signingUrl, event) {
             // Declare button variables at function scope
             const emailBtn = event ? event.target : document.querySelector('button[onclick*="sendViaEmail"]');
-            const originalText = emailBtn ? emailBtn.innerHTML : '📧 Send via Email';
+            const originalText = emailBtn ? emailBtn.innerHTML : ' Send via Email';
             
             try {
                 // Show loading state
                 if (emailBtn) {
-                    emailBtn.innerHTML = '📧 Opening Email...';
+                    emailBtn.innerHTML = ' Opening Email...';
                     emailBtn.disabled = true;
                 }
                 
@@ -5286,7 +5286,7 @@ The Legacy Photography`);
                         </div>
                         
                         <div class="signature-info" style="background: #e8f5e8; border: 1px solid #c3e6c3; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                            <h3 style="color: #28a745; margin: 0 0 15px 0;">✅ Contract Signed</h3>
+                            <h3 style="color: #28a745; margin: 0 0 15px 0;"> Contract Signed</h3>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
                                 <div><strong>Client:</strong> ${contract.client_name}</div>
                                 <div><strong>Email:</strong> ${contract.client_email}</div>
@@ -5472,7 +5472,7 @@ ${contract.contract_content}
                         <div style="background:rgba(212,175,55,0.1);border:1px solid #d4af37;border-radius:12px;padding:20px;margin-bottom:25px;text-align:center;">
                             <h4 style="color:#d4af37;margin:0 0 10px 0;">${session.clientName}</h4>
                             <p style="margin:0;opacity:0.8;">${session.sessionType} - ${new Date(session.dateTime).toLocaleDateString()}</p>
-                            <p style="margin:0;opacity:0.8;">📧 ${session.email} | 📞 ${session.phoneNumber}</p>
+                            <p style="margin:0;opacity:0.8;"> ${session.email} |  ${session.phoneNumber}</p>
                         </div>
                         
                         <div style="margin-bottom:20px;">
@@ -5500,11 +5500,11 @@ ${contract.contract_content}
                         </div>
                         
                         <div style="text-align:center;margin:20px 0;">
-                            <button onclick="calculatePayments()" style="background:#4CAF50;color:white;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-weight:600;margin-right:10px;">📊 Calculate Payments</button>
+                            <button onclick="calculatePayments()" style="background:#4CAF50;color:white;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-weight:600;margin-right:10px;"> Calculate Payments</button>
                         </div>
                         
                         <div id="paymentCalculation" style="background:rgba(212,175,55,0.1);border:1px solid #d4af37;border-radius:12px;padding:20px;margin:20px 0;text-align:center;display:none;">
-                            <h5 style="color:#d4af37;margin:0 0 15px 0;">💰 Payment Breakdown</h5>
+                            <h5 style="color:#d4af37;margin:0 0 15px 0;"> Payment Breakdown</h5>
                             <div id="calculationResults"></div>
                         </div>
                         
@@ -5594,7 +5594,7 @@ ${contract.contract_content}
             }
             
             if (endDate <= startDate) {
-                resultsDiv.innerHTML = '<p style="color:#ff4444;margin:0;">⚠️ End date must be after start date</p>';
+                resultsDiv.innerHTML = '<p style="color:#ff4444;margin:0;"> End date must be after start date</p>';
                 calculationDiv.style.display = 'block';
                 return;
             }
@@ -5658,13 +5658,13 @@ ${contract.contract_content}
             
             resultsDiv.innerHTML = `
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px;text-align:left;">
-                    <div><strong>💰 Total Amount:</strong> $${totalAmount.toFixed(2)}</div>
-                    <div><strong>📅 Payment Frequency:</strong> ${frequency.charAt(0).toUpperCase() + frequency.slice(1)}</div>
+                    <div><strong> Total Amount:</strong> $${totalAmount.toFixed(2)}</div>
+                    <div><strong> Payment Frequency:</strong> ${frequency.charAt(0).toUpperCase() + frequency.slice(1)}</div>
                     <div><strong>🔢 Number of Payments:</strong> ${numberOfPayments}</div>
                     <div><strong>💳 Each Payment:</strong> $${paymentAmount}</div>
                 </div>
                 <div style="background:rgba(26,26,26,0.8);padding:20px;border-radius:12px;border:2px solid #d4af37;margin-top:20px;">
-                    <h6 style="color:#d4af37;margin:0 0 15px 0;font-size:1.1rem;">📋 Payment Schedule:</h6>
+                    <h6 style="color:#d4af37;margin:0 0 15px 0;font-size:1.1rem;"> Payment Schedule:</h6>
                     ${scheduleHTML}
                     <div style="text-align:center;margin-top:15px;padding-top:15px;border-top:1px solid rgba(212,175,55,0.3);color:#d4af37;font-weight:600;">
                         Total: ${numberOfPayments} × $${paymentAmount} = $${totalAmount.toFixed(2)}
@@ -6038,7 +6038,7 @@ ${contract.contract_content}
                     console.log('About to render sorted sessions...');
                     if (typeof window.renderSessions === 'function') {
                         window.renderSessions();
-                        console.log('✅ Sorted sessions rendered successfully');
+                        console.log(' Sorted sessions rendered successfully');
                     }
                     
                     // Remove any existing storage display elements from session cards
@@ -6067,13 +6067,13 @@ ${contract.contract_content}
         window.renderSessions = function renderSessions() {
             // SORT SESSIONS BY APPOINTMENT DATE BEFORE RENDERING
             if (window.sessions && Array.isArray(window.sessions) && window.sessions.length > 0) {
-                console.log('🔥 SORTING sessions by appointment date in renderSessions...');
+                console.log(' SORTING sessions by appointment date in renderSessions...');
                 window.sessions.sort((a, b) => {
                     const dateA = new Date(a.dateTime);
                     const dateB = new Date(b.dateTime);
                     return dateA.getTime() - dateB.getTime(); // Oldest appointment first
                 });
-                console.log('✅ Sessions sorted - Test Client should be first:', window.sessions[0]?.clientName, new Date(window.sessions[0]?.dateTime).toLocaleDateString());
+                console.log(' Sessions sorted - Test Client should be first:', window.sessions[0]?.clientName, new Date(window.sessions[0]?.dateTime).toLocaleDateString());
                 // Use sorted sessions for rendering
                 sessions = window.sessions;
             }
@@ -6204,7 +6204,7 @@ ${contract.contract_content}
                                 ${session.hasPaymentPlan ? `
                                     <button onclick="viewPaymentPlan('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Payment Plan</button>
                                 ` : `
-                                    <button onclick="createInvoiceWithTipping('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">💰 Send Invoice</button>
+                                    <button onclick="createInvoiceWithTipping('${sessionId}'); event.stopPropagation();" class="btn btn-secondary"> Send Invoice</button>
                                     <button onclick="sendDepositInvoice('${sessionId}'); event.stopPropagation();" class="btn btn-warning" style="background-color: #fd7e14; color: white;">💳 Send Deposit</button>
                                     <button onclick="openPaymentPlanModal('${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Payment Plan</button>
                                 `}
@@ -6234,7 +6234,7 @@ ${contract.contract_content}
                         <div class="session-file-actions">
                             <h4>Files & Storage</h4>
                             <div class="file-action-buttons">
-                                <button onclick="openGalleryWindow('${sessionId}'); event.stopPropagation();" class="btn btn-primary">📸 Open Gallery</button>
+                                <button onclick="openGalleryWindow('${sessionId}'); event.stopPropagation();" class="btn btn-primary"> Open Gallery</button>
                                 <button onclick="openRawStorageWindow('${sessionId}'); event.stopPropagation();" class="btn btn-primary">📁 Open Raw Storage</button>
                                 <button onclick="sendGalleryToClient('${sessionId}'); event.stopPropagation();" class="btn btn-success">✉️ Send to Client</button>
                             </div>
@@ -6243,7 +6243,7 @@ ${contract.contract_content}
                         <!-- Enhanced Tip Panel for Delivered Sessions -->
                         ${session.delivered ? `
                             <div class="tip-panel" style="margin-top: 20px; padding: 15px; background: #e8f5e8; border-radius: 8px; border-left: 4px solid #28a745;">
-                                <h4 style="margin-top: 0; color: #28a745;">💡 Session Delivered</h4>
+                                <h4 style="margin-top: 0; color: #28a745;"> Session Delivered</h4>
                                 <p style="margin-bottom: 10px;">This session has been marked as delivered. Consider:</p>
                                 <ul style="margin: 0; padding-left: 20px;">
                                     <li>Following up for feedback</li>
@@ -6399,7 +6399,7 @@ ${contract.contract_content}
             modal.innerHTML = `
                 <div class="payment-plan-modal" style="max-width: 500px;">
                     <div class="modal-header">
-                        <h3>Upload Files - ${folderType === 'gallery' ? '📸 Gallery' : '📁 Raw Storage'}</h3>
+                        <h3>Upload Files - ${folderType === 'gallery' ? ' Gallery' : '📁 Raw Storage'}</h3>
                         <button class="close-btn" onclick="closeFileUploadModal()">&times;</button>
                     </div>
                     <div style="padding: 20px; color: white;">
@@ -6655,7 +6655,7 @@ ${contract.contract_content}
 
 Your photography gallery is ready for viewing and download!
 
-📸 View Your Gallery: ${clientGalleryUrl}
+ View Your Gallery: ${clientGalleryUrl}
 
 You can:
 • View all your photos in high resolution
@@ -6952,21 +6952,21 @@ lance@thelegacyphotography.com`;
                 console.log('=== CHRONOLOGICAL ORDER (calendar-upcoming) ===');
                 
                 if (todayList.length > 0) {
-                    console.log('🎯 TODAY\'S SESSIONS (priority):');
+                    console.log(' TODAY\'S SESSIONS (priority):');
                     todayList.forEach((s, i) => {
                         const sessionDate = new Date(s.dateTime);
                         console.log(`${i+1}. ${s.clientName} - ${sessionDate.toLocaleTimeString()} today`);
                     });
                 }
                 
-                console.log('📅 UPCOMING SESSIONS (closest first):');
+                console.log(' UPCOMING SESSIONS (closest first):');
                 futureList.forEach((s, i) => {
                     const sessionDate = new Date(s.dateTime);
                     const daysUntil = Math.ceil((sessionDate - now) / (1000 * 60 * 60 * 24));
                     console.log(`${i+1}. ${s.clientName} - ${sessionDate.toLocaleDateString()} (in ${daysUntil} days)`);
                 });
                 
-                console.log('📅 PAST SESSIONS (most recent first):');
+                console.log(' PAST SESSIONS (most recent first):');
                 pastList.forEach((s, i) => {
                     const sessionDate = new Date(s.dateTime);
                     const daysAgo = Math.ceil((now - sessionDate) / (1000 * 60 * 60 * 24));
@@ -7061,7 +7061,7 @@ lance@thelegacyphotography.com`;
                                 <p>Star Special Edits: ${session.specialEdits ? 'Success Yes' : 'Error No'}</p>
                                 <p>Message Client Feedback: ${session.clientFeedback ? 'Success Yes' : 'Error No'}</p>
                                 <p>Mobile Social Media OK: ${session.socialMediaApproval ? 'Success Yes' : 'Error No'}</p>
-                                <p>🎨 Retouching Needed: ${session.retouchingNeeded ? 'Success Yes' : 'Error No'}</p>
+                                <p> Retouching Needed: ${session.retouchingNeeded ? 'Success Yes' : 'Error No'}</p>
                                 <p>💾 Backup Completed: ${session.backupCompleted ? 'Success Yes' : 'Error No'}</p>
                             </div>
                         </div>
@@ -7558,7 +7558,7 @@ lance@thelegacyphotography.com`;
                             ` : ''}
                             ${contract.status === 'sent' || contract.status === 'signed' ? `
                                 <button onclick="sendContractToClient('${contract.id}')" class="btn btn-success" style="margin-left: 10px;">
-                                    📧 Resend Contract
+                                     Resend Contract
                                 </button>
                             ` : ''}
                             ${contract.status === 'signed' ? `
@@ -8031,7 +8031,7 @@ ${contract.contract_content}
                             ` : ''}
                             ${contract.status === 'sent' || contract.status === 'signed' ? `
                                 <button onclick="sendContractToClient('${contract.id}')" class="btn btn-success">
-                                    📧 Resend Contract
+                                     Resend Contract
                                 </button>
                             ` : ''}
                             ${contract.status === 'signed' ? `
@@ -8720,7 +8720,7 @@ END:VCALENDAR`;
                 // Generate payment plan view
                 let contentHTML = `
                     <div class="payment-plan-summary">
-                        <h4>📋 Plan Overview</h4>
+                        <h4> Plan Overview</h4>
                         <p><strong>Total Amount:</strong> $${parseFloat(paymentPlan.totalAmount).toFixed(2)}</p>
                         <p><strong>Monthly Payment:</strong> $${parseFloat(paymentPlan.monthlyPayment).toFixed(2)}</p>
                         <p><strong>Payments Completed:</strong> ${paymentPlan.paymentsCompleted} of ${paymentPlan.totalPayments}</p>
@@ -8880,7 +8880,7 @@ END:VCALENDAR`;
                                 <h6>Choose how to send:</h6>
                                 
                                 <button class="btn btn-primary btn-block mb-3" onclick="openEmailClient('${contractData.contract.client_email}', '${encodeURIComponent(contractData.emailData.subject)}', '${encodeURIComponent(contractData.emailData.body)}')">
-                                    📧 Open Email App
+                                     Open Email App
                                 </button>
                                 
                                 <button class="btn btn-success btn-block mb-3" onclick="openMessagingApp('${contractData.signingUrl}', '${contractData.contract.client_name}')">
@@ -10550,7 +10550,7 @@ END:VCALENDAR`;
             
             if (button) {
                 if (isRoundTrip) {
-                    button.textContent = '🔄 Calculate Round Trip';
+                    button.textContent = ' Calculate Round Trip';
                     button.title = 'Calculate total distance: Start → End → Start';
                 } else {
                     button.textContent = '🗺️ Calculate Miles';
@@ -10617,7 +10617,7 @@ END:VCALENDAR`;
                     <td>${trip.startLocation}</td>
                     <td>${trip.endLocation}</td>
                     <td>${trip.miles.toFixed(1)}</td>
-                    <td>${trip.roundTrip ? '🔄 Round Trip' : '➡️ One Way'}</td>
+                    <td>${trip.roundTrip ? ' Round Trip' : '➡️ One Way'}</td>
                     <td>${trip.purpose.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</td>
                     <td>
                         <button onclick="deleteTrip(${trip.id})" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Delete</button>
@@ -10733,7 +10733,7 @@ END:VCALENDAR`;
                     <h4>Report Period: ${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}</h4>
                     
                     <div class="breakdown-section">
-                        <h5>📊 Expenses Breakdown (${expenses.length} items)</h5>
+                        <h5> Expenses Breakdown (${expenses.length} items)</h5>
                         ${expenses.length > 0 ? `
                             <div class="expense-details">
                                 ${expenses.map(expense => `
@@ -11585,14 +11585,14 @@ END:VCALENDAR`;
                 </div>
                 
                 <div class="date-selector">
-                    <h3>📅 Date</h3>
+                    <h3> Date</h3>
                     <input type="date" id="dateInput" style="padding: 12px; border: 2px solid var(--gold-muted); 
                            border-radius: var(--border-radius); background: var(--bg-primary); color: var(--text-primary); 
                            font-family: var(--font-body); font-size: 16px;">
                 </div>
                 
                 <button onclick="calculateGoldenHour()" id="calculateBtn" class="golden-hour-btn">
-                    ✨ Get Times
+                     Get Times
                 </button>
                 
                 <div id="goldenHourResults" class="golden-hour-results" style="display: none;">
@@ -11638,7 +11638,7 @@ END:VCALENDAR`;
                     </div>
                     
                     <div class="photography-tips">
-                        <h4>📸 Photography Tips</h4>
+                        <h4> Photography Tips</h4>
                         <div class="tips-grid">
                             <div class="tip-card">
                                 <strong>🌅 Golden Hour</strong>
@@ -11675,17 +11675,17 @@ END:VCALENDAR`;
             
             <!-- Business Management Navigation -->
             <div class="business-nav">
-                <button class="business-nav-btn active" onclick="showBusinessSection('dashboard')">📊 Dashboard</button>
+                <button class="business-nav-btn active" onclick="showBusinessSection('dashboard')"> Dashboard</button>
                 <button class="business-nav-btn" onclick="showBusinessSection('aiAssistant')">🤖 AI Assistant</button>
-                <button class="business-nav-btn" onclick="showBusinessSection('expenses')">💰 Expense Tracker</button>
+                <button class="business-nav-btn" onclick="showBusinessSection('expenses')"> Expense Tracker</button>
                 <button class="business-nav-btn" onclick="showBusinessSection('mileage')">🚗 Mileage Tracker</button>
-                <button class="business-nav-btn" onclick="showBusinessSection('reports')">📋 Reports</button>
+                <button class="business-nav-btn" onclick="showBusinessSection('reports')"> Reports</button>
             </div>
 
             <!-- Dashboard Section -->
             <div id="dashboardSection" class="business-section active">
                 <div class="dashboard-header">
-                    <h2>📊 Business Dashboard</h2>
+                    <h2> Business Dashboard</h2>
                     <div class="dashboard-controls">
                         <div class="date-range-selector">
                             <select id="dashboardDateRange" onchange="updateDashboard()">
@@ -11702,7 +11702,7 @@ END:VCALENDAR`;
                             </div>
                         </div>
                         <div class="dashboard-export-buttons">
-                            <button onclick="exportDashboardCSV()" class="export-btn">📊 Export CSV</button>
+                            <button onclick="exportDashboardCSV()" class="export-btn"> Export CSV</button>
                             <button onclick="exportDashboardPDF()" class="export-btn">📄 Export PDF</button>
                         </div>
                     </div>
@@ -11757,15 +11757,15 @@ END:VCALENDAR`;
                 </div>
                 
                 <div class="ai-tabs">
-                    <button class="ai-tab-btn active" onclick="showAITab('blogWriter')">📝 Blog Writer</button>
+                    <button class="ai-tab-btn active" onclick="showAITab('blogWriter')"> Blog Writer</button>
                     <button class="ai-tab-btn" onclick="showAITab('socialMedia')">📱 Social Media</button>
-                    <button class="ai-tab-btn" onclick="showAITab('quickIdeas')">💡 Quick Ideas</button>
+                    <button class="ai-tab-btn" onclick="showAITab('quickIdeas')"> Quick Ideas</button>
                     <button class="ai-tab-btn" onclick="showAITab('history')">📚 History</button>
                 </div>
                 
                 <!-- Blog Writer Tab -->
                 <div id="blogWriterTab" class="ai-tab-content active">
-                    <h3>📝 Blog Post Generator</h3>
+                    <h3> Blog Post Generator</h3>
                     <div class="ai-input-section">
                         <label for="blogPrompt">Blog Topic/Prompt:</label>
                         <textarea id="blogPrompt" placeholder="Enter your blog topic or prompt (e.g., 'Tips for outdoor family photography sessions')" rows="3"></textarea>
@@ -11775,7 +11775,7 @@ END:VCALENDAR`;
                         <label>Generated Content:</label>
                         <div id="blogOutput" class="rich-text-editor" contenteditable="true" placeholder="Generated blog post will appear here..."></div>
                         <div class="output-actions">
-                            <button onclick="copyToClipboard('blogOutput')">📋 Copy</button>
+                            <button onclick="copyToClipboard('blogOutput')"> Copy</button>
                             <button onclick="clearOutput('blogOutput')">🗑️ Clear</button>
                         </div>
                     </div>
@@ -11808,7 +11808,7 @@ END:VCALENDAR`;
                         <label>Generated Post:</label>
                         <div id="socialOutput" class="social-output" placeholder="Generated social media post will appear here..."></div>
                         <div class="output-actions">
-                            <button onclick="copyToClipboard('socialOutput')">📋 Copy</button>
+                            <button onclick="copyToClipboard('socialOutput')"> Copy</button>
                             <button onclick="clearOutput('socialOutput')">🗑️ Clear</button>
                         </div>
                     </div>
@@ -11816,7 +11816,7 @@ END:VCALENDAR`;
                 
                 <!-- Quick Ideas Tab -->
                 <div id="quickIdeasTab" class="ai-tab-content">
-                    <h3>💡 Quick Ideas Generator</h3>
+                    <h3> Quick Ideas Generator</h3>
                     <div class="ai-input-section">
                         <label for="ideaPrompt">What do you need ideas for?</label>
                         <input type="text" id="ideaPrompt" placeholder="e.g., 'Christmas photo session promotions'">
@@ -11826,7 +11826,7 @@ END:VCALENDAR`;
                         <label>Generated Ideas:</label>
                         <div id="ideasOutput" class="ideas-list"></div>
                         <div class="output-actions">
-                            <button onclick="copyToClipboard('ideasOutput')">📋 Copy All</button>
+                            <button onclick="copyToClipboard('ideasOutput')"> Copy All</button>
                             <button onclick="clearOutput('ideasOutput')">🗑️ Clear</button>
                         </div>
                     </div>
@@ -11842,7 +11842,7 @@ END:VCALENDAR`;
             <!-- Expense Tracker Section -->
             <div id="expensesSection" class="business-section">
                 <div class="expenses-header">
-                    <h2>💰 Expense Tracker</h2>
+                    <h2> Expense Tracker</h2>
                     <button onclick="showAddExpenseForm()" class="add-btn">+ New Expense</button>
                 </div>
                 
@@ -11890,7 +11890,7 @@ END:VCALENDAR`;
                 
                 <div class="expenses-table-container">
                     <div class="table-actions">
-                        <button onclick="exportExpensesToCSV()" class="export-btn">📊 Export to CSV</button>
+                        <button onclick="exportExpensesToCSV()" class="export-btn"> Export to CSV</button>
                     </div>
                     <table id="expensesTable" class="business-table">
                         <thead>
@@ -11943,7 +11943,7 @@ END:VCALENDAR`;
                         
                         <div class="current-home-base" id="currentHomeBase" style="display: none;">
                             <div class="status-card">
-                                <h4>✅ Current Home Base:</h4>
+                                <h4> Current Home Base:</h4>
                                 <p id="homeBaseAddress">Not set</p>
                                 <button onclick="editHomeBase()" class="edit-btn">Edit</button>
                             </div>
@@ -12028,7 +12028,7 @@ END:VCALENDAR`;
             <!-- Reports Section -->
             <div id="reportsSection" class="business-section">
                 <div class="reports-header">
-                    <h2>📋 Business Reports</h2>
+                    <h2> Business Reports</h2>
                     <div class="report-date-range">
                         <label>Report Period:</label>
                         <input type="date" id="reportStartDate">
@@ -12040,7 +12040,7 @@ END:VCALENDAR`;
                 
                 <div id="reportContent" class="report-content">
                     <div class="report-summary">
-                        <h3>📊 Financial Summary</h3>
+                        <h3> Financial Summary</h3>
                         <div class="summary-grid">
                             <div class="summary-item">
                                 <label>Total Earnings:</label>
@@ -12071,7 +12071,7 @@ END:VCALENDAR`;
                     </div>
                     
                     <div class="report-actions">
-                        <button onclick="exportReportCSV()" class="export-btn">📊 Export CSV</button>
+                        <button onclick="exportReportCSV()" class="export-btn"> Export CSV</button>
                         <button onclick="exportReportPDF()" class="export-btn">📄 Export PDF</button>
                     </div>
                 </div>
@@ -12112,7 +12112,7 @@ END:VCALENDAR`;
                         <!-- Not Connected State -->
                         <div class="connection-state" id="not-connected-state" style="display: none;">
                             <div class="info-section">
-                                <h4>💰 Why Connect Stripe?</h4>
+                                <h4> Why Connect Stripe?</h4>
                                 <ul class="benefits-list">
                                     <li>Receive payments directly to your bank account</li>
                                     <li>Process credit cards, debit cards, and digital wallets</li>
@@ -12124,7 +12124,7 @@ END:VCALENDAR`;
                             
                             <div class="action-section">
                                 <button id="connect-stripe-btn" class="btn btn-primary">
-                                    🚀 Connect Stripe Account
+                                     Connect Stripe Account
                                 </button>
                                 <p class="note">You'll be redirected to Stripe to set up your account. This is completely free and takes just a few minutes.</p>
                             </div>
@@ -12133,7 +12133,7 @@ END:VCALENDAR`;
                         <!-- Connected State -->
                         <div class="connection-state" id="connected-state" style="display: none;">
                             <div class="success-message">
-                                <div class="success-icon">✅</div>
+                                <div class="success-icon"></div>
                                 <h4>Account Connected Successfully!</h4>
                                 <p>Your Stripe account is connected and ready to receive payments.</p>
                             </div>
@@ -12155,7 +12155,7 @@ END:VCALENDAR`;
                             
                             <div class="action-section">
                                 <button id="refresh-status-btn" class="btn btn-secondary">
-                                    🔄 Refresh Status
+                                     Refresh Status
                                 </button>
                                 <button id="manage-account-btn" class="btn btn-outline">
                                     ⚙️ Manage Stripe Account
@@ -12166,14 +12166,14 @@ END:VCALENDAR`;
                         <!-- Incomplete State -->
                         <div class="connection-state" id="incomplete-state" style="display: none;">
                             <div class="warning-message">
-                                <div class="warning-icon">⚠️</div>
+                                <div class="warning-icon"></div>
                                 <h4>Setup Incomplete</h4>
                                 <p>Your Stripe account needs additional information before you can receive payments.</p>
                             </div>
                             
                             <div class="action-section">
                                 <button id="complete-setup-btn" class="btn btn-warning">
-                                    📋 Complete Setup
+                                     Complete Setup
                                 </button>
                                 <p class="note">Complete your Stripe account setup to start receiving payments.</p>
                             </div>
@@ -12535,7 +12535,7 @@ END:VCALENDAR`;
                 showMessage('Failed to calculate golden hour times', 'error');
             } finally {
                 calculateBtn.disabled = false;
-                calculateBtn.textContent = '✨ Get Times';
+                calculateBtn.textContent = ' Get Times';
             }
         };
 
@@ -14646,12 +14646,12 @@ END:VCALENDAR`;
                             
                             <h3>Photography Components</h3>
                             <div class="wb-elements-list">
-                                <button class="wb-element-btn" onclick="WebsiteBuilder.addPhotoSlider()">📸 Photo Slider</button>
+                                <button class="wb-element-btn" onclick="WebsiteBuilder.addPhotoSlider()"> Photo Slider</button>
                                 <button class="wb-element-btn" onclick="WebsiteBuilder.addLightboxGallery()">🖼️ Lightbox Gallery</button>
                                 <button class="wb-element-btn" onclick="WebsiteBuilder.addVideoBackground()">🎥 Video Background</button>
-                                <button class="wb-element-btn" onclick="WebsiteBuilder.addParallaxSection()">✨ Parallax Section</button>
+                                <button class="wb-element-btn" onclick="WebsiteBuilder.addParallaxSection()"> Parallax Section</button>
                                 <button class="wb-element-btn" onclick="WebsiteBuilder.addTestimonialSlider()">💬 Testimonials</button>
-                                <button class="wb-element-btn" onclick="WebsiteBuilder.addPricingTable()">💰 Pricing Table</button>
+                                <button class="wb-element-btn" onclick="WebsiteBuilder.addPricingTable()"> Pricing Table</button>
                             </div>
                             
                             <h3>Basic Elements</h3>
@@ -14674,10 +14674,10 @@ END:VCALENDAR`;
                             
                             <h3>Page Templates</h3>
                             <div class="wb-page-templates">
-                                <button class="wb-template-btn" onclick="WebsiteBuilder.generateAboutPage()">📝 Generate About</button>
+                                <button class="wb-template-btn" onclick="WebsiteBuilder.generateAboutPage()"> Generate About</button>
                                 <button class="wb-template-btn" onclick="WebsiteBuilder.generateServicesPage()">💼 Generate Services</button>
-                                <button class="wb-template-btn" onclick="WebsiteBuilder.generatePortfolioPage()">📸 Generate Portfolio</button>
-                                <button class="wb-template-btn" onclick="WebsiteBuilder.generateContactPage()">📞 Generate Contact</button>
+                                <button class="wb-template-btn" onclick="WebsiteBuilder.generatePortfolioPage()"> Generate Portfolio</button>
+                                <button class="wb-template-btn" onclick="WebsiteBuilder.generateContactPage()"> Generate Contact</button>
                             </div>
                         </div>
                         
@@ -14701,7 +14701,7 @@ END:VCALENDAR`;
                                     <label>Tell me what you want to change:</label>
                                     <textarea id="wb-ai-input" placeholder="e.g., 'Make this look more elegant and professional' or 'Add golden accents and improve the typography' or 'Create a luxury wedding photographer vibe'"></textarea>
                                     <div class="wb-ai-actions">
-                                        <button class="wb-btn" onclick="WebsiteBuilder.processAIRequest()">✨ Apply Changes</button>
+                                        <button class="wb-btn" onclick="WebsiteBuilder.processAIRequest()"> Apply Changes</button>
                                         <button class="wb-btn wb-btn-secondary" onclick="WebsiteBuilder.analyzeWebsite()">🔍 Analyze Design</button>
                                     </div>
                                 </div>
@@ -16348,7 +16348,7 @@ END:VCALENDAR`;
                         this.setupEditableElements();
                         
                         // Show success message
-                        this.showAIStatus(`✅ Changes applied successfully! ${result.description}`, 'success');
+                        this.showAIStatus(` Changes applied successfully! ${result.description}`, 'success');
                         
                         // Add to history
                         this.addToAIHistory(input, result.description);
@@ -16399,7 +16399,7 @@ END:VCALENDAR`;
                     const result = await response.json();
                     
                     if (result.success) {
-                        this.showAIStatus(`🎯 Analysis: ${result.analysis}`, 'success');
+                        this.showAIStatus(` Analysis: ${result.analysis}`, 'success');
                         
                         // Optionally populate suggestions
                         if (result.suggestions && result.suggestions.length > 0) {
@@ -16457,12 +16457,12 @@ END:VCALENDAR`;
                 if (badassPanel.style.display === 'none') {
                     badassPanel.style.display = 'block';
                     standardAI.style.display = 'none';
-                    toggleBtn.textContent = '🔥 EXIT BADASS MODE';
+                    toggleBtn.textContent = ' EXIT BADASS MODE';
                     toggleBtn.style.background = 'linear-gradient(135deg, #ff6b35, #ff8e53)';
                 } else {
                     badassPanel.style.display = 'none';
                     standardAI.style.display = 'flex';
-                    toggleBtn.textContent = '🔥 BADASS MODE';
+                    toggleBtn.textContent = ' BADASS MODE';
                     toggleBtn.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
                 }
                 
@@ -16501,7 +16501,7 @@ END:VCALENDAR`;
                     return;
                 }
                 
-                this.showAIStatus('🔥 Generating advanced content with AI...', 'loading');
+                this.showAIStatus(' Generating advanced content with AI...', 'loading');
                 
                 try {
                     const response = await fetch('/api/ai/badass/advanced-content', {
@@ -16519,7 +16519,7 @@ END:VCALENDAR`;
                     if (result.success) {
                         // Display the generated content in a new window or modal
                         this.displayGeneratedContent('Advanced Content', result.content);
-                        this.showAIStatus(`✅ Advanced content generated! Used ${result.creditsUsed} credits.`, 'success');
+                        this.showAIStatus(` Advanced content generated! Used ${result.creditsUsed} credits.`, 'success');
                         this.updateAICredits();
                     } else {
                         this.showAIStatus(`❌ ${result.error}`, 'error');
@@ -16558,7 +16558,7 @@ END:VCALENDAR`;
                         // Add the component directly to the canvas
                         this.saveToHistory();
                         this.addToCanvas(result.html);
-                        this.showAIStatus(`✅ Custom component created! Used ${result.creditsUsed} credits.`, 'success');
+                        this.showAIStatus(` Custom component created! Used ${result.creditsUsed} credits.`, 'success');
                         this.updateAICredits();
                     } else {
                         this.showAIStatus(`❌ ${result.error}`, 'error');
@@ -16572,7 +16572,7 @@ END:VCALENDAR`;
                 const optimizationType = document.getElementById('optimizationType').value;
                 const currentHTML = document.getElementById('wb-canvas').innerHTML;
                 
-                this.showAIStatus('🚀 Optimizing your website...', 'loading');
+                this.showAIStatus(' Optimizing your website...', 'loading');
                 
                 try {
                     const response = await fetch('/api/ai/badass/optimize-website', {
@@ -16601,7 +16601,7 @@ END:VCALENDAR`;
                              <h4>Improvement Score:</h4>
                              <p>${result.improvementScore}/10</p>`);
                         
-                        this.showAIStatus(`✅ Website optimized! Used ${result.creditsUsed} credits.`, 'success');
+                        this.showAIStatus(` Website optimized! Used ${result.creditsUsed} credits.`, 'success');
                         this.updateAICredits();
                     } else {
                         this.showAIStatus(`❌ ${result.error}`, 'error');
@@ -16620,7 +16620,7 @@ END:VCALENDAR`;
                     return;
                 }
                 
-                this.showAIStatus('📊 Creating comprehensive content strategy...', 'loading');
+                this.showAIStatus(' Creating comprehensive content strategy...', 'loading');
                 
                 try {
                     const response = await fetch('/api/ai/badass/content-strategy', {
@@ -16653,7 +16653,7 @@ END:VCALENDAR`;
                                 <ul>${result.seoKeywords.map(keyword => `<li>${keyword}</li>`).join('')}</ul>
                              </div>`);
                         
-                        this.showAIStatus(`✅ Content strategy created! Used ${result.creditsUsed} credits.`, 'success');
+                        this.showAIStatus(` Content strategy created! Used ${result.creditsUsed} credits.`, 'success');
                         this.updateAICredits();
                     } else {
                         this.showAIStatus(`❌ ${result.error}`, 'error');
@@ -16694,7 +16694,7 @@ END:VCALENDAR`;
                         document.getElementById('wb-canvas').innerHTML = result.html;
                         this.setupEditableElements();
                         
-                        this.showAIStatus(`✅ Smart ${pageType} page created! Used ${result.creditsUsed} credits.`, 'success');
+                        this.showAIStatus(` Smart ${pageType} page created! Used ${result.creditsUsed} credits.`, 'success');
                         this.updateAICredits();
                     } else {
                         this.showAIStatus(`❌ ${result.error}`, 'error');
@@ -17166,14 +17166,14 @@ END:VCALENDAR`;
                                     <h3 style="font-size: 24px; margin-bottom: 20px; color: #333;">Contact Information</h3>
                                     <div style="display: grid; gap: 20px;">
                                         <div style="display: flex; align-items: center; gap: 15px;">
-                                            <div style="width: 50px; height: 50px; background: #d4af37; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px;">📧</div>
+                                            <div style="width: 50px; height: 50px; background: #d4af37; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px;"></div>
                                             <div>
                                                 <div style="font-weight: bold; color: #333;">Email</div>
                                                 <div style="color: #666;">hello@studiophoto.com</div>
                                             </div>
                                         </div>
                                         <div style="display: flex; align-items: center; gap: 15px;">
-                                            <div style="width: 50px; height: 50px; background: #d4af37; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px;">📞</div>
+                                            <div style="width: 50px; height: 50px; background: #d4af37; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px;"></div>
                                             <div>
                                                 <div style="font-weight: bold; color: #333;">Phone</div>
                                                 <div style="color: #666;">(555) 123-4567</div>
@@ -17468,7 +17468,7 @@ END:VCALENDAR`;
                 const originalText = btn.textContent;
                 
                 btn.disabled = true;
-                btn.textContent = '🔄 Connecting...';
+                btn.textContent = ' Connecting...';
                 
                 try {
                     const response = await fetch('/api/stripe-connect/onboard', {
@@ -17501,7 +17501,7 @@ END:VCALENDAR`;
                 const originalText = btn.textContent;
                 
                 btn.disabled = true;
-                btn.textContent = '🔄 Refreshing...';
+                btn.textContent = ' Refreshing...';
                 
                 await this.checkStripeStatus();
                 
@@ -17516,7 +17516,7 @@ END:VCALENDAR`;
                 const originalText = btn.textContent;
                 
                 btn.disabled = true;
-                btn.textContent = '🔄 Creating link...';
+                btn.textContent = ' Creating link...';
                 
                 try {
                     const response = await fetch('/api/stripe-connect/refresh', {
