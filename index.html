@@ -62,8 +62,8 @@
         })();
     </script>
     
-    <!-- Google Fonts - Photography Management System Theme -->
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Google Fonts - Modern Dark Theme -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
 
     
@@ -84,28 +84,28 @@
             position: absolute;
             width: 10px;
             height: 10px;
-            background: #d4af37;
+            background: #00D4AA;
             animation: confetti-fall 3s linear forwards;
         }
         
         .confetti-piece:nth-child(odd) {
-            background: #f4e4bc;
+            background: #0077FF;
             border-radius: 50%;
         }
         
         .confetti-piece:nth-child(3n) {
-            background: #b8941f;
+            background: #00BF9A;
             width: 8px;
             height: 8px;
         }
         
         .confetti-piece:nth-child(4n) {
-            background: #efd971;
+            background: #FF6B35;
             border-radius: 2px;
         }
         
         .confetti-piece:nth-child(5n) {
-            background: #c4962d;
+            background: #00A085;
             width: 12px;
             height: 6px;
             border-radius: 6px;
@@ -127,11 +127,11 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: linear-gradient(135deg, #d4af37 0%, #f4e4bc 100%);
-            color: #1a1a1a;
+            background: linear-gradient(135deg, #00D4AA 0%, #00BF9A 100%);
+            color: #0A0A0B;
             padding: 20px 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 212, 170, 0.4);
             font-size: 1.2rem;
             font-weight: 600;
             z-index: 10000;
@@ -158,14 +158,14 @@
         }
     </style>
     
-    <!-- WHCC Brand Color Reference Guide -->
-    <meta name="brand-primary-color" content="#d4af37">
-    <meta name="brand-secondary-color" content="#8b7355">
-    <meta name="brand-accent-color" content="#f4e4bc">
-    <meta name="brand-background-color" content="#1a1a1a">
-    <meta name="brand-text-color" content="#ffffff">
-    <meta name="brand-business-name" content="The Legacy Photography">
-    <meta name="brand-font-family" content="Playfair Display">
+    <!-- Modern Dark Studio Brand Reference -->
+    <meta name="brand-primary-color" content="#00D4AA">
+    <meta name="brand-secondary-color" content="#0077FF">
+    <meta name="brand-accent-color" content="#FF6B35">
+    <meta name="brand-background-color" content="#0A0A0B">
+    <meta name="brand-text-color" content="#FFFFFF">
+    <meta name="brand-business-name" content="Modern Photography Studio">
+    <meta name="brand-font-family" content="Inter">
     
     <style>
         * {
@@ -174,49 +174,61 @@
             box-sizing: border-box;
         }
         
-        /* Photography Management System Design System */
+        /* Dark Modern Photography Platform Design System */
         :root {
-            /* WHCC Brand Color Reference - Primary Palette */
-            --brand-primary-gold: #d4af37;
-            --brand-secondary-bronze: #8b7355;
-            --brand-accent-cream: #f4e4bc;
-            --brand-dark-bg: #1a1a1a;
-            --brand-text-light: #ffffff;
+            /* Dark Modern Color Palette */
+            --primary-accent: #00D4AA;
+            --primary-accent-hover: #00BF9A;
+            --primary-accent-dark: #00A085;
+            --secondary-accent: #0077FF;
+            --warning-accent: #FF6B35;
             
-            /* Enhanced Color Palette */
-            --bg-primary: linear-gradient(135deg, #f8f6f4 0%, #f2f0ec 100%);
-            --bg-secondary: #ffffff;
-            --bg-card: linear-gradient(135deg, #ffffff 0%, #fdfcfb 100%);
-            --accent-beige: #e8ddd4;
-            --accent-sage: #d9e1d8;
-            --gold-muted: #c1a35e;
-            --gold-light: rgba(212, 175, 55, 0.1);
-            --gold-medium: rgba(212, 175, 55, 0.3);
-            --rose-dusty: #e8c1b4;
-            --text-primary: #2c2c2c;
-            --text-secondary: #5a5a5a;
-            --text-light: #8a8a8a;
-            --shadow-soft: 0 4px 20px rgba(212, 175, 55, 0.08);
-            --shadow-medium: 0 8px 30px rgba(212, 175, 55, 0.12);
-            --shadow-hover: 0 12px 40px rgba(212, 175, 55, 0.15);
+            /* Dark Backgrounds */
+            --bg-primary: #0A0A0B;
+            --bg-secondary: #141419;
+            --bg-tertiary: #1A1A21;
+            --bg-card: #1F1F28;
+            --bg-elevated: #252530;
+            --bg-input: #2A2A35;
+            
+            /* Border Colors */
+            --border-primary: #2A2A35;
+            --border-secondary: #35353F;
+            --border-accent: rgba(0, 212, 170, 0.3);
+            --border-focus: #00D4AA;
+            
+            /* Text Colors */
+            --text-primary: #FFFFFF;
+            --text-secondary: #B4B4B8;
+            --text-muted: #8A8A95;
+            --text-inverse: #0A0A0B;
+            
+            /* Accent Colors */
+            --accent-teal: rgba(0, 212, 170, 0.1);
+            --accent-teal-medium: rgba(0, 212, 170, 0.2);
+            --accent-blue: rgba(0, 119, 255, 0.1);
+            --accent-orange: rgba(255, 107, 53, 0.1);
+            
+            /* Modern Shadows */
+            --shadow-soft: 0 4px 24px rgba(0, 0, 0, 0.15);
+            --shadow-medium: 0 8px 32px rgba(0, 0, 0, 0.25);
+            --shadow-large: 0 16px 48px rgba(0, 0, 0, 0.35);
+            --shadow-accent: 0 4px 20px rgba(0, 212, 170, 0.15);
+            --shadow-hover: 0 8px 32px rgba(0, 212, 170, 0.2);
             
             /* Typography */
-            --font-heading: 'Cormorant Garamond', serif;
-            --font-body: 'Quicksand', sans-serif;
+            --font-heading: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             
-            /* Spacing */
-            --border-radius: 12px;
+            /* Modern Spacing & Border Radius */
+            --border-radius: 16px;
             --border-radius-sm: 8px;
+            --border-radius-lg: 24px;
             --spacing-xs: 8px;
             --spacing-sm: 16px;
             --spacing-md: 24px;
             --spacing-lg: 32px;
             --spacing-xl: 48px;
-            
-            /* Shadows */
-            --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.08);
-            --shadow-medium: 0 8px 30px rgba(0, 0, 0, 0.12);
-            --shadow-hover: 0 12px 40px rgba(0, 0, 0, 0.15);
         }
 
         body {
@@ -229,9 +241,11 @@
             font-size: 16px;
             overflow-x: visible !important;
             position: relative;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
         
-        /* Subtle background pattern */
+        /* Dark modern background pattern */
         body::before {
             content: '';
             position: fixed;
@@ -239,8 +253,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-image: radial-gradient(circle at 1px 1px, rgba(212, 175, 55, 0.05) 1px, transparent 0);
-            background-size: 20px 20px;
+            background-image: radial-gradient(circle at 1px 1px, rgba(0, 212, 170, 0.03) 1px, transparent 0);
+            background-size: 32px 32px;
             pointer-events: none;
             z-index: -1;
         }
@@ -259,17 +273,17 @@
             }
         }
         
-        /* Header with Hamburger Menu */
+        /* Modern Dark Header */
         .app-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: var(--spacing-lg) var(--spacing-xl);
-            background: rgba(255, 255, 255, 0.9);
+            background: var(--bg-secondary);
             backdrop-filter: blur(20px);
-            border: 1px solid rgba(212, 175, 55, 0.1);
-            border-radius: 20px;
-            box-shadow: 0 8px 32px rgba(212, 175, 55, 0.1);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-medium);
             margin-bottom: var(--spacing-xl);
             position: relative;
             overflow: hidden;
@@ -282,49 +296,65 @@
             left: 0;
             right: 0;
             height: 2px;
-            background: linear-gradient(90deg, transparent, var(--brand-primary-gold), transparent);
-            opacity: 0.7;
+            background: linear-gradient(90deg, transparent, var(--primary-accent), transparent);
+            opacity: 0.8;
         }
         
         .logo {
             font-family: var(--font-heading);
-            font-size: 2rem;
+            font-size: 1.75rem;
             font-weight: 700;
-            background: linear-gradient(135deg, var(--brand-primary-gold) 0%, #f4e4bc 50%, var(--gold-muted) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: var(--text-primary);
             margin: 0;
             display: flex;
             align-items: center;
             gap: 12px;
+            letter-spacing: -0.02em;
         }
         
         .logo::before {
-            content: '📸';
-            font-size: 2.2rem;
-            background: linear-gradient(135deg, var(--brand-primary-gold), #f4e4bc);
+            content: '';
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-accent) 0%, var(--primary-accent-hover) 100%);
             border-radius: 12px;
-            padding: 8px;
-            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-accent);
+            position: relative;
+        }
+        
+        .logo::after {
+            content: 'STUDIO';
+            position: absolute;
+            right: -8px;
+            top: -8px;
+            background: var(--secondary-accent);
+            color: var(--text-primary);
+            font-size: 0.6rem;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
         }
         
         /* Removed old conflicting navigation styles */
         
         /* Removed more old navigation styles */
 
-        /* Hamburger Menu Styles */
+        /* Modern Dark Hamburger Menu */
         .hamburger-menu {
-            background: none;
-            border: none;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-secondary);
             cursor: pointer;
             padding: var(--spacing-xs);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            width: 40px;
-            height: 40px;
+            width: 44px;
+            height: 44px;
             position: relative;
             border-radius: var(--border-radius-sm);
             transition: all 0.3s ease;
@@ -332,34 +362,23 @@
         }
 
         .hamburger-menu:hover {
-            background: var(--accent-beige);
+            background: var(--bg-input);
+            border-color: var(--border-accent);
+            transform: translateY(-1px);
         }
 
         .hamburger-line {
             display: block;
-            width: 25px;
-            height: 3px;
-            background: var(--text-primary);
+            width: 20px;
+            height: 2px;
+            background: var(--text-secondary);
             margin: 3px 0;
-            transition: 0.3s;
+            transition: all 0.3s ease;
             border-radius: 2px;
         }
 
-        /* Make hamburger menu fully visible and opaque */
-        .hamburger-menu {
-            background: #2a2a2a !important;
-            border: 2px solid #d4af37 !important;
-            opacity: 1 !important;
-        }
-
-        .hamburger-line {
-            background: #d4af37 !important;
-            opacity: 1 !important;
-        }
-
-        .hamburger-menu:hover {
-            background: #3a3a3a !important;
-            border-color: #ffd700 !important;
+        .hamburger-menu:hover .hamburger-line {
+            background: var(--primary-accent);
         }
 
         .hamburger-menu.active .hamburger-line:nth-child(1) {
@@ -374,19 +393,21 @@
             transform: rotate(45deg) translate(-5px, -6px);
         }
 
-        /* Mobile Menu Dropdown - positioned relative to header */
+        /* Modern Dark Mobile Menu */
         .mobile-menu {
             display: none;
             position: absolute;
-            top: calc(100% + 5px);
+            top: calc(100% + 8px);
             left: 0;
             right: 0;
-            background: var(--bg-secondary);
+            background: var(--bg-card);
+            border: 1px solid var(--border-primary);
             border-radius: var(--border-radius);
-            box-shadow: var(--shadow-medium);
+            box-shadow: var(--shadow-large);
             z-index: 1003;
             animation: slideDown 0.3s ease;
             margin: 0;
+            backdrop-filter: blur(20px);
         }
 
         .mobile-menu.show {
@@ -430,13 +451,14 @@
         }
 
         .mobile-menu .nav-link:hover {
-            background: var(--accent-beige);
+            background: var(--accent-teal);
             color: var(--text-primary);
+            transform: translateX(4px);
         }
 
         .mobile-menu .nav-link.active {
-            background: var(--gold-muted);
-            color: var(--bg-secondary);
+            background: var(--primary-accent);
+            color: var(--text-inverse);
             font-weight: 600;
         }
 
@@ -446,12 +468,12 @@
             text-align: center;
         }
         
-        /* Main Content Area */
+        /* Modern Dark Main Content */
         .main-content {
-            background: var(--bg-card);
-            border: 1px solid rgba(212, 175, 55, 0.08);
-            border-radius: 24px;
-            box-shadow: 0 8px 40px rgba(212, 175, 55, 0.08);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-medium);
             padding: var(--spacing-xl);
             min-height: calc(100vh - var(--spacing-xl));
             position: relative;
@@ -465,7 +487,8 @@
             left: 0;
             right: 0;
             height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.3), transparent);
+            background: linear-gradient(90deg, transparent, var(--primary-accent), transparent);
+            opacity: 0.6;
         }
         
         .header {
@@ -473,7 +496,8 @@
             justify-content: space-between;
             align-items: center;
             padding: var(--spacing-md) var(--spacing-lg);
-            background: var(--bg-secondary);
+            background: var(--bg-card);
+            border: 1px solid var(--border-primary);
             border-radius: var(--border-radius);
             box-shadow: var(--shadow-soft);
             margin-bottom: var(--spacing-lg);
@@ -495,7 +519,7 @@
 
         .content-header {
             margin-bottom: var(--spacing-xl);
-            border-bottom: 2px solid var(--accent-beige);
+            border-bottom: 1px solid var(--border-secondary);
             padding-bottom: var(--spacing-md);
         }
         
@@ -514,7 +538,8 @@
         }
         
         .user-info {
-            background: var(--accent-beige);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-secondary);
             padding: var(--spacing-sm) var(--spacing-md);
             border-radius: var(--border-radius);
             display: flex;
@@ -529,8 +554,8 @@
         /* Removed user avatar styling */
         
         .logout-btn {
-            background: linear-gradient(135deg, #ff4444, #cc0000);
-            color: white;
+            background: linear-gradient(135deg, var(--warning-accent), #e55028);
+            color: var(--text-primary);
             border: none;
             padding: 10px 20px;
             border-radius: var(--border-radius-sm);
@@ -539,28 +564,28 @@
             transition: all 0.3s ease;
             font-weight: 600;
             cursor: pointer;
-            box-shadow: 0 2px 5px rgba(255, 68, 68, 0.3);
+            box-shadow: 0 4px 12px rgba(255, 107, 53, 0.25);
             white-space: nowrap;
         }
         
         .logout-btn:hover {
-            background: linear-gradient(135deg, #ff6666, #ff0000);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(255, 68, 68, 0.4);
+            background: linear-gradient(135deg, #ff8055, var(--warning-accent));
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(255, 107, 53, 0.35);
         }
         
         .logout-btn:active {
             transform: translateY(0);
-            box-shadow: 0 1px 3px rgba(255, 68, 68, 0.3);
+            box-shadow: 0 2px 8px rgba(255, 107, 53, 0.25);
         }
         
         .session-form {
             background: var(--bg-card);
             padding: var(--spacing-xl);
-            border-radius: 20px;
-            box-shadow: 0 8px 32px rgba(212, 175, 55, 0.08);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-medium);
             margin-bottom: var(--spacing-xl);
-            border: 1px solid rgba(212, 175, 55, 0.15);
+            border: 1px solid var(--border-primary);
             position: relative;
             overflow: hidden;
         }
@@ -571,9 +596,9 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, var(--brand-primary-gold), #f4e4bc, var(--gold-muted));
-            border-radius: 20px 20px 0 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary-accent), var(--secondary-accent), var(--primary-accent));
+            border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
         }
         
         .session-form h2 {
@@ -584,14 +609,18 @@
             display: flex;
             align-items: center;
             gap: 12px;
+            font-weight: 700;
         }
         
         .session-form h2::before {
-            content: '✨';
-            font-size: 1.5rem;
-            padding: 8px;
-            background: var(--gold-light);
-            border-radius: 10px;
+            content: '';
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--primary-accent), var(--primary-accent-hover));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .form-grid {
@@ -616,10 +645,9 @@
         
         input, textarea, select {
             padding: 16px 18px;
-            border: 2px solid rgba(212, 175, 55, 0.15);
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-secondary);
+            border-radius: var(--border-radius);
+            background: var(--bg-input);
             color: var(--text-primary);
             font-size: 1rem;
             font-family: var(--font-body);
@@ -636,7 +664,7 @@
         }
 
         input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-            background: var(--gold-muted);
+            background: var(--primary-accent);
             border-radius: var(--border-radius-sm);
             padding: 4px;
             cursor: pointer;
@@ -648,14 +676,15 @@
         }
         
         input::placeholder, textarea::placeholder {
-            color: var(--text-light);
+            color: var(--text-muted);
         }
         
         input:focus, textarea:focus, select:focus {
             outline: none;
-            border-color: var(--gold-muted);
-            box-shadow: 0 0 0 3px rgba(193, 163, 94, 0.2);
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px var(--accent-teal-medium);
             transform: translateY(-1px);
+            background: var(--bg-elevated);
         }
         
         .btn {
@@ -674,36 +703,36 @@
         }
         
         .btn-primary {
-            background: linear-gradient(135deg, var(--brand-primary-gold) 0%, #f4e4bc 100%);
-            color: #1a1a1a;
-            font-weight: 700;
-            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary-accent) 0%, var(--primary-accent-hover) 100%);
+            color: var(--text-inverse);
+            font-weight: 600;
+            border-radius: var(--border-radius);
             border: none;
-            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-size: 0.9rem;
+            box-shadow: var(--shadow-accent);
+            letter-spacing: 0.02em;
+            font-size: 0.95rem;
         }
         
         .btn-primary:hover {
-            background: linear-gradient(135deg, #f4e4bc 0%, var(--brand-primary-gold) 100%);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.35);
+            background: linear-gradient(135deg, var(--primary-accent-hover) 0%, var(--primary-accent-dark) 100%);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
         }
         
         .btn-primary:active {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+            transform: translateY(0);
+            box-shadow: var(--shadow-accent);
         }
         
         .btn-secondary {
-            background: var(--rose-dusty);
+            background: var(--bg-elevated);
             color: var(--text-primary);
-            border: 2px solid var(--accent-beige);
+            border: 1px solid var(--border-secondary);
         }
         
         .btn-secondary:hover {
-            background: #d8a593;
+            background: var(--bg-input);
+            border-color: var(--border-accent);
             transform: translateY(-2px);
             box-shadow: var(--shadow-medium);
         }
@@ -720,29 +749,28 @@
             box-shadow: 0 8px 25px rgba(255, 107, 107, 0.2);
         }
         
-        /* ALL session action buttons - gold background with dark text and bold font like Email Client */
+        /* Modern dark action buttons */
         .btn-edit, .btn-calendar, .btn-call, 
         .btn-text, .btn-warning, .btn-contract, .btn-success,
-        .btn-invoice, .btn-email, .btn-secondary {
-            background: linear-gradient(135deg, #d4af37 0%, #f4e4bc 100%);
-            color: #1a1a1a;
-            border: 1px solid rgba(212, 175, 55, 0.4);
-            font-weight: 700;
+        .btn-invoice, .btn-email {
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+            border: 1px solid var(--border-secondary);
+            font-weight: 500;
             font-size: 0.9rem;
             letter-spacing: 0.01em;
             text-align: center;
-            backdrop-filter: blur(10px);
         }
         
         .btn-edit:hover, .btn-calendar:hover, 
         .btn-call:hover, .btn-text:hover,
         .btn-warning:hover, .btn-contract:hover, .btn-success:hover,
-        .btn-invoice:hover, .btn-email:hover, .btn-secondary:hover {
-            background: linear-gradient(135deg, #f4e4bc 0%, #d4af37 100%);
-            color: #1a1a1a;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(212, 175, 55, 0.4);
-            border-color: rgba(212, 175, 55, 0.6);
+        .btn-invoice:hover, .btn-email:hover {
+            background: var(--accent-teal);
+            color: var(--text-primary);
+            border-color: var(--border-accent);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-medium);
         }
         
         .sessions-grid {
@@ -753,16 +781,16 @@
             z-index: auto;
         }
         
-        /* Photography Management System Session List View Styles */
+        /* Modern Dark Session Cards */
         .session-list-item {
             background: var(--bg-card);
-            border-radius: 16px;
+            border-radius: var(--border-radius);
             margin-bottom: var(--spacing-lg);
-            border: 1px solid rgba(212, 175, 55, 0.1);
+            border: 1px solid var(--border-primary);
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
             overflow: hidden;
-            box-shadow: 0 4px 20px rgba(212, 175, 55, 0.08);
+            box-shadow: var(--shadow-soft);
             position: relative;
         }
         
@@ -773,15 +801,15 @@
             left: 0;
             right: 0;
             height: 2px;
-            background: linear-gradient(90deg, var(--brand-primary-gold), #f4e4bc, var(--gold-muted));
+            background: linear-gradient(90deg, var(--primary-accent), var(--secondary-accent), var(--primary-accent));
             transform: scaleX(0);
             transition: transform 0.3s ease;
         }
 
         .session-list-item:hover {
-            border-color: rgba(212, 175, 55, 0.3);
-            box-shadow: 0 12px 40px rgba(212, 175, 55, 0.15);
-            transform: translateY(-4px);
+            border-color: var(--border-accent);
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-2px);
         }
         
         .session-list-item:hover::before {
@@ -793,8 +821,8 @@
             justify-content: space-between;
             align-items: center;
             padding: var(--spacing-lg);
-            border-bottom: 1px solid var(--accent-beige);
-            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--cream-warm) 100%);
+            border-bottom: 1px solid var(--border-secondary);
+            background: var(--bg-elevated);
         }
 
         .session-info {
