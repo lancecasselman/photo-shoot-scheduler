@@ -13389,17 +13389,66 @@ END:VCALENDAR`;
             z-index: 1000;
         }
 
-        .wb-header {
-            height: 60px;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        /* Top Toolbar - Fixed and Scrollable */
+        .wb-top-toolbar {
+            height: 70px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 2000;
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            padding: 0 20px;
-            position: relative;
-            flex-shrink: 0;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding: 0 10px;
+            white-space: nowrap;
+        }
+
+        .wb-top-toolbar::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .wb-top-toolbar::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .wb-top-toolbar::-webkit-scrollbar-thumb {
+            background: rgba(102, 126, 234, 0.5);
+            border-radius: 3px;
+        }
+
+        /* Bottom Toolbar - Fixed and Scrollable */
+        .wb-bottom-toolbar {
+            height: 60px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            border-top: 2px solid rgba(102, 126, 234, 0.3);
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding: 0 10px;
+            white-space: nowrap;
+        }
+
+        .wb-bottom-toolbar::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .wb-bottom-toolbar::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .wb-bottom-toolbar::-webkit-scrollbar-thumb {
+            background: rgba(102, 126, 234, 0.5);
+            border-radius: 3px;
         }
 
         .wb-logo {
@@ -14291,27 +14340,97 @@ END:VCALENDAR`;
             box-shadow: 0 10px 20px rgba(212, 175, 55, 0.3);
         }
 
-        .wb-main {
-            flex: 1;
+        /* Main Canvas Area - Between Fixed Toolbars */
+        .wb-canvas-workspace {
+            position: fixed;
+            top: 70px;
+            bottom: 60px;
+            left: 0;
+            right: 0;
+            background: #0f0f0f;
             display: flex;
-            overflow: hidden;
-            height: calc(100vh - 60px);
-        }
-        
-        .wb-content-area {
-            flex: 1;
-            display: flex;
-            overflow: hidden;
+            justify-content: center;
+            align-items: center;
+            overflow: auto;
+            padding: 20px;
         }
 
-        .wb-sidebar {
-            width: 250px;
-            min-width: 250px;
-            background: #1a1a1a;
-            border-right: 1px solid rgba(255, 255, 255, 0.1);
-            overflow-y: auto;
-            padding: 20px;
+        /* Toolbar Button Styles */
+        .wb-toolbar-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #fff;
+            padding: 10px 16px;
+            margin: 0 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
             flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        .wb-toolbar-btn:hover {
+            background: rgba(102, 126, 234, 0.2);
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .wb-toolbar-btn.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-color: transparent;
+        }
+
+        .wb-toolbar-separator {
+            width: 1px;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 0 10px;
+            flex-shrink: 0;
+        }
+
+        .wb-toolbar-group {
+            display: flex;
+            align-items: center;
+            margin: 0 10px;
+        }
+
+        .wb-logo {
+            font-size: 18px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-right: 20px;
+            flex-shrink: 0;
+        }
+
+        /* Updated Canvas Styles for New Layout */
+        .wb-canvas {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
+            transition: all 0.3s ease;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .wb-canvas.desktop {
+            width: 1200px;
+            height: 800px;
+        }
+
+        .wb-canvas.tablet {
+            width: 768px;
+            height: 1024px;
+        }
+
+        .wb-canvas.mobile {
+            width: 375px;
+            height: 667px;
         }
 
         .wb-sidebar h3 {
@@ -15571,28 +15690,283 @@ END:VCALENDAR`;
                 this.selectedSectionType = 'hero';
 
                 container.innerHTML = `
-                    <div class="wb-header">
-                        <div class="wb-logo">PhotoSite Builder</div>
-                        <div class="wb-device-selector">
-                            <button class="wb-device-btn active" onclick="WebsiteBuilder.switchDevice('desktop')">Desktop</button>
-                            <button class="wb-device-btn" onclick="WebsiteBuilder.switchDevice('tablet')">Tablet</button>
-                            <button class="wb-device-btn" onclick="WebsiteBuilder.switchDevice('mobile')">Mobile</button>
+                    <!-- Top Toolbar -->
+                    <div class="wb-top-toolbar">
+                        <div class="wb-logo">📸 PhotoSite Builder</div>
+                        <div class="wb-toolbar-separator"></div>
+                        
+                        <div class="wb-toolbar-group">
+                            <button class="wb-toolbar-btn" onclick="WebsiteBuilder.undo()" title="Undo (Ctrl+Z)">
+                                <span>↶</span> Undo
+                            </button>
+                            <button class="wb-toolbar-btn" onclick="WebsiteBuilder.redo()" title="Redo (Ctrl+Y)">
+                                <span>↷</span> Redo
+                            </button>
                         </div>
-                        <div class="wb-actions">
-                            <button class="wb-btn" onclick="WebsiteBuilder.undo()" title="Undo (Ctrl+Z)">↶</button>
-                            <button class="wb-btn" onclick="WebsiteBuilder.redo()" title="Redo (Ctrl+Y)">↷</button>
-                            <button class="wb-btn" onclick="WebsiteBuilder.clearCanvas()">Clear</button>
-                            <button class="wb-btn" onclick="WebsiteBuilder.preview()">Preview</button>
-                            <button class="wb-btn" onclick="WebsiteBuilder.save()">Save</button>
-                            <button class="wb-btn" onclick="WebsiteBuilder.showAIEditor()" style="background: linear-gradient(135deg, #ff6b6b, #ee5a24); margin-right: 10px;"> AI Assistant</button>
-                            <button class="wb-btn" onclick="WebsiteBuilder.showSectionGenerator()" style="background: linear-gradient(135deg, #9b59b6, #8e44ad); margin-right: 10px;"> Generate Section</button>
-                            <button class="wb-btn" onclick="WebsiteBuilder.publish()" style="background: linear-gradient(135deg, #48bb78, #38a169);">Publish</button>
+                        
+                        <div class="wb-toolbar-separator"></div>
+                        
+                        <div class="wb-toolbar-group">
+                            <button class="wb-toolbar-btn active" onclick="WebsiteBuilder.switchDevice('desktop')">
+                                <span>🖥️</span> Desktop
+                            </button>
+                            <button class="wb-toolbar-btn" onclick="WebsiteBuilder.switchDevice('tablet')">
+                                <span>📱</span> Tablet  
+                            </button>
+                            <button class="wb-toolbar-btn" onclick="WebsiteBuilder.switchDevice('mobile')">
+                                <span>📱</span> Mobile
+                            </button>
+                        </div>
+                        
+                        <div class="wb-toolbar-separator"></div>
+                        
+                        <div class="wb-toolbar-group">
+                            <button class="wb-toolbar-btn" onclick="WebsiteBuilder.showAIEditor()">
+                                <span>🤖</span> AI Assistant
+                            </button>
+                            <button class="wb-toolbar-btn" onclick="WebsiteBuilder.showSectionGenerator()">
+                                <span>✨</span> Generate Section
+                            </button>
+                        </div>
+                        
+                        <div class="wb-toolbar-separator"></div>
+                        
+                        <div class="wb-toolbar-group">
+                            <button class="wb-toolbar-btn" onclick="WebsiteBuilder.clearCanvas()">
+                                <span>🗑️</span> Clear
+                            </button>
+                            <button class="wb-toolbar-btn" onclick="WebsiteBuilder.preview()">
+                                <span>👁️</span> Preview
+                            </button>
+                            <button class="wb-toolbar-btn" onclick="WebsiteBuilder.save()">
+                                <span>💾</span> Save
+                            </button>
+                            <button class="wb-toolbar-btn" onclick="WebsiteBuilder.publish()">
+                                <span>🚀</span> Publish
+                            </button>
                         </div>
                     </div>
-                    <div class="wb-main">
-                        <div class="wb-sidebar">
-                            <h3>Inspirational Templates</h3>
-                            <div class="wb-template-carousel">
+                    
+                    <!-- Canvas Workspace -->
+                    <div class="wb-canvas-workspace">
+                        <div class="wb-canvas desktop" id="wb-canvas">
+                            <div style="padding: 40px;">
+                                <h1 class="wb-editable" style="text-align: center; margin-bottom: 20px;">Welcome to Your Photography Portfolio</h1>
+                                <p class="wb-editable" style="text-align: center; color: #666;">Click any element to edit or add new elements from the toolbar</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Bottom Toolbar -->
+                    <div class="wb-bottom-toolbar">
+                        <div class="wb-toolbar-group">
+                            <button class="wb-toolbar-btn" onclick="WebsiteBuilder.addPhotoSlider()">
+                                <span>🖼️</span> Photo Slider
+                            </button>
+                            <button class="wb-toolbar-btn" onclick="WebsiteBuilder.addLightboxGallery()">
+                                <span>🔍</span> Gallery
+                            </button>
+                            <button class="wb-toolbar-btn" onclick="WebsiteBuilder.addVideoBackground()">
+                                <span>🎥</span> Video BG
+                            </button>
+                            <button class="wb-toolbar-btn" onclick="WebsiteBuilder.addParallaxSection()">
+                                <span>📐</span> Parallax
+                            </button>
+                            <button class="wb-toolbar-btn" onclick="WebsiteBuilder.addTestimonialSlider()">
+                                <span>💬</span> Testimonials
+                            </button>
+                        </div>
+                        
+                        <div class="wb-toolbar-separator"></div>
+                        
+                        <div class="wb-toolbar-group">
+                            <button class="wb-toolbar-btn" onclick="WebsiteBuilder.addText()">
+                                <span>📝</span> Text
+                            </button>
+                            <button class="wb-toolbar-btn" onclick="WebsiteBuilder.addImage()">
+                                <span>🖼️</span> Image
+                            </button>
+                            <button class="wb-toolbar-btn" onclick="WebsiteBuilder.addButton()">
+                                <span>🔘</span> Button
+                            </button>
+                            <button class="wb-toolbar-btn" onclick="WebsiteBuilder.addDivider()">
+                                <span>➖</span> Divider
+                            </button>
+                        </div>
+                        
+                        <div class="wb-toolbar-separator"></div>
+                        
+                        <div class="wb-toolbar-group">
+                            <button class="wb-toolbar-btn" onclick="WebsiteBuilder.selectTemplate('minimal')">
+                                <span>🎨</span> Minimal
+                            </button>
+                            <button class="wb-toolbar-btn" onclick="WebsiteBuilder.selectTemplate('wedding')">
+                                <span>💒</span> Wedding
+                            </button>
+                            <button class="wb-toolbar-btn" onclick="WebsiteBuilder.selectTemplate('cinematic')">
+                                <span>🎬</span> Cinematic
+                            </button>
+                            <button class="wb-toolbar-btn" onclick="WebsiteBuilder.selectTemplate('portrait')">
+                                <span>👤</span> Portrait
+                            </button>
+                            <button class="wb-toolbar-btn" onclick="WebsiteBuilder.selectTemplate('commercial')">
+                                <span>🏢</span> Commercial
+                            </button>
+                        </div>
+                    </div>
+                
+                    <!-- AI Panel (Hidden) - Will be shown as modal -->
+                    <div class="wb-ai-panel" id="wb-ai-panel" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 400px; height: 600px; background: #1a1a1a; border-radius: 12px; z-index: 3000; padding: 20px;">
+                        <div class="wb-ai-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="color: white; margin: 0;">🚀 AI Website Generator</h3>
+                            <button onclick="WebsiteBuilder.closeAIEditor()" style="background: none; border: none; color: white; font-size: 20px; cursor: pointer;">✕</button>
+                        </div>
+                        <div style="color: white; text-align: center; padding: 40px;">
+                            <p>AI editor will be implemented here</p>
+                        </div>
+                    </div>
+                `;
+                
+                this.setupEditableElements();
+            },
+            
+            switchDevice(device) {
+                this.currentDevice = device;
+                const canvas = document.getElementById('wb-canvas');
+                const buttons = document.querySelectorAll('.wb-toolbar-btn');
+                
+                // Update canvas class
+                canvas.className = `wb-canvas ${device}`;
+                
+                // Update active button
+                buttons.forEach(btn => {
+                    if (btn.textContent.toLowerCase().includes(device)) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+            },
+            
+            showAIEditor() {
+                const panel = document.getElementById('wb-ai-panel');
+                panel.style.display = 'block';
+            },
+            
+            closeAIEditor() {
+                const panel = document.getElementById('wb-ai-panel');
+                panel.style.display = 'none';
+            },
+            
+            // Add element functions
+            addText() {
+                const canvas = document.getElementById('wb-canvas');
+                const textElement = document.createElement('p');
+                textElement.className = 'wb-editable';
+                textElement.textContent = 'Click to edit this text';
+                textElement.style.padding = '10px';
+                canvas.appendChild(textElement);
+                this.setupEditableElements();
+            },
+            
+            addImage() {
+                const canvas = document.getElementById('wb-canvas');
+                const imgElement = document.createElement('img');
+                imgElement.className = 'wb-editable';
+                imgElement.src = 'https://via.placeholder.com/300x200?text=Click+to+Edit';
+                imgElement.style.width = '300px';
+                imgElement.style.height = 'auto';
+                imgElement.style.margin = '10px';
+                canvas.appendChild(imgElement);
+                this.setupEditableElements();
+            },
+            
+            addButton() {
+                const canvas = document.getElementById('wb-canvas');
+                const btnElement = document.createElement('button');
+                btnElement.className = 'wb-editable';
+                btnElement.textContent = 'Click to Edit Button';
+                btnElement.style.padding = '12px 24px';
+                btnElement.style.background = '#667eea';
+                btnElement.style.color = 'white';
+                btnElement.style.border = 'none';
+                btnElement.style.borderRadius = '6px';
+                btnElement.style.margin = '10px';
+                btnElement.style.cursor = 'pointer';
+                canvas.appendChild(btnElement);
+                this.setupEditableElements();
+            },
+            
+            addDivider() {
+                const canvas = document.getElementById('wb-canvas');
+                const divider = document.createElement('hr');
+                divider.className = 'wb-editable';
+                divider.style.margin = '20px 0';
+                divider.style.border = 'none';
+                divider.style.borderTop = '2px solid #eee';
+                canvas.appendChild(divider);
+                this.setupEditableElements();
+            },
+            
+            setupEditableElements() {
+                const elements = document.querySelectorAll('.wb-editable');
+                elements.forEach(element => {
+                    element.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        // Remove previous selections
+                        document.querySelectorAll('.wb-editable').forEach(el => {
+                            el.classList.remove('selected');
+                        });
+                        // Add selection to current element
+                        element.classList.add('selected');
+                        this.currentElement = element;
+                    });
+                });
+            },
+            
+            // Template functions
+            selectTemplate(templateName) {
+                const template = this.templates[templateName];
+                if (!template) return;
+                
+                const canvas = document.getElementById('wb-canvas');
+                // Apply template styles and content
+                canvas.style.backgroundColor = template.colors.secondary;
+                canvas.style.color = template.colors.primary;
+                
+                // Update existing elements with template styling
+                const elements = canvas.querySelectorAll('.wb-editable');
+                elements.forEach(el => {
+                    if (el.tagName === 'H1') {
+                        el.style.fontFamily = template.fonts.heading;
+                        el.style.color = template.colors.primary;
+                    } else {
+                        el.style.fontFamily = template.fonts.body;
+                        el.style.color = template.colors.primary;
+                    }
+                });
+            },
+            
+            // Placeholder functions for other features
+            undo() { console.log('Undo function - to be implemented'); },
+            redo() { console.log('Redo function - to be implemented'); },
+            clearCanvas() { 
+                const canvas = document.getElementById('wb-canvas');
+                canvas.innerHTML = '<div style="padding: 40px;"><h1 class="wb-editable" style="text-align: center; margin-bottom: 20px;">Welcome to Your Photography Portfolio</h1><p class="wb-editable" style="text-align: center; color: #666;">Click any element to edit or add new elements from the toolbar</p></div>';
+                this.setupEditableElements();
+            },
+            preview() { console.log('Preview function - to be implemented'); },
+            save() { console.log('Save function - to be implemented'); },
+            publish() { console.log('Publish function - to be implemented'); },
+            showSectionGenerator() { console.log('Section Generator - to be implemented'); },
+            
+            // Photography component placeholders
+            addPhotoSlider() { this.addText(); },
+            addLightboxGallery() { this.addImage(); },
+            addVideoBackground() { this.addText(); },
+            addParallaxSection() { this.addText(); },
+            addTestimonialSlider() { this.addText(); }
+        };
                                 <div class="wb-carousel-container">
                                     <div class="wb-carousel-track" id="wb-carousel-track">
                                         <div class="wb-template-card" onclick="WebsiteBuilder.selectTemplate('minimal')">
