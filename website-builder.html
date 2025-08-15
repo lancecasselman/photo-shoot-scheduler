@@ -718,6 +718,18 @@
             <!-- Pages Tab Content -->
             <div class="tab-panel" data-panel="pages">
                 <div class="tools-scroll">
+                    <!-- Pages Management Section -->
+                    <div class="tool-section">
+                        <div class="tool-title">Pages</div>
+                        <div id="pages-list" style="margin-bottom: 15px;">
+                            <div class="page-item active" data-page="home" style="display: flex; align-items: center; padding: 8px; background: #f7fafc; border-radius: 4px; margin-bottom: 8px; cursor: pointer;">
+                                <span class="page-name" style="flex: 1;">Home</span>
+                                <button onclick="renamePage('home')" style="background: none; border: none; color: #667eea; cursor: pointer; padding: 4px; margin-right: 4px;">✏️</button>
+                            </div>
+                        </div>
+                        <button onclick="addNewPage()" style="width: 100%; padding: 8px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">+ Add New Page</button>
+                    </div>
+                    
                     <!-- Templates Section -->
                     <div class="tool-section">
                         <div class="tool-title">Templates</div>
@@ -755,6 +767,14 @@
         // Global state
         let selectedElement = null;
         let currentTemplate = 'modern';
+        let currentPage = 'home';
+        let pages = {
+            home: {
+                name: 'Home',
+                template: 'modern',
+                elements: []
+            }
+        };
         let websiteData = {
             template: 'modern',
             elements: []
@@ -832,8 +852,8 @@
         }
 
         function makeTextEditable() {
-            // Select all headings and paragraphs
-            const textElements = document.querySelectorAll('#canvas h1, #canvas h2, #canvas h3, #canvas p');
+            // Select all headings, paragraphs, and buttons
+            const textElements = document.querySelectorAll('#canvas h1, #canvas h2, #canvas h3, #canvas p, #canvas button');
             
             textElements.forEach(element => {
                 // Skip if already made editable
@@ -846,7 +866,13 @@
                 // Click to edit
                 element.addEventListener('click', function(e) {
                     e.stopPropagation();
-                    startEditingText(this);
+                    
+                    // Handle buttons differently
+                    if (element.tagName === 'BUTTON') {
+                        startEditingButton(this);
+                    } else {
+                        startEditingText(this);
+                    }
                 });
             });
         }
@@ -890,6 +916,78 @@
                     element.removeEventListener('keydown', handleEnter);
                 }
             });
+        }
+        
+        function startEditingButton(button) {
+            // Create a mini editor for buttons
+            const originalText = button.textContent;
+            const buttonRect = button.getBoundingClientRect();
+            
+            // Create overlay editor
+            const editor = document.createElement('div');
+            editor.style.cssText = `
+                position: fixed;
+                top: ${buttonRect.top - 50}px;
+                left: ${buttonRect.left}px;
+                background: white;
+                border: 2px solid #667eea;
+                border-radius: 8px;
+                padding: 15px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                z-index: 10000;
+                min-width: 200px;
+            `;
+            
+            editor.innerHTML = `
+                <div style="margin-bottom: 10px;">
+                    <label style="display: block; font-size: 12px; color: #666; margin-bottom: 4px;">Button Text</label>
+                    <input type="text" id="button-text-input" value="${originalText}" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 10px;">
+                    <button id="save-button" style="background: #667eea; color: white; padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer;">Save</button>
+                    <button id="cancel-button" style="background: #e2e8f0; color: #4a5568; padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+                </div>
+            `;
+            
+            document.body.appendChild(editor);
+            
+            // Focus the input
+            const input = editor.querySelector('#button-text-input');
+            input.focus();
+            input.select();
+            
+            // Save button
+            editor.querySelector('#save-button').addEventListener('click', () => {
+                button.textContent = input.value;
+                console.log('Button text updated:', input.value);
+                document.body.removeChild(editor);
+            });
+            
+            // Cancel button
+            editor.querySelector('#cancel-button').addEventListener('click', () => {
+                document.body.removeChild(editor);
+            });
+            
+            // Save on Enter
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    button.textContent = input.value;
+                    console.log('Button text updated:', input.value);
+                    document.body.removeChild(editor);
+                } else if (e.key === 'Escape') {
+                    document.body.removeChild(editor);
+                }
+            });
+            
+            // Click outside to close
+            setTimeout(() => {
+                document.addEventListener('click', function closeEditor(e) {
+                    if (!editor.contains(e.target) && e.target !== button) {
+                        document.body.removeChild(editor);
+                        document.removeEventListener('click', closeEditor);
+                    }
+                });
+            }, 100);
         }
 
         function addEditToolbar(element) {
@@ -1655,6 +1753,198 @@
             }
             
             window.close();
+        }
+        
+        // Page Management Functions
+        function addNewPage() {
+            const pageCount = Object.keys(pages).length;
+            const pageName = prompt('Enter page name:', `Page ${pageCount + 1}`);
+            
+            if (pageName && pageName.trim()) {
+                const pageId = pageName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+                
+                // Check if page already exists
+                if (pages[pageId]) {
+                    alert('A page with this name already exists!');
+                    return;
+                }
+                
+                // Save current page before switching
+                savePage(currentPage);
+                
+                // Create new page
+                pages[pageId] = {
+                    name: pageName,
+                    template: 'modern',
+                    elements: []
+                };
+                
+                // Add to UI
+                const pagesList = document.getElementById('pages-list');
+                const pageItem = document.createElement('div');
+                pageItem.className = 'page-item';
+                pageItem.dataset.page = pageId;
+                pageItem.style.cssText = 'display: flex; align-items: center; padding: 8px; background: #f7fafc; border-radius: 4px; margin-bottom: 8px; cursor: pointer;';
+                pageItem.innerHTML = `
+                    <span class="page-name" style="flex: 1;">${pageName}</span>
+                    <button onclick="renamePage('${pageId}')" style="background: none; border: none; color: #667eea; cursor: pointer; padding: 4px; margin-right: 4px;">✏️</button>
+                    ${pageId !== 'home' ? `<button onclick="deletePage('${pageId}')" style="background: none; border: none; color: #e53e3e; cursor: pointer; padding: 4px;">🗑️</button>` : ''}
+                `;
+                
+                pageItem.addEventListener('click', function(e) {
+                    if (e.target.tagName !== 'BUTTON') {
+                        switchToPage(pageId);
+                    }
+                });
+                
+                pagesList.appendChild(pageItem);
+                
+                // Switch to new page
+                switchToPage(pageId);
+                
+                console.log(`New page created: ${pageName}`);
+            }
+        }
+        
+        function renamePage(pageId) {
+            const page = pages[pageId];
+            const newName = prompt('Enter new page name:', page.name);
+            
+            if (newName && newName.trim()) {
+                page.name = newName;
+                
+                // Update UI
+                const pageItem = document.querySelector(`[data-page="${pageId}"]`);
+                if (pageItem) {
+                    pageItem.querySelector('.page-name').textContent = newName;
+                }
+                
+                console.log(`Page renamed: ${pageId} -> ${newName}`);
+            }
+        }
+        
+        function deletePage(pageId) {
+            if (pageId === 'home') {
+                alert('Cannot delete the home page!');
+                return;
+            }
+            
+            if (confirm(`Are you sure you want to delete the page "${pages[pageId].name}"?`)) {
+                delete pages[pageId];
+                
+                // Remove from UI
+                const pageItem = document.querySelector(`[data-page="${pageId}"]`);
+                if (pageItem) {
+                    pageItem.remove();
+                }
+                
+                // If deleting current page, switch to home
+                if (currentPage === pageId) {
+                    switchToPage('home');
+                }
+                
+                console.log(`Page deleted: ${pageId}`);
+            }
+        }
+        
+        function switchToPage(pageId) {
+            if (!pages[pageId]) return;
+            
+            // Save current page
+            savePage(currentPage);
+            
+            // Update active states
+            document.querySelectorAll('.page-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.page === pageId) {
+                    item.classList.add('active');
+                }
+            });
+            
+            // Load new page
+            currentPage = pageId;
+            const page = pages[pageId];
+            
+            // Clear canvas
+            const canvas = document.getElementById('canvas');
+            canvas.innerHTML = '';
+            
+            // Load page template
+            if (page.elements && page.elements.length > 0) {
+                // Load saved elements
+                page.elements.forEach(element => {
+                    const html = componentTemplates[element.type](element.content);
+                    canvas.insertAdjacentHTML('beforeend', html);
+                });
+            } else {
+                // Load default template
+                loadTemplate(page.template || 'modern');
+            }
+            
+            // Reinitialize touch-to-edit
+            initializeTouchToEdit();
+            
+            console.log(`Switched to page: ${pageId}`);
+        }
+        
+        function savePage(pageId) {
+            if (!pages[pageId]) return;
+            
+            // Save current canvas state to page
+            const elements = [];
+            document.querySelectorAll('#canvas .element').forEach(element => {
+                const type = element.dataset.type;
+                const content = extractElementContent(element);
+                elements.push({ type, content });
+            });
+            
+            pages[pageId].elements = elements;
+            pages[pageId].template = currentTemplate;
+            
+            console.log(`Page saved: ${pageId}`, pages[pageId]);
+        }
+        
+        function extractElementContent(element) {
+            // Extract content from element for saving
+            const content = {};
+            const type = element.dataset.type;
+            
+            // Extract text content
+            const headings = element.querySelectorAll('h1, h2, h3');
+            if (headings.length > 0) {
+                content.title = headings[0].textContent;
+            }
+            
+            const paragraphs = element.querySelectorAll('p');
+            if (paragraphs.length > 0) {
+                content.text = paragraphs[0].textContent;
+                if (paragraphs.length > 1) {
+                    content.subtitle = paragraphs[0].textContent;
+                    content.description = paragraphs[1].textContent;
+                }
+            }
+            
+            // Extract images
+            const images = element.querySelectorAll('img');
+            if (images.length > 0) {
+                if (images.length === 1) {
+                    content.image = images[0].src;
+                } else {
+                    content.images = Array.from(images).map(img => img.src);
+                }
+            }
+            
+            // Extract background images
+            const bgElements = element.querySelectorAll('[style*="background-image"]');
+            bgElements.forEach(el => {
+                const style = el.style.backgroundImage;
+                const match = style.match(/url\(['"]?([^'")]+)['"]?\)/);
+                if (match) {
+                    content.backgroundImage = match[1];
+                }
+            });
+            
+            return content;
         }
 
         // Initialize everything when DOM is loaded
