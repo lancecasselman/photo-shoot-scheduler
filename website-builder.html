@@ -28,31 +28,6 @@
             height: 100vh;
         }
 
-        /* Header */
-        .builder-header {
-            height: 50px;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid #e2e8f0;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 20px;
-            z-index: 1000;
-            position: relative;
-        }
-
-        .builder-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #2d3748;
-        }
-
-        .builder-actions {
-            display: flex;
-            gap: 10px;
-        }
-
         .btn {
             padding: 8px 16px;
             border: none;
@@ -454,15 +429,6 @@
     </style>
 </head>
 <body>
-    <div class="builder-header">
-        <div class="builder-title">Photographers Website</div>
-        <div class="builder-actions">
-            <button class="btn btn-secondary" onclick="previewWebsite()">Preview</button>
-            <button class="btn btn-primary" onclick="publishWebsite()">Publish</button>
-            <button class="btn btn-secondary" onclick="saveAndClose()">Save & Close</button>
-        </div>
-    </div>
-
     <div class="builder-container">
         <!-- Full Screen Canvas -->
         <div class="builder-canvas">
