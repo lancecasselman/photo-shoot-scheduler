@@ -13395,7 +13395,8 @@ END:VCALENDAR`;
             align-items: center;
             justify-content: space-between;
             padding: 0 15px;
-            z-index: 100;
+            z-index: 10000;
+            position: relative;
         }
 
         .wb-logo {
@@ -13478,7 +13479,37 @@ END:VCALENDAR`;
             transition: all 0.3s ease;
         }
         
-        /* AI Editor Panel Styling */
+        /* Website Builder Z-Index Management */
+        .wb-canvas, .wb-canvas * {
+            /* Ensure no AI-generated content can exceed website builder UI */
+            position: relative !important;
+        }
+        
+        .wb-canvas * {
+            /* Limit z-index for all canvas content to prevent interference */
+            z-index: 1 !important;
+        }
+        
+        .wb-canvas *.wb-editable:hover {
+            z-index: 5 !important;
+        }
+        
+        .wb-canvas *.wb-editable.selected {
+            z-index: 10 !important;
+        }
+        
+        /* Ensure any AI-generated modals or overlays respect z-index hierarchy */
+        .wb-canvas [style*="position: fixed"],
+        .wb-canvas [style*="position: absolute"] {
+            z-index: 50 !important;
+        }
+        
+        /* Override any inline z-index styles from AI that might be too high */
+        .wb-canvas [style*="z-index"] {
+            z-index: 1 !important;
+        }
+
+        /* AI Editor Panel Styling - Higher z-index to always stay on top */
         .wb-ai-panel {
             position: fixed;
             top: 0;
@@ -13488,7 +13519,7 @@ END:VCALENDAR`;
             background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
             border-left: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: -5px 0 20px rgba(0, 0, 0, 0.3);
-            z-index: 1000;
+            z-index: 9999;
             transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             overflow-y: auto;
         }
@@ -14279,6 +14310,8 @@ END:VCALENDAR`;
             border-right: 1px solid rgba(255, 255, 255, 0.1);
             overflow-y: auto;
             padding: 10px;
+            position: relative;
+            z-index: 1000;
         }
 
         .wb-sidebar h3 {
@@ -14734,7 +14767,7 @@ END:VCALENDAR`;
             right: 0;
             top: 0;
             bottom: 0;
-            z-index: 50;
+            z-index: 9998;
         }
 
         .wb-edit-panel.active {
