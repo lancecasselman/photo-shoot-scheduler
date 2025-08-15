@@ -836,6 +836,9 @@
             const textElements = document.querySelectorAll('#canvas h1, #canvas h2, #canvas h3, #canvas p');
             
             textElements.forEach(element => {
+                // Skip if already made editable
+                if (element.classList.contains('editable')) return;
+                
                 // Add editable class
                 element.classList.add('editable');
                 element.setAttribute('contenteditable', 'false');
@@ -908,6 +911,9 @@
             const images = document.querySelectorAll('#canvas img');
             
             images.forEach(img => {
+                // Skip if already made editable
+                if (img.classList.contains('editable')) return;
+                
                 // Add editable class
                 img.classList.add('editable');
                 img.style.cursor = 'pointer';
@@ -915,16 +921,21 @@
                 // Click to replace image
                 img.addEventListener('click', function(e) {
                     e.stopPropagation();
+                    e.preventDefault();
                     startEditingImage(this);
-                });
+                }, { once: false });
             });
             
             // Also handle background images (like in hero sections)
             const elementsWithBackgrounds = document.querySelectorAll('#canvas .element[data-type="hero"] > div, #canvas .element[data-type="hero-minimal"] > div > div');
             
             elementsWithBackgrounds.forEach(element => {
+                // Skip if already made editable
+                if (element.hasAttribute('data-bg-editable')) return;
+                
                 const bgStyle = window.getComputedStyle(element).backgroundImage;
                 if (bgStyle && bgStyle !== 'none') {
+                    element.setAttribute('data-bg-editable', 'true');
                     // Add overlay indicator on hover
                     element.style.position = 'relative';
                     element.style.cursor = 'pointer';
@@ -1037,6 +1048,9 @@
             const elements = document.querySelectorAll('#canvas .element');
             
             elements.forEach(element => {
+                // Skip if already has drag handle
+                if (element.querySelector('.drag-handle')) return;
+                
                 // Add drag handle
                 const dragHandle = document.createElement('div');
                 dragHandle.className = 'drag-handle';
