@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website Builder - Photography Portfolio Creator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+            overflow: hidden;
+        }
+
+        .builder-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Header */
+        .builder-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 1000;
+        }
+
+        .builder-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .builder-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd8;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        /* Sidebar */
+        .builder-sidebar {
+            width: 280px;
+            background: white;
+            border-right: 1px solid #e2e8f0;
+            margin-top: 60px;
+            overflow-y: auto;
+        }
+
+        .sidebar-section {
+            padding: 20px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .sidebar-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 15px;
+        }
+
+        /* Templates */
+        .template-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .template-card {
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .template-card:hover {
+            border-color: #667eea;
+            background: #f7faff;
+        }
+
+        .template-card.active {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .template-preview {
+            width: 100%;
+            height: 80px;
+            background: #f1f5f9;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #718096;
+        }
+
+        .template-name {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* Components */
+        .component-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .component-item {
+            padding: 12px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            cursor: grab;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .component-item:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e0;
+        }
+
+        .component-item:active {
+            cursor: grabbing;
+        }
+
+        .component-icon {
+            width: 20px;
+            height: 20px;
+            background: #667eea;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 10px;
+        }
+
+        /* Canvas */
+        .builder-canvas {
+            flex: 1;
+            margin-top: 60px;
+            padding: 20px;
+            background: #f8fafc;
+            overflow-y: auto;
+        }
+
+        .canvas-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            min-height: 600px;
+        }
+
+        .canvas-viewport {
+            padding: 40px;
+        }
+
+        /* Properties Panel */
+        .builder-properties {
+            width: 300px;
+            background: white;
+            border-left: 1px solid #e2e8f0;
+            margin-top: 60px;
+            overflow-y: auto;
+        }
+
+        .properties-content {
+            padding: 20px;
+        }
+
+        .properties-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 20px;
+        }
+
+        .property-group {
+            margin-bottom: 20px;
+        }
+
+        .property-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #4a5568;
+            margin-bottom: 8px;
+        }
+
+        .property-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .property-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        /* Canvas Elements */
+        .element {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 2px dashed transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .element:hover {
+            border-color: #cbd5e0;
+            background: #f8fafc;
+        }
+
+        .element.selected {
+            border-color: #667eea;
+            background: #f7faff;
+        }
+
+        .element h1, .element h2, .element h3 {
+            margin-bottom: 10px;
+        }
+
+        .element p {
+            line-height: 1.6;
+            color: #4a5568;
+        }
+
+        .element img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+        }
+
+        /* Drop Zone */
+        .drop-zone {
+            min-height: 200px;
+            border: 2px dashed #cbd5e0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+            transition: all 0.2s;
+        }
+
+        .drop-zone.drag-over {
+            border-color: #667eea;
+            background: #f7faff;
+        }
+
+        .drop-message {
+            text-align: center;
+            color: #718096;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .builder-sidebar {
+                width: 250px;
+            }
+            
+            .builder-properties {
+                width: 250px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .builder-container {
+                flex-direction: column;
+            }
+            
+            .builder-sidebar,
+            .builder-properties {
+                width: 100%;
+                height: 200px;
+                margin-top: 0;
+            }
+            
+            .builder-canvas {
+                margin-top: 0;
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="builder-header">
+        <div class="builder-title">Photography Website Builder</div>
+        <div class="builder-actions">
+            <button class="btn btn-secondary" onclick="previewWebsite()">Preview</button>
+            <button class="btn btn-primary" onclick="publishWebsite()">Publish</button>
+            <button class="btn btn-secondary" onclick="saveAndClose()">Save & Close</button>
+        </div>
+    </div>
+
+    <div class="builder-container">
+        <!-- Sidebar -->
+        <div class="builder-sidebar">
+            <!-- Templates Section -->
+            <div class="sidebar-section">
+                <div class="sidebar-title">Templates</div>
+                <div class="template-grid">
+                    <div class="template-card active" onclick="selectTemplate('modern')">
+                        <div class="template-preview">Modern</div>
+                        <div class="template-name">Modern</div>
+                    </div>
+                    <div class="template-card" onclick="selectTemplate('classic')">
+                        <div class="template-preview">Classic</div>
+                        <div class="template-name">Classic</div>
+                    </div>
+                    <div class="template-card" onclick="selectTemplate('minimal')">
+                        <div class="template-preview">Minimal</div>
+                        <div class="template-name">Minimal</div>
+                    </div>
+                    <div class="template-card" onclick="selectTemplate('bold')">
+                        <div class="template-preview">Bold</div>
+                        <div class="template-name">Bold</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Components Section -->
+            <div class="sidebar-section">
+                <div class="sidebar-title">Components</div>
+                <div class="component-list">
+                    <div class="component-item" draggable="true" data-component="header">
+                        <div class="component-icon">H</div>
+                        <span>Header</span>
+                    </div>
+                    <div class="component-item" draggable="true" data-component="hero">
+                        <div class="component-icon">🎯</div>
+                        <span>Hero Section</span>
+                    </div>
+                    <div class="component-item" draggable="true" data-component="about">
+                        <div class="component-icon">👤</div>
+                        <span>About</span>
+                    </div>
+                    <div class="component-item" draggable="true" data-component="gallery">
+                        <div class="component-icon">🖼️</div>
+                        <span>Photo Gallery</span>
+                    </div>
+                    <div class="component-item" draggable="true" data-component="services">
+                        <div class="component-icon">⚡</div>
+                        <span>Services</span>
+                    </div>
+                    <div class="component-item" draggable="true" data-component="testimonials">
+                        <div class="component-icon">💬</div>
+                        <span>Testimonials</span>
+                    </div>
+                    <div class="component-item" draggable="true" data-component="contact">
+                        <div class="component-icon">📧</div>
+                        <span>Contact</span>
+                    </div>
+                    <div class="component-item" draggable="true" data-component="footer">
+                        <div class="component-icon">⬇️</div>
+                        <span>Footer</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Canvas -->
+        <div class="builder-canvas">
+            <div class="canvas-container">
+                <div class="canvas-viewport" id="canvas">
+                    <div class="drop-zone" id="drop-zone">
+                        <div class="drop-message">
+                            <h3>Start Building Your Photography Website</h3>
+                            <p>Drag components from the sidebar or choose a template to get started</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Properties Panel -->
+        <div class="builder-properties">
+            <div class="properties-content">
+                <div class="properties-title">Properties</div>
+                <div id="properties-panel">
+                    <p style="color: #718096; text-align: center; margin-top: 40px;">
+                        Select an element to edit its properties
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let selectedElement = null;
+        let currentTemplate = 'modern';
+        let websiteData = {
+            template: 'modern',
+            elements: []
+        };
+
+        // Templates
+        const templates = {
+            modern: {
+                name: 'Modern Photography',
+                elements: [
+                    {
+                        type: 'header',
+                        content: {
+                            title: 'Your Photography Studio',
+                            navigation: ['Home', 'Portfolio', 'About', 'Contact']
+                        }
+                    },
+                    {
+                        type: 'hero',
+                        content: {
+                            title: 'Capturing Life\'s Beautiful Moments',
+                            subtitle: 'Professional photography services for weddings, portraits, and special events',
+                            backgroundImage: 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=1200'
+                        }
+                    },
+                    {
+                        type: 'about',
+                        content: {
+                            title: 'About Me',
+                            text: 'I\'m a passionate photographer dedicated to capturing the essence of every moment. With over 10 years of experience, I specialize in creating timeless images that tell your unique story.',
+                            image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400'
+                        }
+                    },
+                    {
+                        type: 'gallery',
+                        content: {
+                            title: 'Portfolio',
+                            images: [
+                                'https://images.unsplash.com/photo-1519741497674-611481863552?w=400',
+                                'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=400',
+                                'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400',
+                                'https://images.unsplash.com/photo-1520854221256-17451cc331bf?w=400'
+                            ]
+                        }
+                    },
+                    {
+                        type: 'contact',
+                        content: {
+                            title: 'Get In Touch',
+                            email: 'hello@photographer.com',
+                            phone: '(555) 123-4567',
+                            address: '123 Photography Lane, Studio City, CA 90210'
+                        }
+                    }
+                ]
+            }
+        };
+
+        // Component templates
+        const componentTemplates = {
+            header: (data = {}) => `
+                <div class="element" data-type="header">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid #e2e8f0;">
+                        <h2 style="margin: 0; color: #2d3748;">${data.title || 'Your Photography Studio'}</h2>
+                        <nav style="display: flex; gap: 20px;">
+                            ${(data.navigation || ['Home', 'Portfolio', 'About', 'Contact']).map(item => `<a href="#" style="color: #4a5568; text-decoration: none;">${item}</a>`).join('')}
+                        </nav>
+                    </div>
+                </div>
+            `,
+            hero: (data = {}) => `
+                <div class="element" data-type="hero">
+                    <div style="text-align: center; padding: 80px 20px; background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('${data.backgroundImage || 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=1200'}'); background-size: cover; background-position: center; color: white; border-radius: 8px;">
+                        <h1 style="font-size: 3rem; margin-bottom: 20px; color: white;">${data.title || 'Capturing Beautiful Moments'}</h1>
+                        <p style="font-size: 1.2rem; margin-bottom: 30px; color: rgba(255,255,255,0.9);">${data.subtitle || 'Professional photography services'}</p>
+                        <button style="background: #667eea; color: white; padding: 15px 30px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer;">View Portfolio</button>
+                    </div>
+                </div>
+            `,
+            about: (data = {}) => `
+                <div class="element" data-type="about">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; padding: 40px 0;">
+                        <div>
+                            <h2 style="color: #2d3748; margin-bottom: 20px;">${data.title || 'About Me'}</h2>
+                            <p style="line-height: 1.6; color: #4a5568;">${data.text || 'I\'m a passionate photographer dedicated to capturing the essence of every moment.'}</p>
+                        </div>
+                        <div>
+                            <img src="${data.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400'}" style="width: 100%; border-radius: 8px;" alt="About">
+                        </div>
+                    </div>
+                </div>
+            `,
+            gallery: (data = {}) => `
+                <div class="element" data-type="gallery">
+                    <div style="padding: 40px 0;">
+                        <h2 style="text-align: center; color: #2d3748; margin-bottom: 40px;">${data.title || 'Portfolio'}</h2>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                            ${(data.images || ['https://images.unsplash.com/photo-1519741497674-611481863552?w=400']).map(img => `<img src="${img}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px;" alt="Gallery">`).join('')}
+                        </div>
+                    </div>
+                </div>
+            `,
+            services: (data = {}) => `
+                <div class="element" data-type="services">
+                    <div style="padding: 40px 0;">
+                        <h2 style="text-align: center; color: #2d3748; margin-bottom: 40px;">${data.title || 'Services'}</h2>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px;">
+                            ${(data.services || [
+                                {name: 'Wedding Photography', price: '$2,500', description: 'Complete wedding day coverage'},
+                                {name: 'Portrait Sessions', price: '$350', description: 'Individual and family portraits'},
+                                {name: 'Event Photography', price: '$150/hr', description: 'Corporate and special events'}
+                            ]).map(service => `
+                                <div style="text-align: center; padding: 30px; background: #f8fafc; border-radius: 8px;">
+                                    <h3 style="color: #2d3748; margin-bottom: 10px;">${service.name}</h3>
+                                    <p style="color: #667eea; font-size: 1.2rem; font-weight: 600; margin-bottom: 15px;">${service.price}</p>
+                                    <p style="color: #4a5568;">${service.description}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `,
+            testimonials: (data = {}) => `
+                <div class="element" data-type="testimonials">
+                    <div style="padding: 40px 0; background: #f8fafc; border-radius: 8px;">
+                        <h2 style="text-align: center; color: #2d3748; margin-bottom: 40px;">${data.title || 'What Clients Say'}</h2>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; padding: 0 20px;">
+                            ${(data.testimonials || [
+                                {name: 'Sarah Johnson', text: 'Absolutely amazing work! The photos turned out better than we could have imagined.'},
+                                {name: 'Mike Davis', text: 'Professional, creative, and so easy to work with. Highly recommended!'}
+                            ]).map(testimonial => `
+                                <div style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                                    <p style="color: #4a5568; margin-bottom: 20px; font-style: italic;">"${testimonial.text}"</p>
+                                    <p style="color: #2d3748; font-weight: 600;">— ${testimonial.name}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `,
+            contact: (data = {}) => `
+                <div class="element" data-type="contact">
+                    <div style="padding: 40px 0;">
+                        <h2 style="text-align: center; color: #2d3748; margin-bottom: 40px;">${data.title || 'Get In Touch'}</h2>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+                            <div>
+                                <h3 style="color: #2d3748; margin-bottom: 20px;">Contact Information</h3>
+                                <p style="margin-bottom: 10px; color: #4a5568;">📧 ${data.email || 'hello@photographer.com'}</p>
+                                <p style="margin-bottom: 10px; color: #4a5568;">📞 ${data.phone || '(555) 123-4567'}</p>
+                                <p style="color: #4a5568;">📍 ${data.address || '123 Photography Lane, Studio City, CA'}</p>
+                            </div>
+                            <div>
+                                <h3 style="color: #2d3748; margin-bottom: 20px;">Send a Message</h3>
+                                <form style="display: flex; flex-direction: column; gap: 15px;">
+                                    <input type="text" placeholder="Your Name" style="padding: 12px; border: 1px solid #e2e8f0; border-radius: 6px;">
+                                    <input type="email" placeholder="Your Email" style="padding: 12px; border: 1px solid #e2e8f0; border-radius: 6px;">
+                                    <textarea placeholder="Your Message" rows="4" style="padding: 12px; border: 1px solid #e2e8f0; border-radius: 6px; resize: vertical;"></textarea>
+                                    <button type="submit" style="background: #667eea; color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer;">Send Message</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            footer: (data = {}) => `
+                <div class="element" data-type="footer">
+                    <div style="background: #2d3748; color: white; padding: 30px 0; text-align: center; border-radius: 8px;">
+                        <p style="margin-bottom: 10px; color: white;">&copy; 2024 ${data.businessName || 'Your Photography Studio'}. All rights reserved.</p>
+                        <p style="color: rgba(255,255,255,0.7);">Professional photography services</p>
+                    </div>
+                </div>
+            `
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTemplate('modern');
+            setupDragAndDrop();
+            setupElementSelection();
+        });
+
+        // Template functions
+        function selectTemplate(templateName) {
+            // Update active template card
+            document.querySelectorAll('.template-card').forEach(card => card.classList.remove('active'));
+            event.target.closest('.template-card').classList.add('active');
+            
+            currentTemplate = templateName;
+            loadTemplate(templateName);
+        }
+
+        function loadTemplate(templateName) {
+            const template = templates[templateName];
+            if (!template) return;
+
+            const canvas = document.getElementById('canvas');
+            canvas.innerHTML = '';
+
+            template.elements.forEach(element => {
+                const html = componentTemplates[element.type](element.content);
+                canvas.insertAdjacentHTML('beforeend', html);
+            });
+
+            websiteData = { template: templateName, elements: template.elements };
+            setupElementSelection();
+        }
+
+        // Drag and drop
+        function setupDragAndDrop() {
+            const components = document.querySelectorAll('.component-item');
+            const canvas = document.getElementById('canvas');
+
+            components.forEach(component => {
+                component.addEventListener('dragstart', function(e) {
+                    e.dataTransfer.setData('text/plain', this.dataset.component);
+                });
+            });
+
+            canvas.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('drag-over');
+            });
+
+            canvas.addEventListener('dragleave', function(e) {
+                this.classList.remove('drag-over');
+            });
+
+            canvas.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('drag-over');
+                
+                const componentType = e.dataTransfer.getData('text/plain');
+                addComponent(componentType);
+            });
+        }
+
+        function addComponent(type) {
+            const canvas = document.getElementById('canvas');
+            
+            // Remove drop zone if it exists
+            const dropZone = document.getElementById('drop-zone');
+            if (dropZone) {
+                dropZone.remove();
+            }
+
+            const html = componentTemplates[type]();
+            canvas.insertAdjacentHTML('beforeend', html);
+            
+            setupElementSelection();
+        }
+
+        // Element selection
+        function setupElementSelection() {
+            const elements = document.querySelectorAll('.element');
+            
+            elements.forEach(element => {
+                element.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    selectElement(this);
+                });
+            });
+
+            // Deselect when clicking canvas
+            document.getElementById('canvas').addEventListener('click', function() {
+                deselectElement();
+            });
+        }
+
+        function selectElement(element) {
+            // Remove previous selection
+            document.querySelectorAll('.element').forEach(el => el.classList.remove('selected'));
+            
+            // Select new element
+            element.classList.add('selected');
+            selectedElement = element;
+            
+            // Show properties
+            showProperties(element);
+        }
+
+        function deselectElement() {
+            document.querySelectorAll('.element').forEach(el => el.classList.remove('selected'));
+            selectedElement = null;
+            
+            // Clear properties panel
+            document.getElementById('properties-panel').innerHTML = `
+                <p style="color: #718096; text-align: center; margin-top: 40px;">
+                    Select an element to edit its properties
+                </p>
+            `;
+        }
+
+        function showProperties(element) {
+            const type = element.dataset.type;
+            const propertiesPanel = document.getElementById('properties-panel');
+            
+            let propertiesHTML = '';
+            
+            switch(type) {
+                case 'header':
+                    propertiesHTML = `
+                        <div class="property-group">
+                            <label class="property-label">Title</label>
+                            <input type="text" class="property-input" value="Your Photography Studio" onchange="updateElementProperty('header', 'title', this.value)">
+                        </div>
+                    `;
+                    break;
+                case 'hero':
+                    propertiesHTML = `
+                        <div class="property-group">
+                            <label class="property-label">Title</label>
+                            <input type="text" class="property-input" value="Capturing Beautiful Moments" onchange="updateElementProperty('hero', 'title', this.value)">
+                        </div>
+                        <div class="property-group">
+                            <label class="property-label">Subtitle</label>
+                            <input type="text" class="property-input" value="Professional photography services" onchange="updateElementProperty('hero', 'subtitle', this.value)">
+                        </div>
+                        <div class="property-group">
+                            <label class="property-label">Background Image URL</label>
+                            <input type="url" class="property-input" value="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=1200" onchange="updateElementProperty('hero', 'backgroundImage', this.value)">
+                        </div>
+                    `;
+                    break;
+                case 'about':
+                    propertiesHTML = `
+                        <div class="property-group">
+                            <label class="property-label">Title</label>
+                            <input type="text" class="property-input" value="About Me" onchange="updateElementProperty('about', 'title', this.value)">
+                        </div>
+                        <div class="property-group">
+                            <label class="property-label">Text</label>
+                            <textarea class="property-input" rows="4" onchange="updateElementProperty('about', 'text', this.value)">I'm a passionate photographer dedicated to capturing the essence of every moment.</textarea>
+                        </div>
+                        <div class="property-group">
+                            <label class="property-label">Image URL</label>
+                            <input type="url" class="property-input" value="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400" onchange="updateElementProperty('about', 'image', this.value)">
+                        </div>
+                    `;
+                    break;
+                case 'contact':
+                    propertiesHTML = `
+                        <div class="property-group">
+                            <label class="property-label">Title</label>
+                            <input type="text" class="property-input" value="Get In Touch" onchange="updateElementProperty('contact', 'title', this.value)">
+                        </div>
+                        <div class="property-group">
+                            <label class="property-label">Email</label>
+                            <input type="email" class="property-input" value="hello@photographer.com" onchange="updateElementProperty('contact', 'email', this.value)">
+                        </div>
+                        <div class="property-group">
+                            <label class="property-label">Phone</label>
+                            <input type="tel" class="property-input" value="(555) 123-4567" onchange="updateElementProperty('contact', 'phone', this.value)">
+                        </div>
+                        <div class="property-group">
+                            <label class="property-label">Address</label>
+                            <input type="text" class="property-input" value="123 Photography Lane, Studio City, CA" onchange="updateElementProperty('contact', 'address', this.value)">
+                        </div>
+                    `;
+                    break;
+                default:
+                    propertiesHTML = `
+                        <div class="property-group">
+                            <label class="property-label">Element Type</label>
+                            <input type="text" class="property-input" value="${type}" readonly>
+                        </div>
+                    `;
+            }
+            
+            propertiesPanel.innerHTML = propertiesHTML;
+        }
+
+        function updateElementProperty(elementType, property, value) {
+            if (!selectedElement) return;
+            
+            // This is a simplified update - in a real app you'd want to rebuild the element
+            console.log(`Updating ${elementType} ${property} to ${value}`);
+            
+            // For demo purposes, show that the property is being updated
+            const elements = selectedElement.querySelectorAll('h1, h2, h3, p, img');
+            elements.forEach(el => {
+                if (property === 'title' && (el.tagName === 'H1' || el.tagName === 'H2')) {
+                    el.textContent = value;
+                }
+                if (property === 'subtitle' && el.tagName === 'P') {
+                    el.textContent = value;
+                }
+                if (property === 'backgroundImage' && el.style.backgroundImage) {
+                    el.style.backgroundImage = `url('${value}')`;
+                }
+                if (property === 'image' && el.tagName === 'IMG') {
+                    el.src = value;
+                }
+            });
+        }
+
+        // Header functions
+        function previewWebsite() {
+            alert('Preview functionality would open a new tab with the live website preview');
+        }
+
+        function publishWebsite() {
+            alert('Publish functionality would deploy the website to your domain');
+        }
+
+        function saveAndClose() {
+            // Save to parent window if opened from main app
+            if (window.opener) {
+                window.opener.postMessage({
+                    type: 'website-saved',
+                    data: websiteData
+                }, '*');
+            }
+            
+            window.close();
+        }
+    </script>
+</body>
+</html>
