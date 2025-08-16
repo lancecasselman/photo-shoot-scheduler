@@ -879,11 +879,35 @@
         // Global state
         let selectedElement = null;
         let selectedComponent = null; // Currently selected component block
-        let currentTemplate = 'modern';
         let currentPage = 'home';
+        let currentTemplate = 'modern'; // Current template ('modern' or 'elegant')
         let navStyle = 'horizontal'; // 'horizontal' or 'dropdown'
         let navOrder = ['home', 'portfolio', 'about', 'contact']; // Navigation order
         let subPages = {}; // Store subpages: { parentId: [subpage1, subpage2, ...] }
+        
+        // Template definitions
+        const templates = {
+            modern: {
+                name: 'Modern',
+                description: 'Clean and contemporary design with bright colors',
+                elements: [
+                    { type: 'hero', content: { title: 'Capturing Life\'s Beautiful Moments', subtitle: 'Professional photography services for weddings, portraits, and special events', backgroundImage: 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=1200' } },
+                    { type: 'about', content: { title: 'About My Work', text: 'I specialize in creating timeless memories through the art of photography. With a passion for capturing authentic moments, I work closely with clients to tell their unique stories.' } },
+                    { type: 'gallery', content: { title: 'Portfolio Highlights', images: ['https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=600', 'https://images.unsplash.com/photo-1522673607200-164d1b6ce486?w=600', 'https://images.unsplash.com/photo-1594736797933-d0501ba2fe65?w=600'] } },
+                    { type: 'contact', content: { title: 'Get In Touch', email: 'hello@photographer.com', phone: '(555) 123-4567', address: '123 Photography Lane, Studio City, CA 90210' } }
+                ]
+            },
+            elegant: {
+                name: 'Elegant',
+                description: 'Sophisticated dark theme inspired by high-end fashion photography',
+                elements: [
+                    { type: 'elegant-hero', content: { title: 'Visual Storytelling', subtitle: 'Fine Art Photography', backgroundImage: 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=1600' } },
+                    { type: 'elegant-featured', content: { title: 'Featured Work', description: 'A carefully curated selection of recent work showcasing artistic vision and technical excellence.', image: 'https://images.unsplash.com/photo-1594736797933-d0501ba2fe65?w=800' } },
+                    { type: 'elegant-about', content: { title: 'The Artist', text: 'Through the lens, I capture not just images, but the soul of the moment. Each photograph tells a story, preserving the essence of beauty, emotion, and human connection in its purest form.', subtitle: 'My work spans fine art portraiture, intimate landscapes, and architectural studies, always seeking the extraordinary within the everyday.', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600' } },
+                    { type: 'elegant-contact', content: { title: 'Connect', email: 'studio@photographer.com', phone: '(555) 000-0000', address: 'Available by appointment' } }
+                ]
+            }
+        };
         let pages = {
             home: { name: 'Home', template: 'modern', elements: [] },
             portfolio: { name: 'Portfolio', template: 'modern', elements: [
@@ -2104,6 +2128,51 @@
                         }
                     }
                 ]
+            },
+            elegant: {
+                name: 'Elegant Portfolio',
+                elements: [
+                    {
+                        type: 'elegant-hero',
+                        content: {
+                            title: 'Visual Storytelling',
+                            subtitle: 'Fine Art & Portrait Photography',
+                            backgroundImage: 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=1600',
+                            overlayOpacity: 0.6
+                        }
+                    },
+                    {
+                        type: 'elegant-featured',
+                        content: {
+                            title: 'Featured Work',
+                            image: 'https://images.unsplash.com/photo-1594736797933-d0501ba2fe65?w=800',
+                            description: 'Capturing the essence of natural beauty through carefully composed portraits and landscapes.'
+                        }
+                    },
+                    {
+                        type: 'elegant-gallery-grid',
+                        content: {
+                            title: 'Gallery Collections',
+                            galleries: [
+                                {
+                                    name: 'Portraits',
+                                    image: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=500',
+                                    category: 'Fine Art Portraits'
+                                },
+                                {
+                                    name: 'Landscapes',
+                                    image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=500',
+                                    category: 'Natural Beauty'
+                                },
+                                {
+                                    name: 'Architecture',
+                                    image: 'https://images.unsplash.com/photo-1511818966892-d7d671e672a2?w=500',
+                                    category: 'Urban Stories'
+                                }
+                            ]
+                        }
+                    }
+                ]
             }
         };
 
@@ -2620,17 +2689,204 @@
                         <p style="font-size: 1.2rem; color: rgba(255,255,255,0.9); max-width: 600px; margin: 0 auto;">${data.subtitle || 'Professional photography services'}</p>
                     </div>
                 </div>
+            `,
+            
+            // Elegant Template Components (Versace-inspired)
+            'elegant-hero': (data = {}) => `
+                <div class="element" data-type="elegant-hero">
+                    <div style="position: relative; min-height: 100vh; background: linear-gradient(rgba(0,0,0,${data.overlayOpacity || 0.7}), rgba(0,0,0,${data.overlayOpacity || 0.7})), url('${data.backgroundImage || 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=1600'}'); background-size: cover; background-position: center; background-attachment: fixed; display: flex; align-items: center; justify-content: center; text-align: center; color: white;">
+                        <div class="image-edit-overlay" style="position: absolute; top: 15px; right: 15px; opacity: 1; transition: none; z-index: 9999;">
+                            <button onclick="changeHeroBackground(this)" style="background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.3); color: white; padding: 12px 16px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 500; backdrop-filter: blur(10px); transition: all 0.3s ease;" onmouseover="this.style.background='rgba(255, 255, 255, 0.25)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.15)'" title="Change Background">📷</button>
+                        </div>
+                        <div style="max-width: 800px; padding: 0 30px;">
+                            <div style="font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 300; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 30px; opacity: 0.9;">${data.subtitle || 'Fine Art Photography'}</div>
+                            <h1 style="font-family: 'Cormorant Garamond', serif; font-size: clamp(3rem, 8vw, 6rem); font-weight: 300; line-height: 1.1; margin-bottom: 40px; letter-spacing: 2px;">${data.title || 'Visual Storytelling'}</h1>
+                            <div style="width: 100px; height: 1px; background: white; margin: 0 auto; opacity: 0.7;"></div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            
+            'elegant-featured': (data = {}) => `
+                <div class="element" data-type="elegant-featured">
+                    <div style="background: #0a0a0a; padding: 100px 30px;">
+                        <div style="max-width: 1400px; margin: 0 auto;">
+                            <h2 style="text-align: center; color: white; font-family: 'Cormorant Garamond', serif; font-size: 3rem; font-weight: 300; margin-bottom: 20px; letter-spacing: 2px;">${data.title || 'Featured Work'}</h2>
+                            <p style="text-align: center; color: #999; font-size: 1.1rem; margin-bottom: 60px; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.6;">${data.description || 'A carefully curated selection of recent work showcasing artistic vision and technical excellence.'}</p>
+                            <div style="position: relative; border-radius: 0; overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.5);">
+                                <div class="image-edit-overlay" style="position: absolute; top: 20px; right: 20px; opacity: 1; transition: none; z-index: 9999;">
+                                    <button onclick="changeImage(this)" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: white; padding: 12px 16px; border-radius: 6px; cursor: pointer; font-size: 12px; backdrop-filter: blur(10px);" title="Change Image">📷</button>
+                                </div>
+                                <img src="${data.image || 'https://images.unsplash.com/photo-1594736797933-d0501ba2fe65?w=800'}" alt="Featured Work" style="width: 100%; height: 600px; object-fit: cover; display: block;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            
+            'elegant-gallery-grid': (data = {}) => `
+                <div class="element" data-type="elegant-gallery-grid">
+                    <div style="background: #111111; padding: 100px 30px;">
+                        <div style="max-width: 1400px; margin: 0 auto;">
+                            <h2 style="text-align: center; color: white; font-family: 'Cormorant Garamond', serif; font-size: 3rem; font-weight: 300; margin-bottom: 80px; letter-spacing: 2px;">${data.title || 'Gallery Collections'}</h2>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 40px;">
+                                ${(data.galleries || []).map((gallery, index) => `
+                                    <div style="position: relative; group; cursor: pointer; overflow: hidden;" onmouseover="this.querySelector('.overlay').style.opacity='1'" onmouseout="this.querySelector('.overlay').style.opacity='0'">
+                                        <div class="image-edit-overlay" style="position: absolute; top: 15px; right: 15px; opacity: 1; transition: none; z-index: 9999;">
+                                            <button onclick="changeImage(this)" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: white; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; backdrop-filter: blur(10px);" title="Change Image">📷</button>
+                                        </div>
+                                        <img src="${gallery.image}" alt="${gallery.name}" style="width: 100%; height: 500px; object-fit: cover; transition: transform 0.7s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                                        <div class="overlay" style="position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.9)); padding: 40px 30px 30px; opacity: 0; transition: opacity 0.5s ease;">
+                                            <h3 style="color: white; font-family: 'Cormorant Garamond', serif; font-size: 1.8rem; font-weight: 400; margin-bottom: 8px; letter-spacing: 1px;">${gallery.name}</h3>
+                                            <p style="color: #ccc; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px;">${gallery.category}</p>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            
+            'elegant-about': (data = {}) => `
+                <div class="element" data-type="elegant-about">
+                    <div style="background: #0a0a0a; padding: 120px 30px;">
+                        <div style="max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center;">
+                            <div>
+                                <h2 style="color: white; font-family: 'Cormorant Garamond', serif; font-size: 3.5rem; font-weight: 300; margin-bottom: 30px; line-height: 1.1; letter-spacing: 1px;">${data.title || 'The Artist'}</h2>
+                                <div style="width: 80px; height: 1px; background: white; margin-bottom: 40px; opacity: 0.7;"></div>
+                                <p style="color: #ccc; font-size: 1.1rem; line-height: 1.8; margin-bottom: 30px;">${data.text || 'Through the lens, I capture not just images, but the soul of the moment. Each photograph tells a story, preserving the essence of beauty, emotion, and human connection in its purest form.'}</p>
+                                <p style="color: #999; font-size: 1rem; line-height: 1.7;">${data.subtitle || 'My work spans fine art portraiture, intimate landscapes, and architectural studies, always seeking the extraordinary within the everyday.'}</p>
+                            </div>
+                            <div style="position: relative;">
+                                <div class="image-edit-overlay" style="position: absolute; top: 15px; right: 15px; opacity: 1; transition: none; z-index: 9999;">
+                                    <button onclick="changeImage(this)" style="background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); color: white; padding: 12px 16px; border-radius: 6px; cursor: pointer; font-size: 12px; backdrop-filter: blur(10px);" title="Change Image">📷</button>
+                                </div>
+                                <img src="${data.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600'}" alt="About" style="width: 100%; height: 600px; object-fit: cover; filter: grayscale(20%);">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            
+            'elegant-contact': (data = {}) => `
+                <div class="element" data-type="elegant-contact">
+                    <div style="background: #111111; padding: 120px 30px;">
+                        <div style="max-width: 800px; margin: 0 auto; text-align: center;">
+                            <h2 style="color: white; font-family: 'Cormorant Garamond', serif; font-size: 3rem; font-weight: 300; margin-bottom: 30px; letter-spacing: 2px;">${data.title || 'Connect'}</h2>
+                            <div style="width: 100px; height: 1px; background: white; margin: 0 auto 60px; opacity: 0.7;"></div>
+                            <div style="display: grid; gap: 30px; margin-bottom: 60px;">
+                                <p style="color: #ccc; font-size: 1.1rem;"><span style="color: white; font-weight: 500;">Email</span><br>${data.email || 'studio@photographer.com'}</p>
+                                <p style="color: #ccc; font-size: 1.1rem;"><span style="color: white; font-weight: 500;">Phone</span><br>${data.phone || '(555) 000-0000'}</p>
+                                <p style="color: #ccc; font-size: 1.1rem;"><span style="color: white; font-weight: 500;">Studio</span><br>${data.address || 'Available by appointment'}</p>
+                            </div>
+                            <p style="color: #999; font-size: 1rem; line-height: 1.6; max-width: 500px; margin: 0 auto;">For inquiries about commissions, exhibitions, or collaborations, please reach out. I welcome the opportunity to discuss your vision.</p>
+                        </div>
+                    </div>
+                </div>
             `
         };
 
         // Template functions
+        function showTemplateSelector() {
+            const modal = document.getElementById('templateSelectorModal');
+            if (!modal) {
+                // Create the modal dynamically
+                const modalHTML = `
+                    <div id="templateSelectorModal" style="display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; justify-content: center; align-items: center;">
+                        <div style="width: 90%; max-width: 600px; background: white; border-radius: 12px; padding: 40px; box-shadow: 0 25px 50px rgba(0,0,0,0.3);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                                <h2 style="margin: 0; color: #2d3748; font-family: 'Playfair Display', serif; font-size: 1.8rem;">Choose Template</h2>
+                                <button onclick="closeTemplateSelector()" style="background: none; border: none; font-size: 24px; cursor: pointer; padding: 5px; color: #718096;" title="Close">&times;</button>
+                            </div>
+                            <div class="template-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                                <div class="template-card modern-template" onclick="selectTemplate('modern')" style="border: 2px solid ${currentTemplate === 'modern' ? '#667eea' : '#e2e8f0'}; border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.3s; background: white;">
+                                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); height: 120px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">Modern</div>
+                                    <h3 style="margin: 0 0 8px; color: #2d3748; font-size: 16px; font-weight: 600;">Modern</h3>
+                                    <p style="margin: 0; color: #718096; font-size: 14px; line-height: 1.5;">Clean and contemporary design with bright colors</p>
+                                </div>
+                                <div class="template-card elegant-template" onclick="selectTemplate('elegant')" style="border: 2px solid ${currentTemplate === 'elegant' ? '#667eea' : '#e2e8f0'}; border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.3s; background: white;">
+                                    <div style="background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%); height: 120px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">Elegant</div>
+                                    <h3 style="margin: 0 0 8px; color: #2d3748; font-size: 16px; font-weight: 600;">Elegant</h3>
+                                    <p style="margin: 0; color: #718096; font-size: 14px; line-height: 1.5;">Sophisticated dark theme inspired by high-end fashion photography</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.insertAdjacentHTML('beforeend', modalHTML);
+            } else {
+                modal.style.display = 'flex';
+            }
+        }
+        
+        function closeTemplateSelector() {
+            const modal = document.getElementById('templateSelectorModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
         function selectTemplate(templateName) {
             // Update active template card
-            document.querySelectorAll('.template-card').forEach(card => card.classList.remove('active'));
-            event.target.closest('.template-card').classList.add('active');
+            document.querySelectorAll('.template-card').forEach(card => {
+                if (card.classList.contains(`${templateName}-template`)) {
+                    card.style.borderColor = '#667eea';
+                } else {
+                    card.style.borderColor = '#e2e8f0';
+                }
+            });
             
             currentTemplate = templateName;
             loadTemplate(templateName);
+            closeTemplateSelector();
+            
+            console.log(`Switched to ${templateName} template`);
+        }
+        
+        function addTemplateButton() {
+            // Load elegant template font
+            if (!document.getElementById('elegant-font')) {
+                const elegantFont = document.createElement('link');
+                elegantFont.id = 'elegant-font';
+                elegantFont.rel = 'stylesheet';
+                elegantFont.href = 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap';
+                document.head.appendChild(elegantFont);
+                console.log('Elegant template font loaded');
+            }
+            
+            // Add a floating template button to the interface
+            const templateButton = document.createElement('div');
+            templateButton.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 9998;
+                background: #9f7aea;
+                color: white;
+                padding: 12px 16px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: 500;
+                font-size: 14px;
+                box-shadow: 0 4px 12px rgba(159, 122, 234, 0.3);
+                transition: all 0.3s ease;
+                user-select: none;
+            `;
+            templateButton.innerHTML = '🎨 Templates';
+            templateButton.onclick = showTemplateSelector;
+            templateButton.onmouseover = function() {
+                this.style.background = '#805ad5';
+                this.style.transform = 'translateY(-2px)';
+                this.style.boxShadow = '0 6px 16px rgba(159, 122, 234, 0.4)';
+            };
+            templateButton.onmouseout = function() {
+                this.style.background = '#9f7aea';
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = '0 4px 12px rgba(159, 122, 234, 0.3)';
+            };
+            
+            document.body.appendChild(templateButton);
         }
 
         function loadTemplate(templateName) {
@@ -2651,6 +2907,13 @@
                 }
             });
 
+            // Update the current page to use the new template elements
+            pages[currentPage] = { 
+                name: pages[currentPage]?.name || 'Home', 
+                template: templateName, 
+                elements: template.elements 
+            };
+            
             websiteData = { template: templateName, elements: template.elements };
             setupElementSelection();
             
@@ -6373,6 +6636,12 @@
             initializeDragAndDrop();
             initializeFloatingToolbar(); // Initialize toolbar first
             initializePagesDragAndDrop(); // Initialize page drag and drop
+            
+            // Add template selector button
+            setTimeout(() => {
+                addTemplateButton();
+                console.log('Template selector functionality ready');
+            }, 1000);
             
             // Load saved website data if available, otherwise use defaults
             const hasLoadedData = loadSavedWebsite();
