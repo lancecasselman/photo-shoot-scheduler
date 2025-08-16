@@ -2850,7 +2850,7 @@
                 navElement.innerHTML = `
                     <div style="display: flex; justify-content: center; align-items: center; gap: 30px;">
                         <!-- Home Button -->
-                        <a href="javascript:void(0)" onclick="switchToPageNew('home'); return false;" style="text-decoration: none; color: ${'home' === currentPage ? '#667eea' : '#2d3748'}; font-weight: ${'home' === currentPage ? '600' : '400'}; padding: 8px 12px; border-radius: 4px; transition: all 0.2s; cursor: pointer;">🏠 Home</a>
+                        <a href="javascript:void(0)" onclick="switchToPageNew('home'); return false;" style="text-decoration: none; color: ${'home' === currentPage ? '#667eea' : '#2d3748'}; font-weight: ${'home' === currentPage ? '600' : '400'}; padding: 8px 12px; border-radius: 4px; transition: all 0.2s; cursor: pointer;">Home</a>
                         ${navOrder.filter(pageId => pageId !== 'home').map(pageId => {
                             const hasSubPages = subPages[pageId] && subPages[pageId].length > 0;
                             
@@ -2881,7 +2881,7 @@
                 // Dropdown navigation style
                 const dropdownItems = [];
                 // Always add home first
-                dropdownItems.push(`<a href="javascript:void(0)" onclick="switchToPageNew('home'); toggleDropdown(); return false;" style="display: block; padding: 10px 15px; text-decoration: none; color: ${'home' === currentPage ? '#667eea' : '#2d3748'}; border-bottom: 1px solid #f7fafc; transition: all 0.2s; cursor: pointer;">🏠 Home</a>`);
+                dropdownItems.push(`<a href="javascript:void(0)" onclick="switchToPageNew('home'); toggleDropdown(); return false;" style="display: block; padding: 10px 15px; text-decoration: none; color: ${'home' === currentPage ? '#667eea' : '#2d3748'}; border-bottom: 1px solid #f7fafc; transition: all 0.2s; cursor: pointer;">Home</a>`);
                 
                 navOrder.filter(pageId => pageId !== 'home').forEach(pageId => {
                     dropdownItems.push(`<a href="javascript:void(0)" onclick="switchToPageNew('${pageId}'); toggleDropdown(); return false;" style="display: block; padding: 10px 15px; text-decoration: none; color: ${pageId === currentPage ? '#667eea' : '#2d3748'}; border-bottom: 1px solid #f7fafc; transition: all 0.2s; cursor: pointer;">${pages[pageId]?.name || pageId}</a>`);
