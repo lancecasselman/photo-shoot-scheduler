@@ -1659,62 +1659,68 @@
             });
         }
 
-        // Style Application Functions for Selected Component
+        // Style Application Functions for Selected Component ONLY
         function applyThemeColor(type, value) {
             if (!selectedComponent) {
-                alert('Please select a component first');
+                console.warn('No component selected for styling');
                 return;
             }
             
+            console.log(`Applying ${type} style to component:`, selectedComponent.className);
+            
             switch(type) {
                 case 'background':
+                    // Apply background only to the selected component
                     selectedComponent.style.backgroundColor = value;
+                    selectedComponent.style.setProperty('background-color', value, 'important');
                     break;
+                    
                 case 'text':
-                    // Apply to all text elements within the SELECTED component only
-                    const textElements = selectedComponent.querySelectorAll('h1, h2, h3, h4, h5, h6, p, span, div:not(.builder-tools):not(.floating-toolbar):not(.edit-toolbar)');
+                    // Apply text color ONLY to direct text elements within the selected component
+                    const textElements = selectedComponent.querySelectorAll('h1, h2, h3, h4, h5, h6, p, span');
+                    console.log(`Found ${textElements.length} text elements in selected component`);
+                    
                     textElements.forEach(el => {
-                        // Skip if element is part of toolbars or outside the selected component
-                        if (!selectedComponent.contains(el) || 
-                            el.closest('.builder-tools') || 
-                            el.closest('.floating-toolbar') ||
-                            el.closest('.edit-toolbar') ||
-                            el.closest('nav')) {
-                            return;
+                        // Ensure element is a direct child of selected component
+                        if (selectedComponent.contains(el) && 
+                            !el.classList.contains('delete-button') &&
+                            !el.closest('.camera-button') &&
+                            !el.closest('.drag-handle')) {
+                            el.style.setProperty('color', value, 'important');
+                            console.log('Applied text color to:', el.tagName);
                         }
-                        el.style.color = value;
                     });
                     break;
+                    
                 case 'accent':
-                    // Apply to buttons and links within the SELECTED component only
-                    const accentElements = selectedComponent.querySelectorAll('button, a, .accent-element');
+                    // Apply accent color ONLY to buttons/links within the selected component
+                    const accentElements = selectedComponent.querySelectorAll('button:not(.delete-button):not(.camera-button), a');
+                    console.log(`Found ${accentElements.length} accent elements in selected component`);
+                    
                     accentElements.forEach(el => {
-                        // Skip if element is part of toolbars or navigation
-                        if (!selectedComponent.contains(el) || 
-                            el.closest('.builder-tools') || 
-                            el.closest('.floating-toolbar') ||
-                            el.closest('.edit-toolbar') ||
-                            el.closest('nav')) {
-                            return;
+                        if (selectedComponent.contains(el)) {
+                            el.style.setProperty('background-color', value, 'important');
+                            el.style.setProperty('border-color', value, 'important');
+                            console.log('Applied accent color to:', el.tagName);
                         }
-                        el.style.backgroundColor = value;
-                        el.style.borderColor = value;
                     });
                     break;
             }
             
-            console.log(`Applied ${type} color ${value} to selected component only`);
+            console.log(`Style ${type}:${value} applied only to selected component`);
         }
 
         function applyEffect(type, value) {
             if (!selectedComponent) {
-                alert('Please select a component first');
+                console.warn('No component selected for effects');
                 return;
             }
             
+            console.log(`Applying ${type} effect to selected component only:`, selectedComponent.className);
+            
             switch(type) {
                 case 'overlay':
-                    // Create or update overlay
+                    // Create or update overlay ONLY on selected component
                     let overlay = selectedComponent.querySelector('.style-overlay');
                     if (!overlay) {
                         overlay = document.createElement('div');
@@ -1736,76 +1742,81 @@
                     break;
                     
                 case 'blur':
-                    selectedComponent.style.filter = `blur(${value}px)`;
+                    // Apply blur ONLY to selected component
+                    selectedComponent.style.setProperty('filter', `blur(${value}px)`, 'important');
                     document.getElementById('blur-value').textContent = value + 'px';
                     break;
                     
                 case 'shadow':
-                    selectedComponent.style.boxShadow = `0 ${value}px ${value * 2}px rgba(0, 0, 0, 0.2)`;
+                    // Apply shadow ONLY to selected component
+                    selectedComponent.style.setProperty('box-shadow', `0 ${value}px ${value * 2}px rgba(0, 0, 0, 0.2)`, 'important');
                     document.getElementById('shadow-value').textContent = value + 'px';
                     break;
                     
                 case 'animation':
-                    selectedComponent.style.animation = value === 'none' ? '' : `${value} 0.6s ease-in-out`;
+                    // Apply animation ONLY to selected component
+                    selectedComponent.style.setProperty('animation', value === 'none' ? '' : `${value} 0.6s ease-in-out`, 'important');
                     if (value !== 'none') {
                         addAnimationKeyframes(value);
                     }
                     break;
             }
             
-            console.log(`Applied ${type} effect ${value} to selected component`);
+            console.log(`Effect ${type}:${value} applied only to selected component`);
         }
 
         function applyLayoutProperty(type, value) {
             if (!selectedComponent) {
-                alert('Please select a component first');
+                console.warn('No component selected for layout changes');
                 return;
             }
             
+            console.log(`Applying ${type} layout to selected component only:`, selectedComponent.className);
+            
             switch(type) {
                 case 'padding':
-                    selectedComponent.style.padding = value + 'px';
+                    selectedComponent.style.setProperty('padding', value + 'px', 'important');
                     document.getElementById('padding-value').textContent = value + 'px';
                     break;
                     
                 case 'margin':
-                    selectedComponent.style.margin = value + 'px';
+                    selectedComponent.style.setProperty('margin', value + 'px', 'important');
                     document.getElementById('margin-value').textContent = value + 'px';
                     break;
                     
                 case 'gap':
-                    selectedComponent.style.gap = value + 'px';
+                    selectedComponent.style.setProperty('gap', value + 'px', 'important');
                     document.getElementById('gap-value').textContent = value + 'px';
                     break;
                     
                 case 'horizontal':
-                    selectedComponent.style.textAlign = value;
+                    selectedComponent.style.setProperty('text-align', value, 'important');
                     if (value === 'center') {
-                        selectedComponent.style.display = 'flex';
-                        selectedComponent.style.justifyContent = 'center';
+                        selectedComponent.style.setProperty('display', 'flex', 'important');
+                        selectedComponent.style.setProperty('justify-content', 'center', 'important');
                     } else if (value === 'right') {
-                        selectedComponent.style.display = 'flex';
-                        selectedComponent.style.justifyContent = 'flex-end';
+                        selectedComponent.style.setProperty('display', 'flex', 'important');
+                        selectedComponent.style.setProperty('justify-content', 'flex-end', 'important');
                     } else {
-                        selectedComponent.style.display = 'flex';
-                        selectedComponent.style.justifyContent = 'flex-start';
+                        selectedComponent.style.setProperty('display', 'flex', 'important');
+                        selectedComponent.style.setProperty('justify-content', 'flex-start', 'important');
                     }
                     break;
                     
                 case 'vertical':
-                    selectedComponent.style.display = 'flex';
-                    selectedComponent.style.flexDirection = 'column';
+                    selectedComponent.style.setProperty('display', 'flex', 'important');
+                    selectedComponent.style.setProperty('flex-direction', 'column', 'important');
                     if (value === 'middle') {
-                        selectedComponent.style.justifyContent = 'center';
+                        selectedComponent.style.setProperty('justify-content', 'center', 'important');
                     } else if (value === 'bottom') {
-                        selectedComponent.style.justifyContent = 'flex-end';
+                        selectedComponent.style.setProperty('justify-content', 'flex-end', 'important');
                     } else {
-                        selectedComponent.style.justifyContent = 'flex-start';
+                        selectedComponent.style.setProperty('justify-content', 'flex-start', 'important');
                     }
                     break;
             }
             
-            console.log(`Applied ${type} layout ${value} to selected component`);
+            console.log(`Layout ${type}:${value} applied only to selected component`);
         }
 
         function addAnimationKeyframes(animationType) {
