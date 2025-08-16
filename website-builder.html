@@ -2963,13 +2963,18 @@
         }
 
         function addSubPage() {
+            // Remove any existing subpage modals first
+            const existingModals = document.querySelectorAll('.subpage-modal');
+            existingModals.forEach(modal => modal.remove());
+            
             // First select which parent page
             const parentOptions = navOrder.map(pageId => `<option value="${pageId}">${pages[pageId].name}</option>`).join('');
             
             const parentSelect = document.createElement('div');
+            parentSelect.className = 'subpage-modal';
             parentSelect.innerHTML = `
-                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; justify-content: center;">
-                    <div style="background: white; padding: 30px; border-radius: 12px; max-width: 400px; width: 90%;">
+                <div class="modal-overlay" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; justify-content: center;">
+                    <div class="modal-content" style="background: white; padding: 30px; border-radius: 12px; max-width: 400px; width: 90%;">
                         <h3 style="margin: 0 0 20px 0; color: #2d3748;">Create SubPage</h3>
                         <div style="margin-bottom: 15px;">
                             <label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 500;">Parent Page:</label>
@@ -2982,14 +2987,56 @@
                             <input type="text" id="subpage-name-input" placeholder="e.g., Wedding Gallery" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;">
                         </div>
                         <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                            <button onclick="this.closest('div').parentElement.remove()" style="padding: 10px 20px; background: #e2e8f0; color: #4a5568; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>
+                            <button onclick="cancelSubPageCreation()" style="padding: 10px 20px; background: #e2e8f0; color: #4a5568; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>
                             <button onclick="createSubPage()" style="padding: 10px 20px; background: #805ad5; color: white; border: none; border-radius: 6px; cursor: pointer;">Create SubPage</button>
                         </div>
                     </div>
                 </div>
             `;
             
+            // Add click-outside-to-close functionality
+            const overlay = parentSelect.querySelector('.modal-overlay');
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    cancelSubPageCreation();
+                }
+            });
+            
+            // Prevent modal content clicks from closing
+            const modalContent = parentSelect.querySelector('.modal-content');
+            modalContent.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+            
             document.body.appendChild(parentSelect);
+            
+            // Focus on the name input
+            setTimeout(() => {
+                const nameInput = document.getElementById('subpage-name-input');
+                if (nameInput) {
+                    nameInput.focus();
+                }
+            }, 100);
+        }
+
+        function cancelSubPageCreation() {
+            // Remove subpage modals specifically
+            const subpageModals = document.querySelectorAll('.subpage-modal');
+            subpageModals.forEach(modal => modal.remove());
+            
+            // Also remove any lingering modal overlays
+            const overlays = document.querySelectorAll('div[style*="position: fixed"][style*="background: rgba(0,0,0,0.5)"]');
+            overlays.forEach(overlay => overlay.remove());
+            
+            // Remove any modal that might be stuck
+            const stuckModals = document.querySelectorAll('div[style*="z-index: 10000"]');
+            stuckModals.forEach(modal => {
+                if (modal.innerHTML.includes('Create SubPage')) {
+                    modal.remove();
+                }
+            });
+            
+            console.log('SubPage creation cancelled and all modals cleaned up');
         }
 
         function createSubPage() {
@@ -3027,11 +3074,8 @@
             
             console.log('SubPage data created, updating UI...');
             
-            // Close modal first
-            const modal = document.querySelector('[style*="position: fixed"]');
-            if (modal) {
-                modal.remove();
-            }
+            // Close modal first - use the proper cleanup function
+            cancelSubPageCreation();
             
             // Delay UI updates to ensure modal is closed
             setTimeout(() => {
