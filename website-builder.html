@@ -802,9 +802,113 @@
         let navOrder = ['home', 'portfolio', 'about', 'contact']; // Navigation order
         let pages = {
             home: { name: 'Home', template: 'modern', elements: [] },
-            portfolio: { name: 'Portfolio', template: 'modern', elements: [] },
-            about: { name: 'About', template: 'modern', elements: [] },
-            contact: { name: 'Contact', template: 'modern', elements: [] }
+            portfolio: { name: 'Portfolio', template: 'modern', elements: [
+                {
+                    type: 'header',
+                    content: {
+                        title: 'Portfolio',
+                        subtitle: 'Explore my latest photography work'
+                    }
+                },
+                {
+                    type: 'featured-gallery',
+                    content: {
+                        title: 'Featured Work',
+                        image: 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=1200'
+                    }
+                },
+                {
+                    type: 'gallery-grid',
+                    content: {
+                        title: 'Recent Projects',
+                        galleries: [
+                            {name: 'Wedding Collection', category: 'Wedding Photography', image: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600'},
+                            {name: 'Portrait Sessions', category: 'Portrait Photography', image: 'https://images.unsplash.com/photo-1494790108755-2616c43f40cc?w=600'},
+                            {name: 'Nature & Landscape', category: 'Landscape Photography', image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600'},
+                            {name: 'Event Photography', category: 'Event Photography', image: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=600'},
+                            {name: 'Family Sessions', category: 'Family Photography', image: 'https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?w=600'},
+                            {name: 'Corporate Headshots', category: 'Business Photography', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600'}
+                        ]
+                    }
+                },
+                {
+                    type: 'masonry',
+                    content: {
+                        images: [
+                            'https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=400',
+                            'https://images.unsplash.com/photo-1518098268026-4e89f1a2cd8e?w=400&h=600',
+                            'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=400',
+                            'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=500',
+                            'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400',
+                            'https://images.unsplash.com/photo-1532274402911-5a369e4c4bb5?w=400&h=600',
+                            'https://images.unsplash.com/photo-1519741497674-611481863552?w=400',
+                            'https://images.unsplash.com/photo-1494790108755-2616c43f40cc?w=400&h=500'
+                        ]
+                    }
+                }
+            ] },
+            about: { name: 'About', template: 'modern', elements: [
+                {
+                    type: 'header',
+                    content: {
+                        title: 'About Me',
+                        subtitle: 'Passionate photographer capturing life\'s precious moments'
+                    }
+                },
+                {
+                    type: 'about',
+                    content: {
+                        name: 'Professional Photographer',
+                        bio: 'With over 10 years of experience in photography, I specialize in capturing authentic moments that tell your unique story. From intimate weddings to corporate events, I bring creativity and technical expertise to every shoot.',
+                        image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
+                        services: ['Wedding Photography', 'Portrait Sessions', 'Event Photography', 'Corporate Headshots']
+                    }
+                },
+                {
+                    type: 'services',
+                    content: {
+                        title: 'Photography Services',
+                        services: [
+                            {
+                                icon: '💒',
+                                name: 'Wedding Photography',
+                                price: 'Starting at $2,500',
+                                description: 'Comprehensive wedding coverage from getting ready to reception, capturing every precious moment of your special day.'
+                            },
+                            {
+                                icon: '👨‍👩‍👧‍👦',
+                                name: 'Family Portraits',
+                                price: 'Starting at $350',
+                                description: 'Beautiful family portraits that capture the love and connection between family members in natural settings.'
+                            },
+                            {
+                                icon: '💼',
+                                name: 'Corporate Headshots',
+                                price: 'Starting at $200',
+                                description: 'Professional headshots that help you make a great first impression in your business endeavors.'
+                            }
+                        ]
+                    }
+                }
+            ] },
+            contact: { name: 'Contact', template: 'modern', elements: [
+                {
+                    type: 'header',
+                    content: {
+                        title: 'Get In Touch',
+                        subtitle: 'Ready to capture your special moments? Let\'s discuss your photography needs'
+                    }
+                },
+                {
+                    type: 'contact',
+                    content: {
+                        title: 'Contact Information',
+                        email: 'hello@photographer.com',
+                        phone: '(555) 123-4567',
+                        address: '123 Photography Lane, Creative City, CC 12345'
+                    }
+                }
+            ] }
         };
         let websiteData = {
             template: 'modern',
@@ -1877,6 +1981,36 @@
             }, 100);
         }
 
+        function loadPageContent(pageId) {
+            const page = pages[pageId];
+            if (!page || !page.elements) return;
+
+            const canvas = document.getElementById('canvas');
+            canvas.innerHTML = '';
+
+            page.elements.forEach(element => {
+                if (componentTemplates[element.type]) {
+                    const html = componentTemplates[element.type](element.content);
+                    canvas.insertAdjacentHTML('beforeend', html);
+                } else {
+                    console.error(`Component template for type "${element.type}" not found. Available: ${Object.keys(componentTemplates).join(', ')}`);
+                    const errorHtml = `<div class="element" data-type="${element.type}" style="padding: 20px; background: #fed7d7; border: 1px solid #e53e3e; color: #742a2a; border-radius: 4px; margin: 10px 0;">⚠️ Component "${element.type}" not found</div>`;
+                    canvas.insertAdjacentHTML('beforeend', errorHtml);
+                }
+            });
+
+            // Update website data with page content
+            websiteData = { template: page.template || 'modern', elements: page.elements };
+            setupElementSelection();
+            
+            // Small delay to ensure DOM is updated before initializing touch-to-edit
+            setTimeout(() => {
+                initializeTouchToEdit();
+            }, 100);
+            
+            console.log(`Loaded prebuilt content for page: ${pageId}`);
+        }
+
         // Drag and drop
         function setupDragAndDrop() {
             const components = document.querySelectorAll('.component-item');
@@ -2406,7 +2540,11 @@
             });
             
             // Load page content
-            if (pages[pageId].template) {
+            if (pages[pageId].elements && pages[pageId].elements.length > 0) {
+                // Page has custom content, load it
+                loadPageContent(pageId);
+            } else if (pages[pageId].template) {
+                // No custom content, load template
                 loadTemplate(pages[pageId].template || 'modern');
             }
             
