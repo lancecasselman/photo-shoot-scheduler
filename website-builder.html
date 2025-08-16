@@ -539,9 +539,25 @@
                                 <div class="component-icon">⚏</div>
                                 <span class="component-text">Gallery Grid</span>
                             </div>
+                            <div class="component-item" draggable="true" data-component="gallery-categories" onclick="addComponent('gallery-categories')" style="cursor: pointer;">
+                                <div class="component-icon">📁</div>
+                                <span class="component-text">Categories</span>
+                            </div>
                             <div class="component-item" draggable="true" data-component="masonry" onclick="addComponent('masonry')" style="cursor: pointer;">
                                 <div class="component-icon">🧱</div>
                                 <span class="component-text">Masonry</span>
+                            </div>
+                            <div class="component-item" draggable="true" data-component="masonry-simple" onclick="addComponent('masonry-simple')" style="cursor: pointer;">
+                                <div class="component-icon">⬜</div>
+                                <span class="component-text">Simple Grid</span>
+                            </div>
+                            <div class="component-item" draggable="true" data-component="featured-single" onclick="addComponent('featured-single')" style="cursor: pointer;">
+                                <div class="component-icon">🖼️</div>
+                                <span class="component-text">Single Photo</span>
+                            </div>
+                            <div class="component-item" draggable="true" data-component="gallery" onclick="addComponent('gallery')" style="cursor: pointer;">
+                                <div class="component-icon">📷</div>
+                                <span class="component-text">Basic Gallery</span>
                             </div>
                             <div class="component-item" draggable="true" data-component="about" onclick="addComponent('about')" style="cursor: pointer;">
                                 <div class="component-icon">👤</div>
@@ -1789,16 +1805,26 @@
                     </div>
                 </div>
             `,
-            gallery: (data = {}) => `
-                <div class="element" data-type="gallery">
+            gallery: (data = {}) => {
+                const galleryId = 'basic-gallery-' + Date.now();
+                return `
+                <div class="element" data-type="gallery" data-gallery-id="${galleryId}">
                     <div style="padding: 40px 0;">
                         <h2 style="text-align: center; color: #2d3748; margin-bottom: 40px;">${data.title || 'Portfolio'}</h2>
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
-                            ${(data.images || ['https://images.unsplash.com/photo-1519741497674-611481863552?w=400']).map(img => `<img src="${img}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px;" alt="Gallery">`).join('')}
+                            ${(data.images || ['https://images.unsplash.com/photo-1519741497674-611481863552?w=400']).map((img, index) => `
+                                <div style="position: relative; overflow: hidden; border-radius: 8px;">
+                                    <img src="${img}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px;" alt="Gallery">
+                                    <div class="image-edit-overlay" style="position: absolute; top: 10px; right: 10px; opacity: 0; transition: opacity 0.3s; z-index: 1001;">
+                                        <button onclick="changeGalleryImage('${galleryId}', ${index})" style="background: rgba(59, 130, 246, 0.95); border: none; color: white; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: all 0.2s;" onmouseover="this.style.background='rgba(59, 130, 246, 1)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.95)'; this.style.transform='translateY(0)'" title="Change Photo">📷</button>
+                                    </div>
+                                </div>
+                            `).join('')}
                         </div>
                     </div>
                 </div>
-            `,
+            `;
+            },
             services: (data = {}) => `
                 <div class="element" data-type="services">
                     <div style="padding: 80px 0;">
@@ -1991,8 +2017,8 @@
                     </div>
                 </div>
             `,
-            'featured-gallery': (data = {}) => `
-                <div class="element" data-type="featured-gallery">
+            'featured-single': (data = {}) => `
+                <div class="element" data-type="featured-single">
                     <div style="padding: 80px 40px; background: #fafafa;">
                         <div style="max-width: 1200px; margin: 0 auto;">
                             <div style="text-align: center; margin-bottom: 50px;">
@@ -2001,6 +2027,9 @@
                             </div>
                             <div style="position: relative; overflow: hidden; border-radius: 2px;">
                                 <img src="${data.image || 'https://images.unsplash.com/photo-1570168007204-dfb528c6958f?w=1200'}" style="width: 100%; height: 600px; object-fit: cover;">
+                                <div class="image-edit-overlay" style="position: absolute; top: 15px; right: 15px; opacity: 0; transition: opacity 0.3s; z-index: 1001;">
+                                    <button onclick="changeAboutImage(this)" style="background: rgba(59, 130, 246, 0.95); border: none; color: white; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: all 0.2s;" onmouseover="this.style.background='rgba(59, 130, 246, 1)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.95)'; this.style.transform='translateY(0)'" title="Change Photo">📷</button>
+                                </div>
                                 <div style="position: absolute; bottom: 30px; left: 30px;">
                                     <button style="background: white; color: #2d3748; padding: 15px 40px; border: none; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer;">View Gallery</button>
                                 </div>
@@ -2009,8 +2038,10 @@
                     </div>
                 </div>
             `,
-            'gallery-grid': (data = {}) => `
-                <div class="element" data-type="gallery-grid">
+            'gallery-categories': (data = {}) => {
+                const galleryId = 'gallery-categories-' + Date.now();
+                return `
+                <div class="element" data-type="gallery-categories" data-gallery-id="${galleryId}">
                     <div style="padding: 80px 40px;">
                         <h2 style="font-family: 'Playfair Display', serif; font-size: 48px; text-align: center; margin-bottom: 60px; color: #2d3748;">${data.title || 'Galleries'}</h2>
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 40px; max-width: 1200px; margin: 0 auto;">
@@ -2018,10 +2049,13 @@
                                 {name: 'Burma', category: 'Travel Photography', image: 'https://images.unsplash.com/photo-1503249023995-51b0f3778ccf?w=600'},
                                 {name: 'India', category: 'Cultural Photography', image: 'https://images.unsplash.com/photo-1524721696987-b9527df9e512?w=600'},
                                 {name: 'Cityscapes', category: 'Urban Photography', image: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?w=600'}
-                            ]).map(gallery => `
+                            ]).map((gallery, index) => `
                                 <div style="cursor: pointer;">
-                                    <div style="overflow: hidden; margin-bottom: 20px;">
+                                    <div style="overflow: hidden; margin-bottom: 20px; position: relative;">
                                         <img src="${gallery.image}" style="width: 100%; height: 400px; object-fit: cover; transition: transform 0.3s;">
+                                        <div class="image-edit-overlay" style="position: absolute; top: 15px; right: 15px; opacity: 0; transition: opacity 0.3s; z-index: 1001;">
+                                            <button onclick="changeGalleryImage('${galleryId}', ${index})" style="background: rgba(59, 130, 246, 0.95); border: none; color: white; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: all 0.2s;" onmouseover="this.style.background='rgba(59, 130, 246, 1)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.95)'; this.style.transform='translateY(0)'" title="Change Photo">📷</button>
+                                        </div>
                                     </div>
                                     <h3 style="font-family: 'Montserrat', sans-serif; font-size: 14px; letter-spacing: 2px; text-transform: uppercase;">${gallery.name}</h3>
                                     <p style="color: #718096; font-size: 14px; margin-top: 5px;">${gallery.category}</p>
@@ -2030,9 +2064,12 @@
                         </div>
                     </div>
                 </div>
-            `,
-            masonry: (data = {}) => `
-                <div class="element" data-type="masonry">
+            `;
+            },
+            'masonry-simple': (data = {}) => {
+                const galleryId = 'masonry-simple-' + Date.now();
+                return `
+                <div class="element" data-type="masonry-simple" data-gallery-id="${galleryId}">
                     <div style="padding: 80px 40px; background: white;">
                         <div style="columns: 3; column-gap: 20px; max-width: 1200px; margin: 0 auto;">
                             ${(data.images || [
@@ -2042,11 +2079,19 @@
                                 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=500',
                                 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400',
                                 'https://images.unsplash.com/photo-1532274402911-5a369e4c4bb5?w=400&h=600'
-                            ]).map(img => `<img src="${img}" style="width: 100%; margin-bottom: 20px; display: block;">`).join('')}
+                            ]).map((img, index) => `
+                                <div style="position: relative; margin-bottom: 20px; border-radius: 8px; overflow: hidden; break-inside: avoid;">
+                                    <img src="${img}" style="width: 100%; display: block;">
+                                    <div class="image-edit-overlay" style="position: absolute; top: 10px; right: 10px; opacity: 0; transition: opacity 0.3s; z-index: 1001;">
+                                        <button onclick="changeGalleryImage('${galleryId}', ${index})" style="background: rgba(59, 130, 246, 0.95); border: none; color: white; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: all 0.2s;" onmouseover="this.style.background='rgba(59, 130, 246, 1)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.95)'; this.style.transform='translateY(0)'" title="Change Photo">📷</button>
+                                    </div>
+                                </div>
+                            `).join('')}
                         </div>
                     </div>
                 </div>
-            `,
+            `;
+            },
             workshops: (data = {}) => `
                 <div class="element" data-type="workshops">
                     <div style="padding: 80px 40px; background: #1a202c; color: white;">
