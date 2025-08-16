@@ -3025,28 +3025,50 @@
         let carouselStates = {};
 
         function nextSlide(carouselId) {
+            console.log(`Next slide clicked for carousel: ${carouselId}`);
             const container = document.getElementById(carouselId + '-container');
+            if (!container) {
+                console.error(`Container not found: ${carouselId}-container`);
+                return;
+            }
+            
             const slides = container.querySelectorAll('.carousel-slide');
             const totalSlides = slides.length;
+            console.log(`Total slides: ${totalSlides}`);
             
             if (!carouselStates[carouselId]) {
                 carouselStates[carouselId] = { currentSlide: 0 };
+                console.log(`Initialized carousel state for: ${carouselId}`);
             }
             
+            const oldSlide = carouselStates[carouselId].currentSlide;
             carouselStates[carouselId].currentSlide = (carouselStates[carouselId].currentSlide + 1) % totalSlides;
+            console.log(`Moving from slide ${oldSlide} to ${carouselStates[carouselId].currentSlide}`);
+            
             updateCarousel(carouselId);
         }
 
         function prevSlide(carouselId) {
+            console.log(`Previous slide clicked for carousel: ${carouselId}`);
             const container = document.getElementById(carouselId + '-container');
+            if (!container) {
+                console.error(`Container not found: ${carouselId}-container`);
+                return;
+            }
+            
             const slides = container.querySelectorAll('.carousel-slide');
             const totalSlides = slides.length;
+            console.log(`Total slides: ${totalSlides}`);
             
             if (!carouselStates[carouselId]) {
                 carouselStates[carouselId] = { currentSlide: 0 };
+                console.log(`Initialized carousel state for: ${carouselId}`);
             }
             
+            const oldSlide = carouselStates[carouselId].currentSlide;
             carouselStates[carouselId].currentSlide = (carouselStates[carouselId].currentSlide - 1 + totalSlides) % totalSlides;
+            console.log(`Moving from slide ${oldSlide} to ${carouselStates[carouselId].currentSlide}`);
+            
             updateCarousel(carouselId);
         }
 
