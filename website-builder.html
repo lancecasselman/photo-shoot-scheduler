@@ -1589,9 +1589,35 @@
                 <div class="element" data-type="nav">
                     <nav style="display: flex; justify-content: center; align-items: center; padding: 20px 0; border-bottom: 1px solid #e2e8f0;">
                         <div style="display: flex; gap: 30px;">
-                            ${navOrder.map(pageId => 
-                                `<a href="javascript:void(0)" onclick="switchToPageNew('${pageId}')" style="text-decoration: none; color: ${pageId === currentPage ? '#667eea' : '#2d3748'}; font-weight: ${pageId === currentPage ? '600' : '400'}; padding: 8px 12px; border-radius: 4px; transition: all 0.2s; cursor: pointer;">${pages[pageId]?.name || pageId}</a>`
-                            ).join('')}
+                            ${navOrder.map(pageId => {
+                                const hasSubPages = subPages[pageId] && subPages[pageId].length > 0;
+                                const isActive = pageId === currentPage || (subPages[pageId] && subPages[pageId].includes(currentPage));
+                                
+                                if (hasSubPages) {
+                                    return `
+                                        <div style="position: relative;">
+                                            <a href="javascript:void(0)" onclick="switchToPageNew('${pageId}')" 
+                                               onmouseover="showSubMenu('${pageId}')" onmouseout="hideSubMenu('${pageId}')"
+                                               style="text-decoration: none; color: ${isActive ? '#667eea' : '#2d3748'}; font-weight: ${isActive ? '600' : '400'}; padding: 8px 12px; border-radius: 4px; transition: all 0.2s; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                                                ${pages[pageId]?.name || pageId}
+                                                <span style="font-size: 12px; color: #718096;">▼</span>
+                                            </a>
+                                            <div id="submenu-${pageId}" style="position: absolute; top: 100%; left: 0; background: white; border: 1px solid #e2e8f0; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 150px; z-index: 1000; display: none;" 
+                                                 onmouseover="keepSubMenuOpen('${pageId}')" onmouseout="hideSubMenu('${pageId}')">
+                                                ${subPages[pageId].map(subPageId => 
+                                                    `<a href="javascript:void(0)" onclick="switchToPageNew('${subPageId}')" 
+                                                       style="display: block; padding: 10px 15px; text-decoration: none; color: ${subPageId === currentPage ? '#667eea' : '#2d3748'}; font-weight: ${subPageId === currentPage ? '600' : '400'}; transition: all 0.2s; border-bottom: 1px solid #f7fafc;"
+                                                       onmouseover="this.style.background='#f7fafc'" onmouseout="this.style.background='white'">
+                                                        ${pages[subPageId]?.name || subPageId}
+                                                    </a>`
+                                                ).join('')}
+                                            </div>
+                                        </div>
+                                    `;
+                                } else {
+                                    return `<a href="javascript:void(0)" onclick="switchToPageNew('${pageId}')" style="text-decoration: none; color: ${isActive ? '#667eea' : '#2d3748'}; font-weight: ${isActive ? '600' : '400'}; padding: 8px 12px; border-radius: 4px; transition: all 0.2s; cursor: pointer;">${pages[pageId]?.name || pageId}</a>`;
+                                }
+                            }).join('')}
                         </div>
                     </nav>
                 </div>
@@ -3020,6 +3046,36 @@
                 // Show success message
                 showMessage(`SubPage "${subPageName}" created under "${pages[parentId].name}"!`, 'success');
             }, 100);
+        }
+
+        // Submenu helper functions for navigation dropdowns
+        function showSubMenu(pageId) {
+            // Hide all other submenus first
+            document.querySelectorAll('[id^="submenu-"]').forEach(menu => {
+                menu.style.display = 'none';
+            });
+            
+            // Show this submenu
+            const submenu = document.getElementById(`submenu-${pageId}`);
+            if (submenu) {
+                submenu.style.display = 'block';
+            }
+        }
+
+        function hideSubMenu(pageId) {
+            setTimeout(() => {
+                const submenu = document.getElementById(`submenu-${pageId}`);
+                if (submenu) {
+                    submenu.style.display = 'none';
+                }
+            }, 200); // Small delay to allow moving to submenu
+        }
+
+        function keepSubMenuOpen(pageId) {
+            const submenu = document.getElementById(`submenu-${pageId}`);
+            if (submenu) {
+                submenu.style.display = 'block';
+            }
         }
 
         function refreshPagesList() {
