@@ -2845,8 +2845,8 @@
                 });
             });
             
-            // Initialize block dragging (existing code)
-            initializeBlockDragging();
+            // Initialize block dragging (placeholder for existing functionality)
+            // initializeBlockDragging(); // Commented out until properly implemented
         }
 
         // Style tab functions
@@ -2976,6 +2976,40 @@
                     document.getElementById('height-value').textContent = `${value}px`;
                     selectedElement.style.height = `${value}px`;
                     break;
+            }
+        }
+
+        // Add component function for click functionality
+        function addComponent(componentType) {
+            const canvas = document.getElementById('canvas');
+            if (!canvas) {
+                console.error('Canvas not found');
+                return;
+            }
+            
+            console.log(`Adding component: ${componentType}`);
+            
+            // Check if componentTemplates has the component
+            if (typeof componentTemplates[componentType] === 'function') {
+                const componentHTML = componentTemplates[componentType]();
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = componentHTML;
+                const element = tempDiv.firstElementChild;
+                
+                if (element) {
+                    canvas.appendChild(element);
+                    console.log(`Component ${componentType} added successfully`);
+                    
+                    // Initialize any special functionality for the new component
+                    if (componentType === 'hero-carousel') {
+                        // Initialize carousel hover effects for new carousels
+                        initializeCarouselHover();
+                    }
+                } else {
+                    console.error(`Failed to create element for component: ${componentType}`);
+                }
+            } else {
+                console.error(`Component template not found: ${componentType}`);
             }
         }
 
