@@ -3415,9 +3415,10 @@
             ).join('');
             
             const modal = document.createElement('div');
+            modal.className = 'page-link-modal';
             modal.innerHTML = `
-                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; justify-content: center;">
-                    <div style="background: white; padding: 30px; border-radius: 12px; max-width: 400px; width: 90%;">
+                <div class="modal-overlay" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; justify-content: center;">
+                    <div class="modal-content" style="background: white; padding: 30px; border-radius: 12px; max-width: 400px; width: 90%;">
                         <h3 style="margin: 0 0 20px 0; color: #2d3748;">Convert Text to Page Link</h3>
                         <div style="margin-bottom: 15px;">
                             <label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 500;">Link to Page:</label>
@@ -3433,22 +3434,43 @@
                             </label>
                         </div>
                         <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                            <button onclick="this.closest('div').closest('div').remove()" style="padding: 8px 16px; background: #e2e8f0; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>
+                            <button onclick="closePageLinkModal()" style="padding: 8px 16px; background: #e2e8f0; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>
                             <button onclick="applyPageLink()" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">Create Link</button>
                         </div>
                     </div>
                 </div>
             `;
             
+            // Add click-outside-to-close functionality
+            const overlay = modal.querySelector('.modal-overlay');
+            overlay.addEventListener('click', function(e) {
+                if (e.target === overlay) {
+                    closePageLinkModal();
+                }
+            });
+            
+            // Prevent modal content clicks from closing the modal
+            const modalContent = modal.querySelector('.modal-content');
+            modalContent.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+            
             document.body.appendChild(modal);
         }
         
+        function closePageLinkModal() {
+            const modal = document.querySelector('.page-link-modal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
         function applyPageLink() {
             const selectedPage = document.getElementById('page-link-select').value;
             const openNewTab = document.getElementById('open-new-tab').checked;
             
             if (!selectedPage || !currentTextElement) {
-                document.querySelector('[onclick="applyPageLink()"]').closest('div').closest('div').remove();
+                closePageLinkModal();
                 return;
             }
             
@@ -3491,7 +3513,7 @@
             
             // Hide toolbar and close modal
             document.getElementById('text-toolbar').style.display = 'none';
-            document.querySelector('[onclick="applyPageLink()"]').closest('div').closest('div').remove();
+            closePageLinkModal();
             
             console.log(`Text converted to page link: "${originalText}" -> ${selectedPage}`);
         }
