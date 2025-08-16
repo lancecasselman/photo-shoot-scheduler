@@ -2187,6 +2187,27 @@
                                 <input type="range" class="property-input" min="0" max="100" value="100" onchange="updateHeaderBackground('opacity', this.value)">
                                 <span style="font-size: 12px; color: #666;">100%</span>
                             </div>
+                            <div style="border-top: 1px solid #e2e8f0; padding-top: 15px; margin-top: 15px;">
+                                <label class="property-label">Navigation Logo</label>
+                                <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 10px;">
+                                    <input type="file" id="logo-upload" accept="image/*" style="display: none;" onchange="handleLogoUpload(event)">
+                                    <button onclick="document.getElementById('logo-upload').click()" class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px;">Upload Logo</button>
+                                    <button onclick="removeLogo()" class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px;">Remove</button>
+                                </div>
+                                <div>
+                                    <label class="property-label">Logo Size</label>
+                                    <input type="range" class="property-input" min="20" max="80" value="40" onchange="updateLogoSize(this.value)">
+                                    <span id="logo-size-display" style="font-size: 12px; color: #666;">40px</span>
+                                </div>
+                                <div>
+                                    <label class="property-label">Logo Position</label>
+                                    <select class="property-input" onchange="updateLogoPosition(this.value)">
+                                        <option value="left">Left</option>
+                                        <option value="center">Center</option>
+                                        <option value="right">Right</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     `;
                     break;
@@ -2275,6 +2296,13 @@
             opacity: 100
         };
 
+        // Navigation logo configuration
+        let logoConfig = {
+            url: '',
+            size: 40,
+            position: 'left'
+        };
+
         function updateHeaderBackground(property, value) {
             headerBackgroundConfig[property] = value;
             
@@ -2326,6 +2354,39 @@
                 headerDiv.style.background = backgroundStyle;
                 headerDiv.style.opacity = opacity;
             });
+        }
+
+        // Logo functions
+        function handleLogoUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    logoConfig.url = e.target.result;
+                    updateNavigationPreview();
+                    console.log('Logo uploaded successfully');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function removeLogo() {
+            logoConfig.url = '';
+            updateNavigationPreview();
+            console.log('Logo removed');
+        }
+
+        function updateLogoSize(size) {
+            logoConfig.size = parseInt(size);
+            document.getElementById('logo-size-display').textContent = size + 'px';
+            updateNavigationPreview();
+            console.log('Logo size updated to:', size + 'px');
+        }
+
+        function updateLogoPosition(position) {
+            logoConfig.position = position;
+            updateNavigationPreview();
+            console.log('Logo position updated to:', position);
         }
 
         // Header functions
@@ -2969,36 +3030,85 @@
             
             // Generate navigation HTML based on style
             if (navStyle === 'horizontal') {
-                navElement.innerHTML = `
-                    <div style="display: flex; justify-content: center; align-items: center; gap: 30px;">
-                        <!-- Home Button -->
-                        <a href="javascript:void(0)" onclick="switchToPageNew('home'); return false;" style="text-decoration: none; color: ${currentPage === 'home' ? '#667eea' : '#2d3748'}; font-weight: ${currentPage === 'home' ? '600' : '400'}; padding: 8px 12px; border-radius: 4px; transition: all 0.2s; cursor: pointer;">Home</a>
-                        ${navOrder.filter(pageId => pageId !== 'home').map(pageId => {
-                            const hasSubPages = subPages[pageId] && subPages[pageId].length > 0;
-                            
-                            if (hasSubPages) {
-                                // Create dropdown for pages with subpages
-                                return `
-                                    <div style="position: relative; display: inline-block;">
-                                        <a href="javascript:void(0)" onclick="switchToPageNew('${pageId}'); return false;" 
-                                           onmouseover="showSubMenu('${pageId}')" 
-                                           style="text-decoration: none; color: ${pageId === currentPage ? '#667eea' : '#2d3748'}; font-weight: ${pageId === currentPage ? '600' : '400'}; padding: 8px 12px; border-radius: 4px; transition: all 0.2s; cursor: pointer; display: flex; align-items: center; gap: 4px;">
-                                            ${pages[pageId]?.name || pageId} <span style="font-size: 10px;">▼</span>
-                                        </a>
-                                        <div id="submenu-${pageId}" style="position: absolute; top: 100%; left: 0; background: white; border: 1px solid #e2e8f0; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); min-width: 180px; z-index: 1001; display: none;">
-                                            ${subPages[pageId].map(subPageId => 
-                                                `<a href="javascript:void(0)" onclick="switchToPageNew('${subPageId}'); return false;" style="display: block; padding: 8px 16px; text-decoration: none; color: #4a5568; border-bottom: 1px solid #f1f1f1; cursor: pointer; font-size: 14px;">${pages[subPageId]?.name || subPageId}</a>`
-                                            ).join('')}
-                                        </div>
-                                    </div>
-                                `;
-                            } else {
-                                // Regular page link
-                                return `<a href="javascript:void(0)" onclick="switchToPageNew('${pageId}'); return false;" style="text-decoration: none; color: ${pageId === currentPage ? '#667eea' : '#2d3748'}; font-weight: ${pageId === currentPage ? '600' : '400'}; padding: 8px 12px; border-radius: 4px; transition: all 0.2s; cursor: pointer;">${pages[pageId]?.name || pageId}</a>`;
-                            }
-                        }).join('')}
-                    </div>
-                `;
+                // Create logo HTML if logo exists
+                const logoHTML = logoConfig.url ? `<img src="${logoConfig.url}" style="height: ${logoConfig.size}px; width: auto; object-fit: contain;" alt="Logo">` : '';
+                
+                // Determine layout based on logo position
+                let navigationLayout = '';
+                if (logoConfig.position === 'left' && logoHTML) {
+                    navigationLayout = `
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <div style="flex: 0 0 auto;">
+                                ${logoHTML}
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 30px;">
+                                <a href="javascript:void(0)" onclick="switchToPageNew('home'); return false;" style="text-decoration: none; color: ${currentPage === 'home' ? '#667eea' : '#2d3748'}; font-weight: ${currentPage === 'home' ? '600' : '400'}; padding: 8px 12px; border-radius: 4px; transition: all 0.2s; cursor: pointer;">Home</a>`;
+                } else if (logoConfig.position === 'center' && logoHTML) {
+                    navigationLayout = `
+                        <div style="display: flex; justify-content: center; align-items: center; flex-direction: column; gap: 15px;">
+                            <div>${logoHTML}</div>
+                            <div style="display: flex; align-items: center; gap: 30px;">
+                                <a href="javascript:void(0)" onclick="switchToPageNew('home'); return false;" style="text-decoration: none; color: ${currentPage === 'home' ? '#667eea' : '#2d3748'}; font-weight: ${currentPage === 'home' ? '600' : '400'}; padding: 8px 12px; border-radius: 4px; transition: all 0.2s; cursor: pointer;">Home</a>`;
+                } else if (logoConfig.position === 'right' && logoHTML) {
+                    navigationLayout = `
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <div style="display: flex; align-items: center; gap: 30px;">
+                                <a href="javascript:void(0)" onclick="switchToPageNew('home'); return false;" style="text-decoration: none; color: ${currentPage === 'home' ? '#667eea' : '#2d3748'}; font-weight: ${currentPage === 'home' ? '600' : '400'}; padding: 8px 12px; border-radius: 4px; transition: all 0.2s; cursor: pointer;">Home</a>`;
+                } else {
+                    // No logo or default center layout
+                    navigationLayout = `
+                        <div style="display: flex; justify-content: center; align-items: center; gap: 30px;">
+                            <a href="javascript:void(0)" onclick="switchToPageNew('home'); return false;" style="text-decoration: none; color: ${currentPage === 'home' ? '#667eea' : '#2d3748'}; font-weight: ${currentPage === 'home' ? '600' : '400'}; padding: 8px 12px; border-radius: 4px; transition: all 0.2s; cursor: pointer;">Home</a>`;
+                }
+                
+                // Complete the navigation with remaining pages
+                const remainingPages = navOrder.filter(pageId => pageId !== 'home').map(pageId => {
+                    const hasSubPages = subPages[pageId] && subPages[pageId].length > 0;
+                    
+                    if (hasSubPages) {
+                        // Create dropdown for pages with subpages
+                        return `
+                            <div style="position: relative; display: inline-block;">
+                                <a href="javascript:void(0)" onclick="switchToPageNew('${pageId}'); return false;" 
+                                   onmouseover="showSubMenu('${pageId}')" 
+                                   style="text-decoration: none; color: ${pageId === currentPage ? '#667eea' : '#2d3748'}; font-weight: ${pageId === currentPage ? '600' : '400'}; padding: 8px 12px; border-radius: 4px; transition: all 0.2s; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                    ${pages[pageId]?.name || pageId} <span style="font-size: 10px;">▼</span>
+                                </a>
+                                <div id="submenu-${pageId}" style="position: absolute; top: 100%; left: 0; background: white; border: 1px solid #e2e8f0; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); min-width: 180px; z-index: 1001; display: none;">
+                                    ${subPages[pageId].map(subPageId => 
+                                        `<a href="javascript:void(0)" onclick="switchToPageNew('${subPageId}'); return false;" style="display: block; padding: 8px 16px; text-decoration: none; color: #4a5568; border-bottom: 1px solid #f1f1f1; cursor: pointer; font-size: 14px;">${pages[subPageId]?.name || subPageId}</a>`
+                                    ).join('')}
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        // Regular page link
+                        return `<a href="javascript:void(0)" onclick="switchToPageNew('${pageId}'); return false;" style="text-decoration: none; color: ${pageId === currentPage ? '#667eea' : '#2d3748'}; font-weight: ${pageId === currentPage ? '600' : '400'}; padding: 8px 12px; border-radius: 4px; transition: all 0.2s; cursor: pointer;">${pages[pageId]?.name || pageId}</a>`;
+                    }
+                }).join('');
+                
+                // Complete the navigation HTML based on logo position
+                if (logoConfig.position === 'left' && logoHTML) {
+                    navigationLayout += `${remainingPages}
+                            </div>
+                        </div>`;
+                } else if (logoConfig.position === 'center' && logoHTML) {
+                    navigationLayout += `${remainingPages}
+                            </div>
+                        </div>`;
+                } else if (logoConfig.position === 'right' && logoHTML) {
+                    navigationLayout += `${remainingPages}
+                            </div>
+                            <div style="flex: 0 0 auto;">
+                                ${logoHTML}
+                            </div>
+                        </div>`;
+                } else {
+                    navigationLayout += `${remainingPages}
+                        </div>`;
+                }
+                
+                navElement.innerHTML = navigationLayout;
             } else {
                 // Dropdown navigation style
                 const dropdownItems = [];
