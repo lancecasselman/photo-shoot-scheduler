@@ -549,15 +549,15 @@
                         <div class="property-controls">
                             <div>
                                 <label class="property-label">Background</label>
-                                <input type="color" class="property-input" value="#ffffff" style="width: 60px; height: 30px; padding: 2px;">
+                                <input type="color" id="bg-color" class="property-input" value="#ffffff" style="width: 60px; height: 30px; padding: 2px;" onchange="applyThemeColor('background', this.value)">
                             </div>
                             <div>
                                 <label class="property-label">Text</label>
-                                <input type="color" class="property-input" value="#2d3748" style="width: 60px; height: 30px; padding: 2px;">
+                                <input type="color" id="text-color" class="property-input" value="#2d3748" style="width: 60px; height: 30px; padding: 2px;" onchange="applyThemeColor('text', this.value)">
                             </div>
                             <div>
                                 <label class="property-label">Accent</label>
-                                <input type="color" class="property-input" value="#667eea" style="width: 60px; height: 30px; padding: 2px;">
+                                <input type="color" id="accent-color" class="property-input" value="#667eea" style="width: 60px; height: 30px; padding: 2px;" onchange="applyThemeColor('accent', this.value)">
                             </div>
                         </div>
                     </div>
@@ -568,19 +568,22 @@
                         <div class="property-controls">
                             <div>
                                 <label class="property-label">Overlay</label>
-                                <input type="range" class="property-input" min="0" max="100" value="40" style="width: 80px;">
+                                <input type="range" id="overlay-effect" class="property-input" min="0" max="100" value="40" style="width: 80px;" oninput="applyEffect('overlay', this.value)">
+                                <span id="overlay-value" style="font-size: 10px; color: #666;">40%</span>
                             </div>
                             <div>
                                 <label class="property-label">Blur</label>
-                                <input type="range" class="property-input" min="0" max="20" value="0" style="width: 80px;">
+                                <input type="range" id="blur-effect" class="property-input" min="0" max="20" value="0" style="width: 80px;" oninput="applyEffect('blur', this.value)">
+                                <span id="blur-value" style="font-size: 10px; color: #666;">0px</span>
                             </div>
                             <div>
                                 <label class="property-label">Shadow</label>
-                                <input type="range" class="property-input" min="0" max="50" value="10" style="width: 80px;">
+                                <input type="range" id="shadow-effect" class="property-input" min="0" max="50" value="10" style="width: 80px;" oninput="applyEffect('shadow', this.value)">
+                                <span id="shadow-value" style="font-size: 10px; color: #666;">10px</span>
                             </div>
                             <div>
                                 <label class="property-label">Animation</label>
-                                <select class="property-input" style="width: 80px;">
+                                <select id="animation-effect" class="property-input" style="width: 80px;" onchange="applyEffect('animation', this.value)">
                                     <option value="none">None</option>
                                     <option value="fade">Fade In</option>
                                     <option value="slide">Slide</option>
@@ -601,15 +604,18 @@
                         <div class="property-controls">
                             <div>
                                 <label class="property-label">Padding</label>
-                                <input type="range" class="property-input" min="0" max="100" value="20" style="width: 80px;">
+                                <input type="range" id="padding-control" class="property-input" min="0" max="100" value="20" style="width: 80px;" oninput="applyLayoutProperty('padding', this.value)">
+                                <span id="padding-value" style="font-size: 10px; color: #666;">20px</span>
                             </div>
                             <div>
                                 <label class="property-label">Margin</label>
-                                <input type="range" class="property-input" min="0" max="100" value="0" style="width: 80px;">
+                                <input type="range" id="margin-control" class="property-input" min="0" max="100" value="0" style="width: 80px;" oninput="applyLayoutProperty('margin', this.value)">
+                                <span id="margin-value" style="font-size: 10px; color: #666;">0px</span>
                             </div>
                             <div>
                                 <label class="property-label">Gap</label>
-                                <input type="range" class="property-input" min="0" max="50" value="20" style="width: 80px;">
+                                <input type="range" id="gap-control" class="property-input" min="0" max="50" value="20" style="width: 80px;" oninput="applyLayoutProperty('gap', this.value)">
+                                <span id="gap-value" style="font-size: 10px; color: #666;">20px</span>
                             </div>
                         </div>
                     </div>
@@ -620,7 +626,7 @@
                         <div class="property-controls">
                             <div>
                                 <label class="property-label">Horizontal</label>
-                                <select class="property-input" style="width: 80px;">
+                                <select id="horizontal-align" class="property-input" style="width: 80px;" onchange="applyLayoutProperty('horizontal', this.value)">
                                     <option value="left">Left</option>
                                     <option value="center">Center</option>
                                     <option value="right">Right</option>
@@ -628,7 +634,7 @@
                             </div>
                             <div>
                                 <label class="property-label">Vertical</label>
-                                <select class="property-input" style="width: 80px;">
+                                <select id="vertical-align" class="property-input" style="width: 80px;" onchange="applyLayoutProperty('vertical', this.value)">
                                     <option value="top">Top</option>
                                     <option value="middle">Middle</option>
                                     <option value="bottom">Bottom</option>
@@ -643,11 +649,13 @@
                         <div class="property-controls">
                             <div>
                                 <label class="property-label">Width</label>
-                                <input type="text" class="property-input" placeholder="auto" style="width: 80px;">
+                                <input type="range" id="width-control" class="property-input" min="10" max="100" value="100" style="width: 80px;" oninput="applyLayoutProperty('width', this.value)">
+                                <span id="width-value" style="font-size: 10px; color: #666;">100%</span>
                             </div>
                             <div>
                                 <label class="property-label">Height</label>
-                                <input type="text" class="property-input" placeholder="auto" style="width: 80px;">
+                                <input type="range" id="height-control" class="property-input" min="50" max="1000" value="200" style="width: 80px;" oninput="applyLayoutProperty('height', this.value)">
+                                <span id="height-value" style="font-size: 10px; color: #666;">200px</span>
                             </div>
                         </div>
                     </div>
@@ -2824,6 +2832,160 @@
             // Initialize block dragging (existing code)
             initializeBlockDragging();
         }
+
+        // Style tab functions
+        function applyThemeColor(type, color) {
+            const canvas = document.getElementById('canvas');
+            console.log(`Applying ${type} color: ${color}`);
+            
+            switch(type) {
+                case 'background':
+                    canvas.style.backgroundColor = color;
+                    // Apply to all elements with background
+                    document.querySelectorAll('.element').forEach(el => {
+                        if (el.style.backgroundColor || el.dataset.type === 'hero' || el.dataset.type === 'hero-text') {
+                            el.style.backgroundColor = color;
+                        }
+                    });
+                    break;
+                case 'text':
+                    // Apply to all text elements
+                    document.querySelectorAll('h1, h2, h3, h4, h5, h6, p, span, a').forEach(el => {
+                        if (!el.closest('.toolbar') && !el.closest('.builder-tools')) {
+                            el.style.color = color;
+                        }
+                    });
+                    break;
+                case 'accent':
+                    // Apply to buttons and accent elements
+                    document.querySelectorAll('button, .accent, [style*="background: #667eea"], [style*="color: #667eea"]').forEach(el => {
+                        if (!el.closest('.toolbar') && !el.closest('.builder-tools')) {
+                            if (el.tagName === 'BUTTON' || el.classList.contains('accent')) {
+                                el.style.backgroundColor = color;
+                            } else {
+                                el.style.color = color;
+                            }
+                        }
+                    });
+                    break;
+            }
+        }
+
+        function applyEffect(type, value) {
+            const selectedElement = document.querySelector('.element.selected') || document.getElementById('canvas');
+            console.log(`Applying ${type} effect: ${value}`);
+            
+            switch(type) {
+                case 'overlay':
+                    document.getElementById('overlay-value').textContent = `${value}%`;
+                    // Apply overlay to background images
+                    document.querySelectorAll('[style*="background-image"]').forEach(el => {
+                        if (!el.closest('.toolbar') && !el.closest('.builder-tools')) {
+                            const opacity = value / 100;
+                            const existingBg = el.style.backgroundImage;
+                            if (existingBg.includes('linear-gradient')) {
+                                // Replace existing gradient
+                                const imageUrl = existingBg.split('), url(')[1];
+                                if (imageUrl) {
+                                    el.style.backgroundImage = `linear-gradient(rgba(0,0,0,${opacity}), rgba(0,0,0,${opacity})), url(${imageUrl}`;
+                                }
+                            } else if (existingBg.includes('url(')) {
+                                // Add gradient overlay
+                                el.style.backgroundImage = `linear-gradient(rgba(0,0,0,${opacity}), rgba(0,0,0,${opacity})), ${existingBg}`;
+                            }
+                        }
+                    });
+                    break;
+                case 'blur':
+                    document.getElementById('blur-value').textContent = `${value}px`;
+                    if (selectedElement) {
+                        selectedElement.style.filter = `blur(${value}px)`;
+                    }
+                    break;
+                case 'shadow':
+                    document.getElementById('shadow-value').textContent = `${value}px`;
+                    if (selectedElement) {
+                        selectedElement.style.boxShadow = `0 ${value}px ${value * 2}px rgba(0,0,0,0.1)`;
+                    }
+                    break;
+                case 'animation':
+                    if (selectedElement) {
+                        selectedElement.classList.remove('fade-in', 'slide-in', 'zoom-in');
+                        if (value !== 'none') {
+                            selectedElement.classList.add(`${value}-in`);
+                        }
+                    }
+                    break;
+            }
+        }
+
+        function applyLayoutProperty(type, value) {
+            const selectedElement = document.querySelector('.element.selected');
+            if (!selectedElement) {
+                console.log('No element selected for layout changes');
+                return;
+            }
+            
+            console.log(`Applying ${type} layout: ${value}`);
+            
+            switch(type) {
+                case 'padding':
+                    document.getElementById('padding-value').textContent = `${value}px`;
+                    selectedElement.style.padding = `${value}px`;
+                    break;
+                case 'margin':
+                    document.getElementById('margin-value').textContent = `${value}px`;
+                    selectedElement.style.margin = `${value}px`;
+                    break;
+                case 'gap':
+                    document.getElementById('gap-value').textContent = `${value}px`;
+                    selectedElement.style.gap = `${value}px`;
+                    break;
+                case 'horizontal':
+                    selectedElement.style.textAlign = value;
+                    if (selectedElement.style.display === 'flex' || selectedElement.style.display === 'grid') {
+                        selectedElement.style.justifyContent = value === 'center' ? 'center' : `flex-${value === 'left' ? 'start' : 'end'}`;
+                    }
+                    break;
+                case 'vertical':
+                    if (selectedElement.style.display === 'flex' || selectedElement.style.display === 'grid') {
+                        selectedElement.style.alignItems = value === 'middle' ? 'center' : `flex-${value === 'top' ? 'start' : 'end'}`;
+                    }
+                    break;
+                case 'width':
+                    document.getElementById('width-value').textContent = `${value}%`;
+                    selectedElement.style.width = `${value}%`;
+                    break;
+                case 'height':
+                    document.getElementById('height-value').textContent = `${value}px`;
+                    selectedElement.style.height = `${value}px`;
+                    break;
+            }
+        }
+
+        // Add CSS for animations
+        const animationStyles = document.createElement('style');
+        animationStyles.textContent = `
+            .fade-in { animation: fadeIn 0.6s ease-in-out; }
+            .slide-in { animation: slideIn 0.6s ease-in-out; }
+            .zoom-in { animation: zoomIn 0.6s ease-in-out; }
+            
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            
+            @keyframes slideIn {
+                from { transform: translateY(30px); opacity: 0; }
+                to { transform: translateY(0); opacity: 1; }
+            }
+            
+            @keyframes zoomIn {
+                from { transform: scale(0.9); opacity: 0; }
+                to { transform: scale(1); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(animationStyles);
         
         // Initialize everything when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
