@@ -435,14 +435,6 @@
             color: #718096;
         }
 
-        /* Show individual photo change buttons on hover */
-        [data-image-index]:hover .image-edit-overlay,
-        [data-hero-id]:hover .image-edit-overlay,
-        [data-about-id]:hover .image-edit-overlay,
-        .carousel-slide:hover .image-edit-overlay {
-            opacity: 1 !important;
-        }
-
         /* Responsive */
         @media (max-width: 1024px) {
             .builder-sidebar {
@@ -1668,40 +1660,26 @@
                 </div>
             `;
             },
-            'hero-text': (data = {}) => {
-                const heroId = 'hero-text-' + Date.now();
-                return `
-                <div class="element" data-type="hero-text" data-hero-id="${heroId}">
-                    <div style="position: relative; text-align: center; padding: 80px 20px; background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('${data.backgroundImage || 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=1200'}'); background-size: cover; background-position: center; color: white; border-radius: 8px;">
-                        <div class="image-edit-overlay" style="position: absolute; top: 15px; right: 15px; opacity: 0; transition: opacity 0.3s; z-index: 1001;">
-                            <button onclick="changeHeroImage('${heroId}')" style="background: rgba(59, 130, 246, 0.9); border: none; color: white; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.2); transition: all 0.2s;" onmouseover="this.style.background='rgba(59, 130, 246, 1)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.9)'; this.style.transform='translateY(0)'">📷 Change</button>
-                        </div>
+            'hero-text': (data = {}) => `
+                <div class="element" data-type="hero-text">
+                    <div style="text-align: center; padding: 80px 20px; background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('${data.backgroundImage || 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=1200'}'); background-size: cover; background-position: center; color: white; border-radius: 8px;">
                         <h1 style="font-size: 3rem; margin-bottom: 20px; color: white; font-family: 'Playfair Display', serif;">${data.title || 'Capturing Beautiful Moments'}</h1>
                         <p style="font-size: 1.2rem; margin-bottom: 30px; color: rgba(255,255,255,0.9); max-width: 600px; margin-left: auto; margin-right: auto;">${data.subtitle || 'Professional photography services that tell your unique story'}</p>
                         <button style="background: #667eea; color: white; padding: 15px 30px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: 600;" data-page-link="portfolio" onclick="switchToPageNew('portfolio')">View Portfolio</button>
                     </div>
                 </div>
-            `;
-            },
-            hero: (data = {}) => {
-                const heroId = 'hero-' + Date.now();
-                return `
-                <div class="element" data-type="hero" data-hero-id="${heroId}">
-                    <div style="position: relative; text-align: center; padding: 80px 20px; background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('${data.backgroundImage || 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=1200'}'); background-size: cover; background-position: center; color: white; border-radius: 8px;">
-                        <div class="image-edit-overlay" style="position: absolute; top: 15px; right: 15px; opacity: 0; transition: opacity 0.3s; z-index: 1001;">
-                            <button onclick="changeHeroImage('${heroId}')" style="background: rgba(59, 130, 246, 0.9); border: none; color: white; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.2); transition: all 0.2s;" onmouseover="this.style.background='rgba(59, 130, 246, 1)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.9)'; this.style.transform='translateY(0)'">📷 Change</button>
-                        </div>
+            `,
+            hero: (data = {}) => `
+                <div class="element" data-type="hero">
+                    <div style="text-align: center; padding: 80px 20px; background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('${data.backgroundImage || 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=1200'}'); background-size: cover; background-position: center; color: white; border-radius: 8px;">
                         <h1 style="font-size: 3rem; margin-bottom: 20px; color: white;">${data.title || 'Capturing Beautiful Moments'}</h1>
                         <p style="font-size: 1.2rem; margin-bottom: 30px; color: rgba(255,255,255,0.9);">${data.subtitle || 'Professional photography services'}</p>
                         <button style="background: #667eea; color: white; padding: 15px 30px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer;" data-page-link="portfolio" onclick="switchToPageNew('portfolio')">View Portfolio</button>
                     </div>
                 </div>
-            `;
-            },
-            'featured-gallery': (data = {}) => {
-                const galleryId = 'featured-gallery-' + Date.now();
-                return `
-                <div class="element" data-type="featured-gallery" data-gallery-id="${galleryId}">
+            `,
+            'featured-gallery': (data = {}) => `
+                <div class="element" data-type="featured-gallery">
                     <div style="padding: 60px 0;">
                         <h2 style="text-align: center; color: #2d3748; margin-bottom: 50px; font-family: 'Playfair Display', serif; font-size: 2.5rem;">${data.title || 'Featured Work'}</h2>
                         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; max-width: 1000px; margin: 0 auto;">
@@ -1712,23 +1690,13 @@
                                 'https://images.unsplash.com/photo-1520854221256-17451cc331bf?w=600',
                                 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=600',
                                 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=600'
-                            ]).map((img, index) => `
-                                <div style="position: relative; group;" data-image-index="${index}">
-                                    <img src="${img}" style="width: 100%; height: 250px; object-fit: cover; border-radius: 8px; transition: transform 0.3s ease; cursor: pointer;" alt="Featured" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                                    <div class="image-edit-overlay" style="position: absolute; top: 8px; right: 8px; opacity: 0; transition: opacity 0.3s; z-index: 1001;">
-                                        <button onclick="changeGalleryImage('${galleryId}', ${index})" style="background: rgba(59, 130, 246, 0.9); border: none; color: white; padding: 8px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: all 0.2s;" onmouseover="this.style.background='rgba(59, 130, 246, 1)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.9)'; this.style.transform='translateY(0)'">📷</button>
-                                    </div>
-                                </div>
-                            `).join('')}
+                            ]).map(img => `<img src="${img}" style="width: 100%; height: 250px; object-fit: cover; border-radius: 8px; transition: transform 0.3s ease; cursor: pointer;" alt="Featured" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">`).join('')}
                         </div>
                     </div>
                 </div>
-            `;
-            },
-            'gallery-grid': (data = {}) => {
-                const galleryId = 'gallery-grid-' + Date.now();
-                return `
-                <div class="element" data-type="gallery-grid" data-gallery-id="${galleryId}">
+            `,
+            'gallery-grid': (data = {}) => `
+                <div class="element" data-type="gallery-grid">
                     <div style="padding: 60px 0;">
                         <h2 style="text-align: center; color: #2d3748; margin-bottom: 50px; font-family: 'Playfair Display', serif; font-size: 2.5rem;">${data.title || 'Gallery'}</h2>
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
@@ -1739,23 +1707,13 @@
                                 'https://images.unsplash.com/photo-1520854221256-17451cc331bf?w=400',
                                 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=400',
                                 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=400'
-                            ]).map((img, index) => `
-                                <div style="position: relative;" data-image-index="${index}">
-                                    <img src="${img}" style="width: 100%; height: 300px; object-fit: cover; border-radius: 8px;" alt="Gallery">
-                                    <div class="image-edit-overlay" style="position: absolute; top: 8px; right: 8px; opacity: 0; transition: opacity 0.3s; z-index: 1001;">
-                                        <button onclick="changeGalleryImage('${galleryId}', ${index})" style="background: rgba(59, 130, 246, 0.9); border: none; color: white; padding: 8px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: all 0.2s;" onmouseover="this.style.background='rgba(59, 130, 246, 1)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.9)'; this.style.transform='translateY(0)'">📷</button>
-                                    </div>
-                                </div>
-                            `).join('')}
+                            ]).map(img => `<img src="${img}" style="width: 100%; height: 300px; object-fit: cover; border-radius: 8px;" alt="Gallery">`).join('')}
                         </div>
                     </div>
                 </div>
-            `;
-            },
-            masonry: (data = {}) => {
-                const galleryId = 'masonry-' + Date.now();
-                return `
-                <div class="element" data-type="masonry" data-gallery-id="${galleryId}">
+            `,
+            masonry: (data = {}) => `
+                <div class="element" data-type="masonry">
                     <div style="padding: 60px 0;">
                         <h2 style="text-align: center; color: #2d3748; margin-bottom: 50px; font-family: 'Playfair Display', serif; font-size: 2.5rem;">${data.title || 'Portfolio'}</h2>
                         <div style="columns: 3; column-gap: 20px; max-width: 1200px; margin: 0 auto;">
@@ -1768,34 +1726,21 @@
                                 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=400',
                                 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=400',
                                 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400'
-                            ]).map((img, index) => `
-                                <div style="position: relative; display: inline-block; width: 100%; margin-bottom: 20px;" data-image-index="${index}">
-                                    <img src="${img}" style="width: 100%; border-radius: 8px; display: block; height: ${200 + (index % 3) * 100}px; object-fit: cover;" alt="Portfolio">
-                                    <div class="image-edit-overlay" style="position: absolute; top: 8px; right: 8px; opacity: 0; transition: opacity 0.3s; z-index: 1001;">
-                                        <button onclick="changeGalleryImage('${galleryId}', ${index})" style="background: rgba(59, 130, 246, 0.9); border: none; color: white; padding: 8px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: all 0.2s;" onmouseover="this.style.background='rgba(59, 130, 246, 1)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.9)'; this.style.transform='translateY(0)'">📷</button>
-                                    </div>
-                                </div>
-                            `).join('')}
+                            ]).map((img, index) => `<img src="${img}" style="width: 100%; margin-bottom: 20px; border-radius: 8px; display: block; height: ${200 + (index % 3) * 100}px; object-fit: cover;" alt="Portfolio">`).join('')}
                         </div>
                     </div>
                 </div>
-            `;
-            },
-            about: (data = {}) => {
-                const aboutId = 'about-' + Date.now();
-                return `
-                <div class="element" data-type="about" data-about-id="${aboutId}">
+            `,
+            about: (data = {}) => `
+                <div class="element" data-type="about">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; padding: 80px 0;">
                         <div>
                             <h2 style="color: #2d3748; margin-bottom: 30px; font-family: 'Playfair Display', serif; font-size: 2.5rem;">${data.title || 'About Me'}</h2>
                             <p style="line-height: 1.8; color: #4a5568; font-size: 1.1rem; margin-bottom: 20px;">${data.text || 'I\'m a passionate photographer dedicated to capturing the essence of every moment. With over 10 years of experience, I specialize in creating timeless images that tell your unique story.'}</p>
                             <p style="line-height: 1.8; color: #4a5568; font-size: 1.1rem;">${data.additionalText || 'From intimate portraits to grand celebrations, I believe every photograph should evoke emotion and preserve memories for generations to come.'}</p>
                         </div>
-                        <div style="position: relative;">
+                        <div>
                             <img src="${data.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500'}" style="width: 100%; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.1);" alt="About">
-                            <div class="image-edit-overlay" style="position: absolute; top: 10px; right: 10px; opacity: 0; transition: opacity 0.3s; z-index: 1001;">
-                                <button onclick="changeAboutImage('${aboutId}')" style="background: rgba(59, 130, 246, 0.9); border: none; color: white; padding: 8px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: all 0.2s;" onmouseover="this.style.background='rgba(59, 130, 246, 1)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.9)'; this.style.transform='translateY(0)'">📷</button>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -3175,120 +3120,6 @@
             if (submenu) {
                 submenu.style.display = 'block';
             }
-        }
-
-        // Individual photo change functions
-        function changeGalleryImage(galleryId, imageIndex) {
-            console.log(`Changing gallery image ${imageIndex} in ${galleryId}`);
-            
-            // Create file input for image selection
-            const fileInput = document.createElement('input');
-            fileInput.type = 'file';
-            fileInput.accept = 'image/*';
-            fileInput.style.display = 'none';
-            
-            fileInput.onchange = function(e) {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        const newImageUrl = event.target.result;
-                        
-                        // Find the gallery element and update the specific image
-                        const galleryElement = document.querySelector(`[data-gallery-id="${galleryId}"]`);
-                        if (galleryElement) {
-                            const imageContainer = galleryElement.querySelector(`[data-image-index="${imageIndex}"]`);
-                            if (imageContainer) {
-                                const img = imageContainer.querySelector('img');
-                                if (img) {
-                                    img.src = newImageUrl;
-                                    console.log(`Updated image ${imageIndex} in gallery ${galleryId}`);
-                                    showMessage('Photo updated successfully!', 'success');
-                                }
-                            }
-                        }
-                    };
-                    reader.readAsDataURL(file);
-                }
-                document.body.removeChild(fileInput);
-            };
-            
-            document.body.appendChild(fileInput);
-            fileInput.click();
-        }
-
-        function changeHeroImage(heroId) {
-            console.log(`Changing hero image for ${heroId}`);
-            
-            // Create file input for image selection
-            const fileInput = document.createElement('input');
-            fileInput.type = 'file';
-            fileInput.accept = 'image/*';
-            fileInput.style.display = 'none';
-            
-            fileInput.onchange = function(e) {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        const newImageUrl = event.target.result;
-                        
-                        // Find the hero element and update the background image
-                        const heroElement = document.querySelector(`[data-hero-id="${heroId}"]`);
-                        if (heroElement) {
-                            const heroDiv = heroElement.querySelector('div[style*="background"]');
-                            if (heroDiv) {
-                                const currentStyle = heroDiv.getAttribute('style');
-                                const newStyle = currentStyle.replace(/url\([^)]+\)/, `url('${newImageUrl}')`);
-                                heroDiv.setAttribute('style', newStyle);
-                                console.log(`Updated hero background image for ${heroId}`);
-                                showMessage('Hero image updated successfully!', 'success');
-                            }
-                        }
-                    };
-                    reader.readAsDataURL(file);
-                }
-                document.body.removeChild(fileInput);
-            };
-            
-            document.body.appendChild(fileInput);
-            fileInput.click();
-        }
-
-        function changeAboutImage(aboutId) {
-            console.log(`Changing about image for ${aboutId}`);
-            
-            // Create file input for image selection
-            const fileInput = document.createElement('input');
-            fileInput.type = 'file';
-            fileInput.accept = 'image/*';
-            fileInput.style.display = 'none';
-            
-            fileInput.onchange = function(e) {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        const newImageUrl = event.target.result;
-                        
-                        // Find the about element and update the image
-                        const aboutElement = document.querySelector(`[data-about-id="${aboutId}"]`);
-                        if (aboutElement) {
-                            const img = aboutElement.querySelector('img');
-                            if (img) {
-                                img.src = newImageUrl;
-                                console.log(`Updated about image for ${aboutId}`);
-                                showMessage('About image updated successfully!', 'success');
-                            }
-                        }
-                    };
-                    reader.readAsDataURL(file);
-                }
-                document.body.removeChild(fileInput);
-            };
-            
-            document.body.appendChild(fileInput);
-            fileInput.click();
         }
 
         function refreshPagesList() {
