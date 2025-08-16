@@ -1030,8 +1030,35 @@
 
         // Save website function
         function saveWebsite() {
-            console.log('Saving website...', websiteData);
-            alert('Website saved successfully!');
+            try {
+                // Save current page content before saving entire website
+                if (currentPage) {
+                    savePage(currentPage);
+                }
+                
+                // Prepare complete website data
+                const completeWebsiteData = {
+                    template: currentTemplate,
+                    pages: pages,
+                    navOrder: navOrder,
+                    navStyle: navStyle,
+                    subPages: subPages,
+                    logoConfig: logoConfig || {},
+                    lastSaved: new Date().toISOString()
+                };
+                
+                // Save to localStorage for persistence
+                localStorage.setItem('website-builder-data', JSON.stringify(completeWebsiteData));
+                
+                console.log('Website saved successfully:', completeWebsiteData);
+                
+                // Show success message
+                showMessage('Website saved successfully!', 'success');
+                
+            } catch (error) {
+                console.error('Error saving website:', error);
+                showMessage('Error saving website. Please try again.', 'error');
+            }
         }
 
         // Touch-to-edit functionality
@@ -3135,11 +3162,214 @@
 
         // Header functions
         function previewWebsite() {
-            alert('Preview functionality would open a new tab with the live website preview');
+            try {
+                // Save current page content before preview
+                if (currentPage) {
+                    savePage(currentPage);
+                }
+                
+                // Generate complete website HTML for preview
+                const previewHTML = generateCompleteWebsiteHTML();
+                
+                // Open preview in new tab
+                const previewWindow = window.open('', '_blank');
+                if (previewWindow) {
+                    previewWindow.document.write(previewHTML);
+                    previewWindow.document.close();
+                    showMessage('Preview opened in new tab', 'success');
+                } else {
+                    // Fallback: show preview in current tab
+                    document.getElementById('canvas').innerHTML = previewHTML;
+                    showMessage('Preview mode active. Click refresh to return to edit mode.', 'info');
+                }
+                
+            } catch (error) {
+                console.error('Error generating preview:', error);
+                showMessage('Error generating preview. Please try again.', 'error');
+            }
+        }
+
+        function generateCompleteWebsiteHTML() {
+            // Generate complete standalone HTML for preview
+            const css = `
+                <style>
+                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #2d3748; }
+                    .navigation { background: white; padding: 15px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 1000; }
+                    .nav-container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+                    .nav-links { display: flex; justify-content: center; align-items: center; gap: 30px; }
+                    .nav-links a { text-decoration: none; color: #2d3748; font-weight: 500; padding: 8px 16px; border-radius: 6px; transition: all 0.3s; }
+                    .nav-links a:hover, .nav-links a.active { background: #667eea; color: white; }
+                    .page-content { min-height: 80vh; }
+                    .hero-section { padding: 100px 20px; text-align: center; background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+                    .hero-section h1 { font-size: 3.5rem; font-weight: 700; margin-bottom: 20px; }
+                    .hero-section p { font-size: 1.2rem; max-width: 600px; margin: 0 auto; }
+                    .about-section, .gallery-section, .contact-section { padding: 80px 20px; max-width: 1200px; margin: 0 auto; }
+                    .section-title { font-size: 2.5rem; text-align: center; margin-bottom: 50px; color: #2d3748; }
+                    .gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-top: 40px; }
+                    .gallery-item { border-radius: 12px; overflow: hidden; box-shadow: 0 8px 30px rgba(0,0,0,0.1); }
+                    .gallery-item img { width: 100%; height: 250px; object-fit: cover; }
+                    .contact-info { text-align: center; }
+                    .contact-info p { margin: 10px 0; font-size: 1.1rem; }
+                </style>
+            `;
+            
+            // Generate navigation HTML
+            const navigationHTML = generateNavigationForPreview();
+            
+            // Generate content for current page
+            const pageContentHTML = generatePageContentForPreview(currentPage);
+            
+            return `
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Website Preview</title>
+                    ${css}
+                </head>
+                <body>
+                    ${navigationHTML}
+                    <div class="page-content">
+                        ${pageContentHTML}
+                    </div>
+                    <script>
+                        // Simple navigation for preview
+                        function showPage(pageId) {
+                            alert('Navigation would work in the final published website. This is just a preview of the ${currentPage} page.');
+                        }
+                    </script>
+                </body>
+                </html>
+            `;
+        }
+
+        function generateNavigationForPreview() {
+            const navItems = navOrder.map(pageId => {
+                const isActive = pageId === currentPage;
+                return `<a href="javascript:showPage('${pageId}')" class="${isActive ? 'active' : ''}">${pages[pageId]?.name || pageId}</a>`;
+            }).join('');
+            
+            return `
+                <nav class="navigation">
+                    <div class="nav-container">
+                        <div class="nav-links">
+                            ${navItems}
+                        </div>
+                    </div>
+                </nav>
+            `;
+        }
+
+        function generatePageContentForPreview(pageId) {
+            const page = pages[pageId];
+            if (!page) return '<div>Page not found</div>';
+            
+            if (page.elements && page.elements.length > 0) {
+                // Generate custom page content
+                return page.elements.map(element => generateElementForPreview(element)).join('');
+            } else {
+                // Generate template content
+                return generateTemplateForPreview(page.template || 'modern');
+            }
+        }
+
+        function generateElementForPreview(element) {
+            switch (element.type) {
+                case 'hero':
+                    return `
+                        <div class="hero-section">
+                            <h1>${element.content.title || 'Welcome'}</h1>
+                            <p>${element.content.subtitle || 'Professional photography services'}</p>
+                        </div>
+                    `;
+                case 'about':
+                    return `
+                        <div class="about-section">
+                            <h2 class="section-title">${element.content.title || 'About'}</h2>
+                            <p style="text-align: center; font-size: 1.1rem; max-width: 800px; margin: 0 auto;">${element.content.text || element.content.bio || 'Professional photographer with years of experience.'}</p>
+                        </div>
+                    `;
+                case 'gallery':
+                case 'featured-gallery':
+                    return `
+                        <div class="gallery-section">
+                            <h2 class="section-title">${element.content.title || 'Portfolio'}</h2>
+                            <div class="gallery-grid">
+                                <div class="gallery-item">
+                                    <img src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=400" alt="Gallery Image">
+                                </div>
+                                <div class="gallery-item">
+                                    <img src="https://images.unsplash.com/photo-1519741497674-611481863552?w=400" alt="Gallery Image">
+                                </div>
+                                <div class="gallery-item">
+                                    <img src="https://images.unsplash.com/photo-1494790108755-2616c43f40cc?w=400" alt="Gallery Image">
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                case 'contact':
+                    return `
+                        <div class="contact-section">
+                            <h2 class="section-title">${element.content.title || 'Contact'}</h2>
+                            <div class="contact-info">
+                                <p><strong>Email:</strong> ${element.content.email || 'hello@photographer.com'}</p>
+                                <p><strong>Phone:</strong> ${element.content.phone || '(555) 123-4567'}</p>
+                                <p><strong>Address:</strong> ${element.content.address || 'Photography Studio'}</p>
+                            </div>
+                        </div>
+                    `;
+                default:
+                    return `<div style="padding: 40px; text-align: center;">Content: ${element.type}</div>`;
+            }
+        }
+
+        function generateTemplateForPreview(templateName) {
+            // Generate default template content for home page
+            return `
+                <div class="hero-section">
+                    <h1>Capturing Life's Beautiful Moments</h1>
+                    <p>Professional photography services for weddings, portraits, and special events</p>
+                </div>
+                <div class="about-section">
+                    <h2 class="section-title">About Me</h2>
+                    <p style="text-align: center; font-size: 1.1rem; max-width: 800px; margin: 0 auto;">I'm a passionate photographer dedicated to capturing the essence of every moment. With over 10 years of experience, I specialize in creating timeless images that tell your unique story.</p>
+                </div>
+            `;
         }
 
         function publishWebsite() {
             alert('Publish functionality would deploy the website to your domain');
+        }
+
+        function loadSavedWebsite() {
+            try {
+                const savedData = localStorage.getItem('website-builder-data');
+                if (savedData) {
+                    const websiteData = JSON.parse(savedData);
+                    
+                    // Restore website state
+                    if (websiteData.pages) pages = websiteData.pages;
+                    if (websiteData.navOrder) navOrder = websiteData.navOrder;
+                    if (websiteData.navStyle) navStyle = websiteData.navStyle;
+                    if (websiteData.subPages) subPages = websiteData.subPages;
+                    if (websiteData.logoConfig) logoConfig = websiteData.logoConfig;
+                    if (websiteData.template) currentTemplate = websiteData.template;
+                    
+                    console.log('Loaded saved website data:', websiteData);
+                    showMessage('Previous website data loaded successfully', 'success');
+                    
+                    // Refresh the pages list to show loaded data
+                    refreshPagesList();
+                    
+                    return true;
+                }
+            } catch (error) {
+                console.error('Error loading saved website:', error);
+                showMessage('Error loading previous website data', 'error');
+            }
+            return false;
         }
 
         function saveAndClose() {
@@ -5851,8 +6081,21 @@
             initializeDragAndDrop();
             initializeFloatingToolbar(); // Initialize toolbar first
             initializePagesDragAndDrop(); // Initialize page drag and drop
+            
+            // Load saved website data if available
+            const hasSavedData = loadSavedWebsite();
+            
             refreshPagesList(); // Populate pages list with current pages
-            loadTemplate('modern');
+            
+            // Only load default template if no saved data was found
+            if (!hasSavedData) {
+                loadTemplate('modern');
+            } else {
+                // If we have saved data, load the current page
+                if (currentPage && pages[currentPage]) {
+                    switchToPageNew(currentPage);
+                }
+            }
             
             // Wait for template to load, then make all elements deletable
             setTimeout(() => {
