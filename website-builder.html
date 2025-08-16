@@ -2121,6 +2121,18 @@
             if (componentTemplates[type]) {
                 const html = componentTemplates[type]();
                 canvas.insertAdjacentHTML('beforeend', html);
+                
+                // Get the newly added element and assign ID + hover delete
+                const newElements = canvas.querySelectorAll('.element:not([id])');
+                if (newElements.length > 0) {
+                    const newElement = newElements[newElements.length - 1];
+                    if (!newElement.id) {
+                        newElement.id = 'element-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                    }
+                    // Add hover delete functionality to new element
+                    addHoverDeleteToElement(newElement);
+                }
+                
                 console.log(`Adding component: ${type}`);
                 console.log(`Component ${type} added successfully`);
             } else {
@@ -4093,6 +4105,9 @@
                     canvas.appendChild(element);
                     console.log(`Component ${componentType} added successfully with ID: ${element.id}`);
                     
+                    // Add hover delete functionality to new component
+                    addHoverDeleteToElement(element);
+                    
                     // Initialize any special functionality for the new component
                     if (componentType === 'hero-carousel') {
                         // Get the carousel ID from the newly added element
@@ -4487,6 +4502,82 @@
             console.log('Element selected:', element.id);
         }
 
+        // Add hover delete functionality to an element
+        function addHoverDeleteToElement(element) {
+            // Skip if already has hover delete
+            if (element.dataset.hasHoverDelete) return;
+            
+            element.dataset.hasHoverDelete = 'true';
+            
+            let deleteButton = null;
+            
+            // Show delete button on hover
+            element.addEventListener('mouseenter', function() {
+                // Skip if this is a toolbar or button area
+                if (element.closest('.builder-tools') || 
+                    element.closest('.floating-toolbar') ||
+                    element.closest('.edit-toolbar')) {
+                    return;
+                }
+                
+                if (!deleteButton) {
+                    deleteButton = document.createElement('button');
+                    deleteButton.className = 'delete-button hover-delete';
+                    deleteButton.innerHTML = '×';
+                    deleteButton.title = 'Delete Element';
+                    deleteButton.style.cssText = `
+                        position: absolute;
+                        top: 10px;
+                        right: 10px;
+                        width: 32px;
+                        height: 32px;
+                        background: #e53e3e;
+                        color: white;
+                        border: none;
+                        border-radius: 50%;
+                        cursor: pointer;
+                        font-size: 18px;
+                        font-weight: bold;
+                        z-index: 1000;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                        opacity: 0;
+                        transition: opacity 0.2s ease;
+                        line-height: 1;
+                    `;
+                    
+                    deleteButton.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        deleteElement(element.id);
+                    });
+                    
+                    element.appendChild(deleteButton);
+                }
+                
+                // Ensure element is positioned relative
+                if (getComputedStyle(element).position === 'static') {
+                    element.style.position = 'relative';
+                }
+                
+                // Show delete button with slight delay
+                setTimeout(() => {
+                    if (deleteButton) {
+                        deleteButton.style.opacity = '1';
+                    }
+                }, 100);
+            });
+            
+            // Hide delete button when mouse leaves
+            element.addEventListener('mouseleave', function() {
+                if (deleteButton) {
+                    deleteButton.style.opacity = '0';
+                }
+            });
+        }
+
         // Make all existing elements deletable
         function makeAllElementsDeletable() {
             // Find all component sections and assign IDs if needed
@@ -4503,10 +4594,12 @@
                         element.id = 'element-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
                         console.log(`Assigned ID ${element.id} to existing ${className} element`);
                     }
+                    // Add hover delete functionality
+                    addHoverDeleteToElement(element);
                 });
             });
             
-            console.log('All existing elements made deletable');
+            console.log('All existing elements made deletable with hover');
         }
 
         // Enhanced element selection setup
