@@ -2983,6 +2983,8 @@
                 return;
             }
             
+            console.log(`Creating SubPage: ${subPageId} under ${parentId}`);
+            
             // Create subpage
             pages[subPageId] = {
                 name: subPageName,
@@ -2997,16 +2999,27 @@
             }
             subPages[parentId].push(subPageId);
             
-            // Close modal
-            document.querySelector('[onclick="this.closest(\'div\').parentElement.remove()"]').click();
+            console.log('SubPage data created, updating UI...');
             
-            // Refresh pages list to show new subpage
-            refreshPagesList();
+            // Close modal first
+            const modal = document.querySelector('[style*="position: fixed"]');
+            if (modal) {
+                modal.remove();
+            }
             
-            // Switch to new subpage
-            switchToPageNew(subPageId);
-            
-            console.log(`SubPage created: ${subPageId} under ${parentId}`);
+            // Delay UI updates to ensure modal is closed
+            setTimeout(() => {
+                // Refresh pages list to show new subpage
+                refreshPagesList();
+                
+                // Switch to new subpage
+                switchToPageNew(subPageId);
+                
+                console.log(`SubPage created and loaded: ${subPageId} under ${parentId}`);
+                
+                // Show success message
+                showMessage(`SubPage "${subPageName}" created under "${pages[parentId].name}"!`, 'success');
+            }, 100);
         }
 
         function refreshPagesList() {
@@ -3038,7 +3051,6 @@
             if (currentPage === pageId) pageItem.classList.add('active');
             pageItem.setAttribute('data-page', pageId);
             pageItem.setAttribute('draggable', 'true');
-            pageItem.setAttribute('onclick', `switchToPageNew('${pageId}')`);
             
             const indentation = isSubPage ? '20px' : '0px';
             const pageIcon = isSubPage ? '└─' : '☰';
@@ -3052,6 +3064,13 @@
                 <button onclick="event.stopPropagation(); renamePageNew('${pageId}')" style="background: none; border: none; color: #667eea; cursor: pointer; padding: 4px; margin-right: 4px; font-size: 12px;">✏️</button>
                 <button onclick="event.stopPropagation(); deletePageNew('${pageId}')" style="background: none; border: none; color: #e53e3e; cursor: pointer; padding: 4px; font-size: 12px;">🗑️</button>
             `;
+            
+            // Add click event listener instead of using onclick attribute
+            pageItem.addEventListener('click', function(e) {
+                if (e.target.tagName !== 'BUTTON') {
+                    switchToPageNew(pageId);
+                }
+            });
             
             return pageItem;
         }
