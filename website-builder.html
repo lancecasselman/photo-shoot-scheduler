@@ -531,6 +531,10 @@
                                 <div class="component-icon">☰</div>
                                 <span class="component-text">Nav Menu</span>
                             </div>
+                            <div class="component-item" onclick="openLogoUpload()" style="cursor: pointer; border: 2px dashed #f56565; background: #fff5f5;">
+                                <div class="component-icon">🏢</div>
+                                <span class="component-text">Add Logo</span>
+                            </div>
                             <div class="component-item" draggable="true" data-component="hero-carousel" onclick="addComponent('hero-carousel')" style="cursor: pointer;">
                                 <div class="component-icon">🎞️</div>
                                 <span class="component-text">Image Carousel</span>
@@ -3587,6 +3591,88 @@
             logoConfig.position = position;
             updateNavigationPreview();
             console.log('Logo position updated to:', position);
+        }
+
+        function openLogoUpload() {
+            // Create a file input element
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            
+            input.onchange = function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        // Set default logo configuration
+                        logoConfig.url = e.target.result;
+                        logoConfig.size = logoConfig.size || 40;
+                        logoConfig.position = logoConfig.position || 'left';
+                        
+                        // If no navigation exists, add one first
+                        const existingNav = document.querySelector('#canvas nav');
+                        if (!existingNav) {
+                            addComponent('nav');
+                        }
+                        
+                        // Update the navigation to show the logo
+                        updateNavigationPreview();
+                        
+                        // Switch to properties tab to allow further customization
+                        switchToTab('properties');
+                        
+                        // Show success message
+                        console.log('Logo uploaded successfully and navigation updated');
+                        
+                        // Show brief notification
+                        showNotification('Logo added successfully! Use the Properties tab to customize size and position.');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+            
+            // Trigger file selection
+            input.click();
+        }
+
+        function showNotification(message) {
+            // Create a temporary notification
+            const notification = document.createElement('div');
+            notification.textContent = message;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #48bb78;
+                color: white;
+                padding: 12px 20px;
+                border-radius: 6px;
+                font-size: 14px;
+                z-index: 10000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                animation: slideIn 0.3s ease-out;
+            `;
+            
+            // Add animation keyframes if not already added
+            if (!document.querySelector('#notification-styles')) {
+                const style = document.createElement('style');
+                style.id = 'notification-styles';
+                style.textContent = `
+                    @keyframes slideIn {
+                        from { transform: translateX(100%); opacity: 0; }
+                        to { transform: translateX(0); opacity: 1; }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            document.body.appendChild(notification);
+            
+            // Auto-remove after 3 seconds
+            setTimeout(() => {
+                notification.style.animation = 'slideIn 0.3s ease-out reverse';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
         }
 
         // Header functions
