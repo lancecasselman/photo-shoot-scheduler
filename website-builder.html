@@ -795,6 +795,11 @@
                 <label style="font-size: 12px;">Spacing:</label>
                 <input type="range" id="toolbar-letter-spacing" min="-2" max="10" value="0" style="width: 60px;">
             </div>
+            
+            <!-- Convert to Button Link -->
+            <div style="display: flex; align-items: center; gap: 4px; border-left: 1px solid #e2e8f0; padding-left: 8px;">
+                <button class="toolbar-btn" data-action="convert-to-link" title="Convert to Page Link" style="width: 32px; height: 32px; border: none; background: white; cursor: pointer; border-radius: 4px; font-size: 16px;">🔗</button>
+            </div>
         </div>
     </div>
 
@@ -3149,6 +3154,9 @@
                     currentTextElement.style.fontSize = smallerSize + 'px';
                     console.log('Font size decreased to:', smallerSize);
                     break;
+                case 'convert-to-link':
+                    convertTextToPageLink();
+                    break;
                 default:
                     console.log('Unknown action:', action);
             }
@@ -3162,6 +3170,119 @@
                 return ("0" + parseInt(x).toString(16)).slice(-2);
             }
             return "#" + hex(match[1]) + hex(match[2]) + hex(match[3]);
+        }
+        
+        function convertTextToPageLink() {
+            if (!currentTextElement) return;
+            
+            // Get all available pages including subpages
+            const allPages = [];
+            
+            // Add main pages
+            Object.keys(pages).forEach(pageId => {
+                allPages.push({
+                    id: pageId,
+                    name: pages[pageId].name || pageId,
+                    isSubPage: false
+                });
+            });
+            
+            // Add subpages
+            Object.keys(subPages).forEach(parentId => {
+                subPages[parentId].forEach(subPageId => {
+                    allPages.push({
+                        id: subPageId,
+                        name: `${pages[parentId]?.name || parentId} > ${pages[subPageId]?.name || subPageId}`,
+                        isSubPage: true
+                    });
+                });
+            });
+            
+            // Create page selection modal
+            const pageOptions = allPages.map(page => 
+                `<option value="${page.id}">${page.name}</option>`
+            ).join('');
+            
+            const modal = document.createElement('div');
+            modal.innerHTML = `
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; justify-content: center;">
+                    <div style="background: white; padding: 30px; border-radius: 12px; max-width: 400px; width: 90%;">
+                        <h3 style="margin: 0 0 20px 0; color: #2d3748;">Convert Text to Page Link</h3>
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 500;">Link to Page:</label>
+                            <select id="page-link-select" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;">
+                                <option value="">Select a page...</option>
+                                ${pageOptions}
+                            </select>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: flex; align-items: center; gap: 8px;">
+                                <input type="checkbox" id="open-new-tab">
+                                <span style="color: #4a5568;">Open in new tab</span>
+                            </label>
+                        </div>
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button onclick="this.closest('div').closest('div').remove()" style="padding: 8px 16px; background: #e2e8f0; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>
+                            <button onclick="applyPageLink()" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">Create Link</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+        
+        function applyPageLink() {
+            const selectedPage = document.getElementById('page-link-select').value;
+            const openNewTab = document.getElementById('open-new-tab').checked;
+            
+            if (!selectedPage || !currentTextElement) {
+                document.querySelector('[onclick="applyPageLink()"]').closest('div').closest('div').remove();
+                return;
+            }
+            
+            // Convert text element to a clickable link
+            const originalText = currentTextElement.textContent;
+            const originalStyles = window.getComputedStyle(currentTextElement);
+            
+            // Create a new button element that looks like text but acts like a link
+            const linkElement = document.createElement('a');
+            linkElement.textContent = originalText;
+            linkElement.href = 'javascript:void(0)';
+            linkElement.onclick = function() { 
+                switchToPageNew(selectedPage); 
+                return false; 
+            };
+            
+            // Copy all styles from original element
+            linkElement.style.cssText = `
+                color: ${originalStyles.color};
+                font-family: ${originalStyles.fontFamily};
+                font-size: ${originalStyles.fontSize};
+                font-weight: ${originalStyles.fontWeight};
+                font-style: ${originalStyles.fontStyle};
+                text-decoration: underline;
+                text-align: ${originalStyles.textAlign};
+                letter-spacing: ${originalStyles.letterSpacing};
+                cursor: pointer;
+                background: none;
+                border: none;
+                padding: 0;
+                margin: 0;
+                display: ${originalStyles.display};
+            `;
+            
+            // Replace the original element
+            currentTextElement.parentNode.replaceChild(linkElement, currentTextElement);
+            
+            // Update currentTextElement reference
+            currentTextElement = linkElement;
+            
+            // Hide toolbar and close modal
+            document.getElementById('text-toolbar').style.display = 'none';
+            document.querySelector('[onclick="applyPageLink()"]').closest('div').closest('div').remove();
+            
+            console.log(`Text converted to page link: "${originalText}" -> ${selectedPage}`);
         }
         
         // Initialize text editing with comprehensive toolbar support
