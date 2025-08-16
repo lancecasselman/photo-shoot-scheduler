@@ -1347,28 +1347,44 @@
                     </nav>
                 </div>
             `,
-            'hero-carousel': (data = {}) => `
-                <div class="element" data-type="hero-carousel">
-                    <div style="position: relative; height: 500px; overflow: hidden; border-radius: 8px;">
-                        <div class="carousel-container" style="display: flex; transition: transform 0.5s ease;">
-                            ${(data.images || [
-                                'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=1200',
-                                'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200',
-                                'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=1200'
-                            ]).map((img, index) => `
-                                <div class="carousel-slide" style="min-width: 100%; height: 500px; background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('${img}'); background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; color: white;">
-                                    <div style="text-align: center;">
-                                        <h1 style="font-size: 3rem; margin-bottom: 20px; color: white;">${data.titles?.[index] || 'Beautiful Photography'}</h1>
+            'hero-carousel': (data = {}) => {
+                const images = data.images || [
+                    'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=1200',
+                    'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200',
+                    'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=1200'
+                ];
+                const carouselId = 'carousel-' + Date.now();
+                return `
+                <div class="element" data-type="hero-carousel" data-carousel-id="${carouselId}">
+                    <div style="position: relative; height: 500px; overflow: hidden; border-radius: 8px;" class="carousel-wrapper">
+                        <div class="carousel-container" id="${carouselId}-container" style="display: flex; transition: transform 0.5s ease; width: ${images.length * 100}%;">
+                            ${images.map((img, index) => `
+                                <div class="carousel-slide" data-slide="${index}" style="min-width: ${100/images.length}%; height: 500px; background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('${img}'); background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; color: white; position: relative;">
+                                    <div class="image-edit-overlay" style="position: absolute; top: 10px; right: 10px; opacity: 0; transition: opacity 0.3s;">
+                                        <button onclick="editCarouselImage('${carouselId}', ${index})" style="background: rgba(255,255,255,0.9); border: none; color: #333; padding: 8px; border-radius: 4px; cursor: pointer; margin-right: 5px; font-size: 12px;">✏️ Edit</button>
+                                        <button onclick="removeCarouselImage('${carouselId}', ${index})" style="background: rgba(255,0,0,0.9); border: none; color: white; padding: 8px; border-radius: 4px; cursor: pointer; font-size: 12px;">🗑️</button>
+                                    </div>
+                                    <div style="text-align: center; z-index: 2;">
+                                        <h1 style="font-size: 3rem; margin-bottom: 20px; color: white; font-family: 'Playfair Display', serif;">${data.titles?.[index] || 'Beautiful Photography'}</h1>
                                         <p style="font-size: 1.2rem; color: rgba(255,255,255,0.9);">${data.subtitles?.[index] || 'Capturing life\'s precious moments'}</p>
                                     </div>
                                 </div>
                             `).join('')}
                         </div>
-                        <button class="carousel-prev" style="position: absolute; top: 50%; left: 20px; transform: translateY(-50%); background: rgba(255,255,255,0.2); border: none; color: white; font-size: 24px; padding: 10px 15px; border-radius: 50%; cursor: pointer;">❮</button>
-                        <button class="carousel-next" style="position: absolute; top: 50%; right: 20px; transform: translateY(-50%); background: rgba(255,255,255,0.2); border: none; color: white; font-size: 24px; padding: 10px 15px; border-radius: 50%; cursor: pointer;">❯</button>
+                        <button class="carousel-prev" onclick="prevSlide('${carouselId}')" style="position: absolute; top: 50%; left: 20px; transform: translateY(-50%); background: rgba(255,255,255,0.2); border: none; color: white; font-size: 24px; padding: 10px 15px; border-radius: 50%; cursor: pointer; z-index: 10; transition: background 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.4)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">❮</button>
+                        <button class="carousel-next" onclick="nextSlide('${carouselId}')" style="position: absolute; top: 50%; right: 20px; transform: translateY(-50%); background: rgba(255,255,255,0.2); border: none; color: white; font-size: 24px; padding: 10px 15px; border-radius: 50%; cursor: pointer; z-index: 10; transition: background 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.4)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">❯</button>
+                        <button class="carousel-add" onclick="addCarouselImage('${carouselId}')" style="position: absolute; bottom: 20px; right: 20px; background: rgba(102, 126, 234, 0.9); border: none; color: white; padding: 10px 15px; border-radius: 6px; cursor: pointer; z-index: 10; font-size: 14px; transition: background 0.3s;" onmouseover="this.style.background='rgba(102, 126, 234, 1)'" onmouseout="this.style.background='rgba(102, 126, 234, 0.9)'">+ Add Image</button>
+                        
+                        <!-- Dot indicators -->
+                        <div class="carousel-dots" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 10;">
+                            ${images.map((_, index) => `
+                                <button onclick="goToSlide('${carouselId}', ${index})" class="carousel-dot" data-slide="${index}" style="width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; background: ${index === 0 ? 'white' : 'transparent'}; cursor: pointer; transition: all 0.3s;"></button>
+                            `).join('')}
+                        </div>
                     </div>
                 </div>
-            `,
+            `;
+            },
             'hero-text': (data = {}) => `
                 <div class="element" data-type="hero-text">
                     <div style="text-align: center; padding: 80px 20px; background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('${data.backgroundImage || 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=1200'}'); background-size: cover; background-position: center; color: white; border-radius: 8px;">
@@ -2963,6 +2979,213 @@
             }
         }
 
+        // Carousel functionality
+        let carouselStates = {};
+
+        function nextSlide(carouselId) {
+            const container = document.getElementById(carouselId + '-container');
+            const slides = container.querySelectorAll('.carousel-slide');
+            const totalSlides = slides.length;
+            
+            if (!carouselStates[carouselId]) {
+                carouselStates[carouselId] = { currentSlide: 0 };
+            }
+            
+            carouselStates[carouselId].currentSlide = (carouselStates[carouselId].currentSlide + 1) % totalSlides;
+            updateCarousel(carouselId);
+        }
+
+        function prevSlide(carouselId) {
+            const container = document.getElementById(carouselId + '-container');
+            const slides = container.querySelectorAll('.carousel-slide');
+            const totalSlides = slides.length;
+            
+            if (!carouselStates[carouselId]) {
+                carouselStates[carouselId] = { currentSlide: 0 };
+            }
+            
+            carouselStates[carouselId].currentSlide = (carouselStates[carouselId].currentSlide - 1 + totalSlides) % totalSlides;
+            updateCarousel(carouselId);
+        }
+
+        function goToSlide(carouselId, slideIndex) {
+            if (!carouselStates[carouselId]) {
+                carouselStates[carouselId] = { currentSlide: 0 };
+            }
+            
+            carouselStates[carouselId].currentSlide = slideIndex;
+            updateCarousel(carouselId);
+        }
+
+        function updateCarousel(carouselId) {
+            const container = document.getElementById(carouselId + '-container');
+            const dots = document.querySelectorAll(`[data-carousel-id="${carouselId}"] .carousel-dot`);
+            const currentSlide = carouselStates[carouselId].currentSlide;
+            
+            // Move slides
+            const translateX = -currentSlide * (100 / container.querySelectorAll('.carousel-slide').length);
+            container.style.transform = `translateX(${translateX}%)`;
+            
+            // Update dots
+            dots.forEach((dot, index) => {
+                dot.style.background = index === currentSlide ? 'white' : 'transparent';
+            });
+        }
+
+        function editCarouselImage(carouselId, slideIndex) {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const slide = document.querySelector(`[data-carousel-id="${carouselId}"] .carousel-slide[data-slide="${slideIndex}"]`);
+                        if (slide) {
+                            const currentBg = slide.style.backgroundImage;
+                            const newBg = currentBg.replace(/url\([^)]+\)/, `url('${e.target.result}')`);
+                            slide.style.backgroundImage = newBg;
+                            console.log(`Carousel image ${slideIndex} updated`);
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+            input.click();
+        }
+
+        function addCarouselImage(carouselId) {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const carouselElement = document.querySelector(`[data-carousel-id="${carouselId}"]`);
+                        const container = document.getElementById(carouselId + '-container');
+                        const slides = container.querySelectorAll('.carousel-slide');
+                        const newIndex = slides.length;
+                        
+                        // Create new slide
+                        const newSlide = document.createElement('div');
+                        newSlide.className = 'carousel-slide';
+                        newSlide.setAttribute('data-slide', newIndex);
+                        newSlide.style.cssText = `min-width: ${100/(newIndex + 1)}%; height: 500px; background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('${e.target.result}'); background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; color: white; position: relative;`;
+                        
+                        newSlide.innerHTML = `
+                            <div class="image-edit-overlay" style="position: absolute; top: 10px; right: 10px; opacity: 0; transition: opacity 0.3s;">
+                                <button onclick="editCarouselImage('${carouselId}', ${newIndex})" style="background: rgba(255,255,255,0.9); border: none; color: #333; padding: 8px; border-radius: 4px; cursor: pointer; margin-right: 5px; font-size: 12px;">✏️ Edit</button>
+                                <button onclick="removeCarouselImage('${carouselId}', ${newIndex})" style="background: rgba(255,0,0,0.9); border: none; color: white; padding: 8px; border-radius: 4px; cursor: pointer; font-size: 12px;">🗑️</button>
+                            </div>
+                            <div style="text-align: center; z-index: 2;">
+                                <h1 style="font-size: 3rem; margin-bottom: 20px; color: white; font-family: 'Playfair Display', serif;">New Image</h1>
+                                <p style="font-size: 1.2rem; color: rgba(255,255,255,0.9);">Click to edit this text</p>
+                            </div>
+                        `;
+                        
+                        container.appendChild(newSlide);
+                        
+                        // Update container width
+                        container.style.width = `${(newIndex + 1) * 100}%`;
+                        
+                        // Update all slide widths
+                        container.querySelectorAll('.carousel-slide').forEach(slide => {
+                            slide.style.minWidth = `${100/(newIndex + 1)}%`;
+                        });
+                        
+                        // Add new dot
+                        const dotsContainer = carouselElement.querySelector('.carousel-dots');
+                        const newDot = document.createElement('button');
+                        newDot.className = 'carousel-dot';
+                        newDot.setAttribute('data-slide', newIndex);
+                        newDot.style.cssText = 'width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; background: transparent; cursor: pointer; transition: all 0.3s;';
+                        newDot.onclick = () => goToSlide(carouselId, newIndex);
+                        dotsContainer.appendChild(newDot);
+                        
+                        // Go to new slide
+                        goToSlide(carouselId, newIndex);
+                        
+                        console.log(`New image added to carousel ${carouselId}`);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+            input.click();
+        }
+
+        function removeCarouselImage(carouselId, slideIndex) {
+            const container = document.getElementById(carouselId + '-container');
+            const slides = container.querySelectorAll('.carousel-slide');
+            
+            if (slides.length <= 1) {
+                alert('Cannot remove the last image from carousel');
+                return;
+            }
+            
+            const slideToRemove = container.querySelector(`[data-slide="${slideIndex}"]`);
+            if (slideToRemove) {
+                slideToRemove.remove();
+                
+                // Remove corresponding dot
+                const carouselElement = document.querySelector(`[data-carousel-id="${carouselId}"]`);
+                const dotToRemove = carouselElement.querySelector(`.carousel-dot[data-slide="${slideIndex}"]`);
+                if (dotToRemove) {
+                    dotToRemove.remove();
+                }
+                
+                // Re-index remaining slides and dots
+                const remainingSlides = container.querySelectorAll('.carousel-slide');
+                const remainingDots = carouselElement.querySelectorAll('.carousel-dot');
+                
+                remainingSlides.forEach((slide, index) => {
+                    slide.setAttribute('data-slide', index);
+                    slide.style.minWidth = `${100/remainingSlides.length}%`;
+                    
+                    // Update edit and remove button onclick
+                    const editBtn = slide.querySelector('button[onclick*="editCarouselImage"]');
+                    const removeBtn = slide.querySelector('button[onclick*="removeCarouselImage"]');
+                    if (editBtn) editBtn.setAttribute('onclick', `editCarouselImage('${carouselId}', ${index})`);
+                    if (removeBtn) removeBtn.setAttribute('onclick', `removeCarouselImage('${carouselId}', ${index})`);
+                });
+                
+                remainingDots.forEach((dot, index) => {
+                    dot.setAttribute('data-slide', index);
+                    dot.onclick = () => goToSlide(carouselId, index);
+                });
+                
+                // Update container width
+                container.style.width = `${remainingSlides.length * 100}%`;
+                
+                // Adjust current slide if necessary
+                if (carouselStates[carouselId] && carouselStates[carouselId].currentSlide >= remainingSlides.length) {
+                    carouselStates[carouselId].currentSlide = remainingSlides.length - 1;
+                }
+                
+                updateCarousel(carouselId);
+                console.log(`Image ${slideIndex} removed from carousel ${carouselId}`);
+            }
+        }
+
+        // Add hover effects for carousel edit buttons
+        function initializeCarouselHover() {
+            document.addEventListener('mouseover', function(e) {
+                if (e.target.closest('.carousel-slide')) {
+                    const overlay = e.target.closest('.carousel-slide').querySelector('.image-edit-overlay');
+                    if (overlay) overlay.style.opacity = '1';
+                }
+            });
+            
+            document.addEventListener('mouseout', function(e) {
+                if (e.target.closest('.carousel-slide')) {
+                    const overlay = e.target.closest('.carousel-slide').querySelector('.image-edit-overlay');
+                    if (overlay) overlay.style.opacity = '0';
+                }
+            });
+        }
+
         // Add CSS for animations
         const animationStyles = document.createElement('style');
         animationStyles.textContent = `
@@ -2996,6 +3219,7 @@
             loadTemplate('modern');
             setupElementSelection();
             initializeTouchToEdit();
+            initializeCarouselHover(); // Initialize carousel hover effects
             updateNavigationPreview(); // Initialize navigation
         });
     </script>
