@@ -451,6 +451,7 @@
                     <button class="tool-tab active" data-tab="add">Add</button>
                     <button class="tool-tab" data-tab="style">Style</button>
                     <button class="tool-tab" data-tab="layout">Layout</button>
+                    <button class="tool-tab" data-tab="properties">Properties</button>
                     <button class="tool-tab" data-tab="pages">Pages</button>
                 </div>
             </div>
@@ -665,6 +666,18 @@
                                 <input type="range" id="height-control" class="property-input" min="50" max="1000" value="200" style="width: 80px;" oninput="applyLayoutProperty('height', this.value)">
                                 <span id="height-value" style="font-size: 10px; color: #666;">200px</span>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Properties Tab Content -->
+            <div class="tab-panel" data-panel="properties">
+                <div class="tools-scroll">
+                    <div id="properties-content">
+                        <div class="tool-section">
+                            <div class="tool-title">Element Properties</div>
+                            <p style="color: #718096; font-size: 14px; text-align: center; padding: 20px;">Select an element to edit its properties</p>
                         </div>
                     </div>
                 </div>
@@ -2354,6 +2367,215 @@
                 headerDiv.style.background = backgroundStyle;
                 headerDiv.style.opacity = opacity;
             });
+        }
+
+        // Image positioning configuration
+        let imagePositioning = {};
+
+        // Image positioning functions
+        function showImageProperties(imgElement) {
+            const propertiesContent = document.getElementById('properties-content');
+            const imgSrc = imgElement.src;
+            const imgId = imgElement.id || 'img-' + Date.now();
+            
+            if (!imgElement.id) {
+                imgElement.id = imgId;
+            }
+            
+            // Initialize positioning if not exists
+            if (!imagePositioning[imgId]) {
+                imagePositioning[imgId] = {
+                    x: 50, // percentage
+                    y: 50, // percentage
+                    scale: 100,
+                    fit: 'cover'
+                };
+            }
+            
+            const config = imagePositioning[imgId];
+            
+            propertiesContent.innerHTML = `
+                <div class="tool-section">
+                    <div class="tool-title">Image Properties</div>
+                    
+                    <!-- Image Upload -->
+                    <div style="margin-bottom: 20px;">
+                        <label class="property-label">Change Image</label>
+                        <button onclick="changeImage('${imgId}')" style="width: 100%; padding: 10px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                            Upload New Image
+                        </button>
+                    </div>
+                    
+                    <!-- Position Controls -->
+                    <div style="margin-bottom: 20px;">
+                        <label class="property-label">Position</label>
+                        <div style="background: #f7fafc; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+                            <div style="margin-bottom: 10px;">
+                                <label style="display: block; font-size: 12px; color: #4a5568; margin-bottom: 5px;">Horizontal Position: <span id="pos-x-display">${config.x}%</span></label>
+                                <input type="range" id="position-x" min="0" max="100" value="${config.x}" style="width: 100%;" oninput="updateImagePosition('${imgId}', 'x', this.value)">
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <label style="display: block; font-size: 12px; color: #4a5568; margin-bottom: 5px;">Vertical Position: <span id="pos-y-display">${config.y}%</span></label>
+                                <input type="range" id="position-y" min="0" max="100" value="${config.y}" style="width: 100%;" oninput="updateImagePosition('${imgId}', 'y', this.value)">
+                            </div>
+                        </div>
+                        
+                        <!-- Quick Position Presets -->
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 15px;">
+                            <button onclick="setImagePosition('${imgId}', 0, 0)" style="padding: 8px; font-size: 11px; border: 1px solid #e2e8f0; background: white; border-radius: 4px; cursor: pointer;">Top Left</button>
+                            <button onclick="setImagePosition('${imgId}', 50, 0)" style="padding: 8px; font-size: 11px; border: 1px solid #e2e8f0; background: white; border-radius: 4px; cursor: pointer;">Top Center</button>
+                            <button onclick="setImagePosition('${imgId}', 100, 0)" style="padding: 8px; font-size: 11px; border: 1px solid #e2e8f0; background: white; border-radius: 4px; cursor: pointer;">Top Right</button>
+                            <button onclick="setImagePosition('${imgId}', 0, 50)" style="padding: 8px; font-size: 11px; border: 1px solid #e2e8f0; background: white; border-radius: 4px; cursor: pointer;">Center Left</button>
+                            <button onclick="setImagePosition('${imgId}', 50, 50)" style="padding: 8px; font-size: 11px; border: 1px solid #e2e8f0; background: white; border-radius: 4px; cursor: pointer;">Center</button>
+                            <button onclick="setImagePosition('${imgId}', 100, 50)" style="padding: 8px; font-size: 11px; border: 1px solid #e2e8f0; background: white; border-radius: 4px; cursor: pointer;">Center Right</button>
+                            <button onclick="setImagePosition('${imgId}', 0, 100)" style="padding: 8px; font-size: 11px; border: 1px solid #e2e8f0; background: white; border-radius: 4px; cursor: pointer;">Bottom Left</button>
+                            <button onclick="setImagePosition('${imgId}', 50, 100)" style="padding: 8px; font-size: 11px; border: 1px solid #e2e8f0; background: white; border-radius: 4px; cursor: pointer;">Bottom Center</button>
+                            <button onclick="setImagePosition('${imgId}', 100, 100)" style="padding: 8px; font-size: 11px; border: 1px solid #e2e8f0; background: white; border-radius: 4px; cursor: pointer;">Bottom Right</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Scale Control -->
+                    <div style="margin-bottom: 20px;">
+                        <label class="property-label">Scale: <span id="scale-display">${config.scale}%</span></label>
+                        <input type="range" id="image-scale" min="50" max="200" value="${config.scale}" style="width: 100%;" oninput="updateImageScale('${imgId}', this.value)">
+                    </div>
+                    
+                    <!-- Fit Control -->
+                    <div style="margin-bottom: 20px;">
+                        <label class="property-label">Image Fit</label>
+                        <select id="image-fit" onchange="updateImageFit('${imgId}', this.value)" style="width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px;">
+                            <option value="cover" ${config.fit === 'cover' ? 'selected' : ''}>Cover (Fill Container)</option>
+                            <option value="contain" ${config.fit === 'contain' ? 'selected' : ''}>Contain (Fit Inside)</option>
+                            <option value="fill" ${config.fit === 'fill' ? 'selected' : ''}>Fill (Stretch)</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Reset Button -->
+                    <button onclick="resetImagePosition('${imgId}')" style="width: 100%; padding: 10px; background: #e2e8f0; color: #4a5568; border: none; border-radius: 6px; cursor: pointer;">
+                        Reset to Default
+                    </button>
+                </div>
+            `;
+            
+            // Switch to Properties tab
+            switchToTab('properties');
+            
+            console.log('Image properties shown for:', imgId);
+        }
+
+        function updateImagePosition(imgId, axis, value) {
+            imagePositioning[imgId][axis] = parseInt(value);
+            
+            // Update display
+            document.getElementById(`pos-${axis}-display`).textContent = value + '%';
+            
+            // Apply positioning
+            applyImagePositioning(imgId);
+            
+            console.log(`Image ${imgId} ${axis} position updated to:`, value);
+        }
+
+        function setImagePosition(imgId, x, y) {
+            imagePositioning[imgId].x = x;
+            imagePositioning[imgId].y = y;
+            
+            // Update sliders and displays
+            document.getElementById('position-x').value = x;
+            document.getElementById('position-y').value = y;
+            document.getElementById('pos-x-display').textContent = x + '%';
+            document.getElementById('pos-y-display').textContent = y + '%';
+            
+            // Apply positioning
+            applyImagePositioning(imgId);
+            
+            console.log(`Image ${imgId} position set to:`, x, y);
+        }
+
+        function updateImageScale(imgId, value) {
+            imagePositioning[imgId].scale = parseInt(value);
+            document.getElementById('scale-display').textContent = value + '%';
+            applyImagePositioning(imgId);
+            console.log(`Image ${imgId} scale updated to:`, value);
+        }
+
+        function updateImageFit(imgId, fit) {
+            imagePositioning[imgId].fit = fit;
+            applyImagePositioning(imgId);
+            console.log(`Image ${imgId} fit updated to:`, fit);
+        }
+
+        function applyImagePositioning(imgId) {
+            const imgElement = document.getElementById(imgId);
+            if (!imgElement) return;
+            
+            const config = imagePositioning[imgId];
+            const scale = config.scale / 100;
+            
+            // Apply positioning styles
+            imgElement.style.objectFit = config.fit;
+            imgElement.style.objectPosition = `${config.x}% ${config.y}%`;
+            imgElement.style.transform = `scale(${scale})`;
+            imgElement.style.transformOrigin = 'center';
+            
+            console.log(`Applied positioning to ${imgId}:`, config);
+        }
+
+        function resetImagePosition(imgId) {
+            imagePositioning[imgId] = {
+                x: 50,
+                y: 50,
+                scale: 100,
+                fit: 'cover'
+            };
+            
+            // Update UI if properties panel is open
+            const posX = document.getElementById('position-x');
+            const posY = document.getElementById('position-y');
+            const scale = document.getElementById('image-scale');
+            const fit = document.getElementById('image-fit');
+            
+            if (posX) posX.value = 50;
+            if (posY) posY.value = 50;
+            if (scale) scale.value = 100;
+            if (fit) fit.value = 'cover';
+            
+            if (document.getElementById('pos-x-display')) document.getElementById('pos-x-display').textContent = '50%';
+            if (document.getElementById('pos-y-display')) document.getElementById('pos-y-display').textContent = '50%';
+            if (document.getElementById('scale-display')) document.getElementById('scale-display').textContent = '100%';
+            
+            applyImagePositioning(imgId);
+            console.log(`Image ${imgId} reset to default position`);
+        }
+
+        function changeImage(imgId) {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const imgElement = document.getElementById(imgId);
+                        if (imgElement) {
+                            imgElement.src = e.target.result;
+                            console.log(`Image ${imgId} source updated`);
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+            input.click();
+        }
+
+        function switchToTab(tabName) {
+            // Remove active class from all tabs and panels
+            document.querySelectorAll('.tool-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+            
+            // Add active class to selected tab and panel
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+            document.querySelector(`[data-panel="${tabName}"]`).classList.add('active');
         }
 
         // Logo functions
@@ -4144,6 +4366,192 @@
             console.log('removeCarouselImage exists:', typeof removeCarouselImage === 'function');
         }
 
+        // Initialize image click handling
+        function initializeImageHandling() {
+            // Add click handlers to all existing images
+            document.addEventListener('click', function(e) {
+                if (e.target.tagName === 'IMG' && !e.target.closest('.image-edit-overlay')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    showImageProperties(e.target);
+                    console.log('Image clicked:', e.target.src);
+                }
+            });
+            
+            // Add click handlers to background images
+            document.addEventListener('click', function(e) {
+                const element = e.target;
+                if (element.style.backgroundImage && element.style.backgroundImage.includes('url(')) {
+                    // Check if this is a background image element that should be editable
+                    if (element.classList.contains('carousel-slide') || 
+                        element.hasAttribute('data-bg-editable')) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        showBackgroundImageProperties(element);
+                        console.log('Background image clicked:', element.style.backgroundImage);
+                    }
+                }
+            });
+            
+            console.log('Image click handling initialized');
+        }
+        
+        // Function to handle background images (like in carousels)
+        function showBackgroundImageProperties(element) {
+            const propertiesContent = document.getElementById('properties-content');
+            const elemId = element.id || 'bg-' + Date.now();
+            
+            if (!element.id) {
+                element.id = elemId;
+            }
+            
+            // Initialize positioning if not exists
+            if (!imagePositioning[elemId]) {
+                imagePositioning[elemId] = {
+                    x: 50,
+                    y: 50,
+                    scale: 100,
+                    fit: 'cover'
+                };
+            }
+            
+            const config = imagePositioning[elemId];
+            
+            propertiesContent.innerHTML = `
+                <div class="tool-section">
+                    <div class="tool-title">Background Image Properties</div>
+                    
+                    <!-- Image Upload -->
+                    <div style="margin-bottom: 20px;">
+                        <label class="property-label">Change Background Image</label>
+                        <button onclick="changeBackgroundImage('${elemId}')" style="width: 100%; padding: 10px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                            Upload New Image
+                        </button>
+                    </div>
+                    
+                    <!-- Position Controls -->
+                    <div style="margin-bottom: 20px;">
+                        <label class="property-label">Background Position</label>
+                        <div style="background: #f7fafc; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+                            <div style="margin-bottom: 10px;">
+                                <label style="display: block; font-size: 12px; color: #4a5568; margin-bottom: 5px;">Horizontal Position: <span id="bg-pos-x-display">${config.x}%</span></label>
+                                <input type="range" id="bg-position-x" min="0" max="100" value="${config.x}" style="width: 100%;" oninput="updateBackgroundPosition('${elemId}', 'x', this.value)">
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <label style="display: block; font-size: 12px; color: #4a5568; margin-bottom: 5px;">Vertical Position: <span id="bg-pos-y-display">${config.y}%</span></label>
+                                <input type="range" id="bg-position-y" min="0" max="100" value="${config.y}" style="width: 100%;" oninput="updateBackgroundPosition('${elemId}', 'y', this.value)">
+                            </div>
+                        </div>
+                        
+                        <!-- Quick Position Presets -->
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 15px;">
+                            <button onclick="setBackgroundPosition('${elemId}', 0, 0)" style="padding: 8px; font-size: 11px; border: 1px solid #e2e8f0; background: white; border-radius: 4px; cursor: pointer;">Top Left</button>
+                            <button onclick="setBackgroundPosition('${elemId}', 50, 0)" style="padding: 8px; font-size: 11px; border: 1px solid #e2e8f0; background: white; border-radius: 4px; cursor: pointer;">Top Center</button>
+                            <button onclick="setBackgroundPosition('${elemId}', 100, 0)" style="padding: 8px; font-size: 11px; border: 1px solid #e2e8f0; background: white; border-radius: 4px; cursor: pointer;">Top Right</button>
+                            <button onclick="setBackgroundPosition('${elemId}', 0, 50)" style="padding: 8px; font-size: 11px; border: 1px solid #e2e8f0; background: white; border-radius: 4px; cursor: pointer;">Center Left</button>
+                            <button onclick="setBackgroundPosition('${elemId}', 50, 50)" style="padding: 8px; font-size: 11px; border: 1px solid #e2e8f0; background: white; border-radius: 4px; cursor: pointer;">Center</button>
+                            <button onclick="setBackgroundPosition('${elemId}', 100, 50)" style="padding: 8px; font-size: 11px; border: 1px solid #e2e8f0; background: white; border-radius: 4px; cursor: pointer;">Center Right</button>
+                            <button onclick="setBackgroundPosition('${elemId}', 0, 100)" style="padding: 8px; font-size: 11px; border: 1px solid #e2e8f0; background: white; border-radius: 4px; cursor: pointer;">Bottom Left</button>
+                            <button onclick="setBackgroundPosition('${elemId}', 50, 100)" style="padding: 8px; font-size: 11px; border: 1px solid #e2e8f0; background: white; border-radius: 4px; cursor: pointer;">Bottom Center</button>
+                            <button onclick="setBackgroundPosition('${elemId}', 100, 100)" style="padding: 8px; font-size: 11px; border: 1px solid #e2e8f0; background: white; border-radius: 4px; cursor: pointer;">Bottom Right</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Background Size Control -->
+                    <div style="margin-bottom: 20px;">
+                        <label class="property-label">Background Size</label>
+                        <select id="bg-size" onchange="updateBackgroundSize('${elemId}', this.value)" style="width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px;">
+                            <option value="cover" ${config.fit === 'cover' ? 'selected' : ''}>Cover (Fill Container)</option>
+                            <option value="contain" ${config.fit === 'contain' ? 'selected' : ''}>Contain (Fit Inside)</option>
+                            <option value="auto" ${config.fit === 'auto' ? 'selected' : ''}>Original Size</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Reset Button -->
+                    <button onclick="resetBackgroundPosition('${elemId}')" style="width: 100%; padding: 10px; background: #e2e8f0; color: #4a5568; border: none; border-radius: 6px; cursor: pointer;">
+                        Reset to Default
+                    </button>
+                </div>
+            `;
+            
+            // Switch to Properties tab
+            switchToTab('properties');
+            
+            console.log('Background image properties shown for:', elemId);
+        }
+
+        // Background image handling functions
+        function updateBackgroundPosition(elemId, axis, value) {
+            imagePositioning[elemId][axis] = parseInt(value);
+            document.getElementById(`bg-pos-${axis}-display`).textContent = value + '%';
+            applyBackgroundPositioning(elemId);
+        }
+
+        function setBackgroundPosition(elemId, x, y) {
+            imagePositioning[elemId].x = x;
+            imagePositioning[elemId].y = y;
+            
+            document.getElementById('bg-position-x').value = x;
+            document.getElementById('bg-position-y').value = y;
+            document.getElementById('bg-pos-x-display').textContent = x + '%';
+            document.getElementById('bg-pos-y-display').textContent = y + '%';
+            
+            applyBackgroundPositioning(elemId);
+        }
+
+        function updateBackgroundSize(elemId, size) {
+            imagePositioning[elemId].fit = size;
+            applyBackgroundPositioning(elemId);
+        }
+
+        function applyBackgroundPositioning(elemId) {
+            const element = document.getElementById(elemId);
+            if (!element) return;
+            
+            const config = imagePositioning[elemId];
+            element.style.backgroundPosition = `${config.x}% ${config.y}%`;
+            element.style.backgroundSize = config.fit;
+        }
+
+        function resetBackgroundPosition(elemId) {
+            imagePositioning[elemId] = { x: 50, y: 50, fit: 'cover' };
+            
+            const bgPosX = document.getElementById('bg-position-x');
+            const bgPosY = document.getElementById('bg-position-y');
+            const bgSize = document.getElementById('bg-size');
+            
+            if (bgPosX) bgPosX.value = 50;
+            if (bgPosY) bgPosY.value = 50;
+            if (bgSize) bgSize.value = 'cover';
+            
+            if (document.getElementById('bg-pos-x-display')) document.getElementById('bg-pos-x-display').textContent = '50%';
+            if (document.getElementById('bg-pos-y-display')) document.getElementById('bg-pos-y-display').textContent = '50%';
+            
+            applyBackgroundPositioning(elemId);
+        }
+
+        function changeBackgroundImage(elemId) {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const element = document.getElementById(elemId);
+                        if (element) {
+                            const currentBg = element.style.backgroundImage;
+                            const newBg = currentBg.replace(/url\([^)]+\)/, `url('${e.target.result}')`);
+                            element.style.backgroundImage = newBg;
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+            input.click();
+        }
+
         // Initialize everything when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
             initializeTabs();
@@ -4154,6 +4562,7 @@
             setupElementSelection();
             initializeTouchToEdit(); // This will call initializeTextEditingWithToolbar for comprehensive text editing
             initializeCarouselHover(); // Initialize carousel hover effects
+            initializeImageHandling(); // Initialize image click handling
             updateNavigationPreview(); // Initialize navigation
             testCarouselFunctions(); // Test if carousel functions are available
         });
