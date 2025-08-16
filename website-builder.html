@@ -3297,6 +3297,17 @@
         `;
         document.head.appendChild(animationStyles);
         
+        // Test function to verify carousel functions exist
+        function testCarouselFunctions() {
+            console.log('Testing carousel functions:');
+            console.log('nextSlide exists:', typeof nextSlide === 'function');
+            console.log('prevSlide exists:', typeof prevSlide === 'function');
+            console.log('goToSlide exists:', typeof goToSlide === 'function');
+            console.log('editCarouselImage exists:', typeof editCarouselImage === 'function');
+            console.log('addCarouselImage exists:', typeof addCarouselImage === 'function');
+            console.log('removeCarouselImage exists:', typeof removeCarouselImage === 'function');
+        }
+
         // Initialize everything when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
             initializeTabs();
@@ -3308,6 +3319,7 @@
             initializeTouchToEdit();
             initializeCarouselHover(); // Initialize carousel hover effects
             updateNavigationPreview(); // Initialize navigation
+            testCarouselFunctions(); // Test if carousel functions are available
         });
     </script>
 </body>
