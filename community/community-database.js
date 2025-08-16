@@ -7,9 +7,10 @@ class CommunityDatabase {
     }
 
     async initializeTables() {
+        const client = await this.pool.connect();
         try {
             // Create posts table
-            await this.pool.query(`
+            await client.query(`
                 CREATE TABLE IF NOT EXISTS community_posts (
                     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                     user_id VARCHAR(255) NOT NULL,
@@ -35,7 +36,7 @@ class CommunityDatabase {
             `);
 
             // Create comments table
-            await this.pool.query(`
+            await client.query(`
                 CREATE TABLE IF NOT EXISTS community_comments (
                     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                     post_id UUID REFERENCES community_posts(id) ON DELETE CASCADE,
@@ -50,7 +51,7 @@ class CommunityDatabase {
             `);
 
             // Create messages table
-            await this.pool.query(`
+            await client.query(`
                 CREATE TABLE IF NOT EXISTS community_messages (
                     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                     sender_id VARCHAR(255) NOT NULL,
@@ -64,7 +65,7 @@ class CommunityDatabase {
             `);
 
             // Create likes table (junction table)
-            await this.pool.query(`
+            await client.query(`
                 CREATE TABLE IF NOT EXISTS community_likes (
                     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                     user_id VARCHAR(255) NOT NULL,
@@ -75,7 +76,7 @@ class CommunityDatabase {
             `);
 
             // Create saves table (junction table)
-            await this.pool.query(`
+            await client.query(`
                 CREATE TABLE IF NOT EXISTS community_saves (
                     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                     user_id VARCHAR(255) NOT NULL,
@@ -86,7 +87,7 @@ class CommunityDatabase {
             `);
 
             // Create follows table
-            await this.pool.query(`
+            await client.query(`
                 CREATE TABLE IF NOT EXISTS community_follows (
                     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                     follower_id VARCHAR(255) NOT NULL,
@@ -97,7 +98,7 @@ class CommunityDatabase {
             `);
 
             // Create user profiles table
-            await this.pool.query(`
+            await client.query(`
                 CREATE TABLE IF NOT EXISTS community_profiles (
                     user_id VARCHAR(255) PRIMARY KEY,
                     display_name VARCHAR(255),
@@ -116,7 +117,7 @@ class CommunityDatabase {
             `);
 
             // Create challenges table
-            await this.pool.query(`
+            await client.query(`
                 CREATE TABLE IF NOT EXISTS community_challenges (
                     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                     title VARCHAR(255) NOT NULL,
@@ -130,7 +131,7 @@ class CommunityDatabase {
             `);
 
             // Create indexes for performance
-            await this.pool.query(`
+            await client.query(`
                 CREATE INDEX IF NOT EXISTS idx_posts_user_id ON community_posts(user_id);
                 CREATE INDEX IF NOT EXISTS idx_posts_type ON community_posts(type);
                 CREATE INDEX IF NOT EXISTS idx_posts_created_at ON community_posts(created_at DESC);
@@ -143,6 +144,9 @@ class CommunityDatabase {
         } catch (error) {
             console.error('Error initializing community database:', error);
             throw error;
+        } finally {
+            client.release();
+        }
         }
     }
 

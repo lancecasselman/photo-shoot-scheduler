@@ -292,10 +292,16 @@ const storageSystem = new StorageSystem(pool, r2FileManager);
 // Initialize Community Platform - will be initialized after Firebase admin is ready
 let communityRoutes = null;
 
-// Initialize storage system database tables
-storageSystem.initializeTables().catch(error => {
-    console.error('Failed to initialize storage tables:', error);
-});
+// Initialize storage system database tables with improved error handling
+(async () => {
+    try {
+        await storageSystem.initializeTables();
+        console.log(' Storage tables initialized successfully');
+    } catch (error) {
+        console.warn('Storage tables initialization skipped:', error.message);
+        // Don't fail server startup for non-critical table initialization
+    }
+})();
 
 console.log(' R2 File Manager initialized');
 console.log(' Payment and contract services initialized');
@@ -344,17 +350,24 @@ try {
         console.log('Firebase Admin SDK initialized successfully with project:', serviceAccount.project_id);
         console.log('Storage bucket configured as:', storageBucket);
         
-        // Initialize Community Platform after Firebase is ready
-        const initializeCommunityServices = require('./community/community-routes');
-        // Pass R2 configuration to community services
-        communityRoutes = initializeCommunityServices(pool, {
-            endpoint: process.env.CLOUDFLARE_R2_ENDPOINT || `https://${process.env.CLOUDFLARE_R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-            accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID,
-            secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY,
-            bucketName: process.env.CLOUDFLARE_R2_BUCKET_NAME,
-            publicUrl: process.env.CLOUDFLARE_R2_PUBLIC_URL || 'https://pub-f4fb0dd444374c70b491e4a0adb6bb02.r2.dev'
-        });
-        console.log(' Community Platform initialized with R2 Storage');
+        // Initialize Community Platform after Firebase is ready (non-blocking)
+        (async () => {
+            try {
+                const initializeCommunityServices = require('./community/community-routes');
+                // Pass R2 configuration to community services
+                communityRoutes = initializeCommunityServices(pool, {
+                    endpoint: process.env.CLOUDFLARE_R2_ENDPOINT || `https://${process.env.CLOUDFLARE_R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+                    accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID,
+                    secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY,
+                    bucketName: process.env.CLOUDFLARE_R2_BUCKET_NAME,
+                    publicUrl: process.env.CLOUDFLARE_R2_PUBLIC_URL || 'https://pub-f4fb0dd444374c70b491e4a0adb6bb02.r2.dev'
+                });
+                console.log(' Community Platform initialized with R2 Storage');
+            } catch (error) {
+                console.warn('Community Platform initialization skipped:', error.message);
+                // Continue without community features if initialization fails
+            }
+        })();
     } else {
         console.log('WARNING: Firebase credentials not provided - authentication disabled');
     }
@@ -1130,8 +1143,16 @@ app.use('/api/contracts', createContractRoutes(pool, r2FileManager));
 const createBookingAgreementRoutes = require('./server/booking-agreements-routes');
 const { initializeTemplates } = require('./server/booking-agreement-templates');
 app.use('/api/booking', createBookingAgreementRoutes(pool));
-// Initialize templates on startup
-initializeTemplates(pool);
+// Initialize templates on startup (non-blocking)
+(async () => {
+    try {
+        await initializeTemplates(pool);
+        console.log(' Booking agreement templates initialized');
+    } catch (error) {
+        console.warn('Booking templates initialization skipped:', error.message);
+        // Continue without templates if initialization fails
+    }
+})();
 
 // Community Platform routes (initialized after Firebase)
 app.use('/api/community', (req, res, next) => {
