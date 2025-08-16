@@ -948,13 +948,14 @@
         function startEditingButton(button) {
             // Create a mini editor for buttons
             const originalText = button.textContent;
+            const currentLink = button.getAttribute('data-page-link') || button.getAttribute('onclick') || '';
             const buttonRect = button.getBoundingClientRect();
             
             // Create overlay editor
             const editor = document.createElement('div');
             editor.style.cssText = `
                 position: fixed;
-                top: ${buttonRect.top - 50}px;
+                top: ${buttonRect.top - 80}px;
                 left: ${buttonRect.left}px;
                 background: white;
                 border: 2px solid #667eea;
@@ -962,13 +963,34 @@
                 padding: 15px;
                 box-shadow: 0 4px 6px rgba(0,0,0,0.1);
                 z-index: 10000;
-                min-width: 200px;
+                min-width: 250px;
             `;
+            
+            // Get current page link if set
+            let selectedPage = '';
+            if (currentLink.includes('switchToPageNew')) {
+                const match = currentLink.match(/switchToPageNew\('([^']+)'\)/);
+                if (match) selectedPage = match[1];
+            }
             
             editor.innerHTML = `
                 <div style="margin-bottom: 10px;">
                     <label style="display: block; font-size: 12px; color: #666; margin-bottom: 4px;">Button Text</label>
                     <input type="text" id="button-text-input" value="${originalText}" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label style="display: block; font-size: 12px; color: #666; margin-bottom: 4px;">Link to Page</label>
+                    <select id="button-page-select" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
+                        <option value="">No Link</option>
+                        <option value="home" ${selectedPage === 'home' ? 'selected' : ''}>Home</option>
+                        <option value="portfolio" ${selectedPage === 'portfolio' ? 'selected' : ''}>Portfolio</option>
+                        <option value="about" ${selectedPage === 'about' ? 'selected' : ''}>About</option>
+                        <option value="contact" ${selectedPage === 'contact' ? 'selected' : ''}>Contact</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label style="display: block; font-size: 12px; color: #666; margin-bottom: 4px;">Custom URL (optional)</label>
+                    <input type="text" id="button-url-input" placeholder="https://example.com" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
                 </div>
                 <div style="display: flex; gap: 8px; margin-top: 10px;">
                     <button id="save-button" style="background: #667eea; color: white; padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer;">Save</button>
@@ -980,14 +1002,25 @@
             
             // Focus the input
             const input = editor.querySelector('#button-text-input');
+            const pageSelect = editor.querySelector('#button-page-select');
+            const urlInput = editor.querySelector('#button-url-input');
+            
             input.focus();
             input.select();
             
+            // Handle page select change
+            pageSelect.addEventListener('change', () => {
+                if (pageSelect.value) {
+                    urlInput.value = '';
+                    urlInput.disabled = true;
+                } else {
+                    urlInput.disabled = false;
+                }
+            });
+            
             // Save button
             editor.querySelector('#save-button').addEventListener('click', () => {
-                button.textContent = input.value;
-                console.log('Button text updated:', input.value);
-                document.body.removeChild(editor);
+                saveButtonChanges();
             });
             
             // Cancel button
@@ -998,13 +1031,48 @@
             // Save on Enter
             input.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
-                    button.textContent = input.value;
-                    console.log('Button text updated:', input.value);
-                    document.body.removeChild(editor);
+                    saveButtonChanges();
                 } else if (e.key === 'Escape') {
                     document.body.removeChild(editor);
                 }
             });
+            
+            function saveButtonChanges() {
+                // Update button text
+                button.textContent = input.value;
+                
+                // Remove any existing click handlers
+                button.removeAttribute('onclick');
+                button.removeAttribute('data-page-link');
+                
+                // Set up the link
+                if (pageSelect.value) {
+                    // Link to page
+                    button.setAttribute('data-page-link', pageSelect.value);
+                    button.onclick = () => {
+                        console.log(`Button clicked - navigating to page: ${pageSelect.value}`);
+                        switchToPageNew(pageSelect.value);
+                    };
+                    button.style.cursor = 'pointer';
+                    console.log(`Button linked to page: ${pageSelect.value}`);
+                } else if (urlInput.value.trim()) {
+                    // Link to external URL
+                    button.onclick = () => {
+                        console.log(`Button clicked - opening URL: ${urlInput.value}`);
+                        window.open(urlInput.value, '_blank');
+                    };
+                    button.style.cursor = 'pointer';
+                    console.log(`Button linked to URL: ${urlInput.value}`);
+                } else {
+                    // No link
+                    button.onclick = null;
+                    button.style.cursor = 'default';
+                    console.log('Button link removed');
+                }
+                
+                console.log('Button updated:', input.value);
+                document.body.removeChild(editor);
+            }
             
             // Click outside to close
             setTimeout(() => {
@@ -1390,7 +1458,7 @@
                     <div style="text-align: center; padding: 80px 20px; background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('${data.backgroundImage || 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=1200'}'); background-size: cover; background-position: center; color: white; border-radius: 8px;">
                         <h1 style="font-size: 3rem; margin-bottom: 20px; color: white; font-family: 'Playfair Display', serif;">${data.title || 'Capturing Beautiful Moments'}</h1>
                         <p style="font-size: 1.2rem; margin-bottom: 30px; color: rgba(255,255,255,0.9); max-width: 600px; margin-left: auto; margin-right: auto;">${data.subtitle || 'Professional photography services that tell your unique story'}</p>
-                        <button style="background: #667eea; color: white; padding: 15px 30px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: 600;">View Portfolio</button>
+                        <button style="background: #667eea; color: white; padding: 15px 30px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: 600;" data-page-link="portfolio" onclick="switchToPageNew('portfolio')">View Portfolio</button>
                     </div>
                 </div>
             `,
@@ -1399,7 +1467,7 @@
                     <div style="text-align: center; padding: 80px 20px; background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('${data.backgroundImage || 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=1200'}'); background-size: cover; background-position: center; color: white; border-radius: 8px;">
                         <h1 style="font-size: 3rem; margin-bottom: 20px; color: white;">${data.title || 'Capturing Beautiful Moments'}</h1>
                         <p style="font-size: 1.2rem; margin-bottom: 30px; color: rgba(255,255,255,0.9);">${data.subtitle || 'Professional photography services'}</p>
-                        <button style="background: #667eea; color: white; padding: 15px 30px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer;">View Portfolio</button>
+                        <button style="background: #667eea; color: white; padding: 15px 30px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer;" data-page-link="portfolio" onclick="switchToPageNew('portfolio')">View Portfolio</button>
                     </div>
                 </div>
             `,
@@ -1495,7 +1563,7 @@
                                     <h3 style="color: #2d3748; margin-bottom: 15px; font-size: 1.5rem; font-weight: 600;">${service.name}</h3>
                                     <p style="color: #667eea; font-size: 1.4rem; font-weight: 700; margin-bottom: 20px;">${service.price}</p>
                                     <p style="color: #4a5568; line-height: 1.6;">${service.description}</p>
-                                    <button style="margin-top: 25px; background: #667eea; color: white; padding: 12px 25px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Learn More</button>
+                                    <button style="margin-top: 25px; background: #667eea; color: white; padding: 12px 25px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;" data-page-link="contact" onclick="switchToPageNew('contact')">Learn More</button>
                                 </div>
                             `).join('')}
                         </div>
