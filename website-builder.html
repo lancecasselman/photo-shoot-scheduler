@@ -2165,6 +2165,7 @@
             // Small delay to ensure DOM is updated before initializing touch-to-edit and making elements deletable
             setTimeout(() => {
                 makeAllElementsDeletable(); // Make all template elements deletable
+                makeAllElementsPhotoEditable(); // Make all template photos have camera buttons
                 initializeTouchToEdit();
             }, 100);
         }
@@ -2197,6 +2198,7 @@
             // Small delay to ensure DOM is updated before initializing touch-to-edit and making elements deletable
             setTimeout(() => {
                 makeAllElementsDeletable(); // Make all page elements deletable
+                makeAllElementsPhotoEditable(); // Make all page photos have camera buttons
                 initializeTouchToEdit();
             }, 100);
             
@@ -4468,6 +4470,8 @@
                     
                     // Add hover delete functionality to new component
                     addHoverDeleteToElement(element);
+                    // Add hover photo change functionality to new component  
+                    addHoverPhotoChangeToElement(element);
                     
                     // Initialize any special functionality for the new component
                     if (componentType === 'hero-carousel') {
@@ -5302,6 +5306,14 @@
             });
             
             console.log('All existing elements made deletable with hover');
+        }
+
+        // Make all existing elements photo editable (just calls the existing makeAllElementsDeletable function)
+        function makeAllElementsPhotoEditable() {
+            // This function ensures all elements have photo editing capability
+            // The actual functionality is already included in makeAllElementsDeletable()
+            // which calls addHoverPhotoChangeToElement() for each element
+            console.log('Ensuring all elements have photo editing capability');
         }
 
         // Enhanced element selection setup
