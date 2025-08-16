@@ -1075,14 +1075,26 @@
                 }
                 
                 console.log('Button updated:', input.value);
-                document.body.removeChild(editor);
+                try {
+                    if (editor.parentNode) {
+                        document.body.removeChild(editor);
+                    }
+                } catch (error) {
+                    console.log('Editor already removed');
+                }
             }
             
             // Click outside to close
             setTimeout(() => {
                 document.addEventListener('click', function closeEditor(e) {
                     if (!editor.contains(e.target) && e.target !== button) {
-                        document.body.removeChild(editor);
+                        try {
+                            if (editor.parentNode) {
+                                document.body.removeChild(editor);
+                            }
+                        } catch (error) {
+                            console.log('Editor already removed');
+                        }
                         document.removeEventListener('click', closeEditor);
                     }
                 });
@@ -1817,6 +1829,14 @@
                         <button style="background: #667eea; color: white; padding: 15px 30px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: 600; transition: background-color 0.3s;" data-page-link="" onmouseover="this.style.backgroundColor='#5a67d8'" onmouseout="this.style.backgroundColor='#667eea'">${data.text || 'Click Me'}</button>
                     </div>
                 </div>
+            `,
+            header: (data = {}) => `
+                <div class="element" data-type="header">
+                    <div style="text-align: center; padding: 60px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                        <h1 style="font-size: 3rem; margin-bottom: 20px; color: white; font-family: 'Playfair Display', serif;">${data.title || 'Welcome'}</h1>
+                        <p style="font-size: 1.2rem; color: rgba(255,255,255,0.9); max-width: 600px; margin: 0 auto;">${data.subtitle || 'Professional photography services'}</p>
+                    </div>
+                </div>
             `
         };
 
@@ -2386,7 +2406,9 @@
             });
             
             // Load page content
-            loadPage(pageId);
+            if (pages[pageId].template) {
+                loadTemplate(pages[pageId].template || 'modern');
+            }
             
             console.log('Switched to page:', pageId);
         }

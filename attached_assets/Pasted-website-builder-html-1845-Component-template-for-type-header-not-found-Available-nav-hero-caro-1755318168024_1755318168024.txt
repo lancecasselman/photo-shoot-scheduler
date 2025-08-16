@@ -1,0 +1,376 @@
+website-builder.html:1845  Component template for type "header" not found. Available: nav, hero-carousel, hero-text, hero, featured-gallery, gallery-grid, masonry, about, gallery, services, workshops, testimonials, contact, footer, button
+(anonymous) @ website-builder.html:1845
+website-builder.html:3407 Testing carousel functions:
+website-builder.html:3408 nextSlide exists: true
+website-builder.html:3409 prevSlide exists: true
+website-builder.html:3410 goToSlide exists: true
+website-builder.html:3411 editCarouselImage exists: true
+website-builder.html:3412 addCarouselImage exists: true
+website-builder.html:3413 removeCarouselImage exists: true
+website-builder.html:3085 Adding component: button
+website-builder.html:3096 Component button added successfully
+website-builder.html:2610 Hiding toolbar - clicked outside
+website-builder.html:2854 Text saved: Click Me
+website-builder.html:2831 Text element clicked: BUTTON Click Me
+website-builder.html:2679 Showing toolbar for element: <button style=​"background:​ rgb(102, 126, 234)​;​ color:​ white;​ padding:​ 15px 30px;​ border:​ none;​ border-radius:​ 6px;​ font-size:​ 16px;​ cursor:​ pointer;​ font-weight:​ 600;​ transition:​ background-color 0.3s;​" onmouseover=​"this.style.backgroundColor='#5a67d8'" onmouseout=​"this.style.backgroundColor='#667eea'" class=​"editable-text editable" contenteditable=​"false" data-page-link=​"about">​Click Me​</button>​ Tag: BUTTON
+website-builder.html:2714 Toolbar updated with: Object
+website-builder.html:2854 Text saved: Click Me
+website-builder.html:2610 Hiding toolbar - clicked outside
+website-builder.html:2610 Hiding toolbar - clicked outside
+website-builder.html:1061 Button linked to page: portfolio
+website-builder.html:1077 Button updated: Click Me
+website-builder.html:2610 Hiding toolbar - clicked outside
+website-builder.html:2824 Skipping toolbar/tab/component element click
+website-builder.html:2854 Text saved: Click Me
+website-builder.html:1057 Button clicked - navigating to page: portfolio
+website-builder.html:2234 Page saved: home Object
+website-builder.html:2389  Uncaught ReferenceError: loadPage is not defined
+    at switchToPageNew (website-builder.html:2389:13)
+    at button.onclick (website-builder.html:1058:25)
+website-builder.html:2610 Hiding toolbar - clicked outside
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1969 Properties panel not found
+website-builder.html:2824 Skipping toolbar/tab/component element click
+website-builder.html:2854 Text saved: Click Me
+website-builder.html:1057 Button clicked - navigating to page: portfolio
+website-builder.html:2234 Page saved: portfolio Object
+website-builder.html:2389  Uncaught ReferenceError: loadPage is not defined
+    at switchToPageNew (website-builder.html:2389:13)
+    at button.onclick (website-builder.html:1058:25)
+website-builder.html:1074 Button link removed
+website-builder.html:1077 Button updated: Click Me
+website-builder.html:2610 Hiding toolbar - clicked outside
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:2831 Text element clicked: BUTTON Click Me
+website-builder.html:2679 Showing toolbar for element: <button style=​"background:​ rgb(102, 126, 234)​;​ color:​ white;​ padding:​ 15px 30px;​ border:​ none;​ border-radius:​ 6px;​ font-size:​ 16px;​ cursor:​ pointer;​ font-weight:​ 600;​ transition:​ background-color 0.3s;​" onmouseover=​"this.style.backgroundColor='#5a67d8'" onmouseout=​"this.style.backgroundColor='#667eea'" class=​"editable-text editable" contenteditable=​"false" data-page-link=​"about">​Click Me​</button>​ Tag: BUTTON
+website-builder.html:2714 Toolbar updated with: Object
+website-builder.html:2854 Text saved: Click Me
+website-builder.html:2610 Hiding toolbar - clicked outside
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:2610 Hiding toolbar - clicked outside
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:2831 Text element clicked: BUTTON Click Me
+website-builder.html:2679 Showing toolbar for element: <button style=​"background:​ rgb(102, 126, 234)​;​ color:​ white;​ padding:​ 15px 30px;​ border:​ none;​ border-radius:​ 6px;​ font-size:​ 16px;​ cursor:​ pointer;​ font-weight:​ 600;​ transition:​ background-color 0.3s;​" onmouseover=​"this.style.backgroundColor='#5a67d8'" onmouseout=​"this.style.backgroundColor='#667eea'" class=​"editable-text editable" contenteditable=​"false" data-page-link=​"about">​Click Me​</button>​ Tag: BUTTON
+website-builder.html:2714 Toolbar updated with: Object
+website-builder.html:2854 Text saved: Click Me
+website-builder.html:2610 Hiding toolbar - clicked outside
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1969 Properties panel not found
+website-builder.html:2831 Text element clicked: BUTTON Click Me
+website-builder.html:2679 Showing toolbar for element: <button style=​"background:​ rgb(102, 126, 234)​;​ color:​ white;​ padding:​ 15px 30px;​ border:​ none;​ border-radius:​ 6px;​ font-size:​ 16px;​ cursor:​ pointer;​ font-weight:​ 600;​ transition:​ background-color 0.3s;​" onmouseover=​"this.style.backgroundColor='#5a67d8'" onmouseout=​"this.style.backgroundColor='#667eea'" class=​"editable-text editable" contenteditable=​"false" data-page-link=​"about">​Click Me​</button>​ Tag: BUTTON
+website-builder.html:2714 Toolbar updated with: Object
+website-builder.html:2854 Text saved: Click Me
+website-builder.html:1969 Properties panel not found
+website-builder.html:1969 Properties panel not found
+website-builder.html:1969 Properties panel not found
+website-builder.html:1969 Properties panel not found
+website-builder.html:2610 Hiding toolbar - clicked outside
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:2610 Hiding toolbar - clicked outside
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1061 Button linked to page: about
+website-builder.html:1077 Button updated: Click Me
+website-builder.html:2610 Hiding toolbar - clicked outside
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:2234 Page saved: portfolio Object
+website-builder.html:2389  Uncaught ReferenceError: loadPage is not defined
+    at switchToPageNew (website-builder.html:2389:13)
+    at HTMLAnchorElement.onclick (website-builder.html:3431:9)
+website-builder.html:2610 Hiding toolbar - clicked outside
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:2234 Page saved: about Object
+website-builder.html:2389  Uncaught ReferenceError: loadPage is not defined
+    at switchToPageNew (website-builder.html:2389:13)
+    at HTMLDivElement.onclick (website-builder.html:691:260)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:2234 Page saved: home Object
+website-builder.html:2389  Uncaught ReferenceError: loadPage is not defined
+    at switchToPageNew (website-builder.html:2389:13)
+    at HTMLAnchorElement.onclick (website-builder.html:3431:9)
+website-builder.html:2610 Hiding toolbar - clicked outside
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:2234 Page saved: about Object
+website-builder.html:2389  Uncaught ReferenceError: loadPage is not defined
+    at switchToPageNew (website-builder.html:2389:13)
+    at HTMLAnchorElement.onclick (website-builder.html:3431:9)
+website-builder.html:2610 Hiding toolbar - clicked outside
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:2234 Page saved: about Object
+website-builder.html:2389  Uncaught ReferenceError: loadPage is not defined
+    at switchToPageNew (website-builder.html:2389:13)
+    at HTMLAnchorElement.onclick (website-builder.html:3431:9)
+website-builder.html:2610 Hiding toolbar - clicked outside
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:2234 Page saved: about Object
+website-builder.html:2389  Uncaught ReferenceError: loadPage is not defined
+    at switchToPageNew (website-builder.html:2389:13)
+    at HTMLAnchorElement.onclick (website-builder.html:3431:9)
+website-builder.html:2610 Hiding toolbar - clicked outside
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:2234 Page saved: contact Object
+website-builder.html:2389  Uncaught ReferenceError: loadPage is not defined
+    at switchToPageNew (website-builder.html:2389:13)
+    at HTMLAnchorElement.onclick (website-builder.html:3431:9)
+website-builder.html:2610 Hiding toolbar - clicked outside
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:2234 Page saved: about Object
+website-builder.html:2389  Uncaught ReferenceError: loadPage is not defined
+    at switchToPageNew (website-builder.html:2389:13)
+    at HTMLAnchorElement.onclick (website-builder.html:3431:9)
+website-builder.html:2610 Hiding toolbar - clicked outside
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:2610 Hiding toolbar - clicked outside
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:2234 Page saved: portfolio Object
+website-builder.html:2389  Uncaught ReferenceError: loadPage is not defined
+    at switchToPageNew (website-builder.html:2389:13)
+    at HTMLAnchorElement.onclick (website-builder.html:3431:9)
+website-builder.html:2610 Hiding toolbar - clicked outside
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:2234 Page saved: portfolio Object
+website-builder.html:2389  Uncaught ReferenceError: loadPage is not defined
+    at switchToPageNew (website-builder.html:2389:13)
+    at HTMLAnchorElement.onclick (website-builder.html:3431:9)
+website-builder.html:2610 Hiding toolbar - clicked outside
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:2234 Page saved: about Object
+website-builder.html:2389  Uncaught ReferenceError: loadPage is not defined
+    at switchToPageNew (website-builder.html:2389:13)
+    at HTMLAnchorElement.onclick (website-builder.html:3431:9)
+website-builder.html:2610 Hiding toolbar - clicked outside
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1969 Properties panel not found
+website-builder.html:1969 Properties panel not found
+website-builder.html:1969 Properties panel not found
+website-builder.html:2610 Hiding toolbar - clicked outside
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1085  Uncaught NotFoundError: Failed to execute 'removeChild' on 'Node': The node to be removed is not a child of this node.
+    at HTMLDocument.closeEditor (website-builder.html:1085:39)
+website-builder.html:1969 Properties panel not found
+website-builder.html:1969 Properties panel not found
+website-builder.html:1969 Properties panel not found
