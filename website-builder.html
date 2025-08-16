@@ -4551,7 +4551,31 @@
                     deleteButton.addEventListener('click', function(e) {
                         e.stopPropagation();
                         e.preventDefault();
-                        deleteElement(element.id);
+                        
+                        console.log('Delete button clicked for element:', element.id);
+                        
+                        // Confirm deletion
+                        if (confirm('Are you sure you want to delete this element?')) {
+                            console.log('Deleting element:', element.id);
+                            
+                            // Remove the element directly
+                            element.remove();
+                            
+                            // Clear any selections
+                            if (selectedElement && selectedElement.id === element.id) {
+                                selectedElement = null;
+                                clearElementSelection();
+                            }
+                            
+                            console.log('Element deleted successfully');
+                        } else {
+                            console.log('Deletion cancelled');
+                        }
+                    });
+                    
+                    // Keep button visible when hovering over it
+                    deleteButton.addEventListener('mouseenter', function() {
+                        deleteButton.style.opacity = '1';
                     });
                     
                     element.appendChild(deleteButton);
@@ -4562,19 +4586,20 @@
                     element.style.position = 'relative';
                 }
                 
-                // Show delete button with slight delay
-                setTimeout(() => {
-                    if (deleteButton) {
-                        deleteButton.style.opacity = '1';
-                    }
-                }, 100);
+                // Show delete button
+                if (deleteButton) {
+                    deleteButton.style.opacity = '1';
+                }
             });
             
-            // Hide delete button when mouse leaves
-            element.addEventListener('mouseleave', function() {
-                if (deleteButton) {
-                    deleteButton.style.opacity = '0';
-                }
+            // Hide delete button when mouse leaves BOTH element and button
+            element.addEventListener('mouseleave', function(e) {
+                // Only hide if not moving to the delete button
+                setTimeout(() => {
+                    if (deleteButton && !deleteButton.matches(':hover') && !element.matches(':hover')) {
+                        deleteButton.style.opacity = '0';
+                    }
+                }, 100);
             });
         }
 
