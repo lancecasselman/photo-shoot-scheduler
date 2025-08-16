@@ -778,27 +778,7 @@
                     <div class="tool-section">
                         <div class="tool-title">Page Management</div>
                         <div id="pages-list" style="margin-bottom: 15px;">
-                            <!-- Sortable pages list -->
-                            <div class="page-item active" data-page="home" draggable="true" onclick="switchToPageNew('home')" style="display: flex; align-items: center; padding: 8px; background: #f7fafc; border-radius: 4px; margin-bottom: 4px; cursor: grab;">
-                                <span style="color: #718096; margin-right: 8px;">☰</span>
-                                <span class="page-name" style="flex: 1;">Home</span>
-                                <button onclick="event.stopPropagation(); renamePageNew('home')" style="background: none; border: none; color: #667eea; cursor: pointer; padding: 4px; margin-right: 4px;">✏️</button>
-                            </div>
-                            <div class="page-item" data-page="portfolio" draggable="true" onclick="switchToPageNew('portfolio')" style="display: flex; align-items: center; padding: 8px; background: #f7fafc; border-radius: 4px; margin-bottom: 4px; cursor: grab;">
-                                <span style="color: #718096; margin-right: 8px;">☰</span>
-                                <span class="page-name" style="flex: 1;">Portfolio</span>
-                                <button onclick="event.stopPropagation(); renamePageNew('portfolio')" style="background: none; border: none; color: #667eea; cursor: pointer; padding: 4px; margin-right: 4px;">✏️</button>
-                            </div>
-                            <div class="page-item" data-page="about" draggable="true" onclick="switchToPageNew('about')" style="display: flex; align-items: center; padding: 8px; background: #f7fafc; border-radius: 4px; margin-bottom: 4px; cursor: grab;">
-                                <span style="color: #718096; margin-right: 8px;">☰</span>
-                                <span class="page-name" style="flex: 1;">About</span>
-                                <button onclick="event.stopPropagation(); renamePageNew('about')" style="background: none; border: none; color: #667eea; cursor: pointer; padding: 4px; margin-right: 4px;">✏️</button>
-                            </div>
-                            <div class="page-item" data-page="contact" draggable="true" onclick="switchToPageNew('contact')" style="display: flex; align-items: center; padding: 8px; background: #f7fafc; border-radius: 4px; margin-bottom: 4px; cursor: grab;">
-                                <span style="color: #718096; margin-right: 8px;">☰</span>
-                                <span class="page-name" style="flex: 1;">Contact</span>
-                                <button onclick="event.stopPropagation(); renamePageNew('contact')" style="background: none; border: none; color: #667eea; cursor: pointer; padding: 4px; margin-right: 4px;">✏️</button>
-                            </div>
+                            <!-- Dynamic pages list populated by refreshPagesList() -->
                         </div>
                         <button onclick="addNewPageFromPages()" style="width: 100%; padding: 8px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; margin-bottom: 5px;">+ Add New Page</button>
                         <button onclick="addSubPage()" style="width: 100%; padding: 8px; background: #805ad5; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">+ Add SubPage</button>
@@ -5871,6 +5851,7 @@
             initializeDragAndDrop();
             initializeFloatingToolbar(); // Initialize toolbar first
             initializePagesDragAndDrop(); // Initialize page drag and drop
+            refreshPagesList(); // Populate pages list with current pages
             loadTemplate('modern');
             
             // Wait for template to load, then make all elements deletable
