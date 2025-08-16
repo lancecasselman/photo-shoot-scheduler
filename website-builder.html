@@ -812,7 +812,7 @@
                                 <button class="btn btn-secondary" onclick="resetWebsite()" style="padding: 8px 16px; font-size: 12px; flex: 1;">Reset</button>
                             </div>
                             <div style="display: flex; gap: 8px;">
-                                <button class="btn btn-secondary" onclick="previewWebsite()" style="padding: 8px 16px; font-size: 12px; flex: 1;">Preview</button>
+                                <button class="btn btn-secondary" onclick="openPreviewModal()" style="padding: 8px 16px; font-size: 12px; flex: 1;">Preview</button>
                                 <button class="btn btn-primary" onclick="publishWebsite()" style="padding: 8px 16px; font-size: 12px; flex: 1;">Publish</button>
                             </div>
                         </div>
@@ -3355,8 +3355,309 @@
         }
 
         // Header functions
-        function previewWebsite() {
-            alert('Preview functionality would open a new tab with the live website preview');
+        // New preview system with modal overlay
+        function openPreviewModal() {
+            // Save current page before preview
+            if (currentPage) {
+                savePage(currentPage);
+            }
+            
+            // Create preview modal
+            const modalHTML = `
+                <div id="preview-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 20000; display: flex; flex-direction: column;">
+                    <!-- Preview Header -->
+                    <div style="background: #1a202c; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2d3748;">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <h3 style="margin: 0; font-size: 18px;">Website Preview</h3>
+                            <div style="display: flex; gap: 8px;">
+                                <button onclick="previewDesktop()" id="preview-desktop" style="padding: 8px 12px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Desktop</button>
+                                <button onclick="previewTablet()" id="preview-tablet" style="padding: 8px 12px; background: #4a5568; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Tablet</button>
+                                <button onclick="previewMobile()" id="preview-mobile" style="padding: 8px 12px; background: #4a5568; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Mobile</button>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <label style="font-size: 14px;">Page:</label>
+                                <select id="preview-page-selector" onchange="previewChangePage()" style="padding: 6px; border-radius: 4px; border: 1px solid #4a5568; background: #2d3748; color: white;">
+                                    ${Object.keys(pages).map(pageId => `<option value="${pageId}" ${pageId === currentPage ? 'selected' : ''}>${pages[pageId].name}</option>`).join('')}
+                                </select>
+                            </div>
+                        </div>
+                        <button onclick="closePreviewModal()" style="background: #e53e3e; color: white; border: none; border-radius: 4px; padding: 8px 12px; cursor: pointer; font-size: 12px;">Close Preview</button>
+                    </div>
+                    
+                    <!-- Preview Frame Container -->
+                    <div id="preview-container" style="flex: 1; display: flex; justify-content: center; align-items: flex-start; padding: 20px; overflow: auto;">
+                        <div id="preview-frame" style="background: white; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); transition: all 0.3s ease; width: 100%; max-width: 1200px; height: calc(100vh - 120px);">
+                            <iframe id="preview-iframe" style="width: 100%; height: 100%; border: none; border-radius: 8px;"></iframe>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add modal to page
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            // Generate and load preview content
+            generatePreviewContent();
+        }
+        
+        function closePreviewModal() {
+            const modal = document.getElementById('preview-modal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+        
+        function generatePreviewContent() {
+            const selectedPage = document.getElementById('preview-page-selector').value;
+            const pageData = pages[selectedPage];
+            
+            if (!pageData) return;
+            
+            // Generate complete HTML for preview
+            let previewHTML = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${pageData.name} - Preview</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Raleway:wght@300;400;500;600;700&family=Cormorant+Garamond:wght@300;400;500;600;700&family=Josefin+Sans:wght@300;400;500;600;700&family=Lato:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Montserrat', sans-serif; line-height: 1.6; color: #2d3748; }
+        .nav-container { background: white; padding: 15px 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
+        .content-container { min-height: calc(100vh - 80px); }
+        h1, h2, h3 { font-family: 'Playfair Display', serif; }
+        .preview-page-content { padding: 0; }
+    </style>
+</head>
+<body>
+    <div class="nav-container">
+        ${generateNavigationHTML()}
+    </div>
+    <div class="content-container">
+        <div class="preview-page-content">
+            ${generatePageContentHTML(pageData)}
+        </div>
+    </div>
+</body>
+</html>
+            `;
+            
+            // Load content into iframe
+            const iframe = document.getElementById('preview-iframe');
+            const doc = iframe.contentDocument || iframe.contentWindow.document;
+            doc.open();
+            doc.write(previewHTML);
+            doc.close();
+        }
+        
+        function generateNavigationHTML() {
+            const logoHTML = logoConfig && logoConfig.url ? 
+                `<img src="${logoConfig.url}" alt="${logoConfig.text || 'Logo'}" style="height: ${logoConfig.height || 40}px;">` : 
+                '<div style="font-weight: 600; font-size: 18px;">Your Photography Studio</div>';
+                
+            if (navStyle === 'horizontal') {
+                return `
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>${logoHTML}</div>
+                        <div style="display: flex; gap: 30px; align-items: center;">
+                            ${navOrder.map(pageId => `
+                                <a href="#${pageId}" style="text-decoration: none; color: #2d3748; font-weight: 500; padding: 8px 12px; border-radius: 4px; transition: all 0.2s;">
+                                    ${pages[pageId]?.name || pageId}
+                                </a>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            } else {
+                return `
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>${logoHTML}</div>
+                        <div style="position: relative;">
+                            <button style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer;">Menu ▼</button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        function generatePageContentHTML(pageData) {
+            if (pageData.elements && pageData.elements.length > 0) {
+                return pageData.elements.map(element => generateElementHTML(element)).join('');
+            } else {
+                // Load template content for pages without custom elements
+                const template = templates[pageData.template || 'modern'];
+                if (template && template.elements) {
+                    return template.elements.map(element => generateElementHTML(element)).join('');
+                }
+            }
+            return '<div style="padding: 50px; text-align: center; color: #718096;">No content available for this page</div>';
+        }
+        
+        function previewDesktop() {
+            document.getElementById('preview-frame').style.width = '100%';
+            document.getElementById('preview-frame').style.maxWidth = '1200px';
+            document.querySelectorAll('#preview-modal button[id^="preview-"]').forEach(btn => btn.style.background = '#4a5568');
+            document.getElementById('preview-desktop').style.background = '#667eea';
+        }
+        
+        function previewTablet() {
+            document.getElementById('preview-frame').style.width = '768px';
+            document.getElementById('preview-frame').style.maxWidth = '768px';
+            document.querySelectorAll('#preview-modal button[id^="preview-"]').forEach(btn => btn.style.background = '#4a5568');
+            document.getElementById('preview-tablet').style.background = '#667eea';
+        }
+        
+        function previewMobile() {
+            document.getElementById('preview-frame').style.width = '375px';
+            document.getElementById('preview-frame').style.maxWidth = '375px';
+            document.querySelectorAll('#preview-modal button[id^="preview-"]').forEach(btn => btn.style.background = '#4a5568');
+            document.getElementById('preview-mobile').style.background = '#667eea';
+        }
+        
+        function previewChangePage() {
+            generatePreviewContent();
+        }
+        
+        function generateElementHTML(element) {
+            if (!element || !element.type) return '';
+            
+            switch (element.type) {
+                case 'hero':
+                    return `
+                        <div style="background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('${element.content.backgroundImage}'); background-size: cover; background-position: center; min-height: 80vh; display: flex; align-items: center; justify-content: center; text-align: center; color: white;">
+                            <div>
+                                <h1 style="font-size: 3.5rem; margin-bottom: 1rem; font-weight: 600;">${element.content.title}</h1>
+                                <p style="font-size: 1.2rem; max-width: 600px; margin: 0 auto;">${element.content.subtitle}</p>
+                            </div>
+                        </div>
+                    `;
+                
+                case 'about':
+                    return `
+                        <div style="padding: 80px 30px; background: #f7fafc;">
+                            <div style="max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center;">
+                                <div>
+                                    <h2 style="font-size: 2.5rem; margin-bottom: 1.5rem; color: #2d3748;">${element.content.name || element.content.title || 'About Me'}</h2>
+                                    <p style="font-size: 1.1rem; line-height: 1.8; color: #4a5568; margin-bottom: 2rem;">${element.content.bio || element.content.text}</p>
+                                    ${element.content.services ? `
+                                        <div>
+                                            <h4 style="color: #2d3748; margin-bottom: 1rem;">Services:</h4>
+                                            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                                ${element.content.services.map(service => `<span style="background: #667eea; color: white; padding: 6px 12px; border-radius: 20px; font-size: 14px;">${service}</span>`).join('')}
+                                            </div>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                                <div style="text-align: center;">
+                                    <img src="${element.content.image}" alt="About" style="width: 100%; max-width: 400px; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                
+                case 'gallery':
+                    return `
+                        <div style="padding: 80px 30px;">
+                            <div style="max-width: 1200px; margin: 0 auto;">
+                                <h2 style="text-align: center; font-size: 2.5rem; margin-bottom: 3rem; color: #2d3748;">${element.content.title}</h2>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                                    ${(element.content.images || []).map(image => `
+                                        <div style="aspect-ratio: 4/3; overflow: hidden; border-radius: 8px;">
+                                            <img src="${image}" alt="Gallery" style="width: 100%; height: 100%; object-fit: cover;">
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                
+                case 'featured-gallery':
+                    return `
+                        <div style="padding: 80px 30px; background: #f7fafc;">
+                            <div style="max-width: 1200px; margin: 0 auto; text-align: center;">
+                                <h2 style="font-size: 2.5rem; margin-bottom: 3rem; color: #2d3748;">${element.content.title}</h2>
+                                <div style="border-radius: 12px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.15);">
+                                    <img src="${element.content.image}" alt="Featured" style="width: 100%; height: 500px; object-fit: cover;">
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                
+                case 'gallery-grid':
+                    return `
+                        <div style="padding: 80px 30px;">
+                            <div style="max-width: 1200px; margin: 0 auto;">
+                                <h2 style="text-align: center; font-size: 2.5rem; margin-bottom: 3rem; color: #2d3748;">${element.content.title}</h2>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 30px;">
+                                    ${(element.content.galleries || []).map(gallery => `
+                                        <div style="text-align: center;">
+                                            <div style="aspect-ratio: 4/3; overflow: hidden; border-radius: 8px; margin-bottom: 1rem;">
+                                                <img src="${gallery.image}" alt="${gallery.name}" style="width: 100%; height: 100%; object-fit: cover;">
+                                            </div>
+                                            <h3 style="font-size: 1.3rem; margin-bottom: 0.5rem; color: #2d3748;">${gallery.name}</h3>
+                                            <p style="color: #667eea; font-weight: 500;">${gallery.category}</p>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                
+                case 'masonry':
+                    return `
+                        <div style="padding: 80px 30px; background: #f7fafc;">
+                            <div style="max-width: 1200px; margin: 0 auto;">
+                                <div style="column-count: 4; column-gap: 20px;">
+                                    ${(element.content.images || []).map(image => `
+                                        <div style="break-inside: avoid; margin-bottom: 20px;">
+                                            <img src="${image}" alt="Portfolio" style="width: 100%; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                
+                case 'services':
+                    return `
+                        <div style="padding: 80px 30px;">
+                            <div style="max-width: 1200px; margin: 0 auto;">
+                                <h2 style="text-align: center; font-size: 2.5rem; margin-bottom: 3rem; color: #2d3748;">${element.content.title}</h2>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
+                                    ${(element.content.services || []).map(service => `
+                                        <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center;">
+                                            <div style="font-size: 3rem; margin-bottom: 1rem;">${service.icon}</div>
+                                            <h3 style="font-size: 1.3rem; margin-bottom: 1rem; color: #2d3748;">${service.name}</h3>
+                                            <p style="color: #667eea; font-weight: 600; margin-bottom: 1rem;">${service.price}</p>
+                                            <p style="color: #4a5568; line-height: 1.6;">${service.description}</p>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                
+                case 'contact':
+                    return `
+                        <div style="padding: 80px 30px; background: #f7fafc;">
+                            <div style="max-width: 800px; margin: 0 auto; text-align: center;">
+                                <h2 style="font-size: 2.5rem; margin-bottom: 3rem; color: #2d3748;">${element.content.title}</h2>
+                                <div style="background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+                                    <div style="display: grid; gap: 20px; margin-bottom: 2rem;">
+                                        <p style="color: #4a5568; font-size: 1.1rem;"><strong>Email:</strong> ${element.content.email}</p>
+                                        <p style="color: #4a5568; font-size: 1.1rem;"><strong>Phone:</strong> ${element.content.phone}</p>
+                                        <p style="color: #4a5568; font-size: 1.1rem;"><strong>Address:</strong> ${element.content.address}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                
+                default:
+                    return `<div style="padding: 20px; background: #fed7d7; color: #742a2a; border-radius: 4px; margin: 10px;">Unknown element type: ${element.type}</div>`;
+            }
         }
 
         function publishWebsite() {
