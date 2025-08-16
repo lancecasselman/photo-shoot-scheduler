@@ -806,10 +806,15 @@
                     <!-- Settings Section -->
                     <div class="tool-section">
                         <div class="tool-title">Settings</div>
-                        <div class="property-controls">
-                            <button class="btn btn-primary" onclick="saveWebsite()" style="padding: 8px 16px; font-size: 12px;">Save</button>
-                            <button class="btn btn-secondary" onclick="previewWebsite()" style="padding: 8px 16px; font-size: 12px;">Preview</button>
-                            <button class="btn btn-primary" onclick="publishWebsite()" style="padding: 8px 16px; font-size: 12px;">Publish</button>
+                        <div class="property-controls" style="display: flex; flex-direction: column; gap: 8px;">
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-primary" onclick="saveWebsite()" style="padding: 8px 16px; font-size: 12px; flex: 1;">Save</button>
+                                <button class="btn btn-secondary" onclick="resetWebsite()" style="padding: 8px 16px; font-size: 12px; flex: 1;">Reset</button>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-secondary" onclick="previewWebsite()" style="padding: 8px 16px; font-size: 12px; flex: 1;">Preview</button>
+                                <button class="btn btn-primary" onclick="publishWebsite()" style="padding: 8px 16px; font-size: 12px; flex: 1;">Publish</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1030,8 +1035,224 @@
 
         // Save website function
         function saveWebsite() {
-            console.log('Saving website...', websiteData);
-            alert('Website saved successfully!');
+            try {
+                // Save current page before saving the whole website
+                if (currentPage) {
+                    savePage(currentPage);
+                }
+                
+                // Prepare website data for saving
+                const websiteToSave = {
+                    template: currentTemplate,
+                    navStyle: navStyle,
+                    navOrder: navOrder,
+                    subPages: subPages,
+                    pages: pages,
+                    logoConfig: logoConfig || {},
+                    lastSaved: new Date().toISOString(),
+                    version: '1.0'
+                };
+                
+                // Save to localStorage
+                localStorage.setItem('websiteBuilderData', JSON.stringify(websiteToSave));
+                
+                // Log save details
+                console.log('Website saved successfully:', {
+                    pages: Object.keys(pages).length,
+                    currentPage: currentPage,
+                    template: currentTemplate,
+                    timestamp: websiteToSave.lastSaved
+                });
+                
+                // Update save button to show success
+                const saveBtn = document.querySelector('button[onclick="saveWebsite()"]');
+                if (saveBtn) {
+                    const originalText = saveBtn.textContent;
+                    saveBtn.textContent = '✓ Saved';
+                    saveBtn.style.background = '#48bb78';
+                    
+                    setTimeout(() => {
+                        saveBtn.textContent = originalText;
+                        saveBtn.style.background = '#667eea';
+                    }, 2000);
+                }
+                
+                // Show success message
+                showMessage('Website saved successfully!', 'success');
+                
+            } catch (error) {
+                console.error('Error saving website:', error);
+                showMessage('Error saving website. Please try again.', 'error');
+            }
+        }
+
+        // Reset website function
+        function resetWebsite() {
+            if (confirm('Are you sure you want to reset the website? This will delete all saved data and start fresh.')) {
+                try {
+                    // Clear localStorage
+                    localStorage.removeItem('websiteBuilderData');
+                    
+                    // Reset global variables to defaults
+                    currentTemplate = 'modern';
+                    currentPage = 'home';
+                    navStyle = 'horizontal';
+                    navOrder = ['home', 'portfolio', 'about', 'contact'];
+                    subPages = {};
+                    pages = {
+                        home: { name: 'Home', template: 'modern', elements: [] },
+                        portfolio: { name: 'Portfolio', template: 'modern', elements: [
+                            {
+                                type: 'featured-gallery',
+                                content: {
+                                    title: 'Featured Work',
+                                    image: 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=1200'
+                                }
+                            },
+                            {
+                                type: 'gallery-grid',
+                                content: {
+                                    title: 'Recent Projects',
+                                    galleries: [
+                                        {name: 'Wedding Collection', category: 'Wedding Photography', image: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600'},
+                                        {name: 'Portrait Sessions', category: 'Portrait Photography', image: 'https://images.unsplash.com/photo-1494790108755-2616c43f40cc?w=600'},
+                                        {name: 'Nature & Landscape', category: 'Landscape Photography', image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600'},
+                                        {name: 'Event Photography', category: 'Event Photography', image: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=600'},
+                                        {name: 'Family Sessions', category: 'Family Photography', image: 'https://images.unsplash.com/photo-1581833971358-2c8b550f87b3?w=600'},
+                                        {name: 'Corporate Headshots', category: 'Business Photography', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600'}
+                                    ]
+                                }
+                            },
+                            {
+                                type: 'masonry',
+                                content: {
+                                    images: [
+                                        'https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=400',
+                                        'https://images.unsplash.com/photo-1518098268026-4e89f1a2cd8e?w=400&h=600',
+                                        'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=400',
+                                        'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=500',
+                                        'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400',
+                                        'https://images.unsplash.com/photo-1532274402911-5a369e4c4bb5?w=400&h=600',
+                                        'https://images.unsplash.com/photo-1519741497674-611481863552?w=400',
+                                        'https://images.unsplash.com/photo-1494790108755-2616c43f40cc?w=400&h=500'
+                                    ]
+                                }
+                            }
+                        ] },
+                        about: { name: 'About', template: 'modern', elements: [
+                            {
+                                type: 'about',
+                                content: {
+                                    name: 'Professional Photographer',
+                                    bio: 'With over 10 years of experience in photography, I specialize in capturing authentic moments that tell your unique story. From intimate weddings to corporate events, I bring creativity and technical expertise to every shoot.',
+                                    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
+                                    services: ['Wedding Photography', 'Portrait Sessions', 'Event Photography', 'Corporate Headshots']
+                                }
+                            },
+                            {
+                                type: 'services',
+                                content: {
+                                    title: 'Photography Services',
+                                    services: [
+                                        {
+                                            icon: '💒',
+                                            name: 'Wedding Photography',
+                                            price: 'Starting at $2,500',
+                                            description: 'Comprehensive wedding coverage from getting ready to reception, capturing every precious moment of your special day.'
+                                        },
+                                        {
+                                            icon: '👨‍👩‍👧‍👦',
+                                            name: 'Family Portraits',
+                                            price: 'Starting at $350',
+                                            description: 'Beautiful family portraits that capture the love and connection between family members in natural settings.'
+                                        },
+                                        {
+                                            icon: '💼',
+                                            name: 'Corporate Headshots',
+                                            price: 'Starting at $200',
+                                            description: 'Professional headshots that help you make a great first impression in your business endeavors.'
+                                        }
+                                    ]
+                                }
+                            }
+                        ] },
+                        contact: { name: 'Contact', template: 'modern', elements: [
+                            {
+                                type: 'contact',
+                                content: {
+                                    title: 'Contact Information',
+                                    email: 'hello@photographer.com',
+                                    phone: '(555) 123-4567',
+                                    address: '123 Photography Lane, Creative City, CC 12345'
+                                }
+                            }
+                        ] }
+                    };
+                    logoConfig = {};
+                    
+                    // Reset UI
+                    refreshPagesList();
+                    
+                    // Reset navigation style radio buttons
+                    const radioButtons = document.querySelectorAll('input[name="navStyle"]');
+                    radioButtons.forEach(radio => {
+                        radio.checked = radio.value === 'horizontal';
+                    });
+                    
+                    // Load default template
+                    loadTemplate('modern');
+                    
+                    console.log('Website reset to defaults');
+                    showMessage('Website reset successfully! Starting fresh with default template.', 'success');
+                    
+                } catch (error) {
+                    console.error('Error resetting website:', error);
+                    showMessage('Error resetting website. Please refresh the page.', 'error');
+                }
+            }
+        }
+
+        // Load saved website function
+        function loadSavedWebsite() {
+            try {
+                const savedData = localStorage.getItem('websiteBuilderData');
+                if (savedData) {
+                    const websiteData = JSON.parse(savedData);
+                    
+                    // Restore saved data
+                    if (websiteData.template) currentTemplate = websiteData.template;
+                    if (websiteData.navStyle) navStyle = websiteData.navStyle;
+                    if (websiteData.navOrder) navOrder = websiteData.navOrder;
+                    if (websiteData.subPages) subPages = websiteData.subPages;
+                    if (websiteData.pages) pages = websiteData.pages;
+                    if (websiteData.logoConfig) logoConfig = websiteData.logoConfig;
+                    
+                    console.log('Loaded saved website:', {
+                        pages: Object.keys(pages).length,
+                        template: currentTemplate,
+                        lastSaved: websiteData.lastSaved,
+                        version: websiteData.version
+                    });
+                    
+                    // Refresh the pages list with loaded data
+                    refreshPagesList();
+                    
+                    // Update navigation style radio buttons
+                    const radioButtons = document.querySelectorAll('input[name="navStyle"]');
+                    radioButtons.forEach(radio => {
+                        radio.checked = radio.value === navStyle;
+                    });
+                    
+                    // Show loaded message
+                    showMessage(`Website loaded! Last saved: ${new Date(websiteData.lastSaved).toLocaleString()}`, 'success');
+                    
+                    return true;
+                }
+            } catch (error) {
+                console.error('Error loading saved website:', error);
+                showMessage('Error loading saved website. Starting with default template.', 'warning');
+            }
+            return false;
         }
 
         // Touch-to-edit functionality
@@ -5851,8 +6072,25 @@
             initializeDragAndDrop();
             initializeFloatingToolbar(); // Initialize toolbar first
             initializePagesDragAndDrop(); // Initialize page drag and drop
+            
+            // Load saved website data if available, otherwise use defaults
+            const hasLoadedData = loadSavedWebsite();
+            
             refreshPagesList(); // Populate pages list with current pages
-            loadTemplate('modern');
+            
+            // Load template only if no saved data was loaded
+            if (!hasLoadedData) {
+                loadTemplate('modern');
+            } else {
+                // If we loaded saved data, load the current page
+                if (currentPage && pages[currentPage]) {
+                    if (pages[currentPage].elements && pages[currentPage].elements.length > 0) {
+                        loadPageContent(currentPage);
+                    } else {
+                        loadTemplate(pages[currentPage].template || 'modern');
+                    }
+                }
+            }
             
             // Wait for template to load, then make all elements deletable
             setTimeout(() => {
