@@ -1319,14 +1319,10 @@
                 
                 // Add editable class
                 img.classList.add('editable');
-                img.style.cursor = 'pointer';
+                img.style.cursor = 'grab'; // Images are for repositioning, not uploading
                 
-                // Click to replace image
-                img.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    startEditingImage(this);
-                }, { once: false });
+                // Image click disabled - only camera buttons trigger uploads
+                // Images are for repositioning via drag only
             });
             
             // Also handle background images (like in hero sections)
@@ -1370,11 +1366,7 @@
                         overlay.style.display = 'none';
                     });
                     
-                    // Click to replace background
-                    element.addEventListener('click', function(e) {
-                        e.stopPropagation();
-                        startEditingBackgroundImage(this);
-                    });
+                    // Background click disabled - only camera buttons trigger uploads
                 }
             });
         }
@@ -4234,26 +4226,10 @@
             document.querySelectorAll('img').forEach(img => {
                 if (img.dataset.editableImage === 'true') return;
                 img.dataset.editableImage = 'true';
-                img.style.cursor = 'pointer';
+                img.style.cursor = 'grab'; // Images are for repositioning, not uploading
                 
-                img.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const input = document.createElement('input');
-                    input.type = 'file';
-                    input.accept = 'image/*';
-                    input.onchange = function(event) {
-                        const file = event.target.files[0];
-                        if (file) {
-                            const reader = new FileReader();
-                            reader.onload = function(e) {
-                                img.src = e.target.result;
-                                console.log('Image replaced');
-                            };
-                            reader.readAsDataURL(file);
-                        }
-                    };
-                    input.click();
-                });
+                // Image click disabled - only camera buttons trigger uploads
+                // Images are for repositioning via drag only
             });
             
             // Background image editing (existing code)
