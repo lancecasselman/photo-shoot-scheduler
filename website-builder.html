@@ -3008,7 +3008,15 @@
                             const carouselId = carouselElement.dataset.carouselId;
                             // Initialize carousel state
                             carouselStates[carouselId] = { currentSlide: 0 };
-                            console.log(`Carousel ${carouselId} initialized with state`);
+                            console.log(`Carousel ${carouselId} initialized with state`, carouselStates[carouselId]);
+                            
+                            // Test if the navigation buttons are working
+                            setTimeout(() => {
+                                const container = document.getElementById(carouselId + '-container');
+                                const slides = container?.querySelectorAll('.carousel-slide');
+                                console.log(`Carousel ${carouselId} has ${slides?.length || 0} slides`);
+                                console.log(`Container found:`, !!container);
+                            }, 100);
                         }
                         // Initialize carousel hover effects for new carousels
                         initializeCarouselHover();
