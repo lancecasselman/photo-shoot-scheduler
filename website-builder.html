@@ -512,6 +512,10 @@
                                 <div class="component-icon">💬</div>
                                 <span class="component-text">Reviews</span>
                             </div>
+                            <div class="component-item" draggable="true" data-component="button" onclick="addComponent('button')" style="cursor: pointer;">
+                                <div class="component-icon">🔘</div>
+                                <span class="component-text">Button</span>
+                            </div>
                             <div class="component-item" draggable="true" data-component="contact" onclick="addComponent('contact')" style="cursor: pointer;">
                                 <div class="component-icon">📧</div>
                                 <span class="component-text">Contact</span>
@@ -1804,6 +1808,13 @@
                             <p style="font-size: 18px; line-height: 1.8; margin-bottom: 40px; opacity: 0.9;">${data.description || 'In-person, virtual, or travel workshops: learn everything from essentials to master level concepts.'}</p>
                             <button style="background: white; color: #1a202c; padding: 15px 40px; border: none; font-size: 14px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer;">View All Workshops</button>
                         </div>
+                    </div>
+                </div>
+            `,
+            button: (data = {}) => `
+                <div class="element" data-type="button">
+                    <div style="text-align: center; padding: 20px;">
+                        <button style="background: #667eea; color: white; padding: 15px 30px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: 600; transition: background-color 0.3s;" data-page-link="" onmouseover="this.style.backgroundColor='#5a67d8'" onmouseout="this.style.backgroundColor='#667eea'">${data.text || 'Click Me'}</button>
                     </div>
                 </div>
             `
