@@ -2151,6 +2151,42 @@
                                 <label class="property-label">Title</label>
                                 <input type="text" class="property-input" value="Your Photography Studio" onchange="updateElementProperty('header', 'title', this.value)">
                             </div>
+                            <div>
+                                <label class="property-label">Background Type</label>
+                                <select class="property-input" onchange="updateHeaderBackground('type', this.value)">
+                                    <option value="gradient">Gradient</option>
+                                    <option value="solid">Solid Color</option>
+                                    <option value="image">Background Image</option>
+                                </select>
+                            </div>
+                            <div id="header-gradient-controls">
+                                <label class="property-label">Start Color</label>
+                                <input type="color" class="property-input" value="#667eea" onchange="updateHeaderBackground('startColor', this.value)">
+                                <label class="property-label">End Color</label>
+                                <input type="color" class="property-input" value="#764ba2" onchange="updateHeaderBackground('endColor', this.value)">
+                                <label class="property-label">Direction</label>
+                                <select class="property-input" onchange="updateHeaderBackground('direction', this.value)">
+                                    <option value="135deg">Diagonal</option>
+                                    <option value="0deg">Horizontal</option>
+                                    <option value="90deg">Vertical</option>
+                                    <option value="45deg">Light Diagonal</option>
+                                </select>
+                            </div>
+                            <div id="header-solid-controls" style="display: none;">
+                                <label class="property-label">Background Color</label>
+                                <input type="color" class="property-input" value="#667eea" onchange="updateHeaderBackground('solidColor', this.value)">
+                            </div>
+                            <div id="header-image-controls" style="display: none;">
+                                <label class="property-label">Image URL</label>
+                                <input type="text" class="property-input" placeholder="https://example.com/image.jpg" onchange="updateHeaderBackground('imageUrl', this.value)">
+                                <label class="property-label">Overlay Opacity</label>
+                                <input type="range" class="property-input" min="0" max="100" value="40" onchange="updateHeaderBackground('overlayOpacity', this.value)">
+                            </div>
+                            <div>
+                                <label class="property-label">Transparency</label>
+                                <input type="range" class="property-input" min="0" max="100" value="100" onchange="updateHeaderBackground('opacity', this.value)">
+                                <span style="font-size: 12px; color: #666;">100%</span>
+                            </div>
                         </div>
                     `;
                     break;
@@ -2224,6 +2260,71 @@
                 if (property === 'image' && el.tagName === 'IMG') {
                     el.src = value;
                 }
+            });
+        }
+
+        // Header background configuration
+        let headerBackgroundConfig = {
+            type: 'gradient',
+            startColor: '#667eea',
+            endColor: '#764ba2',
+            direction: '135deg',
+            solidColor: '#667eea',
+            imageUrl: '',
+            overlayOpacity: 40,
+            opacity: 100
+        };
+
+        function updateHeaderBackground(property, value) {
+            headerBackgroundConfig[property] = value;
+            
+            // Update UI controls visibility
+            if (property === 'type') {
+                document.getElementById('header-gradient-controls').style.display = value === 'gradient' ? 'block' : 'none';
+                document.getElementById('header-solid-controls').style.display = value === 'solid' ? 'block' : 'none';
+                document.getElementById('header-image-controls').style.display = value === 'image' ? 'block' : 'none';
+            }
+            
+            // Update transparency display
+            if (property === 'opacity') {
+                const span = document.querySelector('.property-controls span');
+                if (span) span.textContent = `${value}%`;
+            }
+            
+            // Apply changes to all header elements on the page
+            applyHeaderBackgroundChanges();
+            
+            console.log('Header background updated:', property, value);
+        }
+
+        function applyHeaderBackgroundChanges() {
+            const headerElements = document.querySelectorAll('[data-type="header"] > div');
+            
+            headerElements.forEach(headerDiv => {
+                let backgroundStyle = '';
+                let opacity = headerBackgroundConfig.opacity / 100;
+                
+                switch(headerBackgroundConfig.type) {
+                    case 'gradient':
+                        backgroundStyle = `linear-gradient(${headerBackgroundConfig.direction}, ${headerBackgroundConfig.startColor} 0%, ${headerBackgroundConfig.endColor} 100%)`;
+                        break;
+                    case 'solid':
+                        backgroundStyle = headerBackgroundConfig.solidColor;
+                        break;
+                    case 'image':
+                        if (headerBackgroundConfig.imageUrl) {
+                            const overlayOpacity = headerBackgroundConfig.overlayOpacity / 100;
+                            backgroundStyle = `linear-gradient(rgba(0,0,0,${overlayOpacity}), rgba(0,0,0,${overlayOpacity})), url('${headerBackgroundConfig.imageUrl}')`;
+                            headerDiv.style.backgroundSize = 'cover';
+                            headerDiv.style.backgroundPosition = 'center';
+                        } else {
+                            backgroundStyle = headerBackgroundConfig.solidColor;
+                        }
+                        break;
+                }
+                
+                headerDiv.style.background = backgroundStyle;
+                headerDiv.style.opacity = opacity;
             });
         }
 
