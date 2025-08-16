@@ -1977,6 +1977,9 @@
             websiteData = { template: templateName, elements: template.elements };
             setupElementSelection();
             
+            // Ensure navigation stays at top and content has proper spacing
+            updateNavigationPreview();
+            
             // Small delay to ensure DOM is updated before initializing touch-to-edit
             setTimeout(() => {
                 initializeTouchToEdit();
@@ -2004,6 +2007,9 @@
             // Update website data with page content
             websiteData = { template: page.template || 'modern', elements: page.elements };
             setupElementSelection();
+            
+            // Ensure navigation stays at top and content has proper spacing
+            updateNavigationPreview();
             
             // Small delay to ensure DOM is updated before initializing touch-to-edit
             setTimeout(() => {
@@ -2688,6 +2694,9 @@
                 loadTemplate(pages[pageId].template || 'modern');
             }
             
+            // Always update navigation after switching pages to ensure consistency
+            updateNavigationPreview();
+            
             console.log('Switched to page:', pageId);
         }
         
@@ -2845,12 +2854,15 @@
                 canvas.insertBefore(navElement, canvas.firstChild);
             }
             
+            // Ensure canvas has top margin to avoid content overlap
+            canvas.style.marginTop = '70px';
+            
             // Generate navigation HTML based on style
             if (navStyle === 'horizontal') {
                 navElement.innerHTML = `
                     <div style="display: flex; justify-content: center; align-items: center; gap: 30px;">
                         <!-- Home Button -->
-                        <a href="javascript:void(0)" onclick="switchToPageNew('home'); return false;" style="text-decoration: none; color: ${'home' === currentPage ? '#667eea' : '#2d3748'}; font-weight: ${'home' === currentPage ? '600' : '400'}; padding: 8px 12px; border-radius: 4px; transition: all 0.2s; cursor: pointer;">Home</a>
+                        <a href="javascript:void(0)" onclick="switchToPageNew('home'); return false;" style="text-decoration: none; color: ${currentPage === 'home' ? '#667eea' : '#2d3748'}; font-weight: ${currentPage === 'home' ? '600' : '400'}; padding: 8px 12px; border-radius: 4px; transition: all 0.2s; cursor: pointer;">Home</a>
                         ${navOrder.filter(pageId => pageId !== 'home').map(pageId => {
                             const hasSubPages = subPages[pageId] && subPages[pageId].length > 0;
                             
@@ -2881,7 +2893,7 @@
                 // Dropdown navigation style
                 const dropdownItems = [];
                 // Always add home first
-                dropdownItems.push(`<a href="javascript:void(0)" onclick="switchToPageNew('home'); toggleDropdown(); return false;" style="display: block; padding: 10px 15px; text-decoration: none; color: ${'home' === currentPage ? '#667eea' : '#2d3748'}; border-bottom: 1px solid #f7fafc; transition: all 0.2s; cursor: pointer;">Home</a>`);
+                dropdownItems.push(`<a href="javascript:void(0)" onclick="switchToPageNew('home'); toggleDropdown(); return false;" style="display: block; padding: 10px 15px; text-decoration: none; color: ${currentPage === 'home' ? '#667eea' : '#2d3748'}; border-bottom: 1px solid #f7fafc; transition: all 0.2s; cursor: pointer;">Home</a>`);
                 
                 navOrder.filter(pageId => pageId !== 'home').forEach(pageId => {
                     dropdownItems.push(`<a href="javascript:void(0)" onclick="switchToPageNew('${pageId}'); toggleDropdown(); return false;" style="display: block; padding: 10px 15px; text-decoration: none; color: ${pageId === currentPage ? '#667eea' : '#2d3748'}; border-bottom: 1px solid #f7fafc; transition: all 0.2s; cursor: pointer;">${pages[pageId]?.name || pageId}</a>`);
