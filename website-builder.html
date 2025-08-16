@@ -2039,8 +2039,9 @@
             // Ensure navigation stays at top and content has proper spacing
             updateNavigationPreview();
             
-            // Small delay to ensure DOM is updated before initializing touch-to-edit
+            // Small delay to ensure DOM is updated before initializing touch-to-edit and making elements deletable
             setTimeout(() => {
+                makeAllElementsDeletable(); // Make all template elements deletable
                 initializeTouchToEdit();
             }, 100);
         }
@@ -2070,8 +2071,9 @@
             // Ensure navigation stays at top and content has proper spacing
             updateNavigationPreview();
             
-            // Small delay to ensure DOM is updated before initializing touch-to-edit
+            // Small delay to ensure DOM is updated before initializing touch-to-edit and making elements deletable
             setTimeout(() => {
+                makeAllElementsDeletable(); // Make all page elements deletable
                 initializeTouchToEdit();
             }, 100);
             
@@ -2801,8 +2803,9 @@
                 loadTemplate(page.template || 'modern');
             }
             
-            // Reinitialize touch-to-edit with delay
+            // Reinitialize touch-to-edit with delay and make elements deletable
             setTimeout(() => {
+                makeAllElementsDeletable(); // Make all elements on new page deletable
                 initializeTouchToEdit();
             }, 100);
             
@@ -4484,6 +4487,28 @@
             console.log('Element selected:', element.id);
         }
 
+        // Make all existing elements deletable
+        function makeAllElementsDeletable() {
+            // Find all component sections and assign IDs if needed
+            const selectableClasses = [
+                'hero-section', 'gallery-section', 'about-section', 'contact-section',
+                'services-section', 'testimonials-section', 'carousel-section', 
+                'cta-section', 'featured-gallery-section', 'gallery-grid-section',
+                'masonry-section', 'header-section'
+            ];
+            
+            selectableClasses.forEach(className => {
+                document.querySelectorAll('.' + className).forEach(element => {
+                    if (!element.id) {
+                        element.id = 'element-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                        console.log(`Assigned ID ${element.id} to existing ${className} element`);
+                    }
+                });
+            });
+            
+            console.log('All existing elements made deletable');
+        }
+
         // Enhanced element selection setup
         function setupElementSelection() {
             document.addEventListener('click', function(e) {
@@ -4519,7 +4544,7 @@
                         
                         // Assign ID if not present
                         if (!targetElement.id) {
-                            targetElement.id = 'element-' + Date.now();
+                            targetElement.id = 'element-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
                         }
                         
                         selectElement(targetElement);
@@ -4758,7 +4783,13 @@
             initializeFloatingToolbar(); // Initialize toolbar first
             initializePagesDragAndDrop(); // Initialize page drag and drop
             loadTemplate('modern');
-            setupElementSelection(); // Enhanced element selection with delete functionality
+            
+            // Wait a moment for template to load, then make all elements deletable
+            setTimeout(() => {
+                makeAllElementsDeletable(); // Make all existing elements deletable
+                setupElementSelection(); // Enhanced element selection with delete functionality
+            }, 100);
+            
             initializeTouchToEdit(); // This will call initializeTextEditingWithToolbar for comprehensive text editing
             initializeCarouselHover(); // Initialize carousel hover effects
             initializeImageHandling(); // Initialize image click handling
