@@ -618,6 +618,14 @@
             <!-- Style Tab Content -->
             <div class="tab-panel" data-panel="style">
                 <div class="tools-scroll">
+                    <!-- Selection Status -->
+                    <div class="tool-section">
+                        <div class="tool-title">Selected Component</div>
+                        <div id="selected-component-status" style="padding: 10px; background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 12px; color: #4a5568; text-align: center;">
+                            No component selected. Click on a component to style it.
+                        </div>
+                    </div>
+                    
                     <!-- Theme Colors Section -->
                     <div class="tool-section">
                         <div class="tool-title">Theme Colors</div>
@@ -1589,6 +1597,9 @@
             component.classList.add('selected');
             addDeleteButton(component);
             
+            // Update status indicator
+            updateSelectionStatus(component);
+            
             console.log('Component selected:', component.dataset.type || 'unknown');
         }
 
@@ -1597,6 +1608,10 @@
                 selectedComponent.classList.remove('selected');
                 removeDeleteButton(selectedComponent);
                 selectedComponent = null;
+                
+                // Update status indicator
+                updateSelectionStatus(null);
+                
                 console.log('Component deselected');
             }
         }
@@ -1642,6 +1657,201 @@
                     deselectComponent();
                 }
             });
+        }
+
+        // Style Application Functions for Selected Component
+        function applyThemeColor(type, value) {
+            if (!selectedComponent) {
+                alert('Please select a component first');
+                return;
+            }
+            
+            switch(type) {
+                case 'background':
+                    selectedComponent.style.backgroundColor = value;
+                    break;
+                case 'text':
+                    // Apply to all text elements within the component
+                    const textElements = selectedComponent.querySelectorAll('h1, h2, h3, h4, h5, h6, p, span, div');
+                    textElements.forEach(el => {
+                        el.style.color = value;
+                    });
+                    break;
+                case 'accent':
+                    // Apply to buttons and links
+                    const accentElements = selectedComponent.querySelectorAll('button, a, .accent-element');
+                    accentElements.forEach(el => {
+                        el.style.backgroundColor = value;
+                        el.style.borderColor = value;
+                    });
+                    break;
+            }
+            
+            console.log(`Applied ${type} color ${value} to selected component`);
+        }
+
+        function applyEffect(type, value) {
+            if (!selectedComponent) {
+                alert('Please select a component first');
+                return;
+            }
+            
+            switch(type) {
+                case 'overlay':
+                    // Create or update overlay
+                    let overlay = selectedComponent.querySelector('.style-overlay');
+                    if (!overlay) {
+                        overlay = document.createElement('div');
+                        overlay.className = 'style-overlay';
+                        overlay.style.cssText = `
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            right: 0;
+                            bottom: 0;
+                            pointer-events: none;
+                            z-index: 1;
+                        `;
+                        selectedComponent.style.position = 'relative';
+                        selectedComponent.appendChild(overlay);
+                    }
+                    overlay.style.backgroundColor = `rgba(0, 0, 0, ${value / 100})`;
+                    document.getElementById('overlay-value').textContent = value + '%';
+                    break;
+                    
+                case 'blur':
+                    selectedComponent.style.filter = `blur(${value}px)`;
+                    document.getElementById('blur-value').textContent = value + 'px';
+                    break;
+                    
+                case 'shadow':
+                    selectedComponent.style.boxShadow = `0 ${value}px ${value * 2}px rgba(0, 0, 0, 0.2)`;
+                    document.getElementById('shadow-value').textContent = value + 'px';
+                    break;
+                    
+                case 'animation':
+                    selectedComponent.style.animation = value === 'none' ? '' : `${value} 0.6s ease-in-out`;
+                    if (value !== 'none') {
+                        addAnimationKeyframes(value);
+                    }
+                    break;
+            }
+            
+            console.log(`Applied ${type} effect ${value} to selected component`);
+        }
+
+        function applyLayoutProperty(type, value) {
+            if (!selectedComponent) {
+                alert('Please select a component first');
+                return;
+            }
+            
+            switch(type) {
+                case 'padding':
+                    selectedComponent.style.padding = value + 'px';
+                    document.getElementById('padding-value').textContent = value + 'px';
+                    break;
+                    
+                case 'margin':
+                    selectedComponent.style.margin = value + 'px';
+                    document.getElementById('margin-value').textContent = value + 'px';
+                    break;
+                    
+                case 'gap':
+                    selectedComponent.style.gap = value + 'px';
+                    document.getElementById('gap-value').textContent = value + 'px';
+                    break;
+                    
+                case 'horizontal':
+                    selectedComponent.style.textAlign = value;
+                    if (value === 'center') {
+                        selectedComponent.style.display = 'flex';
+                        selectedComponent.style.justifyContent = 'center';
+                    } else if (value === 'right') {
+                        selectedComponent.style.display = 'flex';
+                        selectedComponent.style.justifyContent = 'flex-end';
+                    } else {
+                        selectedComponent.style.display = 'flex';
+                        selectedComponent.style.justifyContent = 'flex-start';
+                    }
+                    break;
+                    
+                case 'vertical':
+                    selectedComponent.style.display = 'flex';
+                    selectedComponent.style.flexDirection = 'column';
+                    if (value === 'middle') {
+                        selectedComponent.style.justifyContent = 'center';
+                    } else if (value === 'bottom') {
+                        selectedComponent.style.justifyContent = 'flex-end';
+                    } else {
+                        selectedComponent.style.justifyContent = 'flex-start';
+                    }
+                    break;
+            }
+            
+            console.log(`Applied ${type} layout ${value} to selected component`);
+        }
+
+        function addAnimationKeyframes(animationType) {
+            // Add CSS keyframes if they don't exist
+            const styleId = 'animation-keyframes';
+            let styleElement = document.getElementById(styleId);
+            
+            if (!styleElement) {
+                styleElement = document.createElement('style');
+                styleElement.id = styleId;
+                document.head.appendChild(styleElement);
+            }
+            
+            const keyframes = {
+                fade: `
+                    @keyframes fade {
+                        from { opacity: 0; }
+                        to { opacity: 1; }
+                    }
+                `,
+                slide: `
+                    @keyframes slide {
+                        from { transform: translateY(20px); opacity: 0; }
+                        to { transform: translateY(0); opacity: 1; }
+                    }
+                `,
+                zoom: `
+                    @keyframes zoom {
+                        from { transform: scale(0.8); opacity: 0; }
+                        to { transform: scale(1); opacity: 1; }
+                    }
+                `
+            };
+            
+            if (keyframes[animationType] && !styleElement.textContent.includes(`@keyframes ${animationType}`)) {
+                styleElement.textContent += keyframes[animationType];
+            }
+        }
+
+        function updateSelectionStatus(component) {
+            const statusElement = document.getElementById('selected-component-status');
+            if (!statusElement) return;
+            
+            if (component) {
+                const componentType = component.dataset.type || 
+                                     component.className.split(' ').find(c => c.includes('-section'))?.replace('-section', '') || 
+                                     'component';
+                statusElement.innerHTML = `
+                    <div style="color: #38a169; font-weight: 500;">
+                        ✓ Selected: ${componentType.charAt(0).toUpperCase() + componentType.slice(1)}
+                    </div>
+                    <div style="font-size: 10px; color: #666; margin-top: 4px;">
+                        Use the controls below to style this component
+                    </div>
+                `;
+                statusElement.style.background = '#f0fff4';
+                statusElement.style.borderColor = '#38a169';
+            } else {
+                statusElement.innerHTML = 'No component selected. Click on a component to style it.';
+                statusElement.style.background = '#f7fafc';
+                statusElement.style.borderColor = '#e2e8f0';
+            }
         }
 
         // Templates
