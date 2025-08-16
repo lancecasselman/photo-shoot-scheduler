@@ -870,8 +870,8 @@
 
         // Touch-to-edit functionality
         function initializeTouchToEdit() {
-            // Make all text elements editable
-            makeTextEditable();
+            // Make all text elements editable with comprehensive toolbar support
+            initializeTextEditingWithToolbar();
             // Make images clickable for replacement
             makeImagesEditable();
             // Make blocks draggable
@@ -1827,8 +1827,15 @@
                 canvas.insertAdjacentHTML('beforeend', errorHtml);
             }
             
+            // Ensure all editable aspects are applied to the new component
             setupElementSelection();
             initializeTouchToEdit();
+            // Make sure text elements are editable with full formatting options
+            makeTextEditable();
+            // Make sure images are editable
+            makeImagesEditable();
+            // Make sure blocks are draggable
+            makeBlocksDraggable();
         }
 
         // Element selection
@@ -2701,8 +2708,8 @@
             return "#" + hex(match[1]) + hex(match[2]) + hex(match[3]);
         }
         
-        // Update initializeTouchToEdit to include toolbar
-        function initializeTouchToEdit() {
+        // Initialize text editing with comprehensive toolbar support
+        function initializeTextEditingWithToolbar() {
             // Text editing with floating toolbar
             document.querySelectorAll('h1, h2, h3, p, span, button').forEach(element => {
                 // Skip if already initialized or is a toolbar element or toolbar button or tab button or component item
@@ -3030,6 +3037,16 @@
                         // Initialize carousel hover effects for new carousels
                         initializeCarouselHover();
                     }
+                    
+                    // Ensure all editable aspects are applied to the new component
+                    setupElementSelection();
+                    initializeTouchToEdit();
+                    // Make sure text elements are editable with full formatting options
+                    makeTextEditable();
+                    // Make sure images are editable
+                    makeImagesEditable();
+                    // Make sure blocks are draggable
+                    makeBlocksDraggable();
                 } else {
                     console.error(`Failed to create element for component: ${componentType}`);
                 }
@@ -3325,7 +3342,7 @@
             initializePagesDragAndDrop(); // Initialize page drag and drop
             loadTemplate('modern');
             setupElementSelection();
-            initializeTouchToEdit();
+            initializeTouchToEdit(); // This will call initializeTextEditingWithToolbar for comprehensive text editing
             initializeCarouselHover(); // Initialize carousel hover effects
             updateNavigationPreview(); // Initialize navigation
             testCarouselFunctions(); // Test if carousel functions are available
