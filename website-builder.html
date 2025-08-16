@@ -709,7 +709,8 @@
                                 <button onclick="event.stopPropagation(); renamePageNew('contact')" style="background: none; border: none; color: #667eea; cursor: pointer; padding: 4px; margin-right: 4px;">✏️</button>
                             </div>
                         </div>
-                        <button onclick="addNewPageFromPages()" style="width: 100%; padding: 8px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">+ Add New Page</button>
+                        <button onclick="addNewPageFromPages()" style="width: 100%; padding: 8px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; margin-bottom: 5px;">+ Add New Page</button>
+                        <button onclick="addSubPage()" style="width: 100%; padding: 6px; background: #805ad5; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;">+ Add SubPage</button>
                     </div>
                     
                     <!-- Templates Section -->
@@ -800,6 +801,7 @@
         let currentPage = 'home';
         let navStyle = 'horizontal'; // 'horizontal' or 'dropdown'
         let navOrder = ['home', 'portfolio', 'about', 'contact']; // Navigation order
+        let subPages = {}; // Store subpages: { parentId: [subpage1, subpage2, ...] }
         let pages = {
             home: { name: 'Home', template: 'modern', elements: [] },
             portfolio: { name: 'Portfolio', template: 'modern', elements: [
@@ -2480,6 +2482,144 @@
         function addNewPageFromPages() {
             addNewPage(); // Same functionality but called from Pages tab
         }
+
+        function addSubPage() {
+            // First select which parent page
+            const parentOptions = navOrder.map(pageId => `<option value="${pageId}">${pages[pageId].name}</option>`).join('');
+            
+            const parentSelect = document.createElement('div');
+            parentSelect.innerHTML = `
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; justify-content: center;">
+                    <div style="background: white; padding: 30px; border-radius: 12px; max-width: 400px; width: 90%;">
+                        <h3 style="margin: 0 0 20px 0; color: #2d3748;">Create SubPage</h3>
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 500;">Parent Page:</label>
+                            <select id="parent-page-select" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;">
+                                ${parentOptions}
+                            </select>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 5px; color: #4a5568; font-weight: 500;">SubPage Name:</label>
+                            <input type="text" id="subpage-name-input" placeholder="e.g., Wedding Gallery" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;">
+                        </div>
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button onclick="this.closest('div').parentElement.remove()" style="padding: 10px 20px; background: #e2e8f0; color: #4a5568; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>
+                            <button onclick="createSubPage()" style="padding: 10px 20px; background: #805ad5; color: white; border: none; border-radius: 6px; cursor: pointer;">Create SubPage</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(parentSelect);
+        }
+
+        function createSubPage() {
+            const parentId = document.getElementById('parent-page-select').value;
+            const subPageName = document.getElementById('subpage-name-input').value.trim();
+            
+            if (!subPageName) {
+                alert('Please enter a subpage name');
+                return;
+            }
+            
+            const subPageId = `${parentId}-${subPageName.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
+            
+            // Check if subpage already exists
+            if (pages[subPageId]) {
+                alert('A subpage with this name already exists!');
+                return;
+            }
+            
+            // Create subpage
+            pages[subPageId] = {
+                name: subPageName,
+                parent: parentId,
+                template: 'modern',
+                elements: []
+            };
+            
+            // Add to subPages tracking
+            if (!subPages[parentId]) {
+                subPages[parentId] = [];
+            }
+            subPages[parentId].push(subPageId);
+            
+            // Close modal
+            document.querySelector('[onclick="this.closest(\'div\').parentElement.remove()"]').click();
+            
+            // Refresh pages list to show new subpage
+            refreshPagesList();
+            
+            // Switch to new subpage
+            switchToPageNew(subPageId);
+            
+            console.log(`SubPage created: ${subPageId} under ${parentId}`);
+        }
+
+        function refreshPagesList() {
+            const pagesList = document.getElementById('pages-list');
+            pagesList.innerHTML = '';
+            
+            navOrder.forEach(pageId => {
+                if (pages[pageId]) {
+                    // Add main page
+                    const pageItem = createPageListItem(pageId, false);
+                    pagesList.appendChild(pageItem);
+                    
+                    // Add subpages
+                    if (subPages[pageId]) {
+                        subPages[pageId].forEach(subPageId => {
+                            if (pages[subPageId]) {
+                                const subPageItem = createPageListItem(subPageId, true);
+                                pagesList.appendChild(subPageItem);
+                            }
+                        });
+                    }
+                }
+            });
+        }
+
+        function createPageListItem(pageId, isSubPage = false) {
+            const pageItem = document.createElement('div');
+            pageItem.className = 'page-item';
+            if (currentPage === pageId) pageItem.classList.add('active');
+            pageItem.setAttribute('data-page', pageId);
+            pageItem.setAttribute('draggable', 'true');
+            pageItem.setAttribute('onclick', `switchToPageNew('${pageId}')`);
+            
+            const indentation = isSubPage ? '20px' : '0px';
+            const pageIcon = isSubPage ? '└─' : '☰';
+            const bgColor = currentPage === pageId ? '#e6fffa' : '#f7fafc';
+            
+            pageItem.style.cssText = `display: flex; align-items: center; padding: 8px; background: ${bgColor}; border-radius: 4px; margin-bottom: 4px; cursor: grab; margin-left: ${indentation};`;
+            
+            pageItem.innerHTML = `
+                <span style="color: #718096; margin-right: 8px;">${pageIcon}</span>
+                <span class="page-name" style="flex: 1; ${isSubPage ? 'font-size: 11px; color: #4a5568;' : ''}">${pages[pageId].name}</span>
+                <button onclick="event.stopPropagation(); renamePageNew('${pageId}')" style="background: none; border: none; color: #667eea; cursor: pointer; padding: 4px; margin-right: 4px; font-size: 12px;">✏️</button>
+                <button onclick="event.stopPropagation(); deletePageNew('${pageId}')" style="background: none; border: none; color: #e53e3e; cursor: pointer; padding: 4px; font-size: 12px;">🗑️</button>
+            `;
+            
+            return pageItem;
+        }
+
+        function showSubMenu(pageId) {
+            // Hide all other submenus
+            document.querySelectorAll('[id^="submenu-"]').forEach(menu => {
+                menu.style.display = 'none';
+            });
+            
+            // Show this submenu
+            const submenu = document.getElementById(`submenu-${pageId}`);
+            if (submenu) {
+                submenu.style.display = 'block';
+                
+                // Hide submenu when mouse leaves
+                submenu.onmouseleave = () => {
+                    submenu.style.display = 'none';
+                };
+            }
+        }
         
         function addPageToUI(pageId, pageName) {
             const pagesList = document.getElementById('pages-list');
@@ -2638,28 +2778,52 @@
         
         // Delete page functionality for new system
         function deletePageNew(pageId) {
-            if (pageId === 'home') {
-                alert('Cannot delete the home page!');
+            // Don't allow deletion of default pages
+            if (['home', 'portfolio', 'about', 'contact'].includes(pageId)) {
+                alert('Cannot delete default pages');
                 return;
             }
             
-            if (confirm(`Are you sure you want to delete the page "${pages[pageId]?.name}"?`)) {
+            const pageName = pages[pageId]?.name || pageId;
+            const isSubPage = pages[pageId]?.parent;
+            
+            if (confirm(`Are you sure you want to delete the ${isSubPage ? 'sub' : ''}page "${pageName}"?`)) {
+                // If it's a subpage, remove from parent's subpages list
+                if (isSubPage) {
+                    const parentId = pages[pageId].parent;
+                    if (subPages[parentId]) {
+                        const subIndex = subPages[parentId].indexOf(pageId);
+                        if (subIndex > -1) {
+                            subPages[parentId].splice(subIndex, 1);
+                        }
+                        // Clean up empty subPages array
+                        if (subPages[parentId].length === 0) {
+                            delete subPages[parentId];
+                        }
+                    }
+                } else {
+                    // If it's a parent page, delete all its subpages first
+                    if (subPages[pageId] && subPages[pageId].length > 0) {
+                        subPages[pageId].forEach(subPageId => {
+                            delete pages[subPageId];
+                        });
+                        delete subPages[pageId];
+                    }
+                    
+                    // Remove from navigation order
+                    navOrder = navOrder.filter(id => id !== pageId);
+                }
+                
                 // Remove from pages object
                 delete pages[pageId];
-                
-                // Remove from navigation order
-                navOrder = navOrder.filter(id => id !== pageId);
-                
-                // Remove from UI
-                const pageItem = document.querySelector(`.page-item[data-page="${pageId}"]`);
-                if (pageItem) {
-                    pageItem.remove();
-                }
                 
                 // If deleting current page, switch to home
                 if (currentPage === pageId) {
                     switchToPageNew('home');
                 }
+                
+                // Refresh the pages list to update the UI
+                refreshPagesList();
                 
                 // Update navigation preview
                 updateNavigationPreview();
@@ -2685,21 +2849,53 @@
             if (navStyle === 'horizontal') {
                 navElement.innerHTML = `
                     <div style="display: flex; justify-content: center; align-items: center; gap: 30px;">
-                        ${navOrder.map(pageId => 
-                            `<a href="javascript:void(0)" onclick="switchToPageNew('${pageId}'); return false;" style="text-decoration: none; color: ${pageId === currentPage ? '#667eea' : '#2d3748'}; font-weight: ${pageId === currentPage ? '600' : '400'}; padding: 8px 12px; border-radius: 4px; transition: all 0.2s; cursor: pointer;">${pages[pageId]?.name || pageId}</a>`
-                        ).join('')}
+                        ${navOrder.map(pageId => {
+                            const hasSubPages = subPages[pageId] && subPages[pageId].length > 0;
+                            
+                            if (hasSubPages) {
+                                // Create dropdown for pages with subpages
+                                return `
+                                    <div style="position: relative; display: inline-block;">
+                                        <a href="javascript:void(0)" onclick="switchToPageNew('${pageId}'); return false;" 
+                                           onmouseover="showSubMenu('${pageId}')" 
+                                           style="text-decoration: none; color: ${pageId === currentPage ? '#667eea' : '#2d3748'}; font-weight: ${pageId === currentPage ? '600' : '400'}; padding: 8px 12px; border-radius: 4px; transition: all 0.2s; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                            ${pages[pageId]?.name || pageId} <span style="font-size: 10px;">▼</span>
+                                        </a>
+                                        <div id="submenu-${pageId}" style="position: absolute; top: 100%; left: 0; background: white; border: 1px solid #e2e8f0; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); min-width: 180px; z-index: 1001; display: none;">
+                                            ${subPages[pageId].map(subPageId => 
+                                                `<a href="javascript:void(0)" onclick="switchToPageNew('${subPageId}'); return false;" style="display: block; padding: 8px 16px; text-decoration: none; color: #4a5568; border-bottom: 1px solid #f1f1f1; cursor: pointer; font-size: 14px;">${pages[subPageId]?.name || subPageId}</a>`
+                                            ).join('')}
+                                        </div>
+                                    </div>
+                                `;
+                            } else {
+                                // Regular page link
+                                return `<a href="javascript:void(0)" onclick="switchToPageNew('${pageId}'); return false;" style="text-decoration: none; color: ${pageId === currentPage ? '#667eea' : '#2d3748'}; font-weight: ${pageId === currentPage ? '600' : '400'}; padding: 8px 12px; border-radius: 4px; transition: all 0.2s; cursor: pointer;">${pages[pageId]?.name || pageId}</a>`;
+                            }
+                        }).join('')}
                     </div>
                 `;
             } else {
+                // Dropdown navigation style
+                const dropdownItems = [];
+                navOrder.forEach(pageId => {
+                    dropdownItems.push(`<a href="javascript:void(0)" onclick="switchToPageNew('${pageId}'); toggleDropdown(); return false;" style="display: block; padding: 10px 15px; text-decoration: none; color: ${pageId === currentPage ? '#667eea' : '#2d3748'}; border-bottom: 1px solid #f7fafc; transition: all 0.2s; cursor: pointer;">${pages[pageId]?.name || pageId}</a>`);
+                    
+                    // Add subpages
+                    if (subPages[pageId] && subPages[pageId].length > 0) {
+                        subPages[pageId].forEach(subPageId => {
+                            dropdownItems.push(`<a href="javascript:void(0)" onclick="switchToPageNew('${subPageId}'); toggleDropdown(); return false;" style="display: block; padding: 8px 15px 8px 32px; text-decoration: none; color: #4a5568; border-bottom: 1px solid #f7fafc; transition: all 0.2s; cursor: pointer; font-size: 13px;">→ ${pages[subPageId]?.name || subPageId}</a>`);
+                        });
+                    }
+                });
+                
                 navElement.innerHTML = `
                     <div style="position: relative; display: inline-block;">
                         <button onclick="toggleDropdown()" style="background: white; border: 1px solid #e2e8f0; padding: 10px 20px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
                             Menu <span style="font-size: 12px;">▼</span>
                         </button>
                         <div id="dropdown-menu" style="position: absolute; top: 100%; left: 0; background: white; border: 1px solid #e2e8f0; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); min-width: 150px; z-index: 1001; display: none;">
-                            ${navOrder.map(pageId => 
-                                `<a href="javascript:void(0)" onclick="switchToPageNew('${pageId}'); toggleDropdown(); return false;" style="display: block; padding: 10px 15px; text-decoration: none; color: ${pageId === currentPage ? '#667eea' : '#2d3748'}; border-bottom: 1px solid #f7fafc; transition: all 0.2s; cursor: pointer;">${pages[pageId]?.name || pageId}</a>`
-                            ).join('')}
+                            ${dropdownItems.join('')}
                         </div>
                     </div>
                 `;
