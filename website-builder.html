@@ -2131,6 +2131,8 @@
                     }
                     // Add hover delete functionality to new element
                     addHoverDeleteToElement(newElement);
+                    // Add hover photo change functionality to new element
+                    addHoverPhotoChangeToElement(newElement);
                 }
                 
                 console.log(`Adding component: ${type}`);
@@ -4426,6 +4428,169 @@
             console.log('removeCarouselImage exists:', typeof removeCarouselImage === 'function');
         }
 
+        // Style Tab Functions
+        function applyThemeColor(type, value) {
+            const canvas = document.getElementById('canvas');
+            if (!canvas) return;
+            
+            console.log(`Applying theme color: ${type} = ${value}`);
+            
+            switch(type) {
+                case 'background':
+                    canvas.style.backgroundColor = value;
+                    // Also update all sections with default backgrounds
+                    canvas.querySelectorAll('.element').forEach(element => {
+                        if (element.style.backgroundColor === '' || element.style.backgroundColor === 'white' || element.style.backgroundColor === '#ffffff') {
+                            element.style.backgroundColor = value;
+                        }
+                    });
+                    break;
+                case 'text':
+                    canvas.querySelectorAll('h1, h2, h3, h4, h5, h6, p, span, div').forEach(element => {
+                        if (!element.style.color || element.style.color === '#2d3748' || element.style.color === 'rgb(45, 55, 72)') {
+                            element.style.color = value;
+                        }
+                    });
+                    break;
+                case 'accent':
+                    canvas.querySelectorAll('button, .btn, a').forEach(element => {
+                        if (!element.style.backgroundColor || element.style.backgroundColor === '#667eea' || element.style.backgroundColor === 'rgb(102, 126, 234)') {
+                            element.style.backgroundColor = value;
+                        }
+                    });
+                    // Update gradients too
+                    canvas.querySelectorAll('[style*="linear-gradient"]').forEach(element => {
+                        const currentStyle = element.style.backgroundImage;
+                        if (currentStyle.includes('#667eea')) {
+                            element.style.backgroundImage = currentStyle.replace(/#667eea/g, value);
+                        }
+                    });
+                    break;
+            }
+        }
+
+        function applyEffect(type, value) {
+            const canvas = document.getElementById('canvas');
+            if (!canvas) return;
+            
+            console.log(`Applying effect: ${type} = ${value}`);
+            
+            // Update the display value
+            const displayElement = document.getElementById(`${type}-value`);
+            if (displayElement) {
+                switch(type) {
+                    case 'overlay':
+                        displayElement.textContent = `${value}%`;
+                        // Apply overlay to hero sections
+                        canvas.querySelectorAll('.hero-section, .carousel-slide').forEach(element => {
+                            const currentBg = element.style.backgroundImage;
+                            if (currentBg && currentBg.includes('url(')) {
+                                const opacity = value / 100;
+                                if (currentBg.includes('linear-gradient')) {
+                                    // Update existing gradient
+                                    element.style.backgroundImage = currentBg.replace(/rgba\(0,0,0,[^)]+\)/g, `rgba(0,0,0,${opacity})`);
+                                } else {
+                                    // Add gradient overlay
+                                    const urlMatch = currentBg.match(/url\([^)]+\)/);
+                                    if (urlMatch) {
+                                        element.style.backgroundImage = `linear-gradient(rgba(0,0,0,${opacity}), rgba(0,0,0,${opacity})), ${urlMatch[0]}`;
+                                    }
+                                }
+                            }
+                        });
+                        break;
+                    case 'blur':
+                        displayElement.textContent = `${value}px`;
+                        canvas.querySelectorAll('img').forEach(img => {
+                            img.style.filter = `blur(${value}px)`;
+                        });
+                        break;
+                    case 'shadow':
+                        displayElement.textContent = `${value}px`;
+                        canvas.querySelectorAll('.element').forEach(element => {
+                            element.style.boxShadow = `0 ${value}px ${value * 2}px rgba(0,0,0,0.1)`;
+                        });
+                        break;
+                    case 'animation':
+                        canvas.querySelectorAll('.element').forEach(element => {
+                            element.classList.remove('fade-in', 'slide-in', 'zoom-in');
+                            if (value !== 'none') {
+                                element.classList.add(`${value}-in`);
+                            }
+                        });
+                        break;
+                }
+            }
+        }
+
+        function applyLayoutProperty(type, value) {
+            const selectedElement = document.querySelector('.element.selected');
+            if (!selectedElement) {
+                console.log('No element selected for layout changes');
+                return;
+            }
+            
+            console.log(`Applying layout property: ${type} = ${value}`);
+            
+            // Update the display value
+            const displayElement = document.getElementById(`${type}-value`);
+            if (displayElement) {
+                switch(type) {
+                    case 'padding':
+                        displayElement.textContent = `${value}px`;
+                        selectedElement.style.padding = `${value}px`;
+                        break;
+                    case 'margin':
+                        displayElement.textContent = `${value}px`;
+                        selectedElement.style.margin = `${value}px`;
+                        break;
+                    case 'gap':
+                        displayElement.textContent = `${value}px`;
+                        if (selectedElement.querySelector('[style*="grid"]') || selectedElement.querySelector('[style*="flex"]')) {
+                            selectedElement.style.gap = `${value}px`;
+                        }
+                        break;
+                    case 'width':
+                        displayElement.textContent = `${value}%`;
+                        selectedElement.style.width = `${value}%`;
+                        break;
+                    case 'height':
+                        displayElement.textContent = `${value}px`;
+                        selectedElement.style.height = `${value}px`;
+                        break;
+                    case 'horizontal':
+                        switch(value) {
+                            case 'left':
+                                selectedElement.style.textAlign = 'left';
+                                selectedElement.style.justifyContent = 'flex-start';
+                                break;
+                            case 'center':
+                                selectedElement.style.textAlign = 'center';
+                                selectedElement.style.justifyContent = 'center';
+                                break;
+                            case 'right':
+                                selectedElement.style.textAlign = 'right';
+                                selectedElement.style.justifyContent = 'flex-end';
+                                break;
+                        }
+                        break;
+                    case 'vertical':
+                        switch(value) {
+                            case 'top':
+                                selectedElement.style.alignItems = 'flex-start';
+                                break;
+                            case 'middle':
+                                selectedElement.style.alignItems = 'center';
+                                break;
+                            case 'bottom':
+                                selectedElement.style.alignItems = 'flex-end';
+                                break;
+                        }
+                        break;
+                }
+            }
+        }
+
         // Element deletion functionality
         function deleteElement(elementId) {
             const element = document.getElementById(elementId);
@@ -4500,6 +4665,135 @@
             selectedElement = element;
             
             console.log('Element selected:', element.id);
+        }
+
+        // Add hover change photo functionality to images
+        function addHoverPhotoChangeToElement(element) {
+            // Skip if already has hover photo change or if not an image element
+            if (element.dataset.hasHoverPhotoChange) return;
+            
+            // Check if this element contains images
+            const img = element.querySelector('img') || (element.tagName === 'IMG' ? element : null);
+            const hasBackgroundImage = element.style.backgroundImage && element.style.backgroundImage !== 'none';
+            
+            if (!img && !hasBackgroundImage) return;
+            
+            element.dataset.hasHoverPhotoChange = 'true';
+            
+            let changePhotoButton = null;
+            
+            // Show change photo button on hover
+            element.addEventListener('mouseenter', function() {
+                // Skip if this is a toolbar or button area
+                if (element.closest('.builder-tools') || 
+                    element.closest('.floating-toolbar') ||
+                    element.closest('.edit-toolbar')) {
+                    return;
+                }
+                
+                if (!changePhotoButton) {
+                    changePhotoButton = document.createElement('button');
+                    changePhotoButton.className = 'change-photo-button hover-photo';
+                    changePhotoButton.innerHTML = '📷';
+                    changePhotoButton.title = 'Change Photo';
+                    changePhotoButton.style.cssText = `
+                        position: absolute;
+                        top: 10px;
+                        left: 10px;
+                        width: 32px;
+                        height: 32px;
+                        background: #4299e1;
+                        color: white;
+                        border: none;
+                        border-radius: 50%;
+                        cursor: pointer;
+                        font-size: 16px;
+                        font-weight: bold;
+                        z-index: 1000;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                        opacity: 0;
+                        transition: opacity 0.2s ease;
+                        line-height: 1;
+                    `;
+                    
+                    changePhotoButton.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        
+                        console.log('Change photo button clicked for element:', element.id);
+                        
+                        // Create file input
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = 'image/*';
+                        input.onchange = function(event) {
+                            const file = event.target.files[0];
+                            if (file) {
+                                const reader = new FileReader();
+                                reader.onload = function(e) {
+                                    const imageUrl = e.target.result;
+                                    
+                                    // Find and update the image
+                                    const targetImg = element.querySelector('img') || (element.tagName === 'IMG' ? element : null);
+                                    if (targetImg) {
+                                        targetImg.src = imageUrl;
+                                        console.log('Updated img src');
+                                    } else if (hasBackgroundImage) {
+                                        // Update background image
+                                        const currentBg = element.style.backgroundImage;
+                                        if (currentBg.includes('linear-gradient')) {
+                                            // Preserve gradient overlay
+                                            const gradientMatch = currentBg.match(/linear-gradient\([^)]+\)/);
+                                            if (gradientMatch) {
+                                                element.style.backgroundImage = `${gradientMatch[0]}, url('${imageUrl}')`;
+                                            } else {
+                                                element.style.backgroundImage = `url('${imageUrl}')`;
+                                            }
+                                        } else {
+                                            element.style.backgroundImage = `url('${imageUrl}')`;
+                                        }
+                                        console.log('Updated background image');
+                                    }
+                                    
+                                    console.log('Photo changed successfully');
+                                };
+                                reader.readAsDataURL(file);
+                            }
+                        };
+                        input.click();
+                    });
+                    
+                    // Keep button visible when hovering over it
+                    changePhotoButton.addEventListener('mouseenter', function() {
+                        changePhotoButton.style.opacity = '1';
+                    });
+                    
+                    element.appendChild(changePhotoButton);
+                }
+                
+                // Ensure element is positioned relative
+                if (getComputedStyle(element).position === 'static') {
+                    element.style.position = 'relative';
+                }
+                
+                // Show change photo button
+                if (changePhotoButton) {
+                    changePhotoButton.style.opacity = '1';
+                }
+            });
+            
+            // Hide change photo button when mouse leaves BOTH element and button
+            element.addEventListener('mouseleave', function(e) {
+                // Only hide if not moving to the change photo button
+                setTimeout(() => {
+                    if (changePhotoButton && !changePhotoButton.matches(':hover') && !element.matches(':hover')) {
+                        changePhotoButton.style.opacity = '0';
+                    }
+                }, 100);
+            });
         }
 
         // Add hover delete functionality to an element
@@ -4640,6 +4934,11 @@
                 // Add hover delete functionality if not already added
                 if (!element.dataset.hasHoverDelete) {
                     addHoverDeleteToElement(element);
+                }
+                
+                // Add hover photo change functionality if element has images
+                if (!element.dataset.hasHoverPhotoChange) {
+                    addHoverPhotoChangeToElement(element);
                 }
             });
             
@@ -4926,14 +5225,20 @@
                 makeAllElementsDeletable(); // Make all existing elements deletable
                 setupElementSelection(); // Enhanced element selection with delete functionality
                 
-                // Force check for any elements that still don't have hover delete
+                // Force check for any elements that still don't have hover delete or photo change
                 document.querySelectorAll('.element, .hero-section, .gallery-section, .about-section, .contact-section, .services-section, .testimonials-section, .carousel-section, .cta-section, .featured-gallery-section, .gallery-grid-section, .masonry-section, .header-section').forEach(element => {
+                    if (!element.id) {
+                        element.id = 'element-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                    }
+                    
                     if (!element.dataset.hasHoverDelete) {
-                        if (!element.id) {
-                            element.id = 'element-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-                        }
                         addHoverDeleteToElement(element);
                         console.log('Added hover delete to preloaded element:', element.id);
+                    }
+                    
+                    if (!element.dataset.hasHoverPhotoChange) {
+                        addHoverPhotoChangeToElement(element);
+                        console.log('Added hover photo change to preloaded element:', element.id);
                     }
                 });
             }, 300);
