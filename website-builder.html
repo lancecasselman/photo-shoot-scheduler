@@ -324,13 +324,9 @@
             pointer-events: auto;
         }
 
-        /* Image edit overlay hover styles */
-        .element:hover .image-edit-overlay {
-            opacity: 1;
-        }
-
-        /* Ensure image edit overlays are always on top */
+        /* Make camera buttons always visible, not just on hover */
         .image-edit-overlay {
+            opacity: 1 !important;
             z-index: 9999 !important;
             pointer-events: auto;
         }
@@ -1668,7 +1664,7 @@
                         <div class="carousel-container" id="${carouselId}-container" style="display: flex; transition: transform 0.5s ease; width: ${images.length * 100}%;">
                             ${images.map((img, index) => `
                                 <div class="carousel-slide" data-slide="${index}" style="min-width: ${100/images.length}%; height: 500px; background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('${img}'); background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; color: white; position: relative;">
-                                    <div class="image-edit-overlay" style="position: absolute; top: 15px; right: 15px; opacity: 0; transition: opacity 0.3s; z-index: 9999;">
+                                    <div class="image-edit-overlay" style="position: absolute; top: 15px; right: 15px; opacity: 1; transition: none; z-index: 9999;">
                                         <button onclick="editCarouselImage('${carouselId}', ${index})" style="background: rgba(255,255,255,0.95); border: none; color: #333; padding: 10px 12px; border-radius: 6px; cursor: pointer; margin-right: 8px; font-size: 12px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.2); transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,1)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(255,255,255,0.95)'; this.style.transform='translateY(0)'">✏️ Edit</button>
                                         <button onclick="removeCarouselImage('${carouselId}', ${index})" style="background: rgba(220, 38, 38, 0.95); border: none; color: white; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.2); transition: all 0.2s;" onmouseover="this.style.background='rgba(220, 38, 38, 1)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(220, 38, 38, 0.95)'; this.style.transform='translateY(0)'">🗑️</button>
                                     </div>
@@ -1696,7 +1692,7 @@
             'hero-text': (data = {}) => `
                 <div class="element" data-type="hero-text">
                     <div style="text-align: center; padding: 80px 20px; background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('${data.backgroundImage || 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=1200'}'); background-size: cover; background-position: center; color: white; border-radius: 8px; position: relative;">
-                        <div class="image-edit-overlay" style="position: absolute; top: 15px; right: 15px; opacity: 0; transition: opacity 0.3s; z-index: 9999;">
+                        <div class="image-edit-overlay" style="position: absolute; top: 15px; right: 15px; opacity: 1; transition: none; z-index: 9999;">
                             <button onclick="changeHeroBackground(this)" style="background: rgba(59, 130, 246, 0.95); border: none; color: white; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: all 0.2s;" onmouseover="this.style.background='rgba(59, 130, 246, 1)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.95)'; this.style.transform='translateY(0)'" title="Change Background">📷</button>
                         </div>
                         <h1 style="font-size: 3rem; margin-bottom: 20px; color: white; font-family: 'Playfair Display', serif;">${data.title || 'Capturing Beautiful Moments'}</h1>
@@ -1708,7 +1704,7 @@
             hero: (data = {}) => `
                 <div class="element" data-type="hero">
                     <div style="text-align: center; padding: 80px 20px; background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('${data.backgroundImage || 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=1200'}'); background-size: cover; background-position: center; color: white; border-radius: 8px; position: relative;">
-                        <div class="image-edit-overlay" style="position: absolute; top: 15px; right: 15px; opacity: 0; transition: opacity 0.3s; z-index: 9999;">
+                        <div class="image-edit-overlay" style="position: absolute; top: 15px; right: 15px; opacity: 1; transition: none; z-index: 9999;">
                             <button onclick="changeHeroBackground(this)" style="background: rgba(59, 130, 246, 0.95); border: none; color: white; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: all 0.2s;" onmouseover="this.style.background='rgba(59, 130, 246, 1)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.95)'; this.style.transform='translateY(0)'" title="Change Background">📷</button>
                         </div>
                         <h1 style="font-size: 3rem; margin-bottom: 20px; color: white;">${data.title || 'Capturing Beautiful Moments'}</h1>
@@ -1733,8 +1729,8 @@
                                 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=600'
                             ]).map((img, index) => `
                                 <div style="position: relative; overflow: hidden; border-radius: 8px;">
-                                    <img src="${img}" style="width: 100%; height: 250px; object-fit: cover; transition: transform 0.3s ease; cursor: pointer;" alt="Featured" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                                    <div class="image-edit-overlay" style="position: absolute; top: 10px; right: 10px; opacity: 0; transition: opacity 0.3s; z-index: 9999;">
+                                    <img src="${img}" style="width: 100%; height: 250px; object-fit: cover; transition: transform 0.3s ease; cursor: grab;" alt="Featured" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" ondragstart="return false;">
+                                    <div class="image-edit-overlay" style="position: absolute; top: 10px; right: 10px; opacity: 1; transition: none; z-index: 9999;">
                                         <button onclick="changeGalleryImage('${galleryId}', ${index})" style="background: rgba(59, 130, 246, 0.95); border: none; color: white; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: all 0.2s;" onmouseover="this.style.background='rgba(59, 130, 246, 1)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.95)'; this.style.transform='translateY(0)'" title="Change Photo">📷</button>
                                     </div>
                                 </div>
@@ -1761,7 +1757,7 @@
                             ]).map((img, index) => `
                                 <div style="position: relative; overflow: hidden; border-radius: 8px;">
                                     <img src="${img}" style="width: 100%; height: 300px; object-fit: cover;" alt="Gallery">
-                                    <div class="image-edit-overlay" style="position: absolute; top: 10px; right: 10px; opacity: 0; transition: opacity 0.3s; z-index: 9999;">
+                                    <div class="image-edit-overlay" style="position: absolute; top: 10px; right: 10px; opacity: 1; transition: none; z-index: 9999;">
                                         <button onclick="changeGalleryImage('${galleryId}', ${index})" style="background: rgba(59, 130, 246, 0.95); border: none; color: white; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: all 0.2s;" onmouseover="this.style.background='rgba(59, 130, 246, 1)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.95)'; this.style.transform='translateY(0)'" title="Change Photo">📷</button>
                                     </div>
                                 </div>
@@ -1789,8 +1785,8 @@
                                 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400'
                             ]).map((img, index) => `
                                 <div style="position: relative; margin-bottom: 20px; border-radius: 8px; overflow: hidden; break-inside: avoid;">
-                                    <img src="${img}" style="width: 100%; border-radius: 8px; display: block; height: ${200 + (index % 3) * 100}px; object-fit: cover;" alt="Portfolio">
-                                    <div class="image-edit-overlay" style="position: absolute; top: 10px; right: 10px; opacity: 0; transition: opacity 0.3s; z-index: 9999;">
+                                    <img src="${img}" style="width: 100%; border-radius: 8px; display: block; height: ${200 + (index % 3) * 100}px; object-fit: cover;" alt="Portfolio" ondragstart="return false;" style="cursor: grab;">
+                                    <div class="image-edit-overlay" style="position: absolute; top: 10px; right: 10px; opacity: 1; transition: none; z-index: 9999;">
                                         <button onclick="changeGalleryImage('${galleryId}', ${index})" style="background: rgba(59, 130, 246, 0.95); border: none; color: white; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: all 0.2s;" onmouseover="this.style.background='rgba(59, 130, 246, 1)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.95)'; this.style.transform='translateY(0)'" title="Change Photo">📷</button>
                                     </div>
                                 </div>
@@ -1810,7 +1806,7 @@
                         </div>
                         <div style="position: relative;">
                             <img src="${data.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500'}" style="width: 100%; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.1);" alt="About">
-                            <div class="image-edit-overlay" style="position: absolute; top: 15px; right: 15px; opacity: 0; transition: opacity 0.3s; z-index: 9999;">
+                            <div class="image-edit-overlay" style="position: absolute; top: 15px; right: 15px; opacity: 1; transition: none; z-index: 9999;">
                                 <button onclick="changeAboutImage(this)" style="background: rgba(59, 130, 246, 0.95); border: none; color: white; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: all 0.2s;" onmouseover="this.style.background='rgba(59, 130, 246, 1)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.95)'; this.style.transform='translateY(0)'" title="Change Photo">📷</button>
                             </div>
                         </div>
@@ -1827,7 +1823,7 @@
                             ${(data.images || ['https://images.unsplash.com/photo-1519741497674-611481863552?w=400']).map((img, index) => `
                                 <div style="position: relative; overflow: hidden; border-radius: 8px;">
                                     <img src="${img}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px;" alt="Gallery">
-                                    <div class="image-edit-overlay" style="position: absolute; top: 10px; right: 10px; opacity: 0; transition: opacity 0.3s; z-index: 9999;">
+                                    <div class="image-edit-overlay" style="position: absolute; top: 10px; right: 10px; opacity: 1; transition: none; z-index: 9999;">
                                         <button onclick="changeGalleryImage('${galleryId}', ${index})" style="background: rgba(59, 130, 246, 0.95); border: none; color: white; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: all 0.2s;" onmouseover="this.style.background='rgba(59, 130, 246, 1)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.95)'; this.style.transform='translateY(0)'" title="Change Photo">📷</button>
                                     </div>
                                 </div>
@@ -2039,7 +2035,7 @@
                             </div>
                             <div style="position: relative; overflow: hidden; border-radius: 2px;">
                                 <img src="${data.image || 'https://images.unsplash.com/photo-1570168007204-dfb528c6958f?w=1200'}" style="width: 100%; height: 600px; object-fit: cover;">
-                                <div class="image-edit-overlay" style="position: absolute; top: 15px; right: 15px; opacity: 0; transition: opacity 0.3s; z-index: 9999;">
+                                <div class="image-edit-overlay" style="position: absolute; top: 15px; right: 15px; opacity: 1; transition: none; z-index: 9999;">
                                     <button onclick="changeAboutImage(this)" style="background: rgba(59, 130, 246, 0.95); border: none; color: white; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: all 0.2s;" onmouseover="this.style.background='rgba(59, 130, 246, 1)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.95)'; this.style.transform='translateY(0)'" title="Change Photo">📷</button>
                                 </div>
                                 <div style="position: absolute; bottom: 30px; left: 30px;">
@@ -2065,7 +2061,7 @@
                                 <div style="cursor: pointer;">
                                     <div style="overflow: hidden; margin-bottom: 20px; position: relative;">
                                         <img src="${gallery.image}" style="width: 100%; height: 400px; object-fit: cover; transition: transform 0.3s;">
-                                        <div class="image-edit-overlay" style="position: absolute; top: 15px; right: 15px; opacity: 0; transition: opacity 0.3s; z-index: 9999;">
+                                        <div class="image-edit-overlay" style="position: absolute; top: 15px; right: 15px; opacity: 1; transition: none; z-index: 9999;">
                                             <button onclick="changeGalleryImage('${galleryId}', ${index})" style="background: rgba(59, 130, 246, 0.95); border: none; color: white; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: all 0.2s;" onmouseover="this.style.background='rgba(59, 130, 246, 1)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.95)'; this.style.transform='translateY(0)'" title="Change Photo">📷</button>
                                         </div>
                                     </div>
@@ -2094,7 +2090,7 @@
                             ]).map((img, index) => `
                                 <div style="position: relative; margin-bottom: 20px; border-radius: 8px; overflow: hidden; break-inside: avoid;">
                                     <img src="${img}" style="width: 100%; display: block;">
-                                    <div class="image-edit-overlay" style="position: absolute; top: 10px; right: 10px; opacity: 0; transition: opacity 0.3s; z-index: 9999;">
+                                    <div class="image-edit-overlay" style="position: absolute; top: 10px; right: 10px; opacity: 1; transition: none; z-index: 9999;">
                                         <button onclick="changeGalleryImage('${galleryId}', ${index})" style="background: rgba(59, 130, 246, 0.95); border: none; color: white; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: all 0.2s;" onmouseover="this.style.background='rgba(59, 130, 246, 1)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.95)'; this.style.transform='translateY(0)'" title="Change Photo">📷</button>
                                     </div>
                                 </div>
@@ -2551,6 +2547,74 @@
 
         // Image positioning configuration
         let imagePositioning = {};
+        let isDraggingImage = false;
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let initialX = 0;
+        let initialY = 0;
+        
+        // Add image drag functionality
+        function enableImageDragging() {
+            document.addEventListener('mousedown', function(e) {
+                const img = e.target.closest('img');
+                if (!img || e.target.closest('.image-edit-overlay')) return;
+                
+                isDraggingImage = true;
+                dragStartX = e.clientX;
+                dragStartY = e.clientY;
+                
+                const container = img.parentElement;
+                const rect = container.getBoundingClientRect();
+                
+                // Get current background-position or object-position
+                const computedStyle = window.getComputedStyle(img);
+                const currentPosition = computedStyle.objectPosition || '50% 50%';
+                const [x, y] = currentPosition.split(' ').map(v => parseFloat(v));
+                
+                initialX = x;
+                initialY = y;
+                
+                img.style.cursor = 'grabbing';
+                e.preventDefault();
+                
+                document.addEventListener('mousemove', handleImageDrag);
+                document.addEventListener('mouseup', handleImageDragEnd);
+            });
+        }
+        
+        function handleImageDrag(e) {
+            if (!isDraggingImage) return;
+            
+            const deltaX = e.clientX - dragStartX;
+            const deltaY = e.clientY - dragStartY;
+            
+            const img = document.querySelector('img[style*="grabbing"]');
+            if (!img) return;
+            
+            const container = img.parentElement;
+            const rect = container.getBoundingClientRect();
+            
+            // Calculate new position as percentage
+            const newX = initialX + (deltaX / rect.width) * 100;
+            const newY = initialY + (deltaY / rect.height) * 100;
+            
+            // Constrain to reasonable bounds
+            const clampedX = Math.max(-50, Math.min(150, newX));
+            const clampedY = Math.max(-50, Math.min(150, newY));
+            
+            img.style.objectPosition = `${clampedX}% ${clampedY}%`;
+        }
+        
+        function handleImageDragEnd() {
+            isDraggingImage = false;
+            const img = document.querySelector('img[style*="grabbing"]');
+            if (img) {
+                img.style.cursor = 'grab';
+            }
+            
+            document.removeEventListener('mousemove', handleImageDrag);
+            document.removeEventListener('mouseup', handleImageDragEnd);
+        }
 
         // Image positioning functions
         function showImageProperties(imgElement) {
@@ -4578,7 +4642,7 @@
                         newSlide.style.cssText = `min-width: ${100/(newIndex + 1)}%; height: 500px; background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('${e.target.result}'); background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; color: white; position: relative;`;
                         
                         newSlide.innerHTML = `
-                            <div class="image-edit-overlay" style="position: absolute; top: 10px; right: 10px; opacity: 0; transition: opacity 0.3s;">
+                            <div class="image-edit-overlay" style="position: absolute; top: 10px; right: 10px; opacity: 1; transition: none;">
                                 <button onclick="editCarouselImage('${carouselId}', ${newIndex})" style="background: rgba(255,255,255,0.9); border: none; color: #333; padding: 8px; border-radius: 4px; cursor: pointer; margin-right: 5px; font-size: 12px;">✏️ Edit</button>
                                 <button onclick="removeCarouselImage('${carouselId}', ${newIndex})" style="background: rgba(255,0,0,0.9); border: none; color: white; padding: 8px; border-radius: 4px; cursor: pointer; font-size: 12px;">🗑️</button>
                             </div>
@@ -5541,6 +5605,7 @@
             initializeTouchToEdit(); // This will call initializeTextEditingWithToolbar for comprehensive text editing
             initializeCarouselHover(); // Initialize carousel hover effects
             initializeImageHandling(); // Initialize image click handling
+            enableImageDragging(); // Initialize image drag repositioning
             initializeKeyboardShortcuts(); // Initialize keyboard shortcuts
             updateNavigationPreview(); // Initialize navigation
             testCarouselFunctions(); // Test if carousel functions are available
