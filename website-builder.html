@@ -472,51 +472,51 @@
                     <div class="tool-section">
                         <div class="tool-title">Components</div>
                         <div class="component-list">
-                            <div class="component-item" draggable="true" data-component="nav">
+                            <div class="component-item" draggable="true" data-component="nav" onclick="addComponent('nav')" style="cursor: pointer;">
                                 <div class="component-icon">☰</div>
                                 <span class="component-text">Nav Menu</span>
                             </div>
-                            <div class="component-item" draggable="true" data-component="hero-carousel">
+                            <div class="component-item" draggable="true" data-component="hero-carousel" onclick="addComponent('hero-carousel')" style="cursor: pointer;">
                                 <div class="component-icon">🎞️</div>
                                 <span class="component-text">Image Carousel</span>
                             </div>
-                            <div class="component-item" draggable="true" data-component="hero-text">
+                            <div class="component-item" draggable="true" data-component="hero-text" onclick="addComponent('hero-text')" style="cursor: pointer;">
                                 <div class="component-icon">✨</div>
                                 <span class="component-text">Hero Text</span>
                             </div>
-                            <div class="component-item" draggable="true" data-component="featured-gallery">
+                            <div class="component-item" draggable="true" data-component="featured-gallery" onclick="addComponent('featured-gallery')" style="cursor: pointer;">
                                 <div class="component-icon">⭐</div>
                                 <span class="component-text">Featured</span>
                             </div>
-                            <div class="component-item" draggable="true" data-component="gallery-grid">
+                            <div class="component-item" draggable="true" data-component="gallery-grid" onclick="addComponent('gallery-grid')" style="cursor: pointer;">
                                 <div class="component-icon">⚏</div>
                                 <span class="component-text">Gallery Grid</span>
                             </div>
-                            <div class="component-item" draggable="true" data-component="masonry">
+                            <div class="component-item" draggable="true" data-component="masonry" onclick="addComponent('masonry')" style="cursor: pointer;">
                                 <div class="component-icon">🧱</div>
                                 <span class="component-text">Masonry</span>
                             </div>
-                            <div class="component-item" draggable="true" data-component="about">
+                            <div class="component-item" draggable="true" data-component="about" onclick="addComponent('about')" style="cursor: pointer;">
                                 <div class="component-icon">👤</div>
                                 <span class="component-text">About</span>
                             </div>
-                            <div class="component-item" draggable="true" data-component="services">
+                            <div class="component-item" draggable="true" data-component="services" onclick="addComponent('services')" style="cursor: pointer;">
                                 <div class="component-icon">⚡</div>
                                 <span class="component-text">Services</span>
                             </div>
-                            <div class="component-item" draggable="true" data-component="workshops">
+                            <div class="component-item" draggable="true" data-component="workshops" onclick="addComponent('workshops')" style="cursor: pointer;">
                                 <div class="component-icon">🎓</div>
                                 <span class="component-text">Workshops</span>
                             </div>
-                            <div class="component-item" draggable="true" data-component="testimonials">
+                            <div class="component-item" draggable="true" data-component="testimonials" onclick="addComponent('testimonials')" style="cursor: pointer;">
                                 <div class="component-icon">💬</div>
                                 <span class="component-text">Reviews</span>
                             </div>
-                            <div class="component-item" draggable="true" data-component="contact">
+                            <div class="component-item" draggable="true" data-component="contact" onclick="addComponent('contact')" style="cursor: pointer;">
                                 <div class="component-icon">📧</div>
                                 <span class="component-text">Contact</span>
                             </div>
-                            <div class="component-item" draggable="true" data-component="footer">
+                            <div class="component-item" draggable="true" data-component="footer" onclick="addComponent('footer')" style="cursor: pointer;">
                                 <div class="component-icon">⬇️</div>
                                 <span class="component-text">Footer</span>
                             </div>
@@ -1328,13 +1328,45 @@
 
         // Component templates
         const componentTemplates = {
-            header: (data = {}) => `
-                <div class="element" data-type="header">
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 0; border-bottom: 1px solid #e2e8f0;">
-                        <h2 style="margin: 0; color: #2d3748;">${data.title || 'Your Photography Studio'}</h2>
-                        <nav style="display: flex; gap: 20px;">
-                            ${(data.navigation || ['Home', 'Portfolio', 'About', 'Contact']).map(item => `<a href="#" style="color: #4a5568; text-decoration: none;">${item}</a>`).join('')}
-                        </nav>
+            nav: (data = {}) => `
+                <div class="element" data-type="nav">
+                    <nav style="display: flex; justify-content: center; align-items: center; padding: 20px 0; border-bottom: 1px solid #e2e8f0;">
+                        <div style="display: flex; gap: 30px;">
+                            ${navOrder.map(pageId => 
+                                `<a href="javascript:void(0)" onclick="switchToPageNew('${pageId}')" style="text-decoration: none; color: ${pageId === currentPage ? '#667eea' : '#2d3748'}; font-weight: ${pageId === currentPage ? '600' : '400'}; padding: 8px 12px; border-radius: 4px; transition: all 0.2s; cursor: pointer;">${pages[pageId]?.name || pageId}</a>`
+                            ).join('')}
+                        </div>
+                    </nav>
+                </div>
+            `,
+            'hero-carousel': (data = {}) => `
+                <div class="element" data-type="hero-carousel">
+                    <div style="position: relative; height: 500px; overflow: hidden; border-radius: 8px;">
+                        <div class="carousel-container" style="display: flex; transition: transform 0.5s ease;">
+                            ${(data.images || [
+                                'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=1200',
+                                'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200',
+                                'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=1200'
+                            ]).map((img, index) => `
+                                <div class="carousel-slide" style="min-width: 100%; height: 500px; background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('${img}'); background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; color: white;">
+                                    <div style="text-align: center;">
+                                        <h1 style="font-size: 3rem; margin-bottom: 20px; color: white;">${data.titles?.[index] || 'Beautiful Photography'}</h1>
+                                        <p style="font-size: 1.2rem; color: rgba(255,255,255,0.9);">${data.subtitles?.[index] || 'Capturing life\'s precious moments'}</p>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <button class="carousel-prev" style="position: absolute; top: 50%; left: 20px; transform: translateY(-50%); background: rgba(255,255,255,0.2); border: none; color: white; font-size: 24px; padding: 10px 15px; border-radius: 50%; cursor: pointer;">❮</button>
+                        <button class="carousel-next" style="position: absolute; top: 50%; right: 20px; transform: translateY(-50%); background: rgba(255,255,255,0.2); border: none; color: white; font-size: 24px; padding: 10px 15px; border-radius: 50%; cursor: pointer;">❯</button>
+                    </div>
+                </div>
+            `,
+            'hero-text': (data = {}) => `
+                <div class="element" data-type="hero-text">
+                    <div style="text-align: center; padding: 80px 20px; background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('${data.backgroundImage || 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=1200'}'); background-size: cover; background-position: center; color: white; border-radius: 8px;">
+                        <h1 style="font-size: 3rem; margin-bottom: 20px; color: white; font-family: 'Playfair Display', serif;">${data.title || 'Capturing Beautiful Moments'}</h1>
+                        <p style="font-size: 1.2rem; margin-bottom: 30px; color: rgba(255,255,255,0.9); max-width: 600px; margin-left: auto; margin-right: auto;">${data.subtitle || 'Professional photography services that tell your unique story'}</p>
+                        <button style="background: #667eea; color: white; padding: 15px 30px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: 600;">View Portfolio</button>
                     </div>
                 </div>
             `,
@@ -1347,15 +1379,69 @@
                     </div>
                 </div>
             `,
+            'featured-gallery': (data = {}) => `
+                <div class="element" data-type="featured-gallery">
+                    <div style="padding: 60px 0;">
+                        <h2 style="text-align: center; color: #2d3748; margin-bottom: 50px; font-family: 'Playfair Display', serif; font-size: 2.5rem;">${data.title || 'Featured Work'}</h2>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; max-width: 1000px; margin: 0 auto;">
+                            ${(data.images || [
+                                'https://images.unsplash.com/photo-1519741497674-611481863552?w=600',
+                                'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=600',
+                                'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=600',
+                                'https://images.unsplash.com/photo-1520854221256-17451cc331bf?w=600',
+                                'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=600',
+                                'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=600'
+                            ]).map(img => `<img src="${img}" style="width: 100%; height: 250px; object-fit: cover; border-radius: 8px; transition: transform 0.3s ease; cursor: pointer;" alt="Featured" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">`).join('')}
+                        </div>
+                    </div>
+                </div>
+            `,
+            'gallery-grid': (data = {}) => `
+                <div class="element" data-type="gallery-grid">
+                    <div style="padding: 60px 0;">
+                        <h2 style="text-align: center; color: #2d3748; margin-bottom: 50px; font-family: 'Playfair Display', serif; font-size: 2.5rem;">${data.title || 'Gallery'}</h2>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                            ${(data.images || [
+                                'https://images.unsplash.com/photo-1519741497674-611481863552?w=400',
+                                'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=400',
+                                'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400',
+                                'https://images.unsplash.com/photo-1520854221256-17451cc331bf?w=400',
+                                'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=400',
+                                'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=400'
+                            ]).map(img => `<img src="${img}" style="width: 100%; height: 300px; object-fit: cover; border-radius: 8px;" alt="Gallery">`).join('')}
+                        </div>
+                    </div>
+                </div>
+            `,
+            masonry: (data = {}) => `
+                <div class="element" data-type="masonry">
+                    <div style="padding: 60px 0;">
+                        <h2 style="text-align: center; color: #2d3748; margin-bottom: 50px; font-family: 'Playfair Display', serif; font-size: 2.5rem;">${data.title || 'Portfolio'}</h2>
+                        <div style="columns: 3; column-gap: 20px; max-width: 1200px; margin: 0 auto;">
+                            ${(data.images || [
+                                'https://images.unsplash.com/photo-1519741497674-611481863552?w=400',
+                                'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=400',
+                                'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400',
+                                'https://images.unsplash.com/photo-1520854221256-17451cc331bf?w=400',
+                                'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=400',
+                                'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=400',
+                                'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=400',
+                                'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400'
+                            ]).map((img, index) => `<img src="${img}" style="width: 100%; margin-bottom: 20px; border-radius: 8px; display: block; height: ${200 + (index % 3) * 100}px; object-fit: cover;" alt="Portfolio">`).join('')}
+                        </div>
+                    </div>
+                </div>
+            `,
             about: (data = {}) => `
                 <div class="element" data-type="about">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; padding: 40px 0;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; padding: 80px 0;">
                         <div>
-                            <h2 style="color: #2d3748; margin-bottom: 20px;">${data.title || 'About Me'}</h2>
-                            <p style="line-height: 1.6; color: #4a5568;">${data.text || 'I\'m a passionate photographer dedicated to capturing the essence of every moment.'}</p>
+                            <h2 style="color: #2d3748; margin-bottom: 30px; font-family: 'Playfair Display', serif; font-size: 2.5rem;">${data.title || 'About Me'}</h2>
+                            <p style="line-height: 1.8; color: #4a5568; font-size: 1.1rem; margin-bottom: 20px;">${data.text || 'I\'m a passionate photographer dedicated to capturing the essence of every moment. With over 10 years of experience, I specialize in creating timeless images that tell your unique story.'}</p>
+                            <p style="line-height: 1.8; color: #4a5568; font-size: 1.1rem;">${data.additionalText || 'From intimate portraits to grand celebrations, I believe every photograph should evoke emotion and preserve memories for generations to come.'}</p>
                         </div>
                         <div>
-                            <img src="${data.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400'}" style="width: 100%; border-radius: 8px;" alt="About">
+                            <img src="${data.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500'}" style="width: 100%; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.1);" alt="About">
                         </div>
                     </div>
                 </div>
@@ -1372,18 +1458,48 @@
             `,
             services: (data = {}) => `
                 <div class="element" data-type="services">
-                    <div style="padding: 40px 0;">
-                        <h2 style="text-align: center; color: #2d3748; margin-bottom: 40px;">${data.title || 'Services'}</h2>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px;">
+                    <div style="padding: 80px 0;">
+                        <h2 style="text-align: center; color: #2d3748; margin-bottom: 60px; font-family: 'Playfair Display', serif; font-size: 2.5rem;">${data.title || 'Services'}</h2>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px; max-width: 1200px; margin: 0 auto;">
                             ${(data.services || [
-                                {name: 'Wedding Photography', price: '$2,500', description: 'Complete wedding day coverage'},
-                                {name: 'Portrait Sessions', price: '$350', description: 'Individual and family portraits'},
-                                {name: 'Event Photography', price: '$150/hr', description: 'Corporate and special events'}
+                                {name: 'Wedding Photography', price: '$2,500', description: 'Complete wedding day coverage with engagement session included', icon: '💍'},
+                                {name: 'Portrait Sessions', price: '$350', description: 'Individual, family, and couple portraits in studio or on location', icon: '📸'},
+                                {name: 'Event Photography', price: '$150/hr', description: 'Corporate events, parties, and special celebrations', icon: '🎉'}
                             ]).map(service => `
-                                <div style="text-align: center; padding: 30px; background: #f8fafc; border-radius: 8px;">
-                                    <h3 style="color: #2d3748; margin-bottom: 10px;">${service.name}</h3>
-                                    <p style="color: #667eea; font-size: 1.2rem; font-weight: 600; margin-bottom: 15px;">${service.price}</p>
-                                    <p style="color: #4a5568;">${service.description}</p>
+                                <div style="text-align: center; padding: 40px 30px; background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); transition: transform 0.3s ease;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                                    <div style="font-size: 3rem; margin-bottom: 20px;">${service.icon}</div>
+                                    <h3 style="color: #2d3748; margin-bottom: 15px; font-size: 1.5rem; font-weight: 600;">${service.name}</h3>
+                                    <p style="color: #667eea; font-size: 1.4rem; font-weight: 700; margin-bottom: 20px;">${service.price}</p>
+                                    <p style="color: #4a5568; line-height: 1.6;">${service.description}</p>
+                                    <button style="margin-top: 25px; background: #667eea; color: white; padding: 12px 25px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Learn More</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `,
+            workshops: (data = {}) => `
+                <div class="element" data-type="workshops">
+                    <div style="padding: 80px 0; background: #f8fafc;">
+                        <h2 style="text-align: center; color: #2d3748; margin-bottom: 60px; font-family: 'Playfair Display', serif; font-size: 2.5rem;">${data.title || 'Photography Workshops'}</h2>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 30px; max-width: 1200px; margin: 0 auto;">
+                            ${(data.workshops || [
+                                {title: 'Portrait Mastery', date: 'March 15, 2024', description: 'Learn professional portrait techniques, lighting, and posing', price: '$299', duration: '8 hours'},
+                                {title: 'Wedding Photography Intensive', date: 'April 20, 2024', description: 'Complete guide to capturing unforgettable wedding moments', price: '$499', duration: '2 days'},
+                                {title: 'Natural Light Workshop', date: 'May 10, 2024', description: 'Master the art of natural light photography in any condition', price: '$199', duration: '6 hours'}
+                            ]).map(workshop => `
+                                <div style="background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+                                    <div style="height: 200px; background: linear-gradient(45deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center;">
+                                        <h3 style="color: white; font-size: 1.5rem; text-align: center; font-weight: 600;">${workshop.title}</h3>
+                                    </div>
+                                    <div style="padding: 30px;">
+                                        <p style="color: #667eea; font-weight: 600; margin-bottom: 10px;">${workshop.date} • ${workshop.duration}</p>
+                                        <p style="color: #4a5568; line-height: 1.6; margin-bottom: 20px;">${workshop.description}</p>
+                                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                                            <span style="color: #2d3748; font-size: 1.3rem; font-weight: 700;">${workshop.price}</span>
+                                            <button style="background: #667eea; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Register</button>
+                                        </div>
+                                    </div>
                                 </div>
                             `).join('')}
                         </div>
@@ -1392,16 +1508,21 @@
             `,
             testimonials: (data = {}) => `
                 <div class="element" data-type="testimonials">
-                    <div style="padding: 40px 0; background: #f8fafc; border-radius: 8px;">
-                        <h2 style="text-align: center; color: #2d3748; margin-bottom: 40px;">${data.title || 'What Clients Say'}</h2>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; padding: 0 20px;">
+                    <div style="padding: 80px 0; background: #f8fafc;">
+                        <h2 style="text-align: center; color: #2d3748; margin-bottom: 60px; font-family: 'Playfair Display', serif; font-size: 2.5rem;">${data.title || 'What Clients Say'}</h2>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 40px; max-width: 1200px; margin: 0 auto;">
                             ${(data.testimonials || [
-                                {name: 'Sarah Johnson', text: 'Absolutely amazing work! The photos turned out better than we could have imagined.'},
-                                {name: 'Mike Davis', text: 'Professional, creative, and so easy to work with. Highly recommended!'}
+                                {name: 'Sarah & Michael Johnson', text: 'Absolutely amazing work! The photos turned out better than we could have imagined. Every moment was captured perfectly, and we\'ll treasure these memories forever.', type: 'Wedding'},
+                                {name: 'Emily Davis', text: 'Professional, creative, and so easy to work with. The family portraits are stunning and really capture our personalities. Highly recommended!', type: 'Family Portrait'},
+                                {name: 'Corporate Events LLC', text: 'Outstanding event photography. Great attention to detail and delivered beautiful images that perfectly represented our brand and event.', type: 'Corporate Event'}
                             ]).map(testimonial => `
-                                <div style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                                    <p style="color: #4a5568; margin-bottom: 20px; font-style: italic;">"${testimonial.text}"</p>
-                                    <p style="color: #2d3748; font-weight: 600;">— ${testimonial.name}</p>
+                                <div style="background: white; padding: 40px; border-radius: 12px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); position: relative;">
+                                    <div style="font-size: 3rem; color: #667eea; margin-bottom: 20px;">❝</div>
+                                    <p style="font-style: italic; color: #4a5568; margin-bottom: 25px; line-height: 1.8; font-size: 1.1rem;">"${testimonial.text}"</p>
+                                    <div style="border-top: 1px solid #e2e8f0; padding-top: 20px;">
+                                        <p style="font-weight: 600; color: #2d3748; margin-bottom: 5px;">${testimonial.name}</p>
+                                        <p style="color: #667eea; font-size: 0.9rem;">${testimonial.type}</p>
+                                    </div>
                                 </div>
                             `).join('')}
                         </div>
@@ -1410,22 +1531,63 @@
             `,
             contact: (data = {}) => `
                 <div class="element" data-type="contact">
-                    <div style="padding: 40px 0;">
-                        <h2 style="text-align: center; color: #2d3748; margin-bottom: 40px;">${data.title || 'Get In Touch'}</h2>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px;">
+                    <div style="padding: 80px 0;">
+                        <h2 style="text-align: center; color: #2d3748; margin-bottom: 60px; font-family: 'Playfair Display', serif; font-size: 2.5rem;">${data.title || 'Get In Touch'}</h2>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; max-width: 1200px; margin: 0 auto;">
                             <div>
-                                <h3 style="color: #2d3748; margin-bottom: 20px;">Contact Information</h3>
-                                <p style="margin-bottom: 10px; color: #4a5568;">📧 ${data.email || 'hello@photographer.com'}</p>
-                                <p style="margin-bottom: 10px; color: #4a5568;">📞 ${data.phone || '(555) 123-4567'}</p>
-                                <p style="color: #4a5568;">📍 ${data.address || '123 Photography Lane, Studio City, CA'}</p>
+                                <h3 style="color: #2d3748; margin-bottom: 30px; font-size: 1.5rem;">Let's Create Something Beautiful</h3>
+                                <p style="color: #4a5568; line-height: 1.8; margin-bottom: 40px;">Ready to capture your special moments? I'd love to hear about your vision and discuss how we can bring it to life through photography.</p>
+                                
+                                <div style="margin-bottom: 25px; display: flex; align-items: center; gap: 15px;">
+                                    <div style="width: 50px; height: 50px; background: #667eea; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem;">📧</div>
+                                    <div>
+                                        <h4 style="color: #2d3748; margin-bottom: 5px;">Email</h4>
+                                        <p style="color: #4a5568;">${data.email || 'hello@photographer.com'}</p>
+                                    </div>
+                                </div>
+                                
+                                <div style="margin-bottom: 25px; display: flex; align-items: center; gap: 15px;">
+                                    <div style="width: 50px; height: 50px; background: #667eea; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem;">📞</div>
+                                    <div>
+                                        <h4 style="color: #2d3748; margin-bottom: 5px;">Phone</h4>
+                                        <p style="color: #4a5568;">${data.phone || '(555) 123-4567'}</p>
+                                    </div>
+                                </div>
+                                
+                                <div style="display: flex; align-items: center; gap: 15px;">
+                                    <div style="width: 50px; height: 50px; background: #667eea; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem;">📍</div>
+                                    <div>
+                                        <h4 style="color: #2d3748; margin-bottom: 5px;">Studio Location</h4>
+                                        <p style="color: #4a5568;">${data.address || '123 Photography Lane, Studio City, CA 90210'}</p>
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <h3 style="color: #2d3748; margin-bottom: 20px;">Send a Message</h3>
-                                <form style="display: flex; flex-direction: column; gap: 15px;">
-                                    <input type="text" placeholder="Your Name" style="padding: 12px; border: 1px solid #e2e8f0; border-radius: 6px;">
-                                    <input type="email" placeholder="Your Email" style="padding: 12px; border: 1px solid #e2e8f0; border-radius: 6px;">
-                                    <textarea placeholder="Your Message" rows="4" style="padding: 12px; border: 1px solid #e2e8f0; border-radius: 6px; resize: vertical;"></textarea>
-                                    <button type="submit" style="background: #667eea; color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer;">Send Message</button>
+                            
+                            <div style="background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+                                <form style="display: flex; flex-direction: column; gap: 25px;">
+                                    <div>
+                                        <label style="display: block; color: #2d3748; font-weight: 600; margin-bottom: 8px;">Your Name</label>
+                                        <input type="text" placeholder="Enter your full name" style="width: 100%; padding: 15px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 16px; transition: border-color 0.3s;" onfocus="this.style.borderColor='#667eea'" onblur="this.style.borderColor='#e2e8f0'">
+                                    </div>
+                                    <div>
+                                        <label style="display: block; color: #2d3748; font-weight: 600; margin-bottom: 8px;">Email Address</label>
+                                        <input type="email" placeholder="your@email.com" style="width: 100%; padding: 15px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 16px; transition: border-color 0.3s;" onfocus="this.style.borderColor='#667eea'" onblur="this.style.borderColor='#e2e8f0'">
+                                    </div>
+                                    <div>
+                                        <label style="display: block; color: #2d3748; font-weight: 600; margin-bottom: 8px;">Project Type</label>
+                                        <select style="width: 100%; padding: 15px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 16px;">
+                                            <option>Wedding Photography</option>
+                                            <option>Portrait Session</option>
+                                            <option>Event Photography</option>
+                                            <option>Corporate Headshots</option>
+                                            <option>Other</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label style="display: block; color: #2d3748; font-weight: 600; margin-bottom: 8px;">Tell me about your vision</label>
+                                        <textarea placeholder="Describe your project, preferred dates, location, and any special requirements..." rows="6" style="width: 100%; padding: 15px; border: 2px solid #e2e8f0; border-radius: 8px; resize: vertical; font-size: 16px; transition: border-color 0.3s;" onfocus="this.style.borderColor='#667eea'" onblur="this.style.borderColor='#e2e8f0'"></textarea>
+                                    </div>
+                                    <button type="submit" style="background: #667eea; color: white; padding: 18px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 16px; transition: background-color 0.3s;" onmouseover="this.style.backgroundColor='#5a67d8'" onmouseout="this.style.backgroundColor='#667eea'">Send Message</button>
                                 </form>
                             </div>
                         </div>
@@ -1434,9 +1596,33 @@
             `,
             footer: (data = {}) => `
                 <div class="element" data-type="footer">
-                    <div style="background: #2d3748; color: white; padding: 30px 0; text-align: center; border-radius: 8px;">
-                        <p style="margin-bottom: 10px; color: white;">&copy; 2024 ${data.businessName || 'Your Photography Studio'}. All rights reserved.</p>
-                        <p style="color: rgba(255,255,255,0.7);">Professional photography services</p>
+                    <div style="background: #2d3748; color: white; padding: 60px 0 40px; margin-top: 80px;">
+                        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 50px; max-width: 1200px; margin: 0 auto; padding: 0 20px;">
+                            <div>
+                                <h3 style="margin-bottom: 25px; font-family: 'Playfair Display', serif; font-size: 1.8rem;">${data.title || 'Photography Studio'}</h3>
+                                <p style="color: #a0aec0; line-height: 1.8; margin-bottom: 25px; font-size: 1.1rem;">${data.description || 'Creating beautiful memories through the art of photography. Every moment tells a story, and I\'m here to help you preserve yours.'}</p>
+                                <div style="display: flex; gap: 20px;">
+                                    <a href="#" style="width: 40px; height: 40px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; text-decoration: none; transition: background-color 0.3s;" onmouseover="this.style.backgroundColor='rgba(255,255,255,0.2)'" onmouseout="this.style.backgroundColor='rgba(255,255,255,0.1)'">📷</a>
+                                    <a href="#" style="width: 40px; height: 40px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; text-decoration: none; transition: background-color 0.3s;" onmouseover="this.style.backgroundColor='rgba(255,255,255,0.2)'" onmouseout="this.style.backgroundColor='rgba(255,255,255,0.1)'">📘</a>
+                                    <a href="#" style="width: 40px; height: 40px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; text-decoration: none; transition: background-color 0.3s;" onmouseover="this.style.backgroundColor='rgba(255,255,255,0.2)'" onmouseout="this.style.backgroundColor='rgba(255,255,255,0.1)'">🐦</a>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 style="margin-bottom: 25px; font-size: 1.2rem;">Quick Links</h4>
+                                <div style="display: flex; flex-direction: column; gap: 12px;">
+                                    ${(data.links || ['Home', 'Portfolio', 'About', 'Services', 'Contact']).map(link => `<a href="#" style="color: #a0aec0; text-decoration: none; transition: color 0.3s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#a0aec0'">${link}</a>`).join('')}
+                                </div>
+                            </div>
+                            <div>
+                                <h4 style="margin-bottom: 25px; font-size: 1.2rem;">Services</h4>
+                                <div style="display: flex; flex-direction: column; gap: 12px;">
+                                    ${(data.services || ['Wedding Photography', 'Portrait Sessions', 'Event Photography', 'Corporate Headshots']).map(service => `<a href="#" style="color: #a0aec0; text-decoration: none; transition: color 0.3s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='#a0aec0'">${service}</a>`).join('')}
+                                </div>
+                            </div>
+                        </div>
+                        <div style="text-align: center; margin-top: 50px; padding-top: 40px; border-top: 1px solid #4a5568;">
+                            <p style="color: #a0aec0;">© 2024 ${data.title || 'Photography Studio'}. All rights reserved. | Crafted with ❤️ for photographers</p>
+                        </div>
                     </div>
                 </div>
             `,
