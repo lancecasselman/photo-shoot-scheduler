@@ -3002,6 +3002,14 @@
                     
                     // Initialize any special functionality for the new component
                     if (componentType === 'hero-carousel') {
+                        // Get the carousel ID from the newly added element
+                        const carouselElement = element.querySelector('[data-carousel-id]');
+                        if (carouselElement) {
+                            const carouselId = carouselElement.dataset.carouselId;
+                            // Initialize carousel state
+                            carouselStates[carouselId] = { currentSlide: 0 };
+                            console.log(`Carousel ${carouselId} initialized with state`);
+                        }
                         // Initialize carousel hover effects for new carousels
                         initializeCarouselHover();
                     }
@@ -3053,16 +3061,31 @@
 
         function updateCarousel(carouselId) {
             const container = document.getElementById(carouselId + '-container');
+            if (!container) {
+                console.error(`Carousel container not found: ${carouselId}`);
+                return;
+            }
+            
+            const slides = container.querySelectorAll('.carousel-slide');
             const dots = document.querySelectorAll(`[data-carousel-id="${carouselId}"] .carousel-dot`);
             const currentSlide = carouselStates[carouselId].currentSlide;
             
-            // Move slides
-            const translateX = -currentSlide * (100 / container.querySelectorAll('.carousel-slide').length);
+            console.log(`Updating carousel ${carouselId} to slide ${currentSlide} of ${slides.length}`);
+            
+            // Move slides - each slide takes up the full container width divided by number of slides
+            const slideWidth = 100 / slides.length;
+            const translateX = -currentSlide * slideWidth;
             container.style.transform = `translateX(${translateX}%)`;
             
             // Update dots
             dots.forEach((dot, index) => {
-                dot.style.background = index === currentSlide ? 'white' : 'transparent';
+                if (index === currentSlide) {
+                    dot.style.background = 'white';
+                    dot.style.opacity = '1';
+                } else {
+                    dot.style.background = 'transparent';
+                    dot.style.opacity = '0.7';
+                }
             });
         }
 
