@@ -1671,23 +1671,39 @@
                     selectedComponent.style.backgroundColor = value;
                     break;
                 case 'text':
-                    // Apply to all text elements within the component
-                    const textElements = selectedComponent.querySelectorAll('h1, h2, h3, h4, h5, h6, p, span, div');
+                    // Apply to all text elements within the SELECTED component only
+                    const textElements = selectedComponent.querySelectorAll('h1, h2, h3, h4, h5, h6, p, span, div:not(.builder-tools):not(.floating-toolbar):not(.edit-toolbar)');
                     textElements.forEach(el => {
+                        // Skip if element is part of toolbars or outside the selected component
+                        if (!selectedComponent.contains(el) || 
+                            el.closest('.builder-tools') || 
+                            el.closest('.floating-toolbar') ||
+                            el.closest('.edit-toolbar') ||
+                            el.closest('nav')) {
+                            return;
+                        }
                         el.style.color = value;
                     });
                     break;
                 case 'accent':
-                    // Apply to buttons and links
+                    // Apply to buttons and links within the SELECTED component only
                     const accentElements = selectedComponent.querySelectorAll('button, a, .accent-element');
                     accentElements.forEach(el => {
+                        // Skip if element is part of toolbars or navigation
+                        if (!selectedComponent.contains(el) || 
+                            el.closest('.builder-tools') || 
+                            el.closest('.floating-toolbar') ||
+                            el.closest('.edit-toolbar') ||
+                            el.closest('nav')) {
+                            return;
+                        }
                         el.style.backgroundColor = value;
                         el.style.borderColor = value;
                     });
                     break;
             }
             
-            console.log(`Applied ${type} color ${value} to selected component`);
+            console.log(`Applied ${type} color ${value} to selected component only`);
         }
 
         function applyEffect(type, value) {
