@@ -885,6 +885,7 @@
     <script>
         // Global state
         let selectedElement = null;
+        let selectedComponent = null; // Currently selected component block
         let currentTemplate = 'modern';
         let currentPage = 'home';
         let navStyle = 'horizontal'; // 'horizontal' or 'dropdown'
@@ -1074,6 +1075,8 @@
             makeImagesEditable();
             // Make blocks draggable
             makeBlocksDraggable();
+            // Make components selectable
+            makeComponentsSelectable();
         }
 
         function makeTextEditable() {
@@ -1549,6 +1552,96 @@
                     break;
                 }
             }
+        }
+
+        // Component Selection System
+        function makeComponentsSelectable() {
+            const elements = document.querySelectorAll('#canvas .element');
+            
+            elements.forEach(element => {
+                // Skip if already has selection handler
+                if (element.dataset.selectable === 'true') return;
+                
+                element.dataset.selectable = 'true';
+                
+                // Add click handler for selection
+                element.addEventListener('click', function(e) {
+                    // Don't interfere with text editing or button editing
+                    if (e.target.classList.contains('editable') || e.target.tagName === 'BUTTON') {
+                        return;
+                    }
+                    
+                    e.stopPropagation();
+                    selectComponent(this);
+                });
+            });
+        }
+
+        function selectComponent(component) {
+            // Deselect previously selected component
+            if (selectedComponent) {
+                selectedComponent.classList.remove('selected');
+                removeDeleteButton(selectedComponent);
+            }
+            
+            // Select new component
+            selectedComponent = component;
+            component.classList.add('selected');
+            addDeleteButton(component);
+            
+            console.log('Component selected:', component.dataset.type || 'unknown');
+        }
+
+        function deselectComponent() {
+            if (selectedComponent) {
+                selectedComponent.classList.remove('selected');
+                removeDeleteButton(selectedComponent);
+                selectedComponent = null;
+                console.log('Component deselected');
+            }
+        }
+
+        function addDeleteButton(component) {
+            // Remove any existing delete button
+            removeDeleteButton(component);
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-button';
+            deleteBtn.innerHTML = '×';
+            deleteBtn.onclick = function(e) {
+                e.stopPropagation();
+                deleteComponent(component);
+            };
+            
+            component.appendChild(deleteBtn);
+        }
+
+        function removeDeleteButton(component) {
+            const deleteBtn = component.querySelector('.delete-button');
+            if (deleteBtn) {
+                deleteBtn.remove();
+            }
+        }
+
+        function deleteComponent(component) {
+            if (confirm('Delete this component?')) {
+                component.remove();
+                selectedComponent = null;
+                console.log('Component deleted');
+            }
+        }
+
+        // Click outside to deselect
+        function setupGlobalClickHandler() {
+            document.addEventListener('click', function(e) {
+                // Check if click is outside canvas or on canvas background
+                const canvas = document.getElementById('canvas');
+                const clickedInsideElement = e.target.closest('.element');
+                
+                if (!clickedInsideElement && canvas.contains(e.target)) {
+                    deselectComponent();
+                }
+            });
         }
 
         // Templates
@@ -2269,6 +2362,8 @@
             makeImagesEditable();
             // Make sure blocks are draggable
             makeBlocksDraggable();
+            // Make sure components are selectable
+            makeComponentsSelectable();
         }
 
         // Element selection
@@ -4480,6 +4575,8 @@
                     makeImagesEditable();
                     // Make sure blocks are draggable
                     makeBlocksDraggable();
+                    // Make sure components are selectable
+                    makeComponentsSelectable();
                 } else {
                     console.error(`Failed to create element for component: ${componentType}`);
                 }
@@ -5595,6 +5692,7 @@
             initializeImageHandling(); // Initialize image click handling
             enableImageDragging(); // Initialize image drag repositioning
             initializeKeyboardShortcuts(); // Initialize keyboard shortcuts
+            setupGlobalClickHandler(); // Initialize component selection system
             updateNavigationPreview(); // Initialize navigation
             testCarouselFunctions(); // Test if carousel functions are available
         });
