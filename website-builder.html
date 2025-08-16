@@ -885,29 +885,7 @@
         let navOrder = ['home', 'portfolio', 'about', 'contact']; // Navigation order
         let subPages = {}; // Store subpages: { parentId: [subpage1, subpage2, ...] }
         
-        // Template definitions
-        const templates = {
-            modern: {
-                name: 'Modern',
-                description: 'Clean and contemporary design with bright colors',
-                elements: [
-                    { type: 'hero', content: { title: 'Capturing Life\'s Beautiful Moments', subtitle: 'Professional photography services for weddings, portraits, and special events', backgroundImage: 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=1200' } },
-                    { type: 'about', content: { title: 'About My Work', text: 'I specialize in creating timeless memories through the art of photography. With a passion for capturing authentic moments, I work closely with clients to tell their unique stories.' } },
-                    { type: 'gallery', content: { title: 'Portfolio Highlights', images: ['https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=600', 'https://images.unsplash.com/photo-1522673607200-164d1b6ce486?w=600', 'https://images.unsplash.com/photo-1594736797933-d0501ba2fe65?w=600'] } },
-                    { type: 'contact', content: { title: 'Get In Touch', email: 'hello@photographer.com', phone: '(555) 123-4567', address: '123 Photography Lane, Studio City, CA 90210' } }
-                ]
-            },
-            elegant: {
-                name: 'Elegant',
-                description: 'Sophisticated dark theme inspired by high-end fashion photography',
-                elements: [
-                    { type: 'elegant-hero', content: { title: 'Visual Storytelling', subtitle: 'Fine Art Photography', backgroundImage: 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=1600' } },
-                    { type: 'elegant-featured', content: { title: 'Featured Work', description: 'A carefully curated selection of recent work showcasing artistic vision and technical excellence.', image: 'https://images.unsplash.com/photo-1594736797933-d0501ba2fe65?w=800' } },
-                    { type: 'elegant-about', content: { title: 'The Artist', text: 'Through the lens, I capture not just images, but the soul of the moment. Each photograph tells a story, preserving the essence of beauty, emotion, and human connection in its purest form.', subtitle: 'My work spans fine art portraiture, intimate landscapes, and architectural studies, always seeking the extraordinary within the everyday.', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600' } },
-                    { type: 'elegant-contact', content: { title: 'Connect', email: 'studio@photographer.com', phone: '(555) 000-0000', address: 'Available by appointment' } }
-                ]
-            }
-        };
+        // Template definitions (moved to comprehensive location below)
         let pages = {
             home: { name: 'Home', template: 'modern', elements: [] },
             portfolio: { name: 'Portfolio', template: 'modern', elements: [
