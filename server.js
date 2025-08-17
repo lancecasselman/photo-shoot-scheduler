@@ -49,6 +49,9 @@ const PaymentNotificationManager = require('./server/payment-notifications');
 // Import Stripe Connect management
 const StripeConnectManager = require('./server/stripe-connect');
 
+// Import unified subscription management
+const createSubscriptionRoutes = require('./server/subscription-routes');
+
 // Import object storage services
 const { ObjectStorageService } = require('./server/objectStorage');
 
@@ -10702,6 +10705,9 @@ async function startServer() {
 
     // Start automated payment scheduler
     paymentScheduler.start();
+    
+    // Register subscription management routes
+    app.use('/api/subscriptions', createSubscriptionRoutes(pool));
 
     const server = app.listen(PORT, '0.0.0.0', () => {
         console.log(` Photography Management System running on http://0.0.0.0:${PORT}`);

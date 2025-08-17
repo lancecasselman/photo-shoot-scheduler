@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription System Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .section-title {
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+            margin-bottom: 25px;
+        }
+        .plan-card {
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            background: #fff;
+        }
+        .plan-card.professional {
+            border-color: #007bff;
+            background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+        }
+        .plan-card.storage {
+            border-color: #28a745;
+            background: linear-gradient(135deg, #f8fff8 0%, #ffffff 100%);
+        }
+        .price {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #333;
+            margin: 10px 0;
+        }
+        .price .currency {
+            font-size: 1.5rem;
+            vertical-align: top;
+        }
+        .price .period {
+            font-size: 1rem;
+            color: #666;
+            font-weight: normal;
+        }
+        .features {
+            list-style: none;
+            padding: 0;
+            margin: 15px 0;
+        }
+        .features li {
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f3f4;
+        }
+        .features li:last-child {
+            border-bottom: none;
+        }
+        .features li::before {
+            content: "✓";
+            color: #28a745;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .btn {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 15px;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,123,255,0.3);
+        }
+        .btn.storage-btn {
+            background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        }
+        .btn.storage-btn:hover {
+            box-shadow: 0 4px 12px rgba(40,167,69,0.3);
+        }
+        .status-card {
+            background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+        .status-card h3 {
+            margin: 0 0 15px 0;
+            font-size: 1.5rem;
+        }
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+        .status-item:last-child {
+            border-bottom: none;
+        }
+        .test-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #17a2b8; }
+        .init-btn {
+            background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+            color: #212529;
+            margin-bottom: 20px;
+        }
+        .init-btn:hover {
+            box-shadow: 0 4px 12px rgba(255,193,7,0.3);
+        }
+        .storage-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .storage-selector select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="section-title">🔧 Unified Subscription System Test</h1>
+        
+        <button id="initBtn" class="btn init-btn">Initialize Subscription System</button>
+        
+        <div id="status-display"></div>
+        
+        <div class="test-section">
+            <!-- Professional Plan -->
+            <div class="plan-card professional">
+                <h3>Professional Plan</h3>
+                <div class="price">
+                    <span class="currency">$</span>39<span class="period">/month</span>
+                </div>
+                <ul class="features">
+                    <li>100GB Cloud Storage</li>
+                    <li>Unlimited Sessions</li>
+                    <li>Client Galleries</li>
+                    <li>Invoice Management</li>
+                    <li>Contract Signing</li>
+                    <li>Mobile App Access</li>
+                    <li>Premium Support</li>
+                </ul>
+                <button id="professionalBtn" class="btn">Subscribe to Professional Plan</button>
+            </div>
+            
+            <!-- Storage Add-ons -->
+            <div class="plan-card storage">
+                <h3>Storage Add-ons</h3>
+                <div class="price">
+                    <span class="currency">$</span>25<span class="period">/TB/month</span>
+                </div>
+                <ul class="features">
+                    <li>1TB Additional Storage</li>
+                    <li>Cloudflare R2 Backup</li>
+                    <li>RAW File Support</li>
+                    <li>Automatic Thumbnails</li>
+                    <li>Full Resolution Downloads</li>
+                    <li>99.9% Uptime SLA</li>
+                </ul>
+                <div class="storage-selector">
+                    <label>TB Count:</label>
+                    <select id="tbSelect">
+                        <option value="1">1 TB</option>
+                        <option value="2">2 TB</option>
+                        <option value="3">3 TB</option>
+                        <option value="5">5 TB</option>
+                        <option value="10">10 TB</option>
+                    </select>
+                </div>
+                <button id="storageBtn" class="btn storage-btn">Add Storage</button>
+            </div>
+        </div>
+        
+        <div class="container">
+            <h3 class="section-title">📊 Current Subscription Status</h3>
+            <button id="refreshStatusBtn" class="btn" style="margin-bottom: 20px;">Refresh Status</button>
+            <div id="subscription-status"></div>
+        </div>
+        
+        <div class="container">
+            <h3 class="section-title">📝 System Logs</h3>
+            <div id="logs" class="log"></div>
+        </div>
+    </div>
+
+    <script>
+        class SubscriptionTester {
+            constructor() {
+                this.logs = document.getElementById('logs');
+                this.statusDisplay = document.getElementById('subscription-status');
+                this.bindEvents();
+                this.log('Subscription tester initialized', 'info');
+                this.refreshStatus();
+            }
+
+            bindEvents() {
+                document.getElementById('initBtn').addEventListener('click', () => this.initializeSystem());
+                document.getElementById('professionalBtn').addEventListener('click', () => this.subscribeToProfessional());
+                document.getElementById('storageBtn').addEventListener('click', () => this.addStorage());
+                document.getElementById('refreshStatusBtn').addEventListener('click', () => this.refreshStatus());
+            }
+
+            log(message, type = 'info') {
+                const timestamp = new Date().toLocaleTimeString();
+                const logClass = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+                this.logs.innerHTML += `<div class="${logClass}">[${timestamp}] ${message}</div>`;
+                this.logs.scrollTop = this.logs.scrollHeight;
+                console.log(`[${type.toUpperCase()}] ${message}`);
+            }
+
+            async makeRequest(endpoint, method = 'GET', body = null) {
+                try {
+                    const options = {
+                        method,
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        credentials: 'include'
+                    };
+
+                    if (body) {
+                        options.body = JSON.stringify(body);
+                    }
+
+                    const response = await fetch(endpoint, options);
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || `HTTP ${response.status}`);
+                    }
+
+                    return data;
+                } catch (error) {
+                    this.log(`Request failed: ${error.message}`, 'error');
+                    throw error;
+                }
+            }
+
+            async initializeSystem() {
+                this.log('Initializing subscription system...');
+                try {
+                    const result = await this.makeRequest('/api/subscriptions/init', 'POST');
+                    this.log(`✅ System initialized: ${result.message}`, 'success');
+                } catch (error) {
+                    this.log(`❌ Initialization failed: ${error.message}`, 'error');
+                }
+            }
+
+            async subscribeToProfessional() {
+                this.log('Creating Professional Plan subscription...');
+                try {
+                    const result = await this.makeRequest('/api/subscriptions/professional/stripe', 'POST', {
+                        email: 'test@example.com'
+                    });
+
+                    if (result.success) {
+                        this.log(`✅ Professional plan created: ${result.subscription.id}`, 'success');
+                        if (result.clientSecret) {
+                            this.log(`💳 Payment intent created with client secret`, 'info');
+                        }
+                        await this.refreshStatus();
+                    } else {
+                        this.log(`❌ Professional plan creation failed: ${result.error}`, 'error');
+                    }
+                } catch (error) {
+                    this.log(`❌ Professional plan error: ${error.message}`, 'error');
+                }
+            }
+
+            async addStorage() {
+                const tbCount = parseInt(document.getElementById('tbSelect').value);
+                this.log(`Adding ${tbCount}TB storage add-on...`);
+                
+                try {
+                    const result = await this.makeRequest('/api/subscriptions/storage/stripe', 'POST', {
+                        tbCount: tbCount
+                    });
+
+                    if (result.success) {
+                        this.log(`✅ Storage add-on created: ${tbCount}TB for $${25 * tbCount}/month`, 'success');
+                        await this.refreshStatus();
+                    } else {
+                        this.log(`❌ Storage add-on failed: ${result.error}`, 'error');
+                    }
+                } catch (error) {
+                    this.log(`❌ Storage add-on error: ${error.message}`, 'error');
+                }
+            }
+
+            async refreshStatus() {
+                this.log('Refreshing subscription status...');
+                try {
+                    const result = await this.makeRequest('/api/subscriptions/status');
+                    
+                    if (result.success) {
+                        this.displayStatus(result.status);
+                        this.log('✅ Status refreshed', 'success');
+                    } else {
+                        this.log(`❌ Status refresh failed: ${result.error}`, 'error');
+                    }
+                } catch (error) {
+                    this.log(`❌ Status error: ${error.message}`, 'error');
+                    this.displayStatus(null);
+                }
+            }
+
+            displayStatus(status) {
+                if (!status) {
+                    this.statusDisplay.innerHTML = `
+                        <div class="status-card">
+                            <h3>❌ No subscription data available</h3>
+                            <p>Please authenticate or initialize the system first.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const summary = status.summary;
+                const subscriptions = status.subscriptions;
+
+                let statusHtml = `
+                    <div class="status-card">
+                        <h3>📊 Subscription Summary</h3>
+                        <div class="status-item">
+                            <span>Professional Plan:</span>
+                            <span>${summary?.has_professional_plan ? '✅ Active' : '❌ Not Active'}</span>
+                        </div>
+                        <div class="status-item">
+                            <span>Platform:</span>
+                            <span>${summary?.professional_platform || 'None'}</span>
+                        </div>
+                        <div class="status-item">
+                            <span>Total Storage:</span>
+                            <span>${summary?.total_storage_gb || 0} GB</span>
+                        </div>
+                        <div class="status-item">
+                            <span>Storage Add-ons:</span>
+                            <span>${summary?.total_storage_tb || 0} TB</span>
+                        </div>
+                        <div class="status-item">
+                            <span>Active Subscriptions:</span>
+                            <span>${summary?.active_subscriptions || 0}</span>
+                        </div>
+                        <div class="status-item">
+                            <span>Monthly Total:</span>
+                            <span>$${summary?.monthly_total || '0.00'}</span>
+                        </div>
+                        <div class="status-item">
+                            <span>Next Billing:</span>
+                            <span>${summary?.next_billing_date ? new Date(summary.next_billing_date).toLocaleDateString() : 'N/A'}</span>
+                        </div>
+                    </div>
+                `;
+
+                if (subscriptions && subscriptions.length > 0) {
+                    statusHtml += `
+                        <div class="container">
+                            <h4>📋 Active Subscriptions</h4>
+                            ${subscriptions.map(sub => `
+                                <div class="plan-card">
+                                    <strong>${sub.subscription_type}</strong> (${sub.platform})<br>
+                                    $${sub.price_amount}/month | Status: ${sub.status}<br>
+                                    ${sub.storage_tb > 0 ? `Storage: ${sub.storage_tb}TB | ` : ''}
+                                    Created: ${new Date(sub.created_at).toLocaleDateString()}
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+
+                this.statusDisplay.innerHTML = statusHtml;
+            }
+        }
+
+        // Initialize the tester when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new SubscriptionTester();
+        });
+    </script>
+</body>
+</html>
