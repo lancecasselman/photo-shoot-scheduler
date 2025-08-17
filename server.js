@@ -51,6 +51,7 @@ const StripeConnectManager = require('./server/stripe-connect');
 
 // Import unified subscription management
 const createSubscriptionRoutes = require('./server/subscription-routes');
+const SubscriptionAuthMiddleware = require('./server/subscription-auth-middleware');
 
 // Import object storage services
 const { ObjectStorageService } = require('./server/objectStorage');
@@ -687,66 +688,29 @@ const isAuthenticated = (req, res, next) => {
     next();
 };
 
-// Subscription check middleware
+// Initialize subscription auth middleware
+const subscriptionAuth = new SubscriptionAuthMiddleware(pool);
+
+// Legacy subscription check middleware (deprecated - use subscriptionAuth.requireActiveSubscription)
 const requireSubscription = async (req, res, next) => {
     // DEV_MODE bypass
     if (DEV_MODE) {
         return next();
     }
 
-    const user = getCurrentUser(req);
-    if (!user || !user.email) {
-        return res.status(401).json({ message: 'Authentication required' });
-    }
-
-    // Whitelist your emails
+    // Admin whitelist bypass
     const whitelistedEmails = [
         'lancecasselman@icloud.com',
         'lancecasselman2011@gmail.com',
-        'Lance@thelegacyphotography.com'
+        'lance@thelegacyphotography.com'
     ];
 
-    if (whitelistedEmails.includes(user.email)) {
+    if (req.session?.user?.email && whitelistedEmails.includes(req.session.user.email)) {
         return next();
     }
 
-    try {
-        // Check user subscription status in database
-        const result = await pool.query(
-            'SELECT subscription_status, subscription_expires_at FROM users WHERE email = $1',
-            [user.email]
-        );
-
-        if (result.rows.length === 0) {
-            return res.status(403).json({ 
-                message: 'No subscription found. Please subscribe to continue.',
-                requiresSubscription: true 
-            });
-        }
-
-        const userRecord = result.rows[0];
-
-        // Check if subscription is active
-        if (userRecord.subscription_status !== 'active') {
-            return res.status(403).json({ 
-                message: 'Your subscription is not active. Please subscribe to continue.',
-                requiresSubscription: true 
-            });
-        }
-
-        // Check if subscription has expired
-        if (userRecord.subscription_expires_at && new Date(userRecord.subscription_expires_at) < new Date()) {
-            return res.status(403).json({ 
-                message: 'Your subscription has expired. Please renew to continue.',
-                requiresSubscription: true 
-            });
-        }
-
-        next();
-    } catch (error) {
-        console.error('Subscription check error:', error);
-        res.status(500).json({ message: 'Error checking subscription status' });
-    }
+    // Use new subscription auth system
+    return subscriptionAuth.requireActiveSubscription(req, res, next);
 };
 
 // Create professional email transporter with better deliverability
@@ -10708,6 +10672,9 @@ async function startServer() {
     
     // Register subscription management routes
     app.use('/api/subscriptions', createSubscriptionRoutes(pool));
+    
+    // Subscription status check for frontend
+    app.get('/api/subscription-status', subscriptionAuth.getSubscriptionStatus);
 
     const server = app.listen(PORT, '0.0.0.0', () => {
         console.log(` Photography Management System running on http://0.0.0.0:${PORT}`);

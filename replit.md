@@ -42,6 +42,9 @@ A comprehensive subscription management system supporting multiple platforms and
 ### Subscription Cancellation System
 Complete subscription cancellation functionality with platform-specific handling. Features include user-initiated cancellation through dedicated settings page, automatic Stripe subscription cancellation with prorated refunds, proper handling of Apple IAP and Google Play subscriptions (marked for cancellation, user completes in respective app stores), cancellation of all user subscriptions (Professional Plan + Storage add-ons) with single action, detailed cancellation logging and event tracking, optional cancellation reason collection for business insights, immediate database status updates while maintaining access until period end, and comprehensive cancellation confirmation system. The cancellation system ensures proper payment cessation across all platforms while maintaining data integrity and user access rights during transition periods.
 
+### Subscription Access Control System
+Comprehensive access control that enforces subscription requirements throughout the platform. Users with cancelled or expired subscriptions cannot access core app functionality. Features include subscription-aware authentication middleware that blocks API access for inactive users, frontend subscription guard with user-friendly modals explaining subscription requirements, automatic redirection to subscription checkout for non-subscribers, grace period access until subscription period officially ends, admin email whitelist bypass for platform administrators, and real-time subscription status checking. The system provides clear messaging about subscription status and required actions, ensuring users understand exactly what they need to do to regain access while maintaining a professional user experience.
+
 ## External Dependencies
 
 ### Core Services
