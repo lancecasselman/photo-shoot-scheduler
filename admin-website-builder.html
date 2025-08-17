@@ -550,15 +550,20 @@
         function saveAdminWebsite() {
             console.log('Saving landing page changes...');
             
-            const previewFrame = document.getElementById('adminPreviewFrame');
-            const content = previewFrame.innerHTML;
+            const iframe = document.querySelector('#adminPreviewFrame iframe');
+            if (!iframe) {
+                showMessage('No content to save', 'error');
+                return;
+            }
             
-            fetch('/api/admin/save-landing', {
+            const fullHtml = iframe.contentDocument.documentElement.outerHTML;
+            
+            fetch('/api/admin/save-landing-full', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ content: content })
+                body: JSON.stringify({ fullHtml: fullHtml })
             })
             .then(response => response.json())
             .then(data => {
@@ -574,16 +579,37 @@
             });
         }
 
-        // Load the actual landing page content
+        // Load the actual landing page content with full styling
         function loadLandingPageContent() {
-            fetch('/api/admin/landing-content')
+            fetch('/api/admin/landing-full')
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
                         const previewFrame = document.getElementById('adminPreviewFrame');
-                        previewFrame.innerHTML = data.content;
-                        makeContentEditable();
-                        console.log('Loaded landing page content for editing');
+                        
+                        // Create an iframe to properly display the full HTML with styles
+                        const iframe = document.createElement('iframe');
+                        iframe.style.cssText = `
+                            width: 100%;
+                            height: 100vh;
+                            border: none;
+                            background: white;
+                        `;
+                        
+                        previewFrame.innerHTML = '';
+                        previewFrame.appendChild(iframe);
+                        
+                        // Write the full HTML to iframe
+                        iframe.contentDocument.open();
+                        iframe.contentDocument.write(data.fullHtml);
+                        iframe.contentDocument.close();
+                        
+                        // Wait for iframe to load then make it editable
+                        iframe.onload = function() {
+                            makeIframeContentEditable(iframe);
+                        };
+                        
+                        console.log('Loaded full landing page for editing');
                     } else {
                         console.error('Failed to load landing page content');
                         showMessage('Failed to load landing page', 'error');
@@ -629,9 +655,9 @@
             `);
         }
 
-        // Make landing page content editable
-        function makeContentEditable() {
-            const previewFrame = document.getElementById('adminPreviewFrame');
+        // Make iframe content editable
+        function makeIframeContentEditable(iframe) {
+            const doc = iframe.contentDocument;
             
             // Make text elements editable
             const editableSelectors = [
@@ -639,16 +665,17 @@
                 'p', 'span', 'div.text-content',
                 '.hero-title', '.hero-subtitle', '.section-title',
                 '.feature-title', '.feature-description',
-                '.testimonial-text', '.cta-text'
+                '.testimonial-text', '.cta-text', '.btn'
             ];
             
             editableSelectors.forEach(selector => {
-                const elements = previewFrame.querySelectorAll(selector);
+                const elements = doc.querySelectorAll(selector);
                 elements.forEach(element => {
-                    // Skip if already has contenteditable or is a container
+                    // Skip if already has contenteditable or is a complex container
                     if (element.hasAttribute('contenteditable') || 
-                        element.children.length > 0 && 
-                        !element.classList.contains('text-content')) {
+                        (element.children.length > 0 && 
+                        !element.classList.contains('text-content') &&
+                        !element.classList.contains('btn'))) {
                         return;
                     }
                     
@@ -659,18 +686,18 @@
                     // Add editing indicators
                     element.addEventListener('focus', function() {
                         this.style.backgroundColor = 'rgba(102, 126, 234, 0.1)';
-                        this.style.border = '2px dashed #667eea';
+                        this.style.boxShadow = '0 0 0 2px #667eea';
                     });
                     
                     element.addEventListener('blur', function() {
                         this.style.backgroundColor = '';
-                        this.style.border = '';
+                        this.style.boxShadow = '';
                     });
                 });
             });
             
             // Make images clickable for replacement
-            const images = previewFrame.querySelectorAll('img');
+            const images = doc.querySelectorAll('img');
             images.forEach(img => {
                 img.style.cursor = 'pointer';
                 img.addEventListener('click', function() {
@@ -693,17 +720,17 @@
                 
                 // Add hover effect
                 img.addEventListener('mouseenter', function() {
-                    this.style.border = '2px dashed #667eea';
+                    this.style.boxShadow = '0 0 0 2px #667eea';
                     this.style.opacity = '0.8';
                 });
                 
                 img.addEventListener('mouseleave', function() {
-                    this.style.border = '';
+                    this.style.boxShadow = '';
                     this.style.opacity = '1';
                 });
             });
             
-            console.log('Made landing page content editable');
+            console.log('Made iframe content editable');
         }
 
         // Publish website (reload landing page to show changes)

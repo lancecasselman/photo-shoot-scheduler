@@ -1170,6 +1170,25 @@ app.get('/api/admin/landing-content', isAuthenticated, isAdmin, async (req, res)
     }
 });
 
+// Admin endpoint to get full landing page HTML
+app.get('/api/admin/landing-full', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const landingPath = path.join(__dirname, 'landing.html');
+        const fullHtml = fs.readFileSync(landingPath, 'utf8');
+        
+        res.json({ 
+            success: true, 
+            fullHtml: fullHtml 
+        });
+    } catch (error) {
+        console.error('Error reading full landing page:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to load full landing page' 
+        });
+    }
+});
+
 // Admin endpoint to save landing page changes
 app.post('/api/admin/save-landing', isAuthenticated, isAdmin, async (req, res) => {
     try {
@@ -1205,6 +1224,35 @@ ${content}
         res.status(500).json({ 
             success: false, 
             error: 'Failed to save landing page content' 
+        });
+    }
+});
+
+// Admin endpoint to save full landing page HTML
+app.post('/api/admin/save-landing-full', isAuthenticated, isAdmin, async (req, res) => {
+    try {
+        const { fullHtml } = req.body;
+        const landingPath = path.join(__dirname, 'landing.html');
+        
+        // Create backup of current file
+        const currentContent = fs.readFileSync(landingPath, 'utf8');
+        const backupPath = path.join(__dirname, `landing-backup-${Date.now()}.html`);
+        fs.writeFileSync(backupPath, currentContent);
+        
+        // Write the updated full HTML
+        fs.writeFileSync(landingPath, fullHtml);
+        
+        console.log('Admin updated full landing page HTML');
+        res.json({ 
+            success: true, 
+            message: 'Landing page updated successfully',
+            backup: backupPath
+        });
+    } catch (error) {
+        console.error('Error saving full landing page:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Failed to save full landing page' 
         });
     }
 });
