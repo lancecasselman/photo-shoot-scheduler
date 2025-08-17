@@ -147,7 +147,6 @@ class CommunityDatabase {
         } finally {
             client.release();
         }
-        }
     }
 
     // Post operations

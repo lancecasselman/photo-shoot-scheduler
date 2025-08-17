@@ -292,12 +292,18 @@ pool.on('error', (err, client) => {
         });
     }
     
-    // Remove the problematic client from pool if available
-    if (client) {
+    // Safely handle problematic client removal
+    if (client && typeof client.release === 'function') {
         try {
-            client.release(true); // Force removal
+            // Check if client is already released before attempting to release
+            if (!client._ended && !client._connecting) {
+                client.release(true); // Force removal
+            }
         } catch (releaseError) {
-            console.error('Error force-releasing problematic client:', releaseError);
+            // Only log if it's not already released
+            if (!releaseError.message.includes('already been released')) {
+                console.error('Error force-releasing problematic client:', releaseError);
+            }
         }
     }
 });
