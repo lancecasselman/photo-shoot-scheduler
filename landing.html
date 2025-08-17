@@ -88,11 +88,13 @@
                     .then(response => response.json())
                     .then(userData => {
                         console.log('Backend auth response:', userData);
-                        if (userData && userData.email && isAdmin(userData.email)) {
-                            console.log('✅ Backend session auth found for admin:', userData.email);
+                        // Handle both direct email and nested user object
+                        const email = userData?.email || userData?.user?.email;
+                        if (email && isAdmin(email)) {
+                            console.log('✅ Backend session auth found for admin:', email);
                             showAdminElements(true);
                         } else {
-                            console.log('Backend user not admin or not found');
+                            console.log('Backend user not admin or not found. Email found:', email);
                         }
                     })
                     .catch(err => {

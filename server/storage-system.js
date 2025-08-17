@@ -103,11 +103,11 @@ class StorageSystem {
             );
 
             if (result.rows.length === 0) {
-                // Create new quota record with 5GB free storage
+                // Create new quota record with 100GB base storage  
                 await this.pool.query(`
-                    INSERT INTO user_storage_quotas (user_id, free_storage_gb, total_quota_gb)
+                    INSERT INTO user_storage_quotas (user_id, base_storage_gb, total_quota_gb)
                     VALUES ($1, $2, $3)
-                `, [userId, this.FREE_STORAGE_GB, this.FREE_STORAGE_GB]);
+                `, [userId, this.BASE_STORAGE_GB, this.BASE_STORAGE_GB]);
 
                 result = await this.pool.query(
                     'SELECT * FROM user_storage_quotas WHERE user_id = $1',
