@@ -22,6 +22,29 @@
             padding: 0;
         }
 
+        /* Animation keyframes for notifications */
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
         .builder-container {
             display: flex;
             flex-direction: column;
@@ -1435,6 +1458,178 @@
                 showMessage('Error loading saved website. Starting with default template.', 'warning');
             }
             return false;
+        }
+
+        // Load landing page content for direct editing
+        async function loadLandingPageForEditing() {
+            try {
+                console.log('Loading landing page content for editing...');
+                
+                const response = await fetch('/api/landing/content');
+                if (!response.ok) {
+                    throw new Error(`Failed to load landing page: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('Landing page content loaded successfully');
+                
+                // Parse the HTML content and extract the body
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(data.content, 'text/html');
+                const bodyContent = doc.body.innerHTML;
+                
+                // Display the landing page content in the canvas for editing
+                const canvas = document.getElementById('canvas');
+                canvas.innerHTML = bodyContent;
+                
+                // Update page title
+                const pageTitle = doc.title || 'Landing Page';
+                pages['home'] = {
+                    name: 'Landing Page',
+                    template: 'landing',
+                    elements: [], // Will be dynamically determined from the loaded content
+                    isLandingPage: true
+                };
+                currentPage = 'home';
+                
+                // Add "Save Landing Page" button to the toolbar
+                addLandingPageSaveButton();
+                
+                console.log('Landing page loaded in editor');
+                
+            } catch (error) {
+                console.error('Error loading landing page:', error);
+                
+                // Fallback to default template if loading fails
+                loadTemplate('modern');
+                
+                // Show error message
+                const canvas = document.getElementById('canvas');
+                canvas.innerHTML = `
+                    <div style="padding: 40px; text-align: center; background: #fed7d7; border: 1px solid #e53e3e; color: #742a2a; border-radius: 8px; margin: 20px;">
+                        <h2>⚠️ Failed to Load Landing Page</h2>
+                        <p>Could not load the landing page for editing. Using default template instead.</p>
+                        <p><small>Error: ${error.message}</small></p>
+                    </div>
+                `;
+            }
+        }
+
+        // Add save button for landing page
+        function addLandingPageSaveButton() {
+            // Remove existing save button if any
+            const existingSaveBtn = document.getElementById('landingPageSaveBtn');
+            if (existingSaveBtn) {
+                existingSaveBtn.remove();
+            }
+            
+            // Create save button
+            const saveButton = document.createElement('div');
+            saveButton.id = 'landingPageSaveBtn';
+            saveButton.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 20px;
+                z-index: 9998;
+                background: #48bb78;
+                color: white;
+                padding: 12px 16px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: 500;
+                font-size: 14px;
+                box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+                transition: all 0.3s ease;
+                user-select: none;
+            `;
+            saveButton.innerHTML = '💾 Save Landing Page';
+            saveButton.onclick = saveLandingPage;
+            saveButton.onmouseover = function() {
+                this.style.background = '#38a169';
+                this.style.transform = 'translateY(-2px)';
+                this.style.boxShadow = '0 6px 16px rgba(72, 187, 120, 0.4)';
+            };
+            saveButton.onmouseout = function() {
+                this.style.background = '#48bb78';
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = '0 4px 12px rgba(72, 187, 120, 0.3)';
+            };
+            
+            document.body.appendChild(saveButton);
+        }
+
+        // Save the edited landing page
+        async function saveLandingPage() {
+            try {
+                const canvas = document.getElementById('canvas');
+                const editedContent = canvas.innerHTML;
+                
+                // We need to reconstruct the full HTML document
+                const response = await fetch('/api/landing/content');
+                const data = await response.json();
+                
+                // Parse original and replace body content
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(data.content, 'text/html');
+                doc.body.innerHTML = editedContent;
+                
+                // Convert back to string
+                const updatedHtml = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+                
+                // Save to server
+                const saveResponse = await fetch('/api/landing/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ content: updatedHtml })
+                });
+                
+                if (!saveResponse.ok) {
+                    throw new Error(`Save failed: ${saveResponse.status}`);
+                }
+                
+                // Show success message
+                showNotification('Landing page saved successfully!', 'success');
+                console.log('Landing page saved successfully');
+                
+            } catch (error) {
+                console.error('Error saving landing page:', error);
+                showNotification('Failed to save landing page: ' + error.message, 'error');
+            }
+        }
+
+        // Show notification function
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                z-index: 10000;
+                background: ${type === 'success' ? '#48bb78' : type === 'error' ? '#f56565' : '#4299e1'};
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                font-weight: 500;
+                font-size: 14px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+                animation: slideIn 0.3s ease-out;
+                max-width: 300px;
+            `;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-in';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
         }
 
         // Touch-to-edit functionality
@@ -6943,24 +7138,10 @@
                 console.log('Template selector functionality ready');
             }, 1000);
             
-            // Load saved website data if available, otherwise use defaults
-            const hasLoadedData = loadSavedWebsite();
+            // Load landing page content for editing
+            loadLandingPageForEditing();
             
             refreshPagesList(); // Populate pages list with current pages
-            
-            // Load template only if no saved data was loaded
-            if (!hasLoadedData) {
-                loadTemplate('modern');
-            } else {
-                // If we loaded saved data, load the current page
-                if (currentPage && pages[currentPage]) {
-                    if (pages[currentPage].elements && pages[currentPage].elements.length > 0) {
-                        loadPageContent(currentPage);
-                    } else {
-                        loadTemplate(pages[currentPage].template || 'modern');
-                    }
-                }
-            }
             
             // Wait for template to load, then make all elements deletable
             setTimeout(() => {
