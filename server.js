@@ -11276,45 +11276,6 @@ app.get('/website-builder', isAuthenticated, (req, res) => {
   res.sendFile(path.join(__dirname, 'website-builder.html'));
 });
 
-// API endpoint to load landing page content for editing
-app.get('/api/landing/content', isAuthenticated, (req, res) => {
-  try {
-    const fs = require('fs');
-    const landingPath = path.join(__dirname, 'landing.html');
-    const content = fs.readFileSync(landingPath, 'utf8');
-    res.json({ content });
-  } catch (error) {
-    console.error('Error loading landing page:', error);
-    res.status(500).json({ error: 'Failed to load landing page content' });
-  }
-});
-
-// API endpoint to save landing page content
-app.post('/api/landing/save', isAuthenticated, (req, res) => {
-  try {
-    const { content } = req.body;
-    if (!content) {
-      return res.status(400).json({ error: 'Content is required' });
-    }
-    
-    const fs = require('fs');
-    const landingPath = path.join(__dirname, 'landing.html');
-    
-    // Create backup first
-    const backupPath = path.join(__dirname, `landing.html.backup.${Date.now()}`);
-    fs.copyFileSync(landingPath, backupPath);
-    
-    // Save new content
-    fs.writeFileSync(landingPath, content, 'utf8');
-    
-    console.log('Landing page updated successfully');
-    res.json({ success: true, message: 'Landing page updated successfully' });
-  } catch (error) {
-    console.error('Error saving landing page:', error);
-    res.status(500).json({ error: 'Failed to save landing page content' });
-  }
-});
-
 // Custom token generation for Firebase client authentication
 app.post('/api/auth/firebase-token', isAuthenticated, async (req, res) => {
     try {
