@@ -370,6 +370,11 @@
                 localStorage.setItem('firebaseAuthUser', JSON.stringify(userAuthData));
                 sessionStorage.setItem('firebaseAuthUser', JSON.stringify(userAuthData));
                 
+                // Use the iframe auth system for better compatibility
+                if (window.IframeAuth) {
+                    window.IframeAuth.storeAuthToken(userAuthData);
+                }
+                
                 console.log('Stored Firebase auth data locally for iframe persistence');
 
                 // Send user info to backend

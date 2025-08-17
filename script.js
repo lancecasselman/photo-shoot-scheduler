@@ -74,6 +74,9 @@ async function checkAuth() {
                             return true;
                         } else {
                             console.log(' AUTH CHECK: Firebase fallback verification failed');
+                            // Clear invalid stored data
+                            localStorage.removeItem('firebaseAuthUser');
+                            sessionStorage.removeItem('firebaseAuthUser');
                         }
                     } else {
                         console.log(' AUTH CHECK: Stored Firebase auth data is too old, clearing');

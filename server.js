@@ -696,7 +696,7 @@ const normalizeUserForLance = (user) => {
     return user;
 };
 
-// Enhanced authentication middleware with strict security
+// Enhanced authentication middleware with token support for iframe contexts
 const isAuthenticated = (req, res, next) => {
     // DEV_MODE bypass for development
     if (DEV_MODE) {
@@ -704,32 +704,64 @@ const isAuthenticated = (req, res, next) => {
         return next();
     }
 
-    // Strict authentication check - multiple validation layers
+    // First try session-based authentication
     const hasValidSession = req.session && req.session.user && req.session.user.uid;
     const userHasValidId = req.session?.user?.uid && req.session.user.uid.length > 0;
     const userHasValidEmail = req.session?.user?.email && req.session.user.email.includes('@');
     
-    if (!hasValidSession || !userHasValidId || !userHasValidEmail) {
-        console.log('🚫 Authentication failed:', {
-            hasSession: !!req.session,
-            hasSessionUser: !!(req.session && req.session.user),
-            hasUserId: !!(req.session?.user?.uid),
-            hasUserEmail: !!(req.session?.user?.email),
-            sessionId: req.sessionID,
-            userAgent: req.get('User-Agent'),
-            ip: req.ip,
-            timestamp: new Date().toISOString()
-        });
-        
-        return res.status(401).json({ 
-            message: 'Authentication required',
-            redirectTo: '/auth.html'
-        });
+    if (hasValidSession && userHasValidId && userHasValidEmail) {
+        req.user = req.session.user;
+        return next();
     }
 
-    // Set req.user for downstream middleware
-    req.user = req.session.user;
-    next();
+    // Fallback to token-based authentication for iframe contexts
+    const authToken = req.headers['authorization'];
+    const authUID = req.headers['x-auth-uid'];
+    const authEmail = req.headers['x-auth-email'];
+    
+    if (authToken && authUID && authEmail) {
+        try {
+            // Decode and validate the token
+            const tokenData = JSON.parse(Buffer.from(authToken.replace('Bearer ', ''), 'base64').toString());
+            
+            if (tokenData.uid === authUID && tokenData.email === authEmail) {
+                // Check token age (24 hours max)
+                const tokenAge = Date.now() - (tokenData.timestamp || 0);
+                if (tokenAge < 24 * 60 * 60 * 1000) {
+                    console.log('🔓 Token authentication successful for:', authEmail);
+                    req.user = {
+                        uid: tokenData.uid,
+                        email: tokenData.email,
+                        displayName: tokenData.displayName || tokenData.email
+                    };
+                    return next();
+                } else {
+                    console.log('🚫 Token expired for:', authEmail);
+                }
+            } else {
+                console.log('🚫 Token validation failed');
+            }
+        } catch (error) {
+            console.log('🚫 Token decode error:', error.message);
+        }
+    }
+    
+    console.log('🚫 Authentication failed:', {
+        hasSession: !!req.session,
+        hasSessionUser: !!(req.session && req.session.user),
+        hasUserId: !!(req.session?.user?.uid),
+        hasUserEmail: !!(req.session?.user?.email),
+        hasAuthHeaders: !!(authToken && authUID && authEmail),
+        sessionId: req.sessionID,
+        userAgent: req.get('User-Agent'),
+        ip: req.ip,
+        timestamp: new Date().toISOString()
+    });
+    
+    return res.status(401).json({ 
+        message: 'Authentication required',
+        redirectTo: '/auth.html'
+    });
 };
 
 // Initialize subscription auth middleware
