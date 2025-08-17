@@ -48,6 +48,9 @@ Complete subscription cancellation functionality with platform-specific handling
 ### Subscription Access Control System
 Comprehensive access control that enforces subscription requirements throughout the platform. Users with cancelled or expired subscriptions cannot access core app functionality. Features include subscription-aware authentication middleware that blocks API access for inactive users, frontend subscription guard with user-friendly modals explaining subscription requirements, automatic redirection to subscription checkout for non-subscribers, grace period access until subscription period officially ends, admin email whitelist bypass for platform administrators, and real-time subscription status checking. The system provides clear messaging about subscription status and required actions, ensuring users understand exactly what they need to do to regain access while maintaining a professional user experience.
 
+### Replit Development Environment Compatibility
+The system includes specific handling for Replit's development environment constraints. Session persistence issues in Safari with multiple emails are resolved through optimized cookie settings (secure: false, sameSite: 'lax'). Iframe detection automatically identifies when the app is running in Replit's preview pane where session cookies may not function properly, providing users with a clear notification and option to open in a new tab for full functionality. Authentication flow works correctly but may require opening in new tab for proper session persistence in development environment.
+
 ## External Dependencies
 
 ### Core Services
