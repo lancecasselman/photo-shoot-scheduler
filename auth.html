@@ -10,6 +10,9 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     
+    <!-- Mobile authentication handler for iOS/Safari compatibility -->
+    <script src="/mobile-auth.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -347,6 +350,10 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const googleProvider = new firebase.auth.GoogleAuthProvider();
+        
+        // Set Firebase initialization flag for mobile auth
+        window.firebaseInitialized = true;
+        window.firebaseAuth = auth;
 
         // Handle successful authentication
         async function handleSuccessfulAuth(user) {
@@ -432,26 +439,41 @@
                 googleLoginBtn.addEventListener("click", function () {
                     document.getElementById('loadingIndicator').style.display = 'block';
                     
-                    // Try popup first, fall back to redirect if blocked
-                    auth.signInWithPopup(googleProvider)
-                        .then((result) => {
-                            handleSuccessfulAuth(result.user);
-                        })
-                        .catch((error) => {
-                            console.error('Google sign-in popup error:', error);
-                            
-                            // Handle specific error cases
-                            if (error.code === 'auth/popup-blocked') {
-                                console.log('Popup blocked, using redirect method');
-                                auth.signInWithRedirect(googleProvider);
-                            } else if (error.code === 'auth/unauthorized-domain') {
-                                alert("Domain authorization error: This domain needs to be added to Firebase console. Please contact support or try the email/password sign-in method.");
+                    // Use mobile auth handler for better mobile compatibility
+                    if (window.mobileAuth) {
+                        window.mobileAuth.signInWithGoogle()
+                            .then((result) => {
+                                if (result.method === 'popup' && result.user) {
+                                    handleSuccessfulAuth(result.user);
+                                }
+                                // For redirect method, handling is done automatically
+                            })
+                            .catch((error) => {
+                                console.error('Mobile auth sign-in error:', error);
+                                if (error.code === 'auth/unauthorized-domain') {
+                                    alert("Domain authorization error: This domain needs to be added to Firebase console. Please contact support or try the email/password sign-in method.");
+                                } else {
+                                    alert("Google sign-in failed: " + error.message);
+                                }
                                 document.getElementById('loadingIndicator').style.display = 'none';
-                            } else {
-                                alert("Google sign-in failed: " + error.message);
-                                document.getElementById('loadingIndicator').style.display = 'none';
-                            }
-                        });
+                            });
+                    } else {
+                        // Fallback to original method
+                        auth.signInWithPopup(googleProvider)
+                            .then((result) => {
+                                handleSuccessfulAuth(result.user);
+                            })
+                            .catch((error) => {
+                                console.error('Google sign-in popup error:', error);
+                                if (error.code === 'auth/popup-blocked') {
+                                    console.log('Popup blocked, using redirect method');
+                                    auth.signInWithRedirect(googleProvider);
+                                } else {
+                                    alert("Google sign-in failed: " + error.message);
+                                    document.getElementById('loadingIndicator').style.display = 'none';
+                                }
+                            });
+                    }
                 });
             }
 

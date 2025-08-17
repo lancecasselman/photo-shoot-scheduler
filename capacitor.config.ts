@@ -6,10 +6,16 @@ const config: CapacitorConfig = {
   appName: 'Photo Shoot Scheduler',
   webDir: 'public',
   server: {
-    androidScheme: 'https'
+    androidScheme: 'https',
+    hostname: 'localhost',
+    allowNavigation: [
+      'https://photoshcheduleapp.firebaseapp.com',
+      'https://*.replit.dev',
+      'https://*.firebaseapp.com'
+    ]
   },
   ios: {
-    scheme: 'Photo Shoot Scheduler',
+    scheme: 'photoshootscheduler',
     contentInset: 'automatic'
   },
   android: {

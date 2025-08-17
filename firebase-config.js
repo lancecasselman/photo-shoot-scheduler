@@ -9,6 +9,19 @@ const firebaseConfig = {
     measurementId: "G-MB2KDEFRHL"
 };
 
+// Mobile-specific Firebase configuration
+function configureMobileAuth() {
+    if (window.firebaseAuth) {
+        // Enable persistence for mobile
+        firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+        
+        // Configure auth settings for mobile
+        window.firebaseAuth.useDeviceLanguage();
+        
+        console.log('Mobile Firebase auth configured');
+    }
+}
+
 // Initialize Firebase with improved error handling and duplicate prevention
 (function() {
     try {
@@ -36,6 +49,9 @@ const firebaseConfig = {
             // Set global references for compatibility
             window.firebaseAuth = firebase.auth();
             // Firebase storage removed - using R2 exclusively
+            
+            // Configure mobile auth
+            configureMobileAuth();
         } else {
             // Initialize Firebase for the first time
             firebase.initializeApp(firebaseConfig);
@@ -45,6 +61,9 @@ const firebaseConfig = {
             window.firebaseAuth = firebase.auth();
             // Firebase storage removed - using R2 exclusively
             window.firebaseInitialized = true;
+            
+            // Configure mobile auth
+            configureMobileAuth();
         }
     } catch (error) {
         console.error('Firebase initialization error:', error);
