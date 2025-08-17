@@ -44,7 +44,14 @@ The app includes Firebase authentication with these settings:
 - **Bundle ID**: com.thelegacyphotography.photomanager
 - **GoogleService-Info.plist** is already configured
 
-### 5. App Permissions
+### 5. Firebase Configuration
+The app includes complete Firebase setup:
+- **GoogleService-Info.plist**: Properly configured and included in Xcode project
+- **Bundle ID**: `com.thelegacyphotography.photomanager` (matches Firebase configuration)
+- **Firebase Authentication**: Google OAuth configured
+- **URL Schemes**: Configured for Firebase OAuth redirects
+
+### 6. App Permissions
 The following permissions are configured:
 - **Camera**: Photo capture for sessions
 - **Photo Library**: Portfolio management
@@ -52,7 +59,7 @@ The following permissions are configured:
 - **Microphone**: Video recording (optional)
 - **Location**: Session location tagging
 
-### 6. Build & Test
+### 7. Build & Test
 
 #### Simulator Testing
 1. Select iOS Simulator (iPhone 15 Pro recommended)
@@ -64,7 +71,7 @@ The following permissions are configured:
 3. Click **Build and Run** (⌘+R)
 4. Trust developer certificate on device if prompted
 
-### 7. App Store Distribution
+### 8. App Store Distribution
 
 #### Archive for Distribution
 1. Select **Any iOS Device** as target
