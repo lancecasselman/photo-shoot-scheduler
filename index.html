@@ -6357,43 +6357,6 @@ ${contract.contract_content}
             }
         }
 
-        // Missing function: toggleWorkflowStatus
-        async function toggleWorkflowStatus(sessionId, field, checked) {
-            try {
-                console.log(`Updating ${field} to ${checked} for session ${sessionId}`);
-                
-                const response = await fetch(`/api/sessions/${sessionId}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        [field]: checked
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Failed to update session: ${response.status}`);
-                }
-
-                const result = await response.json();
-                showMessage(`${field} updated successfully`, 'success');
-                
-                // Refresh sessions to get updated data
-                await loadSessions();
-                
-            } catch (error) {
-                console.error(`Error updating ${field}:`, error);
-                showMessage(`Failed to update ${field}`, 'error');
-                
-                // Revert checkbox state on error
-                const checkbox = document.getElementById(`${field}_${sessionId}`);
-                if (checkbox) {
-                    checkbox.checked = !checked;
-                }
-            }
-        }
-
         window.renderSessions = function renderSessions() {
             // SORT SESSIONS BY APPOINTMENT DATE BEFORE RENDERING
             if (window.sessions && Array.isArray(window.sessions) && window.sessions.length > 0) {
@@ -12659,12 +12622,6 @@ END:VCALENDAR`;
                         <div style="padding: 20px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #ffc107;">
                             <h3 style="margin-top: 0;">Storage Usage</h3>
                             <div id="storageUsage">Loading storage information...</div>
-                            <script>
-                                // Load storage quota information when settings are loaded
-                                setTimeout(() => {
-                                    loadStorageQuotaDisplay();
-                                }, 500);
-                            </script>
                         </div>
                         
                         <div style="padding: 20px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #6f42c1;">
@@ -12770,63 +12727,6 @@ END:VCALENDAR`;
             console.log('Refreshing global storage stats...');
             await window.loadGlobalStorageStats();
             showMessage('Storage statistics refreshed!', 'success');
-        }
-
-        // Load storage quota information for Settings page
-        window.loadStorageQuotaDisplay = async function() {
-            try {
-                console.log('Loading storage quota display...');
-                
-                const response = await fetch('/api/storage/summary', {
-                    credentials: 'include'
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Failed to fetch storage quota');
-                }
-                
-                const quotaData = await response.json();
-                console.log('Storage quota data received:', quotaData);
-                
-                const usagePercentage = (quotaData.currentUsageGB / quotaData.quotaGB) * 100;
-                const progressBarColor = usagePercentage >= 90 ? '#dc3545' : usagePercentage >= 75 ? '#ffc107' : '#28a745';
-                
-                document.getElementById('storageUsage').innerHTML = `
-                    <div style="margin-bottom: 15px;">
-                        <p style="margin: 0; color: #666; font-size: 14px;">
-                            <strong>${quotaData.currentUsageGB.toFixed(2)} GB</strong> of <strong>${quotaData.quotaGB.toFixed(0)} GB</strong> used
-                        </p>
-                        <div style="background: #e9ecef; border-radius: 4px; height: 8px; margin: 8px 0;">
-                            <div style="background: ${progressBarColor}; height: 100%; border-radius: 4px; width: ${Math.min(usagePercentage, 100)}%; transition: width 0.3s ease;"></div>
-                        </div>
-                        <p style="margin: 0; color: #666; font-size: 12px;">
-                            ${usagePercentage.toFixed(1)}% of total storage used
-                        </p>
-                    </div>
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <button onclick="window.open('/storage-dashboard.html', '_blank')" class="btn btn-primary" style="font-size: 12px; padding: 6px 12px;">
-                            Manage Storage
-                        </button>
-                        <button onclick="loadStorageQuotaDisplay()" class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px;">
-                            Refresh
-                        </button>
-                    </div>
-                `;
-                
-                console.log('Storage quota display updated successfully');
-                
-            } catch (error) {
-                console.error('Error loading storage quota display:', error);
-                
-                document.getElementById('storageUsage').innerHTML = `
-                    <div style="color: #666;">
-                        <p style="margin: 0;">Unable to load storage information</p>
-                        <button onclick="loadStorageQuotaDisplay()" class="btn btn-secondary" style="font-size: 12px; padding: 6px 12px; margin-top: 10px;">
-                            Try Again
-                        </button>
-                    </div>
-                `;
-            }
         }
 
         // Golden Hour Times Functionality

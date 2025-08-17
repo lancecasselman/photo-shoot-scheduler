@@ -800,7 +800,7 @@
         // Storage quota checking function
         async function checkStorageQuota(fileSizeBytes) {
             try {
-                const response = await fetch('/api/storage/summary', {
+                const response = await fetch('/api/storage/quota', {
                     credentials: 'include'
                 });
                 
@@ -809,20 +809,22 @@
                     return true; // Allow upload if we can't check quota
                 }
                 
-                const quotaData = await response.json();
+                const result = await response.json();
                 
-                if (!quotaData || typeof quotaData.quotaGB === 'undefined') {
-                    console.warn('Storage quota data invalid, allowing upload');
-                    return true; // Allow upload if quota data is invalid
+                if (!result.success) {
+                    console.warn('Storage quota check failed:', result.error);
+                    return true; // Allow upload if quota check failed
                 }
+                
+                const quotaData = result.data;
                 const fileSizeGB = fileSizeBytes / (1024 * 1024 * 1024);
-                const wouldExceedQuota = (quotaData.currentUsageGB + fileSizeGB) > quotaData.quotaGB;
+                const wouldExceedQuota = (quotaData.usedStorageGB + fileSizeGB) > quotaData.totalQuotaGB;
                 
                 if (wouldExceedQuota) {
                     const upgradeMessage = `
                         ❌ Upload blocked - Storage quota exceeded!
                         
-                        Current usage: ${quotaData.currentUsageGB.toFixed(2)} GB / ${quotaData.quotaGB.toFixed(0)} GB
+                        Current usage: ${quotaData.usedStorageGB.toFixed(2)} GB / ${quotaData.totalQuotaGB.toFixed(0)} GB
                         File size: ${fileSizeGB.toFixed(2)} GB
                         
                         You need more storage to upload this file.
@@ -838,8 +840,7 @@
                 }
                 
                 // Show warning if approaching limit (90%+)
-                const usagePercentage = (quotaData.currentUsageGB / quotaData.quotaGB) * 100;
-                if (usagePercentage >= 90) {
+                if (quotaData.usagePercentage >= 90) {
                     const warningMessage = `
                          Storage nearly full!
                         
