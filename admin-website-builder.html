@@ -296,7 +296,7 @@
     <div id="adminBuilder" class="admin-builder-container" style="display: none;">
         <!-- Header -->
         <header class="admin-header">
-            <h1>Admin Website Builder</h1>
+            <h1>Landing Page Editor</h1>
             <div class="admin-actions">
                 <select id="templateSelect" class="btn btn-secondary">
                     <option value="">Choose Template</option>
@@ -304,9 +304,9 @@
                     <option value="classic-portfolio">Classic Portfolio</option>
                     <option value="minimal-gallery">Minimal Gallery</option>
                 </select>
-                <button class="btn btn-secondary" onclick="previewWebsite()">Preview</button>
-                <button class="btn btn-primary" onclick="saveAdminWebsite()">Save Website</button>
-                <button class="btn btn-secondary" onclick="publishWebsite()">Publish</button>
+                <button class="btn btn-secondary" onclick="previewWebsite()">Preview Changes</button>
+                <button class="btn btn-primary" onclick="saveAdminWebsite()">Save Landing Page</button>
+                <button class="btn btn-secondary" onclick="publishWebsite()">View Live Page</button>
             </div>
         </header>
 
@@ -315,10 +315,11 @@
             <!-- Full Screen Preview -->
             <div class="preview-container">
                 <div id="adminPreviewFrame" class="preview-frame">
-                    <!-- Website content will be rendered here -->
+                    <!-- Landing page content will be loaded here for editing -->
                     <div style="padding: 60px 20px; text-align: center; color: #718096;">
-                        <h2>Welcome to Admin Website Builder</h2>
-                        <p>Start building by selecting a template or adding components from the toolbar below.</p>
+                        <div class="loading-spinner"></div>
+                        <h2>Loading Landing Page Content...</h2>
+                        <p>Loading the actual landing page for direct editing.</p>
                     </div>
                 </div>
             </div>
@@ -456,7 +457,7 @@
         function initializeAdminBuilder() {
             console.log('Admin Website Builder initialized');
             setupDragAndDrop();
-            loadSavedWebsite();
+            loadLandingPageContent();
         }
 
         // Setup drag and drop functionality
@@ -545,24 +546,53 @@
             };
         }
 
-        // Save admin website
+        // Save admin website changes back to landing.html
         function saveAdminWebsite() {
-            console.log('Saving admin website...', adminWebsiteData);
+            console.log('Saving landing page changes...');
             
-            // Save to localStorage for now
-            localStorage.setItem('adminWebsiteData', JSON.stringify(adminWebsiteData));
+            const previewFrame = document.getElementById('adminPreviewFrame');
+            const content = previewFrame.innerHTML;
             
-            // Show success message
-            showMessage('Website saved successfully!', 'success');
+            fetch('/api/admin/save-landing', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ content: content })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage('Landing page saved successfully!', 'success');
+                } else {
+                    showMessage('Failed to save landing page', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error saving landing page:', error);
+                showMessage('Error saving landing page', 'error');
+            });
         }
 
-        // Load saved website
-        function loadSavedWebsite() {
-            const saved = localStorage.getItem('adminWebsiteData');
-            if (saved) {
-                adminWebsiteData = JSON.parse(saved);
-                renderSavedComponents();
-            }
+        // Load the actual landing page content
+        function loadLandingPageContent() {
+            fetch('/api/admin/landing-content')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const previewFrame = document.getElementById('adminPreviewFrame');
+                        previewFrame.innerHTML = data.content;
+                        makeContentEditable();
+                        console.log('Loaded landing page content for editing');
+                    } else {
+                        console.error('Failed to load landing page content');
+                        showMessage('Failed to load landing page', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading landing page:', error);
+                    showMessage('Error loading landing page', 'error');
+                });
         }
 
         // Render saved components
@@ -599,10 +629,88 @@
             `);
         }
 
-        // Publish website
+        // Make landing page content editable
+        function makeContentEditable() {
+            const previewFrame = document.getElementById('adminPreviewFrame');
+            
+            // Make text elements editable
+            const editableSelectors = [
+                'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+                'p', 'span', 'div.text-content',
+                '.hero-title', '.hero-subtitle', '.section-title',
+                '.feature-title', '.feature-description',
+                '.testimonial-text', '.cta-text'
+            ];
+            
+            editableSelectors.forEach(selector => {
+                const elements = previewFrame.querySelectorAll(selector);
+                elements.forEach(element => {
+                    // Skip if already has contenteditable or is a container
+                    if (element.hasAttribute('contenteditable') || 
+                        element.children.length > 0 && 
+                        !element.classList.contains('text-content')) {
+                        return;
+                    }
+                    
+                    element.contentEditable = true;
+                    element.style.outline = 'none';
+                    element.style.cursor = 'text';
+                    
+                    // Add editing indicators
+                    element.addEventListener('focus', function() {
+                        this.style.backgroundColor = 'rgba(102, 126, 234, 0.1)';
+                        this.style.border = '2px dashed #667eea';
+                    });
+                    
+                    element.addEventListener('blur', function() {
+                        this.style.backgroundColor = '';
+                        this.style.border = '';
+                    });
+                });
+            });
+            
+            // Make images clickable for replacement
+            const images = previewFrame.querySelectorAll('img');
+            images.forEach(img => {
+                img.style.cursor = 'pointer';
+                img.addEventListener('click', function() {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.onchange = function(e) {
+                        const file = e.target.files[0];
+                        if (file) {
+                            const reader = new FileReader();
+                            reader.onload = function(e) {
+                                img.src = e.target.result;
+                                showMessage('Image updated', 'success');
+                            };
+                            reader.readAsDataURL(file);
+                        }
+                    };
+                    input.click();
+                });
+                
+                // Add hover effect
+                img.addEventListener('mouseenter', function() {
+                    this.style.border = '2px dashed #667eea';
+                    this.style.opacity = '0.8';
+                });
+                
+                img.addEventListener('mouseleave', function() {
+                    this.style.border = '';
+                    this.style.opacity = '1';
+                });
+            });
+            
+            console.log('Made landing page content editable');
+        }
+
+        // Publish website (reload landing page to show changes)
         function publishWebsite() {
-            console.log('Publishing admin website...');
-            showMessage('Website published successfully!', 'success');
+            console.log('Publishing landing page changes...');
+            window.open('/landing.html', '_blank');
+            showMessage('Opening landing page to view changes', 'success');
         }
 
         // Show message to user
