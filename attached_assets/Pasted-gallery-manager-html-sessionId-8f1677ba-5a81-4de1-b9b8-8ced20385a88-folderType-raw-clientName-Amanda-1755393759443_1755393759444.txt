@@ -1,0 +1,64 @@
+gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:1466 PhotoDeletion system initialized
+gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:538 URL Parameters: Object
+gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:515 Session data loaded: Object
+gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:522 Client: Amanda casselman, Email: amandacasselman55@yahoo.com, Phone: 18434617260
+gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:956 Loaded 0 files for raw folder
+gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:1494 Storage stats updated: Object
+gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:723 Starting upload for DSC_4691.tif, size: 272673944
+gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:724 Session ID: 8f1677ba-5a81-4de1-b9b8-8ced20385a88, Folder Type: raw
+gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:723 Starting upload for DSC_4753.tif, size: 221019554
+gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:724 Session ID: 8f1677ba-5a81-4de1-b9b8-8ced20385a88, Folder Type: raw
+/api/storage/quota:1   Failed to load resource: the server responded with a status of 404 (Not Found)
+gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:808  Failed to check storage quota, allowing upload
+checkStorageQuota @ gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:808
+/api/storage/quota:1   Failed to load resource: the server responded with a status of 404 (Not Found)
+gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:808  Failed to check storage quota, allowing upload
+checkStorageQuota @ gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:808
+/api/sessions/8f1677ba-5a81-4de1-b9b8-8ced20385a88/files/raw/upload-direct:1   Failed to load resource: the server responded with a status of 413 (Request Entity Too Large)
+gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:747 Upload response status: 413
+gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:751  Upload response error: {"error":"Storage quota exceeded","currentUsageGB":0,"quotaGB":null,"requiredGB":0.206,"message":"Upload would exceed your NaNGB storage limit. Please upgrade your storage plan to continue."}
+uploadFile @ gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:751
+gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:789  Upload error for DSC_4753.tif : Error: Storage quota exceeded
+    at uploadFile (gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:765:35)
+    at async Promise.all (/index 1)
+    at async processUploadQueue (gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:647:21)
+uploadFile @ gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:789
+/api/sessions/8f1677ba-5a81-4de1-b9b8-8ced20385a88/files/raw/upload-direct:1   Failed to load resource: the server responded with a status of 413 (Request Entity Too Large)
+gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:747 Upload response status: 413
+gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:751  Upload response error: {"error":"Storage quota exceeded","currentUsageGB":0,"quotaGB":null,"requiredGB":0.254,"message":"Upload would exceed your NaNGB storage limit. Please upgrade your storage plan to continue."}
+uploadFile @ gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:751
+gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:789  Upload error for DSC_4691.tif : Error: Storage quota exceeded
+    at uploadFile (gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:765:35)
+    at async Promise.all (/index 0)
+    at async processUploadQueue (gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:647:21)
+uploadFile @ gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:789
+gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:723 Starting upload for DSC_5071.tif, size: 177198854
+gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:724 Session ID: 8f1677ba-5a81-4de1-b9b8-8ced20385a88, Folder Type: raw
+gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:723 Starting upload for DSC_5144.tif, size: 272681444
+gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:724 Session ID: 8f1677ba-5a81-4de1-b9b8-8ced20385a88, Folder Type: raw
+/api/storage/quota:1   Failed to load resource: the server responded with a status of 404 (Not Found)
+gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:808  Failed to check storage quota, allowing upload
+checkStorageQuota @ gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:808
+/api/storage/quota:1   Failed to load resource: the server responded with a status of 404 (Not Found)
+gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:808  Failed to check storage quota, allowing upload
+checkStorageQuota @ gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:808
+/api/sessions/8f1677ba-5a81-4de1-b9b8-8ced20385a88/files/raw/upload-direct:1   Failed to load resource: the server responded with a status of 413 (Request Entity Too Large)
+gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:747 Upload response status: 413
+gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:751  Upload response error: {"error":"Storage quota exceeded","currentUsageGB":0,"quotaGB":null,"requiredGB":0.165,"message":"Upload would exceed your NaNGB storage limit. Please upgrade your storage plan to continue."}
+uploadFile @ gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:751
+gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:789  Upload error for DSC_5071.tif : Error: Storage quota exceeded
+    at uploadFile (gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:765:35)
+    at async Promise.all (/index 0)
+    at async processUploadQueue (gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:647:21)
+uploadFile @ gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:789
+/api/sessions/8f1677ba-5a81-4de1-b9b8-8ced20385a88/files/raw/upload-direct:1   Failed to load resource: the server responded with a status of 413 (Request Entity Too Large)
+gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:747 Upload response status: 413
+gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:751  Upload response error: {"error":"Storage quota exceeded","currentUsageGB":0,"quotaGB":null,"requiredGB":0.254,"message":"Upload would exceed your NaNGB storage limit. Please upgrade your storage plan to continue."}
+uploadFile @ gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:751
+gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:789  Upload error for DSC_5144.tif : Error: Storage quota exceeded
+    at uploadFile (gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:765:35)
+    at async Promise.all (/index 1)
+    at async processUploadQueue (gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:647:21)
+uploadFile @ gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:789
+gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:956 Loaded 0 files for raw folder
+gallery-manager.html?sessionId=8f1677ba-5a81-4de1-b9b8-8ced20385a88&folderType=raw&clientName=Amanda%20casselman:1494 Storage stats updated: Object

@@ -6357,6 +6357,43 @@ ${contract.contract_content}
             }
         }
 
+        // Missing function: toggleWorkflowStatus
+        async function toggleWorkflowStatus(sessionId, field, checked) {
+            try {
+                console.log(`Updating ${field} to ${checked} for session ${sessionId}`);
+                
+                const response = await fetch(`/api/sessions/${sessionId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        [field]: checked
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to update session: ${response.status}`);
+                }
+
+                const result = await response.json();
+                showMessage(`${field} updated successfully`, 'success');
+                
+                // Refresh sessions to get updated data
+                await loadSessions();
+                
+            } catch (error) {
+                console.error(`Error updating ${field}:`, error);
+                showMessage(`Failed to update ${field}`, 'error');
+                
+                // Revert checkbox state on error
+                const checkbox = document.getElementById(`${field}_${sessionId}`);
+                if (checkbox) {
+                    checkbox.checked = !checked;
+                }
+            }
+        }
+
         window.renderSessions = function renderSessions() {
             // SORT SESSIONS BY APPOINTMENT DATE BEFORE RENDERING
             if (window.sessions && Array.isArray(window.sessions) && window.sessions.length > 0) {
