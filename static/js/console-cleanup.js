@@ -108,7 +108,8 @@
     window.addEventListener('unhandledrejection', function(e) {
         const reason = e.reason || e.detail || 'Unknown error';
         
-        if (isProduction && shouldSuppress(String(reason))) {
+        // Only suppress in production and if shouldSuppress function is available
+        if (isProduction && typeof shouldSuppress === 'function' && shouldSuppress(String(reason))) {
             e.preventDefault();
         }
     });
