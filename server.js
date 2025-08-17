@@ -1264,7 +1264,7 @@ app.post('/api/sessions/:sessionId/files/upload', isAuthenticated, async (req, r
 const uploadMemory = multer({
     storage: multer.memoryStorage(),
     limits: {
-        fileSize: 5 * 1024 * 1024 * 1024, // 5GB per file for R2
+        fileSize: 5 * 1024 * 1024 * 1024, // 5GB per file limit (technical R2 limit)
         files: 100
     },
     fileFilter: (req, file, cb) => {

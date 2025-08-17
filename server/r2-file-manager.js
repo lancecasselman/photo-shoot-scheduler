@@ -767,10 +767,14 @@ class R2FileManager {
 
   /**
    * Check if user can upload given amount of data within storage limits
+   * NOTE: This method is deprecated - storage validation should use the new StorageSystem
+   * Kept for backward compatibility but returns permissive results
    */
   async checkStorageLimit(userId, additionalBytes) {
     try {
-      const maxStorageBytes = 1024 * 1024 * 1024 * 1024; // 1TB in bytes
+      // DEPRECATED: This method is superseded by the StorageSystem class
+      // All proper storage validation should happen in server.js via storageSystem.canUpload()
+      console.log('⚠️ checkStorageLimit called - consider using StorageSystem.canUpload() instead');
       
       // Get current usage from actual storage calculation
       let currentUsageBytes = 0;
@@ -787,26 +791,15 @@ class R2FileManager {
       const totalAfterUpload = currentUsageBytes + additionalBytes;
       const additionalGB = additionalBytes / (1024**3);
       
-      console.log(`📤 Upload check: Current: ${(currentUsageBytes / (1024**3)).toFixed(2)} GB, Additional: ${additionalGB.toFixed(2)} GB, Total after: ${(totalAfterUpload / (1024**3)).toFixed(2)} GB`);
+      console.log(`📤 Legacy upload check: Current: ${(currentUsageBytes / (1024**3)).toFixed(2)} GB, Additional: ${additionalGB.toFixed(2)} GB, Total after: ${(totalAfterUpload / (1024**3)).toFixed(2)} GB`);
       
-      if (totalAfterUpload > maxStorageBytes) {
-        return {
-          allowed: false,
-          message: `Upload would exceed 1TB storage limit. Current: ${(currentUsageBytes / (1024**3)).toFixed(2)} GB, Upload: ${additionalGB.toFixed(2)} GB, Total: ${(totalAfterUpload / (1024**3)).toFixed(2)} GB`,
-          usage: {
-            current: currentUsageBytes,
-            limit: maxStorageBytes,
-            afterUpload: totalAfterUpload
-          }
-        };
-      }
-      
+      // Return permissive result - actual quota enforcement happens in StorageSystem
       return {
         allowed: true,
-        message: `Upload within storage limits. Current: ${(currentUsageBytes / (1024**3)).toFixed(2)} GB, After upload: ${(totalAfterUpload / (1024**3)).toFixed(2)} GB`,
+        message: `Legacy check - defer to StorageSystem for quota enforcement. Current: ${(currentUsageBytes / (1024**3)).toFixed(2)} GB, After upload: ${(totalAfterUpload / (1024**3)).toFixed(2)} GB`,
         usage: {
           current: currentUsageBytes,
-          limit: maxStorageBytes,
+          limit: 100 * 1024 * 1024 * 1024, // 100GB base limit for reference
           afterUpload: totalAfterUpload
         }
       };

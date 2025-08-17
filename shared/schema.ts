@@ -197,14 +197,14 @@ export const r2Files = pgTable("r2_files", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Storage quota tracking per user (5GB free + 1TB packages at $25/month each)
+// Storage quota tracking per user (100GB free + 1TB packages at $25/month each)
 export const userStorageQuotas = pgTable("user_storage_quotas", {
   id: varchar("id").primaryKey().notNull(),
   userId: varchar("user_id").notNull().unique().references(() => users.id),
-  freeStorageGB: decimal("free_storage_gb", { precision: 10, scale: 3 }).notNull().default("5.000"), // 5GB free
+  freeStorageGB: decimal("free_storage_gb", { precision: 10, scale: 3 }).notNull().default("100.000"), // 100GB free
   usedStorageBytes: varchar("used_storage_bytes").notNull().default("0"), // Current usage in bytes
   usedStorageGB: decimal("used_storage_gb", { precision: 12, scale: 3 }).notNull().default("0"), // Current usage in GB
-  totalQuotaGB: decimal("total_quota_gb", { precision: 12, scale: 3 }).notNull().default("5.000"), // Free + purchased
+  totalQuotaGB: decimal("total_quota_gb", { precision: 12, scale: 3 }).notNull().default("100.000"), // Free + purchased
   purchasedPackages: integer("purchased_packages").notNull().default(0), // Number of 1TB packages purchased
   monthlyStorageCost: decimal("monthly_storage_cost", { precision: 10, scale: 2 }).notNull().default("0.00"),
   quotaStatus: varchar("quota_status").notNull().default("active"), // active, warning, overlimit, suspended

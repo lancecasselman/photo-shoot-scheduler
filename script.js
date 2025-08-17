@@ -1860,7 +1860,7 @@ function setupUploadModal(sessionId) {
     function handleFileSelection(files) {
         selectedFiles = Array.from(files).filter(file => {
             // Accept all file types - no restrictions for photographers
-            if (file.size > 5 * 1024 * 1024 * 1024) { // 5GB per file limit (Cloudflare R2 limit)
+            if (file.size > 5 * 1024 * 1024 * 1024) { // 5GB per file limit (Cloudflare R2 technical limit)
                 showMessage(`${file.name} is too large (max 5GB per file)`, 'error');
                 return false;
             }
