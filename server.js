@@ -773,9 +773,9 @@ app.use(session({
     saveUninitialized: false,
     cookie: {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production', // Auto-detect HTTPS in production
+        secure: false, // Always false for Replit/Safari compatibility
         maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax' // Allow cross-site for production
+        sameSite: 'lax' // Always lax for Safari compatibility
     }
 }));
 

@@ -38,8 +38,9 @@ export function getSession() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: true,
+      secure: false, // Changed for Replit/Safari compatibility
       maxAge: sessionTtl,
+      sameSite: 'lax', // Added for Safari compatibility
     },
   });
 }
