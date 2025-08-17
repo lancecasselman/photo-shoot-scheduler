@@ -11789,6 +11789,12 @@ END:VCALENDAR`;
         
         // Check subscription status on load
         async function checkSubscriptionStatus() {
+            // Skip subscription check if user not authenticated
+            if (!window.currentUser) {
+                console.log('User not authenticated - skipping subscription check');
+                return;
+            }
+            
             try {
                 const response = await fetch('/api/subscription-status');
                 const data = await response.json();

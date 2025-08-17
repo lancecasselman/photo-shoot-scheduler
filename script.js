@@ -347,6 +347,12 @@ async function createAPISession(sessionData) {
 
 // Load sessions from API
 async function loadSessions() {
+    // Check if user is authenticated before making API calls
+    if (!currentUser) {
+        console.log('User not authenticated - skipping session load');
+        return;
+    }
+    
     try {
         console.log('Loading sessions from API...');
 
@@ -1646,8 +1652,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Load sessions on page load
-    loadSessions();
+    // Load sessions only if user is authenticated
+    if (currentUser) {
+        loadSessions();
+    }
 });
 
 // Update session via API

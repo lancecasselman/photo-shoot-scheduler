@@ -129,6 +129,12 @@ function closeBookingAgreementModal() {
 
 // Load agreement templates
 async function loadAgreementTemplates() {
+    // Skip loading if user not authenticated
+    if (!window.currentUser) {
+        console.log('User not authenticated - skipping template load');
+        return;
+    }
+    
     try {
         console.log('Loading booking agreement templates...');
         const response = await fetch('/api/booking/templates');
