@@ -12,13 +12,14 @@
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
+        // Get Firebase config from environment variables
         const firebaseConfig = {
-            apiKey: "AIzaSyBB6_nBfGFKQG2mKuYSe8sGz3LCmOw2m_Y",
-            authDomain: "photoshcheduleapp.firebaseapp.com", 
-            projectId: "photoshcheduleapp",
-            storageBucket: "photoshcheduleapp.appspot.com",
+            apiKey: window.VITE_FIREBASE_API_KEY || "AIzaSyBB6_nBfGFKQG2mKuYSe8sGz3LCmOw2m_Y",
+            authDomain: `${window.VITE_FIREBASE_PROJECT_ID || "photoshcheduleapp"}.firebaseapp.com`,
+            projectId: window.VITE_FIREBASE_PROJECT_ID || "photoshcheduleapp",
+            storageBucket: `${window.VITE_FIREBASE_PROJECT_ID || "photoshcheduleapp"}.appspot.com`,
             messagingSenderId: "982529899883",
-            appId: "1:982529899883:web:6d3fb6b50eb6c1b8caeda3"
+            appId: window.VITE_FIREBASE_APP_ID || "1:982529899883:web:6d3fb6b50eb6c1b8caeda3"
         };
 
         window.firebaseApp = initializeApp(firebaseConfig);
