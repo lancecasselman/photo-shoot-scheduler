@@ -526,6 +526,220 @@ class UnifiedSubscriptionManager {
         return { valid: false, purchase: null };
     }
 
+    /**
+     * Cancel user's subscription - All platforms
+     */
+    async cancelUserSubscription(userId, subscriptionId, cancellationReason = 'user_requested') {
+        const client = await this.pool.connect();
+        try {
+            // Get subscription details
+            const subResult = await client.query(
+                'SELECT * FROM subscriptions WHERE id = $1 AND user_id = $2',
+                [subscriptionId, userId]
+            );
+
+            if (subResult.rows.length === 0) {
+                throw new Error('Subscription not found');
+            }
+
+            const subscription = subResult.rows[0];
+
+            // Handle platform-specific cancellation
+            if (subscription.platform === 'stripe') {
+                return await this.cancelStripeSubscription(userId, subscription, cancellationReason);
+            } else if (subscription.platform === 'apple_iap') {
+                return await this.cancelAppleSubscription(userId, subscription, cancellationReason);
+            } else if (subscription.platform === 'google_play') {
+                return await this.cancelGooglePlaySubscription(userId, subscription, cancellationReason);
+            }
+
+            throw new Error(`Unsupported platform: ${subscription.platform}`);
+        } finally {
+            client.release();
+        }
+    }
+
+    /**
+     * Cancel all user subscriptions (Professional + Storage add-ons)
+     */
+    async cancelAllUserSubscriptions(userId, cancellationReason = 'user_requested') {
+        const client = await this.pool.connect();
+        try {
+            // Get all active subscriptions
+            const result = await client.query(
+                'SELECT * FROM subscriptions WHERE user_id = $1 AND status = $2',
+                [userId, 'active']
+            );
+
+            const cancellationResults = [];
+
+            for (const subscription of result.rows) {
+                try {
+                    const cancelResult = await this.cancelUserSubscription(userId, subscription.id, cancellationReason);
+                    cancellationResults.push({
+                        subscriptionId: subscription.id,
+                        subscriptionType: subscription.subscription_type,
+                        success: true,
+                        result: cancelResult
+                    });
+                } catch (error) {
+                    console.error(`❌ Failed to cancel subscription ${subscription.id}:`, error);
+                    cancellationResults.push({
+                        subscriptionId: subscription.id,
+                        subscriptionType: subscription.subscription_type,
+                        success: false,
+                        error: error.message
+                    });
+                }
+            }
+
+            // Update user summary
+            await this.updateUserSummary(userId);
+
+            return {
+                success: true,
+                totalSubscriptions: result.rows.length,
+                cancelledCount: cancellationResults.filter(r => r.success).length,
+                failedCount: cancellationResults.filter(r => !r.success).length,
+                results: cancellationResults
+            };
+
+        } finally {
+            client.release();
+        }
+    }
+
+    /**
+     * Cancel Stripe subscription
+     */
+    async cancelStripeSubscription(userId, subscription, cancellationReason) {
+        try {
+            // Cancel subscription in Stripe
+            const cancelledSubscription = await stripe.subscriptions.cancel(subscription.external_subscription_id, {
+                prorate: true // Give prorated refund
+            });
+
+            console.log(`✅ Stripe subscription cancelled: ${subscription.external_subscription_id}`);
+
+            // Update database
+            const client = await this.pool.connect();
+            try {
+                await client.query(
+                    'UPDATE subscriptions SET status = $1, cancellation_reason = $2, cancelled_at = NOW() WHERE id = $3',
+                    ['cancelled', cancellationReason, subscription.id]
+                );
+
+                // Log cancellation event
+                await this.logSubscriptionEvent({
+                    subscriptionId: subscription.id,
+                    eventType: 'subscription_cancelled',
+                    platform: 'stripe',
+                    externalEventId: null,
+                    eventData: {
+                        reason: cancellationReason,
+                        cancelled_by: 'user',
+                        stripe_subscription_id: subscription.external_subscription_id
+                    }
+                });
+
+            } finally {
+                client.release();
+            }
+
+            return {
+                success: true,
+                platform: 'stripe',
+                subscriptionType: subscription.subscription_type,
+                effectiveDate: cancelledSubscription.canceled_at ? new Date(cancelledSubscription.canceled_at * 1000) : new Date(),
+                proratedRefund: cancelledSubscription.latest_invoice?.amount_paid || 0
+            };
+
+        } catch (error) {
+            console.error('❌ Error cancelling Stripe subscription:', error);
+            throw new Error(`Failed to cancel Stripe subscription: ${error.message}`);
+        }
+    }
+
+    /**
+     * Cancel Apple IAP subscription
+     */
+    async cancelAppleSubscription(userId, subscription, cancellationReason) {
+        // For Apple IAP, we can't cancel from server - user must cancel via App Store
+        // We just mark it for cancellation and it will expire at period end
+        
+        const client = await this.pool.connect();
+        try {
+            await client.query(
+                'UPDATE subscriptions SET status = $1, cancellation_reason = $2, cancelled_at = NOW() WHERE id = $3',
+                ['pending_cancellation', cancellationReason, subscription.id]
+            );
+
+            await this.logSubscriptionEvent({
+                subscriptionId: subscription.id,
+                eventType: 'subscription_cancellation_requested',
+                platform: 'apple_iap',
+                externalEventId: null,
+                eventData: {
+                    reason: cancellationReason,
+                    cancelled_by: 'user',
+                    note: 'User must complete cancellation in App Store'
+                }
+            });
+
+            return {
+                success: true,
+                platform: 'apple_iap',
+                subscriptionType: subscription.subscription_type,
+                status: 'pending_cancellation',
+                message: 'Subscription marked for cancellation. Please cancel in the App Store to complete.',
+                expiresAt: subscription.current_period_end
+            };
+
+        } finally {
+            client.release();
+        }
+    }
+
+    /**
+     * Cancel Google Play subscription
+     */
+    async cancelGooglePlaySubscription(userId, subscription, cancellationReason) {
+        // For Google Play, we can't cancel from server - user must cancel via Play Store
+        // We just mark it for cancellation and it will expire at period end
+        
+        const client = await this.pool.connect();
+        try {
+            await client.query(
+                'UPDATE subscriptions SET status = $1, cancellation_reason = $2, cancelled_at = NOW() WHERE id = $3',
+                ['pending_cancellation', cancellationReason, subscription.id]
+            );
+
+            await this.logSubscriptionEvent({
+                subscriptionId: subscription.id,
+                eventType: 'subscription_cancellation_requested',
+                platform: 'google_play',
+                externalEventId: null,
+                eventData: {
+                    reason: cancellationReason,
+                    cancelled_by: 'user',
+                    note: 'User must complete cancellation in Play Store'
+                }
+            });
+
+            return {
+                success: true,
+                platform: 'google_play',
+                subscriptionType: subscription.subscription_type,
+                status: 'pending_cancellation',
+                message: 'Subscription marked for cancellation. Please cancel in the Play Store to complete.',
+                expiresAt: subscription.current_period_end
+            };
+
+        } finally {
+            client.release();
+        }
+    }
+
     extractStorageFromProductId(productId) {
         // Extract TB count from product ID like "storage_1tb" or "storage_5tb"
         const match = productId.match(/storage_(\d+)tb/);

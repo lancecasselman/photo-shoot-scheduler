@@ -187,6 +187,52 @@ function createSubscriptionRoutes(pool) {
         });
     }
 
+    // Cancel specific subscription
+    router.post('/cancel/:subscriptionId', async (req, res) => {
+        try {
+            if (!req.session?.user?.uid) {
+                return res.status(401).json({ success: false, error: 'Authentication required' });
+            }
+
+            const { subscriptionId } = req.params;
+            const { reason } = req.body;
+            const userId = req.session.user.uid;
+
+            const result = await subscriptionManager.cancelUserSubscription(
+                userId, 
+                subscriptionId, 
+                reason || 'user_requested'
+            );
+            
+            res.json({ success: true, result });
+        } catch (error) {
+            console.error('Error cancelling subscription:', error);
+            res.status(500).json({ success: false, error: error.message });
+        }
+    });
+
+    // Cancel all user subscriptions
+    router.post('/cancel-all', async (req, res) => {
+        try {
+            if (!req.session?.user?.uid) {
+                return res.status(401).json({ success: false, error: 'Authentication required' });
+            }
+
+            const { reason } = req.body;
+            const userId = req.session.user.uid;
+
+            const result = await subscriptionManager.cancelAllUserSubscriptions(
+                userId, 
+                reason || 'user_requested'
+            );
+            
+            res.json({ success: true, result });
+        } catch (error) {
+            console.error('Error cancelling all subscriptions:', error);
+            res.status(500).json({ success: false, error: error.message });
+        }
+    });
+
     // Get Stripe public key for frontend
     router.get('/stripe-public-key', (req, res) => {
         try {
