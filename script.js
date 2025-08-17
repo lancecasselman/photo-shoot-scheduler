@@ -44,50 +44,6 @@ async function checkAuth() {
         } else {
             console.log('Auth check failed - response not ok:', response.status);
             
-            // Try Firebase fallback authentication for iframe contexts
-            const firebaseUser = localStorage.getItem('firebaseAuthUser') || sessionStorage.getItem('firebaseAuthUser');
-            if (firebaseUser && response.status === 401) {
-                try {
-                    console.log(' AUTH CHECK: Trying Firebase fallback authentication...');
-                    const userData = JSON.parse(firebaseUser);
-                    // Check if the stored auth data is still valid (not older than 24 hours)
-                    const authAge = Date.now() - (userData.timestamp || 0);
-                    const maxAge = 24 * 60 * 60 * 1000; // 24 hours
-                    
-                    if (authAge < maxAge) {
-                        console.log(' AUTH CHECK: Using stored Firebase auth data');
-                        
-                        // Verify with backend using Firebase data
-                        const verifyResponse = await fetch('/api/auth/firebase-verify', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            credentials: 'include',
-                            body: JSON.stringify(userData)
-                        });
-                        
-                        if (verifyResponse.ok) {
-                            console.log(' AUTH CHECK: Firebase fallback verification successful');
-                            currentUser = userData;
-                            updateUserUI();
-                            return true;
-                        } else {
-                            console.log(' AUTH CHECK: Firebase fallback verification failed');
-                            // Clear invalid stored data
-                            localStorage.removeItem('firebaseAuthUser');
-                            sessionStorage.removeItem('firebaseAuthUser');
-                        }
-                    } else {
-                        console.log(' AUTH CHECK: Stored Firebase auth data is too old, clearing');
-                        localStorage.removeItem('firebaseAuthUser');
-                        sessionStorage.removeItem('firebaseAuthUser');
-                    }
-                } catch (parseError) {
-                    console.error(' AUTH CHECK: Error parsing stored Firebase data:', parseError);
-                }
-            }
-            
             // COMPLETELY disable redirects if coming from auth page
             if (localStorage.getItem('manualLogout') !== 'true' && !fromAuth && !sessionStorage.getItem('fromAuth') && !document.referrer.includes('auth.html')) {
                 console.log(' AUTH CHECK: Scheduling redirect to auth page...');
@@ -391,12 +347,6 @@ async function createAPISession(sessionData) {
 
 // Load sessions from API
 async function loadSessions() {
-    // Check if user is authenticated before making API calls
-    if (!currentUser) {
-        console.log('User not authenticated - skipping session load');
-        return;
-    }
-    
     try {
         console.log('Loading sessions from API...');
 
@@ -465,7 +415,7 @@ async function loadSessions() {
                 window.dispatchEvent(sessionsRenderedEvent);
             }, 200);
         } else {
-            console.log('renderSessions function not available - loading complete without render');
+            console.error('renderSessions function not found in window scope');
         }
         console.log('Successfully loaded', sessions.length, 'sessions');
 
@@ -1696,10 +1646,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Load sessions only if user is authenticated
-    if (currentUser) {
-        loadSessions();
-    }
+    // Load sessions on page load
+    loadSessions();
 });
 
 // Update session via API
@@ -2140,26 +2088,21 @@ async function deletePhoto(sessionId, photoIndex) {
     }
 }
 
-// Firebase logout function - Mobile Safari compatible
+// Firebase logout function
 async function firebaseLogout() {
     try {
-        console.log('Starting logout process...');
-        
-        // Set flags immediately for mobile Safari compatibility
+        // Set flag to prevent automatic re-authentication
         sessionStorage.setItem('loggingOut', 'true');
         localStorage.setItem('manualLogout', 'true');
         
-        // Clear current user immediately to prevent race conditions
-        currentUser = null;
+        console.log('Starting logout process...');
         
-        // First, clear server session with mobile Safari compatible headers
+        // First, clear server session
         const response = await fetch('/api/auth/logout', {
             method: 'POST',
             credentials: 'include',
             headers: {
-                'Content-Type': 'application/json',
-                'Cache-Control': 'no-cache',
-                'Pragma': 'no-cache'
+                'Content-Type': 'application/json'
             }
         });
         
@@ -2175,60 +2118,29 @@ async function firebaseLogout() {
             console.error('Firebase signout error:', firebaseError);
         }
 
-        // Clear all storage with mobile Safari compatibility
-        try {
-            localStorage.clear();
-            sessionStorage.clear();
-        } catch (storageError) {
-            console.error('Storage clear error:', storageError);
-            // Fallback: clear known keys individually
-            const knownKeys = ['manualLogout', 'loggingOut', 'fromAuth'];
-            knownKeys.forEach(key => {
-                try {
-                    localStorage.removeItem(key);
-                    sessionStorage.removeItem(key);
-                } catch (e) {}
-            });
-        }
+        // Clear all local data
+        currentUser = null;
+        localStorage.clear();
         
-        // Reset logout flags for mobile Safari
-        localStorage.setItem('manualLogout', 'true');
+        // Keep the logout flags until redirect
         sessionStorage.setItem('loggingOut', 'true');
+        localStorage.setItem('manualLogout', 'true');
         
         console.log('Logout complete, redirecting...');
         
-        // Mobile Safari specific redirect - use timeout to ensure completion
-        setTimeout(() => {
-            window.location.href = '/auth.html';
-            // Fallback for stubborn mobile browsers
-            setTimeout(() => {
-                if (window.location.pathname !== '/auth.html') {
-                    window.location.replace('/auth.html');
-                }
-            }, 100);
-        }, 100);
+        // Force redirect with page reload
+        window.location.replace('/auth.html');
         
     } catch (error) {
         console.error('Logout error:', error);
         
-        // Force logout even on error - mobile Safari fallback
-        try {
-            currentUser = null;
-            localStorage.clear();
-            sessionStorage.clear();
-            localStorage.setItem('manualLogout', 'true');
-        } catch (clearError) {
-            console.error('Emergency clear error:', clearError);
-        }
+        // Force logout even on error
+        currentUser = null;
+        localStorage.clear();
+        sessionStorage.clear();
+        localStorage.setItem('manualLogout', 'true');
         
-        // Force redirect with multiple fallbacks for mobile Safari
-        setTimeout(() => {
-            try {
-                window.location.href = '/auth.html';
-            } catch (redirectError) {
-                window.location.replace('/auth.html');
-            }
-        }, 100);
+        window.location.replace('/auth.html');
     }
 }
 

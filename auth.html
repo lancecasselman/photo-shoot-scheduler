@@ -357,33 +357,12 @@
                     displayName: user.displayName || user.email
                 });
 
-                // Store Firebase user data locally for iframe session persistence
-                const userAuthData = {
-                    uid: user.uid,
-                    email: user.email,
-                    displayName: user.displayName || user.email,
-                    photoURL: user.photoURL,
-                    timestamp: Date.now()
-                };
-                
-                // Store in both localStorage and sessionStorage for redundancy
-                localStorage.setItem('firebaseAuthUser', JSON.stringify(userAuthData));
-                sessionStorage.setItem('firebaseAuthUser', JSON.stringify(userAuthData));
-                
-                // Use the iframe auth system for better compatibility
-                if (window.IframeAuth) {
-                    window.IframeAuth.storeAuthToken(userAuthData);
-                }
-                
-                console.log('Stored Firebase auth data locally for iframe persistence');
-
                 // Send user info to backend
                 const response = await fetch('/api/auth/firebase-login', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    credentials: 'include', // Ensure cookies are sent
                     body: JSON.stringify({
                         uid: user.uid,
                         email: user.email,
@@ -447,25 +426,6 @@
             localStorage.removeItem('manualLogout');
             sessionStorage.removeItem('loggingOut');
             console.log('All logout flags cleared immediately on auth page load');
-            
-            // Log current domain for debugging
-            console.log('Current domain for Firebase auth:', window.location.hostname);
-            console.log('Full URL:', window.location.href);
-            
-            // Add a manual fallback button for testing
-            const fallbackButton = document.createElement('button');
-            fallbackButton.textContent = 'Try Email/Password Instead';
-            fallbackButton.style.cssText = 'margin: 10px auto; display: block; padding: 8px 16px; background: #d4af37; color: #000; border: none; border-radius: 6px; cursor: pointer;';
-            fallbackButton.onclick = function() {
-                document.getElementById('emailForm').scrollIntoView();
-                document.getElementById('email').focus();
-            };
-            
-            // Insert fallback button after loading indicator
-            const loadingEl = document.getElementById('loadingIndicator');
-            if (loadingEl && loadingEl.parentNode) {
-                loadingEl.parentNode.insertBefore(fallbackButton, loadingEl.nextSibling);
-            }
             // Google Sign-in with redirect fallback
             const googleLoginBtn = document.getElementById("google-login");
             if (googleLoginBtn) {
@@ -483,19 +443,11 @@
                             // Handle specific error cases
                             if (error.code === 'auth/popup-blocked') {
                                 console.log('Popup blocked, using redirect method');
-                                // Don't hide loading indicator for redirect - it will redirect the page
-                                auth.signInWithRedirect(googleProvider).catch((redirectError) => {
-                                    console.error('Redirect also failed:', redirectError);
-                                    document.getElementById('loadingIndicator').style.display = 'none';
-                                    alert("Both popup and redirect authentication failed. Please try email/password or contact support.");
-                                });
+                                auth.signInWithRedirect(googleProvider);
                             } else if (error.code === 'auth/unauthorized-domain') {
-                                const currentDomain = window.location.hostname;
-                                alert(`Domain authorization error: The domain "${currentDomain}" needs to be added to Firebase console. Please try the email/password sign-in method or use a different domain.`);
-                                console.error('Unauthorized domain:', currentDomain, 'Full error:', error);
+                                alert("Domain authorization error: This domain needs to be added to Firebase console. Please contact support or try the email/password sign-in method.");
                                 document.getElementById('loadingIndicator').style.display = 'none';
                             } else {
-                                console.error('Google sign-in failed with error code:', error.code, 'Message:', error.message);
                                 alert("Google sign-in failed: " + error.message);
                                 document.getElementById('loadingIndicator').style.display = 'none';
                             }
@@ -560,28 +512,15 @@
                 });
             }
 
-            // Handle redirect result (for popup-blocked scenarios) - check on page load
-            console.log('Checking for redirect result...');
+            // Handle redirect result (for popup-blocked scenarios)
             auth.getRedirectResult().then((result) => {
-                if (result && result.user) {
-                    console.log('Found redirect result, processing authentication:', result.user.email);
-                    document.getElementById('loadingIndicator').style.display = 'block';
+                if (result.user) {
                     handleSuccessfulAuth(result.user);
-                } else {
-                    console.log('No redirect result found');
-                    // Hide loading indicator if it's showing from a previous redirect attempt
-                    const loadingEl = document.getElementById('loadingIndicator');
-                    if (loadingEl) loadingEl.style.display = 'none';
                 }
             }).catch((error) => {
                 console.error('Redirect result error:', error);
-                const loadingEl = document.getElementById('loadingIndicator');
-                if (loadingEl) loadingEl.style.display = 'none';
-                
                 if (error.code === 'auth/unauthorized-domain') {
                     alert("Domain authorization error: This domain needs to be added to Firebase console. Please contact support.");
-                } else {
-                    console.error('Redirect authentication failed:', error.message);
                 }
             });
 

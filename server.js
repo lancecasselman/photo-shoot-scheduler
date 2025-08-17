@@ -1,5 +1,5 @@
-//  TOGGLEABLE AUTH GUARD SYSTEM  
-const DEV_MODE = false; // 👉 Authentication enabled - production mode with working login system
+//  TOGGLEABLE AUTH GUARD SYSTEM
+const DEV_MODE = false; // 👉 Authentication enabled - production mode
 
 // SUCCESS: PREMIUM MODE IMPLEMENTATION
 const PREMIUM_FEATURES = {
@@ -72,7 +72,7 @@ const UnifiedFileDeletion = require('./server/unified-file-deletion');
 const archiver = require('archiver');
 const { JSDOM } = require('jsdom');
 
-// Database AI Credits Functions with improved error handling
+// Database AI Credits Functions
 async function getUserAiCredits(userId) {
     let client;
     try {
@@ -80,33 +80,21 @@ async function getUserAiCredits(userId) {
         const result = await client.query('SELECT ai_credits FROM users WHERE id = $1', [userId]);
         return result.rows[0]?.ai_credits || 0;
     } catch (error) {
-        // Handle specific database errors gracefully
-        if (error.code === '57P01' || error.code === 'ECONNRESET') {
-            console.warn('Database connection lost, retrying AI credits fetch...');
-            // Simple retry mechanism for connection issues
-            try {
-                if (client) client.release(true);
-                client = await pool.connect();
-                const result = await client.query('SELECT ai_credits FROM users WHERE id = $1', [userId]);
-                return result.rows[0]?.ai_credits || 0;
-            } catch (retryError) {
-                console.error('Retry failed for AI credits:', retryError.message);
-                return 0;
-            }
-        } else {
-            console.error('Error getting user AI credits:', {
-                code: error.code,
-                message: error.message,
-                userId: userId
-            });
-            return 0;
-        }
+        console.error('Error getting user AI credits:', error);
+        // Log the specific error for debugging
+        console.error('Database error details:', {
+            code: error.code,
+            detail: error.detail,
+            hint: error.hint
+        });
+        // Return a conservative default instead of high amount
+        return 0;
     } finally {
         if (client) {
             try {
                 client.release();
             } catch (releaseError) {
-                console.error('Error releasing database client:', releaseError.message);
+                console.error('Error releasing database client:', releaseError);
             }
         }
     }
@@ -273,55 +261,23 @@ const pool = new Pool({
     keepAliveInitialDelayMillis: 10000,
 });
 
-// Enhanced database pool error handling for production stability
-pool.on('error', (err, client) => {
+// Add error handling for database pool
+pool.on('error', (err) => {
     console.error('Unexpected database pool error:', err);
-    
-    // Handle specific error types
-    if (err.code === '57P01') { // Admin shutdown
-        console.warn('Database connection terminated by administrator - will reconnect');
-    } else if (err.code === 'ECONNRESET') {
-        console.warn('Database connection reset - will reconnect');  
-    } else if (err.code === 'ENOTFOUND') {
-        console.error('Database host not found - check DATABASE_URL');
-    } else {
-        console.error('Database error details:', {
-            code: err.code,
-            message: err.message,
-            severity: err.severity
-        });
-    }
-    
-    // Safely handle problematic client removal
-    if (client && typeof client.release === 'function') {
-        try {
-            // Check if client is already released before attempting to release
-            if (!client._ended && !client._connecting) {
-                client.release(true); // Force removal
-            }
-        } catch (releaseError) {
-            // Only log if it's not already released
-            if (!releaseError.message.includes('already been released')) {
-                console.error('Error force-releasing problematic client:', releaseError);
-            }
-        }
-    }
+    // Don't exit the process, just log the error
 });
 
-// Reduce pool event logging for production (only in development)
-if (process.env.NODE_ENV !== 'production') {
-    pool.on('connect', (client) => {
-        console.log('Database client connected');
-    });
+pool.on('connect', (client) => {
+    console.log('Database client connected');
+});
 
-    pool.on('acquire', (client) => {
-        console.log('Database client acquired from pool');
-    });
+pool.on('acquire', (client) => {
+    console.log('Database client acquired from pool');
+});
 
-    pool.on('remove', (client) => {
-        console.log('Database client removed from pool');
-    });
-}
+pool.on('remove', (client) => {
+    console.log('Database client removed from pool');
+});
 
 // Initialize local backup system first
 const LocalBackupFallback = require('./server/local-backup-fallback');
@@ -696,7 +652,7 @@ const normalizeUserForLance = (user) => {
     return user;
 };
 
-// Enhanced authentication middleware with token support for iframe contexts
+// Enhanced authentication middleware with strict security
 const isAuthenticated = (req, res, next) => {
     // DEV_MODE bypass for development
     if (DEV_MODE) {
@@ -704,64 +660,32 @@ const isAuthenticated = (req, res, next) => {
         return next();
     }
 
-    // First try session-based authentication
+    // Strict authentication check - multiple validation layers
     const hasValidSession = req.session && req.session.user && req.session.user.uid;
     const userHasValidId = req.session?.user?.uid && req.session.user.uid.length > 0;
     const userHasValidEmail = req.session?.user?.email && req.session.user.email.includes('@');
     
-    if (hasValidSession && userHasValidId && userHasValidEmail) {
-        req.user = req.session.user;
-        return next();
+    if (!hasValidSession || !userHasValidId || !userHasValidEmail) {
+        console.log('🚫 Authentication failed:', {
+            hasSession: !!req.session,
+            hasSessionUser: !!(req.session && req.session.user),
+            hasUserId: !!(req.session?.user?.uid),
+            hasUserEmail: !!(req.session?.user?.email),
+            sessionId: req.sessionID,
+            userAgent: req.get('User-Agent'),
+            ip: req.ip,
+            timestamp: new Date().toISOString()
+        });
+        
+        return res.status(401).json({ 
+            message: 'Authentication required',
+            redirectTo: '/auth.html'
+        });
     }
 
-    // Fallback to token-based authentication for iframe contexts
-    const authToken = req.headers['authorization'];
-    const authUID = req.headers['x-auth-uid'];
-    const authEmail = req.headers['x-auth-email'];
-    
-    if (authToken && authUID && authEmail) {
-        try {
-            // Decode and validate the token
-            const tokenData = JSON.parse(Buffer.from(authToken.replace('Bearer ', ''), 'base64').toString());
-            
-            if (tokenData.uid === authUID && tokenData.email === authEmail) {
-                // Check token age (24 hours max)
-                const tokenAge = Date.now() - (tokenData.timestamp || 0);
-                if (tokenAge < 24 * 60 * 60 * 1000) {
-                    console.log('🔓 Token authentication successful for:', authEmail);
-                    req.user = {
-                        uid: tokenData.uid,
-                        email: tokenData.email,
-                        displayName: tokenData.displayName || tokenData.email
-                    };
-                    return next();
-                } else {
-                    console.log('🚫 Token expired for:', authEmail);
-                }
-            } else {
-                console.log('🚫 Token validation failed');
-            }
-        } catch (error) {
-            console.log('🚫 Token decode error:', error.message);
-        }
-    }
-    
-    console.log('🚫 Authentication failed:', {
-        hasSession: !!req.session,
-        hasSessionUser: !!(req.session && req.session.user),
-        hasUserId: !!(req.session?.user?.uid),
-        hasUserEmail: !!(req.session?.user?.email),
-        hasAuthHeaders: !!(authToken && authUID && authEmail),
-        sessionId: req.sessionID,
-        userAgent: req.get('User-Agent'),
-        ip: req.ip,
-        timestamp: new Date().toISOString()
-    });
-    
-    return res.status(401).json({ 
-        message: 'Authentication required',
-        redirectTo: '/auth.html'
-    });
+    // Set req.user for downstream middleware
+    req.user = req.session.user;
+    next();
 };
 
 // Initialize subscription auth middleware
@@ -848,60 +772,35 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-        httpOnly: false, // Set to false for iframe JavaScript access
-        secure: false, // Must be false for Replit HTTP
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production', // Auto-detect HTTPS in production
         maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
-        sameSite: 'lax', // Lax works better for Replit iframe than none
-        path: '/', // Ensure cookie is available across all paths
-        domain: undefined // Let browser handle domain automatically
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax' // Allow cross-site for production
     }
 }));
 
-// CORS configuration for custom domains and iframe compatibility
+// CORS configuration for custom domains
 app.use((req, res, next) => {
     const allowedOrigins = [
         'https://photomanagementsystem.com',
         'https://www.photomanagementsystem.com',
         /\.replit\.app$/,
         /\.replit\.dev$/,
-        /\.repl\.co$/,
         'http://localhost:5000',
         'https://localhost:5000'
     ];
 
-    const origin = req.headers.origin || req.headers.referer;
-    const host = req.headers.host;
-    
-    // More permissive CORS for iframe contexts
-    let allowOrigin = null;
-    
-    if (origin && allowedOrigins.some(allowed => {
+    const origin = req.headers.origin;
+    if (allowedOrigins.some(allowed => {
         if (typeof allowed === 'string') return allowed === origin;
         return allowed.test(origin);
     })) {
-        allowOrigin = origin;
-    } else if (host && (host.includes('replit.') || host.includes('repl.') || host.includes('localhost'))) {
-        // For same-origin requests or iframe contexts
-        allowOrigin = `https://${host}`;
-    }
-    
-    if (allowOrigin) {
-        res.header('Access-Control-Allow-Origin', allowOrigin);
+        res.header('Access-Control-Allow-Origin', origin);
     }
 
     res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control');
-    
-    // Remove headers that block iframe embedding
-    res.removeHeader('X-Frame-Options');
-    
-    // Prevent caching of auth-related responses in iframe context
-    if (req.url.includes('/api/auth/') || req.url.includes('/api/sessions') || req.url.includes('/api/user')) {
-        res.header('Cache-Control', 'no-cache, no-store, must-revalidate');
-        res.header('Pragma', 'no-cache');
-        res.header('Expires', '0');
-    }
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
 
     if (req.method === 'OPTIONS') {
         res.sendStatus(200);
@@ -10880,7 +10779,7 @@ async function startServer() {
         if (process.env.TEST_MODE === 'true') {
             console.log('🧪 TEST MODE ENABLED - Development authentication bypass active');
         } else {
-            console.log('✅ PRODUCTION MODE: Authentication system fully operational - secure access enabled');
+            console.log('AUTH: Authentication required for all access - no anonymous mode');
         }
         
         // Initialize database asynchronously after server starts

@@ -30,13 +30,8 @@
         ];
         
         function shouldSuppress(message) {
-            try {
-                const messageStr = String(message);
-                return suppressedPatterns.some(pattern => pattern.test(messageStr));
-            } catch (error) {
-                // If message processing fails, don't suppress
-                return false;
-            }
+            const messageStr = String(message);
+            return suppressedPatterns.some(pattern => pattern.test(messageStr));
         }
         
         // Override console methods to filter out noise
