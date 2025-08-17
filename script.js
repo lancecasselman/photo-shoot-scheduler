@@ -2088,21 +2088,26 @@ async function deletePhoto(sessionId, photoIndex) {
     }
 }
 
-// Firebase logout function
+// Firebase logout function - Mobile Safari compatible
 async function firebaseLogout() {
     try {
-        // Set flag to prevent automatic re-authentication
+        console.log('Starting logout process...');
+        
+        // Set flags immediately for mobile Safari compatibility
         sessionStorage.setItem('loggingOut', 'true');
         localStorage.setItem('manualLogout', 'true');
         
-        console.log('Starting logout process...');
+        // Clear current user immediately to prevent race conditions
+        currentUser = null;
         
-        // First, clear server session
+        // First, clear server session with mobile Safari compatible headers
         const response = await fetch('/api/auth/logout', {
             method: 'POST',
             credentials: 'include',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
             }
         });
         
@@ -2118,29 +2123,60 @@ async function firebaseLogout() {
             console.error('Firebase signout error:', firebaseError);
         }
 
-        // Clear all local data
-        currentUser = null;
-        localStorage.clear();
+        // Clear all storage with mobile Safari compatibility
+        try {
+            localStorage.clear();
+            sessionStorage.clear();
+        } catch (storageError) {
+            console.error('Storage clear error:', storageError);
+            // Fallback: clear known keys individually
+            const knownKeys = ['manualLogout', 'loggingOut', 'fromAuth'];
+            knownKeys.forEach(key => {
+                try {
+                    localStorage.removeItem(key);
+                    sessionStorage.removeItem(key);
+                } catch (e) {}
+            });
+        }
         
-        // Keep the logout flags until redirect
-        sessionStorage.setItem('loggingOut', 'true');
+        // Reset logout flags for mobile Safari
         localStorage.setItem('manualLogout', 'true');
+        sessionStorage.setItem('loggingOut', 'true');
         
         console.log('Logout complete, redirecting...');
         
-        // Force redirect with page reload
-        window.location.replace('/auth.html');
+        // Mobile Safari specific redirect - use timeout to ensure completion
+        setTimeout(() => {
+            window.location.href = '/auth.html';
+            // Fallback for stubborn mobile browsers
+            setTimeout(() => {
+                if (window.location.pathname !== '/auth.html') {
+                    window.location.replace('/auth.html');
+                }
+            }, 100);
+        }, 100);
         
     } catch (error) {
         console.error('Logout error:', error);
         
-        // Force logout even on error
-        currentUser = null;
-        localStorage.clear();
-        sessionStorage.clear();
-        localStorage.setItem('manualLogout', 'true');
+        // Force logout even on error - mobile Safari fallback
+        try {
+            currentUser = null;
+            localStorage.clear();
+            sessionStorage.clear();
+            localStorage.setItem('manualLogout', 'true');
+        } catch (clearError) {
+            console.error('Emergency clear error:', clearError);
+        }
         
-        window.location.replace('/auth.html');
+        // Force redirect with multiple fallbacks for mobile Safari
+        setTimeout(() => {
+            try {
+                window.location.href = '/auth.html';
+            } catch (redirectError) {
+                window.location.replace('/auth.html');
+            }
+        }, 100);
     }
 }
 
