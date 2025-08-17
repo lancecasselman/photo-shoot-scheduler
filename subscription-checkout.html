@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Photography Plan - Subscription</title>
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .plans-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+        }
+        
+        .plan {
+            padding: 40px;
+            border-right: 1px solid #eee;
+        }
+        
+        .plan:last-child {
+            border-right: none;
+        }
+        
+        .plan-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .plan-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .plan-price {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 5px;
+        }
+        
+        .plan-price .currency {
+            font-size: 1.5rem;
+            vertical-align: top;
+        }
+        
+        .plan-price .period {
+            font-size: 1rem;
+            color: #666;
+            font-weight: normal;
+        }
+        
+        .plan-description {
+            color: #666;
+            font-size: 1rem;
+        }
+        
+        .features {
+            list-style: none;
+            margin: 30px 0;
+        }
+        
+        .features li {
+            padding: 12px 0;
+            border-bottom: 1px solid #f8f9fa;
+            display: flex;
+            align-items: center;
+        }
+        
+        .features li:last-child {
+            border-bottom: none;
+        }
+        
+        .features li::before {
+            content: "✓";
+            color: #28a745;
+            font-weight: bold;
+            margin-right: 12px;
+            font-size: 1.1rem;
+        }
+        
+        .subscribe-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            border: none;
+            padding: 16px 24px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+        
+        .subscribe-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,123,255,0.3);
+        }
+        
+        .subscribe-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .storage-addon {
+            background: linear-gradient(135deg, #f8fff8 0%, #ffffff 100%);
+            border: 2px solid #28a745;
+        }
+        
+        .storage-addon .subscribe-btn {
+            background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        }
+        
+        .storage-addon .subscribe-btn:hover {
+            box-shadow: 0 8px 25px rgba(40,167,69,0.3);
+        }
+        
+        .quantity-selector {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .quantity-btn {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #28a745;
+            background: white;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #28a745;
+            font-size: 1.2rem;
+        }
+        
+        .quantity-btn:hover {
+            background: #28a745;
+            color: white;
+        }
+        
+        .quantity-display {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2c3e50;
+            min-width: 60px;
+            text-align: center;
+        }
+        
+        .checkout-section {
+            padding: 40px;
+            background: #f8f9fa;
+            border-top: 1px solid #eee;
+        }
+        
+        .payment-form {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .form-row {
+            margin-bottom: 20px;
+        }
+        
+        .form-row label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .form-row input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-row input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        
+        .stripe-element {
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            background: white;
+        }
+        
+        .stripe-element--focus {
+            border-color: #007bff;
+        }
+        
+        .payment-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+            color: white;
+            border: none;
+            padding: 18px 24px;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 30px;
+        }
+        
+        .payment-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(40,167,69,0.3);
+        }
+        
+        .payment-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .summary {
+            background: white;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .summary h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f3f4;
+        }
+        
+        .summary-item:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-top: 10px;
+            padding-top: 15px;
+            border-top: 2px solid #f1f3f4;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .success-message {
+            display: none;
+            background: #d4edda;
+            color: #155724;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .error-message {
+            display: none;
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        @media (max-width: 768px) {
+            .plans-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .plan {
+                border-right: none;
+                border-bottom: 1px solid #eee;
+            }
+            
+            .plan:last-child {
+                border-bottom: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Professional Photography Plans</h1>
+            <p>Everything you need to run your photography business</p>
+        </div>
+        
+        <div class="plans-container">
+            <!-- Professional Plan -->
+            <div class="plan">
+                <div class="plan-header">
+                    <div class="plan-title">Professional Plan</div>
+                    <div class="plan-price">
+                        <span class="currency">$</span>39<span class="period">/month</span>
+                    </div>
+                    <div class="plan-description">Complete photography business solution</div>
+                </div>
+                
+                <ul class="features">
+                    <li>100GB Cloud Storage</li>
+                    <li>Unlimited Photo Sessions</li>
+                    <li>Client Gallery Management</li>
+                    <li>Invoice & Contract System</li>
+                    <li>Booking & Scheduling</li>
+                    <li>Mobile App Access</li>
+                    <li>Payment Processing</li>
+                    <li>Custom Website Builder</li>
+                    <li>24/7 Premium Support</li>
+                </ul>
+                
+                <button class="subscribe-btn" onclick="selectPlan('professional')">
+                    Start Professional Plan
+                </button>
+            </div>
+            
+            <!-- Storage Add-on -->
+            <div class="plan storage-addon">
+                <div class="plan-header">
+                    <div class="plan-title">Storage Add-on</div>
+                    <div class="plan-price">
+                        <span class="currency">$</span>25<span class="period">/TB/month</span>
+                    </div>
+                    <div class="plan-description">Additional cloud storage for your photos</div>
+                </div>
+                
+                <ul class="features">
+                    <li>1TB Additional Storage per unit</li>
+                    <li>Cloudflare R2 Backup</li>
+                    <li>RAW File Support</li>
+                    <li>Automatic Thumbnails</li>
+                    <li>Full Resolution Downloads</li>
+                    <li>99.9% Uptime SLA</li>
+                    <li>Global CDN Delivery</li>
+                    <li>Advanced File Management</li>
+                </ul>
+                
+                <div class="quantity-selector">
+                    <div class="quantity-btn" onclick="changeQuantity(-1)">−</div>
+                    <div class="quantity-display" id="storageQuantity">1</div>
+                    <div class="quantity-btn" onclick="changeQuantity(1)">+</div>
+                </div>
+                
+                <button class="subscribe-btn" onclick="selectPlan('storage')">
+                    Add Storage TB
+                </button>
+            </div>
+        </div>
+        
+        <div class="checkout-section" id="checkoutSection" style="display: none;">
+            <form id="payment-form" class="payment-form">
+                <div class="summary" id="orderSummary"></div>
+                
+                <div class="form-row">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" required>
+                </div>
+                
+                <div class="form-row">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" required>
+                </div>
+                
+                <div class="form-row">
+                    <label for="card-element">Credit Card</label>
+                    <div id="card-element" class="stripe-element"></div>
+                </div>
+                
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Processing your subscription...</p>
+                </div>
+                
+                <div class="success-message" id="successMessage">
+                    <h3>Subscription Successful!</h3>
+                    <p>Welcome to your Professional Photography Plan. You can now access all features.</p>
+                </div>
+                
+                <div class="error-message" id="errorMessage"></div>
+                
+                <button type="submit" class="payment-btn" id="submitButton">
+                    Complete Subscription
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let stripe;
+        let elements;
+        let cardElement;
+        let selectedPlan = null;
+        let storageQuantity = 1;
+        
+        // Initialize Stripe
+        async function initStripe() {
+            try {
+                const response = await fetch('/api/stripe-public-key');
+                const { publicKey } = await response.json();
+                
+                if (!publicKey) {
+                    throw new Error('Stripe public key not configured');
+                }
+                
+                stripe = Stripe(publicKey);
+                elements = stripe.elements();
+                
+                // Create card element
+                cardElement = elements.create('card', {
+                    style: {
+                        base: {
+                            fontSize: '16px',
+                            color: '#424770',
+                            '::placeholder': {
+                                color: '#aab7c4',
+                            },
+                        },
+                    },
+                });
+                
+                console.log('Stripe initialized successfully');
+            } catch (error) {
+                console.error('Failed to initialize Stripe:', error);
+                showError('Payment system unavailable. Please try again later.');
+            }
+        }
+        
+        function selectPlan(planType) {
+            selectedPlan = planType;
+            
+            if (planType === 'professional') {
+                updateOrderSummary('professional', 39, 1);
+            } else if (planType === 'storage') {
+                updateOrderSummary('storage', 25, storageQuantity);
+            }
+            
+            showCheckoutSection();
+        }
+        
+        function changeQuantity(delta) {
+            const newQuantity = storageQuantity + delta;
+            if (newQuantity >= 1 && newQuantity <= 50) {
+                storageQuantity = newQuantity;
+                document.getElementById('storageQuantity').textContent = storageQuantity;
+                
+                if (selectedPlan === 'storage') {
+                    updateOrderSummary('storage', 25, storageQuantity);
+                }
+            }
+        }
+        
+        function updateOrderSummary(type, pricePerUnit, quantity) {
+            const total = pricePerUnit * quantity;
+            let planName, description;
+            
+            if (type === 'professional') {
+                planName = 'Professional Plan';
+                description = '100GB storage + all features';
+            } else {
+                planName = `Storage Add-on (${quantity}TB)`;
+                description = `${quantity}TB additional cloud storage`;
+            }
+            
+            document.getElementById('orderSummary').innerHTML = `
+                <h3>Order Summary</h3>
+                <div class="summary-item">
+                    <span>${planName}</span>
+                    <span>$${pricePerUnit}/month</span>
+                </div>
+                <div class="summary-item">
+                    <span>${description}</span>
+                    <span>${quantity > 1 ? `× ${quantity}` : ''}</span>
+                </div>
+                <div class="summary-item">
+                    <span><strong>Total Monthly</strong></span>
+                    <span><strong>$${total}/month</strong></span>
+                </div>
+            `;
+        }
+        
+        function showCheckoutSection() {
+            document.getElementById('checkoutSection').style.display = 'block';
+            document.getElementById('checkoutSection').scrollIntoView({ 
+                behavior: 'smooth',
+                block: 'start'
+            });
+            
+            // Mount card element if not already mounted
+            if (cardElement && !cardElement._mounted) {
+                cardElement.mount('#card-element');
+            }
+        }
+        
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+            document.getElementById('submitButton').disabled = show;
+        }
+        
+        function showSuccess(message) {
+            document.getElementById('successMessage').style.display = 'block';
+            document.getElementById('errorMessage').style.display = 'none';
+            if (message) {
+                document.getElementById('successMessage').innerHTML = `
+                    <h3>Subscription Successful!</h3>
+                    <p>${message}</p>
+                `;
+            }
+        }
+        
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('errorMessage').style.display = 'block';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+        
+        // Handle form submission
+        document.getElementById('payment-form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            
+            if (!stripe || !cardElement) {
+                showError('Payment system not ready. Please refresh the page.');
+                return;
+            }
+            
+            showLoading(true);
+            
+            try {
+                const email = document.getElementById('email').value;
+                const name = document.getElementById('name').value;
+                
+                if (!email || !name) {
+                    throw new Error('Please fill in all required fields');
+                }
+                
+                // Create subscription based on selected plan
+                let endpoint, data;
+                
+                if (selectedPlan === 'professional') {
+                    endpoint = '/api/subscriptions/professional/stripe';
+                    data = { email, name };
+                } else if (selectedPlan === 'storage') {
+                    endpoint = '/api/subscriptions/storage/stripe';
+                    data = { tbCount: storageQuantity };
+                } else {
+                    throw new Error('Please select a subscription plan');
+                }
+                
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                    credentials: 'include'
+                });
+                
+                const result = await response.json();
+                
+                if (!result.success) {
+                    throw new Error(result.error || 'Subscription creation failed');
+                }
+                
+                // If we have a client secret, confirm payment
+                if (result.clientSecret) {
+                    const { error: stripeError } = await stripe.confirmCardPayment(result.clientSecret, {
+                        payment_method: {
+                            card: cardElement,
+                            billing_details: {
+                                name: name,
+                                email: email,
+                            },
+                        }
+                    });
+                    
+                    if (stripeError) {
+                        throw new Error(stripeError.message);
+                    }
+                }
+                
+                showSuccess(`Your ${selectedPlan === 'professional' ? 'Professional Plan' : 'Storage Add-on'} subscription is now active!`);
+                
+                // Redirect to main app after success
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 3000);
+                
+            } catch (error) {
+                console.error('Subscription error:', error);
+                showError(error.message);
+            } finally {
+                showLoading(false);
+            }
+        });
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', initStripe);
+    </script>
+</body>
+</html>

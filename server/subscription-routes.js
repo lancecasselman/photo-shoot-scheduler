@@ -187,6 +187,20 @@ function createSubscriptionRoutes(pool) {
         });
     }
 
+    // Get Stripe public key for frontend
+    router.get('/stripe-public-key', (req, res) => {
+        try {
+            const publicKey = process.env.VITE_STRIPE_PUBLIC_KEY;
+            if (!publicKey) {
+                return res.status(500).json({ error: 'Stripe public key not configured' });
+            }
+            res.json({ publicKey });
+        } catch (error) {
+            console.error('Error getting Stripe public key:', error);
+            res.status(500).json({ error: 'Failed to get public key' });
+        }
+    });
+
     return router;
 }
 
