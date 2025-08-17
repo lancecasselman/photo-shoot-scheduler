@@ -772,10 +772,11 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-        httpOnly: true,
-        secure: false, // Always false for Replit/Safari compatibility
+        httpOnly: false, // Safari needs JS access to session for compatibility
+        secure: false, // Always false for development
         maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
-        sameSite: 'lax' // Always lax for Safari compatibility
+        sameSite: 'none', // Required for Safari cross-origin
+        path: '/' // Explicit path for Safari
     }
 }));
 
