@@ -25,12 +25,18 @@
         window.firebaseApp = initializeApp(firebaseConfig);
         window.auth = getAuth(window.firebaseApp);
 
-        // Admin email addresses
+        // Admin email addresses - comprehensive list for Lance
         const adminEmails = [
             'lancecasselman2011@gmail.com',
             'lancecasselman@icloud.com', 
             'lance@thelegacyphotography.com'
         ];
+
+        // Manual admin trigger for testing
+        window.showAdminPanelManually = () => {
+            console.log('🔧 Manually showing admin panel');
+            showAdminElements(true);
+        };
 
         // Check if user is admin
         function isAdmin(email) {
@@ -81,12 +87,17 @@
                 fetch('/api/auth/user')
                     .then(response => response.json())
                     .then(userData => {
+                        console.log('Backend auth response:', userData);
                         if (userData && userData.email && isAdmin(userData.email)) {
                             console.log('✅ Backend session auth found for admin:', userData.email);
                             showAdminElements(true);
+                        } else {
+                            console.log('Backend user not admin or not found');
                         }
                     })
-                    .catch(err => console.log('No backend session found'));
+                    .catch(err => {
+                        console.log('Backend session check failed:', err);
+                    });
             }
         }, 1000);
 
