@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Website Builder - Photography Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Montserrat:wght@100;300;400;600;700;900&family=Raleway:wght@100;300;400;600;700;900&family=Cormorant+Garamond:wght@300;400;600;700&family=Josefin+Sans:wght@100;300;400;600;700&family=Lato:wght@100;300;400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+            overflow: hidden;
+            position: relative;
+            margin: 0;
+            padding: 0;
+        }
+
+        .admin-builder-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Header Bar */
+        .admin-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1001;
+        }
+
+        .admin-header h1 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .admin-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Main Builder Area */
+        .builder-main {
+            flex: 1;
+            display: flex;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Full Screen Preview */
+        .preview-container {
+            flex: 1;
+            background: white;
+            position: relative;
+            overflow: auto;
+        }
+
+        .preview-frame {
+            width: 100%;
+            min-height: 100%;
+            padding: 0;
+            margin: 0;
+            background: white;
+            position: relative;
+        }
+
+        /* Bottom Tools Bar */
+        .admin-tools {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(15px);
+            border-top: 1px solid #e2e8f0;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .tools-header {
+            padding: 8px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            background: rgba(255, 255, 255, 0.5);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .tools-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .tools-content {
+            flex: 1;
+            padding: 15px 20px;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+
+        .tool-categories {
+            display: flex;
+            gap: 20px;
+            height: 100%;
+        }
+
+        .tool-category {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 120px;
+        }
+
+        .category-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #718096;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .tool-item {
+            padding: 8px 12px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            cursor: grab;
+            font-size: 13px;
+            font-weight: 500;
+            color: #4a5568;
+            transition: all 0.2s;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            user-select: none;
+        }
+
+        .tool-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border-color: #667eea;
+        }
+
+        .tool-item:active {
+            cursor: grabbing;
+            transform: scale(0.95);
+        }
+
+        /* Component Styles in Preview */
+        .admin-component {
+            position: relative;
+            margin: 10px 0;
+            outline: 2px dashed transparent;
+            transition: outline 0.2s;
+        }
+
+        .admin-component:hover {
+            outline-color: #667eea;
+        }
+
+        .component-toolbar {
+            position: absolute;
+            top: -35px;
+            left: 0;
+            background: #667eea;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 10;
+        }
+
+        .admin-component:hover .component-toolbar {
+            opacity: 1;
+        }
+
+        /* Authentication Check */
+        .auth-check {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        .auth-message {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+            max-width: 400px;
+        }
+
+        .auth-message h2 {
+            color: #e53e3e;
+            margin-bottom: 16px;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .admin-tools {
+                height: 140px;
+            }
+            
+            .tool-categories {
+                gap: 15px;
+                padding-bottom: 10px;
+            }
+            
+            .tool-category {
+                min-width: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Authentication Check -->
+    <div id="authCheck" class="auth-check">
+        <div class="auth-message">
+            <div class="loading-spinner"></div>
+            <span>Verifying admin access...</span>
+        </div>
+    </div>
+
+    <!-- Main Admin Builder Interface -->
+    <div id="adminBuilder" class="admin-builder-container" style="display: none;">
+        <!-- Header -->
+        <header class="admin-header">
+            <h1>Admin Website Builder</h1>
+            <div class="admin-actions">
+                <select id="templateSelect" class="btn btn-secondary">
+                    <option value="">Choose Template</option>
+                    <option value="modern-studio">Modern Studio</option>
+                    <option value="classic-portfolio">Classic Portfolio</option>
+                    <option value="minimal-gallery">Minimal Gallery</option>
+                </select>
+                <button class="btn btn-secondary" onclick="previewWebsite()">Preview</button>
+                <button class="btn btn-primary" onclick="saveAdminWebsite()">Save Website</button>
+                <button class="btn btn-secondary" onclick="publishWebsite()">Publish</button>
+            </div>
+        </header>
+
+        <!-- Main Builder -->
+        <div class="builder-main">
+            <!-- Full Screen Preview -->
+            <div class="preview-container">
+                <div id="adminPreviewFrame" class="preview-frame">
+                    <!-- Website content will be rendered here -->
+                    <div style="padding: 60px 20px; text-align: center; color: #718096;">
+                        <h2>Welcome to Admin Website Builder</h2>
+                        <p>Start building by selecting a template or adding components from the toolbar below.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Tools -->
+        <div class="admin-tools">
+            <div class="tools-header">
+                <div class="tools-title">Components & Tools</div>
+                <div style="font-size: 12px; color: #718096;">Drag components to add them to your page</div>
+            </div>
+            <div class="tools-content">
+                <div class="tool-categories">
+                    <!-- Layout Components -->
+                    <div class="tool-category">
+                        <div class="category-title">Layout</div>
+                        <div class="tool-item" draggable="true" data-component="header">Header</div>
+                        <div class="tool-item" draggable="true" data-component="section">Section</div>
+                        <div class="tool-item" draggable="true" data-component="footer">Footer</div>
+                    </div>
+
+                    <!-- Content Components -->
+                    <div class="tool-category">
+                        <div class="category-title">Content</div>
+                        <div class="tool-item" draggable="true" data-component="heading">Heading</div>
+                        <div class="tool-item" draggable="true" data-component="paragraph">Paragraph</div>
+                        <div class="tool-item" draggable="true" data-component="button">Button</div>
+                    </div>
+
+                    <!-- Media Components -->
+                    <div class="tool-category">
+                        <div class="category-title">Media</div>
+                        <div class="tool-item" draggable="true" data-component="image">Image</div>
+                        <div class="tool-item" draggable="true" data-component="gallery">Gallery</div>
+                        <div class="tool-item" draggable="true" data-component="video">Video</div>
+                    </div>
+
+                    <!-- Forms -->
+                    <div class="tool-category">
+                        <div class="category-title">Forms</div>
+                        <div class="tool-item" draggable="true" data-component="contact-form">Contact Form</div>
+                        <div class="tool-item" draggable="true" data-component="booking-form">Booking Form</div>
+                    </div>
+
+                    <!-- Special -->
+                    <div class="tool-category">
+                        <div class="category-title">Special</div>
+                        <div class="tool-item" draggable="true" data-component="testimonial">Testimonial</div>
+                        <div class="tool-item" draggable="true" data-component="pricing">Pricing</div>
+                        <div class="tool-item" draggable="true" data-component="map">Map</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase Configuration -->
+    <script type="module">
+        // Firebase configuration
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBxCO8WEe_LMrU7SZFTzFMZNlbpF38mU2U",
+            authDomain: "photoshcheduleapp.firebaseapp.com",
+            projectId: "photoshcheduleapp",
+            storageBucket: "photoshcheduleapp.appspot.com",
+            messagingSenderId: "324891118866",
+            appId: "1:324891118866:web:b6f3e82aa3d5fecd4f6439"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        // Admin email addresses
+        const adminEmails = [
+            'lancecasselman2011@gmail.com',
+            'lancecasselman@icloud.com', 
+            'lance@thelegacyphotography.com'
+        ];
+
+        // Check authentication and admin access
+        function checkAdminAccess() {
+            const authCheck = document.getElementById('authCheck');
+            const adminBuilder = document.getElementById('adminBuilder');
+
+            // First check backend session
+            fetch('/api/auth/user')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.user && adminEmails.includes(data.user.email)) {
+                        // Admin access granted
+                        authCheck.style.display = 'none';
+                        adminBuilder.style.display = 'flex';
+                        initializeAdminBuilder();
+                    } else {
+                        showAccessDenied();
+                    }
+                })
+                .catch(error => {
+                    console.error('Auth check error:', error);
+                    showAccessDenied();
+                });
+        }
+
+        function showAccessDenied() {
+            const authCheck = document.getElementById('authCheck');
+            authCheck.innerHTML = `
+                <div class="auth-message">
+                    <h2>Access Denied</h2>
+                    <p>This is an admin-only website builder. Please log in with an authorized admin account.</p>
+                    <button class="btn btn-primary" onclick="window.location.href='/'">Go to Main App</button>
+                </div>
+            `;
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', checkAdminAccess);
+
+        // Make functions globally available
+        window.checkAdminAccess = checkAdminAccess;
+    </script>
+
+    <script>
+        // Admin Website Builder JavaScript
+        let adminWebsiteData = {
+            components: [],
+            settings: {
+                title: 'My Photography Website',
+                theme: 'modern-studio'
+            }
+        };
+
+        // Initialize the admin builder
+        function initializeAdminBuilder() {
+            console.log('Admin Website Builder initialized');
+            setupDragAndDrop();
+            loadSavedWebsite();
+        }
+
+        // Setup drag and drop functionality
+        function setupDragAndDrop() {
+            const toolItems = document.querySelectorAll('.tool-item');
+            const previewFrame = document.getElementById('adminPreviewFrame');
+
+            toolItems.forEach(item => {
+                item.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', e.target.dataset.component);
+                });
+            });
+
+            previewFrame.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'copy';
+            });
+
+            previewFrame.addEventListener('drop', (e) => {
+                e.preventDefault();
+                const componentType = e.dataTransfer.getData('text/plain');
+                addAdminComponent(componentType, e.clientX, e.clientY);
+            });
+        }
+
+        // Add a component to the admin builder
+        function addAdminComponent(type, x, y) {
+            const previewFrame = document.getElementById('adminPreviewFrame');
+            const component = createAdminComponent(type);
+            
+            // Add to preview
+            previewFrame.appendChild(component);
+            
+            // Add to data model
+            adminWebsiteData.components.push({
+                type: type,
+                id: 'comp_' + Date.now(),
+                content: getDefaultContent(type)
+            });
+
+            console.log('Added admin component:', type);
+        }
+
+        // Create HTML element for component
+        function createAdminComponent(type) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'admin-component';
+            wrapper.innerHTML = getComponentHTML(type);
+            
+            // Add toolbar
+            const toolbar = document.createElement('div');
+            toolbar.className = 'component-toolbar';
+            toolbar.textContent = type.charAt(0).toUpperCase() + type.slice(1);
+            wrapper.appendChild(toolbar);
+
+            return wrapper;
+        }
+
+        // Get HTML for component type
+        function getComponentHTML(type) {
+            const templates = {
+                'header': '<header style="background: #667eea; color: white; padding: 40px 20px; text-align: center;"><h1>Your Photography Studio</h1><nav><a href="#" style="color: white; margin: 0 15px;">Home</a><a href="#" style="color: white; margin: 0 15px;">Portfolio</a><a href="#" style="color: white; margin: 0 15px;">Contact</a></nav></header>',
+                'section': '<section style="padding: 60px 20px; text-align: center;"><h2>Welcome Section</h2><p>Add your content here</p></section>',
+                'footer': '<footer style="background: #2d3748; color: white; padding: 40px 20px; text-align: center;"><p>&copy; 2024 Your Photography Studio</p></footer>',
+                'heading': '<h2 style="padding: 20px; text-align: center; color: #2d3748;">Your Heading Here</h2>',
+                'paragraph': '<p style="padding: 20px; line-height: 1.6; color: #4a5568;">Add your text content here. This is a paragraph component that you can customize.</p>',
+                'button': '<div style="text-align: center; padding: 20px;"><button style="background: #667eea; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer;">Click Me</button></div>',
+                'image': '<div style="text-align: center; padding: 20px;"><img src="https://via.placeholder.com/400x300?text=Your+Photo" alt="Photography" style="max-width: 100%; border-radius: 8px;"></div>',
+                'gallery': '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; padding: 20px;"><img src="https://via.placeholder.com/250x200?text=Photo+1" style="width: 100%; border-radius: 8px;"><img src="https://via.placeholder.com/250x200?text=Photo+2" style="width: 100%; border-radius: 8px;"><img src="https://via.placeholder.com/250x200?text=Photo+3" style="width: 100%; border-radius: 8px;"></div>',
+                'video': '<div style="text-align: center; padding: 20px;"><div style="background: #f7fafc; padding: 40px; border-radius: 8px; color: #4a5568;">Video Component - Add your video embed code here</div></div>',
+                'contact-form': '<div style="max-width: 500px; margin: 0 auto; padding: 20px;"><h3 style="text-align: center; margin-bottom: 20px;">Contact Us</h3><form><input type="text" placeholder="Your Name" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #e2e8f0; border-radius: 6px;"><input type="email" placeholder="Your Email" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #e2e8f0; border-radius: 6px;"><textarea placeholder="Your Message" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #e2e8f0; border-radius: 6px; height: 100px;"></textarea><button type="submit" style="background: #667eea; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer;">Send Message</button></form></div>',
+                'booking-form': '<div style="max-width: 500px; margin: 0 auto; padding: 20px;"><h3 style="text-align: center; margin-bottom: 20px;">Book a Session</h3><form><input type="text" placeholder="Your Name" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #e2e8f0; border-radius: 6px;"><input type="date" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #e2e8f0; border-radius: 6px;"><select style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #e2e8f0; border-radius: 6px;"><option>Wedding Photography</option><option>Portrait Session</option><option>Event Photography</option></select><button type="submit" style="background: #667eea; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer;">Book Now</button></form></div>',
+                'testimonial': '<div style="text-align: center; padding: 40px 20px; background: #f7fafc;"><blockquote style="font-size: 18px; font-style: italic; color: #4a5568; margin-bottom: 20px;">"Amazing photography work! Highly recommended for any special occasion."</blockquote><cite style="font-weight: 600; color: #2d3748;">- Happy Client</cite></div>',
+                'pricing': '<div style="text-align: center; padding: 40px 20px;"><h3 style="margin-bottom: 30px;">Photography Packages</h3><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;"><div style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);"><h4>Basic Package</h4><div style="font-size: 24px; font-weight: bold; color: #667eea; margin: 15px 0;">$299</div><ul style="text-align: left; color: #4a5568;"><li>2 hour session</li><li>20 edited photos</li><li>Online gallery</li></ul></div></div></div>',
+                'map': '<div style="text-align: center; padding: 20px;"><div style="background: #f7fafc; padding: 40px; border-radius: 8px; color: #4a5568;">Map Component - Add your location map here</div></div>'
+            };
+
+            return templates[type] || '<div style="padding: 20px;">Unknown component</div>';
+        }
+
+        // Get default content for component
+        function getDefaultContent(type) {
+            return {
+                text: getComponentHTML(type),
+                styles: {}
+            };
+        }
+
+        // Save admin website
+        function saveAdminWebsite() {
+            console.log('Saving admin website...', adminWebsiteData);
+            
+            // Save to localStorage for now
+            localStorage.setItem('adminWebsiteData', JSON.stringify(adminWebsiteData));
+            
+            // Show success message
+            showMessage('Website saved successfully!', 'success');
+        }
+
+        // Load saved website
+        function loadSavedWebsite() {
+            const saved = localStorage.getItem('adminWebsiteData');
+            if (saved) {
+                adminWebsiteData = JSON.parse(saved);
+                renderSavedComponents();
+            }
+        }
+
+        // Render saved components
+        function renderSavedComponents() {
+            const previewFrame = document.getElementById('adminPreviewFrame');
+            previewFrame.innerHTML = '';
+
+            adminWebsiteData.components.forEach(comp => {
+                const element = createAdminComponent(comp.type);
+                previewFrame.appendChild(element);
+            });
+        }
+
+        // Preview website in new tab
+        function previewWebsite() {
+            const previewWindow = window.open('', '_blank');
+            const content = document.getElementById('adminPreviewFrame').innerHTML;
+            
+            previewWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Preview - ${adminWebsiteData.settings.title}</title>
+                    <style>
+                        body { margin: 0; font-family: 'Inter', sans-serif; }
+                        .admin-component { position: relative; }
+                        .component-toolbar { display: none; }
+                    </style>
+                </head>
+                <body>
+                    ${content}
+                </body>
+                </html>
+            `);
+        }
+
+        // Publish website
+        function publishWebsite() {
+            console.log('Publishing admin website...');
+            showMessage('Website published successfully!', 'success');
+        }
+
+        // Show message to user
+        function showMessage(text, type) {
+            const message = document.createElement('div');
+            message.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? '#48bb78' : '#f56565'};
+                color: white;
+                padding: 12px 20px;
+                border-radius: 6px;
+                z-index: 10001;
+                font-weight: 500;
+            `;
+            message.textContent = text;
+            document.body.appendChild(message);
+
+            setTimeout(() => {
+                document.body.removeChild(message);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
