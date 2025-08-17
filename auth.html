@@ -357,12 +357,28 @@
                     displayName: user.displayName || user.email
                 });
 
+                // Store Firebase user data locally for iframe session persistence
+                const userAuthData = {
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: user.displayName || user.email,
+                    photoURL: user.photoURL,
+                    timestamp: Date.now()
+                };
+                
+                // Store in both localStorage and sessionStorage for redundancy
+                localStorage.setItem('firebaseAuthUser', JSON.stringify(userAuthData));
+                sessionStorage.setItem('firebaseAuthUser', JSON.stringify(userAuthData));
+                
+                console.log('Stored Firebase auth data locally for iframe persistence');
+
                 // Send user info to backend
                 const response = await fetch('/api/auth/firebase-login', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
+                    credentials: 'include', // Ensure cookies are sent
                     body: JSON.stringify({
                         uid: user.uid,
                         email: user.email,

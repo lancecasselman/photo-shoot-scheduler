@@ -44,6 +44,47 @@ async function checkAuth() {
         } else {
             console.log('Auth check failed - response not ok:', response.status);
             
+            // Try Firebase fallback authentication for iframe contexts
+            const firebaseUser = localStorage.getItem('firebaseAuthUser') || sessionStorage.getItem('firebaseAuthUser');
+            if (firebaseUser && response.status === 401) {
+                try {
+                    console.log(' AUTH CHECK: Trying Firebase fallback authentication...');
+                    const userData = JSON.parse(firebaseUser);
+                    // Check if the stored auth data is still valid (not older than 24 hours)
+                    const authAge = Date.now() - (userData.timestamp || 0);
+                    const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+                    
+                    if (authAge < maxAge) {
+                        console.log(' AUTH CHECK: Using stored Firebase auth data');
+                        
+                        // Verify with backend using Firebase data
+                        const verifyResponse = await fetch('/api/auth/firebase-verify', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            credentials: 'include',
+                            body: JSON.stringify(userData)
+                        });
+                        
+                        if (verifyResponse.ok) {
+                            console.log(' AUTH CHECK: Firebase fallback verification successful');
+                            currentUser = userData;
+                            updateUserUI();
+                            return true;
+                        } else {
+                            console.log(' AUTH CHECK: Firebase fallback verification failed');
+                        }
+                    } else {
+                        console.log(' AUTH CHECK: Stored Firebase auth data is too old, clearing');
+                        localStorage.removeItem('firebaseAuthUser');
+                        sessionStorage.removeItem('firebaseAuthUser');
+                    }
+                } catch (parseError) {
+                    console.error(' AUTH CHECK: Error parsing stored Firebase data:', parseError);
+                }
+            }
+            
             // COMPLETELY disable redirects if coming from auth page
             if (localStorage.getItem('manualLogout') !== 'true' && !fromAuth && !sessionStorage.getItem('fromAuth') && !document.referrer.includes('auth.html')) {
                 console.log(' AUTH CHECK: Scheduling redirect to auth page...');

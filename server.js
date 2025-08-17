@@ -816,36 +816,60 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production', // Auto-detect HTTPS in production
+        httpOnly: false, // Set to false for iframe JavaScript access
+        secure: false, // Must be false for Replit HTTP
         maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
-        // Mobile Safari compatible - use 'lax' for better compatibility
-        sameSite: 'lax' // Better mobile compatibility than 'none'
+        sameSite: 'lax', // Lax works better for Replit iframe than none
+        path: '/', // Ensure cookie is available across all paths
+        domain: undefined // Let browser handle domain automatically
     }
 }));
 
-// CORS configuration for custom domains
+// CORS configuration for custom domains and iframe compatibility
 app.use((req, res, next) => {
     const allowedOrigins = [
         'https://photomanagementsystem.com',
         'https://www.photomanagementsystem.com',
         /\.replit\.app$/,
         /\.replit\.dev$/,
+        /\.repl\.co$/,
         'http://localhost:5000',
         'https://localhost:5000'
     ];
 
-    const origin = req.headers.origin;
-    if (allowedOrigins.some(allowed => {
+    const origin = req.headers.origin || req.headers.referer;
+    const host = req.headers.host;
+    
+    // More permissive CORS for iframe contexts
+    let allowOrigin = null;
+    
+    if (origin && allowedOrigins.some(allowed => {
         if (typeof allowed === 'string') return allowed === origin;
         return allowed.test(origin);
     })) {
-        res.header('Access-Control-Allow-Origin', origin);
+        allowOrigin = origin;
+    } else if (host && (host.includes('replit.') || host.includes('repl.') || host.includes('localhost'))) {
+        // For same-origin requests or iframe contexts
+        allowOrigin = `https://${host}`;
+    }
+    
+    if (allowOrigin) {
+        res.header('Access-Control-Allow-Origin', allowOrigin);
     }
 
     res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control');
+    
+    // Remove headers that block iframe embedding
+    res.removeHeader('X-Frame-Options');
+    
+    // Prevent caching of auth-related responses in iframe context
+    if (req.url.includes('/api/auth/') || req.url.includes('/api/sessions') || req.url.includes('/api/user')) {
+        res.header('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.header('Pragma', 'no-cache');
+        res.header('Expires', '0');
+    }
 
     if (req.method === 'OPTIONS') {
         res.sendStatus(200);
