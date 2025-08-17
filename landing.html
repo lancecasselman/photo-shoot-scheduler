@@ -1122,68 +1122,7 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Admin Website Builder Panel */
-        .admin-panel {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100vh;
-            background: white;
-            z-index: 10000;
-            display: none;
-            overflow: hidden;
-        }
 
-        .admin-panel.active {
-            display: block;
-        }
-
-        .admin-panel-header {
-            background: var(--gradient);
-            color: white;
-            padding: 15px 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .admin-panel-title {
-            font-size: 1.2rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .admin-close-btn {
-            background: rgba(255,255,255,0.2);
-            border: none;
-            color: white;
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 1.1rem;
-            transition: all 0.3s ease;
-        }
-
-        .admin-close-btn:hover {
-            background: rgba(255,255,255,0.3);
-        }
-
-        .admin-content {
-            height: calc(100vh - 70px);
-            overflow: auto;
-        }
-
-        /* Website Builder Integration */
-        .builder-frame {
-            width: 100%;
-            height: 100%;
-            border: none;
-            background: white;
-        }
     </style>
 </head>
 <body>
@@ -1205,7 +1144,7 @@
                 <a href="#features" class="nav-link">Features</a>
                 <a href="#pricing" class="nav-link">Pricing</a>
                 <a href="#testimonials" class="nav-link">Reviews</a>
-                <a href="#" class="nav-link admin-only" id="adminWebsiteBuilder" onclick="showWebsiteBuilder()" style="display: none; background: rgba(196, 150, 45, 0.1); padding: 8px 15px; border-radius: 15px; color: var(--primary); font-weight: 600;">🛠️ Website Builder</a>
+
                 <a href="/auth.html" class="nav-signin">Sign In</a>
                 <a href="#pricing" class="nav-cta">Get Started Free</a>
             </div>
@@ -1219,7 +1158,7 @@
             <a href="#features" class="mobile-nav-link" onclick="toggleMobileMenu()">Features</a>
             <a href="#pricing" class="mobile-nav-link" onclick="toggleMobileMenu()">Pricing</a>
             <a href="#testimonials" class="mobile-nav-link" onclick="toggleMobileMenu()">Reviews</a>
-            <a href="#" class="mobile-nav-link admin-only" id="mobileAdminWebsiteBuilder" onclick="showWebsiteBuilder(); toggleMobileMenu()" style="display: none; background: rgba(196, 150, 45, 0.1); border-radius: 8px; color: var(--primary); font-weight: 600;">🛠️ Website Builder</a>
+
             <a href="/auth.html" class="mobile-nav-signin">Sign In</a>
             <a href="#pricing" class="mobile-nav-cta" onclick="toggleMobileMenu()">Get Started Free</a>
         </div>
@@ -1643,53 +1582,9 @@
             }
         });
 
-        // Admin Website Builder Functions
-        function showWebsiteBuilder() {
-            const adminPanel = document.getElementById('adminPanel');
-            if (adminPanel) {
-                adminPanel.classList.add('active');
-                // Load the website builder in iframe
-                const iframe = document.getElementById('builderFrame');
-                if (iframe && !iframe.src) {
-                    iframe.src = '/website-builder.html';
-                }
-            }
-        }
 
-        function hideWebsiteBuilder() {
-            const adminPanel = document.getElementById('adminPanel');
-            if (adminPanel) {
-                adminPanel.classList.remove('active');
-            }
-        }
-
-        // Close admin panel when clicking outside iframe
-        document.addEventListener('click', function(event) {
-            const adminPanel = document.getElementById('adminPanel');
-            const adminContent = document.querySelector('.admin-content');
-            
-            if (adminPanel && adminPanel.classList.contains('active') && 
-                !adminContent.contains(event.target) && 
-                !event.target.closest('.admin-panel-header')) {
-                hideWebsiteBuilder();
-            }
-        });
-
-        window.showWebsiteBuilder = showWebsiteBuilder;
-        window.hideWebsiteBuilder = hideWebsiteBuilder;
     </script>
 
-    <!-- Admin Website Builder Panel -->
-    <div class="admin-panel" id="adminPanel">
-        <div class="admin-panel-header">
-            <div class="admin-panel-title">
-                🛠️ Website Builder - Admin Panel
-            </div>
-            <button class="admin-close-btn" onclick="hideWebsiteBuilder()" title="Close Builder">✕</button>
-        </div>
-        <div class="admin-content">
-            <iframe id="builderFrame" class="builder-frame" src="" title="Website Builder"></iframe>
-        </div>
-    </div>
+
 </body>
 </html>
