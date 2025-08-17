@@ -693,8 +693,12 @@
                     <div class="tools-scroll">
 
                     <div class="tool-section">
-                        <div class="tool-title">Page Management</div>
+                        <div class="tool-title">Templates & Pages</div>
                         <div class="component-list">
+                            <div class="component-item" onclick="showTemplateSelector()" style="cursor: pointer; border: 2px dashed #9f7aea; background: #faf5ff;">
+                                <div class="component-icon">🎨</div>
+                                <span class="component-text">Templates</span>
+                            </div>
                             <div class="component-item" onclick="addNewPage()" style="cursor: pointer; border: 2px dashed #667eea; background: #f7faff;">
                                 <div class="component-icon">➕</div>
                                 <span class="component-text">Add Page</span>
@@ -3042,38 +3046,8 @@
                 console.log('Elegant template font loaded');
             }
             
-            // Add a floating template button to the interface
-            const templateButton = document.createElement('div');
-            templateButton.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                z-index: 9998;
-                background: #9f7aea;
-                color: white;
-                padding: 12px 16px;
-                border-radius: 8px;
-                cursor: pointer;
-                font-weight: 500;
-                font-size: 14px;
-                box-shadow: 0 4px 12px rgba(159, 122, 234, 0.3);
-                transition: all 0.3s ease;
-                user-select: none;
-            `;
-            templateButton.innerHTML = '🎨 Templates';
-            templateButton.onclick = showTemplateSelector;
-            templateButton.onmouseover = function() {
-                this.style.background = '#805ad5';
-                this.style.transform = 'translateY(-2px)';
-                this.style.boxShadow = '0 6px 16px rgba(159, 122, 234, 0.4)';
-            };
-            templateButton.onmouseout = function() {
-                this.style.background = '#9f7aea';
-                this.style.transform = 'translateY(0)';
-                this.style.boxShadow = '0 4px 12px rgba(159, 122, 234, 0.3)';
-            };
-            
-            document.body.appendChild(templateButton);
+            // Template button is now in the bottom toolbar - no floating button needed
+            console.log('Template button integrated into bottom toolbar');
         }
 
         function loadTemplate(templateName) {
