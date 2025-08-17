@@ -448,6 +448,47 @@
             color: #718096;
         }
 
+        /* Mobile Navigation Styles */
+        .mobile-nav-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #2d3748;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        .mobile-nav-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        .mobile-nav-menu.active {
+            display: block;
+        }
+
+        .mobile-nav-menu a {
+            display: block;
+            padding: 15px 20px;
+            text-decoration: none;
+            color: #2d3748;
+            border-bottom: 1px solid #f7fafc;
+            font-weight: 500;
+        }
+
+        .mobile-nav-menu a:hover {
+            background: #f7fafc;
+            color: #667eea;
+        }
+
         /* Responsive */
         @media (max-width: 1024px) {
             .builder-sidebar {
@@ -473,7 +514,148 @@
             
             .builder-canvas {
                 margin-top: 0;
-                padding: 10px;
+                padding: 5px;
+            }
+
+            /* Mobile navigation responsive */
+            .mobile-nav-toggle {
+                display: block;
+            }
+
+            .desktop-nav-menu {
+                display: none;
+            }
+
+            /* Adjust component sizes for mobile */
+            .element {
+                padding: 15px;
+            }
+
+            /* Mobile carousel adjustments */
+            .carousel-prev, .carousel-next {
+                width: 45px !important;
+                height: 45px !important;
+                font-size: 20px !important;
+                left: 10px !important;
+            }
+
+            .carousel-next {
+                left: auto !important;
+                right: 10px !important;
+            }
+
+            .carousel-add {
+                bottom: 10px !important;
+                right: 10px !important;
+                padding: 8px 12px !important;
+                font-size: 12px !important;
+            }
+
+            /* Bottom toolbar mobile adjustments */
+            .tools-header {
+                height: 35px;
+            }
+
+            .tool-tab {
+                padding: 0 12px;
+                font-size: 12px;
+            }
+
+            .builder-tools {
+                height: 100px;
+            }
+
+            .tools-content {
+                padding: 8px 0;
+            }
+
+            .tools-scroll {
+                padding: 0 15px;
+                gap: 10px;
+            }
+
+            .component-item {
+                padding: 6px 10px;
+                min-width: auto;
+            }
+
+            .component-text {
+                font-size: 10px;
+            }
+
+            .component-icon {
+                width: 14px;
+                height: 14px;
+                font-size: 7px;
+            }
+
+            .tool-section {
+                min-width: 150px;
+            }
+
+            .property-input {
+                width: 100px;
+                font-size: 11px;
+            }
+
+            /* Mobile gallery and content adjustments */
+            .gallery-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
+                gap: 10px !important;
+            }
+
+            .masonry-grid {
+                column-count: 2 !important;
+                column-gap: 10px !important;
+            }
+
+            /* Hero and text content mobile adjustments */
+            .hero-text h1 {
+                font-size: 2rem !important;
+                line-height: 1.2 !important;
+            }
+
+            .hero-text p {
+                font-size: 1rem !important;
+                line-height: 1.4 !important;
+            }
+
+            /* About section mobile layout */
+            .about-section {
+                grid-template-columns: 1fr !important;
+                gap: 30px !important;
+                text-align: center !important;
+            }
+
+            /* Contact form mobile adjustments */
+            .contact-form {
+                max-width: 100% !important;
+                padding: 20px !important;
+            }
+
+            .contact-form input,
+            .contact-form textarea {
+                font-size: 16px !important; /* Prevents zoom on iOS */
+            }
+
+            /* Footer mobile adjustments */
+            .footer-content {
+                flex-direction: column !important;
+                gap: 20px !important;
+                text-align: center !important;
+            }
+
+            /* Services grid mobile */
+            .services-grid {
+                grid-template-columns: 1fr !important;
+                gap: 20px !important;
+            }
+
+            /* Button adjustments for mobile */
+            .btn, .button {
+                padding: 12px 24px !important;
+                font-size: 14px !important;
+                min-height: 44px !important; /* Touch target minimum */
             }
         }
     </style>
@@ -2156,8 +2338,14 @@
         const componentTemplates = {
             nav: (data = {}) => `
                 <div class="element" data-type="nav">
-                    <nav style="display: flex; justify-content: center; align-items: center; padding: 20px 0; border-bottom: 1px solid #e2e8f0;">
-                        <div style="display: flex; gap: 30px;">
+                    <nav style="position: relative; display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 1px solid #e2e8f0;">
+                        <!-- Logo Area -->
+                        <div style="display: flex; align-items: center;">
+                            ${logoConfig.url ? `<img src="${logoConfig.url}" style="height: ${logoConfig.size || 40}px; width: auto; object-fit: contain; margin-right: 20px;" alt="Logo">` : ''}
+                        </div>
+                        
+                        <!-- Desktop Navigation -->
+                        <div class="desktop-nav-menu" style="display: flex; gap: 30px; align-items: center;">
                             ${navOrder.map(pageId => {
                                 const hasSubPages = subPages[pageId] && subPages[pageId].length > 0;
                                 const isActive = pageId === currentPage || (subPages[pageId] && subPages[pageId].includes(currentPage));
@@ -2186,6 +2374,29 @@
                                 } else {
                                     return `<a href="javascript:void(0)" onclick="switchToPageNew('${pageId}')" style="text-decoration: none; color: ${isActive ? '#667eea' : '#2d3748'}; font-weight: ${isActive ? '600' : '400'}; padding: 8px 12px; border-radius: 4px; transition: all 0.2s; cursor: pointer;">${pages[pageId]?.name || pageId}</a>`;
                                 }
+                            }).join('')}
+                        </div>
+                        
+                        <!-- Mobile Menu Toggle -->
+                        <button class="mobile-nav-toggle" onclick="toggleMobileNav(this)" style="display: none; background: none; border: none; font-size: 24px; color: #2d3748; cursor: pointer; padding: 8px;">
+                            ☰
+                        </button>
+                        
+                        <!-- Mobile Navigation -->
+                        <div class="mobile-nav-menu" id="mobile-nav-menu" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border-top: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 1000;">
+                            ${navOrder.map(pageId => {
+                                const hasSubPages = subPages[pageId] && subPages[pageId].length > 0;
+                                const isActive = pageId === currentPage || (subPages[pageId] && subPages[pageId].includes(currentPage));
+                                
+                                let menuItems = `<a href="javascript:void(0)" onclick="switchToPageNew('${pageId}'); toggleMobileNav()" style="display: block; padding: 15px 20px; text-decoration: none; color: ${isActive ? '#667eea' : '#2d3748'}; border-bottom: 1px solid #f7fafc; font-weight: ${isActive ? '600' : '500'};">${pages[pageId]?.name || pageId}</a>`;
+                                
+                                if (hasSubPages) {
+                                    menuItems += subPages[pageId].map(subPageId => 
+                                        `<a href="javascript:void(0)" onclick="switchToPageNew('${subPageId}'); toggleMobileNav()" style="display: block; padding: 12px 40px; text-decoration: none; color: ${subPageId === currentPage ? '#667eea' : '#4a5568'}; border-bottom: 1px solid #f7fafc; font-weight: ${subPageId === currentPage ? '600' : '400'}; font-size: 14px; background: #f8fafc;">${pages[subPageId]?.name || subPageId}</a>`
+                                    ).join('');
+                                }
+                                
+                                return menuItems;
                             }).join('')}
                         </div>
                     </nav>
@@ -2286,7 +2497,7 @@
                 <div class="element" data-type="gallery-grid" data-gallery-id="${galleryId}">
                     <div style="padding: 60px 0;">
                         <h2 style="text-align: center; color: #2d3748; margin-bottom: 50px; font-family: 'Playfair Display', serif; font-size: 2.5rem;">${data.title || 'Gallery'}</h2>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                        <div class="gallery-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
                             ${(data.images || [
                                 'https://images.unsplash.com/photo-1519741497674-611481863552?w=400',
                                 'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=400',
@@ -2313,7 +2524,7 @@
                 <div class="element" data-type="masonry" data-gallery-id="${galleryId}">
                     <div style="padding: 60px 0;">
                         <h2 style="text-align: center; color: #2d3748; margin-bottom: 50px; font-family: 'Playfair Display', serif; font-size: 2.5rem;">${data.title || 'Portfolio'}</h2>
-                        <div style="columns: 3; column-gap: 20px; max-width: 1200px; margin: 0 auto;">
+                        <div class="masonry-grid" style="columns: 3; column-gap: 20px; max-width: 1200px; margin: 0 auto;">
                             ${(data.images || [
                                 'https://images.unsplash.com/photo-1519741497674-611481863552?w=400',
                                 'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=400',
@@ -2619,7 +2830,7 @@
                 return `
                 <div class="element" data-type="masonry-simple" data-gallery-id="${galleryId}">
                     <div style="padding: 80px 40px; background: white;">
-                        <div style="columns: 3; column-gap: 20px; max-width: 1200px; margin: 0 auto;">
+                        <div class="masonry-grid" style="columns: 3; column-gap: 20px; max-width: 1200px; margin: 0 auto;">
                             ${(data.images || [
                                 'https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=400',
                                 'https://images.unsplash.com/photo-1518098268026-4e89f1a2cd8e?w=400&h=600',
@@ -2705,7 +2916,7 @@
                     <div style="background: #111111; padding: 100px 30px;">
                         <div style="max-width: 1400px; margin: 0 auto;">
                             <h2 style="text-align: center; color: white; font-family: 'Cormorant Garamond', serif; font-size: 3rem; font-weight: 300; margin-bottom: 80px; letter-spacing: 2px;">${data.title || 'Gallery Collections'}</h2>
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 40px;">
+                            <div class="gallery-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 40px;">
                                 ${(data.galleries || []).map((gallery, index) => `
                                     <div style="position: relative; group; cursor: pointer; overflow: hidden;" onmouseover="this.querySelector('.overlay').style.opacity='1'" onmouseout="this.querySelector('.overlay').style.opacity='0'">
                                         <div class="image-edit-overlay" style="position: absolute; top: 15px; right: 15px; opacity: 1; transition: none; z-index: 9999;">
@@ -3674,6 +3885,37 @@
                 setTimeout(() => notification.remove(), 300);
             }, 3000);
         }
+
+        // Mobile navigation toggle function
+        function toggleMobileNav(button) {
+            const mobileMenu = document.getElementById('mobile-nav-menu');
+            if (mobileMenu) {
+                const isActive = mobileMenu.classList.contains('active');
+                if (isActive) {
+                    mobileMenu.classList.remove('active');
+                    mobileMenu.style.display = 'none';
+                    if (button) button.textContent = '☰';
+                } else {
+                    mobileMenu.classList.add('active');
+                    mobileMenu.style.display = 'block';
+                    if (button) button.textContent = '✕';
+                }
+            }
+        }
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const mobileMenu = document.getElementById('mobile-nav-menu');
+            const mobileToggle = document.querySelector('.mobile-nav-toggle');
+            
+            if (mobileMenu && mobileToggle && mobileMenu.classList.contains('active')) {
+                if (!mobileMenu.contains(event.target) && !mobileToggle.contains(event.target)) {
+                    mobileMenu.classList.remove('active');
+                    mobileMenu.style.display = 'none';
+                    mobileToggle.textContent = '☰';
+                }
+            }
+        });
 
         // Header functions
         // New preview system with modal overlay
