@@ -561,6 +561,64 @@
             gap: var(--spacing-md);
         }
 
+        /* User info bar under header */
+        .user-info-bar {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-primary);
+            padding: 8px 0;
+            position: relative;
+            z-index: 999;
+        }
+
+        .user-info-bar .user-info {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            font-size: 0.9rem;
+        }
+
+        .user-info-bar .user-info span {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .user-info-bar .logout-btn {
+            background: var(--primary-accent);
+            color: var(--text-inverse);
+            border: none;
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .user-info-bar .logout-btn:hover {
+            background: var(--primary-accent-hover);
+            transform: translateY(-1px);
+        }
+
+        /* Mobile responsiveness for user info bar */
+        @media (max-width: 768px) {
+            .user-info-bar .user-info {
+                flex-direction: column;
+                gap: 8px;
+                padding: 8px 16px;
+            }
+
+            .user-info-bar .user-info span {
+                font-size: 0.8rem;
+                text-align: center;
+            }
+
+            .user-info-bar .logout-btn {
+                font-size: 0.8rem;
+                padding: 5px 12px;
+            }
+        }
+
         .content-header {
             margin-bottom: var(--spacing-xl);
             border-bottom: 1px solid var(--border-secondary);
@@ -5008,12 +5066,17 @@
             </div>
             
             <div class="header-right">
-
-                <div id="userInfo" class="user-info" style="display: block;">
-                    <span id="userName">lance@thelegacyphotography.com</span>
-                    <button onclick="firebaseLogout()" class="logout-btn">Sign Out</button>
-                </div>
+                <!-- Empty for balance -->
             </div>
+        </div>
+        
+        <!-- User info bar under header -->
+        <div class="user-info-bar">
+            <div id="userInfo" class="user-info" style="display: block;">
+                <span id="userName">lance@thelegacyphotography.com</span>
+                <button onclick="firebaseLogout()" class="logout-btn">Sign Out</button>
+            </div>
+        </div>
             
             <!-- Mobile Dropdown Menu - inside header for proper positioning -->
         <div class="mobile-menu" id="mobileMenu">
