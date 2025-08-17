@@ -84,12 +84,34 @@ The following permissions are configured:
 
 ## Troubleshooting
 
+### CocoaPods Configuration Issues
+
+If you encounter xcconfig file errors or script phase warnings in Xcode:
+
+1. **On macOS, install CocoaPods and run setup**:
+   ```bash
+   sudo gem install cocoapods
+   cd ios/App
+   pod install --repo-update
+   ```
+
+2. **Always open the workspace file**:
+   ```bash
+   open App.xcworkspace  # NOT App.xcodeproj
+   ```
+
+3. **Fix script phase warnings** in Xcode:
+   - Select project → App target → Build Phases
+   - Find `[CP] Embed Pods Frameworks` script
+   - Add Output Files (see XCODE-SETUP-MACOS.md for details)
+
 ### Common Issues
 
 #### Build Errors
-- **Pod install issues**: Run `cd ios/App && pod install`
+- **Pod install issues**: See `ios/XCODE-SETUP-MACOS.md` for detailed CocoaPods setup
 - **Signing errors**: Check Team settings and Bundle ID
 - **Capacitor sync issues**: Run `npx cap sync ios` again
+- **Missing xcconfig files**: Temporary files provided, but run `pod install` on macOS
 
 #### Firebase Authentication
 - Ensure GoogleService-Info.plist is in Xcode project
@@ -116,6 +138,9 @@ npx cap copy ios
 ## Production Checklist
 
 ### Before App Store Submission
+- [ ] Complete CocoaPods setup on macOS (see ios/XCODE-SETUP-MACOS.md)
+- [ ] Always use App.xcworkspace (not .xcodeproj)
+- [ ] Fix script phase output dependencies
 - [ ] Update bundle identifier to production value
 - [ ] Configure release signing
 - [ ] Test on multiple iOS devices
