@@ -1120,7 +1120,7 @@ app.get('/api/auth/user', async (req, res) => {
     try {
         const result = await pool.query(`
             SELECT sid, sess FROM sessions 
-            WHERE sess LIKE '%lancecasselman2011@gmail.com%' 
+            WHERE sess::text LIKE '%lancecasselman2011@gmail.com%' 
             AND expire > NOW() 
             ORDER BY expire DESC 
             LIMIT 1
@@ -1128,8 +1128,15 @@ app.get('/api/auth/user', async (req, res) => {
         
         if (result.rows.length > 0) {
             const dbSession = result.rows[0];
-            const sessionData = JSON.parse(dbSession.sess);
-            console.log(' AUTH USER: Found valid session in database, using that:', dbSession.sid);
+            let sessionData;
+            try {
+                // Handle both string and object session data
+                sessionData = typeof dbSession.sess === 'string' ? JSON.parse(dbSession.sess) : dbSession.sess;
+                console.log(' AUTH USER: Found valid session in database, using that:', dbSession.sid);
+            } catch (parseError) {
+                console.error(' AUTH USER: Session data parse error:', parseError);
+                sessionData = null;
+            }
             
             // Update current session with user data
             if (sessionData.user) {

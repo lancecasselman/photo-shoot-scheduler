@@ -48,37 +48,15 @@ async function checkAuth() {
         } else {
             console.log('Auth check failed - response not ok:', response.status);
             
-            // Only redirect if we're not coming from auth page and not in a redirect loop
-            if (localStorage.getItem('manualLogout') !== 'true' && 
-                !fromAuth && 
-                !sessionStorage.getItem('fromAuth') && 
-                !document.referrer.includes('auth.html') &&
-                !window.location.href.includes('auth.html')) {
-                
-                console.log(' AUTH CHECK: Scheduling redirect to auth page...');
-                setTimeout(() => {
-                    redirectToAuth();
-                }, 2000);
-            } else {
-                console.log(' AUTH CHECK: Skipping redirect - avoiding loop');
-            }
+            // COMPLETELY DISABLE ALL REDIRECTS - session restoration handles authentication
+            console.log(' AUTH CHECK: Skipping all redirects - session restoration active');
             return false;
         }
     } catch (error) {
         console.error('Auth check failed:', error);
         
-        // COMPLETELY disable redirects if coming from auth page
-        if (localStorage.getItem('manualLogout') !== 'true' && !fromAuth && !sessionStorage.getItem('fromAuth') && !document.referrer.includes('auth.html')) {
-            console.log(' AUTH CHECK: Scheduling redirect to auth page due to error...');
-            setTimeout(() => {
-                redirectToAuth();
-            }, 2000); // Even longer delay
-        } else {
-            console.log(' AUTH CHECK: Skipping redirect due to error - from auth page, manual logout, or has fromAuth flag');
-            console.log(' AUTH CHECK: fromAuth:', fromAuth);
-            console.log(' AUTH CHECK: sessionStorage fromAuth:', sessionStorage.getItem('fromAuth'));
-            console.log(' AUTH CHECK: referrer:', document.referrer);
-        }
+        // COMPLETELY DISABLE ALL REDIRECTS - session restoration handles authentication
+        console.log(' AUTH CHECK: Skipping all redirects due to error - session restoration active');
         return false;
     }
 }
@@ -2213,8 +2191,7 @@ async function initializePage() {
         localStorage.removeItem('manualLogout');
         sessionStorage.removeItem('loggingOut');
         
-        console.log(' INIT PAGE: Logout flags cleared, waiting 2 seconds for backend session to fully establish...');
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Reduced to 2 seconds since we now wait 1.5 in auth page
+        console.log(' INIT PAGE: Logout flags cleared, proceeding immediately with session restoration...');
     } else {
         console.log(' INIT PAGE: Not from auth page, proceeding immediately');
     }
