@@ -2,8 +2,8 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.yourco.photoshootscheduler',
-  appName: 'Photo Shoot Scheduler',
+  appId: 'com.thelegacyphotography.photomanager',
+  appName: 'Photography Manager',
   webDir: 'public',
   server: {
     androidScheme: 'https',
@@ -11,14 +11,23 @@ const config: CapacitorConfig = {
     allowNavigation: [
       'https://photoshcheduleapp.firebaseapp.com',
       'https://*.replit.dev',
-      'https://*.firebaseapp.com'
+      'https://*.firebaseapp.com',
+      'https://*.googleapis.com',
+      'https://accounts.google.com',
+      'https://www.googleapis.com'
     ]
   },
   ios: {
-    scheme: 'photoshootscheduler',
-    contentInset: 'automatic'
+    scheme: 'photomanager',
+    contentInset: 'automatic',
+    allowsLinkPreview: false,
+    handleApplicationNotifications: false,
+    webContentsDebuggingEnabled: false
   },
   android: {
+    allowMixedContent: true,
+    captureInput: true,
+    webContentsDebuggingEnabled: false,
     buildOptions: {
       keystorePath: undefined,
       keystoreAlias: undefined,
@@ -30,6 +39,24 @@ const config: CapacitorConfig = {
     },
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert']
+    },
+    SplashScreen: {
+      launchShowDuration: 2000,
+      launchAutoHide: true,
+      androidSplashResourceName: 'splash',
+      androidScaleType: 'CENTER_CROP',
+      showSpinner: false,
+      iosSpinnerStyle: 'small',
+      spinnerColor: '#999999'
+    },
+    StatusBar: {
+      style: 'default',
+      backgroundColor: '#000000'
+    },
+    Keyboard: {
+      resize: 'body',
+      style: 'dark',
+      resizeOnFullScreen: true
     }
   }
 };

@@ -5,7 +5,7 @@
         <key>CFBundleDevelopmentRegion</key>
         <string>en</string>
         <key>CFBundleDisplayName</key>
-        <string>Photo Shoot Scheduler</string>
+        <string>Photography Manager</string>
         <key>CFBundleExecutable</key>
         <string>$(EXECUTABLE_NAME)</string>
         <key>CFBundleIdentifier</key>
@@ -62,16 +62,26 @@
                         <string>BUNDLE_ID</string>
                         <key>CFBundleURLSchemes</key>
                         <array>
-                                <string>com.yourco.photoshootscheduler</string>
+                                <string>com.thelegacyphotography.photomanager</string>
                         </array>
                 </dict>
         </array>
         
-        <!-- Camera permissions -->
+        <!-- Camera and Photos permissions -->
         <key>NSCameraUsageDescription</key>
-        <string>This app needs camera access to capture photos for your photography sessions.</string>
+        <string>This app needs camera access to capture photos for your photography sessions and manage your portfolio.</string>
         <key>NSPhotoLibraryUsageDescription</key>
-        <string>This app needs photo library access to manage your photography portfolio.</string>
+        <string>This app needs photo library access to manage your photography portfolio and upload photos to client galleries.</string>
+        <key>NSPhotoLibraryAddUsageDescription</key>
+        <string>This app needs permission to save photos to your photo library for backup and portfolio management.</string>
+        
+        <!-- Microphone for video recording -->
+        <key>NSMicrophoneUsageDescription</key>
+        <string>This app may need microphone access for video recording features in your photography sessions.</string>
+        
+        <!-- Location for session metadata -->
+        <key>NSLocationWhenInUseUsageDescription</key>
+        <string>This app uses location to tag photo sessions and help organize your photography work by location.</string>
         
         <!-- Network security -->
         <key>NSAppTransportSecurity</key>
