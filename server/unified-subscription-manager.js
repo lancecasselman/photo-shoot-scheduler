@@ -20,6 +20,8 @@ class UnifiedSubscriptionManager {
     async initializeTables() {
         const client = await this.pool.connect();
         try {
+            console.log('🔧 Creating subscription tables...');
+            
             // Main subscriptions table
             await client.query(`
                 CREATE TABLE IF NOT EXISTS subscriptions (
@@ -84,7 +86,16 @@ class UnifiedSubscriptionManager {
                 CREATE INDEX IF NOT EXISTS idx_subscription_events_type ON subscription_events(event_type);
             `);
 
+            // Test table creation
+            const testResult = await client.query(`
+                SELECT table_name FROM information_schema.tables 
+                WHERE table_schema = 'public' 
+                AND table_name IN ('subscriptions', 'subscription_events', 'user_subscription_summary')
+                ORDER BY table_name
+            `);
+            
             console.log('✅ Unified subscription tables initialized');
+            console.log(`📊 Created tables: ${testResult.rows.map(r => r.table_name).join(', ')}`);
         } catch (error) {
             console.error('❌ Error initializing subscription tables:', error);
             throw error;
@@ -113,21 +124,29 @@ class UnifiedSubscriptionManager {
                 });
             }
 
-            // Create subscription
+            // Create or get existing product
+            const product = await stripe.products.create({
+                name: 'Professional Photography Plan',
+                description: `Professional plan with ${this.BASE_STORAGE_GB}GB storage`,
+                metadata: {
+                    plan_type: 'professional',
+                    storage_gb: this.BASE_STORAGE_GB.toString()
+                }
+            });
+
+            // Create subscription (test mode - will create without payment method)
             const subscription = await stripe.subscriptions.create({
                 customer: customer.id,
                 items: [{
                     price_data: {
                         currency: 'usd',
-                        product_data: {
-                            name: 'Professional Photography Plan',
-                            description: `Professional plan with ${this.BASE_STORAGE_GB}GB storage`
-                        },
+                        product: product.id,
                         unit_amount: this.PROFESSIONAL_PLAN_PRICE * 100,
                         recurring: { interval: 'month' }
                     }
                 }],
-                payment_behavior: 'default_incomplete',
+                // For test mode, create as active without payment requirement
+                collection_method: 'charge_automatically',
                 expand: ['latest_invoice.payment_intent'],
                 metadata: {
                     userId: userId,
@@ -137,6 +156,11 @@ class UnifiedSubscriptionManager {
             });
 
             // Save to database
+            const currentPeriodStart = subscription.current_period_start ? 
+                new Date(subscription.current_period_start * 1000) : new Date();
+            const currentPeriodEnd = subscription.current_period_end ? 
+                new Date(subscription.current_period_end * 1000) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
             await this.saveSubscription({
                 userId: userId,
                 subscriptionType: 'professional',
@@ -145,8 +169,8 @@ class UnifiedSubscriptionManager {
                 externalCustomerId: customer.id,
                 status: subscription.status,
                 priceAmount: this.PROFESSIONAL_PLAN_PRICE,
-                currentPeriodStart: new Date(subscription.current_period_start * 1000),
-                currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+                currentPeriodStart: currentPeriodStart,
+                currentPeriodEnd: currentPeriodEnd,
                 metadata: subscription.metadata
             });
 
@@ -176,16 +200,23 @@ class UnifiedSubscriptionManager {
                 throw new Error('User must have Professional plan first');
             }
 
+            // Create storage product
+            const product = await stripe.products.create({
+                name: `Storage Add-on - ${tbCount}TB`,
+                description: `${tbCount}TB additional cloud storage`,
+                metadata: {
+                    plan_type: 'storage_addon',
+                    storage_tb: tbCount.toString()
+                }
+            });
+
             // Create storage subscription
             const subscription = await stripe.subscriptions.create({
                 customer: customer.id,
                 items: [{
                     price_data: {
                         currency: 'usd',
-                        product_data: {
-                            name: `Storage Add-on - ${tbCount}TB`,
-                            description: `${tbCount}TB additional cloud storage`
-                        },
+                        product: product.id,
                         unit_amount: this.STORAGE_ADD_ON_PRICE * 100,
                         recurring: { interval: 'month' }
                     },
@@ -199,6 +230,11 @@ class UnifiedSubscriptionManager {
             });
 
             // Save to database
+            const currentPeriodStart = subscription.current_period_start ? 
+                new Date(subscription.current_period_start * 1000) : new Date();
+            const currentPeriodEnd = subscription.current_period_end ? 
+                new Date(subscription.current_period_end * 1000) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
             await this.saveSubscription({
                 userId: userId,
                 subscriptionType: 'storage_addon',
@@ -208,8 +244,8 @@ class UnifiedSubscriptionManager {
                 status: subscription.status,
                 priceAmount: this.STORAGE_ADD_ON_PRICE * tbCount,
                 storageTb: tbCount,
-                currentPeriodStart: new Date(subscription.current_period_start * 1000),
-                currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+                currentPeriodStart: currentPeriodStart,
+                currentPeriodEnd: currentPeriodEnd,
                 metadata: subscription.metadata
             });
 
@@ -445,7 +481,7 @@ class UnifiedSubscriptionManager {
                     monthly_total, next_billing_date, updated_at
                 )
                 SELECT 
-                    $1 as user_id,
+                    $1::text as user_id,
                     BOOL_OR(subscription_type = 'professional' AND status = 'active') as has_professional_plan,
                     (SELECT platform FROM subscriptions WHERE user_id = $1 AND subscription_type = 'professional' AND status = 'active' LIMIT 1) as professional_platform,
                     (SELECT status FROM subscriptions WHERE user_id = $1 AND subscription_type = 'professional' AND status = 'active' LIMIT 1) as professional_status,
@@ -458,7 +494,7 @@ class UnifiedSubscriptionManager {
                     MIN(current_period_end) FILTER (WHERE status = 'active') as next_billing_date,
                     NOW() as updated_at
                 FROM subscriptions 
-                WHERE user_id = $1
+                WHERE user_id = $1::text
                 ON CONFLICT (user_id) DO UPDATE SET
                     has_professional_plan = EXCLUDED.has_professional_plan,
                     professional_platform = EXCLUDED.professional_platform,

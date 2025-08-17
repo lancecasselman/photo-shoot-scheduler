@@ -23,7 +23,9 @@ function createSubscriptionRoutes(pool) {
     // Create Professional Plan (Stripe) - Web only
     router.post('/professional/stripe', async (req, res) => {
         try {
-            if (!req.session?.user) {
+            // Check authentication
+            if (!req.session?.user?.uid) {
+                console.log('❌ No authenticated user found in session:', req.session);
                 return res.status(401).json({ success: false, error: 'Authentication required' });
             }
 
@@ -46,7 +48,8 @@ function createSubscriptionRoutes(pool) {
     // Add Storage Add-on (Stripe) - Web only
     router.post('/storage/stripe', async (req, res) => {
         try {
-            if (!req.session?.user) {
+            if (!req.session?.user?.uid) {
+                console.log('❌ No authenticated user found in session:', req.session);
                 return res.status(401).json({ success: false, error: 'Authentication required' });
             }
 
@@ -113,7 +116,8 @@ function createSubscriptionRoutes(pool) {
     // Get user's subscription status - All platforms
     router.get('/status', async (req, res) => {
         try {
-            if (!req.session?.user) {
+            if (!req.session?.user?.uid) {
+                console.log('❌ No authenticated user found in session:', req.session);
                 return res.status(401).json({ success: false, error: 'Authentication required' });
             }
 
