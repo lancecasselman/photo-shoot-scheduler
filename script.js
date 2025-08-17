@@ -41,21 +41,26 @@ async function checkAuth() {
             currentUser = data.user;
             updateUserUI();
             console.log('User authenticated successfully:', currentUser.email);
+            
+            // Clear any fromAuth flags since auth is working
+            sessionStorage.removeItem('fromAuth');
             return true;
         } else {
             console.log('Auth check failed - response not ok:', response.status);
             
-            // COMPLETELY disable redirects if coming from auth page
-            if (localStorage.getItem('manualLogout') !== 'true' && !fromAuth && !sessionStorage.getItem('fromAuth') && !document.referrer.includes('auth.html')) {
+            // Only redirect if we're not coming from auth page and not in a redirect loop
+            if (localStorage.getItem('manualLogout') !== 'true' && 
+                !fromAuth && 
+                !sessionStorage.getItem('fromAuth') && 
+                !document.referrer.includes('auth.html') &&
+                !window.location.href.includes('auth.html')) {
+                
                 console.log(' AUTH CHECK: Scheduling redirect to auth page...');
                 setTimeout(() => {
                     redirectToAuth();
-                }, 2000); // Even longer delay
+                }, 2000);
             } else {
-                console.log(' AUTH CHECK: Skipping redirect - from auth page, manual logout, or has fromAuth flag');
-                console.log(' AUTH CHECK: fromAuth:', fromAuth);
-                console.log(' AUTH CHECK: sessionStorage fromAuth:', sessionStorage.getItem('fromAuth'));
-                console.log(' AUTH CHECK: referrer:', document.referrer);
+                console.log(' AUTH CHECK: Skipping redirect - avoiding loop');
             }
             return false;
         }

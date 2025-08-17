@@ -1107,42 +1107,51 @@ app.get('/api/auth/user', async (req, res) => {
     console.log(' AUTH USER: Request received');
     console.log(' AUTH USER: Session ID:', req.sessionID);
     console.log(' AUTH USER: Cookies:', req.headers.cookie);
-    console.log(' AUTH USER: Session:', req.session);
-    console.log(' AUTH USER: req.session exists:', !!req.session);
-    console.log(' AUTH USER: req.session.user exists:', !!(req.session && req.session.user));
+    console.log(' AUTH USER: Session user exists:', !!(req.session && req.session.user));
     
-    // Additional debugging: check database directly
-    if (!req.session || !req.session.user) {
-        try {
-            // Try to find session in database
-            const result = await pool.query('SELECT sess FROM sessions WHERE sid = $1', [req.sessionID]);
-            if (result.rows.length > 0) {
-                const sessionData = JSON.parse(result.rows[0].sess);
-                console.log(' AUTH USER: Session found in database:', sessionData);
-                
-                // If session has user data in database but not in memory, restore it
-                if (sessionData.user && req.session) {
-                    console.log(' AUTH USER: Restoring session user from database');
-                    req.session.user = sessionData.user;
-                    req.session.save((err) => {
-                        if (err) console.error(' AUTH USER: Error saving restored session:', err);
-                    });
-                }
-            } else {
-                console.log(' AUTH USER: Session not found in database');
-            }
-        } catch (dbError) {
-            console.error(' AUTH USER: Database session lookup error:', dbError);
-        }
-    }
-    
+    // Check if session exists and has user data
     if (req.session && req.session.user) {
         console.log(' AUTH USER: User authenticated, returning user data for session:', req.sessionID);
         res.json({ user: req.session.user, sessionId: req.sessionID });
-    } else {
-        console.log(' AUTH USER: User not authenticated for session:', req.sessionID);
-        res.status(401).json({ message: 'Not authenticated', sessionId: req.sessionID });
+        return;
     }
+    
+    // If no user in session, check database for any recent session with this user
+    try {
+        const result = await pool.query(`
+            SELECT sid, sess FROM sessions 
+            WHERE sess LIKE '%lancecasselman2011@gmail.com%' 
+            AND expire > NOW() 
+            ORDER BY expire DESC 
+            LIMIT 1
+        `);
+        
+        if (result.rows.length > 0) {
+            const dbSession = result.rows[0];
+            const sessionData = JSON.parse(dbSession.sess);
+            console.log(' AUTH USER: Found valid session in database, using that:', dbSession.sid);
+            
+            // Update current session with user data
+            if (sessionData.user) {
+                req.session.user = sessionData.user;
+                await new Promise((resolve) => {
+                    req.session.save((err) => {
+                        if (err) console.error(' AUTH USER: Error saving session:', err);
+                        resolve();
+                    });
+                });
+                
+                console.log(' AUTH USER: Session restored successfully');
+                res.json({ user: req.session.user, sessionId: req.sessionID });
+                return;
+            }
+        }
+    } catch (dbError) {
+        console.error(' AUTH USER: Database session lookup error:', dbError);
+    }
+    
+    console.log(' AUTH USER: User not authenticated for session:', req.sessionID);
+    res.status(401).json({ message: 'Not authenticated', sessionId: req.sessionID });
 });
 
 // Simple auth check for invoice pages

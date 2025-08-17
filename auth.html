@@ -633,14 +633,12 @@
                             localStorage.removeItem('manualLogout');
                             sessionStorage.removeItem('loggingOut');
                             
-                            // Wait longer for session cookie to be set properly
-                            setTimeout(() => {
-                                const urlParams = new URLSearchParams(window.location.search);
-                                const returnTo = urlParams.get('return');
-                                console.log('Session established, redirecting to:', returnTo || '/index.html');
-                                // Redirect to index.html explicitly instead of just '/'
-                                window.location.href = returnTo || '/index.html';
-                            }, 1500); // Wait 1.5 seconds for session to be established
+                            // Redirect immediately since session is now being restored from database
+                            const urlParams = new URLSearchParams(window.location.search);
+                            const returnTo = urlParams.get('return');
+                            console.log('Session established, redirecting to:', returnTo || '/index.html');
+                            // Redirect to index.html explicitly instead of just '/'
+                            window.location.href = returnTo || '/index.html';
                         } else {
                             console.log('Backend verification failed, but user is signed in to Firebase. Continuing...');
                             // Set flag to indicate coming from auth page
