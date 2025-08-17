@@ -278,10 +278,7 @@
             
             <div class="signup-info">
                 <h3>New to the platform?</h3>
-                <p>Create your photographer account using email/password (recommended for Replit environment). All your session data will be securely stored and accessible across devices.</p>
-                <div style="margin-top: 10px; padding: 8px; background: rgba(0, 212, 170, 0.1); border-radius: 6px; border: 1px solid rgba(0, 212, 170, 0.3);">
-                    <strong style="color: #00D4AA;">✓ Email/Password authentication is working perfectly</strong>
-                </div>
+                <p>Create your photographer account using Google or email. All your session data will be securely stored and accessible across devices.</p>
             </div>
             
             <div class="signup-info" style="margin-top: 1rem; background: rgba(212, 175, 55, 0.15);">
@@ -336,7 +333,7 @@
         //  TOGGLEABLE AUTH GUARD SYSTEM
         const DEV_MODE = false; // 👉 Authentication enabled for proper Google login
         
-        // Initialize Firebase with current domain awareness
+        // Initialize Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDbtboh1bW6xu9Tz9FILkx_0lzGwXQHjyM",
             authDomain: "photoshcheduleapp.firebaseapp.com",
@@ -346,11 +343,6 @@
             appId: "1:1080892259604:web:8198de9d7da81c684c1601",
             measurementId: "G-MB2KDEFRHL"
         };
-        
-        // Override authDomain for Replit environment
-        if (window.location.hostname.includes('replit.dev')) {
-            console.log('Using Replit domain configuration for Firebase auth');
-        }
 
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
@@ -441,18 +433,11 @@
             
             // Add a manual fallback button for testing
             const fallbackButton = document.createElement('button');
-            fallbackButton.textContent = 'Jump to Email/Password Login';
-            fallbackButton.style.cssText = 'margin: 10px auto; display: block; padding: 10px 20px; background: #00D4AA; color: #000; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;';
+            fallbackButton.textContent = 'Try Email/Password Instead';
+            fallbackButton.style.cssText = 'margin: 10px auto; display: block; padding: 8px 16px; background: #d4af37; color: #000; border: none; border-radius: 6px; cursor: pointer;';
             fallbackButton.onclick = function() {
-                document.getElementById('emailForm').scrollIntoView({ behavior: 'smooth' });
+                document.getElementById('emailForm').scrollIntoView();
                 document.getElementById('email').focus();
-                
-                // Highlight the email form
-                const emailForm = document.getElementById('emailForm');
-                if (emailForm) {
-                    emailForm.style.border = '2px solid #00D4AA';
-                    emailForm.style.background = 'rgba(0, 212, 170, 0.05)';
-                }
             };
             
             // Insert fallback button after loading indicator
@@ -460,15 +445,6 @@
             if (loadingEl && loadingEl.parentNode) {
                 loadingEl.parentNode.insertBefore(fallbackButton, loadingEl.nextSibling);
             }
-            
-            // Auto-highlight email form on load to guide users
-            setTimeout(() => {
-                const emailForm = document.getElementById('emailForm');
-                if (emailForm) {
-                    emailForm.style.border = '1px solid #00D4AA';
-                    emailForm.style.background = 'rgba(0, 212, 170, 0.02)';
-                }
-            }, 1000);
             // Google Sign-in with redirect fallback
             const googleLoginBtn = document.getElementById("google-login");
             if (googleLoginBtn) {
@@ -487,22 +463,11 @@
                             if (error.code === 'auth/popup-blocked') {
                                 console.log('Popup blocked, using redirect method');
                                 // Don't hide loading indicator for redirect - it will redirect the page
-                                // For Replit, try a different approach - use signInWithCustomToken if available
-                                console.log('Trying alternative redirect method for Replit environment...');
-                                
-                                // Show clearer message and redirect to email/password
-                                document.getElementById('loadingIndicator').style.display = 'none';
-                                
-                                // Auto-focus email field and show message
-                                const emailField = document.getElementById('email');
-                                const emailForm = document.getElementById('emailForm');
-                                if (emailField && emailForm) {
-                                    emailField.focus();
-                                    emailForm.style.border = '2px solid #d4af37';
-                                    emailForm.scrollIntoView({ behavior: 'smooth' });
-                                }
-                                
-                                alert("Google sign-in is having network issues on this domain. Please use email/password authentication instead - it works perfectly!");
+                                auth.signInWithRedirect(googleProvider).catch((redirectError) => {
+                                    console.error('Redirect also failed:', redirectError);
+                                    document.getElementById('loadingIndicator').style.display = 'none';
+                                    alert("Both popup and redirect authentication failed. Please try email/password or contact support.");
+                                });
                             } else if (error.code === 'auth/unauthorized-domain') {
                                 const currentDomain = window.location.hostname;
                                 alert(`Domain authorization error: The domain "${currentDomain}" needs to be added to Firebase console. Please try the email/password sign-in method or use a different domain.`);
@@ -616,7 +581,6 @@
                             headers: {
                                 'Content-Type': 'application/json',
                             },
-                            credentials: 'include', // CRITICAL: Include cookies in request
                             body: JSON.stringify({
                                 uid: user.uid,
                                 email: user.email,
@@ -633,12 +597,14 @@
                             localStorage.removeItem('manualLogout');
                             sessionStorage.removeItem('loggingOut');
                             
-                            // Redirect immediately since session is now being restored from database
-                            const urlParams = new URLSearchParams(window.location.search);
-                            const returnTo = urlParams.get('return');
-                            console.log('Session established, redirecting to:', returnTo || '/index.html');
-                            // Redirect to index.html explicitly instead of just '/'
-                            window.location.href = returnTo || '/index.html';
+                            // Wait longer for session cookie to be set properly
+                            setTimeout(() => {
+                                const urlParams = new URLSearchParams(window.location.search);
+                                const returnTo = urlParams.get('return');
+                                console.log('Session established, redirecting to:', returnTo || '/index.html');
+                                // Redirect to index.html explicitly instead of just '/'
+                                window.location.href = returnTo || '/index.html';
+                            }, 1500); // Wait 1.5 seconds for session to be established
                         } else {
                             console.log('Backend verification failed, but user is signed in to Firebase. Continuing...');
                             // Set flag to indicate coming from auth page

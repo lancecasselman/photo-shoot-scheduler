@@ -804,7 +804,7 @@ const PORT = process.env.PORT || 5000;
 app.use(express.json({ limit: '100gb' }));
 app.use(express.urlencoded({ extended: true, limit: '100gb' }));
 
-// Session configuration for authentication - Fixed for Replit environment
+// Session configuration for authentication
 const pgSession = connectPg(session);
 app.use(session({
     store: new pgSession({
@@ -812,23 +812,15 @@ app.use(session({
         tableName: 'sessions',
         createTableIfMissing: false
     }),
-    secret: process.env.SESSION_SECRET || 'photography-session-secret-2025',
+    secret: process.env.SESSION_SECRET || 'your-session-secret',
     resave: false,
     saveUninitialized: false,
-    name: 'photography.sid', // Custom session name for better tracking
     cookie: {
         httpOnly: true,
-        secure: false, // Always false for Replit development environment
+        secure: process.env.NODE_ENV === 'production', // Auto-detect HTTPS in production
         maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
-        sameSite: 'lax', // Better mobile compatibility than 'none'
-        path: '/', // Ensure cookie works across all paths
-        domain: undefined // Let browser set domain automatically
-    },
-    // Additional options for session persistence
-    rolling: false, // DON'T reset expiration on every request - this might cause session ID changes
-    genid: function(req) {
-        // Generate unique session IDs
-        return 'photo-' + require('crypto').randomUUID();
+        // Mobile Safari compatible - use 'lax' for better compatibility
+        sameSite: 'lax' // Better mobile compatibility than 'none'
     }
 }));
 
@@ -1076,26 +1068,15 @@ app.post('/api/auth/firebase-verify', async (req, res) => {
         // Verify user exists and update session
         req.session.user = { uid, email, displayName };
         console.log(' FIREBASE VERIFY: Session after setting user:', req.session);
-        console.log(' FIREBASE VERIFY: Session ID being set:', req.sessionID);
         
-        // Force session save and regenerate session ID to prevent confusion
+        // Force session save
         req.session.save((err) => {
             if (err) {
                 console.error(' FIREBASE VERIFY: Session save error:', err);
                 return res.status(500).json({ message: 'Session save failed' });
             }
-            console.log(' FIREBASE VERIFY: Session saved successfully for session ID:', req.sessionID);
-            
-            // Set session cookie explicitly to ensure browser gets it
-            res.cookie('photography.sid', req.sessionID, {
-                httpOnly: true,
-                secure: false, // Always false for Replit development
-                maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-                sameSite: 'lax',
-                path: '/'
-            });
-            
-            res.json({ success: true, user: req.session.user, sessionId: req.sessionID });
+            console.log(' FIREBASE VERIFY: Session saved successfully');
+            res.json({ success: true, user: req.session.user });
         });
     } catch (error) {
         console.error('Firebase verification error:', error);
@@ -1103,62 +1084,20 @@ app.post('/api/auth/firebase-verify', async (req, res) => {
     }
 });
 
-app.get('/api/auth/user', async (req, res) => {
+app.get('/api/auth/user', (req, res) => {
     console.log(' AUTH USER: Request received');
     console.log(' AUTH USER: Session ID:', req.sessionID);
-    console.log(' AUTH USER: Cookies:', req.headers.cookie);
-    console.log(' AUTH USER: Session user exists:', !!(req.session && req.session.user));
+    console.log(' AUTH USER: Session:', req.session);
+    console.log(' AUTH USER: req.session exists:', !!req.session);
+    console.log(' AUTH USER: req.session.user exists:', !!(req.session && req.session.user));
     
-    // Check if session exists and has user data
     if (req.session && req.session.user) {
-        console.log(' AUTH USER: User authenticated, returning user data for session:', req.sessionID);
-        res.json({ user: req.session.user, sessionId: req.sessionID });
-        return;
+        console.log(' AUTH USER: User authenticated, returning user data');
+        res.json({ user: req.session.user });
+    } else {
+        console.log(' AUTH USER: User not authenticated');
+        res.status(401).json({ message: 'Not authenticated' });
     }
-    
-    // If no user in session, check database for any recent session with this user
-    try {
-        const result = await pool.query(`
-            SELECT sid, sess FROM sessions 
-            WHERE sess::text LIKE '%lancecasselman2011@gmail.com%' 
-            AND expire > NOW() 
-            ORDER BY expire DESC 
-            LIMIT 1
-        `);
-        
-        if (result.rows.length > 0) {
-            const dbSession = result.rows[0];
-            let sessionData;
-            try {
-                // Handle both string and object session data
-                sessionData = typeof dbSession.sess === 'string' ? JSON.parse(dbSession.sess) : dbSession.sess;
-                console.log(' AUTH USER: Found valid session in database, using that:', dbSession.sid);
-            } catch (parseError) {
-                console.error(' AUTH USER: Session data parse error:', parseError);
-                sessionData = null;
-            }
-            
-            // Update current session with user data
-            if (sessionData.user) {
-                req.session.user = sessionData.user;
-                await new Promise((resolve) => {
-                    req.session.save((err) => {
-                        if (err) console.error(' AUTH USER: Error saving session:', err);
-                        resolve();
-                    });
-                });
-                
-                console.log(' AUTH USER: Session restored successfully');
-                res.json({ user: req.session.user, sessionId: req.sessionID });
-                return;
-            }
-        }
-    } catch (dbError) {
-        console.error(' AUTH USER: Database session lookup error:', dbError);
-    }
-    
-    console.log(' AUTH USER: User not authenticated for session:', req.sessionID);
-    res.status(401).json({ message: 'Not authenticated', sessionId: req.sessionID });
 });
 
 // Simple auth check for invoice pages
