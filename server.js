@@ -10675,6 +10675,104 @@ async function startServer() {
     
     // Subscription status check for frontend
     app.get('/api/subscription-status', subscriptionAuth.getSubscriptionStatus);
+    
+    // Username availability check
+    app.get('/api/users/check-username', async (req, res) => {
+        try {
+            const { username } = req.query;
+            
+            if (!username) {
+                return res.status(400).json({ error: 'Username required' });
+            }
+            
+            // Check if username is available in database
+            const result = await pool.query(
+                'SELECT id FROM users WHERE username = $1',
+                [username.toLowerCase()]
+            );
+            
+            res.json({ 
+                available: result.rows.length === 0,
+                username: username.toLowerCase()
+            });
+        } catch (error) {
+            console.error('Error checking username:', error);
+            res.status(500).json({ error: 'Failed to check username availability' });
+        }
+    });
+    
+    // Complete onboarding
+    app.post('/api/users/complete-onboarding', isAuthenticated, async (req, res) => {
+        try {
+            const userId = req.session.user.uid;
+            const {
+                username,
+                displayName,
+                firstName,
+                lastName,
+                businessName,
+                businessType
+            } = req.body;
+            
+            // Validate required fields
+            if (!username || !displayName || !businessName) {
+                return res.status(400).json({ 
+                    error: 'Missing required fields: username, displayName, businessName' 
+                });
+            }
+            
+            // Check username availability one more time
+            const usernameCheck = await pool.query(
+                'SELECT id FROM users WHERE username = $1 AND id != $2',
+                [username.toLowerCase(), userId]
+            );
+            
+            if (usernameCheck.rows.length > 0) {
+                return res.status(400).json({ error: 'Username already taken' });
+            }
+            
+            // Update user record with onboarding data
+            await pool.query(
+                `UPDATE users SET 
+                    username = $1,
+                    display_name = $2,
+                    first_name = $3,
+                    last_name = $4,
+                    business_name = $5,
+                    business_type = $6,
+                    onboarding_completed = true,
+                    updated_at = NOW()
+                WHERE id = $7`,
+                [
+                    username.toLowerCase(),
+                    displayName,
+                    firstName,
+                    lastName,
+                    businessName,
+                    businessType,
+                    userId
+                ]
+            );
+            
+            console.log(`✅ Onboarding completed for user ${userId} with username @${username}`);
+            
+            res.json({ 
+                success: true,
+                message: 'Onboarding completed successfully',
+                user: {
+                    id: userId,
+                    username: username.toLowerCase(),
+                    displayName,
+                    businessName,
+                    businessType
+                }
+            });
+            
+        } catch (error) {
+            console.error('Error completing onboarding:', error);
+            res.status(500).json({ error: 'Failed to complete onboarding' });
+        }
+    });
 
     const server = app.listen(PORT, '0.0.0.0', () => {
         console.log(` Photography Management System running on http://0.0.0.0:${PORT}`);
