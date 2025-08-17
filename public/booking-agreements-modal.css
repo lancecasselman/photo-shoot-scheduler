@@ -1,0 +1,356 @@
+/* Booking Agreements Modal Styles */
+
+.booking-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.booking-modal-content {
+    background: white;
+    width: 90%;
+    max-width: 900px;
+    height: 85vh;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    animation: slideUp 0.3s ease;
+}
+
+.booking-modal-header {
+    padding: 20px 25px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px 12px 0 0;
+}
+
+.booking-modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.booking-modal-close {
+    background: none;
+    border: none;
+    font-size: 28px;
+    color: white;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.booking-modal-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.booking-modal-body {
+    flex: 1;
+    padding: 25px;
+    overflow-y: auto;
+    background: #f9fafb;
+}
+
+.template-section {
+    margin-bottom: 20px;
+}
+
+.template-section label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.template-section select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 15px;
+    background: white;
+    cursor: pointer;
+}
+
+.agreement-content-editor,
+.agreement-content-viewer {
+    background: white;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 20px;
+    min-height: 400px;
+    max-height: 500px;
+    overflow-y: auto;
+    font-size: 14px;
+    line-height: 1.8;
+}
+
+.agreement-content-editor {
+    outline: none;
+}
+
+.agreement-content-editor:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.agreement-content-editor h2,
+.agreement-content-viewer h2 {
+    color: #1f2937;
+    font-size: 1.5rem;
+    margin: 20px 0 15px;
+    border-bottom: 2px solid #e5e7eb;
+    padding-bottom: 10px;
+}
+
+.agreement-content-editor h3,
+.agreement-content-viewer h3 {
+    color: #374151;
+    font-size: 1.2rem;
+    margin: 18px 0 12px;
+}
+
+.agreement-content-editor ul,
+.agreement-content-viewer ul {
+    margin: 12px 0;
+    padding-left: 25px;
+}
+
+.agreement-content-editor li,
+.agreement-content-viewer li {
+    margin: 8px 0;
+}
+
+.agreement-status-badge {
+    margin-bottom: 15px;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-draft {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.status-sent {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-viewed {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.status-signed {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.signature-info {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f0fdf4;
+    border: 1px solid #86efac;
+    border-radius: 6px;
+}
+
+.signature-info p {
+    margin: 5px 0;
+    color: #166534;
+}
+
+.booking-modal-footer {
+    padding: 20px 25px;
+    border-top: 1px solid #e5e7eb;
+    background: white;
+    border-radius: 0 0 12px 12px;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+/* Agreement Button Styles for Session Cards */
+.booking-agreement-btn {
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    background: #f9fafb;
+    color: #374151;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.booking-agreement-btn:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+}
+
+.btn-agreement-draft {
+    background: #f3f4f6;
+    color: #6b7280;
+    border-color: #d1d5db;
+}
+
+.btn-agreement-sent {
+    background: #fef3c7;
+    color: #92400e;
+    border-color: #fbbf24;
+}
+
+.btn-agreement-viewed {
+    background: #dbeafe;
+    color: #1e40af;
+    border-color: #93c5fd;
+}
+
+.btn-agreement-signed {
+    background: #d1fae5;
+    color: #065f46;
+    border-color: #86efac;
+}
+
+.agreement-status {
+    font-weight: 500;
+}
+
+/* Booking Agreement Button Styles */
+.booking-agreement-btn {
+    background-color: #9b59b6 !important;
+    color: white !important;
+    border: none;
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+    margin: 2px;
+    cursor: pointer;
+    display: inline-block;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.booking-agreement-btn:hover {
+    background-color: #8e44ad !important;
+    transform: translateY(-1px);
+}
+
+.btn-agreement-none {
+    background-color: #9b59b6 !important;
+}
+
+.btn-agreement-draft {
+    background-color: #f39c12 !important;
+}
+
+.btn-agreement-sent {
+    background-color: #3498db !important;
+}
+
+.btn-agreement-viewed {
+    background-color: #e67e22 !important;
+}
+
+.btn-agreement-signed {
+    background-color: #27ae60 !important;
+}
+
+/* Modal Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .booking-modal-content {
+        width: 95%;
+        height: 90vh;
+        margin: 20px;
+    }
+    
+    .booking-modal-header h2 {
+        font-size: 1.2rem;
+    }
+    
+    .booking-modal-body {
+        padding: 15px;
+    }
+    
+    .button-group {
+        flex-wrap: wrap;
+    }
+    
+    .button-group button {
+        flex: 1;
+        min-width: 120px;
+    }
+}
+
+/* Print Styles for Agreements */
+@media print {
+    .booking-modal-header,
+    .booking-modal-footer,
+    .template-section,
+    .agreement-status-badge {
+        display: none !important;
+    }
+    
+    .booking-modal-body {
+        padding: 0;
+    }
+    
+    .agreement-content-editor,
+    .agreement-content-viewer {
+        border: none;
+        box-shadow: none;
+        padding: 0;
+    }
+}

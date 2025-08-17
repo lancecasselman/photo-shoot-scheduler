@@ -4,7 +4,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'com.yourco.photoshootscheduler',
   appName: 'Photo Shoot Scheduler',
-  webDir: '.',
+  webDir: 'public',
   server: {
     androidScheme: 'https'
   },
