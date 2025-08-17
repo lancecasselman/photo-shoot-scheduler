@@ -616,6 +616,7 @@
                             headers: {
                                 'Content-Type': 'application/json',
                             },
+                            credentials: 'include', // CRITICAL: Include cookies in request
                             body: JSON.stringify({
                                 uid: user.uid,
                                 email: user.email,

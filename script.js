@@ -27,9 +27,10 @@ async function checkAuth() {
         console.log(' AUTH CHECK: Checking authentication with backend...');
         console.log(' AUTH CHECK: About to call /api/auth/user');
         const response = await fetch('/api/auth/user', {
-            credentials: 'include', // Ensure cookies are sent
+            credentials: 'include', // Include cookies - this is critical for session persistence
             headers: {
-                'Cache-Control': 'no-cache' // Prevent caching of auth responses
+                'Cache-Control': 'no-cache', // Prevent caching of auth responses
+                'Accept': 'application/json'
             }
         });
         
