@@ -37,10 +37,10 @@ export function getSession() {
     resave: false,
     saveUninitialized: false,
     cookie: {
-      httpOnly: true,
-      secure: false, // Changed for Replit/Safari compatibility
+      httpOnly: false, // Changed to false for Replit compatibility
+      secure: false, // Keep false for Replit
       maxAge: sessionTtl,
-      sameSite: 'lax', // Added for Safari compatibility
+      sameSite: 'none', // Changed to none for cross-origin requests
     },
   });
 }

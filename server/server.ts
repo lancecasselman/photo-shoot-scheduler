@@ -3,6 +3,7 @@ import { parse } from 'url';
 import * as fs from 'fs';
 import * as path from 'path';
 import { storage } from './api';
+import { createSession, getSession, generateSessionId } from './session-handler.js';
 
 const PORT = parseInt(process.env.PORT || '5000');
 
@@ -45,12 +46,52 @@ function serveStaticFile(filePath: string, res: any) {
   }
 }
 
+function getSessionFromCookies(cookieHeader: string): string | null {
+  if (!cookieHeader) return null;
+  
+  const cookies = cookieHeader.split(';').map(c => c.trim());
+  for (const cookie of cookies) {
+    if (cookie.startsWith('sessionId=')) {
+      return cookie.substring('sessionId='.length);
+    }
+  }
+  return null;
+}
+
+function isAuthenticated(req: any): boolean {
+  const sessionId = getSessionFromCookies(req.headers.cookie);
+  if (!sessionId) {
+    console.log('🚫 No session ID found in cookies');
+    return false;
+  }
+  
+  const session = getSession(sessionId);
+  if (!session) {
+    console.log('🚫 Session not found for ID:', sessionId);
+    return false;
+  }
+  
+  console.log('✅ Authentication successful for:', session.user.email);
+  req.user = session.user;
+  return true;
+}
+
 async function handleApiRequest(method: string, pathname: string, req: any, res: any) {
   setCorsHeaders(res);
   
   if (method === 'OPTIONS') {
     res.writeHead(200);
     res.end();
+    return;
+  }
+  
+  // Check authentication for protected routes
+  const protectedRoutes = ['/api/sessions', '/api/users'];
+  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
+  
+  if (isProtectedRoute && !pathname.includes('/firebase-') && !isAuthenticated(req)) {
+    res.writeHead(401, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Unauthorized' }));
     return;
   }
 
@@ -85,8 +126,20 @@ async function handleApiRequest(method: string, pathname: string, req: any, res:
         // Handle Firebase login
         result = { success: true, message: 'User authenticated', user: data };
       } else if (pathname === '/api/auth/firebase-verify' && method === 'POST') {
-        // Handle Firebase verification
-        result = { success: true, message: 'User verified', user: data };
+        // Handle Firebase verification and create session
+        console.log(' FIREBASE VERIFY: Received request:', data);
+        
+        const sessionId = generateSessionId();
+        createSession(sessionId, {
+          uid: data.uid,
+          email: data.email,
+          displayName: data.displayName
+        });
+        
+        // Set session cookie
+        res.setHeader('Set-Cookie', `sessionId=${sessionId}; Path=/; Max-Age=604800; SameSite=None`);
+        
+        result = { success: true, message: 'User verified', user: data, sessionId };
       } else if (pathname === '/api/auth/logout' && method === 'POST') {
         // Handle logout
         result = { success: true, message: 'Logged out successfully' };
