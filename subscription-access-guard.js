@@ -84,8 +84,8 @@ class SubscriptionAccessGuard {
                             <h4>Current Status:</h4>
                             <p><strong>Professional Plan:</strong> ${status.hasProfessionalPlan ? 'Yes' : 'No'}</p>
                             <p><strong>Status:</strong> ${status.professionalStatus || 'None'}</p>
-                            <p><strong>Storage:</strong> ${status.totalStorageGb}GB</p>
-                            <p><strong>Monthly Total:</strong> $${status.monthlyTotal.toFixed(2)}</p>
+                            <p><strong>Storage:</strong> ${status.totalStorageGb || 0}GB</p>
+                            <p><strong>Monthly Total:</strong> $${(status.monthlyTotal || 0).toFixed(2)}</p>
                         </div>
                     </div>
                     <div class="modal-actions">
