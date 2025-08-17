@@ -415,7 +415,7 @@ async function loadSessions() {
                 window.dispatchEvent(sessionsRenderedEvent);
             }, 200);
         } else {
-            console.error('renderSessions function not found in window scope');
+            console.log('renderSessions function not available - loading complete without render');
         }
         console.log('Successfully loaded', sessions.length, 'sessions');
 

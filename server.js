@@ -72,7 +72,7 @@ const UnifiedFileDeletion = require('./server/unified-file-deletion');
 const archiver = require('archiver');
 const { JSDOM } = require('jsdom');
 
-// Database AI Credits Functions
+// Database AI Credits Functions with improved error handling
 async function getUserAiCredits(userId) {
     let client;
     try {
@@ -80,21 +80,33 @@ async function getUserAiCredits(userId) {
         const result = await client.query('SELECT ai_credits FROM users WHERE id = $1', [userId]);
         return result.rows[0]?.ai_credits || 0;
     } catch (error) {
-        console.error('Error getting user AI credits:', error);
-        // Log the specific error for debugging
-        console.error('Database error details:', {
-            code: error.code,
-            detail: error.detail,
-            hint: error.hint
-        });
-        // Return a conservative default instead of high amount
-        return 0;
+        // Handle specific database errors gracefully
+        if (error.code === '57P01' || error.code === 'ECONNRESET') {
+            console.warn('Database connection lost, retrying AI credits fetch...');
+            // Simple retry mechanism for connection issues
+            try {
+                if (client) client.release(true);
+                client = await pool.connect();
+                const result = await client.query('SELECT ai_credits FROM users WHERE id = $1', [userId]);
+                return result.rows[0]?.ai_credits || 0;
+            } catch (retryError) {
+                console.error('Retry failed for AI credits:', retryError.message);
+                return 0;
+            }
+        } else {
+            console.error('Error getting user AI credits:', {
+                code: error.code,
+                message: error.message,
+                userId: userId
+            });
+            return 0;
+        }
     } finally {
         if (client) {
             try {
                 client.release();
             } catch (releaseError) {
-                console.error('Error releasing database client:', releaseError);
+                console.error('Error releasing database client:', releaseError.message);
             }
         }
     }
@@ -261,23 +273,49 @@ const pool = new Pool({
     keepAliveInitialDelayMillis: 10000,
 });
 
-// Add error handling for database pool
-pool.on('error', (err) => {
+// Enhanced database pool error handling for production stability
+pool.on('error', (err, client) => {
     console.error('Unexpected database pool error:', err);
-    // Don't exit the process, just log the error
+    
+    // Handle specific error types
+    if (err.code === '57P01') { // Admin shutdown
+        console.warn('Database connection terminated by administrator - will reconnect');
+    } else if (err.code === 'ECONNRESET') {
+        console.warn('Database connection reset - will reconnect');  
+    } else if (err.code === 'ENOTFOUND') {
+        console.error('Database host not found - check DATABASE_URL');
+    } else {
+        console.error('Database error details:', {
+            code: err.code,
+            message: err.message,
+            severity: err.severity
+        });
+    }
+    
+    // Remove the problematic client from pool if available
+    if (client) {
+        try {
+            client.release(true); // Force removal
+        } catch (releaseError) {
+            console.error('Error force-releasing problematic client:', releaseError);
+        }
+    }
 });
 
-pool.on('connect', (client) => {
-    console.log('Database client connected');
-});
+// Reduce pool event logging for production (only in development)
+if (process.env.NODE_ENV !== 'production') {
+    pool.on('connect', (client) => {
+        console.log('Database client connected');
+    });
 
-pool.on('acquire', (client) => {
-    console.log('Database client acquired from pool');
-});
+    pool.on('acquire', (client) => {
+        console.log('Database client acquired from pool');
+    });
 
-pool.on('remove', (client) => {
-    console.log('Database client removed from pool');
-});
+    pool.on('remove', (client) => {
+        console.log('Database client removed from pool');
+    });
+}
 
 // Initialize local backup system first
 const LocalBackupFallback = require('./server/local-backup-fallback');
@@ -775,7 +813,8 @@ app.use(session({
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production', // Auto-detect HTTPS in production
         maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax' // Allow cross-site for production
+        // Mobile Safari compatible - use 'lax' for better compatibility
+        sameSite: 'lax' // Better mobile compatibility than 'none'
     }
 }));
 
