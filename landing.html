@@ -12,14 +12,14 @@
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
-        // Get Firebase config from environment variables
+        // Use the working Firebase config
         const firebaseConfig = {
-            apiKey: window.VITE_FIREBASE_API_KEY || "AIzaSyBB6_nBfGFKQG2mKuYSe8sGz3LCmOw2m_Y",
-            authDomain: `${window.VITE_FIREBASE_PROJECT_ID || "photoshcheduleapp"}.firebaseapp.com`,
-            projectId: window.VITE_FIREBASE_PROJECT_ID || "photoshcheduleapp",
-            storageBucket: `${window.VITE_FIREBASE_PROJECT_ID || "photoshcheduleapp"}.appspot.com`,
+            apiKey: "AIzaSyBB6_nBfGFKQG2mKuYSe8sGz3LCmOw2m_Y",
+            authDomain: "photoshcheduleapp.firebaseapp.com",
+            projectId: "photoshcheduleapp",
+            storageBucket: "photoshcheduleapp.appspot.com",
             messagingSenderId: "982529899883",
-            appId: window.VITE_FIREBASE_APP_ID || "1:982529899883:web:6d3fb6b50eb6c1b8caeda3"
+            appId: "1:982529899883:web:6d3fb6b50eb6c1b8caeda3"
         };
 
         window.firebaseApp = initializeApp(firebaseConfig);
@@ -39,21 +39,56 @@
 
         // Show/hide admin elements
         function showAdminElements(show) {
+            console.log('showAdminElements called with:', show);
             const adminElements = document.querySelectorAll('.admin-only');
-            adminElements.forEach(el => {
-                el.style.display = show ? 'block' : 'none';
+            console.log('Found admin elements:', adminElements.length);
+            adminElements.forEach((el, index) => {
+                console.log(`Admin element ${index}:`, el);
+                el.style.display = show ? 'flex' : 'none'; // Use flex to maintain inline layout
+                if (show) {
+                    el.style.visibility = 'visible';
+                    el.style.opacity = '1';
+                }
             });
         }
 
         // Auth state listener
         onAuthStateChanged(window.auth, (user) => {
+            console.log('Firebase auth state changed:', user ? user.email : 'No user');
             if (user && isAdmin(user.email)) {
-                console.log('Admin authenticated:', user.email);
+                console.log('✅ Admin authenticated:', user.email);
+                console.log('Showing admin elements');
                 showAdminElements(true);
             } else {
+                console.log('❌ Not admin or not authenticated');
                 showAdminElements(false);
             }
         });
+
+        // Also check for already existing session authentication
+        setTimeout(() => {
+            console.log('Checking for existing authentication...');
+            if (window.auth && window.auth.currentUser) {
+                const user = window.auth.currentUser;
+                console.log('Found existing Firebase user:', user.email);
+                if (isAdmin(user.email)) {
+                    console.log('✅ Existing user is admin, showing admin elements');
+                    showAdminElements(true);
+                }
+            } else {
+                console.log('No existing Firebase user found');
+                // Check if user is authenticated via session (backend auth)
+                fetch('/api/auth/user')
+                    .then(response => response.json())
+                    .then(userData => {
+                        if (userData && userData.email && isAdmin(userData.email)) {
+                            console.log('✅ Backend session auth found for admin:', userData.email);
+                            showAdminElements(true);
+                        }
+                    })
+                    .catch(err => console.log('No backend session found'));
+            }
+        }, 1000);
 
         window.isAdminUser = (email) => isAdmin(email);
         window.showAdminElements = showAdminElements;
