@@ -1,9 +1,11 @@
-<html lang="en"><head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Photography Management System - Complete Business Platform</title>
-    <meta name="description" content="The #1 All-in-One Photography Management System. Session Management, Client Galleries, Automated Payments, Community Network &amp; More!">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+    <meta name="description" content="The #1 All-in-One Photography Management System. Session Management, Client Galleries, Automated Payments, Community Network & More!">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://js.stripe.com/v3/"></script>
     <!-- Firebase SDKs -->
     <script type="module">
@@ -1183,18 +1185,7 @@
             background: white;
         }
     </style>
-<style>
-            @keyframes fadeInUp {
-                from {
-                    opacity: 0;
-                    transform: translateY(30px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-        </style></head>
+</head>
 <body>
     <!-- Floating Background Shapes -->
     <div class="floating-shapes">
@@ -1214,7 +1205,7 @@
                 <a href="#features" class="nav-link">Features</a>
                 <a href="#pricing" class="nav-link">Pricing</a>
                 <a href="#testimonials" class="nav-link">Reviews</a>
-                <a href="#" class="nav-link admin-only" id="adminWebsiteBuilder" onclick="showWebsiteBuilder()" style="display: flex; background: rgba(196, 150, 45, 0.1); padding: 8px 15px; border-radius: 15px; color: var(--primary); font-weight: 600; visibility: visible; opacity: 1;">🛠️ Website Builder</a>
+                <a href="#" class="nav-link admin-only" id="adminWebsiteBuilder" onclick="showWebsiteBuilder()" style="display: none; background: rgba(196, 150, 45, 0.1); padding: 8px 15px; border-radius: 15px; color: var(--primary); font-weight: 600;">🛠️ Website Builder</a>
                 <a href="/auth.html" class="nav-signin">Sign In</a>
                 <a href="#pricing" class="nav-cta">Get Started Free</a>
             </div>
@@ -1228,7 +1219,7 @@
             <a href="#features" class="mobile-nav-link" onclick="toggleMobileMenu()">Features</a>
             <a href="#pricing" class="mobile-nav-link" onclick="toggleMobileMenu()">Pricing</a>
             <a href="#testimonials" class="mobile-nav-link" onclick="toggleMobileMenu()">Reviews</a>
-            <a href="#" class="mobile-nav-link admin-only" id="mobileAdminWebsiteBuilder" onclick="showWebsiteBuilder(); toggleMobileMenu()" style="display: flex; background: rgba(196, 150, 45, 0.1); border-radius: 8px; color: var(--primary); font-weight: 600; visibility: visible; opacity: 1;">🛠️ Website Builder</a>
+            <a href="#" class="mobile-nav-link admin-only" id="mobileAdminWebsiteBuilder" onclick="showWebsiteBuilder(); toggleMobileMenu()" style="display: none; background: rgba(196, 150, 45, 0.1); border-radius: 8px; color: var(--primary); font-weight: 600;">🛠️ Website Builder</a>
             <a href="/auth.html" class="mobile-nav-signin">Sign In</a>
             <a href="#pricing" class="mobile-nav-cta" onclick="toggleMobileMenu()">Get Started Free</a>
         </div>
@@ -1239,12 +1230,12 @@
         <div class="hero-bg"></div>
         <div class="hero-content">
             <div class="badge"> Professional Photography Management Platform</div>
-            <h1 class="hero-title" contenteditable="true" style="outline: none; cursor: text;">The Complete Photography Business Platform.</h1>
-            <p class="hero-subtitle" contenteditable="true" style="outline: none; cursor: text;">Stop juggling multiple tools. Manage sessions, deliver galleries, process payments, and grow your community - all in one powerful platform.</p>
+            <h1 class="hero-title">The Complete Photography Business Platform That Runs Itself</h1>
+            <p class="hero-subtitle">Stop juggling multiple tools. Manage sessions, deliver galleries, process payments, and grow your community - all in one powerful platform.</p>
             <div class="hero-cta-group">
                 <a href="#" class="hero-cta-primary" onclick="openPaymentModal('pro'); return false;">
                     Start Your Free Trial
-                    <span contenteditable="true" style="outline: none; cursor: text;">→</span>
+                    <span>→</span>
                 </a>
                 <a href="#features" class="hero-cta-secondary">See How It Works</a>
             </div>
@@ -1253,16 +1244,16 @@
             </div>
             <div class="trust-badges">
                 <div class="trust-badge">
-                    <span class="trust-badge-icon" contenteditable="true" style="outline: none; cursor: text;">✓</span>
-                    <span contenteditable="true" style="outline: none; cursor: text;">No Credit Card Required</span>
+                    <span class="trust-badge-icon">✓</span>
+                    <span>No Credit Card Required</span>
                 </div>
                 <div class="trust-badge">
-                    <span class="trust-badge-icon" contenteditable="true" style="outline: none; cursor: text;">✓</span>
-                    <span contenteditable="true" style="outline: none; cursor: text;">14-Day Free Trial</span>
+                    <span class="trust-badge-icon">✓</span>
+                    <span>14-Day Free Trial</span>
                 </div>
                 <div class="trust-badge">
-                    <span class="trust-badge-icon" contenteditable="true" style="outline: none; cursor: text;">✓</span>
-                    <span contenteditable="true" style="outline: none; cursor: text;">Cancel Anytime</span>
+                    <span class="trust-badge-icon">✓</span>
+                    <span>Cancel Anytime</span>
                 </div>
             </div>
         </div>
@@ -1271,16 +1262,16 @@
     <!-- Features Section -->
     <section class="features" id="features">
         <div class="section-header">
-            <h2 class="section-title" contenteditable="true" style="outline: none; cursor: text;">Everything You Need to Run Your Photography Business</h2>
-            <p class="section-subtitle" contenteditable="true" style="outline: none; cursor: text;">Powerful features designed specifically for professional photographers</p>
+            <h2 class="section-title">Everything You Need to Run Your Photography Business</h2>
+            <p class="section-subtitle">Powerful features designed specifically for professional photographers</p>
         </div>
         <div class="features-grid">
             <div class="feature-card">
                 <div class="feature-icon"></div>
-                <h3 class="feature-title" contenteditable="true" style="outline: none; cursor: text;">Smart Session Management</h3>
-                <p class="feature-description" contenteditable="true" style="outline: none; cursor: text;">Schedule, track, and manage all your photography sessions in one intuitive dashboard.</p>
+                <h3 class="feature-title">Smart Session Management</h3>
+                <p class="feature-description">Schedule, track, and manage all your photography sessions in one intuitive dashboard.</p>
                 <ul class="feature-list">
-                    <li>Automated booking &amp; scheduling</li>
+                    <li>Automated booking & scheduling</li>
                     <li>Smart calendar with reminders</li>
                     <li>Client information management</li>
                     <li>Session type templates</li>
@@ -1289,8 +1280,8 @@
 
             <div class="feature-card">
                 <div class="feature-icon">🖼️</div>
-                <h3 class="feature-title" contenteditable="true" style="outline: none; cursor: text;">Beautiful Client Galleries</h3>
-                <p class="feature-description" contenteditable="true" style="outline: none; cursor: text;">Deliver stunning, password-protected galleries that wow your clients every time.</p>
+                <h3 class="feature-title">Beautiful Client Galleries</h3>
+                <p class="feature-description">Deliver stunning, password-protected galleries that wow your clients every time.</p>
                 <ul class="feature-list">
                     <li>Drag-and-drop uploads</li>
                     <li>Custom branding options</li>
@@ -1301,11 +1292,11 @@
 
             <div class="feature-card">
                 <div class="feature-icon">💳</div>
-                <h3 class="feature-title" contenteditable="true" style="outline: none; cursor: text;">Automated Payments</h3>
-                <p class="feature-description" contenteditable="true" style="outline: none; cursor: text;">Get paid faster with integrated payment processing and automated invoicing.</p>
+                <h3 class="feature-title">Automated Payments</h3>
+                <p class="feature-description">Get paid faster with integrated payment processing and automated invoicing.</p>
                 <ul class="feature-list">
                     <li>Stripe integration</li>
-                    <li>Payment plans &amp; deposits</li>
+                    <li>Payment plans & deposits</li>
                     <li>Automated invoice generation</li>
                     <li>Payment reminders</li>
                 </ul>
@@ -1313,8 +1304,8 @@
 
             <div class="feature-card">
                 <div class="feature-icon"></div>
-                <h3 class="feature-title" contenteditable="true" style="outline: none; cursor: text;">Digital Contracts</h3>
-                <p class="feature-description" contenteditable="true" style="outline: none; cursor: text;">Professional contracts with e-signatures to protect your business and streamline bookings.</p>
+                <h3 class="feature-title">Digital Contracts</h3>
+                <p class="feature-description">Professional contracts with e-signatures to protect your business and streamline bookings.</p>
                 <ul class="feature-list">
                     <li>Customizable templates</li>
                     <li>Electronic signatures</li>
@@ -1325,10 +1316,10 @@
 
             <div class="feature-card">
                 <div class="feature-icon">🌐</div>
-                <h3 class="feature-title" contenteditable="true" style="outline: none; cursor: text;">Photography Community</h3>
-                <p class="feature-description" contenteditable="true" style="outline: none; cursor: text;">Connect with fellow photographers, share work, and grow your network.</p>
+                <h3 class="feature-title">Photography Community</h3>
+                <p class="feature-description">Connect with fellow photographers, share work, and grow your network.</p>
                 <ul class="feature-list">
-                    <li>Share &amp; discover inspiration</li>
+                    <li>Share & discover inspiration</li>
                     <li>Weekly challenges</li>
                     <li>Mentorship opportunities</li>
                     <li>Direct messaging</li>
@@ -1337,8 +1328,8 @@
 
             <div class="feature-card">
                 <div class="feature-icon">☁️</div>
-                <h3 class="feature-title" contenteditable="true" style="outline: none; cursor: text;">Secure Cloud Storage</h3>
-                <p class="feature-description" contenteditable="true" style="outline: none; cursor: text;">Never lose a photo again with automatic cloud backup and RAW file support.</p>
+                <h3 class="feature-title">Secure Cloud Storage</h3>
+                <p class="feature-description">Never lose a photo again with automatic cloud backup and RAW file support.</p>
                 <ul class="feature-list">
                     <li>Unlimited RAW storage</li>
                     <li>Automatic backups</li>
@@ -1349,8 +1340,8 @@
 
             <div class="feature-card">
                 <div class="feature-icon">🌅</div>
-                <h3 class="feature-title" contenteditable="true" style="outline: none; cursor: text;">Golden Hour Calculator</h3>
-                <p class="feature-description" contenteditable="true" style="outline: none; cursor: text;">Plan perfect shoots with precise sunrise, sunset, and golden hour calculations.</p>
+                <h3 class="feature-title">Golden Hour Calculator</h3>
+                <p class="feature-description">Plan perfect shoots with precise sunrise, sunset, and golden hour calculations.</p>
                 <ul class="feature-list">
                     <li>Location-based calculations</li>
                     <li>Weather integration</li>
@@ -1361,8 +1352,8 @@
 
             <div class="feature-card">
                 <div class="feature-icon"></div>
-                <h3 class="feature-title" contenteditable="true" style="outline: none; cursor: text;">Business Analytics</h3>
-                <p class="feature-description" contenteditable="true" style="outline: none; cursor: text;">Track revenue, expenses, and growth with powerful business insights.</p>
+                <h3 class="feature-title">Business Analytics</h3>
+                <p class="feature-description">Track revenue, expenses, and growth with powerful business insights.</p>
                 <ul class="feature-list">
                     <li>Revenue tracking</li>
                     <li>Expense management</li>
@@ -1373,10 +1364,10 @@
 
             <div class="feature-card">
                 <div class="feature-icon">📱</div>
-                <h3 class="feature-title" contenteditable="true" style="outline: none; cursor: text;">Mobile App</h3>
-                <p class="feature-description" contenteditable="true" style="outline: none; cursor: text;">Manage your business on the go with our powerful mobile application.</p>
+                <h3 class="feature-title">Mobile App</h3>
+                <p class="feature-description">Manage your business on the go with our powerful mobile application.</p>
                 <ul class="feature-list">
-                    <li>iOS &amp; Android support</li>
+                    <li>iOS & Android support</li>
                     <li>Offline mode</li>
                     <li>Push notifications</li>
                     <li>Quick photo uploads</li>
@@ -1390,14 +1381,14 @@
     <!-- Pricing Section -->
     <section class="pricing" id="pricing">
         <div class="section-header">
-            <h2 class="section-title" contenteditable="true" style="outline: none; cursor: text;">Simple, Transparent Pricing</h2>
-            <p class="section-subtitle" contenteditable="true" style="outline: none; cursor: text;">One plan with everything you need</p>
+            <h2 class="section-title">Simple, Transparent Pricing</h2>
+            <p class="section-subtitle">One plan with everything you need</p>
         </div>
         <div class="pricing-cards" style="max-width: 500px; margin: 0 auto;">
             <div class="pricing-card featured">
-                <h3 class="plan-name" contenteditable="true" style="outline: none; cursor: text;">Professional</h3>
-                <div class="plan-price">$39 <span contenteditable="true" style="outline: none; cursor: text;">/month</span></div>
-                <p class="plan-description" contenteditable="true" style="outline: none; cursor: text;">Everything you need to run your photography business</p>
+                <h3 class="plan-name">Professional</h3>
+                <div class="plan-price">$39 <span>/month</span></div>
+                <p class="plan-description">Everything you need to run your photography business</p>
                 <ul class="plan-features">
                     <li>Unlimited sessions</li>
                     <li>100GB cloud storage included</li>
@@ -1409,7 +1400,7 @@
                     <li>Priority support</li>
                     <li>Custom branding</li>
                     <li>Mobile app access</li>
-                    <li>Email &amp; SMS notifications</li>
+                    <li>Email & SMS notifications</li>
                 </ul>
                 <button class="plan-cta" onclick="openPaymentModal('pro')">Start 14-Day Trial</button>
             </div>
@@ -1420,8 +1411,8 @@
 
     <!-- Final CTA -->
     <section class="final-cta">
-        <h2 class="final-cta-title" contenteditable="true" style="outline: none; cursor: text;">Ready to Transform Your Photography Business?</h2>
-        <p class="final-cta-subtitle" contenteditable="true" style="outline: none; cursor: text;">Start managing your photography business with professional tools</p>
+        <h2 class="final-cta-title">Ready to Transform Your Photography Business?</h2>
+        <p class="final-cta-subtitle">Start managing your photography business with professional tools</p>
         <a href="#" class="final-cta-button" onclick="openPaymentModal('pro'); return false;">Start Your Free 14-Day Trial</a>
     </section>
 
@@ -1445,13 +1436,13 @@
     <div class="payment-modal" id="paymentModal">
         <div class="payment-content">
             <button class="payment-close" onclick="closePaymentModal()">×</button>
-            <h2 class="payment-title" contenteditable="true" style="outline: none; cursor: text;">Start Your Free Trial</h2>
-            <p style="color: #666; margin-bottom: 20px;">14 days free, then <span id="planPrice" contenteditable="true" style="outline: none; cursor: text;">$39</span>/month. Cancel anytime.</p>
+            <h2 class="payment-title">Start Your Free Trial</h2>
+            <p style="color: #666; margin-bottom: 20px;">14 days free, then <span id="planPrice">$39</span>/month. Cancel anytime.</p>
             
             <form id="payment-form" class="payment-form">
                 <div class="form-group">
                     <label class="form-label">Email Address</label>
-                    <input type="email" id="email" class="form-input" required="" placeholder="your@email.com">
+                    <input type="email" id="email" class="form-input" required placeholder="your@email.com">
                 </div>
                 
                 <div class="form-group">
@@ -1686,7 +1677,7 @@
 
         window.showWebsiteBuilder = showWebsiteBuilder;
         window.hideWebsiteBuilder = hideWebsiteBuilder;
-    </script><iframe name="__privateStripeController3181" frameborder="0" allowtransparency="true" scrolling="no" role="presentation" allow="payment *" src="https://js.stripe.com/v3/controller-with-preconnect-43ba7ed1895faf8f56d412a714925e6a.html#__shared_params__[version]=v3&amp;__shared_params__[light_experiment_assignments]=%7B%22token%22%3A%22003b12a0-05dd-4d82-9ac8-f76fb377ddc9%22%2C%22assignments%22%3A%7B%7D%7D&amp;apiKey=pk_test_51QbsKRRthSV0XBDf3oHKZA7KWQeZZrqH3ywQGqF0tNxS2jUpPvMJSy1cgBEe0ktXwHeFBJNi8YkwlWEzG6vYPjDg00z5rr0fj7&amp;stripeJsId=003b12a0-05dd-4d82-9ac8-f76fb377ddc9&amp;stripeObjId=sobj-c222da3a-5c7b-436a-8885-6ad9137a1541&amp;firstStripeInstanceCreatedLatency=10&amp;topOriginForCrossOriginFrame=https%3A%2F%2Freplit.com&amp;controllerCount=1&amp;isCheckout=false&amp;stripeJsLoadTime=1755398265496&amp;manualBrowserDeprecationRollout=false&amp;mids[guid]=NA&amp;mids[muid]=NA&amp;mids[sid]=NA&amp;referrer=https%3A%2F%2F8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev%2Fadmin-website-builder.html&amp;controllerId=__privateStripeController3181" aria-hidden="true" tabindex="-1" style="border: none !important; margin: 0px !important; padding: 0px !important; width: 1px !important; min-width: 100% !important; overflow: hidden !important; display: block !important; visibility: hidden !important; position: fixed !important; height: 1px !important; pointer-events: none !important; user-select: none !important;"></iframe>
+    </script>
 
     <!-- Admin Website Builder Panel -->
     <div class="admin-panel" id="adminPanel">
@@ -1700,5 +1691,5 @@
             <iframe id="builderFrame" class="builder-frame" src="" title="Website Builder"></iframe>
         </div>
     </div>
-
-<iframe name="__privateStripeMetricsController3180" frameborder="0" allowtransparency="true" scrolling="no" role="presentation" allow="payment *" src="https://js.stripe.com/v3/m-outer-3437aaddcdf6922d623e172c2d6f9278.html#url=https%3A%2F%2F8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev%2Fadmin-website-builder.html&amp;title=Photography%20Management%20System%20-%20Complete%20Business%20Platform&amp;referrer=https%3A%2F%2F8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev%2Fadmin-website-builder.html&amp;muid=NA&amp;sid=NA&amp;version=6&amp;preview=false&amp;__shared_params__[version]=v3" aria-hidden="true" tabindex="-1" style="border: none !important; margin: 0px !important; padding: 0px !important; width: 1px !important; min-width: 100% !important; overflow: hidden !important; display: block !important; visibility: hidden !important; position: fixed !important; height: 1px !important; pointer-events: none !important; user-select: none !important;"></iframe></body></html>
+</body>
+</html>

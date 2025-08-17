@@ -112,7 +112,7 @@
             bottom: 0;
             left: 0;
             right: 0;
-            height: 140px;
+            height: 120px;
             background: rgba(255, 255, 255, 0.98);
             backdrop-filter: blur(15px);
             border-top: 1px solid #e2e8f0;
@@ -120,11 +120,6 @@
             display: flex;
             flex-direction: column;
             box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
-            transition: height 0.3s ease;
-        }
-        
-        .admin-tools.expanded {
-            height: 300px;
         }
 
         .tools-header {
@@ -153,114 +148,6 @@
             display: flex;
             gap: 20px;
             height: 100%;
-            overflow-x: auto;
-            padding-bottom: 10px;
-        }
-        
-        /* Advanced Component Panel */
-        .component-panel {
-            position: fixed;
-            right: -350px;
-            top: 80px;
-            bottom: 140px;
-            width: 350px;
-            background: white;
-            box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
-            z-index: 1001;
-            transition: right 0.3s ease;
-            overflow-y: auto;
-            border-left: 1px solid #e2e8f0;
-        }
-        
-        .component-panel.open {
-            right: 0;
-        }
-        
-        .style-panel {
-            position: fixed;
-            left: -350px;
-            top: 80px;
-            bottom: 140px;
-            width: 350px;
-            background: white;
-            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
-            z-index: 1001;
-            transition: left 0.3s ease;
-            overflow-y: auto;
-            border-right: 1px solid #e2e8f0;
-        }
-        
-        .style-panel.open {
-            left: 0;
-        }
-        
-        .panel-header {
-            padding: 20px;
-            border-bottom: 1px solid #e2e8f0;
-            background: #f8fafc;
-        }
-        
-        .panel-content {
-            padding: 20px;
-        }
-        
-        .component-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        
-        .component-card {
-            padding: 15px;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            cursor: grab;
-            text-align: center;
-            transition: all 0.2s;
-        }
-        
-        .component-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            border-color: #667eea;
-        }
-        
-        .component-card:active {
-            cursor: grabbing;
-            transform: scale(0.95);
-        }
-        
-        /* Floating Toolbar for Selected Elements */
-        .floating-toolbar {
-            position: absolute;
-            background: #667eea;
-            color: white;
-            padding: 8px;
-            border-radius: 8px;
-            display: none;
-            gap: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            z-index: 1002;
-        }
-        
-        .floating-toolbar.show {
-            display: flex;
-        }
-        
-        .toolbar-btn {
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        
-        .toolbar-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
         }
 
         .tool-category {
@@ -409,14 +296,17 @@
     <div id="adminBuilder" class="admin-builder-container" style="display: none;">
         <!-- Header -->
         <header class="admin-header">
-            <h1>Landing Page Editor</h1>
+            <h1>Admin Website Builder</h1>
             <div class="admin-actions">
-                <button class="btn btn-secondary" onclick="toggleComponentPanel()">Components</button>
-                <button class="btn btn-secondary" onclick="toggleStylePanel()">Styles</button>
-                <button class="btn btn-secondary" onclick="undoLastChange()">Undo</button>
-                <button class="btn btn-secondary" onclick="previewWebsite()">Preview Changes</button>
-                <button class="btn btn-primary" onclick="saveAdminWebsite()">Save Landing Page</button>
-                <button class="btn btn-secondary" onclick="publishWebsite()">View Live Page</button>
+                <select id="templateSelect" class="btn btn-secondary">
+                    <option value="">Choose Template</option>
+                    <option value="modern-studio">Modern Studio</option>
+                    <option value="classic-portfolio">Classic Portfolio</option>
+                    <option value="minimal-gallery">Minimal Gallery</option>
+                </select>
+                <button class="btn btn-secondary" onclick="previewWebsite()">Preview</button>
+                <button class="btn btn-primary" onclick="saveAdminWebsite()">Save Website</button>
+                <button class="btn btn-secondary" onclick="publishWebsite()">Publish</button>
             </div>
         </header>
 
@@ -425,11 +315,10 @@
             <!-- Full Screen Preview -->
             <div class="preview-container">
                 <div id="adminPreviewFrame" class="preview-frame">
-                    <!-- Landing page content will be loaded here for editing -->
+                    <!-- Website content will be rendered here -->
                     <div style="padding: 60px 20px; text-align: center; color: #718096;">
-                        <div class="loading-spinner"></div>
-                        <h2>Loading Landing Page Content...</h2>
-                        <p>Loading the actual landing page for direct editing.</p>
+                        <h2>Welcome to Admin Website Builder</h2>
+                        <p>Start building by selecting a template or adding components from the toolbar below.</p>
                     </div>
                 </div>
             </div>
@@ -483,128 +372,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Component Panel -->
-        <div id="componentPanel" class="component-panel">
-            <div class="panel-header">
-                <h3>Components</h3>
-                <button class="btn btn-secondary" onclick="toggleComponentPanel()" style="float: right;">×</button>
-            </div>
-            <div class="panel-content">
-                <div class="component-category">
-                    <h4>Layout</h4>
-                    <div class="component-grid">
-                        <div class="component-card" draggable="true" data-component="hero-section">
-                            <strong>Hero Section</strong>
-                            <small>Large banner area</small>
-                        </div>
-                        <div class="component-card" draggable="true" data-component="two-column">
-                            <strong>Two Column</strong>
-                            <small>Side by side layout</small>
-                        </div>
-                        <div class="component-card" draggable="true" data-component="three-column">
-                            <strong>Three Column</strong>
-                            <small>Triple column layout</small>
-                        </div>
-                        <div class="component-card" draggable="true" data-component="full-width">
-                            <strong>Full Width</strong>
-                            <small>Edge to edge section</small>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="component-category">
-                    <h4>Content</h4>
-                    <div class="component-grid">
-                        <div class="component-card" draggable="true" data-component="text-block">
-                            <strong>Text Block</strong>
-                            <small>Paragraph content</small>
-                        </div>
-                        <div class="component-card" draggable="true" data-component="heading">
-                            <strong>Heading</strong>
-                            <small>Title text</small>
-                        </div>
-                        <div class="component-card" draggable="true" data-component="button-group">
-                            <strong>Button Group</strong>
-                            <small>Action buttons</small>
-                        </div>
-                        <div class="component-card" draggable="true" data-component="quote">
-                            <strong>Quote</strong>
-                            <small>Highlighted text</small>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="component-category">
-                    <h4>Media</h4>
-                    <div class="component-grid">
-                        <div class="component-card" draggable="true" data-component="image-gallery">
-                            <strong>Image Gallery</strong>
-                            <small>Photo showcase</small>
-                        </div>
-                        <div class="component-card" draggable="true" data-component="single-image">
-                            <strong>Single Image</strong>
-                            <small>Individual photo</small>
-                        </div>
-                        <div class="component-card" draggable="true" data-component="video-embed">
-                            <strong>Video</strong>
-                            <small>Embedded video</small>
-                        </div>
-                        <div class="component-card" draggable="true" data-component="before-after">
-                            <strong>Before/After</strong>
-                            <small>Comparison slider</small>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="component-category">
-                    <h4>Business</h4>
-                    <div class="component-grid">
-                        <div class="component-card" draggable="true" data-component="contact-form">
-                            <strong>Contact Form</strong>
-                            <small>Contact information</small>
-                        </div>
-                        <div class="component-card" draggable="true" data-component="testimonials">
-                            <strong>Testimonials</strong>
-                            <small>Client reviews</small>
-                        </div>
-                        <div class="component-card" draggable="true" data-component="pricing-table">
-                            <strong>Pricing</strong>
-                            <small>Service packages</small>
-                        </div>
-                        <div class="component-card" draggable="true" data-component="map">
-                            <strong>Map</strong>
-                            <small>Location display</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Style Panel -->
-        <div id="stylePanel" class="style-panel">
-            <div class="panel-header">
-                <h3>Styles</h3>
-                <button class="btn btn-secondary" onclick="toggleStylePanel()" style="float: right;">×</button>
-            </div>
-            <div class="panel-content">
-                <div id="selectedElementStyles">
-                    <p>Select an element to edit its styles</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Floating Toolbar -->
-        <div id="floatingToolbar" class="floating-toolbar">
-            <button class="toolbar-btn" onclick="formatText('bold')">B</button>
-            <button class="toolbar-btn" onclick="formatText('italic')">I</button>
-            <button class="toolbar-btn" onclick="formatText('underline')">U</button>
-            <button class="toolbar-btn" onclick="changeTextAlign('left')">⇤</button>
-            <button class="toolbar-btn" onclick="changeTextAlign('center')">⇔</button>
-            <button class="toolbar-btn" onclick="changeTextAlign('right')">⇥</button>
-            <button class="toolbar-btn" onclick="duplicateElement()">⧉</button>
-            <button class="toolbar-btn" onclick="deleteElement()">🗑</button>
         </div>
     </div>
 
@@ -682,87 +449,37 @@
             settings: {
                 title: 'My Photography Website',
                 theme: 'modern-studio'
-            },
-            history: [],
-            selectedElement: null
+            }
         };
-
-        let isDragging = false;
-        let currentIframe = null;
 
         // Initialize the admin builder
         function initializeAdminBuilder() {
             console.log('Admin Website Builder initialized');
             setupDragAndDrop();
-            loadLandingPageContent();
+            loadSavedWebsite();
         }
 
         // Setup drag and drop functionality
         function setupDragAndDrop() {
-            // Setup drag for both old and new component systems
-            const toolItems = document.querySelectorAll('.tool-item, .component-card');
-            
+            const toolItems = document.querySelectorAll('.tool-item');
+            const previewFrame = document.getElementById('adminPreviewFrame');
+
             toolItems.forEach(item => {
                 item.addEventListener('dragstart', (e) => {
                     e.dataTransfer.setData('text/plain', e.target.dataset.component);
-                    isDragging = true;
-                });
-                
-                item.addEventListener('dragend', () => {
-                    isDragging = false;
                 });
             });
-        }
 
-        // Enhanced drag and drop for iframe content
-        function setupIframeDragDrop(iframe) {
-            const doc = iframe.contentDocument;
-            
-            doc.addEventListener('dragover', (e) => {
+            previewFrame.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 e.dataTransfer.dropEffect = 'copy';
-                
-                // Show drop indicator
-                const dropZone = getDropZone(e);
-                if (dropZone) {
-                    dropZone.style.outline = '2px dashed #667eea';
-                }
-            });
-            
-            doc.addEventListener('dragleave', (e) => {
-                // Remove drop indicators
-                const elements = doc.querySelectorAll('[style*="outline"]');
-                elements.forEach(el => {
-                    if (el.style.outline.includes('667eea')) {
-                        el.style.outline = '';
-                    }
-                });
             });
 
-            doc.addEventListener('drop', (e) => {
+            previewFrame.addEventListener('drop', (e) => {
                 e.preventDefault();
                 const componentType = e.dataTransfer.getData('text/plain');
-                if (componentType) {
-                    const dropZone = getDropZone(e);
-                    if (dropZone) {
-                        addComponentToElement(dropZone, componentType);
-                        dropZone.style.outline = '';
-                    }
-                }
+                addAdminComponent(componentType, e.clientX, e.clientY);
             });
-        }
-
-        // Get appropriate drop zone for component
-        function getDropZone(e) {
-            const target = e.target;
-            
-            // Find the nearest suitable container
-            let dropZone = target.closest('section, main, div, body');
-            if (!dropZone) {
-                dropZone = currentIframe.contentDocument.body;
-            }
-            
-            return dropZone;
         }
 
         // Add a component to the admin builder
@@ -828,82 +545,24 @@
             };
         }
 
-        // Save admin website changes back to landing.html
+        // Save admin website
         function saveAdminWebsite() {
-            console.log('Saving landing page changes...');
+            console.log('Saving admin website...', adminWebsiteData);
             
-            const iframe = document.querySelector('#adminPreviewFrame iframe');
-            if (!iframe) {
-                showMessage('No content to save', 'error');
-                return;
-            }
+            // Save to localStorage for now
+            localStorage.setItem('adminWebsiteData', JSON.stringify(adminWebsiteData));
             
-            const fullHtml = iframe.contentDocument.documentElement.outerHTML;
-            
-            fetch('/api/admin/save-landing-full', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ fullHtml: fullHtml })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showMessage('Landing page saved successfully!', 'success');
-                } else {
-                    showMessage('Failed to save landing page', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error saving landing page:', error);
-                showMessage('Error saving landing page', 'error');
-            });
+            // Show success message
+            showMessage('Website saved successfully!', 'success');
         }
 
-        // Load the actual landing page content with full styling
-        function loadLandingPageContent() {
-            fetch('/api/admin/landing-full')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        const previewFrame = document.getElementById('adminPreviewFrame');
-                        
-                        // Create an iframe to properly display the full HTML with styles
-                        const iframe = document.createElement('iframe');
-                        iframe.style.cssText = `
-                            width: 100%;
-                            height: 100vh;
-                            border: none;
-                            background: white;
-                        `;
-                        
-                        previewFrame.innerHTML = '';
-                        previewFrame.appendChild(iframe);
-                        
-                        // Write the full HTML to iframe
-                        iframe.contentDocument.open();
-                        iframe.contentDocument.write(data.fullHtml);
-                        iframe.contentDocument.close();
-                        
-                        // Wait for iframe to load then make it editable
-                        iframe.onload = function() {
-                            currentIframe = iframe;
-                            makeIframeContentEditable(iframe);
-                            setupIframeDragDrop(iframe);
-                            setupElementSelection(iframe);
-                        };
-                        
-                        console.log('Loaded full landing page for editing');
-                    } else {
-                        console.error('Failed to load landing page content');
-                        showMessage('Failed to load landing page', 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading landing page:', error);
-                    showMessage('Error loading landing page', 'error');
-                });
+        // Load saved website
+        function loadSavedWebsite() {
+            const saved = localStorage.getItem('adminWebsiteData');
+            if (saved) {
+                adminWebsiteData = JSON.parse(saved);
+                renderSavedComponents();
+            }
         }
 
         // Render saved components
@@ -940,335 +599,10 @@
             `);
         }
 
-        // Make iframe content editable
-        function makeIframeContentEditable(iframe) {
-            const doc = iframe.contentDocument;
-            
-            // Make text elements editable
-            const editableSelectors = [
-                'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-                'p', 'span', 'div.text-content',
-                '.hero-title', '.hero-subtitle', '.section-title',
-                '.feature-title', '.feature-description',
-                '.testimonial-text', '.cta-text', '.btn'
-            ];
-            
-            editableSelectors.forEach(selector => {
-                const elements = doc.querySelectorAll(selector);
-                elements.forEach(element => {
-                    // Skip if already has contenteditable or is a complex container
-                    if (element.hasAttribute('contenteditable') || 
-                        (element.children.length > 0 && 
-                        !element.classList.contains('text-content') &&
-                        !element.classList.contains('btn'))) {
-                        return;
-                    }
-                    
-                    element.contentEditable = true;
-                    element.style.outline = 'none';
-                    element.style.cursor = 'text';
-                    
-                    // Add editing indicators
-                    element.addEventListener('focus', function() {
-                        this.style.backgroundColor = 'rgba(102, 126, 234, 0.1)';
-                        this.style.boxShadow = '0 0 0 2px #667eea';
-                    });
-                    
-                    element.addEventListener('blur', function() {
-                        this.style.backgroundColor = '';
-                        this.style.boxShadow = '';
-                    });
-                });
-            });
-            
-            // Make images clickable for replacement
-            const images = doc.querySelectorAll('img');
-            images.forEach(img => {
-                img.style.cursor = 'pointer';
-                img.addEventListener('click', function() {
-                    const input = document.createElement('input');
-                    input.type = 'file';
-                    input.accept = 'image/*';
-                    input.onchange = function(e) {
-                        const file = e.target.files[0];
-                        if (file) {
-                            const reader = new FileReader();
-                            reader.onload = function(e) {
-                                img.src = e.target.result;
-                                showMessage('Image updated', 'success');
-                            };
-                            reader.readAsDataURL(file);
-                        }
-                    };
-                    input.click();
-                });
-                
-                // Add hover effect
-                img.addEventListener('mouseenter', function() {
-                    this.style.boxShadow = '0 0 0 2px #667eea';
-                    this.style.opacity = '0.8';
-                });
-                
-                img.addEventListener('mouseleave', function() {
-                    this.style.boxShadow = '';
-                    this.style.opacity = '1';
-                });
-            });
-            
-            console.log('Made iframe content editable');
-        }
-
-        // Publish website (reload landing page to show changes)
+        // Publish website
         function publishWebsite() {
-            console.log('Publishing landing page changes...');
-            window.open('/landing.html', '_blank');
-            showMessage('Opening landing page to view changes', 'success');
-        }
-
-        // Panel Management Functions
-        function toggleComponentPanel() {
-            const panel = document.getElementById('componentPanel');
-            panel.classList.toggle('open');
-            
-            // Close style panel if open
-            const stylePanel = document.getElementById('stylePanel');
-            if (stylePanel.classList.contains('open')) {
-                stylePanel.classList.remove('open');
-            }
-        }
-
-        function toggleStylePanel() {
-            const panel = document.getElementById('stylePanel');
-            panel.classList.toggle('open');
-            
-            // Close component panel if open
-            const componentPanel = document.getElementById('componentPanel');
-            if (componentPanel.classList.contains('open')) {
-                componentPanel.classList.remove('open');
-            }
-        }
-
-        // Element Selection System
-        function setupElementSelection(iframe) {
-            const doc = iframe.contentDocument;
-            const floatingToolbar = document.getElementById('floatingToolbar');
-            
-            doc.addEventListener('click', (e) => {
-                if (!isDragging) {
-                    selectElement(e.target);
-                    showFloatingToolbar(e.target);
-                    e.preventDefault();
-                }
-            });
-            
-            // Hide toolbar when clicking outside
-            document.addEventListener('click', (e) => {
-                if (!e.target.closest('.floating-toolbar')) {
-                    hideFloatingToolbar();
-                }
-            });
-        }
-
-        function selectElement(element) {
-            // Remove previous selection
-            if (adminWebsiteData.selectedElement) {
-                adminWebsiteData.selectedElement.style.outline = '';
-            }
-            
-            // Select new element
-            adminWebsiteData.selectedElement = element;
-            element.style.outline = '2px solid #667eea';
-            
-            // Update style panel
-            updateStylePanel(element);
-        }
-
-        function showFloatingToolbar(element) {
-            const toolbar = document.getElementById('floatingToolbar');
-            const rect = element.getBoundingClientRect();
-            const iframeRect = currentIframe.getBoundingClientRect();
-            
-            toolbar.style.left = (iframeRect.left + rect.left) + 'px';
-            toolbar.style.top = (iframeRect.top + rect.top - 40) + 'px';
-            toolbar.classList.add('show');
-        }
-
-        function hideFloatingToolbar() {
-            const toolbar = document.getElementById('floatingToolbar');
-            toolbar.classList.remove('show');
-            
-            if (adminWebsiteData.selectedElement) {
-                adminWebsiteData.selectedElement.style.outline = '';
-                adminWebsiteData.selectedElement = null;
-            }
-        }
-
-        // Text Formatting Functions
-        function formatText(command) {
-            if (!adminWebsiteData.selectedElement) return;
-            
-            const element = adminWebsiteData.selectedElement;
-            document.execCommand(command, false, null);
-            saveToHistory();
-        }
-
-        function changeTextAlign(align) {
-            if (!adminWebsiteData.selectedElement) return;
-            
-            adminWebsiteData.selectedElement.style.textAlign = align;
-            saveToHistory();
-        }
-
-        // Element Manipulation Functions
-        function duplicateElement() {
-            if (!adminWebsiteData.selectedElement) return;
-            
-            const element = adminWebsiteData.selectedElement;
-            const clone = element.cloneNode(true);
-            element.parentNode.insertBefore(clone, element.nextSibling);
-            saveToHistory();
-            showMessage('Element duplicated', 'success');
-        }
-
-        function deleteElement() {
-            if (!adminWebsiteData.selectedElement) return;
-            
-            adminWebsiteData.selectedElement.remove();
-            hideFloatingToolbar();
-            saveToHistory();
-            showMessage('Element deleted', 'success');
-        }
-
-        // Component Addition Function
-        function addComponentToElement(dropZone, componentType) {
-            const componentHtml = getAdvancedComponentHTML(componentType);
-            const tempDiv = currentIframe.contentDocument.createElement('div');
-            tempDiv.innerHTML = componentHtml;
-            
-            while (tempDiv.firstChild) {
-                dropZone.appendChild(tempDiv.firstChild);
-            }
-            
-            // Re-setup editing for new elements
-            makeIframeContentEditable(currentIframe);
-            saveToHistory();
-            showMessage(`${componentType} added`, 'success');
-        }
-
-        // Advanced Component HTML Templates
-        function getAdvancedComponentHTML(type) {
-            const templates = {
-                'hero-section': `<section style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 100px 20px; text-align: center; margin: 20px 0;">
-                    <h1 style="font-size: 3rem; margin-bottom: 20px;">Your Amazing Headline</h1>
-                    <p style="font-size: 1.2rem; margin-bottom: 30px;">Compelling subtitle that explains your value proposition</p>
-                    <button style="background: white; color: #667eea; padding: 15px 30px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Get Started</button>
-                </section>`,
-                
-                'two-column': `<section style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; padding: 60px 20px; margin: 20px 0;">
-                    <div style="padding: 20px;">
-                        <h3>Column One</h3>
-                        <p>Add your content here for the first column.</p>
-                    </div>
-                    <div style="padding: 20px;">
-                        <h3>Column Two</h3>
-                        <p>Add your content here for the second column.</p>
-                    </div>
-                </section>`,
-                
-                'image-gallery': `<section style="padding: 60px 20px; margin: 20px 0;">
-                    <h2 style="text-align: center; margin-bottom: 40px;">Photo Gallery</h2>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
-                        <img src="https://via.placeholder.com/300x200?text=Photo+1" style="width: 100%; border-radius: 8px;">
-                        <img src="https://via.placeholder.com/300x200?text=Photo+2" style="width: 100%; border-radius: 8px;">
-                        <img src="https://via.placeholder.com/300x200?text=Photo+3" style="width: 100%; border-radius: 8px;">
-                    </div>
-                </section>`,
-                
-                'testimonials': `<section style="background: #f8fafc; padding: 60px 20px; margin: 20px 0; text-align: center;">
-                    <h2 style="margin-bottom: 40px;">What Clients Say</h2>
-                    <div style="max-width: 600px; margin: 0 auto;">
-                        <blockquote style="font-size: 1.2rem; font-style: italic; margin-bottom: 20px; color: #4a5568;">"Absolutely incredible work! Professional, creative, and captured our special day perfectly."</blockquote>
-                        <cite style="font-weight: bold; color: #2d3748;">- Sarah & Mike Johnson</cite>
-                    </div>
-                </section>`
-            };
-            
-            return templates[type] || templates['text-block'] || '<div style="padding: 20px;">New Component</div>';
-        }
-
-        // History Management
-        function saveToHistory() {
-            if (currentIframe) {
-                const currentState = currentIframe.contentDocument.documentElement.outerHTML;
-                adminWebsiteData.history.push(currentState);
-                
-                // Limit history to last 20 states
-                if (adminWebsiteData.history.length > 20) {
-                    adminWebsiteData.history.shift();
-                }
-            }
-        }
-
-        function undoLastChange() {
-            if (adminWebsiteData.history.length > 0) {
-                const previousState = adminWebsiteData.history.pop();
-                currentIframe.contentDocument.open();
-                currentIframe.contentDocument.write(previousState);
-                currentIframe.contentDocument.close();
-                
-                // Re-setup interactivity
-                currentIframe.onload = function() {
-                    makeIframeContentEditable(currentIframe);
-                    setupIframeDragDrop(currentIframe);
-                    setupElementSelection(currentIframe);
-                };
-                
-                showMessage('Change undone', 'success');
-            }
-        }
-
-        // Style Panel Update
-        function updateStylePanel(element) {
-            const stylePanel = document.getElementById('selectedElementStyles');
-            const tagName = element.tagName.toLowerCase();
-            
-            stylePanel.innerHTML = `
-                <h4>Selected: ${tagName}</h4>
-                <div style="margin-top: 15px;">
-                    <label>Font Size:</label>
-                    <input type="range" min="12" max="72" value="${parseInt(getComputedStyle(element).fontSize) || 16}" 
-                           onchange="changeElementStyle('fontSize', this.value + 'px')" style="width: 100%;">
-                </div>
-                <div style="margin-top: 15px;">
-                    <label>Text Color:</label>
-                    <input type="color" value="${rgbToHex(getComputedStyle(element).color)}" 
-                           onchange="changeElementStyle('color', this.value)" style="width: 100%;">
-                </div>
-                <div style="margin-top: 15px;">
-                    <label>Background Color:</label>
-                    <input type="color" value="${rgbToHex(getComputedStyle(element).backgroundColor)}" 
-                           onchange="changeElementStyle('backgroundColor', this.value)" style="width: 100%;">
-                </div>
-                <div style="margin-top: 15px;">
-                    <label>Padding:</label>
-                    <input type="range" min="0" max="100" value="${parseInt(getComputedStyle(element).padding) || 20}" 
-                           onchange="changeElementStyle('padding', this.value + 'px')" style="width: 100%;">
-                </div>
-            `;
-        }
-
-        function changeElementStyle(property, value) {
-            if (adminWebsiteData.selectedElement) {
-                adminWebsiteData.selectedElement.style[property] = value;
-                saveToHistory();
-            }
-        }
-
-        function rgbToHex(rgb) {
-            if (!rgb || rgb === 'rgba(0, 0, 0, 0)') return '#000000';
-            const result = rgb.match(/\d+/g);
-            if (!result) return '#000000';
-            return "#" + ((1 << 24) + (parseInt(result[0]) << 16) + (parseInt(result[1]) << 8) + parseInt(result[2])).toString(16).slice(1);
+            console.log('Publishing admin website...');
+            showMessage('Website published successfully!', 'success');
         }
 
         // Show message to user
