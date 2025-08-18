@@ -1,19 +1,19 @@
 import { db } from './db';
-import { users, sessions } from '../shared/schema';
+import { users, sessions, photographySessions } from '../shared/schema';
 import { eq } from 'drizzle-orm';
-import type { User, InsertUser, Session, InsertSession } from '../shared/schema';
+import type { User, UpsertUser, PhotographySession, InsertPhotographySession } from '../shared/schema';
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
-  createUser(insertUser: InsertUser): Promise<User>;
+  upsertUser(user: UpsertUser): Promise<User>;
   updateUser(id: string, updates: Partial<User>): Promise<User>;
   
-  getSessions(): Promise<Session[]>;
-  getSession(id: number): Promise<Session | undefined>;
-  createSession(insertSession: InsertSession): Promise<Session>;
-  updateSession(id: number, updates: Partial<Session>): Promise<Session>;
-  deleteSession(id: number): Promise<boolean>;
+  getSessions(): Promise<PhotographySession[]>;
+  getSession(id: string): Promise<PhotographySession | undefined>;
+  createSession(insertSession: InsertPhotographySession): Promise<PhotographySession>;
+  updateSession(id: string, updates: Partial<PhotographySession>): Promise<PhotographySession>;
+  deleteSession(id: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -27,12 +27,41 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db
-      .insert(users)
-      .values(insertUser)
-      .returning();
-    return user;
+  async upsertUser(user: UpsertUser): Promise<User> {
+    // Normalize user ID for specific admin emails
+    const adminEmails = [
+      'lancecasselman2011@gmail.com',
+      'lancecasselman@icloud.com', 
+      'lance@thelegacyphotography.com'
+    ];
+    
+    let normalizedUserId = user.id;
+    if (user.email && adminEmails.includes(user.email.toLowerCase())) {
+      normalizedUserId = '44735007'; // Normalize Lance's accounts to single ID
+    }
+
+    const existingUser = await this.getUser(normalizedUserId);
+    
+    if (existingUser) {
+      // Update existing user
+      return this.updateUser(normalizedUserId, {
+        ...user,
+        id: normalizedUserId,
+        updatedAt: new Date()
+      });
+    } else {
+      // Create new user
+      const [newUser] = await db
+        .insert(users)
+        .values({
+          ...user,
+          id: normalizedUserId,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        .returning();
+      return newUser;
+    }
   }
 
   async updateUser(id: string, updates: Partial<User>): Promise<User> {
@@ -44,35 +73,35 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async getSessions(): Promise<Session[]> {
-    return await db.select().from(sessions);
+  async getSessions(): Promise<PhotographySession[]> {
+    return await db.select().from(photographySessions);
   }
 
-  async getSession(id: number): Promise<Session | undefined> {
-    const [session] = await db.select().from(sessions).where(eq(sessions.id, id));
+  async getSession(id: string): Promise<PhotographySession | undefined> {
+    const [session] = await db.select().from(photographySessions).where(eq(photographySessions.id, id));
     return session || undefined;
   }
 
-  async createSession(insertSession: InsertSession): Promise<Session> {
+  async createSession(insertSession: InsertPhotographySession): Promise<PhotographySession> {
     const [session] = await db
-      .insert(sessions)
+      .insert(photographySessions)
       .values(insertSession)
       .returning();
     return session;
   }
 
-  async updateSession(id: number, updates: Partial<Session>): Promise<Session> {
+  async updateSession(id: string, updates: Partial<PhotographySession>): Promise<PhotographySession> {
     const [session] = await db
-      .update(sessions)
+      .update(photographySessions)
       .set({ ...updates, updatedAt: new Date() })
-      .where(eq(sessions.id, id))
+      .where(eq(photographySessions.id, id))
       .returning();
     return session;
   }
 
-  async deleteSession(id: number): Promise<boolean> {
-    const result = await db.delete(sessions).where(eq(sessions.id, id));
-    return result.rowCount > 0;
+  async deleteSession(id: string): Promise<boolean> {
+    const result = await db.delete(photographySessions).where(eq(photographySessions.id, id));
+    return (result.rowCount ?? 0) > 0;
   }
 }
 

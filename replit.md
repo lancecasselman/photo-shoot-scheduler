@@ -16,7 +16,7 @@ The system uses a static HTML/CSS/JavaScript multi-page application approach wit
 The backend is built on a Node.js/Express server handling API routes and business logic.
 
 ### Authentication & Authorization
-Firebase Authentication is the primary system, supporting email/password and Google OAuth. It features a dual-mode system for development/production and implements role-based access for administrative functions and subscriber management, with premium features gate-kept by specific middleware.
+Firebase Authentication is the primary system, supporting email/password and Google OAuth. It features a dual-mode system for development/production and implements role-based access for administrative functions and subscriber management, with premium features gate-kept by specific middleware. **User Management Enhancement (Aug 2025)**: Implemented comprehensive upsertUser functionality with automatic ID normalization for admin accounts, ensuring consistent user identity across multiple authentication sessions while maintaining proper database integrity and preventing duplicate user records.
 
 ### Database Architecture
 The primary database is PostgreSQL, utilizing Drizzle ORM for type-safe operations. Firebase Firestore is used for real-time data synchronization, creating a hybrid storage strategy where session data resides in PostgreSQL and real-time features in Firestore.
