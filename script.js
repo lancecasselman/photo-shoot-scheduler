@@ -9,6 +9,13 @@ let currentUser = null;
 // Firebase Authentication functions
 async function checkAuth() {
     // Only skip auth check if actively logging out (not for manual logout flag)
+    // Clear logout flags if coming from secure-app.html (successful authentication)
+    if (document.referrer.includes('secure-app.html')) {
+        console.log('Coming from secure app - clearing logout flags');
+        sessionStorage.removeItem('loggingOut');
+        localStorage.removeItem('manualLogout');
+    }
+    
     if (sessionStorage.getItem('loggingOut') === 'true') {
         console.log('Skipping auth check - logout in progress');
         return false;
