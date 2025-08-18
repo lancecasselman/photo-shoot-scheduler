@@ -815,6 +815,9 @@ app.use((req, res, next) => {
 // Serve static files from public directory (for invoice.html and other public assets)
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Serve root level HTML files
+app.use(express.static(__dirname));
+
 // Enhanced Address autocomplete API endpoint with improved rural address support
 app.post('/api/geocode', async (req, res) => {
   try {
