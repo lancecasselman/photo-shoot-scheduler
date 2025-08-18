@@ -605,13 +605,18 @@ const getCurrentUser = (req) => {
 
 // Helper function to normalize Lance's emails to a single user ID
 const normalizeUserForLance = (user) => {
+    // Return early if no user or no email
+    if (!user || !user.email) {
+        return user;
+    }
+    
     const lanceEmails = [
         'lancecasselman@icloud.com',
         'lancecasselman2011@gmail.com',
         'lance@thelegacyphotography.com'
     ];
 
-    if (user && lanceEmails.includes(user.email.toLowerCase())) {
+    if (lanceEmails.includes(user.email.toLowerCase())) {
         // Always use the existing account ID "44735007" for Lance's unified account
         return {
             ...user,
