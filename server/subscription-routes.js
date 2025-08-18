@@ -28,28 +28,44 @@ function createSubscriptionRoutes(pool) {
 
             // If creating account with subscription, handle account creation
             if (createAccount && email && name) {
-                console.log('🔔 Creating new account with Professional Plan subscription');
+                console.log('🔔 Creating/getting account with Professional Plan subscription');
                 
                 // Create user account first
                 const firebase = require('firebase-admin');
                 
                 try {
-                    // Create Firebase user
-                    const userRecord = await firebase.auth().createUser({
-                        email: email,
-                        displayName: name,
-                        emailVerified: true
-                    });
+                    let userRecord;
+                    try {
+                        // Try to create new user
+                        userRecord = await firebase.auth().createUser({
+                            email: email,
+                            displayName: name,
+                            emailVerified: true
+                        });
+                        console.log(`✅ Created new Firebase user: ${userRecord.uid}`);
+                    } catch (createError) {
+                        if (createError.code === 'auth/email-already-exists') {
+                            // Email exists, get the existing user
+                            userRecord = await firebase.auth().getUserByEmail(email);
+                            console.log(`✅ Using existing Firebase user: ${userRecord.uid}`);
+                        } else {
+                            throw createError;
+                        }
+                    }
                     
                     userId = userRecord.uid;
                     
-                    // Create user in database
+                    // Create or update user in database
                     const client = await pool.connect();
                     try {
                         await client.query(`
                             INSERT INTO users (id, email, username, display_name, created_at, subscription_status)
                             VALUES ($1, $2, $3, $4, NOW(), 'pending')
-                            ON CONFLICT (id) DO NOTHING
+                            ON CONFLICT (id) DO UPDATE SET
+                                email = EXCLUDED.email,
+                                display_name = EXCLUDED.display_name,
+                                subscription_status = 'pending',
+                                updated_at = NOW()
                         `, [userId, email, email.split('@')[0], name]);
                     } finally {
                         client.release();
