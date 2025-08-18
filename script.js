@@ -16,8 +16,9 @@ async function checkAuth() {
         localStorage.removeItem('manualLogout');
     }
     
-    if (sessionStorage.getItem('loggingOut') === 'true') {
-        console.log('Skipping auth check - logout in progress');
+    // Only skip auth if actively logging out AND coming from a logout action
+    if (sessionStorage.getItem('loggingOut') === 'true' && document.referrer.includes('secure-login.html')) {
+        console.log('Skipping auth check - logout in progress from login page');
         return false;
     }
     

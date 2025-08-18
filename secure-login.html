@@ -345,7 +345,7 @@
         </form>
 
         <div class="toggle-text">
-            <p>Don't have an account? <button type="button" id="toggleMode">Create Account</button></p>
+            <p>Don't have an account? <a href="/subscription-checkout.html" style="color: var(--primary-gold); text-decoration: none; font-weight: 500;">Sign Up & Subscribe</a></p>
         </div>
 
         <div class="back-link">
@@ -360,32 +360,11 @@
     </div>
 
     <script>
-        let isSignUp = false;
 
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('loginForm');
-            const toggleBtn = document.getElementById('toggleMode');
-            const submitBtn = document.getElementById('submitBtn');
-            const submitText = document.getElementById('submitText');
 
-            // Toggle between login and signup
-            toggleBtn.addEventListener('click', function() {
-                isSignUp = !isSignUp;
-                if (isSignUp) {
-                    submitText.textContent = 'Create Account';
-                    toggleBtn.textContent = 'Sign In Instead';
-                    toggleBtn.parentElement.innerHTML = 'Already have an account? <button type="button" id="toggleMode">Sign In Instead</button>';
-                } else {
-                    submitText.textContent = 'Sign In';
-                    toggleBtn.textContent = 'Create Account';
-                    toggleBtn.parentElement.innerHTML = 'Don\'t have an account? <button type="button" id="toggleMode">Create Account</button>';
-                }
-                
-                // Re-attach event listener to new button
-                document.getElementById('toggleMode').addEventListener('click', arguments.callee);
-            });
-
-            // Handle form submission
+            // Handle login form submission
             form.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
@@ -398,17 +377,10 @@
                 }
 
                 try {
-                    showLoading(isSignUp ? 'Creating account...' : 'Signing in...');
+                    showLoading('Signing in...');
                     hideMessage();
                     
-                    let userCredential;
-                    if (isSignUp) {
-                        userCredential = await window.createUserWithEmailAndPassword(window.auth, email, password);
-                        showSuccess('Account created successfully!');
-                    } else {
-                        userCredential = await window.signInWithEmailAndPassword(window.auth, email, password);
-                    }
-
+                    const userCredential = await window.signInWithEmailAndPassword(window.auth, email, password);
                     console.log('Authentication successful:', userCredential.user.email);
                     
                     // Verify subscription and redirect
@@ -420,23 +392,14 @@
                     
                     let errorMessage = 'Authentication failed. Please try again.';
                     if (error.code === 'auth/user-not-found') {
-                        errorMessage = 'No account found with this email address.';
+                        errorMessage = 'No account found with this email address. Please sign up first.';
                     } else if (error.code === 'auth/wrong-password') {
                         errorMessage = 'Incorrect password. Please try again.';
-                    } else if (error.code === 'auth/email-already-in-use') {
-                        errorMessage = 'An account with this email already exists.';
-                    } else if (error.code === 'auth/weak-password') {
-                        errorMessage = 'Password should be at least 6 characters.';
                     } else if (error.code === 'auth/invalid-email') {
                         errorMessage = 'Please enter a valid email address.';
                     }
                     
-                    showError(errorMessage + ' Redirecting to homepage in 3 seconds...');
-                    
-                    // Redirect to homepage after 3 seconds to allow retry/signup
-                    setTimeout(() => {
-                        window.location.href = '/';
-                    }, 3000);
+                    showError(errorMessage);
                 }
             });
         });
