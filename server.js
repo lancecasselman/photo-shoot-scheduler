@@ -10733,8 +10733,8 @@ app.get('/invoice.html', (req, res) => {
 // Serve public directory files directly at root level
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Serve static files last to ensure routes run first
-app.use(express.static(__dirname));
+// SECURITY: Removed static root directory serving to prevent bypass of secure routes
+// This was serving index.html which allowed bypassing our secure authentication system
 
 // Start server
 // Premium subscription middleware
