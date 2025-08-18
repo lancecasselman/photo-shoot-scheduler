@@ -83,7 +83,7 @@
                     await window.signOut(window.auth);
                     showError('No active subscription found. Redirecting to homepage...');
                     setTimeout(() => {
-                        window.location.href = '/secure-landing.html?message=subscription_required';
+                        window.location.href = '/?message=subscription_required';
                     }, 2000);
                     return;
                 }
@@ -349,7 +349,7 @@
         </div>
 
         <div class="back-link">
-            <a href="/secure-landing.html">← Back to Home</a>
+            <a href="/">← Back to Home</a>
         </div>
 
         <div id="signOutSection" style="display: none; text-align: center; margin-top: 1rem;">
@@ -435,7 +435,7 @@
                     
                     // Redirect to homepage after 3 seconds to allow retry/signup
                     setTimeout(() => {
-                        window.location.href = '/secure-landing.html';
+                        window.location.href = '/';
                     }, 3000);
                 }
             });
