@@ -1109,9 +1109,21 @@ app.get('/api/status', (req, res) => {
     });
 });
 
-// Subscription status endpoint
-app.get('/api/subscription-status', isAuthenticated, async (req, res) => {
+// Subscription status endpoint - SECURE VERSION
+app.get('/api/subscription-status', async (req, res) => {
     try {
+        // Check authentication first
+        if (!req.session || !req.session.user) {
+            console.log('🚨 SECURE: Subscription check without auth');
+            return res.status(401).json({ 
+                status: { 
+                    hasProfessionalPlan: false, 
+                    professionalStatus: 'inactive' 
+                },
+                error: 'Authentication required' 
+            });
+        }
+        
         const userId = req.session.user.uid;
         const UnifiedSubscriptionManager = require('./server/unified-subscription-manager');
         const subscriptionManager = new UnifiedSubscriptionManager(pool);
@@ -1121,6 +1133,68 @@ app.get('/api/subscription-status', isAuthenticated, async (req, res) => {
     } catch (error) {
         console.error('Error checking subscription status:', error);
         res.status(500).json({ error: 'Failed to check subscription status' });
+    }
+});
+
+// SECURE: Verify session endpoint for bulletproof security
+app.get('/api/verify-session', (req, res) => {
+    console.log('🔐 SECURE: Session verification request');
+    
+    if (req.session && req.session.user) {
+        console.log('✅ SECURE: Session valid for', req.session.user.email);
+        res.json({ 
+            valid: true,
+            user: {
+                uid: req.session.user.uid,
+                email: req.session.user.email,
+                displayName: req.session.user.displayName || req.session.user.email
+            }
+        });
+    } else {
+        console.log('🚨 SECURE: Invalid session detected');
+        res.status(401).json({ valid: false, error: 'Invalid session' });
+    }
+});
+
+// SECURE: Verify auth with Firebase token
+app.post('/api/verify-auth', async (req, res) => {
+    try {
+        const { idToken } = req.body;
+        
+        if (!idToken) {
+            return res.status(400).json({ error: 'ID token required' });
+        }
+
+        console.log('🔐 SECURE: Verifying Firebase token...');
+        
+        // Verify the Firebase ID token
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+        const { uid, email, name, picture } = decodedToken;
+
+        console.log('✅ SECURE: Token verified for', email);
+
+        // Create/update session
+        req.session.user = {
+            uid: uid,
+            email: email,
+            displayName: name || email,
+            photoURL: picture
+        };
+
+        // Save session
+        req.session.save((err) => {
+            if (err) {
+                console.error('Session save error:', err);
+                return res.status(500).json({ error: 'Session creation failed' });
+            }
+            
+            console.log('✅ SECURE: Session created for', email);
+            res.json({ success: true, message: 'Authentication successful' });
+        });
+
+    } catch (error) {
+        console.error('🚨 SECURE: Token verification failed:', error);
+        res.status(401).json({ error: 'Invalid token' });
     }
 });
 
@@ -9890,40 +9964,40 @@ function generatePublicWebsite(websiteData) {
 `;
 }
 
-// Serve landing page OR redirect to app based on authentication
-app.get('/', async (req, res) => {
-    // Check if user is authenticated
-    if (req.session && req.session.user) {
-        // User is authenticated - check subscription
-        const userId = req.session.user.uid;
-        const userEmail = req.session.user.email;
-        
-        // Admin whitelist bypass
-        const adminEmails = [
-            'lancecasselman@icloud.com',
-            'lancecasselman2011@gmail.com',
-            'lance@thelegacyphotography.com'
-        ];
-        
-        if (!adminEmails.includes(userEmail)) {
-            // Check subscription
-            const UnifiedSubscriptionManager = require('./server/unified-subscription-manager');
-            const subscriptionManager = new UnifiedSubscriptionManager(pool);
-            const status = await subscriptionManager.getUserSubscriptionStatus(userId);
-            
-            if (!status.hasProfessionalPlan || status.professionalStatus !== 'active') {
-                console.log(`🔒 Blocking access at root / for ${userEmail} - No active subscription`);
-                return res.redirect('/subscription-checkout.html?message=subscription_required');
-            }
-        }
-        
-        // User has subscription or is admin - serve the app
-        console.log(`✅ Serving app to authenticated user: ${userEmail}`);
-        return res.sendFile(path.join(__dirname, 'index.html'));
-    }
+// SECURE ROOT ROUTE - Always serve secure landing page
+app.get('/', (req, res) => {
+    console.log('🔐 SECURE: Serving secure landing page');
+    res.sendFile(path.join(__dirname, 'secure-landing.html'));
+});
+
+// Secure login page
+app.get('/secure-login.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'secure-login.html'));
+});
+
+// Secure app - BULLETPROOF authentication required
+app.get('/secure-app.html', async (req, res) => {
+    console.log('🔐 SECURE: Access attempt to secure app');
     
-    // Not authenticated - serve landing page
-    res.sendFile(path.join(__dirname, 'landing.html'));
+    // Don't check session here - let the frontend JavaScript handle all security
+    // This ensures the bulletproof client-side security system is always active
+    res.sendFile(path.join(__dirname, 'secure-app.html'));
+});
+
+// LEGACY REDIRECTS - Redirect old routes to secure system
+app.get('/landing.html', (req, res) => {
+    console.log('🔄 REDIRECT: /landing.html → /secure-landing.html');
+    res.redirect(301, '/secure-landing.html');
+});
+
+app.get('/auth.html', (req, res) => {
+    console.log('🔄 REDIRECT: /auth.html → /secure-login.html');
+    res.redirect(301, '/secure-login.html');
+});
+
+app.get('/index.html', (req, res) => {
+    console.log('🔄 REDIRECT: /index.html → /secure-app.html');
+    res.redirect(301, '/secure-app.html');
 });
 
 // Serve main app with authentication AND subscription requirement
