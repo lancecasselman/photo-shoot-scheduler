@@ -10,7 +10,8 @@ function registerStorageRoutes(app, isAuthenticated, normalizeUser, storageSyste
     // Get user's storage summary
     app.get('/api/storage/summary', isAuthenticated, async (req, res) => {
         try {
-            const userId = normalizeUser(req.user.uid);
+            const normalizedUser = normalizeUser(req.user);
+            const userId = normalizedUser.uid;
             const summary = await storageSystem.getStorageSummary(userId);
             res.json(summary);
         } catch (error) {
@@ -22,7 +23,8 @@ function registerStorageRoutes(app, isAuthenticated, normalizeUser, storageSyste
     // Check if user can upload a file
     app.post('/api/storage/check-upload', isAuthenticated, async (req, res) => {
         try {
-            const userId = normalizeUser(req.user.uid);
+            const normalizedUser = normalizeUser(req.user);
+            const userId = normalizedUser.uid;
             const { fileSizeBytes } = req.body;
 
             if (!fileSizeBytes || fileSizeBytes <= 0) {
@@ -40,7 +42,8 @@ function registerStorageRoutes(app, isAuthenticated, normalizeUser, storageSyste
     // Purchase storage package
     app.post('/api/storage/purchase', isAuthenticated, async (req, res) => {
         try {
-            const userId = normalizeUser(req.user.uid);
+            const normalizedUser = normalizeUser(req.user);
+            const userId = normalizedUser.uid;
             const { tbCount = 1 } = req.body;
             const customerEmail = req.user.email;
 
@@ -63,7 +66,8 @@ function registerStorageRoutes(app, isAuthenticated, normalizeUser, storageSyste
     // Get active subscriptions
     app.get('/api/storage/subscriptions', isAuthenticated, async (req, res) => {
         try {
-            const userId = normalizeUser(req.user.uid);
+            const normalizedUser = normalizeUser(req.user);
+            const userId = normalizedUser.uid;
             const subscriptions = await storageSystem.getActiveSubscriptions(userId);
             res.json(subscriptions);
         } catch (error) {
@@ -75,7 +79,8 @@ function registerStorageRoutes(app, isAuthenticated, normalizeUser, storageSyste
     // Cancel storage subscription
     app.delete('/api/storage/subscription/:subscriptionId', isAuthenticated, async (req, res) => {
         try {
-            const userId = normalizeUser(req.user.uid);
+            const normalizedUser = normalizeUser(req.user);
+            const userId = normalizedUser.uid;
             const { subscriptionId } = req.params;
 
             // Verify subscription belongs to user
@@ -102,7 +107,8 @@ function registerStorageRoutes(app, isAuthenticated, normalizeUser, storageSyste
     // Log storage usage (for uploads/deletes)
     app.post('/api/storage/log-usage', isAuthenticated, async (req, res) => {
         try {
-            const userId = normalizeUser(req.user.uid);
+            const normalizedUser = normalizeUser(req.user);
+            const userId = normalizedUser.uid;
             const { sessionId, action, fileSizeBytes, folderType, filename } = req.body;
 
             if (!['upload', 'delete'].includes(action)) {
