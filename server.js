@@ -250,21 +250,21 @@ async function updateRawStorageUsage(userId, fileSizeTB, fileSizeMB, fileCount) 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    // Unified connection pool configuration to match server/db.ts
-    max: 20, // Increased to match db.ts for consistency
-    min: 2, // Keep minimum connections alive
-    idleTimeoutMillis: 30000, // Match db.ts configuration (30 seconds)
-    connectionTimeoutMillis: 5000, // Match db.ts configuration (5 seconds)
-    acquireTimeoutMillis: 60000, // 60 second acquire timeout
-    maxUses: 5000, // Reduced max uses before replacement
-    keepAlive: true, // Keep connections alive
-    keepAliveInitialDelayMillis: 10000,
+    // Optimized connection pool configuration for stability
+    max: 10, // Reduced for better connection management
+    min: 1, // Keep minimum connections alive
+    idleTimeoutMillis: 20000, // Reduced idle timeout
+    connectionTimeoutMillis: 3000, // Faster timeout for failed connections
+    acquireTimeoutMillis: 30000, // Reduced acquire timeout
+    maxUses: 1000, // Lower max uses for better connection recycling
+    keepAlive: true,
+    keepAliveInitialDelayMillis: 5000, // Reduced initial delay
 });
 
-// Add error handling for database pool
+// Add comprehensive error handling for database pool
 pool.on('error', (err) => {
-    console.error('Unexpected database pool error:', err);
-    // Don't exit the process, just log the error
+    console.error('Database pool error (handled):', err.code || err.message);
+    // Gracefully handle connection errors without crashing
 });
 
 pool.on('connect', (client) => {
@@ -660,32 +660,40 @@ const isAuthenticated = (req, res, next) => {
         return next();
     }
 
-    // Strict authentication check - multiple validation layers
-    const hasValidSession = req.session && req.session.user && req.session.user.uid;
-    const userHasValidId = req.session?.user?.uid && req.session.user.uid.length > 0;
-    const userHasValidEmail = req.session?.user?.email && req.session.user.email.includes('@');
-    
-    if (!hasValidSession || !userHasValidId || !userHasValidEmail) {
-        console.log('🚫 Authentication failed:', {
-            hasSession: !!req.session,
-            hasSessionUser: !!(req.session && req.session.user),
-            hasUserId: !!(req.session?.user?.uid),
-            hasUserEmail: !!(req.session?.user?.email),
-            sessionId: req.sessionID,
-            userAgent: req.get('User-Agent'),
-            ip: req.ip,
-            timestamp: new Date().toISOString()
-        });
+    // Enhanced authentication check with better error handling
+    try {
+        const hasValidSession = req.session && req.session.user && req.session.user.uid;
+        const userHasValidId = req.session?.user?.uid && req.session.user.uid.length > 0;
+        const userHasValidEmail = req.session?.user?.email && req.session.user.email.includes('@');
         
-        return res.status(401).json({ 
-            message: 'Authentication required',
-            redirectTo: '/auth.html'
-        });
-    }
+        if (!hasValidSession || !userHasValidId || !userHasValidEmail) {
+            // Only log authentication failures occasionally to reduce noise
+            if (Math.random() < 0.1) { // Log only 10% of failures
+                console.log('🚫 Authentication failed:', {
+                    hasSession: !!req.session,
+                    hasSessionUser: !!(req.session && req.session.user),
+                    hasUserId: !!(req.session?.user?.uid),
+                    hasUserEmail: !!(req.session?.user?.email),
+                    sessionId: req.sessionID,
+                    userAgent: req.get('User-Agent'),
+                    ip: req.ip,
+                    timestamp: new Date().toISOString()
+                });
+            }
+            
+            return res.status(401).json({ 
+                message: 'Authentication required',
+                redirectTo: '/auth.html'
+            });
+        }
 
-    // Set req.user for downstream middleware
-    req.user = req.session.user;
-    next();
+        // Set req.user for downstream middleware
+        req.user = req.session.user;
+        next();
+    } catch (error) {
+        console.error('Authentication middleware error:', error);
+        return res.status(500).json({ message: 'Authentication error' });
+    }
 };
 
 // Initialize subscription auth middleware
@@ -756,21 +764,44 @@ const createEmailTransporter = () => {
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Global error handlers for unhandled rejections and exceptions
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    // Don't exit the process, just log it
+});
+
+process.on('uncaughtException', (error) => {
+    console.error('Uncaught Exception:', error);
+    // For uncaught exceptions, we should restart gracefully
+    setTimeout(() => process.exit(1), 1000);
+});
+
 // Body parsing middleware (must be before routes)
 app.use(express.json({ limit: '100gb' }));
 app.use(express.urlencoded({ extended: true, limit: '100gb' }));
 
-// Session configuration for authentication
+// Session configuration for authentication with improved error handling
 const pgSession = connectPg(session);
+
+// Create session store with error handling
+const sessionStore = new pgSession({
+    conString: process.env.DATABASE_URL,
+    tableName: 'sessions',
+    createTableIfMissing: true // Allow table creation if missing
+});
+
+// Handle session store errors gracefully
+sessionStore.on('error', (error) => {
+    console.error('Session store error:', error.message);
+    // Don't crash the server for session store errors
+});
+
 app.use(session({
-    store: new pgSession({
-        conString: process.env.DATABASE_URL,
-        tableName: 'sessions',
-        createTableIfMissing: false
-    }),
-    secret: process.env.SESSION_SECRET || 'your-session-secret',
+    store: sessionStore,
+    secret: process.env.SESSION_SECRET || 'your-session-secret-' + Date.now(),
     resave: false,
     saveUninitialized: false,
+    rolling: true, // Reset expiration on each request
     cookie: {
         httpOnly: false, // Safari needs JS access to session for compatibility
         secure: false, // Always false for development
@@ -969,12 +1000,6 @@ app.post('/api/distance', async (req, res) => {
 // Firebase Authentication Routes
 app.post('/api/auth/firebase-login', async (req, res) => {
     try {
-        console.log('Firebase login request:', {
-            body: req.body,
-            origin: req.headers.origin,
-            userAgent: req.headers['user-agent']
-        });
-
         const { uid, email, displayName, photoURL } = req.body;
 
         if (!uid || !email) {
@@ -982,9 +1007,11 @@ app.post('/api/auth/firebase-login', async (req, res) => {
             return res.status(400).json({ message: 'Missing required user information' });
         }
 
-        // Create or update user in database
+        let client;
         try {
-            await pool.query(`
+            // Create or update user in database with proper error handling
+            client = await pool.connect();
+            await client.query(`
                 INSERT INTO users (id, email, display_name, updated_at)
                 VALUES ($1, $2, $3, NOW())
                 ON CONFLICT (email) DO UPDATE SET
@@ -997,13 +1024,34 @@ app.post('/api/auth/firebase-login', async (req, res) => {
         } catch (dbError) {
             console.error('Database error during user creation:', dbError);
             // Continue anyway - authentication can work without DB
+        } finally {
+            if (client) {
+                try {
+                    client.release();
+                } catch (releaseError) {
+                    console.error('Error releasing database client:', releaseError);
+                }
+            }
         }
 
-        // Store user in session
-        req.session.user = { uid, email, displayName, photoURL };
-
-        console.log('Authentication successful for:', email);
-        res.json({ success: true, message: 'Authentication successful' });
+        // Store user in session with proper error handling
+        try {
+            req.session.user = { uid, email, displayName, photoURL };
+            
+            // Save session explicitly to ensure persistence
+            req.session.save((err) => {
+                if (err) {
+                    console.error('Session save error:', err);
+                    return res.status(500).json({ message: 'Session error' });
+                }
+                
+                console.log('Authentication successful for:', email);
+                res.json({ success: true, message: 'Authentication successful' });
+            });
+        } catch (sessionError) {
+            console.error('Session error:', sessionError);
+            res.status(500).json({ message: 'Session creation failed' });
+        }
     } catch (error) {
         console.error('Firebase login error:', error);
         res.status(500).json({ message: 'Authentication failed', error: error.message });
@@ -1013,28 +1061,24 @@ app.post('/api/auth/firebase-login', async (req, res) => {
 app.post('/api/auth/firebase-verify', async (req, res) => {
     try {
         const { uid, email, displayName } = req.body;
-        console.log(' FIREBASE VERIFY: Received request:', { uid, email, displayName });
-        console.log(' FIREBASE VERIFY: Session ID:', req.sessionID);
-        console.log(' FIREBASE VERIFY: Session before:', req.session);
 
         if (!uid || !email) {
-            console.log(' FIREBASE VERIFY: Missing user information');
             return res.status(400).json({ message: 'Missing user information' });
         }
 
         // Verify user exists and update session
         req.session.user = { uid, email, displayName };
-        console.log(' FIREBASE VERIFY: Session after setting user:', req.session);
         
-        // Force session save
-        req.session.save((err) => {
-            if (err) {
-                console.error(' FIREBASE VERIFY: Session save error:', err);
-                return res.status(500).json({ message: 'Session save failed' });
-            }
-            console.log(' FIREBASE VERIFY: Session saved successfully');
-            res.json({ success: true, user: req.session.user });
+        // Force session save with promise wrapper
+        const sessionSavePromise = new Promise((resolve, reject) => {
+            req.session.save((err) => {
+                if (err) reject(err);
+                else resolve();
+            });
         });
+
+        await sessionSavePromise;
+        res.json({ success: true, user: req.session.user });
     } catch (error) {
         console.error('Firebase verification error:', error);
         res.status(500).json({ message: 'Verification failed' });
@@ -1042,18 +1086,24 @@ app.post('/api/auth/firebase-verify', async (req, res) => {
 });
 
 app.get('/api/auth/user', (req, res) => {
-    console.log(' AUTH USER: Request received');
-    console.log(' AUTH USER: Session ID:', req.sessionID);
-    console.log(' AUTH USER: Session:', req.session);
-    console.log(' AUTH USER: req.session exists:', !!req.session);
-    console.log(' AUTH USER: req.session.user exists:', !!(req.session && req.session.user));
-    
-    if (req.session && req.session.user) {
-        console.log(' AUTH USER: User authenticated, returning user data');
-        res.json({ user: req.session.user });
-    } else {
-        console.log(' AUTH USER: User not authenticated');
-        res.status(401).json({ message: 'Not authenticated' });
+    try {
+        // Only log detailed debug info occasionally to reduce noise
+        if (Math.random() < 0.1) {
+            console.log(' AUTH USER: Debug check:', {
+                hasSession: !!req.session,
+                hasUser: !!(req.session && req.session.user),
+                sessionId: req.sessionID?.slice(0, 8) + '...'
+            });
+        }
+        
+        if (req.session && req.session.user) {
+            res.json({ user: req.session.user });
+        } else {
+            res.status(401).json({ message: 'Not authenticated' });
+        }
+    } catch (error) {
+        console.error('Auth user check error:', error);
+        res.status(500).json({ message: 'Internal server error' });
     }
 });
 
@@ -1075,6 +1125,21 @@ app.get('/api/status', (req, res) => {
         databaseConnected: !!pool,
         timestamp: new Date().toISOString()
     });
+});
+
+// Subscription status endpoint
+app.get('/api/subscription-status', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.session.user.uid;
+        const UnifiedSubscriptionManager = require('./server/unified-subscription-manager');
+        const subscriptionManager = new UnifiedSubscriptionManager(pool);
+        
+        const status = await subscriptionManager.getUserSubscriptionStatus(userId);
+        res.json({ status });
+    } catch (error) {
+        console.error('Error checking subscription status:', error);
+        res.status(500).json({ error: 'Failed to check subscription status' });
+    }
 });
 
 // Get Stripe public key
