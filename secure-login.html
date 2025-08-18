@@ -349,7 +349,7 @@
         </div>
 
         <div class="back-link">
-            <a href="/">← Back to Home</a>
+            <a href="#" onclick="handleBackToHome(); return false;">← Back to Home</a>
         </div>
 
         <div id="signOutSection" style="display: none; text-align: center; margin-top: 1rem;">
@@ -486,14 +486,48 @@
             document.getElementById('signOutSection').style.display = 'block';
             document.getElementById('signOutBtn').addEventListener('click', async () => {
                 try {
+                    // Sign out from Firebase
                     await window.signOut(window.auth);
-                    showSuccess('Signed out successfully. You can now sign in with a different account.');
+                    
+                    // Also clear the server session
+                    await fetch('/api/auth/logout', { method: 'POST' });
+                    
+                    showSuccess('Signed out successfully. Redirecting to home...');
                     document.getElementById('signOutSection').style.display = 'none';
-                    hideMessage();
+                    
+                    // Redirect to home page after logout
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1500);
                 } catch (error) {
                     showError('Error signing out: ' + error.message);
                 }
             });
+        }
+
+        // Handle back to home with proper logout
+        async function handleBackToHome() {
+            try {
+                // Clear any authentication state
+                if (window.auth && window.auth.currentUser) {
+                    await window.signOut(window.auth);
+                }
+                
+                // Clear server session
+                await fetch('/api/auth/logout', { method: 'POST' });
+                
+                // Clear local storage flags
+                localStorage.removeItem('manualLogout');
+                sessionStorage.removeItem('loggingOut');
+                sessionStorage.removeItem('fromAuth');
+                
+                // Redirect to home
+                window.location.href = '/';
+            } catch (error) {
+                console.error('Error during back to home:', error);
+                // Still redirect even if logout fails
+                window.location.href = '/';
+            }
         }
     </script>
 </body>
