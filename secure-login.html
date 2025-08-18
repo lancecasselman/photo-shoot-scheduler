@@ -349,7 +349,7 @@
         </div>
 
         <div class="back-link">
-            <a href="#" onclick="handleBackToHome(); return false;">← Back to Home</a>
+            <a href="/secure-landing.html">← Back to Home</a>
         </div>
 
         <div id="signOutSection" style="display: none; text-align: center; margin-top: 1rem;">
@@ -505,30 +505,7 @@
             });
         }
 
-        // Handle back to home with proper logout
-        async function handleBackToHome() {
-            try {
-                // Clear any authentication state
-                if (window.auth && window.auth.currentUser) {
-                    await window.signOut(window.auth);
-                }
-                
-                // Clear server session
-                await fetch('/api/auth/logout', { method: 'POST' });
-                
-                // Clear local storage flags
-                localStorage.removeItem('manualLogout');
-                sessionStorage.removeItem('loggingOut');
-                sessionStorage.removeItem('fromAuth');
-                
-                // Redirect to home
-                window.location.href = '/';
-            } catch (error) {
-                console.error('Error during back to home:', error);
-                // Still redirect even if logout fails
-                window.location.href = '/';
-            }
-        }
+
     </script>
 </body>
 </html>
