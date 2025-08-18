@@ -9975,6 +9975,11 @@ app.get('/secure-login.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'secure-login.html'));
 });
 
+// Subscription checkout page
+app.get('/subscription-checkout.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'subscription-checkout.html'));
+});
+
 // Secure app - BULLETPROOF authentication required
 app.get('/secure-app.html', async (req, res) => {
     console.log('🔐 SECURE: Access attempt to secure app');
