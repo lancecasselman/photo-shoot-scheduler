@@ -148,23 +148,9 @@
         }
 
         function unlockApplication() {
-            // Remove security lockdown
-            const lockdown = document.getElementById('security-lockdown');
-            if (lockdown) lockdown.remove();
-            
-            // Remove overlay
-            const overlay = document.querySelector('.security-overlay');
-            if (overlay) overlay.remove();
-            
-            // Show application
-            document.documentElement.style.display = '';
-            document.documentElement.style.visibility = '';
-            document.documentElement.style.opacity = '';
-            document.body.style.display = '';
-            document.body.style.visibility = '';
-            document.body.style.opacity = '';
-            
-            console.log('🔓 APPLICATION UNLOCKED - Welcome to secure dashboard');
+            console.log('🔓 APPLICATION UNLOCKED - Redirecting to main app');
+            // Redirect to the main photography management application
+            window.location.href = '/admin.html';
         }
 
         function redirectToSecureLogin() {
