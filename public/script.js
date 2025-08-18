@@ -8,8 +8,11 @@ let currentUser = null;
 
 // Firebase Authentication functions
 async function checkAuth() {
-    // Skip authentication check entirely for landing page (root only)
-    if (window.location.pathname === '/') {
+    // Skip authentication check only for actual landing page content
+    // Check if this is the real landing page by looking for landing page elements
+    const isLandingPage = document.querySelector('.landing-hero') || document.querySelector('.pricing-section') || document.title.includes('Complete Business Platform');
+    
+    if (window.location.pathname === '/' && isLandingPage) {
         console.log('Landing page - skipping authentication check');
         return false; // Don't authenticate on landing page
     }
@@ -410,8 +413,10 @@ async function createAPISession(sessionData) {
 
 // Load sessions from API
 async function loadSessions() {
-    // Skip session loading on landing page only
-    if (window.location.pathname === '/') {
+    // Skip session loading only for actual landing page content
+    const isLandingPage = document.querySelector('.landing-hero') || document.querySelector('.pricing-section') || document.title.includes('Complete Business Platform');
+    
+    if (window.location.pathname === '/' && isLandingPage) {
         console.log('Landing page - skipping session loading');
         return;
     }

@@ -44,16 +44,19 @@ class SubscriptionAccessGuard {
     }
 
     guardMainAppAccess() {
-        // Skip subscription checks on landing page and auth pages only
+        // Skip subscription checks on actual landing page and auth pages only
         const currentPath = window.location.pathname;
-        const skipPages = ['/', '/auth.html', '/auth', '/login'];
+        const authPages = ['/auth.html', '/auth', '/login'];
         
-        if (skipPages.includes(currentPath)) {
+        // Check if this is the real landing page (not the app served at root)
+        const isLandingPage = document.querySelector('.landing-hero') || document.querySelector('.pricing-section') || document.title.includes('Complete Business Platform');
+        
+        if (authPages.includes(currentPath) || (currentPath === '/' && isLandingPage)) {
             console.log('Skipping subscription check for:', currentPath);
             return;
         }
 
-        // Enforce subscription on all app pages including /index.html
+        // Enforce subscription on all app pages
         this.enforceSubscriptionAccess();
     }
 
