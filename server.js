@@ -1078,6 +1078,19 @@ app.get('/api/check-auth', (req, res) => {
     }
 });
 
+// Get current user info endpoint
+app.get('/api/current-user', (req, res) => {
+    if (req.session && req.session.user) {
+        res.status(200).json({ 
+            email: req.session.user.email,
+            uid: req.session.user.uid,
+            displayName: req.session.user.displayName
+        });
+    } else {
+        res.status(401).json({ error: 'Not authenticated' });
+    }
+});
+
 // Status endpoint for health checks and authentication status
 app.get('/api/status', (req, res) => {
     res.json({
