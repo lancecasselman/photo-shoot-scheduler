@@ -25,6 +25,24 @@ class SubscriptionAuthMiddleware {
             }
 
             const userId = req.session.user.uid;
+            const userEmail = req.session.user.email;
+
+            // ADMIN BYPASS: Skip subscription check for admin emails
+            const adminEmails = [
+                'lancecasselman@icloud.com',
+                'lancecasselman2011@gmail.com', 
+                'lance@thelegacyphotography.com'
+            ];
+
+            if (adminEmails.includes(userEmail?.toLowerCase())) {
+                console.log(`✅ Admin bypass: ${userEmail} granted access without subscription check`);
+                req.subscriptionStatus = { 
+                    hasProfessionalPlan: true, 
+                    professionalStatus: 'active',
+                    isAdmin: true 
+                };
+                return next();
+            }
 
             // Get user's subscription status
             const subscriptionStatus = await this.subscriptionManager.getUserSubscriptionStatus(userId);
