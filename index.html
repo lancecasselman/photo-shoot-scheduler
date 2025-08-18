@@ -15,72 +15,7 @@
     <meta name="keywords" content="photography, business management, client portal, photo gallery, session scheduling, invoicing">
     <title>Photography Management System - Professional Photography Business Platform</title>
     
-    <!-- Subscription Access Guard - Inline to ensure execution -->
-    <script>
-    // IMMEDIATE SUBSCRIPTION BLOCKING - Runs before anything else
-    (function() {
-        const path = window.location.pathname;
-        if (path === '/' || path === '/index.html' || path === '/app') {
-            console.log('🚨 SUBSCRIPTION GUARD ACTIVE');
-            
-            // Hide app immediately
-            document.write('<style id="sub-block">body { display: none !important; }</style>');
-            
-            // Check subscription as soon as DOM is ready
-            window.addEventListener('DOMContentLoaded', function() {
-                console.log('🚨 Checking subscription status...');
-                
-                fetch('/api/check-auth')
-                    .then(r => r.json())
-                    .then(auth => {
-                        if (!auth.authenticated) {
-                            console.log('🚨 Not authenticated - redirecting');
-                            window.location.href = '/auth.html';
-                            return;
-                        }
-                        return fetch('/api/current-user');
-                    })
-                    .then(r => r && r.json())
-                    .then(user => {
-                        if (!user) return;
-                        
-                        const admins = [
-                            'lancecasselman@icloud.com',
-                            'lancecasselman2011@gmail.com',
-                            'lance@thelegacyphotography.com'
-                        ];
-                        
-                        if (admins.includes(user.email)) {
-                            console.log('✅ Admin bypass');
-                            document.getElementById('sub-block').remove();
-                            document.body.style.display = '';
-                            return;
-                        }
-                        
-                        console.log('🚨 Checking subscription for:', user.email);
-                        return fetch('/api/subscription-status');
-                    })
-                    .then(r => r && r.json())
-                    .then(sub => {
-                        if (!sub) return;
-                        
-                        if (!sub.status || !sub.status.hasProfessionalPlan) {
-                            console.log('🚨 NO SUBSCRIPTION - REDIRECTING TO CHECKOUT');
-                            window.location.href = '/subscription-checkout.html?message=subscription_required';
-                        } else {
-                            console.log('✅ Subscription verified');
-                            document.getElementById('sub-block').remove();
-                            document.body.style.display = '';
-                        }
-                    })
-                    .catch(err => {
-                        console.error('🚨 Error:', err);
-                        window.location.href = '/auth.html';
-                    });
-            });
-        }
-    })();
-    </script>
+    <!-- Authentication is handled at the server level via /app route -->
     <script src="/subscription-access-guard.js?v=2"></script>
     
     <!-- Replit Preview Pane Fix -->
