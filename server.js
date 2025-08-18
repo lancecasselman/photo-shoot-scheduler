@@ -9883,8 +9883,39 @@ function generatePublicWebsite(websiteData) {
 `;
 }
 
-// Serve landing page (no authentication required)
-app.get('/', (req, res) => {
+// Serve landing page OR redirect to app based on authentication
+app.get('/', async (req, res) => {
+    // Check if user is authenticated
+    if (req.session && req.session.user) {
+        // User is authenticated - check subscription
+        const userId = req.session.user.uid;
+        const userEmail = req.session.user.email;
+        
+        // Admin whitelist bypass
+        const adminEmails = [
+            'lancecasselman@icloud.com',
+            'lancecasselman2011@gmail.com',
+            'lance@thelegacyphotography.com'
+        ];
+        
+        if (!adminEmails.includes(userEmail)) {
+            // Check subscription
+            const UnifiedSubscriptionManager = require('./server/unified-subscription-manager');
+            const subscriptionManager = new UnifiedSubscriptionManager(pool);
+            const status = await subscriptionManager.getUserSubscriptionStatus(userId);
+            
+            if (!status.hasProfessionalPlan || status.professionalStatus !== 'active') {
+                console.log(`🔒 Blocking access at root / for ${userEmail} - No active subscription`);
+                return res.redirect('/subscription-checkout.html?message=subscription_required');
+            }
+        }
+        
+        // User has subscription or is admin - serve the app
+        console.log(`✅ Serving app to authenticated user: ${userEmail}`);
+        return res.sendFile(path.join(__dirname, 'index.html'));
+    }
+    
+    // Not authenticated - serve landing page
     res.sendFile(path.join(__dirname, 'landing.html'));
 });
 
