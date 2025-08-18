@@ -389,7 +389,7 @@
             </p>
 
             <div class="features-grid">
-                <div class="feature-card" onclick="alert('Session Management - Coming Soon!')">
+                <div class="feature-card" onclick="loadSessionManagement()">
                     <div class="feature-icon">📅</div>
                     <h3 class="feature-title">Session Management</h3>
                     <p class="feature-description">Organize and track your photography sessions with comprehensive client management.</p>
@@ -469,6 +469,154 @@
         });
 
         console.log('🔓 Secure dashboard loaded successfully');
+
+        // Load session management interface
+        function loadSessionManagement() {
+            // Replace the main content with session management interface
+            window.location.href = '/secure-app.html#sessions';
+            loadSessionInterface();
+        }
+
+        // Load the session management interface content
+        async function loadSessionInterface() {
+            try {
+                const mainContent = document.querySelector('.main-content');
+                mainContent.innerHTML = `
+                    <div class="dashboard-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                            <h1 class="dashboard-title">Your Photography Sessions</h1>
+                            <button onclick="goBackToDashboard()" style="background: var(--accent-sage); color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
+                                ← Back to Dashboard
+                            </button>
+                        </div>
+                        <div id="sessionsLoading" style="text-align: center; padding: 2rem; color: var(--primary-gold);">
+                            Loading your sessions...
+                        </div>
+                        <div id="sessionsContainer" style="display: none;">
+                            <!-- Sessions will be loaded here -->
+                        </div>
+                    </div>
+                `;
+
+                // Load user's sessions
+                await loadUserSessions();
+            } catch (error) {
+                console.error('Error loading session interface:', error);
+            }
+        }
+
+        // Load sessions specific to the authenticated user
+        async function loadUserSessions() {
+            try {
+                const response = await fetch('/api/sessions');
+                if (!response.ok) {
+                    throw new Error('Failed to load sessions');
+                }
+                
+                const sessions = await response.json();
+                console.log('Loaded user sessions:', sessions);
+                
+                const sessionsContainer = document.getElementById('sessionsContainer');
+                const loadingElement = document.getElementById('sessionsLoading');
+                
+                loadingElement.style.display = 'none';
+                sessionsContainer.style.display = 'block';
+                
+                if (sessions.length === 0) {
+                    sessionsContainer.innerHTML = `
+                        <div style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">📅</div>
+                            <h3>No sessions yet</h3>
+                            <p>Your photography sessions will appear here once created.</p>
+                        </div>
+                    `;
+                } else {
+                    // Display sessions in a clean, organized way
+                    const sessionsHTML = sessions.map(session => `
+                        <div class="session-card" style="background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 8px; margin: 1rem 0; border: 1px solid rgba(212, 175, 55, 0.2);">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                                <div>
+                                    <h3 style="color: var(--primary-gold); margin: 0; font-size: 1.2rem;">${session.clientName}</h3>
+                                    <p style="color: var(--accent-sage); margin: 0.25rem 0; font-weight: 500;">${session.sessionType}</p>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="background: var(--primary-gold); color: var(--primary-dark); padding: 0.25rem 0.75rem; border-radius: 12px; font-weight: 600; font-size: 0.9rem;">
+                                        $${session.price}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1rem 0;">
+                                <div>
+                                    <strong style="color: var(--text-light);">Date & Time:</strong>
+                                    <p style="color: var(--text-muted); margin: 0.25rem 0;">${new Date(session.dateTime).toLocaleString()}</p>
+                                </div>
+                                <div>
+                                    <strong style="color: var(--text-light);">Location:</strong>
+                                    <p style="color: var(--text-muted); margin: 0.25rem 0;">${session.location}</p>
+                                </div>
+                                <div>
+                                    <strong style="color: var(--text-light);">Contact:</strong>
+                                    <p style="color: var(--text-muted); margin: 0.25rem 0;">${session.email}</p>
+                                    <p style="color: var(--text-muted); margin: 0.25rem 0;">${session.phoneNumber}</p>
+                                </div>
+                            </div>
+                            
+                            ${session.notes ? `
+                                <div style="margin: 1rem 0;">
+                                    <strong style="color: var(--text-light);">Notes:</strong>
+                                    <p style="color: var(--text-muted); margin: 0.25rem 0;">${session.notes}</p>
+                                </div>
+                            ` : ''}
+                            
+                            <div style="display: flex; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap;">
+                                ${session.contractSigned ? '<span style="background: rgba(40, 167, 69, 0.2); color: #28a745; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">Contract Signed</span>' : '<span style="background: rgba(220, 53, 69, 0.2); color: #dc3545; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">Contract Pending</span>'}
+                                ${session.paid ? '<span style="background: rgba(40, 167, 69, 0.2); color: #28a745; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">Paid</span>' : '<span style="background: rgba(255, 193, 7, 0.2); color: #ffc107; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">Payment Pending</span>'}
+                                ${session.edited ? '<span style="background: rgba(40, 167, 69, 0.2); color: #28a745; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">Edited</span>' : '<span style="background: rgba(108, 117, 125, 0.2); color: #6c757d; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">Editing Pending</span>'}
+                                ${session.delivered ? '<span style="background: rgba(40, 167, 69, 0.2); color: #28a745; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">Delivered</span>' : '<span style="background: rgba(108, 117, 125, 0.2); color: #6c757d; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">Delivery Pending</span>'}
+                            </div>
+                            
+                            ${session.depositAmount > 0 ? `
+                                <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(212, 175, 55, 0.1); border-radius: 6px; border: 1px solid rgba(212, 175, 55, 0.3);">
+                                    <strong style="color: var(--primary-gold);">Deposit: $${session.depositAmount}</strong>
+                                    <span style="color: var(--text-muted); margin-left: 1rem;">Balance: $${session.price - session.depositAmount}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `).join('');
+                    
+                    sessionsContainer.innerHTML = `
+                        <div style="margin-bottom: 1rem; padding: 1rem; background: rgba(135, 169, 107, 0.1); border-radius: 8px; border: 1px solid var(--accent-sage);">
+                            <strong style="color: var(--accent-sage);">🔒 Secure Session Management</strong>
+                            <p style="color: var(--text-muted); margin: 0.5rem 0 0 0; font-size: 0.9rem;">
+                                Showing sessions for: <strong style="color: var(--text-light);">${window.auth.currentUser?.email}</strong>
+                            </p>
+                        </div>
+                        ${sessionsHTML}
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading sessions:', error);
+                document.getElementById('sessionsLoading').innerHTML = `
+                    <div style="color: #dc3545; text-align: center; padding: 2rem;">
+                        <div style="font-size: 2rem; margin-bottom: 1rem;">⚠️</div>
+                        <h3>Error Loading Sessions</h3>
+                        <p>Please try again later or contact support if the problem persists.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Go back to main dashboard
+        function goBackToDashboard() {
+            window.location.href = '/secure-app.html';
+            location.reload();
+        }
+
+        // Check if we should load sessions immediately (from URL hash)
+        if (window.location.hash === '#sessions') {
+            setTimeout(loadSessionInterface, 1000); // Wait for auth to be ready
+        }
     </script>
 </body>
 </html>
