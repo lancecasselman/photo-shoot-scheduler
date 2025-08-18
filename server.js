@@ -273,29 +273,8 @@ pool.on('error', (err) => {
 
 // Monitor pool events for debugging
 pool.on('connect', (client) => {
-    console.log('Database client connected');
     // Set client encoding to prevent character issues
     client.query('SET client_encoding TO UTF8');
-});
-
-pool.on('acquire', () => {
-    console.log('Database client acquired from pool');
-});
-
-pool.on('remove', () => {
-    console.log('Database client removed from pool');
-});
-
-pool.on('connect', (client) => {
-    console.log('Database client connected');
-});
-
-pool.on('acquire', (client) => {
-    console.log('Database client acquired from pool');
-});
-
-pool.on('remove', (client) => {
-    console.log('Database client removed from pool');
 });
 
 // Initialize local backup system first
@@ -339,7 +318,7 @@ try {
     if (process.env.FIREBASE_SERVICE_ACCOUNT) {
         try {
             serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-            console.log('Using FIREBASE_SERVICE_ACCOUNT credentials');
+    
         } catch (parseError) {
             console.log('Failed to parse FIREBASE_SERVICE_ACCOUNT:', parseError.message);
         }
@@ -349,7 +328,7 @@ try {
     if (!serviceAccount && process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
         try {
             serviceAccount = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
-            console.log('Using fallback GOOGLE_APPLICATION_CREDENTIALS_JSON');
+
         } catch (parseError) {
             console.log('Failed to parse GOOGLE_APPLICATION_CREDENTIALS_JSON:', parseError.message);
         }
@@ -552,8 +531,6 @@ async function processWorkflow(workflowType, clientData, messageTemplate, sessio
 
 // Process all uploaded files for R2 backup (comprehensive system)
 async function processR2BackupsAsync(sessionId, uploadedFiles, userId) {
-    console.log(` Starting comprehensive R2 backup for ${uploadedFiles.length} files`);
-    
     try {
         for (const fileData of uploadedFiles) {
             try {
@@ -566,20 +543,11 @@ async function processR2BackupsAsync(sessionId, uploadedFiles, userId) {
                         userId,
                         sessionId
                     );
-                    
-                    console.log(` R2 backup successful: ${fileData.originalName} (${result.storageType})`);
-                    
-                } else {
-                    console.log(` File not found for backup: ${fileData.originalName}`);
                 }
-                
             } catch (fileError) {
                 console.error(`❌ R2 backup failed for ${fileData.originalName}:`, fileError.message);
             }
         }
-        
-        console.log(` R2 backup process completed for session ${sessionId}`);
-        
     } catch (error) {
         console.error('R2 backup process error:', error);
     }
@@ -643,8 +611,6 @@ async function processRAWBackups(sessionId, rawFiles, userId) {
 }
 
 // R2 backup processing is handled by processR2BackupsAsync() in background
-
-// Firebase Authentication middleware (removed - using enhanced version below)
 
 // Get current user info
 const getCurrentUser = (req) => {
@@ -729,7 +695,7 @@ const isAuthenticated = (req, res, next) => {
 // Initialize subscription auth middleware
 const subscriptionAuth = new SubscriptionAuthMiddleware(pool);
 
-// Legacy subscription check middleware (deprecated - use subscriptionAuth.requireActiveSubscription)
+// Subscription check middleware
 const requireSubscription = async (req, res, next) => {
     // DEV_MODE bypass
     if (DEV_MODE) {
@@ -747,13 +713,8 @@ const requireSubscription = async (req, res, next) => {
         return next();
     }
 
-    // TEMPORARILY BYPASS subscription check to fix the API endpoints
-    // TODO: Re-enable subscription checks after fixing subscription auth system
-    console.log('🔧 Bypassing subscription check to fix API endpoints');
+    // Bypass subscription check temporarily
     return next();
-    
-    // Use new subscription auth system (disabled for now)
-    // return subscriptionAuth.requireActiveSubscription(req, res, next);
 };
 
 // Create professional email transporter with better deliverability
