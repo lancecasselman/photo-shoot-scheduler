@@ -20,7 +20,7 @@
     // IMMEDIATE SUBSCRIPTION BLOCKING - Runs before anything else
     (function() {
         const path = window.location.pathname;
-        if (path === '/' || path === '/index.html') {
+        if (path === '/' || path === '/index.html' || path === '/app') {
             console.log('🚨 SUBSCRIPTION GUARD ACTIVE');
             
             // Hide app immediately
