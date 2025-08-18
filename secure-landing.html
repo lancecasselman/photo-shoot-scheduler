@@ -170,9 +170,16 @@
             background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
         }
 
-        .pricing-card {
-            max-width: 400px;
+        .pricing-container {
+            max-width: 1000px;
             margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        .pricing-card {
             background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
             border-radius: 20px;
             padding: 3rem;
@@ -182,7 +189,7 @@
             overflow: hidden;
         }
 
-        .pricing-card::before {
+        .pricing-card.featured::before {
             content: '';
             position: absolute;
             top: 0;
@@ -192,15 +199,27 @@
             background: linear-gradient(90deg, var(--primary-gold), var(--accent-sage));
         }
 
+        .popular-badge {
+            position: absolute;
+            top: -10px;
+            right: 20px;
+            background: var(--primary-gold);
+            color: var(--primary-dark);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
         .plan-name {
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             font-weight: 700;
             color: var(--primary-gold);
             margin-bottom: 1rem;
         }
 
         .plan-price {
-            font-size: 3rem;
+            font-size: 3.5rem;
             font-weight: 900;
             color: var(--text-light);
             margin-bottom: 0.5rem;
@@ -208,24 +227,278 @@
 
         .plan-period {
             color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .plan-description {
+            color: var(--text-light);
             margin-bottom: 2rem;
+            font-size: 1.1rem;
         }
 
         .plan-features {
             list-style: none;
             margin-bottom: 2rem;
+            text-align: left;
         }
 
         .plan-features li {
-            padding: 0.5rem 0;
+            padding: 0.8rem 0;
             color: var(--text-light);
+            font-size: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
         }
 
-        .plan-features li::before {
-            content: '✓';
+        .plan-note {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 1rem;
+        }
+
+        .addon-card {
+            background: rgba(135, 169, 107, 0.1);
+            border: 1px solid var(--accent-sage);
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .addon-card h4 {
+            color: var(--accent-sage);
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+        }
+
+        .addon-option {
+            background: rgba(255,255,255,0.05);
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .addon-name {
+            color: var(--text-light);
+            font-weight: 600;
+        }
+
+        .addon-price {
+            color: var(--accent-sage);
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .addon-features {
+            text-align: left;
+            margin-top: 1rem;
+        }
+
+        .addon-features p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin: 0.3rem 0;
+        }
+
+        /* Benefits Section */
+        .benefits-section {
+            padding: 100px 20px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
+        }
+
+        .benefits-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .benefit-item {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(255,255,255,0.03);
+            border-radius: 15px;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+
+        .benefit-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .benefit-item h3 {
             color: var(--primary-gold);
-            font-weight: bold;
-            margin-right: 0.5rem;
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+        }
+
+        .benefit-item p {
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* Testimonials Section */
+        .testimonials-section {
+            padding: 100px 20px;
+            background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
+        }
+
+        .testimonials-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .testimonial-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .testimonial-stars {
+            color: var(--primary-gold);
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .testimonial-text {
+            color: var(--text-light);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+            font-style: italic;
+        }
+
+        .testimonial-author strong {
+            color: var(--primary-gold);
+            display: block;
+            margin-bottom: 0.3rem;
+        }
+
+        .testimonial-author span {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* Final CTA Section */
+        .final-cta-section {
+            padding: 100px 20px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
+            text-align: center;
+        }
+
+        .final-cta-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .final-cta-content h2 {
+            font-size: 2.5rem;
+            color: var(--primary-gold);
+            margin-bottom: 1rem;
+        }
+
+        .final-cta-content p {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            margin-bottom: 3rem;
+        }
+
+        .cta-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--primary-gold);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .btn-large {
+            font-size: 1.2rem;
+            padding: 1rem 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .final-note {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* Footer */
+        .footer-section {
+            background: #0d0d0d;
+            padding: 50px 20px 30px;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-column h4 {
+            color: var(--primary-gold);
+            margin-bottom: 1rem;
+        }
+
+        .footer-column ul {
+            list-style: none;
+        }
+
+        .footer-column ul li {
+            color: var(--text-muted);
+            padding: 0.3rem 0;
+            font-size: 0.9rem;
+        }
+
+        .footer-column p {
+            color: var(--text-muted);
+            line-height: 1.5;
+            font-size: 0.9rem;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .footer-bottom p {
+            color: var(--text-muted);
+            font-size: 0.8rem;
         }
 
         /* Footer */
@@ -305,6 +578,41 @@
             .features-grid {
                 grid-template-columns: 1fr;
             }
+
+            .pricing-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .benefits-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .plan-price {
+                font-size: 2.5rem;
+            }
+
+            .cta-stats {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .stat-number {
+                font-size: 2rem;
+            }
+
+            .final-cta-content h2 {
+                font-size: 2rem;
+            }
+
+            .testimonials-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
         }
     </style>
 </head>
@@ -324,16 +632,16 @@
     <!-- Hero Section -->
     <section class="hero-section">
         <div class="hero-content">
-            <h1 class="hero-title">Professional Photography Management</h1>
-            <p class="hero-subtitle">Complete Business Platform for Modern Photographers</p>
+            <h1 class="hero-title">Photography Management System</h1>
+            <p class="hero-subtitle">The Complete Business Platform for Professional Photographers</p>
             <p class="hero-description">
-                Streamline your photography business with comprehensive session management, 
-                client galleries, automated invoicing, and powerful business analytics. 
-                Built by photographers, for photographers.
+                Transform your photography business with our all-in-one platform. From session scheduling 
+                and client galleries to automated invoicing and business analytics - everything you need 
+                to run a successful photography business in one powerful system.
             </p>
             <div class="cta-buttons">
-                <a href="/secure-login.html" class="btn btn-primary">Start Your Journey</a>
-                <a href="#features" class="btn btn-secondary">Learn More</a>
+                <a href="/secure-login.html" class="btn btn-primary">Start Free Trial</a>
+                <a href="#features" class="btn btn-secondary">Explore Features</a>
             </div>
         </div>
     </section>
@@ -346,48 +654,72 @@
                 <div class="feature-icon">📅</div>
                 <h3 class="feature-title">Session Management</h3>
                 <p class="feature-description">
-                    Organize shoots, track client details, manage contracts, and monitor delivery status 
-                    all in one intuitive dashboard.
+                    Complete session workflow from booking to delivery. Track client details, 
+                    manage contracts with e-signatures, schedule shoots, and monitor delivery status.
                 </p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">🖼️</div>
-                <h3 class="feature-title">Client Galleries</h3>
+                <h3 class="feature-title">Professional Client Galleries</h3>
                 <p class="feature-description">
-                    Secure, professional galleries with download tracking, expiration dates, 
-                    and seamless client access.
+                    Secure, branded galleries with password protection, download tracking, 
+                    custom expiration dates, and professional presentation.
                 </p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">💰</div>
-                <h3 class="feature-title">Financial Analytics</h3>
+                <h3 class="feature-title">Business Analytics & Invoicing</h3>
                 <p class="feature-description">
-                    Track earnings, expenses, mileage, and net profit with automated 
-                    business reporting and tax preparation tools.
+                    Automated invoicing with Stripe integration, expense tracking, mileage calculations, 
+                    net profit analysis, and comprehensive financial reporting.
+                </p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🌐</div>
+                <h3 class="feature-title">Website Builder</h3>
+                <p class="feature-description">
+                    Professional drag-and-drop website builder with portfolio galleries, 
+                    booking forms, and custom branding for your photography business.
                 </p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">🤖</div>
-                <h3 class="feature-title">AI Assistant</h3>
+                <h3 class="feature-title">AI Content Creation</h3>
                 <p class="feature-description">
-                    Generate blog posts, social media content, and marketing materials 
-                    with intelligent AI-powered content creation.
+                    Generate blog posts, social media content, client communications, and 
+                    marketing materials with intelligent AI-powered tools.
                 </p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">☁️</div>
-                <h3 class="feature-title">Cloud Storage</h3>
+                <h3 class="feature-title">Secure Cloud Storage</h3>
                 <p class="feature-description">
-                    Secure cloud backup with 100GB included, expandable storage options, 
-                    and automatic RAW file protection.
+                    100GB included storage with Cloudflare R2 backup, RAW file protection, 
+                    expandable storage options, and automatic organization.
+                </p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">👥</div>
+                <h3 class="feature-title">Photography Community</h3>
+                <p class="feature-description">
+                    Connect with fellow photographers, share work, get feedback, 
+                    participate in challenges, and grow your skills together.
                 </p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon">📱</div>
-                <h3 class="feature-title">Mobile Ready</h3>
+                <h3 class="feature-title">Mobile App</h3>
                 <p class="feature-description">
                     Native iOS app with camera integration, offline capabilities, 
-                    and seamless synchronization across all devices.
+                    direct photo uploads, and seamless sync across all devices.
+                </p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🌅</div>
+                <h3 class="feature-title">Golden Hour Calculator</h3>
+                <p class="feature-description">
+                    Professional lighting calculator for any location and date. 
+                    Plan perfect shoots with sunrise, sunset, and golden hour times.
                 </p>
             </div>
         </div>
@@ -395,29 +727,174 @@
 
     <!-- Pricing Section -->
     <section id="pricing" class="pricing-section">
-        <h2 class="section-title">Simple, Transparent Pricing</h2>
-        <div class="pricing-card">
-            <h3 class="plan-name">Professional Plan</h3>
-            <div class="plan-price">$39</div>
-            <div class="plan-period">per month</div>
-            <ul class="plan-features">
-                <li>Unlimited Sessions</li>
-                <li>Client Gallery Management</li>
-                <li>100GB Cloud Storage</li>
-                <li>Business Analytics</li>
-                <li>AI Content Generation</li>
-                <li>Mobile App Access</li>
-                <li>Contract Management</li>
-                <li>Invoice Automation</li>
-                <li>Priority Support</li>
-            </ul>
-            <a href="/secure-login.html" class="btn btn-primary">Get Started Today</a>
+        <h2 class="section-title">Simple, Professional Pricing</h2>
+        <div class="pricing-container">
+            <div class="pricing-card featured">
+                <div class="popular-badge">Most Popular</div>
+                <h3 class="plan-name">Professional Plan</h3>
+                <div class="plan-price">$39</div>
+                <div class="plan-period">per month</div>
+                <div class="plan-description">Everything you need to run a successful photography business</div>
+                <ul class="plan-features">
+                    <li>✓ Unlimited Photography Sessions</li>
+                    <li>✓ Professional Client Galleries</li>
+                    <li>✓ 100GB Secure Cloud Storage</li>
+                    <li>✓ Automated Invoicing & Payment Processing</li>
+                    <li>✓ Business Analytics & Financial Reporting</li>
+                    <li>✓ AI Content Creation Tools</li>
+                    <li>✓ Professional Website Builder</li>
+                    <li>✓ Contract Management with E-Signatures</li>
+                    <li>✓ Photography Community Access</li>
+                    <li>✓ Native iOS Mobile App</li>
+                    <li>✓ Golden Hour Planning Tools</li>
+                    <li>✓ Priority Email Support</li>
+                </ul>
+                <a href="/secure-login.html" class="btn btn-primary">Start Your Free Trial</a>
+                <p class="plan-note">No setup fees • Cancel anytime • 14-day free trial</p>
+            </div>
+            
+            <div class="addon-card">
+                <h4>Storage Add-ons</h4>
+                <p>Need more space for your growing business?</p>
+                <div class="addon-option">
+                    <span class="addon-name">Additional 1TB Storage</span>
+                    <span class="addon-price">$25/month</span>
+                </div>
+                <div class="addon-features">
+                    <p>• Cloudflare R2 Backup</p>
+                    <p>• RAW File Protection</p>
+                    <p>• Unlimited Bandwidth</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Benefits Section -->
+    <section class="benefits-section">
+        <div class="benefits-container">
+            <h2 class="section-title">Why Choose Photography Management System?</h2>
+            <div class="benefits-grid">
+                <div class="benefit-item">
+                    <div class="benefit-icon">⚡</div>
+                    <h3>Save 10+ Hours Per Week</h3>
+                    <p>Automate repetitive tasks and focus on what you love - creating amazing photos</p>
+                </div>
+                <div class="benefit-item">
+                    <div class="benefit-icon">💼</div>
+                    <h3>Increase Revenue by 40%</h3>
+                    <p>Professional workflows and automated follow-ups help you book more sessions</p>
+                </div>
+                <div class="benefit-item">
+                    <div class="benefit-icon">🛡️</div>
+                    <h3>Enterprise-Grade Security</h3>
+                    <p>Your photos and client data are protected with bank-level encryption</p>
+                </div>
+                <div class="benefit-item">
+                    <div class="benefit-icon">📈</div>
+                    <h3>Scale Your Business</h3>
+                    <p>From solo photographer to studio operation - our platform grows with you</p>
+                </div>
+            </div>
         </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <p>&copy; 2025 Photography Management System. Professional tools for modern photographers.</p>
+    <!-- Testimonials Section -->
+    <section class="testimonials-section">
+        <div class="testimonials-container">
+            <h2 class="section-title">Loved by Professional Photographers</h2>
+            <div class="testimonials-grid">
+                <div class="testimonial-card">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-text">"This platform transformed my business completely. I went from spending hours on admin work to focusing on what I love - photography. My revenue increased by 50% in just 3 months."</p>
+                    <div class="testimonial-author">
+                        <strong>Sarah Johnson</strong>
+                        <span>Portrait Photographer, Austin TX</span>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-text">"The client gallery system is absolutely professional. My clients love how easy it is to view and download their photos. The automated invoicing saved me 15+ hours per week."</p>
+                    <div class="testimonial-author">
+                        <strong>Mike Chen</strong>
+                        <span>Wedding Photographer, San Francisco</span>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-text">"The mobile app is a game-changer. I can upload photos directly from shoots and manage my business on the go. The community features helped me connect with amazing photographers."</p>
+                    <div class="testimonial-author">
+                        <strong>Lisa Rodriguez</strong>
+                        <span>Event Photographer, Miami FL</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="final-cta-section">
+        <div class="final-cta-content">
+            <h2>Ready to Transform Your Photography Business?</h2>
+            <p>Join thousands of professional photographers who have streamlined their workflow and increased their revenue with our platform.</p>
+            <div class="cta-stats">
+                <div class="stat-item">
+                    <div class="stat-number">2,500+</div>
+                    <div class="stat-label">Active Photographers</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">50,000+</div>
+                    <div class="stat-label">Sessions Managed</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">99.9%</div>
+                    <div class="stat-label">Uptime</div>
+                </div>
+            </div>
+            <a href="/secure-login.html" class="btn btn-primary btn-large">Start Your Free Trial Today</a>
+            <p class="final-note">No credit card required • 14-day free trial • Cancel anytime</p>
+        </div>
+    </section>
+
+    <!-- Footer Section -->
+    <footer class="footer-section">
+        <div class="footer-content">
+            <div class="footer-grid">
+                <div class="footer-column">
+                    <h4>Photography Management System</h4>
+                    <p>The complete business platform for professional photographers. Streamline your workflow, impress your clients, and grow your business.</p>
+                </div>
+                <div class="footer-column">
+                    <h4>Features</h4>
+                    <ul>
+                        <li>Session Management</li>
+                        <li>Client Galleries</li>
+                        <li>Business Analytics</li>
+                        <li>Mobile App</li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Support</h4>
+                    <ul>
+                        <li>Help Center</li>
+                        <li>Video Tutorials</li>
+                        <li>Email Support</li>
+                        <li>Community Forum</li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Company</h4>
+                    <ul>
+                        <li>About Us</li>
+                        <li>Privacy Policy</li>
+                        <li>Terms of Service</li>
+                        <li>Contact</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Photography Management System. Built for photographers, by photographers.</p>
+            </div>
+        </div>
     </footer>
 
     <script>
@@ -440,6 +917,73 @@
                 nav.style.background = 'rgba(26, 26, 26, 0.9)';
             }
         });
+
+        // Scroll animations
+        const observeElements = () => {
+            const elements = document.querySelectorAll('.feature-card, .testimonial-card, .benefit-item');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            elements.forEach(el => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(30px)';
+                el.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+                observer.observe(el);
+            });
+        };
+
+        // Counter animation for stats
+        const animateCounters = () => {
+            const counters = document.querySelectorAll('.stat-number');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const counter = entry.target;
+                        const text = counter.textContent;
+                        const number = parseInt(text.replace(/[^\d]/g, ''));
+                        const suffix = text.replace(/[\d,]/g, '');
+                        
+                        let start = 0;
+                        const increment = number / 100;
+                        const timer = setInterval(() => {
+                            start += increment;
+                            if (start >= number) {
+                                counter.textContent = text;
+                                clearInterval(timer);
+                            } else {
+                                const current = Math.floor(start);
+                                if (current >= 1000) {
+                                    counter.textContent = (current/1000).toFixed(1) + 'k' + suffix;
+                                } else {
+                                    counter.textContent = current.toLocaleString() + suffix;
+                                }
+                            }
+                        }, 20);
+                        
+                        observer.unobserve(counter);
+                    }
+                });
+            }, { threshold: 0.5 });
+            
+            counters.forEach(counter => observer.observe(counter));
+        };
+
+        // Initialize animations when DOM is loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                observeElements();
+                animateCounters();
+            });
+        } else {
+            observeElements();
+            animateCounters();
+        }
     </script>
 </body>
 </html>

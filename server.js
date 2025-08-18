@@ -9966,7 +9966,7 @@ function generatePublicWebsite(websiteData) {
 
 // SECURE ROOT ROUTE - Always serve secure landing page
 app.get('/', (req, res) => {
-    console.log('🔐 SECURE: Serving secure landing page');
+    console.log('🏠 HOME: Serving public landing page');
     res.sendFile(path.join(__dirname, 'secure-landing.html'));
 });
 
