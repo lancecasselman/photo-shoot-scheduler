@@ -120,8 +120,19 @@ class R2FileManager {
       console.log(`🖼️ Generating thumbnail for: ${originalFilename}`);
 
       // Create thumbnail filename
-      const ext = originalFilename.split('.').pop();
+      const ext = originalFilename.split('.').pop().toLowerCase();
       const baseName = originalFilename.replace(`.${ext}`, '');
+      
+      // Skip thumbnail generation for NEF files as Sharp doesn't support them
+      const unsupportedRawFormats = ['.nef', '.cr2', '.arw', '.orf', '.rw2', '.3fr'];
+      if (unsupportedRawFormats.includes('.' + ext)) {
+        console.log(`⚠️ Skipping thumbnail generation for unsupported RAW format: ${ext}`);
+        return {
+          success: false,
+          error: `Thumbnails not supported for ${ext.toUpperCase()} files`,
+          skipped: true
+        };
+      }
       
       // Generate multiple thumbnail sizes for different use cases
       const thumbnailSizes = [
@@ -139,7 +150,7 @@ class R2FileManager {
           let processedBuffer;
           
           // Handle different file types
-          const isRawFile = this.fileTypeCategories.raw.includes('.' + ext.toLowerCase());
+          const isRawFile = this.fileTypeCategories.raw.includes('.' + ext);
           
           if (isRawFile) {
             // For RAW files, extract embedded JPEG if possible, otherwise convert
@@ -301,6 +312,18 @@ class R2FileManager {
     try {
       console.log(` Generating thumbnail on-demand for: ${originalFilename}`);
       
+      // Check if file type is supported for thumbnails
+      const ext = originalFilename.split('.').pop().toLowerCase();
+      const unsupportedRawFormats = ['.nef', '.cr2', '.arw', '.orf', '.rw2', '.3fr'];
+      if (unsupportedRawFormats.includes('.' + ext)) {
+        console.log(`⚠️ Thumbnails not supported for ${ext.toUpperCase()} files`);
+        return {
+          success: false,
+          error: `Thumbnails not supported for ${ext.toUpperCase()} files`,
+          skipped: true
+        };
+      }
+      
       // First download the original file
       const originalFile = await this.downloadFile(userId, sessionId, originalFilename);
       if (!originalFile.success) {
@@ -317,6 +340,9 @@ class R2FileManager {
       );
       
       if (!thumbnailResult.success) {
+        if (thumbnailResult.skipped) {
+          return thumbnailResult; // Return the skipped status
+        }
         throw new Error('Thumbnail generation failed');
       }
       
