@@ -1537,6 +1537,8 @@ app.post('/api/sessions/:sessionId/files/:folderType/upload-direct', isAuthentic
 app.get('/api/sessions/:sessionId/files/:folderType', isAuthenticated, async (req, res) => {
     try {
         const { sessionId, folderType } = req.params;
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
         
         if (!['gallery', 'raw'].includes(folderType)) {
             return res.status(400).json({ error: 'Invalid folder type' });
@@ -1546,6 +1548,16 @@ app.get('/api/sessions/:sessionId/files/:folderType', isAuthenticated, async (re
         let client;
         try {
             client = await pool.connect();
+            
+            // First verify session belongs to user
+            const sessionCheck = await client.query(
+                'SELECT user_id FROM photography_sessions WHERE id = $1',
+                [sessionId]
+            );
+            
+            if (sessionCheck.rows.length === 0 || sessionCheck.rows[0].user_id !== userId) {
+                return res.status(403).json({ error: 'Access denied' });
+            }
             const result = await client.query(`
                 SELECT * FROM session_files 
                 WHERE session_id = $1 AND folder_type = $2
@@ -1576,18 +1588,31 @@ app.get('/api/sessions/:sessionId/files/:folderType', isAuthenticated, async (re
 });
 
 // Download session file from R2
-app.get('/api/sessions/:sessionId/files/:folderType/download/:fileName', async (req, res) => {
+app.get('/api/sessions/:sessionId/files/:folderType/download/:fileName', isAuthenticated, async (req, res) => {
     try {
         const { sessionId, folderType, fileName } = req.params;
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
         
         if (!['gallery', 'raw'].includes(folderType)) {
             return res.status(400).json({ error: 'Invalid folder type' });
         }
         
-        // Get file info from database
+        // First verify session belongs to user
         let client;
         try {
             client = await pool.connect();
+            
+            // Check session ownership
+            const sessionCheck = await client.query(
+                'SELECT user_id FROM photography_sessions WHERE id = $1',
+                [sessionId]
+            );
+            
+            if (sessionCheck.rows.length === 0 || sessionCheck.rows[0].user_id !== userId) {
+                return res.status(403).json({ error: 'Access denied' });
+            }
+            
             const result = await client.query(`
                 SELECT * FROM session_files 
                 WHERE session_id = $1 AND folder_type = $2 AND filename = $3
@@ -1629,11 +1654,23 @@ app.get('/api/sessions/:sessionId/files/:folderType/download/:fileName', async (
 app.get('/api/sessions/:sessionId/storage', isAuthenticated, async (req, res) => {
     try {
         const { sessionId } = req.params;
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
         
         // Get files from database
         let client;
         try {
             client = await pool.connect();
+            
+            // First verify session belongs to user
+            const sessionCheck = await client.query(
+                'SELECT user_id FROM photography_sessions WHERE id = $1',
+                [sessionId]
+            );
+            
+            if (sessionCheck.rows.length === 0 || sessionCheck.rows[0].user_id !== userId) {
+                return res.status(403).json({ error: 'Access denied' });
+            }
             
             // Get gallery files
             const galleryResult = await client.query(`
@@ -1738,23 +1775,29 @@ function formatBytes(bytes) {
 }
 
 // Get thumbnail for session file (generates thumbnails on-the-fly)
-app.get('/api/sessions/:sessionId/files/:folderType/thumbnail/:fileName', async (req, res) => {
+app.get('/api/sessions/:sessionId/files/:folderType/thumbnail/:fileName', isAuthenticated, async (req, res) => {
     try {
         const { sessionId, folderType, fileName } = req.params;
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
         
         if (!['gallery', 'raw'].includes(folderType)) {
             return res.status(400).json({ error: 'Invalid folder type' });
         }
         
-        // First check if user is authenticated
-        const userId = req.session?.userId;
-        if (!userId) {
-            return res.status(401).json({ error: 'Authentication required' });
-        }
-        
-        // Query database to find the file
+        // Query database to find the file and verify ownership
         const dbClient = await pool.connect();
         try {
+            // First verify session belongs to user
+            const sessionCheck = await dbClient.query(
+                'SELECT user_id FROM photography_sessions WHERE id = $1',
+                [sessionId]
+            );
+            
+            if (sessionCheck.rows.length === 0 || sessionCheck.rows[0].user_id !== userId) {
+                return res.status(403).json({ error: 'Access denied' });
+            }
+            
             const fileQuery = `
                 SELECT r2_key, file_size_bytes
                 FROM session_files
@@ -3074,7 +3117,7 @@ async function getSessionById(id, userId) {
     }
 }
 
-async function updateSession(id, updates) {
+async function updateSession(id, updates, userId) {
     try {
         const setClause = [];
         const values = [];
@@ -3125,10 +3168,14 @@ async function updateSession(id, updates) {
         }
         values.push(id);
 
+        // Add userId to ensure only the owner can update
+        values.push(userId);
+        const userIdParam = paramCount + 1;
+        
         const result = await pool.query(`
             UPDATE photography_sessions 
             SET ${setClause.join(', ')} 
-            WHERE id = $${paramCount}
+            WHERE id = $${paramCount} AND user_id = $${userIdParam}
             RETURNING *
         `, values);
 
@@ -3489,9 +3536,11 @@ app.post('/api/sessions', isAuthenticated, requireSubscription, async (req, res)
 // Update session
 app.put('/api/sessions/:id', isAuthenticated, async (req, res) => {
     const sessionId = req.params.id;
+    const normalizedUser = normalizeUserForLance(req.user);
+    const userId = normalizedUser.uid;
 
     try {
-        const updatedSession = await updateSession(sessionId, req.body);
+        const updatedSession = await updateSession(sessionId, req.body, userId);
 
         if (!updatedSession) {
             return res.status(404).json({ error: 'Session not found' });
