@@ -303,6 +303,8 @@ class SubscriptionAccessGuard {
 
 // Initialize subscription guard IMMEDIATELY - don't wait for DOM
 (function() {
+    console.log('🔐 Subscription guard initializing...');
+    
     // Hide the app immediately until subscription is verified
     const style = document.createElement('style');
     style.id = 'subscription-block';
@@ -312,33 +314,45 @@ class SubscriptionAccessGuard {
             opacity: 0 !important;
         }
     `;
-    document.head.appendChild(style);
+    if (document.head) {
+        document.head.appendChild(style);
+    } else {
+        document.documentElement.appendChild(style);
+    }
     
-    // Check subscription as soon as possible
+    // Create guard instance
     window.subscriptionGuard = new SubscriptionAccessGuard();
     
-    // Enhanced init that blocks immediately
-    window.subscriptionGuard.initImmediate = async function() {
+    // Run subscription check immediately
+    async function checkSubscriptionNow() {
+        console.log('🔐 Running subscription check...');
         try {
             // Check if we're on a protected page
             const protectedPages = ['/', '/index.html'];
             const currentPath = window.location.pathname;
             
+            console.log('🔐 Current path:', currentPath);
+            
             if (!protectedPages.includes(currentPath)) {
-                // Not a protected page, show it
-                document.getElementById('subscription-block').remove();
+                console.log('🔐 Not a protected page, allowing access');
+                const blockStyle = document.getElementById('subscription-block');
+                if (blockStyle) blockStyle.remove();
                 document.body.style.display = '';
                 document.body.style.opacity = '';
                 return;
             }
             
+            console.log('🔐 Protected page detected, checking authentication...');
+            
             // Check authentication first
             const authResponse = await fetch('/api/check-auth');
             if (!authResponse.ok) {
-                // Not authenticated, redirect to login
+                console.log('🔐 Not authenticated, redirecting to login');
                 window.location.href = '/auth.html';
                 return;
             }
+            
+            console.log('🔐 User authenticated, checking admin status...');
             
             // Admin whitelist bypass
             const whitelistedEmails = [
@@ -351,48 +365,58 @@ class SubscriptionAccessGuard {
             const userResponse = await fetch('/api/current-user');
             if (userResponse.ok) {
                 const userData = await userResponse.json();
+                console.log('🔐 User email:', userData.email);
                 if (userData.email && whitelistedEmails.includes(userData.email)) {
                     console.log('✅ Admin account detected - bypassing subscription check');
-                    document.getElementById('subscription-block').remove();
+                    const blockStyle = document.getElementById('subscription-block');
+                    if (blockStyle) blockStyle.remove();
                     document.body.style.display = '';
                     document.body.style.opacity = '';
                     return;
                 }
             }
             
+            console.log('🔐 Not admin, checking subscription status...');
+            
             // Check subscription status
             const subResponse = await fetch('/api/subscription-status');
             const data = await subResponse.json();
             
+            console.log('🔐 Subscription data:', data.status);
+            
             if (!data.status || !data.status.hasProfessionalPlan || data.status.professionalStatus !== 'active') {
                 // No active subscription - redirect immediately
                 console.log('🔒 No active subscription detected - blocking access');
+                console.log('🔒 Redirecting to subscription checkout...');
                 window.location.href = '/subscription-checkout.html?message=subscription_required';
                 return;
             }
             
             // User has subscription - show the app
             console.log('✅ Subscription verified - allowing access');
-            document.getElementById('subscription-block').remove();
+            const blockStyle = document.getElementById('subscription-block');
+            if (blockStyle) blockStyle.remove();
             document.body.style.display = '';
             document.body.style.opacity = '';
             
         } catch (error) {
-            console.error('Subscription check error:', error);
+            console.error('🔐 Subscription check error:', error);
             // On error, redirect to auth for safety
             window.location.href = '/auth.html';
         }
-    };
+    }
     
-    // Run immediately when script loads
+    // Run the check immediately - don't wait for anything
+    console.log('🔐 Starting immediate subscription check');
+    checkSubscriptionNow();
+    
+    // Also run when DOM is ready (backup)
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
-            window.subscriptionGuard.initImmediate();
             window.subscriptionGuard.init();
         });
     } else {
-        window.subscriptionGuard.initImmediate();
-        window.subscriptionGuard.init();
+        setTimeout(() => window.subscriptionGuard.init(), 100);
     }
 })();
 
