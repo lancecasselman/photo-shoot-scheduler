@@ -190,7 +190,119 @@ class UnifiedSubscriptionManager {
     }
 
     /**
-     * Add Storage Add-on (Stripe)
+     * Create Professional Plan Subscription via Stripe Checkout Session
+     */
+    async createProfessionalPlanCheckout(userId, email, name) {
+        try {
+            // Create or get Stripe customer
+            let customer = await this.getOrCreateStripeCustomer(userId, email);
+            
+            // Create checkout session for Professional Plan
+            const session = await stripe.checkout.sessions.create({
+                customer: customer.id,
+                customer_email: email,
+                payment_method_types: ['card'],
+                mode: 'subscription',
+                line_items: [{
+                    price_data: {
+                        currency: 'usd',
+                        product_data: {
+                            name: 'Professional Photography Plan',
+                            description: `Professional plan with ${this.BASE_STORAGE_GB}GB storage`,
+                            metadata: {
+                                plan_type: 'professional',
+                                storage_gb: this.BASE_STORAGE_GB.toString()
+                            }
+                        },
+                        unit_amount: this.PROFESSIONAL_PLAN_PRICE * 100,
+                        recurring: { interval: 'month' }
+                    },
+                    quantity: 1
+                }],
+                metadata: {
+                    userId: userId,
+                    type: 'subscription',
+                    planType: 'professional',
+                    storageGb: this.BASE_STORAGE_GB.toString()
+                },
+                success_url: `${process.env.FRONTEND_URL || 'http://localhost:5000'}/subscription-success?session_id={CHECKOUT_SESSION_ID}`,
+                cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:5000'}/subscription-checkout.html`,
+                allow_promotion_codes: true,
+                billing_address_collection: 'required'
+            });
+
+            console.log(`✅ Professional plan checkout session created: ${session.id}`);
+            return {
+                success: true,
+                clientSecret: session.id,
+                sessionUrl: session.url
+            };
+
+        } catch (error) {
+            console.error('❌ Error creating professional plan checkout:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * Add Storage Add-on via Stripe Checkout Session
+     */
+    async addStorageAddonCheckout(userId, tbCount) {
+        try {
+            // Get user's Stripe customer
+            const customer = await this.getStripeCustomerByUserId(userId);
+            if (!customer) {
+                throw new Error('User must have Professional plan first');
+            }
+
+            // Create checkout session for Storage Add-on
+            const totalPrice = this.STORAGE_ADD_ON_PRICE * tbCount;
+            const session = await stripe.checkout.sessions.create({
+                customer: customer.id,
+                payment_method_types: ['card'],
+                mode: 'subscription',
+                line_items: [{
+                    price_data: {
+                        currency: 'usd',
+                        product_data: {
+                            name: `Storage Add-on - ${tbCount}TB`,
+                            description: `${tbCount}TB additional cloud storage`,
+                            metadata: {
+                                plan_type: 'storage_addon',
+                                storage_tb: tbCount.toString()
+                            }
+                        },
+                        unit_amount: this.STORAGE_ADD_ON_PRICE * 100,
+                        recurring: { interval: 'month' }
+                    },
+                    quantity: tbCount
+                }],
+                metadata: {
+                    userId: userId,
+                    type: 'subscription',
+                    planType: 'storage',
+                    tbCount: tbCount.toString()
+                },
+                success_url: `${process.env.FRONTEND_URL || 'http://localhost:5000'}/subscription-success?session_id={CHECKOUT_SESSION_ID}`,
+                cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:5000'}/subscription-checkout.html`,
+                allow_promotion_codes: true
+            });
+
+            console.log(`✅ Storage add-on checkout session created: ${session.id} for ${tbCount}TB`);
+            return {
+                success: true,
+                clientSecret: session.id,
+                sessionUrl: session.url
+            };
+
+        } catch (error) {
+            console.error('❌ Error creating storage add-on checkout:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * Add Storage Add-on (Stripe) - Direct subscription creation
      */
     async addStorageAddonStripe(userId, tbCount) {
         try {

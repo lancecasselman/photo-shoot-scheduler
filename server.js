@@ -4853,6 +4853,62 @@ app.post('/api/stripe/webhook', express.raw({type: 'application/json'}), async (
                 console.log(` Added ${creditsAmount} AI credits to user ${userId} via Stripe payment (${session.id})`);
             }
             
+            // Check if this is a subscription creation (Professional Plan or Storage Add-on)
+            if (session.metadata && session.metadata.type === 'subscription') {
+                const userId = session.metadata.userId;
+                const planType = session.metadata.planType; // 'professional' or 'storage'
+                
+                console.log(`🔔 Processing subscription creation for user ${userId}, plan: ${planType}`);
+                
+                if (planType === 'professional') {
+                    // Update user with Professional Plan
+                    const expires = new Date();
+                    expires.setMonth(expires.getMonth() + 1); // Monthly subscription
+                    
+                    await pool.query(`
+                        UPDATE users 
+                        SET subscription_status = 'active',
+                            subscription_plan = 'professional',
+                            subscription_expires_at = $1,
+                            stripe_subscription_id = $2,
+                            updated_at = NOW()
+                        WHERE id = $3
+                    `, [expires, session.subscription, userId]);
+                    
+                    // Add to subscription summary
+                    await pool.query(`
+                        INSERT INTO user_subscription_summary (user_id, has_professional_plan, professional_platform, professional_status, base_storage_gb, total_storage_gb, updated_at)
+                        VALUES ($1, true, 'stripe', 'active', 100, 100, NOW())
+                        ON CONFLICT (user_id) 
+                        DO UPDATE SET 
+                            has_professional_plan = true,
+                            professional_platform = 'stripe',
+                            professional_status = 'active',
+                            base_storage_gb = 100,
+                            total_storage_gb = GREATEST(user_subscription_summary.total_storage_gb, 100),
+                            updated_at = NOW()
+                    `, [userId]);
+                    
+                    console.log(`✅ Professional Plan activated for user ${userId}`);
+                } else if (planType === 'storage') {
+                    const tbCount = parseInt(session.metadata.tbCount || '1');
+                    const storageGb = tbCount * 1024; // Convert TB to GB
+                    
+                    // Add storage add-on
+                    await pool.query(`
+                        INSERT INTO user_subscription_summary (user_id, total_storage_tb, total_storage_gb, updated_at)
+                        VALUES ($1, $2, $3, NOW())
+                        ON CONFLICT (user_id) 
+                        DO UPDATE SET 
+                            total_storage_tb = user_subscription_summary.total_storage_tb + $2,
+                            total_storage_gb = user_subscription_summary.total_storage_gb + $3,
+                            updated_at = NOW()
+                    `, [userId, tbCount, storageGb]);
+                    
+                    console.log(`✅ Added ${tbCount}TB storage for user ${userId}`);
+                }
+            }
+            
             // Check if this is a photography session payment (deposits use checkout sessions)
             if (session.metadata && session.metadata.paymentId) {
                 console.log(' Processing photography session checkout session payment');

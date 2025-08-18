@@ -20,22 +20,63 @@ function createSubscriptionRoutes(pool) {
         }
     });
 
-    // Create Professional Plan (Stripe) - Web only
+    // Create Professional Plan (Stripe) - Web only (handles both existing users and new account creation)
     router.post('/professional/stripe', async (req, res) => {
         try {
-            // Check authentication
-            if (!req.session?.user?.uid) {
-                console.log('❌ No authenticated user found in session:', req.session);
-                return res.status(401).json({ success: false, error: 'Authentication required' });
+            const { email, name, createAccount = false } = req.body;
+            let userId;
+
+            // If creating account with subscription, handle account creation
+            if (createAccount && email && name) {
+                console.log('🔔 Creating new account with Professional Plan subscription');
+                
+                // Create user account first
+                const firebase = require('firebase-admin');
+                
+                try {
+                    // Create Firebase user
+                    const userRecord = await firebase.auth().createUser({
+                        email: email,
+                        displayName: name,
+                        emailVerified: true
+                    });
+                    
+                    userId = userRecord.uid;
+                    
+                    // Create user in database
+                    const client = await pool.connect();
+                    try {
+                        await client.query(`
+                            INSERT INTO users (id, email, username, display_name, created_at, subscription_status)
+                            VALUES ($1, $2, $3, $4, NOW(), 'pending')
+                            ON CONFLICT (id) DO NOTHING
+                        `, [userId, email, email.split('@')[0], name]);
+                    } finally {
+                        client.release();
+                    }
+                    
+                    console.log(`✅ Created user account ${userId} for subscription`);
+                } catch (createError) {
+                    console.error('❌ Error creating user account:', createError);
+                    return res.status(400).json({ 
+                        success: false, 
+                        error: 'Failed to create account: ' + createError.message 
+                    });
+                }
+            } else {
+                // Check authentication for existing users
+                if (!req.session?.user?.uid) {
+                    console.log('❌ No authenticated user found in session:', req.session);
+                    return res.status(401).json({ success: false, error: 'Authentication required' });
+                }
+                userId = req.session.user.uid;
             }
 
-            const { email, paymentMethodId } = req.body;
-            const userId = req.session.user.uid;
-
-            const result = await subscriptionManager.createProfessionalPlanStripe(
+            // Create subscription with Stripe checkout session
+            const result = await subscriptionManager.createProfessionalPlanCheckout(
                 userId, 
-                email || req.session.user.email, 
-                paymentMethodId
+                email || req.session?.user?.email, 
+                name || req.session?.user?.displayName
             );
 
             res.json(result);
@@ -63,7 +104,7 @@ function createSubscriptionRoutes(pool) {
                 });
             }
 
-            const result = await subscriptionManager.addStorageAddonStripe(userId, parseInt(tbCount));
+            const result = await subscriptionManager.addStorageAddonCheckout(userId, parseInt(tbCount));
             res.json(result);
         } catch (error) {
             console.error('Error adding storage add-on:', error);

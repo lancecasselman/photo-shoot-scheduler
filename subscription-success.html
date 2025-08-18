@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription Successful - Photography Management</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
+
+        .success-container {
+            background: white;
+            border-radius: 20px;
+            padding: 60px 40px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: #4CAF50;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            color: white;
+            font-size: 40px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 32px;
+            font-weight: 600;
+        }
+
+        .description {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        .plan-info {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+
+        .plan-info h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .plan-info ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .plan-info li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+        }
+
+        .plan-info li:last-child {
+            border-bottom: none;
+        }
+
+        .plan-info li::before {
+            content: "✓";
+            color: #4CAF50;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .continue-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin: 10px;
+        }
+
+        .continue-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .loading {
+            display: none;
+            margin: 20px 0;
+        }
+
+        .loading .spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="success-container">
+        <div class="success-icon">✓</div>
+        
+        <h1>Welcome to Professional!</h1>
+        
+        <div class="description">
+            Your subscription has been successfully activated. You now have access to all Professional features and 100GB of cloud storage.
+        </div>
+
+        <div class="plan-info">
+            <h3>Your Professional Plan includes:</h3>
+            <ul>
+                <li>100GB Cloud Storage</li>
+                <li>Unlimited Photo Sessions</li>
+                <li>Client Gallery Management</li>
+                <li>Invoice & Contract System</li>
+                <li>Booking & Scheduling</li>
+                <li>Mobile App Access</li>
+                <li>Payment Processing</li>
+                <li>Custom Website Builder</li>
+                <li>24/7 Premium Support</li>
+            </ul>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Setting up your account...</p>
+        </div>
+
+        <button class="continue-btn" onclick="continueToApp()">
+            Continue to Your Dashboard
+        </button>
+        
+        <button class="continue-btn" onclick="startOnboarding()" style="background: #28a745;">
+            Complete Setup Guide
+        </button>
+    </div>
+
+    <script>
+        // Check if this is coming from a Stripe checkout session
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('session_id');
+
+        if (sessionId) {
+            // Verify the session and update user account
+            verifySubscription(sessionId);
+        }
+
+        async function verifySubscription(sessionId) {
+            try {
+                console.log('Verifying subscription session:', sessionId);
+                
+                // The webhook should have already processed the subscription
+                // This is just for verification and user experience
+                const response = await fetch('/api/subscriptions/verify-session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId })
+                });
+
+                if (response.ok) {
+                    console.log('Subscription verified successfully');
+                } else {
+                    console.log('Subscription verification pending - webhook will handle');
+                }
+            } catch (error) {
+                console.error('Error verifying subscription:', error);
+                // Don't show error to user as webhook will handle the subscription
+            }
+        }
+
+        function continueToApp() {
+            showLoading();
+            window.location.href = '/';
+        }
+
+        function startOnboarding() {
+            showLoading();
+            window.location.href = '/onboarding.html';
+        }
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.querySelectorAll('.continue-btn').forEach(btn => btn.style.display = 'none');
+        }
+
+        // Auto-redirect after 10 seconds if user doesn't click
+        setTimeout(() => {
+            if (window.location.pathname === '/subscription-success.html') {
+                continueToApp();
+            }
+        }, 10000);
+    </script>
+</body>
+</html>
