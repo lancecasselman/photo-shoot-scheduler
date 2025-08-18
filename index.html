@@ -30,6 +30,16 @@
     <script src="/ios-auth-bridge.js"></script>
     
     <script>
+        // Clear logout flags on homepage load to prevent stuck states
+        if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
+            // Only clear if not actively logging out
+            if (!sessionStorage.getItem('loggingOut')) {
+                localStorage.removeItem('manualLogout');
+                sessionStorage.removeItem('fromAuth');
+                console.log('Homepage loaded - cleared stale logout flags');
+            }
+        }
+        
         //  TOGGLEABLE AUTH GUARD SYSTEM
         const DEV_MODE = false; // 👉 Authentication enabled - production mode
         

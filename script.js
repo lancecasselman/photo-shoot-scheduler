@@ -22,9 +22,11 @@ async function checkAuth() {
     }
     
     // Clear any stale manual logout flag at start of auth check
-    if (localStorage.getItem('manualLogout') === 'true') {
+    // If user is on homepage and not actively logging out, clear the manual logout flag
+    if (localStorage.getItem('manualLogout') === 'true' && !sessionStorage.getItem('loggingOut')) {
         console.log('Clearing stale manual logout flag during auth check');
         localStorage.removeItem('manualLogout');
+        sessionStorage.removeItem('loggingOut');
     }
 
     // Check if we just came from auth page
