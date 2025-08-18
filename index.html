@@ -30,7 +30,7 @@
         
         // Dev mode banner handled in main DOM ready event
         
-        // Console error suppression for production
+        // Console error suppression and global error handling for production
         (function() {
             const originalError = console.error;
             const originalWarn = console.warn;
@@ -41,7 +41,8 @@
                 'Unrecognized feature:',
                 'Allow attribute will take precedence',
                 'Error while parsing the \'sandbox\' attribute',
-                'Failed to load resource: the server responded with a status of 404'
+                'Failed to load resource: the server responded with a status of 404',
+                'Unable to verify that the app domain is authorized'
             ];
             
             console.error = function(...args) {
@@ -60,14 +61,27 @@
                 originalWarn.apply(console, args);
             };
             
-            // Prevent gravatar 404 errors by intercepting image load failures
-            document.addEventListener('error', function(e) {
-                if (e.target.tagName === 'IMG' && e.target.src.includes('gravatar.com')) {
-                    e.target.style.display = 'none';
-                    e.preventDefault();
-                    e.stopPropagation();
+            // Global unhandled promise rejection handler
+            window.addEventListener('unhandledrejection', function(event) {
+                console.error('Unhandled promise rejection:', event.reason);
+                event.preventDefault(); // Prevent default browser behavior
+            });
+            
+            // Global error handler
+            window.addEventListener('error', function(event) {
+                if (event.target.tagName === 'IMG' && event.target.src.includes('gravatar.com')) {
+                    event.target.style.display = 'none';
+                    event.preventDefault();
+                    event.stopPropagation();
+                    return;
                 }
-            }, true);
+                
+                // Handle other script errors
+                if (event.error) {
+                    console.error('Global error caught:', event.error);
+                }
+            });
+            
         })();
     </script>
     

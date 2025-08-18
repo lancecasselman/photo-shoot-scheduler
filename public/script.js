@@ -25,53 +25,55 @@ async function checkAuth() {
     
     try {
         console.log(' AUTH CHECK: Checking authentication with backend...');
-        console.log(' AUTH CHECK: About to call /api/auth/user');
+        
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        
         const response = await fetch('/api/auth/user', {
-            credentials: 'include', // Ensure cookies are sent
+            credentials: 'include',
             headers: {
-                'Cache-Control': 'no-cache' // Prevent caching of auth responses
+                'Cache-Control': 'no-cache'
+            },
+            signal: controller.signal
+        }).catch(error => {
+            clearTimeout(timeoutId);
+            if (error.name === 'AbortError') {
+                console.error('Auth check timed out');
+                throw new Error('Authentication check timed out');
             }
+            throw error;
         });
         
+        clearTimeout(timeoutId);
         console.log(' AUTH CHECK: Auth response status:', response.status, 'ok:', response.ok);
         
         if (response.ok) {
             const data = await response.json();
-            currentUser = data.user;
-            updateUserUI();
-            console.log('User authenticated successfully:', currentUser.email);
-            return true;
+            if (data && data.user) {
+                currentUser = data.user;
+                updateUserUI();
+                console.log('User authenticated successfully:', currentUser.email);
+                return true;
+            } else {
+                console.log('Auth check failed - no user data in response');
+                return false;
+            }
         } else {
             console.log('Auth check failed - response not ok:', response.status);
-            
-            // COMPLETELY disable redirects if coming from auth page
-            if (localStorage.getItem('manualLogout') !== 'true' && !fromAuth && !sessionStorage.getItem('fromAuth') && !document.referrer.includes('auth.html')) {
-                console.log(' AUTH CHECK: Scheduling redirect to auth page...');
-                setTimeout(() => {
-                    redirectToAuth();
-                }, 2000); // Even longer delay
-            } else {
-                console.log(' AUTH CHECK: Skipping redirect - from auth page, manual logout, or has fromAuth flag');
-                console.log(' AUTH CHECK: fromAuth:', fromAuth);
-                console.log(' AUTH CHECK: sessionStorage fromAuth:', sessionStorage.getItem('fromAuth'));
-                console.log(' AUTH CHECK: referrer:', document.referrer);
-            }
             return false;
         }
     } catch (error) {
         console.error('Auth check failed:', error);
         
-        // COMPLETELY disable redirects if coming from auth page
-        if (localStorage.getItem('manualLogout') !== 'true' && !fromAuth && !sessionStorage.getItem('fromAuth') && !document.referrer.includes('auth.html')) {
-            console.log(' AUTH CHECK: Scheduling redirect to auth page due to error...');
-            setTimeout(() => {
-                redirectToAuth();
-            }, 2000); // Even longer delay
-        } else {
-            console.log(' AUTH CHECK: Skipping redirect due to error - from auth page, manual logout, or has fromAuth flag');
-            console.log(' AUTH CHECK: fromAuth:', fromAuth);
-            console.log(' AUTH CHECK: sessionStorage fromAuth:', sessionStorage.getItem('fromAuth'));
-            console.log(' AUTH CHECK: referrer:', document.referrer);
+        // Only redirect on network errors if not coming from auth page
+        if (!fromAuth && !sessionStorage.getItem('fromAuth') && !document.referrer.includes('auth.html')) {
+            // Only redirect on certain error types
+            if (error.message && (error.message.includes('Failed to fetch') || error.message.includes('NetworkError'))) {
+                console.log(' AUTH CHECK: Network error detected, scheduling redirect...');
+                setTimeout(() => {
+                    redirectToAuth();
+                }, 3000);
+            }
         }
         return false;
     }
@@ -145,9 +147,34 @@ function redirectToAuth() {
 // Show message to user
 function showMessage(message, type = 'info') {
     try {
+        // First check if DOM is ready
+        if (document.readyState === 'loading') {
+            console.log(`Message (${type}): ${message}`);
+            return;
+        }
+
         const messageContainer = document.getElementById('messageContainer');
         if (!messageContainer) {
-            // Fallback to console if messageContainer doesn't exist
+            // Try to create a temporary message container if it doesn't exist
+            const tempContainer = document.createElement('div');
+            tempContainer.id = 'tempMessageContainer';
+            tempContainer.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 10000;
+                max-width: 300px;
+            `;
+            document.body?.appendChild(tempContainer);
+            
+            if (!tempContainer) {
+                console.log(`${type}: ${message}`);
+                return;
+            }
+        }
+
+        const container = messageContainer || document.getElementById('tempMessageContainer');
+        if (!container) {
             console.log(`${type}: ${message}`);
             return;
         }
@@ -155,18 +182,27 @@ function showMessage(message, type = 'info') {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message message-${type}`;
         messageDiv.textContent = message;
+        messageDiv.style.cssText = `
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            background: ${type === 'error' ? '#ff6b6b' : type === 'success' ? '#51cf66' : '#339af0'};
+            color: white;
+            font-size: 14px;
+        `;
 
-        // Safe DOM manipulation with null checks
-        if (messageContainer && messageDiv) {
-            messageContainer.appendChild(messageDiv);
+        container.appendChild(messageDiv);
 
-            // Auto-remove after 5 seconds
-            setTimeout(() => {
-                if (messageDiv && messageDiv.parentNode && messageDiv.parentNode.contains(messageDiv)) {
-                    messageDiv.remove();
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            try {
+                if (messageDiv && messageDiv.parentNode) {
+                    messageDiv.parentNode.removeChild(messageDiv);
                 }
-            }, 5000);
-        }
+            } catch (removeError) {
+                console.error('Error removing message:', removeError);
+            }
+        }, 5000);
     } catch (error) {
         // Ultimate fallback to prevent crashes
         console.log(`Message (${type}): ${message}`);
