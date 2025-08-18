@@ -44,16 +44,16 @@ class SubscriptionAccessGuard {
     }
 
     guardMainAppAccess() {
-        // Skip subscription checks on landing page and auth pages
+        // Skip subscription checks on landing page and auth pages only
         const currentPath = window.location.pathname;
-        const skipPages = ['/', '/index.html', '/auth.html', '/auth', '/login'];
+        const skipPages = ['/', '/auth.html', '/auth', '/login'];
         
         if (skipPages.includes(currentPath)) {
             console.log('Skipping subscription check for:', currentPath);
             return;
         }
 
-        // Only enforce subscription on authenticated app pages
+        // Enforce subscription on all app pages including /index.html
         this.enforceSubscriptionAccess();
     }
 

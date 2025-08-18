@@ -8,8 +8,8 @@ let currentUser = null;
 
 // Firebase Authentication functions
 async function checkAuth() {
-    // Skip authentication check entirely for landing page
-    if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
+    // Skip authentication check entirely for landing page (root only)
+    if (window.location.pathname === '/') {
         console.log('Landing page - skipping authentication check');
         return false; // Don't authenticate on landing page
     }
@@ -410,8 +410,8 @@ async function createAPISession(sessionData) {
 
 // Load sessions from API
 async function loadSessions() {
-    // Skip session loading on landing page
-    if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
+    // Skip session loading on landing page only
+    if (window.location.pathname === '/') {
         console.log('Landing page - skipping session loading');
         return;
     }
