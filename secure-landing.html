@@ -343,54 +343,55 @@
             line-height: 1.5;
         }
 
-        /* Testimonials Section */
-        .testimonials-section {
+        /* About Section */
+        .about-section {
             padding: 100px 20px;
             background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
         }
 
-        .testimonials-container {
+        .about-container {
             max-width: 1200px;
             margin: 0 auto;
         }
 
-        .testimonials-grid {
+        .about-content {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 2rem;
+            grid-template-columns: 2fr 1fr;
+            gap: 3rem;
             margin-top: 3rem;
+            align-items: start;
         }
 
-        .testimonial-card {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(212, 175, 55, 0.3);
-            border-radius: 15px;
-            padding: 2rem;
-            text-align: center;
-        }
-
-        .testimonial-stars {
-            color: var(--primary-gold);
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .testimonial-text {
+        .about-text p {
             color: var(--text-light);
-            line-height: 1.6;
+            line-height: 1.7;
+            font-size: 1.1rem;
             margin-bottom: 1.5rem;
-            font-style: italic;
         }
 
-        .testimonial-author strong {
+        .about-features {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .about-feature {
+            background: rgba(255,255,255,0.03);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+
+        .about-feature h3 {
             color: var(--primary-gold);
-            display: block;
-            margin-bottom: 0.3rem;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
         }
 
-        .testimonial-author span {
+        .about-feature p {
             color: var(--text-muted);
-            font-size: 0.9rem;
+            font-size: 0.95rem;
+            line-height: 1.5;
         }
 
         /* Final CTA Section */
@@ -417,27 +418,30 @@
             margin-bottom: 3rem;
         }
 
-        .cta-stats {
+        .cta-benefits {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 2rem;
             margin-bottom: 3rem;
         }
 
-        .stat-item {
+        .benefit-highlight {
             text-align: center;
+            background: rgba(255,255,255,0.03);
+            padding: 2rem;
+            border-radius: 15px;
+            border: 1px solid rgba(212, 175, 55, 0.2);
         }
 
-        .stat-number {
-            font-size: 3rem;
-            font-weight: 900;
+        .benefit-highlight h3 {
             color: var(--primary-gold);
-            margin-bottom: 0.5rem;
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
         }
 
-        .stat-label {
+        .benefit-highlight p {
             color: var(--text-muted);
-            font-size: 0.9rem;
+            line-height: 1.5;
         }
 
         .btn-large {
@@ -592,21 +596,22 @@
                 font-size: 2.5rem;
             }
 
-            .cta-stats {
+            .cta-benefits {
                 grid-template-columns: 1fr;
                 gap: 1rem;
             }
 
-            .stat-number {
-                font-size: 2rem;
+            .about-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
             }
 
             .final-cta-content h2 {
                 font-size: 2rem;
             }
 
-            .testimonials-grid {
-                grid-template-columns: 1fr;
+            .about-features {
+                gap: 1rem;
             }
 
             .footer-grid {
@@ -798,33 +803,27 @@
         </div>
     </section>
 
-    <!-- Testimonials Section -->
-    <section class="testimonials-section">
-        <div class="testimonials-container">
-            <h2 class="section-title">Loved by Professional Photographers</h2>
-            <div class="testimonials-grid">
-                <div class="testimonial-card">
-                    <div class="testimonial-stars">★★★★★</div>
-                    <p class="testimonial-text">"This platform transformed my business completely. I went from spending hours on admin work to focusing on what I love - photography. My revenue increased by 50% in just 3 months."</p>
-                    <div class="testimonial-author">
-                        <strong>Sarah Johnson</strong>
-                        <span>Portrait Photographer, Austin TX</span>
-                    </div>
+    <!-- About Section -->
+    <section class="about-section">
+        <div class="about-container">
+            <h2 class="section-title">Built by Photographers, for Photographers</h2>
+            <div class="about-content">
+                <div class="about-text">
+                    <p>As working photographers ourselves, we understand the daily challenges of running a photography business. The endless hours spent on administrative tasks, client management, and trying to keep everything organized while still finding time to actually create art.</p>
+                    <p>That's why we built Photography Management System - to give photographers the tools they need to streamline their business operations and focus on what they do best: capturing beautiful moments.</p>
                 </div>
-                <div class="testimonial-card">
-                    <div class="testimonial-stars">★★★★★</div>
-                    <p class="testimonial-text">"The client gallery system is absolutely professional. My clients love how easy it is to view and download their photos. The automated invoicing saved me 15+ hours per week."</p>
-                    <div class="testimonial-author">
-                        <strong>Mike Chen</strong>
-                        <span>Wedding Photographer, San Francisco</span>
+                <div class="about-features">
+                    <div class="about-feature">
+                        <h3>🎯 Purpose-Built</h3>
+                        <p>Every feature designed specifically for photography workflows</p>
                     </div>
-                </div>
-                <div class="testimonial-card">
-                    <div class="testimonial-stars">★★★★★</div>
-                    <p class="testimonial-text">"The mobile app is a game-changer. I can upload photos directly from shoots and manage my business on the go. The community features helped me connect with amazing photographers."</p>
-                    <div class="testimonial-author">
-                        <strong>Lisa Rodriguez</strong>
-                        <span>Event Photographer, Miami FL</span>
+                    <div class="about-feature">
+                        <h3>🔒 Secure & Reliable</h3>
+                        <p>Your photos and client data protected with enterprise-grade security</p>
+                    </div>
+                    <div class="about-feature">
+                        <h3>📱 Always Accessible</h3>
+                        <p>Manage your business from anywhere with our mobile apps</p>
                     </div>
                 </div>
             </div>
@@ -834,24 +833,24 @@
     <!-- CTA Section -->
     <section class="final-cta-section">
         <div class="final-cta-content">
-            <h2>Ready to Transform Your Photography Business?</h2>
-            <p>Join thousands of professional photographers who have streamlined their workflow and increased their revenue with our platform.</p>
-            <div class="cta-stats">
-                <div class="stat-item">
-                    <div class="stat-number">2,500+</div>
-                    <div class="stat-label">Active Photographers</div>
+            <h2>Ready to Streamline Your Photography Business?</h2>
+            <p>Stop spending hours on admin work and start focusing on what you love - creating amazing photography. Our platform handles the business side so you can focus on the creative side.</p>
+            <div class="cta-benefits">
+                <div class="benefit-highlight">
+                    <h3>⏰ Save Time</h3>
+                    <p>Automate invoicing, client communications, and gallery delivery</p>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-number">50,000+</div>
-                    <div class="stat-label">Sessions Managed</div>
+                <div class="benefit-highlight">
+                    <h3>📊 Stay Organized</h3>
+                    <p>Track sessions, expenses, and client details in one place</p>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-number">99.9%</div>
-                    <div class="stat-label">Uptime</div>
+                <div class="benefit-highlight">
+                    <h3>💼 Look Professional</h3>
+                    <p>Impress clients with professional galleries and contracts</p>
                 </div>
             </div>
-            <a href="/secure-login.html" class="btn btn-primary btn-large">Start Your Free Trial Today</a>
-            <p class="final-note">No credit card required • 14-day free trial • Cancel anytime</p>
+            <a href="/secure-login.html" class="btn btn-primary btn-large">Start Your Free Trial</a>
+            <p class="final-note">Try it free for 14 days • No credit card required • Cancel anytime</p>
         </div>
     </section>
 
@@ -920,7 +919,7 @@
 
         // Scroll animations
         const observeElements = () => {
-            const elements = document.querySelectorAll('.feature-card, .testimonial-card, .benefit-item');
+            const elements = document.querySelectorAll('.feature-card, .benefit-item, .about-feature, .benefit-highlight');
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
@@ -938,51 +937,11 @@
             });
         };
 
-        // Counter animation for stats
-        const animateCounters = () => {
-            const counters = document.querySelectorAll('.stat-number');
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const counter = entry.target;
-                        const text = counter.textContent;
-                        const number = parseInt(text.replace(/[^\d]/g, ''));
-                        const suffix = text.replace(/[\d,]/g, '');
-                        
-                        let start = 0;
-                        const increment = number / 100;
-                        const timer = setInterval(() => {
-                            start += increment;
-                            if (start >= number) {
-                                counter.textContent = text;
-                                clearInterval(timer);
-                            } else {
-                                const current = Math.floor(start);
-                                if (current >= 1000) {
-                                    counter.textContent = (current/1000).toFixed(1) + 'k' + suffix;
-                                } else {
-                                    counter.textContent = current.toLocaleString() + suffix;
-                                }
-                            }
-                        }, 20);
-                        
-                        observer.unobserve(counter);
-                    }
-                });
-            }, { threshold: 0.5 });
-            
-            counters.forEach(counter => observer.observe(counter));
-        };
-
         // Initialize animations when DOM is loaded
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                observeElements();
-                animateCounters();
-            });
+            document.addEventListener('DOMContentLoaded', observeElements);
         } else {
             observeElements();
-            animateCounters();
         }
     </script>
 </body>
