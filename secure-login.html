@@ -422,7 +422,12 @@
                         errorMessage = 'Please enter a valid email address.';
                     }
                     
-                    showError(errorMessage);
+                    showError(errorMessage + ' Redirecting to homepage in 3 seconds...');
+                    
+                    // Redirect to homepage after 3 seconds to allow retry/signup
+                    setTimeout(() => {
+                        window.location.href = '/secure-landing.html';
+                    }, 3000);
                 }
             });
         });
