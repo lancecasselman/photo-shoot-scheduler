@@ -32,8 +32,9 @@
         onAuthStateChanged(window.auth, async (user) => {
             if (user) {
                 console.log('User already authenticated:', user.email);
-                // Verify subscription before allowing access
-                await verifyAndRedirect(user);
+                // Don't auto-redirect - let them manually try to login again
+                showInfo(`Already signed in as ${user.email}. Click "Sign In" to continue or "Sign Out" to try a different account.`);
+                showSignOutButton();
             }
         });
 
@@ -78,9 +79,11 @@
                 // Check subscription
                 if (!subData.status || !subData.status.hasProfessionalPlan || subData.status.professionalStatus !== 'active') {
                     console.log('No active subscription');
-                    showError('Active subscription required. Redirecting to checkout...');
+                    // Sign out the user and redirect to homepage instead of subscription checkout
+                    await window.signOut(window.auth);
+                    showError('No active subscription found. Redirecting to homepage...');
                     setTimeout(() => {
-                        window.location.href = '/subscription-checkout.html?message=subscription_required';
+                        window.location.href = '/secure-landing.html?message=subscription_required';
                     }, 2000);
                     return;
                 }
@@ -348,6 +351,12 @@
         <div class="back-link">
             <a href="/secure-landing.html">← Back to Home</a>
         </div>
+
+        <div id="signOutSection" style="display: none; text-align: center; margin-top: 1rem;">
+            <button id="signOutBtn" class="btn" style="background: #dc3545; margin-top: 1rem;">
+                Sign Out Current User
+            </button>
+        </div>
     </div>
 
     <script>
@@ -471,6 +480,20 @@
             
             loading.classList.remove('show');
             submitBtn.disabled = false;
+        }
+
+        function showSignOutButton() {
+            document.getElementById('signOutSection').style.display = 'block';
+            document.getElementById('signOutBtn').addEventListener('click', async () => {
+                try {
+                    await window.signOut(window.auth);
+                    showSuccess('Signed out successfully. You can now sign in with a different account.');
+                    document.getElementById('signOutSection').style.display = 'none';
+                    hideMessage();
+                } catch (error) {
+                    showError('Error signing out: ' + error.message);
+                }
+            });
         }
     </script>
 </body>
