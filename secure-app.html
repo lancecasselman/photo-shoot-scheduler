@@ -88,6 +88,9 @@
         async function performSecurityCheck() {
             try {
                 console.log('🔐 SECURITY: Starting comprehensive verification...');
+                
+                // Reset counter for this check
+                securityChecksPassed = 0;
 
                 // CHECK 1: Firebase Authentication
                 const user = window.auth.currentUser;
@@ -130,11 +133,12 @@
                 }
 
                 // ALL CHECKS PASSED - UNLOCK APPLICATION
+                console.log(`🔐 SECURITY: Passed ${securityChecksPassed}/${requiredChecks} checks`);
                 if (securityChecksPassed === requiredChecks) {
                     console.log('🔓 SECURITY: All checks passed - unlocking application');
                     unlockApplication();
                 } else {
-                    throw new Error('Security verification incomplete');
+                    throw new Error(`Security verification incomplete: ${securityChecksPassed}/${requiredChecks} checks passed`);
                 }
 
             } catch (error) {
