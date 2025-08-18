@@ -770,6 +770,43 @@ class R2FileManager {
   }
 
   /**
+   * List objects in R2 bucket with a specific prefix
+   * Used by StorageSystem for calculating storage usage
+   */
+  async listObjects(prefix) {
+    try {
+      const { ListObjectsV2Command } = require('@aws-sdk/client-s3');
+      const listCommand = new ListObjectsV2Command({
+        Bucket: this.bucketName,
+        Prefix: prefix,
+        MaxKeys: 1000 // Get up to 1000 objects at a time
+      });
+
+      let allObjects = [];
+      let continuationToken = null;
+
+      do {
+        if (continuationToken) {
+          listCommand.input.ContinuationToken = continuationToken;
+        }
+
+        const response = await this.s3Client.send(listCommand);
+        
+        if (response.Contents) {
+          allObjects = allObjects.concat(response.Contents);
+        }
+        
+        continuationToken = response.NextContinuationToken;
+      } while (continuationToken);
+
+      return allObjects;
+    } catch (error) {
+      console.error(`Error listing objects with prefix ${prefix}:`, error);
+      return [];
+    }
+  }
+
+  /**
    * Get backup index for a session
    */
   async getSessionBackupIndex(userId, sessionId) {
