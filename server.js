@@ -608,7 +608,7 @@ const normalizeUserForLance = (user) => {
     const lanceEmails = [
         'lancecasselman@icloud.com',
         'lancecasselman2011@gmail.com',
-        'Lance@thelegacyphotography.com'
+        'lance@thelegacyphotography.com'
     ];
 
     if (user && lanceEmails.includes(user.email)) {
@@ -3390,7 +3390,7 @@ app.get('/api/sessions', isAuthenticated, requireSubscription, async (req, res) 
         console.log(`Found ${sessions.length} sessions for user ${userId}`);
 
         // SPECIAL ACCESS: If Lance's accounts, give access to ALL sessions (admin mode)
-        if (req.user.email === 'lancecasselman@icloud.com' || req.user.email === 'lancecasselman2011@gmail.com' || req.user.email === 'Lance@thelegacyphotography.com') {
+        if (req.user.email === 'lancecasselman@icloud.com' || req.user.email === 'lancecasselman2011@gmail.com' || req.user.email === 'lance@thelegacyphotography.com') {
             console.log('UNIFIED LANCE ACCOUNT: Loading sessions for unified Lance account');
 
             // Get sessions for the unified Lance account
@@ -4544,7 +4544,7 @@ app.get('/api/ai/credits', isAuthenticated, async (req, res) => {
         const lanceEmails = [
             'lancecasselman@icloud.com',
             'lancecasselman2011@gmail.com', 
-            'Lance@thelegacyphotography.com'
+            'lance@thelegacyphotography.com'
         ];
 
         if (lanceEmails.includes(req.user.email)) {
@@ -10800,7 +10800,7 @@ app.post('/api/ai/generate-complete-website', async (req, res) => {
         const lanceEmails = [
             'lancecasselman@icloud.com',
             'lancecasselman2011@gmail.com', 
-            'Lance@thelegacyphotography.com'
+            'lance@thelegacyphotography.com'
         ];
 
         // Bypass credit check for Lance
