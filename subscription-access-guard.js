@@ -3,6 +3,73 @@
  * Checks subscription status and redirects users without active subscriptions
  */
 
+// IMMEDIATE BLOCKING - Run this instantly when script loads
+(function() {
+    // Only run on main app pages
+    const path = window.location.pathname;
+    if (path === '/' || path === '/index.html') {
+        console.log('🚨 SUBSCRIPTION GUARD ACTIVE - Checking access...');
+        
+        // Hide everything immediately
+        const hideStyle = document.createElement('style');
+        hideStyle.id = 'immediate-block';
+        hideStyle.innerHTML = 'body { display: none !important; }';
+        (document.head || document.documentElement).appendChild(hideStyle);
+        
+        // Check subscription immediately
+        fetch('/api/check-auth')
+            .then(r => r.json())
+            .then(authData => {
+                if (!authData.authenticated) {
+                    console.log('🚨 Not authenticated - redirecting to login');
+                    window.location.replace('/auth.html');
+                    return;
+                }
+                
+                // Check user email for admin bypass
+                return fetch('/api/current-user');
+            })
+            .then(r => r && r.json())
+            .then(userData => {
+                if (!userData) return;
+                
+                const adminEmails = [
+                    'lancecasselman@icloud.com',
+                    'lancecasselman2011@gmail.com',
+                    'lance@thelegacyphotography.com'
+                ];
+                
+                if (adminEmails.includes(userData.email)) {
+                    console.log('✅ Admin bypass - showing app');
+                    document.getElementById('immediate-block').remove();
+                    return;
+                }
+                
+                // Check subscription
+                return fetch('/api/subscription-status');
+            })
+            .then(r => r && r.json())
+            .then(subData => {
+                if (!subData) return;
+                
+                console.log('🚨 Subscription status:', subData.status);
+                
+                if (!subData.status || !subData.status.hasProfessionalPlan) {
+                    console.log('🚨 NO SUBSCRIPTION - BLOCKING ACCESS');
+                    window.location.replace('/subscription-checkout.html?message=subscription_required');
+                } else {
+                    console.log('✅ Subscription verified - showing app');
+                    const block = document.getElementById('immediate-block');
+                    if (block) block.remove();
+                }
+            })
+            .catch(err => {
+                console.error('🚨 Subscription check error:', err);
+                window.location.replace('/auth.html');
+            });
+    }
+})();
+
 class SubscriptionAccessGuard {
     constructor() {
         this.subscriptionStatus = null;
