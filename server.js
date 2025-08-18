@@ -9888,23 +9888,69 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'landing.html'));
 });
 
-// Serve main app with authentication requirement
-app.get('/app', (req, res) => {
+// Serve main app with authentication AND subscription requirement
+app.get('/app', async (req, res) => {
     if (!DEV_MODE) {
         // Check authentication in production mode
         if (!req.session || !req.session.user) {
             return res.redirect('/auth.html?return=/app');
+        }
+        
+        // Check subscription status
+        const userId = req.session.user.uid;
+        const userEmail = req.session.user.email;
+        
+        // Admin whitelist bypass
+        const adminEmails = [
+            'lancecasselman@icloud.com',
+            'lancecasselman2011@gmail.com',
+            'lance@thelegacyphotography.com'
+        ];
+        
+        if (!adminEmails.includes(userEmail)) {
+            // Check subscription
+            const UnifiedSubscriptionManager = require('./server/unified-subscription-manager');
+            const subscriptionManager = new UnifiedSubscriptionManager(pool);
+            const status = await subscriptionManager.getUserSubscriptionStatus(userId);
+            
+            if (!status.hasProfessionalPlan || status.professionalStatus !== 'active') {
+                console.log(`🔒 Blocking access to /app for ${userEmail} - No active subscription`);
+                return res.redirect('/subscription-checkout.html?message=subscription_required');
+            }
         }
     }
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // Alternative dashboard route
-app.get('/dashboard', (req, res) => {
+app.get('/dashboard', async (req, res) => {
     if (!DEV_MODE) {
         // Check authentication in production mode
         if (!req.session || !req.session.user) {
             return res.redirect('/auth.html?return=/dashboard');
+        }
+        
+        // Check subscription status
+        const userId = req.session.user.uid;
+        const userEmail = req.session.user.email;
+        
+        // Admin whitelist bypass
+        const adminEmails = [
+            'lancecasselman@icloud.com',
+            'lancecasselman2011@gmail.com',
+            'lance@thelegacyphotography.com'
+        ];
+        
+        if (!adminEmails.includes(userEmail)) {
+            // Check subscription
+            const UnifiedSubscriptionManager = require('./server/unified-subscription-manager');
+            const subscriptionManager = new UnifiedSubscriptionManager(pool);
+            const status = await subscriptionManager.getUserSubscriptionStatus(userId);
+            
+            if (!status.hasProfessionalPlan || status.professionalStatus !== 'active') {
+                console.log(`🔒 Blocking access to /dashboard for ${userEmail} - No active subscription`);
+                return res.redirect('/subscription-checkout.html?message=subscription_required');
+            }
         }
     }
     res.sendFile(path.join(__dirname, 'index.html'));
