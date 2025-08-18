@@ -681,27 +681,8 @@ const isAuthenticated = (req, res, next) => {
 // Initialize subscription auth middleware
 const subscriptionAuth = new SubscriptionAuthMiddleware(pool);
 
-// Subscription check middleware
-const requireSubscription = async (req, res, next) => {
-    // DEV_MODE bypass
-    if (DEV_MODE) {
-        return next();
-    }
-
-    // Admin whitelist bypass
-    const whitelistedEmails = [
-        'lancecasselman@icloud.com',
-        'lancecasselman2011@gmail.com',
-        'lance@thelegacyphotography.com'
-    ];
-
-    if (req.session?.user?.email && whitelistedEmails.includes(req.session.user.email)) {
-        return next();
-    }
-
-    // Bypass subscription check temporarily
-    return next();
-};
+// Subscription check middleware - ENFORCED
+const requireSubscription = subscriptionAuth.requireActiveSubscription;
 
 // Create professional email transporter with better deliverability
 const createEmailTransporter = () => {
