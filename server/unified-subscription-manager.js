@@ -200,7 +200,6 @@ class UnifiedSubscriptionManager {
             // Create checkout session for Professional Plan
             const session = await stripe.checkout.sessions.create({
                 customer: customer.id,
-                customer_email: email,
                 payment_method_types: ['card'],
                 mode: 'subscription',
                 line_items: [{
