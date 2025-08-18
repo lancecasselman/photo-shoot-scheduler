@@ -1333,7 +1333,8 @@ app.post('/api/sessions/:sessionId/files/upload', isAuthenticated, async (req, r
         }
 
         // QUOTA ENFORCEMENT: Check if user can upload this file
-        const normalizedUserId = normalizeUserForLance(userId);
+        const normalizedUser = normalizeUserForLance(req.user);
+        const normalizedUserId = normalizedUser.uid;
         if (fileSize) {
             const quotaCheck = await storageSystem.canUpload(normalizedUserId, fileSize);
             if (!quotaCheck.canUpload) {
@@ -1441,7 +1442,8 @@ app.post('/api/sessions/:sessionId/files/:folderType/upload-direct', isAuthentic
         }
 
         // QUOTA ENFORCEMENT: Check if user can upload this file
-        const normalizedUserId = normalizeUserForLance(userId);
+        const normalizedUser = normalizeUserForLance(req.user);
+        const normalizedUserId = normalizedUser.uid;
         const quotaCheck = await storageSystem.canUpload(normalizedUserId, file.size);
         if (!quotaCheck.canUpload) {
             return res.status(413).json({ 
@@ -3506,7 +3508,8 @@ app.put('/api/sessions/:id', isAuthenticated, async (req, res) => {
 // Upload photos to session with enhanced error handling and processing
 app.post('/api/sessions/:id/upload-photos', isAuthenticated, async (req, res) => {
     const sessionId = req.params.id;
-    const userId = normalizeUserForLance(req.user.uid);
+    const normalizedUser = normalizeUserForLance(req.user);
+    const userId = normalizedUser.uid;
 
     console.log(` Starting upload for session ${sessionId}...`);
 
