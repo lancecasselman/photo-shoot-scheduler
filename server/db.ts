@@ -35,8 +35,19 @@ pool.on('remove', () => {
   console.log('Database client removed from pool');
 });
 
-pool.on('error', (err) => {
-  console.error('Database pool error:', err);
-});
+pool.on('error', (err, client) => {
+    console.error('Unexpected database pool error:', err);
+    console.log('Database client removed from pool');
+
+    // Attempt to reconnect after a brief delay
+    setTimeout(() => {
+      console.log('Attempting to reconnect to database...');
+      try {
+        pool.connect();
+      } catch (reconnectErr) {
+        console.error('Database reconnection failed:', reconnectErr);
+      }
+    }, 5000);
+  });
 
 export const db = drizzle({ client: pool, schema });

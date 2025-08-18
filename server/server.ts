@@ -71,6 +71,12 @@ function isAuthenticated(req: any): boolean {
     return false;
   }
   
+  // Check if session has valid user data
+  if (!session.user || !session.user.email) {
+    console.log('🚫 Session exists but missing user data:', sessionId);
+    return false;
+  }
+  
   console.log('✅ Authentication successful for:', session.user.email);
   req.user = session.user;
   return true;
@@ -136,8 +142,8 @@ async function handleApiRequest(method: string, pathname: string, req: any, res:
           displayName: data.displayName
         });
         
-        // Set session cookie
-        res.setHeader('Set-Cookie', `sessionId=${sessionId}; Path=/; Max-Age=604800; SameSite=None`);
+        // Set session cookie with proper security settings
+        res.setHeader('Set-Cookie', `sessionId=${sessionId}; Path=/; Max-Age=604800; SameSite=None; Secure=false; HttpOnly=false`);
         
         result = { success: true, message: 'User verified', user: data, sessionId };
       } else if (pathname === '/api/auth/logout' && method === 'POST') {
