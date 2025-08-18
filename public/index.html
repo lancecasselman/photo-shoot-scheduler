@@ -6217,6 +6217,12 @@ ${contract.contract_content}
         
         // Initialize app content after authentication
         window.initializeAppContent = function() {
+            // Skip app content initialization on landing page
+            if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
+                console.log('Landing page - skipping app content initialization');
+                return;
+            }
+            
             console.log('Loading authenticated app content...');
             
             // Main app initialization - loading sessions
@@ -13300,14 +13306,27 @@ END:VCALENDAR`;
 
         // Initialize dashboard when sessions are loaded
         window.initializeDashboard = async function() {
+            // Skip dashboard initialization on landing page
+            if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
+                console.log('Landing page - skipping dashboard initialization');
+                return;
+            }
+            
             // Wait for sessions to be loaded, then calculate stats
             if (window.sessions && Array.isArray(window.sessions)) {
                 console.log('Initializing dashboard with', window.sessions.length, 'sessions');
                 await calculateFinancialStats('thisMonth');
             } else {
                 console.log('Sessions not ready yet, retrying dashboard initialization...');
-                // Retry after a short delay
-                setTimeout(window.initializeDashboard, 500);
+                // Retry after a short delay, but only for a limited time to prevent infinite loops
+                if (!window.dashboardRetryCount) window.dashboardRetryCount = 0;
+                window.dashboardRetryCount++;
+                
+                if (window.dashboardRetryCount < 10) { // Limit to 5 seconds of retries
+                    setTimeout(window.initializeDashboard, 500);
+                } else {
+                    console.log('Dashboard initialization timed out after 5 seconds');
+                }
             }
         }
 

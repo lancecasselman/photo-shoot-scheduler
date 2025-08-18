@@ -743,35 +743,42 @@ process.on('uncaughtException', (error) => {
 app.use(express.json({ limit: '100gb' }));
 app.use(express.urlencoded({ extended: true, limit: '100gb' }));
 
-// Session configuration for authentication with improved error handling
+// Session configuration with fallback mechanism
 const pgSession = connectPg(session);
 
-// Create session store with error handling
-const sessionStore = new pgSession({
-    conString: process.env.DATABASE_URL,
-    tableName: 'sessions',
-    createTableIfMissing: true // Allow table creation if missing
-});
-
-// Handle session store errors gracefully
-sessionStore.on('error', (error) => {
-    console.error('Session store error:', error.message);
-    // Don't crash the server for session store errors
-});
+// Create session store with fallback to memory store
+let sessionStore;
+try {
+    sessionStore = new pgSession({
+        conString: process.env.DATABASE_URL,
+        tableName: 'sessions',
+        createTableIfMissing: true
+    });
+    
+    // Test the session store connection
+    sessionStore.on('error', (error) => {
+        console.error('Session store error:', error.message);
+    });
+    
+    console.log('✅ PostgreSQL session store initialized');
+} catch (error) {
+    console.warn('⚠️ PostgreSQL session store failed, using memory store:', error.message);
+    sessionStore = null; // Will use default memory store
+}
 
 app.use(session({
-    store: sessionStore,
+    store: sessionStore, // Will fall back to memory store if null
     secret: process.env.SESSION_SECRET || 'your-session-secret-' + Date.now(),
     resave: false,
     saveUninitialized: false,
-    rolling: true, // Reset expiration on each request
+    rolling: true,
     cookie: {
-        httpOnly: false, // Safari needs JS access to session for compatibility
-        secure: false, // Always false for development
+        httpOnly: false,
+        secure: false,
         maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
-        sameSite: 'lax', // Back to lax for better Safari compatibility
-        path: '/', // Explicit path for Safari
-        domain: undefined // Let browser set domain automatically
+        sameSite: 'lax',
+        path: '/',
+        domain: undefined
     }
 }));
 

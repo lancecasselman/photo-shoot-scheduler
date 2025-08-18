@@ -8,6 +8,12 @@ let currentUser = null;
 
 // Firebase Authentication functions
 async function checkAuth() {
+    // Skip authentication check entirely for landing page
+    if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
+        console.log('Landing page - skipping authentication check');
+        return false; // Don't authenticate on landing page
+    }
+    
     // Only skip auth check if actively logging out (not for manual logout flag)
     if (sessionStorage.getItem('loggingOut') === 'true') {
         console.log('Skipping auth check - logout in progress');
