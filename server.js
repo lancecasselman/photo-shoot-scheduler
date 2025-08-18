@@ -611,7 +611,7 @@ const normalizeUserForLance = (user) => {
         'lance@thelegacyphotography.com'
     ];
 
-    if (user && lanceEmails.includes(user.email)) {
+    if (user && lanceEmails.includes(user.email.toLowerCase())) {
         // Always use the existing account ID "44735007" for Lance's unified account
         return {
             ...user,
@@ -3389,8 +3389,9 @@ app.get('/api/sessions', isAuthenticated, requireSubscription, async (req, res) 
         let sessions = await getAllSessions(userId);
         console.log(`Found ${sessions.length} sessions for user ${userId}`);
 
-        // SPECIAL ACCESS: If Lance's accounts, give access to ALL sessions (admin mode)
-        if (req.user.email === 'lancecasselman@icloud.com' || req.user.email === 'lancecasselman2011@gmail.com' || req.user.email === 'lance@thelegacyphotography.com') {
+        // SPECIAL ACCESS: If Lance's accounts, give access to ALL sessions (admin mode)  
+        const userEmail = req.user.email.toLowerCase();
+        if (userEmail === 'lancecasselman@icloud.com' || userEmail === 'lancecasselman2011@gmail.com' || userEmail === 'lance@thelegacyphotography.com') {
             console.log('UNIFIED LANCE ACCOUNT: Loading sessions for unified Lance account');
 
             // Get sessions for the unified Lance account
@@ -4547,7 +4548,7 @@ app.get('/api/ai/credits', isAuthenticated, async (req, res) => {
             'lance@thelegacyphotography.com'
         ];
 
-        if (lanceEmails.includes(req.user.email)) {
+        if (lanceEmails.includes(req.user.email.toLowerCase())) {
             return res.json({
                 success: true,
                 credits: 999999, // Unlimited credits for owner
@@ -10024,7 +10025,7 @@ app.get('/app', async (req, res) => {
             'lance@thelegacyphotography.com'
         ];
         
-        if (!adminEmails.includes(userEmail)) {
+        if (!adminEmails.includes(userEmail.toLowerCase())) {
             // Check subscription
             const UnifiedSubscriptionManager = require('./server/unified-subscription-manager');
             const subscriptionManager = new UnifiedSubscriptionManager(pool);
@@ -10058,7 +10059,7 @@ app.get('/dashboard', async (req, res) => {
             'lance@thelegacyphotography.com'
         ];
         
-        if (!adminEmails.includes(userEmail)) {
+        if (!adminEmails.includes(userEmail.toLowerCase())) {
             // Check subscription
             const UnifiedSubscriptionManager = require('./server/unified-subscription-manager');
             const subscriptionManager = new UnifiedSubscriptionManager(pool);
@@ -10804,7 +10805,7 @@ app.post('/api/ai/generate-complete-website', async (req, res) => {
         ];
 
         // Bypass credit check for Lance
-        if (!lanceEmails.includes(req.user?.email)) {
+        if (!lanceEmails.includes(req.user?.email.toLowerCase())) {
             // Check credits for other users
             const normalizedUser = normalizeUserForLance(req.user);
             const userId = normalizedUser.uid;

@@ -118,7 +118,7 @@
                     'lance@thelegacyphotography.com'
                 ];
 
-                if (adminEmails.includes(user.email)) {
+                if (adminEmails.includes(user.email.toLowerCase())) {
                     console.log('✅ SECURITY: Admin access granted');
                     securityChecksPassed++;
                 } else if (subData.status && subData.status.hasProfessionalPlan && subData.status.professionalStatus === 'active') {
