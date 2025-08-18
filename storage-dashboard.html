@@ -367,9 +367,16 @@
         // Initialize page
         document.addEventListener('DOMContentLoaded', async function() {
             try {
-                // Initialize Stripe
+                // Initialize Stripe from server
                 const response = await fetch('/api/stripe-public-key');
                 const { publicKey } = await response.json();
+                
+                if (!publicKey) {
+                    console.error('Stripe public key not configured');
+                    showError('Payment system not configured. Please contact support.');
+                    return;
+                }
+                
                 stripe = Stripe(publicKey);
 
                 // Load storage data
@@ -490,6 +497,9 @@
                 const confirmed = confirm(`Purchase ${tbCount}TB of additional storage for $${tbCount * 25}/month?`);
                 if (!confirmed) return;
 
+                // Show loading state
+                showLoadingMessage(`Setting up ${tbCount}TB storage subscription...`);
+
                 const response = await fetch('/api/storage/purchase', {
                     method: 'POST',
                     headers: {
@@ -502,23 +512,39 @@
                 const result = await response.json();
 
                 if (!response.ok) {
-                    throw new Error(result.error);
+                    hideLoadingMessage();
+                    throw new Error(result.error || 'Failed to create subscription');
                 }
 
-                // Redirect to Stripe checkout
-                const { error } = await stripe.confirmCardPayment(result.clientSecret);
+                // Store subscription details for completion
+                sessionStorage.setItem('pending_storage_subscription', JSON.stringify({
+                    tbCount,
+                    subscriptionId: result.subscriptionId,
+                    monthlyPrice: result.monthlyPrice
+                }));
 
-                if (error) {
-                    throw new Error(error.message);
-                }
-
-                alert(`Successfully purchased ${tbCount}TB storage package!`);
-                await loadStorageData(); // Refresh data
+                // Redirect to Stripe payment form
+                window.location.href = `/subscription-checkout.html?clientSecret=${encodeURIComponent(result.clientSecret)}&returnUrl=${encodeURIComponent('/storage-dashboard.html')}`;
 
             } catch (error) {
                 console.error('Purchase error:', error);
+                hideLoadingMessage();
                 alert('Failed to purchase storage: ' + error.message);
             }
+        }
+
+        // Show loading message
+        function showLoadingMessage(message) {
+            const loadingEl = document.getElementById('loading');
+            loadingEl.innerHTML = `<p>${message}</p>`;
+            loadingEl.style.display = 'block';
+            document.getElementById('dashboard').style.display = 'none';
+        }
+
+        // Hide loading message
+        function hideLoadingMessage() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
         }
 
         // Cancel subscription
