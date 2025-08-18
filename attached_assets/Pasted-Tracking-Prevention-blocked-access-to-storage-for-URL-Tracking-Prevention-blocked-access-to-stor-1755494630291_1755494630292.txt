@@ -1,0 +1,48 @@
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+console-cleanup.js:57 Console cleanup initialized for production
+console-cleanup.js:57 DOM loaded, preparing UI elements...
+console-cleanup.js:57  INDEX PAGE: UI elements prepared, waiting for authentication...
+console-cleanup.js:57  INDEX PAGE: Document loaded successfully
+console-cleanup.js:57 Loading sessions from API...
+console-cleanup.js:57 DOM loaded - initializing booking agreements...
+console-cleanup.js:57 Initializing booking agreements system...
+console-cleanup.js:57 Loading booking agreement templates...
+console-cleanup.js:57  MAIN APP: Page loaded event fired
+console-cleanup.js:57  MAIN APP: Current URL: https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/
+console-cleanup.js:57  MAIN APP: Referrer: https://replit.com/
+console-cleanup.js:57  MAIN APP: Manual logout flag: null
+console-cleanup.js:57  MAIN APP: Logging out flag: null
+console-cleanup.js:57  MAIN APP: Starting initializePage...
+console-cleanup.js:57  MAIN APP: Coming from auth? false
+console-cleanup.js:57  INIT PAGE: Starting initialization...
+console-cleanup.js:57  INIT PAGE: Document referrer: https://replit.com/
+console-cleanup.js:57  INIT PAGE: Manual logout flag: null
+console-cleanup.js:57  INIT PAGE: Not from auth page, proceeding immediately
+console-cleanup.js:57  INIT PAGE: Starting authentication check...
+console-cleanup.js:57 Landing page - skipping authentication check
+console-cleanup.js:57  INIT PAGE: First auth check result: false
+console-cleanup.js:57  INIT PAGE: User not authenticated after retries - returning early
+console-cleanup.js:57 Template response status: 200
+(index):1  <meta name="apple-mobile-web-app-capable" content="yes"> is deprecated. Please include <meta name="mobile-web-app-capable" content="yes">
+/api/sessions:1   Failed to load resource: the server responded with a status of 402 (Payment Required)
+(index):46  Error loading sessions: Error: HTTP error! status: 402
+    at loadSessions (script.js?v=1755136100&customizable=deposit:426:19)
+console.error @ (index):46
+console-cleanup.js:57 Loaded templates: 6
+/icon-192.png:1   Failed to load resource: the server responded with a status of 404 (Not Found)
+(index):1  Error while trying to use the following icon from the Manifest: https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/icon-192.png (Download error or resource isn't a valid image)
+subscription-access-guard.js:88  Uncaught (in promise) TypeError: Cannot read properties of undefined (reading 'toFixed')
+    at SubscriptionAccessGuard.showSubscriptionRequiredModal (subscription-access-guard.js:88:87)
+    at SubscriptionAccessGuard.enforceSubscriptionAccess (subscription-access-guard.js:63:18)
+[NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
+        Don't show again

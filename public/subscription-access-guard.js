@@ -44,13 +44,17 @@ class SubscriptionAccessGuard {
     }
 
     guardMainAppAccess() {
-        // Only run on main app pages (not landing, auth, etc.)
-        const protectedPages = ['/', '/index.html'];
+        // Skip subscription checks on landing page and auth pages
         const currentPath = window.location.pathname;
-
-        if (protectedPages.includes(currentPath)) {
-            this.enforceSubscriptionAccess();
+        const skipPages = ['/', '/index.html', '/auth.html', '/auth', '/login'];
+        
+        if (skipPages.includes(currentPath)) {
+            console.log('Skipping subscription check for:', currentPath);
+            return;
         }
+
+        // Only enforce subscription on authenticated app pages
+        this.enforceSubscriptionAccess();
     }
 
     async enforceSubscriptionAccess() {
@@ -85,7 +89,7 @@ class SubscriptionAccessGuard {
                             <p><strong>Professional Plan:</strong> ${status.hasProfessionalPlan ? 'Yes' : 'No'}</p>
                             <p><strong>Status:</strong> ${status.professionalStatus || 'None'}</p>
                             <p><strong>Storage:</strong> ${status.totalStorageGb}GB</p>
-                            <p><strong>Monthly Total:</strong> $${status.monthlyTotal.toFixed(2)}</p>
+                            <p><strong>Monthly Total:</strong> $${(status.monthlyTotal || 0).toFixed(2)}</p>
                         </div>
                     </div>
                     <div class="modal-actions">

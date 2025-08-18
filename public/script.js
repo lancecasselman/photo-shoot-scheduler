@@ -410,6 +410,12 @@ async function createAPISession(sessionData) {
 
 // Load sessions from API
 async function loadSessions() {
+    // Skip session loading on landing page
+    if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
+        console.log('Landing page - skipping session loading');
+        return;
+    }
+    
     try {
         console.log('Loading sessions from API...');
 
