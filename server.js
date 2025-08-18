@@ -80,13 +80,7 @@ async function getUserAiCredits(userId) {
         const result = await client.query('SELECT ai_credits FROM users WHERE id = $1', [userId]);
         return result.rows[0]?.ai_credits || 0;
     } catch (error) {
-        console.error('Error getting user AI credits:', error);
-        // Log the specific error for debugging
-        console.error('Database error details:', {
-            code: error.code,
-            detail: error.detail,
-            hint: error.hint
-        });
+        console.error('Error getting user AI credits:', error.message);
         // Return a conservative default instead of high amount
         return 0;
     } finally {
@@ -305,10 +299,7 @@ let communityRoutes = null;
     }
 })();
 
-console.log(' R2 File Manager initialized');
-console.log(' Payment and contract services initialized');
-console.log('AI Services:', aiServices.status);
-console.log(' New storage system initialized');
+// Services initialized
 
 // Initialize Firebase Admin SDK with latest service account
 try {
@@ -349,8 +340,7 @@ try {
             projectId: serviceAccount.project_id,
             storageBucket: storageBucket
         });
-        console.log('Firebase Admin SDK initialized successfully with project:', serviceAccount.project_id);
-        console.log('Storage bucket configured as:', storageBucket);
+        // Firebase Admin SDK initialized
         
         // Initialize Community Platform after Firebase is ready (non-blocking)
         (async () => {
@@ -364,7 +354,7 @@ try {
                     bucketName: process.env.CLOUDFLARE_R2_BUCKET_NAME,
                     publicUrl: process.env.CLOUDFLARE_R2_PUBLIC_URL || 'https://pub-f4fb0dd444374c70b491e4a0adb6bb02.r2.dev'
                 });
-                console.log(' Community Platform initialized with R2 Storage');
+
             } catch (error) {
                 console.warn('Community Platform initialization skipped:', error.message);
                 // Continue without community features if initialization fails
@@ -453,8 +443,6 @@ function isRAWFile(filename, mimetype) {
 // Process workflow automation
 async function processWorkflow(workflowType, clientData, messageTemplate, sessionId) {
     try {
-        console.log(`🤖 Processing workflow: ${workflowType} for session ${sessionId}`);
-
         const templates = {
             professional: {
                 contractReminder: {
@@ -555,8 +543,6 @@ async function processR2BackupsAsync(sessionId, uploadedFiles, userId) {
 
 // Legacy RAW backup process (kept for compatibility)
 async function processRAWBackups(sessionId, rawFiles, userId) {
-    console.log(` Starting RAW backup process for ${rawFiles.length} files`);
-
     for (const photo of rawFiles) {
         try {
             // Record backup request in database
@@ -580,7 +566,7 @@ async function processRAWBackups(sessionId, rawFiles, userId) {
                 new Date()
             ]);
 
-            console.log(` RAW backup record created for ${photo.originalName}`);
+
 
             // Queue for background R2 upload (async)
             setImmediate(async () => {
@@ -1041,7 +1027,6 @@ app.post('/api/auth/firebase-login', async (req, res) => {
                     return res.status(500).json({ message: 'Session error' });
                 }
                 
-                console.log('Authentication successful for:', email);
                 res.json({ success: true, message: 'Authentication successful' });
             });
         } catch (sessionError) {
@@ -1183,11 +1168,11 @@ app.post('/api/auth/mobile-session', async (req, res) => {
             }
             
             // Get normalized user ID
-            const normalizedUserId = normalizeUserId(uid);
+            const normalizedUser = normalizeUserForLance({ uid, email });
             
             // Create or update session
             req.session.user = {
-                uid: normalizedUserId,
+                uid: normalizedUser.uid,
                 email: email,
                 displayName: displayName,
                 photoURL: photoURL,
@@ -1201,7 +1186,6 @@ app.post('/api/auth/mobile-session', async (req, res) => {
                     return res.status(500).json({ error: 'Failed to save session' });
                 }
                 
-                console.log(`Mobile session created for iOS user: ${email}`);
                 res.json({ 
                     success: true, 
                     user: req.session.user,
@@ -2860,8 +2844,7 @@ async function getAllSessions(userId) {
 
         const result = await pool.query(query, params);
         console.log('Database query result sample (first row):', result.rows[0]);
-        console.log('Testing dammit session from DB:', result.rows.find(r => r.client_name === 'Testing dammit')?.deposit_amount || 'NOT FOUND');
-        console.log('Full API response for Testing dammit:', JSON.stringify(result.rows.find(r => r.client_name === 'Testing dammit'), null, 2));
+
         const mappedRows = result.rows.map(row => ({
             id: row.id,
             userId: row.user_id,
@@ -2892,12 +2875,6 @@ async function getAllSessions(userId) {
             createdAt: row.created_at,
             updatedAt: row.updated_at
         }));
-        
-        // Debug the mapped response for Testing dammit
-        const testingSession = mappedRows.find(r => r.clientName === 'Testing dammit');
-        if (testingSession) {
-            console.log('Mapped Testing dammit session:', JSON.stringify(testingSession, null, 2));
-        }
         
         return mappedRows;
     } catch (error) {
