@@ -295,7 +295,7 @@ class StorageSystem {
             await this.pool.query(`
                 UPDATE user_storage_quotas 
                 SET purchased_tb = purchased_tb + $1,
-                    total_quota_gb = free_storage_gb + (purchased_tb + $1) * 1024,
+                    total_quota_gb = base_storage_gb + (purchased_tb + $1) * 1024,
                     updated_at = NOW()
                 WHERE user_id = $2
             `, [tbCount, userId]);
@@ -328,7 +328,7 @@ class StorageSystem {
 
             return {
                 userId,
-                freeStorageGB: parseFloat(quota.free_storage_gb),
+                freeStorageGB: parseFloat(quota.base_storage_gb),
                 purchasedTB: quota.purchased_tb,
                 totalQuotaGB: parseFloat(quota.total_quota_gb),
                 usedStorageGB: usage.totalGB,
