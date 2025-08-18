@@ -1201,6 +1201,64 @@ app.post('/api/auth/logout', (req, res) => {
     });
 });
 
+// Mobile session endpoint for iOS authentication
+app.post('/api/auth/mobile-session', async (req, res) => {
+    try {
+        const { uid, email, displayName, photoURL, isIOS } = req.body;
+        const authHeader = req.headers.authorization;
+        
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ error: 'No authentication token provided' });
+        }
+        
+        const idToken = authHeader.split('Bearer ')[1];
+        
+        // Verify the Firebase token
+        try {
+            const decodedToken = await admin.auth().verifyIdToken(idToken);
+            
+            if (decodedToken.uid !== uid) {
+                return res.status(401).json({ error: 'Token UID mismatch' });
+            }
+            
+            // Get normalized user ID
+            const normalizedUserId = normalizeUserId(uid);
+            
+            // Create or update session
+            req.session.user = {
+                uid: normalizedUserId,
+                email: email,
+                displayName: displayName,
+                photoURL: photoURL,
+                isIOS: isIOS || false
+            };
+            
+            // Force session save
+            req.session.save((err) => {
+                if (err) {
+                    console.error('Session save error:', err);
+                    return res.status(500).json({ error: 'Failed to save session' });
+                }
+                
+                console.log(`Mobile session created for iOS user: ${email}`);
+                res.json({ 
+                    success: true, 
+                    user: req.session.user,
+                    sessionId: req.session.id
+                });
+            });
+            
+        } catch (verifyError) {
+            console.error('Token verification failed:', verifyError);
+            return res.status(401).json({ error: 'Invalid authentication token' });
+        }
+        
+    } catch (error) {
+        console.error('Mobile session creation error:', error);
+        res.status(500).json({ error: 'Failed to create mobile session' });
+    }
+});
+
 // R2 Storage API Routes - Complete file management system
 app.use('/api/r2', createR2Routes());
 

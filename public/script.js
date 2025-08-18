@@ -23,6 +23,27 @@ async function checkAuth() {
     // Check if we just came from auth page
     const fromAuth = document.referrer.includes('auth.html') || sessionStorage.getItem('fromAuth') === 'true';
     
+    // Check if we're on iOS and use native auth handler
+    if (window.nativeAuth && (window.nativeAuth.isIOS || window.nativeAuth.isCapacitor)) {
+        console.log('Using native iOS authentication handler...');
+        try {
+            await window.nativeAuth.initialize();
+            if (window.nativeAuth.isAuthenticated()) {
+                currentUser = window.nativeAuth.getCurrentUser();
+                updateUserUI();
+                console.log('iOS user authenticated successfully:', currentUser.email);
+                return true;
+            } else {
+                console.log('No iOS authentication found');
+                return false;
+            }
+        } catch (error) {
+            console.error('Native auth check failed:', error);
+            return false;
+        }
+    }
+    
+    // Regular web authentication flow
     try {
         console.log(' AUTH CHECK: Checking authentication with backend...');
         
