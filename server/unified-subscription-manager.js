@@ -478,7 +478,10 @@ class UnifiedSubscriptionManager {
                 summary: summaryResult.rows[0] || null,
                 subscriptions: subscriptionsResult.rows,
                 totalStorageGB: summaryResult.rows[0]?.total_storage_gb || 0,
-                hasActivePlan: summaryResult.rows[0]?.has_professional_plan || false
+                hasActivePlan: summaryResult.rows[0]?.has_professional_plan || false,
+                // Add properties expected by subscription middleware
+                hasProfessionalPlan: summaryResult.rows[0]?.has_professional_plan || false,
+                professionalStatus: summaryResult.rows[0]?.professional_status || 'inactive'
             };
 
         } catch (error) {
