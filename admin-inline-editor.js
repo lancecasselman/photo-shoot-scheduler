@@ -1650,15 +1650,22 @@
             element.style.width = newWidth + 'px';
             element.style.height = newHeight + 'px';
             element.style.overflow = 'hidden';
+            element.style.position = 'relative';
+            element.style.display = 'inline-block';
             
             // If there's an image, resize it too
             if (img) {
-                img.style.width = '100%';
-                img.style.height = '100%';
+                // Remove all previous inline styles
+                img.removeAttribute('width');
+                img.removeAttribute('height');
+                
+                // Set new image styles for proper scaling
+                img.style.width = newWidth + 'px';
+                img.style.height = newHeight + 'px';
                 img.style.maxWidth = '100%';
-                img.style.maxHeight = '100%';
-                img.style.objectFit = 'contain';
+                img.style.objectFit = 'cover';
                 img.style.display = 'block';
+                img.style.position = 'relative';
             }
         }
         
@@ -1693,18 +1700,24 @@
                 if (block.tagName === 'IMG' && !block.parentElement.classList.contains('photo-block')) {
                     const wrapper = document.createElement('div');
                     wrapper.className = 'photo-block image-block';
-                    wrapper.style.display = 'inline-block';
-                    wrapper.style.width = block.width ? block.width + 'px' : 'auto';
-                    wrapper.style.height = block.height ? block.height + 'px' : 'auto';
-                    wrapper.style.overflow = 'hidden';
                     
-                    // Preserve image dimensions
-                    block.style.width = '100%';
-                    block.style.height = '100%';
-                    block.style.maxWidth = '100%';
-                    block.style.maxHeight = '100%';
-                    block.style.objectFit = 'contain';
+                    // Get original image dimensions
+                    const imgWidth = block.naturalWidth || block.width || 300;
+                    const imgHeight = block.naturalHeight || block.height || 200;
+                    
+                    // Set wrapper dimensions
+                    wrapper.style.display = 'inline-block';
+                    wrapper.style.width = imgWidth + 'px';
+                    wrapper.style.height = imgHeight + 'px';
+                    wrapper.style.overflow = 'hidden';
+                    wrapper.style.position = 'relative';
+                    
+                    // Style the image to fit properly
+                    block.style.width = imgWidth + 'px';
+                    block.style.height = imgHeight + 'px';
+                    block.style.objectFit = 'cover';
                     block.style.display = 'block';
+                    block.style.position = 'relative';
                     
                     block.parentNode.insertBefore(wrapper, block);
                     wrapper.appendChild(block);
