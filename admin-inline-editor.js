@@ -1358,6 +1358,16 @@
             });
         });
         
+        // Add image selection and sizing
+        const img = element.querySelector('img');
+        if (img) {
+            img.style.cursor = 'pointer';
+            img.addEventListener('click', (e) => {
+                e.stopPropagation();
+                selectImage(img, element);
+            });
+        }
+        
         // Show/hide controls on hover
         element.addEventListener('mouseenter', function() {
             this.style.outline = '2px dashed #667eea';
@@ -1558,6 +1568,145 @@
                 if (!editor.contains(e.target)) {
                     editor.remove();
                     document.removeEventListener('mousedown', removeEditor);
+                }
+            });
+        }, 100);
+    }
+    
+    // Select image and show size slider
+    function selectImage(img, container) {
+        // Remove any existing image controls
+        const existingControls = document.querySelector('.image-size-controls');
+        if (existingControls) existingControls.remove();
+        
+        // Remove selection from other images
+        document.querySelectorAll('.selected-image').forEach(el => {
+            el.classList.remove('selected-image');
+            el.style.outline = 'none';
+        });
+        
+        // Mark this image as selected
+        img.classList.add('selected-image');
+        img.style.outline = '3px solid #667eea';
+        img.style.outlineOffset = '2px';
+        
+        // Create size control panel
+        const controls = document.createElement('div');
+        controls.className = 'image-size-controls';
+        controls.style.cssText = `
+            position: fixed;
+            bottom: 140px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 12px;
+            padding: 15px 20px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            z-index: 10002;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        `;
+        
+        // Create size slider
+        const sizeLabel = document.createElement('label');
+        sizeLabel.innerHTML = '<strong>Image Size:</strong>';
+        sizeLabel.style.color = '#333';
+        
+        const sizeSlider = document.createElement('input');
+        sizeSlider.type = 'range';
+        sizeSlider.min = '10';
+        sizeSlider.max = '200';
+        sizeSlider.value = '100';
+        sizeSlider.style.cssText = `
+            width: 200px;
+            accent-color: #667eea;
+        `;
+        
+        const sizeValue = document.createElement('span');
+        sizeValue.textContent = '100%';
+        sizeValue.style.cssText = `
+            min-width: 50px;
+            font-weight: 600;
+            color: #667eea;
+        `;
+        
+        // Object fit toggle
+        const fitLabel = document.createElement('label');
+        fitLabel.style.cssText = `
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #333;
+            margin-left: 20px;
+        `;
+        fitLabel.innerHTML = `
+            <input type="checkbox" id="fitToggle" checked>
+            <strong>Cover</strong>
+        `;
+        
+        const fitToggle = fitLabel.querySelector('#fitToggle');
+        fitToggle.style.cssText = `
+            width: 18px;
+            height: 18px;
+            accent-color: #667eea;
+        `;
+        
+        // Close button
+        const closeBtn = document.createElement('button');
+        closeBtn.innerHTML = '✕';
+        closeBtn.style.cssText = `
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: none;
+            background: #ef4444;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            margin-left: 20px;
+        `;
+        
+        // Add event handlers
+        sizeSlider.addEventListener('input', (e) => {
+            const scale = e.target.value / 100;
+            sizeValue.textContent = e.target.value + '%';
+            
+            // Apply transform to image
+            img.style.transform = `scale(${scale})`;
+            img.style.transformOrigin = 'center';
+        });
+        
+        fitToggle.addEventListener('change', (e) => {
+            img.style.objectFit = e.target.checked ? 'cover' : 'contain';
+            fitLabel.querySelector('strong').textContent = e.target.checked ? 'Cover' : 'Contain';
+        });
+        
+        closeBtn.addEventListener('click', () => {
+            controls.remove();
+            img.classList.remove('selected-image');
+            img.style.outline = 'none';
+        });
+        
+        // Assemble controls
+        controls.appendChild(sizeLabel);
+        controls.appendChild(sizeSlider);
+        controls.appendChild(sizeValue);
+        controls.appendChild(fitLabel);
+        controls.appendChild(closeBtn);
+        
+        document.body.appendChild(controls);
+        
+        // Remove controls when clicking elsewhere
+        setTimeout(() => {
+            document.addEventListener('click', function removeControls(e) {
+                if (!controls.contains(e.target) && e.target !== img) {
+                    controls.remove();
+                    img.classList.remove('selected-image');
+                    img.style.outline = 'none';
+                    document.removeEventListener('click', removeControls);
                 }
             });
         }, 100);
