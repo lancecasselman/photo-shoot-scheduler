@@ -238,11 +238,8 @@
     }
     
     function handleEditInput(e) {
-        // Auto-save with debounce
-        clearTimeout(saveTimer);
-        saveTimer = setTimeout(() => {
-            saveContent(e.target);
-        }, AUTO_SAVE_DELAY);
+        // No auto-save - user will use Save All button
+        // This preserves changes for manual save
     }
     
     // Stop editing an element
@@ -251,10 +248,7 @@
         element.style.outline = 'none';
         element.style.background = 'transparent';
         
-        // Save if content changed
-        if (element.innerHTML !== element.dataset.originalContent) {
-            saveContent(element);
-        }
+        // Don't auto-save - let user use Save All button
         
         // Remove temporary event listeners
         element.removeEventListener('blur', handleEditBlur);
@@ -288,7 +282,8 @@
             console.log('Save response:', response.status, result);
             
             if (response.ok) {
-                element.dataset.originalContent = content;
+                // DON'T update originalContent here - it should stay as baseline for detecting changes
+                // element.dataset.originalContent = content; // REMOVED - this was breaking change detection
                 showSaveIndicator(element, 'saved');
                 console.log('Content saved successfully');
             } else {
@@ -1109,6 +1104,8 @@
             if (current !== original) {
                 console.log('Saving changed element...');
                 await saveContent(element);
+                // Update baseline after successful save
+                element.dataset.originalContent = current;
                 savedCount++;
             }
         }
