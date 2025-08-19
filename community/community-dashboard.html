@@ -1786,14 +1786,278 @@
             }, 3000);
         }
 
-        // Placeholder functions for features to be implemented
-        function toggleNotifications() {
-            showMessage('Notifications coming soon!', 'info');
+        // Notification functions
+        async function toggleNotifications() {
+            // Create and show notifications modal
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Notifications</h2>
+                        <button class="close-btn" onclick="this.closest('.modal').remove()">×</button>
+                    </div>
+                    <div class="modal-body" style="padding: 20px; max-height: 500px; overflow-y: auto;">
+                        <div id="notificationsList">
+                            <p style="text-align: center; color: #9CA3AF;">Loading notifications...</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            // Load notifications
+            loadNotifications();
         }
 
+        async function loadNotifications() {
+            try {
+                const response = await fetch('/api/community/notifications', {
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const notifications = await response.json();
+                    const container = document.getElementById('notificationsList');
+                    
+                    if (notifications.length === 0) {
+                        container.innerHTML = `
+                            <div style="text-align: center; padding: 40px;">
+                                <p style="color: #9CA3AF; margin-bottom: 10px;">No notifications yet</p>
+                                <p style="color: #6B7280; font-size: 14px;">You'll see likes, comments, and messages here</p>
+                            </div>
+                        `;
+                    } else {
+                        container.innerHTML = notifications.map(notif => `
+                            <div class="notification-item" style="padding: 15px; border-bottom: 1px solid #374151; cursor: pointer;" 
+                                 onclick="markNotificationRead('${notif.id}')" 
+                                 data-read="${notif.is_read}">
+                                <div style="display: flex; align-items: start; gap: 10px;">
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: ${notif.is_read ? 'normal' : 'bold'}; color: #fff;">
+                                            ${notif.title}
+                                        </div>
+                                        <div style="color: #9CA3AF; font-size: 14px; margin-top: 5px;">
+                                            ${notif.message}
+                                        </div>
+                                        <div style="color: #6B7280; font-size: 12px; margin-top: 5px;">
+                                            ${formatTime(notif.created_at)}
+                                        </div>
+                                    </div>
+                                    ${!notif.is_read ? '<div style="width: 8px; height: 8px; background: #667eea; border-radius: 50%;"></div>' : ''}
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+                    
+                    // Update notification badge
+                    updateNotificationBadge();
+                }
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+            }
+        }
+
+        async function markNotificationRead(notificationId) {
+            try {
+                await fetch(`/api/community/notifications/${notificationId}/read`, {
+                    method: 'PUT',
+                    credentials: 'include'
+                });
+                // Reload notifications
+                loadNotifications();
+            } catch (error) {
+                console.error('Error marking notification as read:', error);
+            }
+        }
+
+        async function updateNotificationBadge() {
+            try {
+                const response = await fetch('/api/community/notifications/unread/count', {
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const badge = document.querySelector('.notification-badge');
+                    if (badge) {
+                        if (data.count > 0) {
+                            badge.textContent = data.count;
+                            badge.style.display = 'block';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error updating notification badge:', error);
+            }
+        }
+
+        // Messages functions
         function toggleMessages() {
-            const modal = document.getElementById('messagesModal');
-            modal.classList.toggle('active');
+            // Create and show messages modal
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 600px;">
+                    <div class="modal-header">
+                        <h2>Messages</h2>
+                        <button class="close-btn" onclick="this.closest('.modal').remove()">×</button>
+                    </div>
+                    <div class="modal-body" style="padding: 0; display: flex; height: 500px;">
+                        <div id="conversationsList" style="width: 200px; border-right: 1px solid #374151; padding: 10px;">
+                            <h3 style="font-size: 14px; color: #9CA3AF; margin-bottom: 10px;">Conversations</h3>
+                            <div id="usersList">
+                                <p style="color: #6B7280; font-size: 14px;">Loading users...</p>
+                            </div>
+                        </div>
+                        <div id="messagesArea" style="flex: 1; display: flex; flex-direction: column;">
+                            <div id="messagesContainer" style="flex: 1; padding: 20px; overflow-y: auto;">
+                                <p style="text-align: center; color: #9CA3AF;">Select a user to start messaging</p>
+                            </div>
+                            <div id="messageInput" style="padding: 10px; border-top: 1px solid #374151; display: none;">
+                                <div style="display: flex; gap: 10px;">
+                                    <input type="text" id="messageText" placeholder="Type a message..." 
+                                           style="flex: 1; padding: 10px; border-radius: 8px; background: #1A1F2E; color: white; border: 1px solid #374151;">
+                                    <button onclick="sendMessage()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                                        Send
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            // Load users list
+            loadUsersList();
+        }
+
+        async function loadUsersList() {
+            // For now, show recent post authors as potential conversation partners
+            const users = [];
+            const seenUsers = new Set();
+            
+            posts.forEach(post => {
+                if (!seenUsers.has(post.user_id) && post.user_id !== currentUserProfile?.userId) {
+                    seenUsers.add(post.user_id);
+                    users.push({
+                        id: post.user_id,
+                        name: post.user_name || 'Anonymous'
+                    });
+                }
+            });
+            
+            const container = document.getElementById('usersList');
+            if (users.length === 0) {
+                container.innerHTML = '<p style="color: #6B7280; font-size: 14px;">No users to message</p>';
+            } else {
+                container.innerHTML = users.map(user => `
+                    <div class="user-item" onclick="loadConversation('${user.id}', '${user.name}')"
+                         style="padding: 10px; cursor: pointer; border-radius: 8px; margin-bottom: 5px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="user-avatar" style="width: 30px; height: 30px; font-size: 12px;">
+                                ${getInitials(user.name)}
+                            </div>
+                            <div style="flex: 1; font-size: 14px;">${user.name}</div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                // Add hover effect
+                document.querySelectorAll('.user-item').forEach(item => {
+                    item.addEventListener('mouseenter', () => {
+                        item.style.background = '#374151';
+                    });
+                    item.addEventListener('mouseleave', () => {
+                        item.style.background = 'transparent';
+                    });
+                });
+            }
+        }
+
+        let currentConversationUserId = null;
+        let currentConversationUserName = null;
+
+        async function loadConversation(userId, userName) {
+            currentConversationUserId = userId;
+            currentConversationUserName = userName;
+            
+            const container = document.getElementById('messagesContainer');
+            container.innerHTML = '<p style="text-align: center; color: #9CA3AF;">Loading messages...</p>';
+            
+            // Show message input
+            document.getElementById('messageInput').style.display = 'block';
+            
+            try {
+                const response = await fetch(`/api/community/messages/${userId}`, {
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const messages = await response.json();
+                    
+                    if (messages.length === 0) {
+                        container.innerHTML = `
+                            <div style="text-align: center; padding: 40px;">
+                                <p style="color: #9CA3AF;">No messages yet</p>
+                                <p style="color: #6B7280; font-size: 14px;">Start a conversation with ${userName}</p>
+                            </div>
+                        `;
+                    } else {
+                        container.innerHTML = messages.map(msg => `
+                            <div style="margin-bottom: 15px; ${msg.sender_id === currentUserProfile?.userId ? 'text-align: right;' : ''}">
+                                <div style="display: inline-block; max-width: 70%; padding: 10px; border-radius: 8px; 
+                                           background: ${msg.sender_id === currentUserProfile?.userId ? '#667eea' : '#374151'};">
+                                    <div style="font-size: 12px; color: #D1D5DB; margin-bottom: 5px;">
+                                        ${msg.sender_name}
+                                    </div>
+                                    <div style="color: white;">${msg.message}</div>
+                                    <div style="font-size: 11px; color: #9CA3AF; margin-top: 5px;">
+                                        ${formatTime(msg.created_at)}
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('');
+                        
+                        // Scroll to bottom
+                        container.scrollTop = container.scrollHeight;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading conversation:', error);
+                container.innerHTML = '<p style="color: #ef4444;">Failed to load messages</p>';
+            }
+        }
+
+        async function sendMessage() {
+            const messageText = document.getElementById('messageText').value.trim();
+            
+            if (!messageText || !currentConversationUserId) return;
+            
+            try {
+                const response = await fetch('/api/community/messages', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        receiverId: currentConversationUserId,
+                        receiverName: currentConversationUserName,
+                        message: messageText
+                    })
+                });
+                
+                if (response.ok) {
+                    document.getElementById('messageText').value = '';
+                    // Reload conversation
+                    loadConversation(currentConversationUserId, currentConversationUserName);
+                }
+            } catch (error) {
+                console.error('Error sending message:', error);
+                showMessage('Failed to send message', 'error');
+            }
         }
 
         // Toggle save on post

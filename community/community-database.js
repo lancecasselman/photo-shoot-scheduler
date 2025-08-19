@@ -64,6 +64,21 @@ class CommunityDatabase {
                 )
             `);
 
+            // Create notifications table
+            await client.query(`
+                CREATE TABLE IF NOT EXISTS community_notifications (
+                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                    user_id VARCHAR(255) NOT NULL,
+                    type VARCHAR(50) CHECK (type IN ('like', 'comment', 'follow', 'mention', 'message')),
+                    title TEXT NOT NULL,
+                    message TEXT NOT NULL,
+                    related_id VARCHAR(255),
+                    related_type VARCHAR(50),
+                    is_read BOOLEAN DEFAULT false,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            `);
+
             // Create likes table (junction table)
             await client.query(`
                 CREATE TABLE IF NOT EXISTS community_likes (
@@ -475,6 +490,141 @@ class CommunityDatabase {
         
         const result = await this.pool.query(query, values);
         return result.rows;
+    }
+
+    // Message operations
+    async sendMessage(messageData) {
+        try {
+            const query = `
+                INSERT INTO community_messages (sender_id, sender_name, receiver_id, receiver_name, message)
+                VALUES ($1, $2, $3, $4, $5)
+                RETURNING *
+            `;
+            const values = [
+                messageData.senderId,
+                messageData.senderName,
+                messageData.receiverId,
+                messageData.receiverName,
+                messageData.message
+            ];
+            
+            const result = await this.pool.query(query, values);
+            
+            // Create notification for the receiver
+            await this.createNotification({
+                userId: messageData.receiverId,
+                type: 'message',
+                title: 'New Message',
+                message: `${messageData.senderName} sent you a message`,
+                relatedId: messageData.senderId,
+                relatedType: 'user'
+            });
+            
+            return result.rows[0];
+        } catch (error) {
+            console.error('Error sending message:', error);
+            throw error;
+        }
+    }
+
+    async getMessages(userId1, userId2) {
+        try {
+            const query = `
+                SELECT * FROM community_messages
+                WHERE (sender_id = $1 AND receiver_id = $2)
+                   OR (sender_id = $2 AND receiver_id = $1)
+                ORDER BY created_at ASC
+            `;
+            const result = await this.pool.query(query, [userId1, userId2]);
+            return result.rows;
+        } catch (error) {
+            console.error('Error getting messages:', error);
+            throw error;
+        }
+    }
+
+    async markMessagesAsRead(receiverId, senderId) {
+        try {
+            const query = `
+                UPDATE community_messages
+                SET is_read = true
+                WHERE receiver_id = $1 AND sender_id = $2 AND is_read = false
+            `;
+            await this.pool.query(query, [receiverId, senderId]);
+        } catch (error) {
+            console.error('Error marking messages as read:', error);
+            throw error;
+        }
+    }
+
+    // Notification operations
+    async createNotification(notificationData) {
+        try {
+            const query = `
+                INSERT INTO community_notifications (user_id, type, title, message, related_id, related_type)
+                VALUES ($1, $2, $3, $4, $5, $6)
+                RETURNING *
+            `;
+            const values = [
+                notificationData.userId,
+                notificationData.type,
+                notificationData.title,
+                notificationData.message,
+                notificationData.relatedId || null,
+                notificationData.relatedType || null
+            ];
+            
+            const result = await this.pool.query(query, values);
+            return result.rows[0];
+        } catch (error) {
+            console.error('Error creating notification:', error);
+            throw error;
+        }
+    }
+
+    async getNotifications(userId) {
+        try {
+            const query = `
+                SELECT * FROM community_notifications
+                WHERE user_id = $1
+                ORDER BY created_at DESC
+                LIMIT 50
+            `;
+            const result = await this.pool.query(query, [userId]);
+            return result.rows;
+        } catch (error) {
+            console.error('Error getting notifications:', error);
+            throw error;
+        }
+    }
+
+    async markNotificationAsRead(userId, notificationId) {
+        try {
+            const query = `
+                UPDATE community_notifications
+                SET is_read = true
+                WHERE user_id = $1 AND id = $2
+            `;
+            await this.pool.query(query, [userId, notificationId]);
+        } catch (error) {
+            console.error('Error marking notification as read:', error);
+            throw error;
+        }
+    }
+
+    async getUnreadNotificationCount(userId) {
+        try {
+            const query = `
+                SELECT COUNT(*) as count
+                FROM community_notifications
+                WHERE user_id = $1 AND is_read = false
+            `;
+            const result = await this.pool.query(query, [userId]);
+            return parseInt(result.rows[0].count);
+        } catch (error) {
+            console.error('Error getting unread notification count:', error);
+            throw error;
+        }
     }
 }
 

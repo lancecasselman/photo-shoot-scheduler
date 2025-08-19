@@ -496,6 +496,42 @@ router.get('/messages/unread/count', requireAuth, async (req, res) => {
     }
 });
 
+// Get notifications
+router.get('/notifications', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session.user.uid || req.session.user.id;
+        const notifications = await db.getNotifications(userId);
+        res.json(notifications);
+    } catch (error) {
+        console.error('Error getting notifications:', error);
+        res.status(500).json({ error: 'Failed to get notifications' });
+    }
+});
+
+// Mark notification as read
+router.put('/notifications/:notificationId/read', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session.user.uid || req.session.user.id;
+        await db.markNotificationAsRead(userId, req.params.notificationId);
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error marking notification as read:', error);
+        res.status(500).json({ error: 'Failed to mark notification as read' });
+    }
+});
+
+// Get unread notification count
+router.get('/notifications/unread/count', requireAuth, async (req, res) => {
+    try {
+        const userId = req.session.user.uid || req.session.user.id;
+        const count = await db.getUnreadNotificationCount(userId);
+        res.json({ count });
+    } catch (error) {
+        console.error('Error getting unread notification count:', error);
+        res.status(500).json({ error: 'Failed to get unread notification count' });
+    }
+});
+
 // Get saved posts
 router.get('/saved', requireAuth, async (req, res) => {
     try {
