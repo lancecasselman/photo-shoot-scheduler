@@ -1120,7 +1120,7 @@ app.post('/api/admin/content', async (req, res) => {
             return res.status(403).json({ error: 'Not authorized' });
         }
         
-        const { page, selector, content } = req.body;
+        const { page, selector, content, type } = req.body;
         
         if (!page || !selector || content === undefined) {
             return res.status(400).json({ error: 'Missing required fields' });
@@ -1133,6 +1133,7 @@ app.post('/api/admin/content', async (req, res) => {
                 page VARCHAR(255) NOT NULL,
                 selector TEXT NOT NULL,
                 content TEXT NOT NULL,
+                type VARCHAR(50) DEFAULT 'text',
                 edited_by VARCHAR(255) NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -1142,14 +1143,15 @@ app.post('/api/admin/content', async (req, res) => {
         
         // Insert or update the content
         await pool.query(`
-            INSERT INTO admin_content_edits (page, selector, content, edited_by)
-            VALUES ($1, $2, $3, $4)
+            INSERT INTO admin_content_edits (page, selector, content, type, edited_by)
+            VALUES ($1, $2, $3, $4, $5)
             ON CONFLICT (page, selector)
             DO UPDATE SET 
                 content = EXCLUDED.content,
+                type = EXCLUDED.type,
                 edited_by = EXCLUDED.edited_by,
                 updated_at = CURRENT_TIMESTAMP
-        `, [page, selector, content, req.session.user.email]);
+        `, [page, selector, content, type || 'text', req.session.user.email]);
         
         res.json({ success: true, message: 'Content saved' });
     } catch (error) {
@@ -1176,7 +1178,7 @@ app.get('/api/admin/content/:page', async (req, res) => {
         }
         
         const result = await pool.query(
-            'SELECT selector, content FROM admin_content_edits WHERE page = $1',
+            'SELECT selector, content, type FROM admin_content_edits WHERE page = $1',
             [page]
         );
         
