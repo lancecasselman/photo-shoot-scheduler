@@ -1299,7 +1299,7 @@
         moveControls.style.cssText = `
             position: absolute;
             top: 50%;
-            right: -45px;
+            right: 10px;
             transform: translateY(-50%);
             display: none;
             flex-direction: column;
