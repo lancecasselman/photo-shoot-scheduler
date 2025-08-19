@@ -1972,57 +1972,78 @@
     
     // Apply editing capabilities to existing content sections
     function applyEditingToExistingContent() {
-        // Find all major content sections
-        const sections = document.querySelectorAll('section, article, .content-section, .hero-section, .features-section, .contact-section, .gallery-section');
+        console.log('Applying editing controls to existing content...');
         
-        sections.forEach(section => {
-            // Skip if already has delete button
-            if (section.querySelector('.block-delete-btn')) return;
-            
-            // Apply editing capabilities
-            makeEditableWithDelete(section);
-        });
+        // Find all major content blocks - be more comprehensive
+        const allElements = document.querySelectorAll('section, article, div, header, footer, main > *, .content-section, .hero-section, .features-section, .contact-section, .gallery-section, .text-block, .photo-block, .content-block, .editable-content, .image-block');
         
-        // Also apply to individual content blocks including photo blocks
-        const blocks = document.querySelectorAll('.text-block, .photo-block, .content-block, .editable-content, .image-block, img');
-        blocks.forEach(block => {
-            if (!block.querySelector('.block-delete-btn')) {
-                // For img elements, wrap them in a div first if not already wrapped
-                if (block.tagName === 'IMG' && !block.parentElement.classList.contains('photo-block')) {
-                    const wrapper = document.createElement('div');
-                    wrapper.className = 'photo-block image-block resizable-block';
-                    
-                    // Get original image dimensions
-                    const imgWidth = block.naturalWidth || block.width || 300;
-                    const imgHeight = block.naturalHeight || block.height || 200;
-                    
-                    // Set wrapper dimensions based on image
-                    wrapper.style.display = 'block';
-                    wrapper.style.width = imgWidth + 'px';
-                    wrapper.style.height = imgHeight + 'px';
-                    wrapper.style.overflow = 'hidden';
-                    wrapper.style.position = 'relative';
-                    
-                    // Remove any width/height attributes from image
-                    block.removeAttribute('width');
-                    block.removeAttribute('height');
-                    
-                    // Make image responsive within wrapper
-                    block.style.width = '100%';
-                    block.style.height = '100%';
-                    block.style.objectFit = 'cover';
-                    block.style.display = 'block';
-                    block.style.maxWidth = 'none';
-                    block.style.maxHeight = 'none';
-                    
-                    block.parentNode.insertBefore(wrapper, block);
-                    wrapper.appendChild(block);
-                    makeEditableWithDelete(wrapper);
-                } else {
-                    makeEditableWithDelete(block);
-                }
+        let appliedCount = 0;
+        allElements.forEach(element => {
+            // Skip if already has controls, is toolbar, or is too small
+            if (element.querySelector('.block-delete-btn') || 
+                element.querySelector('.block-move-controls') ||
+                element.id === 'admin-toolbar' ||
+                element.classList.contains('admin-toolbar') ||
+                element.tagName === 'SCRIPT' ||
+                element.tagName === 'STYLE' ||
+                element.offsetHeight < 30) {
+                return;
             }
+            
+            // Apply editing capabilities with move controls
+            makeEditableWithDelete(element);
+            appliedCount++;
         });
+        
+        // Also handle standalone images
+        const images = document.querySelectorAll('img');
+        images.forEach(img => {
+            // Skip if already wrapped or in toolbar
+            if (img.closest('.photo-block') || 
+                img.closest('#admin-toolbar') ||
+                img.closest('.block-move-controls')) {
+                return;
+            }
+            
+            // Wrap standalone images
+            const wrapper = document.createElement('div');
+            wrapper.className = 'photo-block image-block resizable-block';
+            
+            // Get original image dimensions
+            const imgWidth = img.naturalWidth || img.width || 300;
+            const imgHeight = img.naturalHeight || img.height || 200;
+            
+            // Set wrapper dimensions based on image
+            wrapper.style.display = 'block';
+            wrapper.style.width = imgWidth + 'px';
+            wrapper.style.height = imgHeight + 'px';
+            wrapper.style.overflow = 'hidden';
+            wrapper.style.position = 'relative';
+            
+            // Remove any width/height attributes from image
+            img.removeAttribute('width');
+            img.removeAttribute('height');
+            
+            // Make image responsive within wrapper
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'cover';
+            img.style.display = 'block';
+            img.style.maxWidth = 'none';
+            img.style.maxHeight = 'none';
+            
+            img.parentNode.insertBefore(wrapper, img);
+            wrapper.appendChild(img);
+            makeEditableWithDelete(wrapper);
+            appliedCount++;
+        });
+        
+        console.log(`Applied editing controls to ${appliedCount} elements`);
+        
+        // Show confirmation message
+        if (appliedCount > 0) {
+            showFloatingMessage(`Added controls to ${appliedCount} blocks`);
+        }
     }
     
     // Apply font family
