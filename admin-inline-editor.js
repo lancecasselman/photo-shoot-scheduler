@@ -815,15 +815,26 @@
             mainContent.appendChild(photoBlock);
         }
         
-        // Add upload handler
+        // Add upload handler ONLY if no image exists
         const uploadArea = photoBlock.querySelector('.photo-upload-area');
         const fileInput = photoBlock.querySelector('input[type="file"]');
+        const existingImg = uploadArea.querySelector('img');
         
-        uploadArea.addEventListener('click', () => fileInput.click());
-        
-        fileInput.addEventListener('change', (e) => {
-            handlePhotoUpload(e.target.files[0], photoBlock);
-        });
+        if (!existingImg) {
+            // Only allow upload if there's no image
+            uploadArea.addEventListener('click', () => fileInput.click());
+            
+            fileInput.addEventListener('change', (e) => {
+                handlePhotoUpload(e.target.files[0], photoBlock);
+            });
+        } else {
+            // If image exists, make it selectable for resizing
+            existingImg.style.cursor = 'pointer';
+            existingImg.addEventListener('click', (e) => {
+                e.stopPropagation();
+                selectImage(existingImg, photoBlock);
+            });
+        }
         
         // Enable drag and drop
         uploadArea.addEventListener('dragover', (e) => {
@@ -867,6 +878,23 @@
             const uploadArea = photoBlock.querySelector('.photo-upload-area');
             uploadArea.innerHTML = `<img src="${e.target.result}" alt="Uploaded photo">`;
             photoBlock.classList.add('has-image');
+            
+            // Make the new image selectable for resizing
+            const newImg = uploadArea.querySelector('img');
+            if (newImg) {
+                newImg.style.cursor = 'pointer';
+                
+                // Remove any existing click handlers on upload area
+                const newUploadArea = uploadArea.cloneNode(true);
+                uploadArea.parentNode.replaceChild(newUploadArea, uploadArea);
+                
+                // Add selection handler to the image
+                const img = newUploadArea.querySelector('img');
+                img.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    selectImage(img, photoBlock);
+                });
+            }
             
             // Save the updated block
             savePhotoBlock(photoBlock);
@@ -912,6 +940,26 @@
             parent.insertBefore(photoBlock, before);
         } else {
             parent.appendChild(photoBlock);
+        }
+        
+        // If there's an image, make it selectable for resizing
+        const uploadArea = photoBlock.querySelector('.photo-upload-area');
+        const img = uploadArea?.querySelector('img');
+        if (img) {
+            img.style.cursor = 'pointer';
+            img.addEventListener('click', (e) => {
+                e.stopPropagation();
+                selectImage(img, photoBlock);
+            });
+        } else if (uploadArea) {
+            // Only add upload handler if there's no image
+            const fileInput = uploadArea.querySelector('input[type="file"]');
+            if (fileInput) {
+                uploadArea.addEventListener('click', () => fileInput.click());
+                fileInput.addEventListener('change', (e) => {
+                    handlePhotoUpload(e.target.files[0], photoBlock);
+                });
+            }
         }
         
         // Apply drag and drop functionality with delete button
