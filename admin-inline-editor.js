@@ -120,7 +120,8 @@
                                     element.remove();
                                 } else {
                                     element.innerHTML = edit.content;
-                                    // DON'T set originalContent here - it will be set when editing controls are applied
+                                    // Update the baseline to the saved content so we only detect NEW changes
+                                    element.dataset.originalContent = edit.content;
                                 }
                             }
                         });
@@ -167,7 +168,7 @@
     function makeElementEditable(element) {
         element.classList.add('admin-editable');
         // Only set originalContent if it hasn't been set yet
-        // This preserves the actual original content before any edits were loaded
+        // This preserves the saved state or sets initial content
         if (!element.dataset.originalContent) {
             element.dataset.originalContent = element.innerHTML;
         }
