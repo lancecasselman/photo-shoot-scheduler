@@ -12701,8 +12701,8 @@ app.post('/api/stripe-connect/onboard', isAuthenticated, async (req, res) => {
         
         // Create onboarding link
         const baseUrl = req.headers.origin || `https://${req.headers.host}`;
-        const refreshUrl = `${baseUrl}/stripe-connect/refresh`;
-        const returnUrl = `${baseUrl}/stripe-connect/success`;
+        const refreshUrl = `${baseUrl}/payment-settings.html?stripe_connect=refresh`;
+        const returnUrl = `${baseUrl}/payment-settings.html?stripe_connect=success`;
         
         const linkResult = await stripeConnectManager.createAccountLink(
             accountResult.accountId,
@@ -12746,8 +12746,14 @@ app.get('/api/stripe-connect/status', isAuthenticated, async (req, res) => {
         
         if (!userResult.rows[0]?.stripe_connect_account_id) {
             return res.json({
-                connected: false,
-                onboardingComplete: false,
+                hasAccount: false,
+                account: null,
+                status: {
+                    isOnboardingComplete: false,
+                    chargesEnabled: false,
+                    payoutsEnabled: false,
+                    detailsSubmitted: false
+                },
                 message: 'No Stripe account connected'
             });
         }
@@ -12757,14 +12763,20 @@ app.get('/api/stripe-connect/status', isAuthenticated, async (req, res) => {
         
         if (!statusResult.success) {
             return res.json({
-                connected: false,
-                onboardingComplete: false,
+                hasAccount: false,
+                account: null,
+                status: {
+                    isOnboardingComplete: false,
+                    chargesEnabled: false,
+                    payoutsEnabled: false,
+                    detailsSubmitted: false
+                },
                 error: statusResult.error
             });
         }
         
         // Update database if onboarding is now complete
-        if (statusResult.onboardingComplete && !userResult.rows[0].stripe_onboarding_complete) {
+        if (statusResult.isOnboardingComplete && !userResult.rows[0].stripe_onboarding_complete) {
             await pool.query(
                 'UPDATE users SET stripe_onboarding_complete = true WHERE id = $1',
                 [userId]
@@ -12772,19 +12784,32 @@ app.get('/api/stripe-connect/status', isAuthenticated, async (req, res) => {
         }
         
         res.json({
-            connected: true,
-            accountId: accountId,
-            onboardingComplete: statusResult.onboardingComplete,
-            canReceivePayments: statusResult.canReceivePayments,
-            canReceivePayouts: statusResult.canReceivePayouts,
-            requiresInfo: statusResult.requiresInfo
+            hasAccount: true,
+            account: {
+                id: accountId,
+                email: statusResult.account?.email || req.session.user.email,
+                country: statusResult.account?.country || 'US'
+            },
+            status: {
+                isOnboardingComplete: statusResult.isOnboardingComplete,
+                chargesEnabled: statusResult.chargesEnabled,
+                payoutsEnabled: statusResult.payoutsEnabled,
+                detailsSubmitted: statusResult.detailsSubmitted,
+                requiresInfo: statusResult.requiresInfo || []
+            }
         });
         
     } catch (error) {
         console.error('❌ Error checking Connect status:', error);
         res.status(500).json({
-            connected: false,
-            onboardingComplete: false,
+            hasAccount: false,
+            account: null,
+            status: {
+                isOnboardingComplete: false,
+                chargesEnabled: false,
+                payoutsEnabled: false,
+                detailsSubmitted: false
+            },
             error: 'Failed to check account status'
         });
     }
@@ -12811,8 +12836,8 @@ app.post('/api/stripe-connect/refresh', isAuthenticated, async (req, res) => {
         
         // Create new onboarding link
         const baseUrl = req.headers.origin || `https://${req.headers.host}`;
-        const refreshUrl = `${baseUrl}/stripe-connect/refresh`;
-        const returnUrl = `${baseUrl}/stripe-connect/success`;
+        const refreshUrl = `${baseUrl}/payment-settings.html?stripe_connect=refresh`;
+        const returnUrl = `${baseUrl}/payment-settings.html?stripe_connect=success`;
         
         const linkResult = await stripeConnectManager.createAccountLink(
             accountId,

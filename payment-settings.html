@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Settings - Photography Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #7f8c8d;
+            font-size: 16px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .card h2 {
+            font-size: 22px;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 10px;
+        }
+        
+        .status-banner {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-banner.connected {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .status-banner.pending {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+        }
+        
+        .status-banner.not-connected {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .status-icon {
+            font-size: 24px;
+        }
+        
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: background 0.3s;
+        }
+        
+        .button:hover {
+            background: #2980b9;
+        }
+        
+        .button.secondary {
+            background: #95a5a6;
+        }
+        
+        .button.secondary:hover {
+            background: #7f8c8d;
+        }
+        
+        .button.success {
+            background: #27ae60;
+        }
+        
+        .button.success:hover {
+            background: #229954;
+        }
+        
+        .info-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: #ecf0f1;
+            border-radius: 8px;
+        }
+        
+        .info-section h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #34495e;
+        }
+        
+        .info-section ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .info-section li {
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .info-section li:before {
+            content: "✓";
+            color: #27ae60;
+            font-weight: bold;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
+        
+        .spinner {
+            border: 3px solid #ecf0f1;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #3498db;
+            text-decoration: none;
+            font-size: 16px;
+        }
+        
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        
+        .account-details {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .account-details p {
+            margin: 5px 0;
+            color: #495057;
+        }
+        
+        .account-details strong {
+            color: #2c3e50;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">← Back to Dashboard</a>
+        
+        <div class="header">
+            <h1>Payment Settings</h1>
+            <p>Connect your Stripe account to receive payments directly from your clients</p>
+        </div>
+        
+        <div id="loading" class="card loading">
+            <div class="spinner"></div>
+            <p>Loading your payment settings...</p>
+        </div>
+        
+        <div id="content" style="display: none;">
+            <div class="card">
+                <h2>Stripe Connect Status</h2>
+                
+                <div id="statusBanner" class="status-banner">
+                    <!-- Status will be populated here -->
+                </div>
+                
+                <div id="accountDetails" class="account-details" style="display: none;">
+                    <!-- Account details will be populated here -->
+                </div>
+                
+                <div id="actionSection">
+                    <!-- Action buttons will be populated here -->
+                </div>
+                
+                <div class="info-section">
+                    <h3>How Stripe Connect Works</h3>
+                    <ul>
+                        <li>Receive payments directly to your bank account</li>
+                        <li>Automatic daily or weekly payouts</li>
+                        <li>Professional invoices sent to clients</li>
+                        <li>Secure payment processing with fraud protection</li>
+                        <li>Support for deposits and payment plans</li>
+                        <li>Transaction fees: 2.9% + 30¢ per successful payment</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>Payment Features</h2>
+                
+                <div class="info-section">
+                    <h3>Available Payment Options</h3>
+                    <ul>
+                        <li>Session deposits (customizable amounts)</li>
+                        <li>Full session payments</li>
+                        <li>Payment plans for large bookings</li>
+                        <li>Automatic payment reminders</li>
+                        <li>Digital invoices with payment links</li>
+                        <li>Credit card and ACH bank transfers</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div id="messageArea"></div>
+    </div>
+    
+    <script>
+        let stripeAccountId = null;
+        let stripeAccountStatus = null;
+        
+        async function checkAuthAndLoadStatus() {
+            try {
+                // Check authentication
+                const authResponse = await fetch('/api/check-auth', {
+                    credentials: 'include'
+                });
+                
+                if (!authResponse.ok) {
+                    window.location.href = '/auth.html';
+                    return;
+                }
+                
+                // Load Stripe Connect status
+                await loadStripeStatus();
+                
+            } catch (error) {
+                console.error('Error checking auth:', error);
+                showError('Failed to load payment settings. Please try again.');
+            }
+        }
+        
+        async function loadStripeStatus() {
+            try {
+                const response = await fetch('/api/stripe-connect/status', {
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load Stripe status');
+                }
+                
+                const data = await response.json();
+                displayStatus(data);
+                
+                // Hide loading, show content
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error loading Stripe status:', error);
+                showError('Failed to load payment status. Please refresh the page.');
+            }
+        }
+        
+        function displayStatus(data) {
+            const statusBanner = document.getElementById('statusBanner');
+            const accountDetails = document.getElementById('accountDetails');
+            const actionSection = document.getElementById('actionSection');
+            
+            if (data.hasAccount && data.account) {
+                stripeAccountId = data.account.id;
+                stripeAccountStatus = data.status;
+                
+                if (data.status.isOnboardingComplete) {
+                    // Fully connected
+                    statusBanner.className = 'status-banner connected';
+                    statusBanner.innerHTML = `
+                        <span class="status-icon">✅</span>
+                        <div>
+                            <strong>Connected</strong>
+                            <p>Your Stripe account is active and ready to receive payments</p>
+                        </div>
+                    `;
+                    
+                    // Show account details
+                    accountDetails.style.display = 'block';
+                    accountDetails.innerHTML = `
+                        <p><strong>Account ID:</strong> ${data.account.id}</p>
+                        <p><strong>Email:</strong> ${data.account.email || 'Not provided'}</p>
+                        <p><strong>Country:</strong> ${data.account.country}</p>
+                        <p><strong>Charges Enabled:</strong> ${data.status.chargesEnabled ? 'Yes' : 'No'}</p>
+                        <p><strong>Payouts Enabled:</strong> ${data.status.payoutsEnabled ? 'Yes' : 'No'}</p>
+                    `;
+                    
+                    actionSection.innerHTML = `
+                        <button class="button success" onclick="openStripeDashboard()">
+                            Open Stripe Dashboard
+                        </button>
+                        <button class="button secondary" onclick="refreshOnboarding()" style="margin-left: 10px;">
+                            Update Account Info
+                        </button>
+                    `;
+                    
+                } else {
+                    // Onboarding incomplete
+                    statusBanner.className = 'status-banner pending';
+                    statusBanner.innerHTML = `
+                        <span class="status-icon">⚠️</span>
+                        <div>
+                            <strong>Setup Incomplete</strong>
+                            <p>Please complete your Stripe account setup to start receiving payments</p>
+                        </div>
+                    `;
+                    
+                    let missingItems = [];
+                    if (!data.status.detailsSubmitted) missingItems.push('Account details');
+                    if (!data.status.chargesEnabled) missingItems.push('Payment verification');
+                    if (!data.status.payoutsEnabled) missingItems.push('Bank account');
+                    
+                    if (missingItems.length > 0) {
+                        accountDetails.style.display = 'block';
+                        accountDetails.innerHTML = `
+                            <p><strong>Missing items:</strong></p>
+                            <ul>${missingItems.map(item => `<li>• ${item}</li>`).join('')}</ul>
+                        `;
+                    }
+                    
+                    actionSection.innerHTML = `
+                        <button class="button" onclick="continueOnboarding()">
+                            Continue Setup
+                        </button>
+                    `;
+                }
+                
+            } else {
+                // No account
+                statusBanner.className = 'status-banner not-connected';
+                statusBanner.innerHTML = `
+                    <span class="status-icon">❌</span>
+                    <div>
+                        <strong>Not Connected</strong>
+                        <p>Connect your Stripe account to start accepting payments</p>
+                    </div>
+                `;
+                
+                actionSection.innerHTML = `
+                    <button class="button" onclick="startOnboarding()">
+                        Connect Stripe Account
+                    </button>
+                `;
+            }
+        }
+        
+        async function startOnboarding() {
+            try {
+                showMessage('Setting up your Stripe account...', 'info');
+                
+                const response = await fetch('/api/stripe-connect/onboard', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to start onboarding');
+                }
+                
+                const data = await response.json();
+                
+                if (data.onboardingUrl) {
+                    // Redirect to Stripe onboarding
+                    window.location.href = data.onboardingUrl;
+                } else {
+                    throw new Error('No onboarding URL received');
+                }
+                
+            } catch (error) {
+                console.error('Error starting onboarding:', error);
+                showError('Failed to start Stripe setup. Please try again.');
+            }
+        }
+        
+        async function continueOnboarding() {
+            await refreshOnboarding();
+        }
+        
+        async function refreshOnboarding() {
+            try {
+                showMessage('Loading Stripe setup...', 'info');
+                
+                const response = await fetch('/api/stripe-connect/refresh', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to refresh onboarding');
+                }
+                
+                const data = await response.json();
+                
+                if (data.onboardingUrl) {
+                    // Redirect to Stripe onboarding
+                    window.location.href = data.onboardingUrl;
+                } else {
+                    throw new Error('No onboarding URL received');
+                }
+                
+            } catch (error) {
+                console.error('Error refreshing onboarding:', error);
+                showError('Failed to load Stripe setup. Please try again.');
+            }
+        }
+        
+        function openStripeDashboard() {
+            // Open Stripe Express Dashboard
+            window.open(`https://dashboard.stripe.com/connect/accounts/${stripeAccountId}`, '_blank');
+        }
+        
+        function showMessage(message, type) {
+            const messageArea = document.getElementById('messageArea');
+            const className = type === 'error' ? 'error-message' : 
+                            type === 'success' ? 'success-message' : 
+                            'status-banner pending';
+            
+            messageArea.innerHTML = `<div class="${className}">${message}</div>`;
+            
+            setTimeout(() => {
+                messageArea.innerHTML = '';
+            }, 5000);
+        }
+        
+        function showError(message) {
+            showMessage(message, 'error');
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+        }
+        
+        // Check for return from Stripe
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('stripe_connect') === 'success') {
+            showMessage('Successfully connected your Stripe account!', 'success');
+            // Remove query params
+            window.history.replaceState({}, document.title, window.location.pathname);
+        } else if (urlParams.get('stripe_connect') === 'refresh') {
+            showMessage('Please complete your Stripe account setup', 'info');
+            // Remove query params
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', checkAuthAndLoadStatus);
+    </script>
+</body>
+</html>
