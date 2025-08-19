@@ -26,9 +26,13 @@
             
             const authData = await authResponse.json();
             
-            if (authData.email === ADMIN_EMAIL) {
+            // Only activate admin controls on secure-landing.html page
+            const currentPath = window.location.pathname;
+            const isSecureLandingPage = currentPath === '/secure-landing.html' || currentPath === '/secure-landing';
+            
+            if (authData.email === ADMIN_EMAIL && isSecureLandingPage) {
                 isAdmin = true;
-                console.log('Admin editor activated');
+                console.log('Admin editor activated on secure landing page');
                 
                 // Load saved edits first
                 await loadSavedEdits();
@@ -43,6 +47,10 @@
                 
                 // Apply editing to existing content
                 applyEditingToExistingContent();
+            } else if (authData.email === ADMIN_EMAIL) {
+                // Admin user but not on secure-landing page - just load saved edits without controls
+                console.log('Admin user detected, but controls disabled on this page');
+                await loadSavedEdits();
             }
         } catch (error) {
             console.log('Admin editor not available:', error);
