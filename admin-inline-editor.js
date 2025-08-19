@@ -204,6 +204,10 @@
     
     // Start editing an element
     function startEditing(element) {
+        // Log the baseline before editing starts
+        console.log('Starting edit - baseline:', element.dataset.originalContent);
+        console.log('Starting edit - current:', element.innerHTML);
+        
         element.contentEditable = true;
         element.focus();
         element.style.outline = '2px solid #667eea';
@@ -244,6 +248,11 @@
     
     // Stop editing an element
     function stopEditing(element) {
+        // Log what we have when stopping edit
+        console.log('Stopping edit - baseline:', element.dataset.originalContent);
+        console.log('Stopping edit - current:', element.innerHTML);
+        console.log('Stopping edit - has changed?', element.innerHTML !== element.dataset.originalContent);
+        
         element.contentEditable = false;
         element.style.outline = 'none';
         element.style.background = 'transparent';
@@ -1090,19 +1099,31 @@
         let savedCount = 0;
         let checkedCount = 0;
         
+        // First, show what we have for the first few elements
+        for (let i = 0; i < Math.min(3, editables.length); i++) {
+            const el = editables[i];
+            console.log(`\n=== Sample Element ${i + 1} ===`);
+            console.log('Tag:', el.tagName);
+            console.log('Text content:', el.textContent.substring(0, 50));
+            console.log('Has originalContent?', !!el.dataset.originalContent);
+            if (el.dataset.originalContent) {
+                console.log('Original first 50 chars:', el.dataset.originalContent.substring(0, 50));
+                console.log('Current first 50 chars:', el.innerHTML.substring(0, 50));
+            }
+        }
+        
         for (const element of editables) {
             checkedCount++;
             const current = element.innerHTML;
             const original = element.dataset.originalContent || '';
             
-            console.log(`Checking element ${checkedCount}:`, {
-                hasChanged: current !== original,
-                currentLength: current.length,
-                originalLength: original.length
-            });
-            
             if (current !== original) {
-                console.log('Saving changed element...');
+                console.log(`\n🔴 CHANGE DETECTED in element ${checkedCount}:`);
+                console.log('- Tag:', element.tagName);
+                console.log('- Text:', element.textContent.substring(0, 30));
+                console.log('- Original length:', original.length);
+                console.log('- Current length:', current.length);
+                console.log('Saving...');
                 await saveContent(element);
                 // Update baseline after successful save
                 element.dataset.originalContent = current;
