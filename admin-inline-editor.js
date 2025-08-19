@@ -314,51 +314,74 @@
         toolbar.innerHTML = `
             <div style="
                 position: fixed;
-                bottom: 20px;
+                bottom: 30px;
                 left: 50%;
-                transform: translateX(-50%);
-                background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
-                border: 2px solid #d4af37;
+                transform: translateX(-50%) scale(1.1);
+                background: linear-gradient(135deg, #000000, #2d2d2d);
+                border: 3px solid #d4af37;
                 border-radius: 50px;
-                padding: 10px 20px;
+                padding: 15px 25px;
                 display: flex;
-                gap: 10px;
-                z-index: 99999;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+                gap: 15px;
+                z-index: 2147483647;
+                box-shadow: 0 0 50px rgba(212, 175, 55, 0.8), 0 20px 40px rgba(0,0,0,0.9);
+                backdrop-filter: blur(10px);
+                animation: toolbarGlow 3s ease-in-out infinite;
             ">
-                <button id="add-photo-block" style="
-                    background: #d4af37;
-                    color: #1a1a1a;
-                    border: none;
+                <div style="
+                    background: linear-gradient(135deg, #ff0080, #ff6ec7);
+                    color: white;
                     padding: 8px 16px;
-                    border-radius: 25px;
-                    font-weight: 600;
+                    border-radius: 20px;
+                    font-weight: 900;
+                    font-size: 14px;
+                    text-transform: uppercase;
+                    letter-spacing: 2px;
+                    margin-right: 10px;
+                    border: 2px solid #fff;
+                    box-shadow: 0 4px 10px rgba(255, 0, 128, 0.5);
+                ">
+                    ⚡ ADMIN MODE
+                </div>
+                <button id="add-photo-block" style="
+                    background: linear-gradient(135deg, #d4af37, #f0c74a);
+                    color: #000000;
+                    border: 2px solid #fff;
+                    padding: 12px 24px;
+                    border-radius: 30px;
+                    font-weight: 700;
+                    font-size: 16px;
                     cursor: pointer;
                     transition: all 0.3s;
+                    box-shadow: 0 4px 10px rgba(212, 175, 55, 0.5);
                 ">
                     + Add Photo Block
                 </button>
                 <button id="add-text-block" style="
-                    background: #667eea;
+                    background: linear-gradient(135deg, #667eea, #7c8ff7);
                     color: white;
-                    border: none;
-                    padding: 8px 16px;
-                    border-radius: 25px;
-                    font-weight: 600;
+                    border: 2px solid #fff;
+                    padding: 12px 24px;
+                    border-radius: 30px;
+                    font-weight: 700;
+                    font-size: 16px;
                     cursor: pointer;
                     transition: all 0.3s;
+                    box-shadow: 0 4px 10px rgba(102, 126, 234, 0.5);
                 ">
                     + Add Text
                 </button>
                 <button id="save-all" style="
-                    background: #10b981;
+                    background: linear-gradient(135deg, #10b981, #22d39f);
                     color: white;
-                    border: none;
-                    padding: 8px 16px;
-                    border-radius: 25px;
-                    font-weight: 600;
+                    border: 2px solid #fff;
+                    padding: 12px 24px;
+                    border-radius: 30px;
+                    font-weight: 700;
+                    font-size: 16px;
                     cursor: pointer;
                     transition: all 0.3s;
+                    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.5);
                 ">
                     Save All
                 </button>
@@ -378,6 +401,22 @@
         // Add styles for photo blocks
         const style = document.createElement('style');
         style.textContent = `
+            @keyframes toolbarGlow {
+                0%, 100% { 
+                    box-shadow: 0 0 50px rgba(212, 175, 55, 0.8), 0 20px 40px rgba(0,0,0,0.9);
+                    transform: translateX(-50%) scale(1.1);
+                }
+                50% { 
+                    box-shadow: 0 0 80px rgba(212, 175, 55, 1), 0 25px 50px rgba(0,0,0,0.95);
+                    transform: translateX(-50%) scale(1.12);
+                }
+            }
+            
+            #admin-toolbar button:hover {
+                transform: scale(1.1) !important;
+                filter: brightness(1.2);
+            }
+            
             .photo-block {
                 position: relative;
                 margin: 20px 0;
