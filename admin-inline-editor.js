@@ -59,15 +59,27 @@
     
     // Load saved content edits
     async function loadSavedEdits() {
+        console.log('Loading saved edits for page:', currentPage);
+        
         try {
             const response = await fetch(`/api/admin/content/${currentPage}`);
-            if (!response.ok) return;
+            console.log('Load response status:', response.status);
+            
+            if (!response.ok) {
+                console.log('Failed to load saved edits - bad response');
+                return;
+            }
             
             const data = await response.json();
+            console.log('Loaded edits data:', data);
+            
             if (data.edits && data.edits.length > 0) {
                 data.edits.forEach(edit => {
                     try {
+                        console.log('Applying edit to selector:', edit.selector);
                         const elements = document.querySelectorAll(edit.selector);
+                        console.log('Found elements:', elements.length);
+                        
                         elements.forEach(element => {
                             if (element) {
                                 if (edit.type === 'photoBlock') {
@@ -85,6 +97,8 @@
                     }
                 });
                 console.log(`Applied ${data.edits.length} saved edits`);
+            } else {
+                console.log('No saved edits found for this page');
             }
         } catch (error) {
             console.log('Could not load saved edits:', error);
@@ -217,6 +231,8 @@
         const selector = getElementSelector(element);
         const content = element.innerHTML;
         
+        console.log('Saving content - page:', currentPage, 'selector:', selector);
+        
         try {
             const response = await fetch('/api/admin/content', {
                 method: 'POST',
@@ -232,15 +248,20 @@
                 })
             });
             
+            const result = await response.json();
+            console.log('Save response:', response.status, result);
+            
             if (response.ok) {
                 element.dataset.originalContent = content;
                 showSaveIndicator(element, 'saved');
+                console.log('Content saved successfully');
             } else {
+                console.error('Save failed - server error:', result);
                 element.innerHTML = element.dataset.originalContent;
                 showSaveIndicator(element, 'error');
             }
         } catch (error) {
-            console.error('Save failed:', error);
+            console.error('Save failed - network error:', error);
             element.innerHTML = element.dataset.originalContent;
             showSaveIndicator(element, 'error');
         }
