@@ -34,11 +34,11 @@
                 isAdmin = true;
                 console.log('Admin editor activated on secure landing page');
                 
-                // FIRST: Store the ORIGINAL HTML as baseline (before loading any saved edits)
-                storeCurrentStateAsBaseline();
-                
-                // SECOND: Load and apply saved edits on top of the baseline
+                // FIRST: Load and apply saved edits
                 await loadSavedEdits();
+                
+                // SECOND: Store the current state (WITH saved edits) as baseline
+                storeCurrentStateAsBaseline();
                 
                 // THIRD: Enable editing features
                 enableInlineEditing();
@@ -60,9 +60,9 @@
         }
     }
     
-    // Store original HTML state as baseline (before loading saved edits)
+    // Store current state as baseline (AFTER loading saved edits)
     function storeCurrentStateAsBaseline() {
-        console.log('Storing ORIGINAL HTML as baseline for change detection...');
+        console.log('Storing current state (with saved edits) as baseline for change detection...');
         
         // Select all elements that will be editable
         const editableSelectors = [
