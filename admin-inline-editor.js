@@ -971,7 +971,7 @@
     // Insert text block
     function insertTextBlock() {
         const textBlock = document.createElement('div');
-        textBlock.className = 'text-content admin-editable';
+        textBlock.className = 'text-content admin-editable text-block';
         textBlock.style.cssText = `
             margin: 20px 0;
             padding: 15px;
@@ -986,8 +986,8 @@
         const mainContent = document.querySelector('main, .content, .container, body');
         mainContent.appendChild(textBlock);
         
-        // Make it editable
-        makeElementEditable(textBlock);
+        // Apply full editing capabilities with arrow controls
+        makeEditableWithDelete(textBlock);
         
         // Focus on it
         textBlock.focus();
