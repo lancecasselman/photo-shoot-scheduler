@@ -1,0 +1,86 @@
+hero-background.jpg:1   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/hero-background.jpg 404 (Not Found)
+[NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
+        Learn more
+        Don't show again
+hero-background.jpg:1   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/hero-background.jpg 404 (Not Found)
+hero-background.jpg:1   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/hero-background.jpg 404 (Not Found)
+hero-background.jpg:1   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/hero-background.jpg 404 (Not Found)
+hero-background.jpg:1   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/hero-background.jpg 404 (Not Found)
+hero-background.jpg:1   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/hero-background.jpg 404 (Not Found)
+hero-background.jpg:1   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/hero-background.jpg 404 (Not Found)
+hero-background.jpg:1   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/hero-background.jpg 404 (Not Found)
+hero-background.jpg:1   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/hero-background.jpg 404 (Not Found)
+hero-background.jpg:1   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/hero-background.jpg 404 (Not Found)
+admin-inline-editor.js:149 Apply button clicked
+admin-inline-editor.js:152 Found editable elements: 99
+admin-inline-editor.js:162 🔍 Checking Photography element:
+admin-inline-editor.js:163   Current HTML: Photography Management System
+admin-inline-editor.js:164   Original HTML: Photography Management System
+admin-inline-editor.js:165   Are they different? false
+admin-inline-editor.js:166   Current text: Photography Management System
+admin-inline-editor.js:162 🔍 Checking Photography element:
+admin-inline-editor.js:163   Current HTML: Photography Community
+admin-inline-editor.js:164   Original HTML: Photography Community
+admin-inline-editor.js:165   Are they different? false
+admin-inline-editor.js:166   Current text: Photography Community
+admin-inline-editor.js:162 🔍 Checking Photography element:
+admin-inline-editor.js:163   Current HTML: ✓ Photography Community Access
+admin-inline-editor.js:164   Original HTML: ✓ Photography Community Access
+admin-inline-editor.js:165   Are they different? false
+admin-inline-editor.js:166   Current text: ✓ Photography Community Access
+admin-inline-editor.js:162 🔍 Checking Photography element:
+admin-inline-editor.js:163   Current HTML: Why Choose Photography Management System?
+admin-inline-editor.js:164   Original HTML: Why Choose Photography Management System?
+admin-inline-editor.js:165   Are they different? false
+admin-inline-editor.js:166   Current text: Why Choose Photography Management System?
+admin-inline-editor.js:162 🔍 Checking Photography element:
+admin-inline-editor.js:163   Current HTML: That's why we built Photography Management System - to give photographers the tools they need to streamline their business operations and focus on what they do best: capturing beautiful moments.
+admin-inline-editor.js:164   Original HTML: That's why we built Photography Management System - to give photographers the tools they need to streamline their business operations and focus on what they do best: capturing beautiful moments.
+admin-inline-editor.js:165   Are they different? false
+admin-inline-editor.js:166   Current text: That's why we built Photography Management System - to give photographers the tools they need to streamline their business operations and focus on what they do best: capturing beautiful moments.
+admin-inline-editor.js:162 🔍 Checking Photography element:
+admin-inline-editor.js:163   Current HTML: Ready to Streamline Your Photography Business?
+admin-inline-editor.js:164   Original HTML: Ready to Streamline Your Photography Business?
+admin-inline-editor.js:165   Are they different? false
+admin-inline-editor.js:166   Current text: Ready to Streamline Your Photography Business?
+admin-inline-editor.js:162 🔍 Checking Photography element:
+admin-inline-editor.js:163   Current HTML: Photography Management System
+admin-inline-editor.js:164   Original HTML: Photography Management System
+admin-inline-editor.js:165   Are they different? false
+admin-inline-editor.js:166   Current text: Photography Management System
+admin-inline-editor.js:162 🔍 Checking Photography element:
+admin-inline-editor.js:163   Current HTML: © 2025 Photography Management System. Built for photographers, by photographers.
+admin-inline-editor.js:164   Original HTML: © 2025 Photography Management System. Built for photographers, by photographers.
+admin-inline-editor.js:165   Are they different? false
+admin-inline-editor.js:166   Current text: © 2025 Photography Management System. Built for photographers, by photographers.
+admin-inline-editor.js:206 Apply complete: 0 changes applied to baseline
+admin-inline-editor.js:1190 Save All button clicked
+admin-inline-editor.js:1193 Found editable elements: 99
+admin-inline-editor.js:1201 
+=== Sample Element 1 ===
+admin-inline-editor.js:1202 Tag: H1
+admin-inline-editor.js:1203 Text content: Photography Management System
+admin-inline-editor.js:1204 Has originalContent? true
+admin-inline-editor.js:1206 Original first 50 chars: Photography Management System
+admin-inline-editor.js:1207 Current first 50 chars: Photography Management System
+admin-inline-editor.js:1201 
+=== Sample Element 2 ===
+admin-inline-editor.js:1202 Tag: P
+admin-inline-editor.js:1203 Text content: The Complete Business Platform for Professional Ph
+admin-inline-editor.js:1204 Has originalContent? true
+admin-inline-editor.js:1206 Original first 50 chars: The Complete Business Platform for Professional Ph
+admin-inline-editor.js:1207 Current first 50 chars: The Complete Business Platform for Professional Ph
+admin-inline-editor.js:1201 
+=== Sample Element 3 ===
+admin-inline-editor.js:1202 Tag: P
+admin-inline-editor.js:1203 Text content: 
+                Transform your photography busine
+admin-inline-editor.js:1204 Has originalContent? true
+admin-inline-editor.js:1206 Original first 50 chars: 
+                Transform your photography busine
+admin-inline-editor.js:1207 Current first 50 chars: 
+                Transform your photography busine
+admin-inline-editor.js:1230 Save complete: 0 of 99 elements saved
+hero-background.jpg:1   GET https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev/hero-background.jpg 404 (Not Found)

@@ -277,7 +277,10 @@
         console.log('🔵 STARTING EDIT');
         console.log('Element:', element.tagName, element.textContent.substring(0, 30));
         console.log('Baseline stored:', element.dataset.originalContent?.substring(0, 50));
-        console.log('Current HTML:', element.innerHTML.substring(0, 50));
+        console.log('Current HTML before edit:', element.innerHTML.substring(0, 50));
+        
+        // Store the content before we start editing
+        element.dataset.contentBeforeEdit = element.innerHTML;
         
         element.contentEditable = true;
         element.focus();
@@ -296,22 +299,27 @@
         element.addEventListener('keydown', handleEditKeydown);
         element.addEventListener('input', handleEditInput);
         
-        // Add input listener to track changes
+        // Track real-time changes
         element.addEventListener('input', (e) => {
-            console.log('📝 TEXT CHANGED:', e.target.innerHTML.substring(0, 50));
+            console.log('📝 TEXT CHANGED to:', e.target.innerHTML.substring(0, 50));
+            console.log('  Text content:', e.target.textContent.substring(0, 50));
         });
     }
     
     function handleEditBlur(e) {
+        console.log('⚠️ BLUR EVENT - About to stop editing');
+        console.log('  Content at blur:', e.target.innerHTML.substring(0, 50));
         stopEditing(e.target);
     }
     
     function handleEditKeydown(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
+            console.log('↩️ Enter pressed - saving changes');
             e.target.blur();
         }
         if (e.key === 'Escape') {
+            console.log('⎋ Escape pressed - reverting changes');
             e.target.innerHTML = e.target.dataset.originalContent;
             e.target.blur();
         }
@@ -326,17 +334,22 @@
     function stopEditing(element) {
         // Log what we have when stopping edit
         console.log('🔴 STOPPING EDIT');
-        console.log('  Baseline stored:', element.dataset.originalContent);
-        console.log('  Current HTML:', element.innerHTML);
+        console.log('  Baseline stored:', element.dataset.originalContent?.substring(0, 50));
+        console.log('  Content before edit:', element.dataset.contentBeforeEdit?.substring(0, 50));
+        console.log('  Current HTML now:', element.innerHTML.substring(0, 50));
+        console.log('  Current text now:', element.textContent.substring(0, 50));
         console.log('  Has changed?', element.innerHTML !== element.dataset.originalContent);
+        
+        // Make sure we're preserving the edited content
+        const editedContent = element.innerHTML;
         
         element.contentEditable = false;
         element.style.outline = 'none';
         element.style.background = 'transparent';
         
-        // IMPORTANT: Keep the changes in the element
-        // The innerHTML should retain the edited content
-        // Don't revert to originalContent here
+        // IMPORTANT: Ensure the content stays as edited
+        element.innerHTML = editedContent;
+        console.log('  Content after stopping edit:', element.innerHTML.substring(0, 50));
         
         // Remove temporary event listeners
         element.removeEventListener('blur', handleEditBlur);
@@ -347,6 +360,10 @@
         if (element.innerHTML !== element.dataset.originalContent) {
             element.dataset.hasUnsavedChanges = 'true';
             console.log('✅ Marked element as having unsaved changes');
+            console.log('  Changed from:', element.dataset.originalContent?.substring(0, 30));
+            console.log('  Changed to:', element.innerHTML.substring(0, 30));
+        } else {
+            console.log('❌ No changes detected');
         }
     }
     
