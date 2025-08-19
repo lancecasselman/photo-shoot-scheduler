@@ -1293,6 +1293,76 @@
             }
         };
         
+        // Add move up/down buttons
+        const moveControls = document.createElement('div');
+        moveControls.className = 'block-move-controls';
+        moveControls.style.cssText = `
+            position: absolute;
+            top: 50%;
+            right: -45px;
+            transform: translateY(-50%);
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 10001;
+        `;
+        
+        const moveUpBtn = document.createElement('button');
+        moveUpBtn.className = 'block-move-up';
+        moveUpBtn.innerHTML = '↑';
+        moveUpBtn.style.cssText = `
+            width: 32px;
+            height: 32px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        `;
+        moveUpBtn.onmouseover = () => moveUpBtn.style.background = '#5a67d8';
+        moveUpBtn.onmouseout = () => moveUpBtn.style.background = '#667eea';
+        moveUpBtn.onclick = (e) => {
+            e.stopPropagation();
+            moveBlockUp(element);
+        };
+        
+        const moveDownBtn = document.createElement('button');
+        moveDownBtn.className = 'block-move-down';
+        moveDownBtn.innerHTML = '↓';
+        moveDownBtn.style.cssText = `
+            width: 32px;
+            height: 32px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        `;
+        moveDownBtn.onmouseover = () => moveDownBtn.style.background = '#5a67d8';
+        moveDownBtn.onmouseout = () => moveDownBtn.style.background = '#667eea';
+        moveDownBtn.onclick = (e) => {
+            e.stopPropagation();
+            moveBlockDown(element);
+        };
+        
+        moveControls.appendChild(moveUpBtn);
+        moveControls.appendChild(moveDownBtn);
+        element.appendChild(moveControls);
+        
         // Add resize handles
         const resizeHandles = ['nw', 'ne', 'sw', 'se', 'n', 's', 'e', 'w'];
         resizeHandles.forEach(position => {
@@ -1423,8 +1493,10 @@
             const btn = this.querySelector('.block-delete-btn');
             const handle = this.querySelector('.drag-handle');
             const resizeHandles = this.querySelectorAll('.resize-handle');
+            const moveControls = this.querySelector('.block-move-controls');
             if (btn) btn.style.display = 'block';
             if (handle) handle.style.display = 'flex';
+            if (moveControls) moveControls.style.display = 'flex';
             resizeHandles.forEach(h => h.style.display = 'block');
         });
         
@@ -1433,8 +1505,10 @@
             const btn = this.querySelector('.block-delete-btn');
             const handle = this.querySelector('.drag-handle');
             const resizeHandles = this.querySelectorAll('.resize-handle');
+            const moveControls = this.querySelector('.block-move-controls');
             if (btn) btn.style.display = 'none';
             if (handle) handle.style.display = 'none';
+            if (moveControls) moveControls.style.display = 'none';
             resizeHandles.forEach(h => h.style.display = 'none');
         });
         
@@ -1758,6 +1832,26 @@
                 }
             });
         }, 100);
+    }
+    
+    // Move block up
+    function moveBlockUp(element) {
+        const prev = element.previousElementSibling;
+        if (prev && !prev.id?.includes('toolbar') && !prev.classList?.contains('admin-toolbar')) {
+            element.parentNode.insertBefore(element, prev);
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            showFloatingMessage('Block moved up');
+        }
+    }
+    
+    // Move block down
+    function moveBlockDown(element) {
+        const next = element.nextElementSibling;
+        if (next && !next.id?.includes('toolbar') && !next.classList?.contains('admin-toolbar')) {
+            element.parentNode.insertBefore(next, element);
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            showFloatingMessage('Block moved down');
+        }
     }
     
     // Get cursor style for resize position
