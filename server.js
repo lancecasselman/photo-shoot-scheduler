@@ -1093,6 +1093,100 @@ app.get('/api/check-auth', (req, res) => {
     }
 });
 
+// Auth check endpoint for admin editing
+app.get('/api/auth/check', (req, res) => {
+    if (req.session && req.session.user) {
+        res.json({ 
+            authenticated: true,
+            email: req.session.user.email,
+            uid: req.session.user.uid
+        });
+    } else {
+        res.status(401).json({ authenticated: false });
+    }
+});
+
+// Admin content editing endpoint
+app.post('/api/admin/content', async (req, res) => {
+    try {
+        // Check if user is authenticated
+        if (!req.session || !req.session.user) {
+            return res.status(401).json({ error: 'Not authenticated' });
+        }
+        
+        // Check if user is admin
+        const adminEmail = 'lancecasselman@icloud.com';
+        if (req.session.user.email !== adminEmail) {
+            return res.status(403).json({ error: 'Not authorized' });
+        }
+        
+        const { page, selector, content } = req.body;
+        
+        if (!page || !selector || content === undefined) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+        
+        // Create table if it doesn't exist
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS admin_content_edits (
+                id SERIAL PRIMARY KEY,
+                page VARCHAR(255) NOT NULL,
+                selector TEXT NOT NULL,
+                content TEXT NOT NULL,
+                edited_by VARCHAR(255) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(page, selector)
+            )
+        `);
+        
+        // Insert or update the content
+        await pool.query(`
+            INSERT INTO admin_content_edits (page, selector, content, edited_by)
+            VALUES ($1, $2, $3, $4)
+            ON CONFLICT (page, selector)
+            DO UPDATE SET 
+                content = EXCLUDED.content,
+                edited_by = EXCLUDED.edited_by,
+                updated_at = CURRENT_TIMESTAMP
+        `, [page, selector, content, req.session.user.email]);
+        
+        res.json({ success: true, message: 'Content saved' });
+    } catch (error) {
+        console.error('Error saving content:', error);
+        res.status(500).json({ error: 'Failed to save content' });
+    }
+});
+
+// Get admin content edits for a page
+app.get('/api/admin/content/:page', async (req, res) => {
+    try {
+        const { page } = req.params;
+        
+        // Check if table exists
+        const tableExists = await pool.query(`
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_name = 'admin_content_edits'
+            )
+        `);
+        
+        if (!tableExists.rows[0].exists) {
+            return res.json({ edits: [] });
+        }
+        
+        const result = await pool.query(
+            'SELECT selector, content FROM admin_content_edits WHERE page = $1',
+            [page]
+        );
+        
+        res.json({ edits: result.rows });
+    } catch (error) {
+        console.error('Error fetching content:', error);
+        res.json({ edits: [] });
+    }
+});
+
 // Get current user info endpoint
 app.get('/api/current-user', (req, res) => {
     if (req.session && req.session.user) {
