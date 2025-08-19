@@ -34,11 +34,11 @@
                 isAdmin = true;
                 console.log('Admin editor activated on secure landing page');
                 
-                // FIRST: Load and apply saved edits to the page
-                await loadSavedEdits();
-                
-                // SECOND: Store the current state (with saved edits) as baseline for detecting new changes
+                // FIRST: Store the ORIGINAL HTML as baseline (before loading any saved edits)
                 storeCurrentStateAsBaseline();
+                
+                // SECOND: Load and apply saved edits on top of the baseline
+                await loadSavedEdits();
                 
                 // THIRD: Enable editing features
                 enableInlineEditing();
@@ -60,9 +60,9 @@
         }
     }
     
-    // Store current state (after saved edits) as baseline for detecting new changes
+    // Store original HTML state as baseline (before loading saved edits)
     function storeCurrentStateAsBaseline() {
-        console.log('Storing current state as baseline for change detection...');
+        console.log('Storing ORIGINAL HTML as baseline for change detection...');
         
         // Select all elements that will be editable
         const editableSelectors = [
@@ -79,14 +79,14 @@
             document.querySelectorAll(selector).forEach(element => {
                 // Skip if it contains form elements
                 if (!element.querySelector('input, select, textarea, button')) {
-                    // Store the current content (which includes any saved edits) as the baseline
+                    // Store the ORIGINAL content as baseline (before any saved edits)
                     element.dataset.originalContent = element.innerHTML;
                     storedCount++;
                 }
             });
         });
         
-        console.log(`Stored baseline content for ${storedCount} elements`);
+        console.log(`Stored original baseline for ${storedCount} elements`);
     }
     
     // Load saved content edits
