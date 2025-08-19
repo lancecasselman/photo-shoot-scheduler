@@ -310,13 +310,12 @@
     
     // Add admin toolbar
     function addAdminToolbar() {
-        // Only show toolbar on landing page
-        const isLandingPage = window.location.pathname === '/landing.html' || 
-                             window.location.pathname === '/landing' ||
-                             (window.location.pathname === '/' && document.title.includes('Landing'));
+        // Only show toolbar on secure landing page
+        const isSecureLandingPage = window.location.pathname === '/secure-landing.html' || 
+                                    window.location.pathname === '/secure-landing';
         
-        if (!isLandingPage) {
-            console.log('Admin toolbar hidden - not on landing page');
+        if (!isSecureLandingPage) {
+            console.log('Admin toolbar hidden - not on secure landing page');
             return;
         }
         
