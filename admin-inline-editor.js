@@ -40,6 +40,9 @@
                 
                 // Show admin indicator
                 showAdminBadge();
+                
+                // Apply editing to existing content
+                applyEditingToExistingContent();
             }
         } catch (error) {
             console.log('Admin editor not available:', error);
@@ -1161,7 +1164,268 @@
             container.appendChild(element);
         }
         element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        makeEditable(element);
+        makeEditableWithDelete(element);
+    }
+    
+    // Make element editable with delete button
+    function makeEditableWithDelete(element) {
+        // Make all text content editable
+        element.querySelectorAll('h1, h2, h3, h4, h5, h6, p, span, button, div').forEach(el => {
+            if (!el.classList.contains('block-delete-btn')) {
+                el.contentEditable = true;
+            }
+        });
+        
+        // Add container styling
+        element.style.position = 'relative';
+        
+        // Add delete button
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'block-delete-btn';
+        deleteBtn.innerHTML = '×';
+        deleteBtn.style.cssText = `
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            display: none;
+            z-index: 10000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            line-height: 1;
+            transition: all 0.2s;
+        `;
+        deleteBtn.onmouseover = () => deleteBtn.style.transform = 'scale(1.1)';
+        deleteBtn.onmouseout = () => deleteBtn.style.transform = 'scale(1)';
+        deleteBtn.onclick = (e) => {
+            e.stopPropagation();
+            if (confirm('Delete this block?')) {
+                element.remove();
+                showFloatingMessage('Block deleted');
+            }
+        };
+        
+        // Show/hide delete button on hover
+        element.addEventListener('mouseenter', function() {
+            this.style.outline = '2px dashed #667eea';
+            this.style.outlineOffset = '4px';
+            const btn = this.querySelector('.block-delete-btn');
+            if (btn) btn.style.display = 'block';
+        });
+        
+        element.addEventListener('mouseleave', function() {
+            this.style.outline = 'none';
+            const btn = this.querySelector('.block-delete-btn');
+            if (btn) btn.style.display = 'none';
+        });
+        
+        // Add delete button if not already present
+        if (!element.querySelector('.block-delete-btn')) {
+            element.appendChild(deleteBtn);
+        }
+        
+        // Add text selection handler for floating editor
+        element.addEventListener('mouseup', handleTextSelection);
+        element.addEventListener('keyup', handleTextSelection);
+    }
+    
+    // Show floating message
+    function showFloatingMessage(message) {
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #10b981;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 100000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        `;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 2000);
+    }
+    
+    // Handle text selection for floating editor
+    function handleTextSelection() {
+        const selection = window.getSelection();
+        const text = selection.toString().trim();
+        
+        // Remove existing floating editor
+        const existingEditor = document.getElementById('floating-editor');
+        if (existingEditor) existingEditor.remove();
+        
+        // Only show if text is selected
+        if (text.length > 0) {
+            showFloatingEditor(selection);
+        }
+    }
+    
+    // Show floating text editor
+    function showFloatingEditor(selection) {
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        
+        const editor = document.createElement('div');
+        editor.id = 'floating-editor';
+        editor.style.cssText = `
+            position: fixed;
+            top: ${rect.top - 50}px;
+            left: ${rect.left + (rect.width / 2) - 150}px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 8px;
+            display: flex;
+            gap: 4px;
+            z-index: 100000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        `;
+        
+        // Format buttons
+        const formats = [
+            { icon: 'B', command: 'bold', title: 'Bold' },
+            { icon: 'I', command: 'italic', title: 'Italic', style: 'font-style: italic;' },
+            { icon: 'U', command: 'underline', title: 'Underline', style: 'text-decoration: underline;' },
+            { icon: 'S', command: 'strikethrough', title: 'Strikethrough', style: 'text-decoration: line-through;' },
+            { icon: '↑', command: 'superscript', title: 'Superscript' },
+            { icon: '↓', command: 'subscript', title: 'Subscript' },
+            { icon: '≡', command: 'justifyLeft', title: 'Align Left' },
+            { icon: '≡', command: 'justifyCenter', title: 'Center' },
+            { icon: '≡', command: 'justifyRight', title: 'Align Right' },
+            { icon: '🔗', command: 'createLink', title: 'Add Link' },
+            { icon: '×', command: 'removeFormat', title: 'Clear Format' }
+        ];
+        
+        formats.forEach(format => {
+            const btn = document.createElement('button');
+            btn.innerHTML = format.icon;
+            btn.title = format.title;
+            btn.style.cssText = `
+                width: 28px;
+                height: 28px;
+                background: white;
+                border: 1px solid #e2e8f0;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: ${format.command === 'bold' ? 'bold' : 'normal'};
+                ${format.style || ''}
+                transition: all 0.2s;
+            `;
+            btn.onmouseover = () => {
+                btn.style.background = '#f1f5f9';
+                btn.style.borderColor = '#667eea';
+            };
+            btn.onmouseout = () => {
+                btn.style.background = 'white';
+                btn.style.borderColor = '#e2e8f0';
+            };
+            btn.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (format.command === 'createLink') {
+                    const url = prompt('Enter URL:');
+                    if (url) document.execCommand('createLink', false, url);
+                } else {
+                    document.execCommand(format.command, false, null);
+                }
+                
+                // Keep selection active
+                selection.removeAllRanges();
+                selection.addRange(range);
+            };
+            editor.appendChild(btn);
+        });
+        
+        // Add color picker
+        const colorPicker = document.createElement('input');
+        colorPicker.type = 'color';
+        colorPicker.value = '#000000';
+        colorPicker.title = 'Text Color';
+        colorPicker.style.cssText = `
+            width: 28px;
+            height: 28px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            cursor: pointer;
+        `;
+        colorPicker.onchange = (e) => {
+            document.execCommand('foreColor', false, e.target.value);
+            selection.removeAllRanges();
+            selection.addRange(range);
+        };
+        editor.appendChild(colorPicker);
+        
+        // Add font size selector
+        const fontSize = document.createElement('select');
+        fontSize.innerHTML = `
+            <option value="1">Small</option>
+            <option value="3" selected>Normal</option>
+            <option value="5">Large</option>
+            <option value="7">Huge</option>
+        `;
+        fontSize.style.cssText = `
+            height: 28px;
+            padding: 0 8px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        `;
+        fontSize.onchange = (e) => {
+            document.execCommand('fontSize', false, e.target.value);
+            selection.removeAllRanges();
+            selection.addRange(range);
+        };
+        editor.appendChild(fontSize);
+        
+        document.body.appendChild(editor);
+        
+        // Remove editor when clicking elsewhere
+        setTimeout(() => {
+            document.addEventListener('mousedown', function removeEditor(e) {
+                if (!editor.contains(e.target)) {
+                    editor.remove();
+                    document.removeEventListener('mousedown', removeEditor);
+                }
+            });
+        }, 100);
+    }
+    
+    // Apply editing capabilities to existing content sections
+    function applyEditingToExistingContent() {
+        // Find all major content sections
+        const sections = document.querySelectorAll('section, article, .content-section, .hero-section, .features-section, .contact-section, .gallery-section');
+        
+        sections.forEach(section => {
+            // Skip if already has delete button
+            if (section.querySelector('.block-delete-btn')) return;
+            
+            // Apply editing capabilities
+            makeEditableWithDelete(section);
+        });
+        
+        // Also apply to individual content blocks
+        const blocks = document.querySelectorAll('.text-block, .photo-block, .content-block, .editable-content');
+        blocks.forEach(block => {
+            if (!block.querySelector('.block-delete-btn')) {
+                makeEditableWithDelete(block);
+            }
+        });
     }
     
     // Apply font family
