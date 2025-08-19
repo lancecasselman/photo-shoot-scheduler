@@ -34,10 +34,13 @@
                 isAdmin = true;
                 console.log('Admin editor activated on secure landing page');
                 
-                // Load saved edits first
+                // FIRST: Store original content before any edits are applied
+                storeOriginalContent();
+                
+                // SECOND: Load and apply saved edits
                 await loadSavedEdits();
                 
-                // Enable editing features
+                // THIRD: Enable editing features
                 enableInlineEditing();
                 addAdminToolbar();
                 enablePhotoBlocks();
@@ -55,6 +58,34 @@
         } catch (error) {
             console.log('Admin editor not available:', error);
         }
+    }
+    
+    // Store original content before any edits are applied
+    function storeOriginalContent() {
+        console.log('Storing original content before applying edits...');
+        
+        // Select all elements that will be editable
+        const editableSelectors = [
+            'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+            'p', 'span', 'div.text-content',
+            '.editable', '.title', '.subtitle', '.description',
+            'td', 'th', 'li', 'label',
+            '.dashboard-title', '.tab-title', '.session-title',
+            '.client-name', '.location', '.notes'
+        ];
+        
+        let storedCount = 0;
+        editableSelectors.forEach(selector => {
+            document.querySelectorAll(selector).forEach(element => {
+                // Skip if it contains form elements
+                if (!element.querySelector('input, select, textarea, button')) {
+                    element.dataset.originalContent = element.innerHTML;
+                    storedCount++;
+                }
+            });
+        });
+        
+        console.log(`Stored original content for ${storedCount} elements`);
     }
     
     // Load saved content edits
@@ -88,7 +119,7 @@
                                     element.remove();
                                 } else {
                                     element.innerHTML = edit.content;
-                                    element.dataset.originalContent = edit.content;
+                                    // DON'T set originalContent here - it will be set when editing controls are applied
                                 }
                             }
                         });
@@ -134,7 +165,11 @@
     // Make an element editable
     function makeElementEditable(element) {
         element.classList.add('admin-editable');
-        element.dataset.originalContent = element.innerHTML;
+        // Only set originalContent if it hasn't been set yet
+        // This preserves the actual original content before any edits were loaded
+        if (!element.dataset.originalContent) {
+            element.dataset.originalContent = element.innerHTML;
+        }
         
         // Add hover effect
         element.addEventListener('mouseenter', handleMouseEnter);
