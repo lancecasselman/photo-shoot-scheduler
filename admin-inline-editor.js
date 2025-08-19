@@ -11,7 +11,13 @@
     // State management
     let isAdmin = false;
     let saveTimer = null;
-    let currentPage = window.location.pathname.replace('/', '') || 'index';
+    // Fix page detection for secure-landing.html
+    let pathname = window.location.pathname;
+    let currentPage = pathname.substring(1) || 'index'; // Remove leading slash
+    if (currentPage.endsWith('.html')) {
+        currentPage = currentPage.replace('.html', ''); // Remove .html extension
+    }
+    console.log('Current page detected as:', currentPage, 'from path:', pathname);
     let currentUserEmail = null;
     
     // Initialize the editor system
