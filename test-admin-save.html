@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Save Test</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-content {
+            padding: 20px;
+            border: 2px solid #ddd;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        h1, h2, h3, p {
+            margin: 15px 0;
+        }
+        .status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            max-width: 300px;
+        }
+        .admin-toolbar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            display: flex;
+            gap: 15px;
+            z-index: 10000;
+        }
+        .admin-toolbar button {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .admin-toolbar button:hover {
+            background: #5a67d8;
+        }
+    </style>
+</head>
+<body>
+    <div class="status" id="status">
+        <h4>Test Status</h4>
+        <div id="statusContent">Loading...</div>
+    </div>
+
+    <div class="test-content">
+        <h1>Test Heading - Click to Edit</h1>
+        <p>This is a test paragraph. Click on any text to edit it.</p>
+        <h2>Another Heading</h2>
+        <p>Another paragraph with some content.</p>
+        <h3>Smaller Heading</h3>
+        <p>Final test paragraph.</p>
+    </div>
+
+    <div class="admin-toolbar">
+        <button onclick="testSave()">Test Save</button>
+        <button onclick="checkDatabase()">Check Database</button>
+        <button onclick="clearDatabase()">Clear All Saves</button>
+        <button onclick="location.reload()">Refresh Page</button>
+    </div>
+
+    <script>
+        // Simple inline editing test
+        let editableElements = [];
+        
+        async function initTest() {
+            updateStatus('Initializing test...');
+            
+            // Check if user is admin
+            try {
+                const response = await fetch('/api/auth/check', {
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) {
+                    updateStatus('Not authenticated', 'error');
+                    return;
+                }
+                
+                const data = await response.json();
+                if (data.email !== 'lancecasselman@icloud.com') {
+                    updateStatus('Not admin user', 'error');
+                    return;
+                }
+                
+                updateStatus('Admin verified ✓');
+                
+                // Load any saved edits first
+                await loadSavedEdits();
+                
+                // Make elements editable
+                makeEditable();
+                
+            } catch (error) {
+                updateStatus('Error: ' + error.message, 'error');
+            }
+        }
+        
+        async function loadSavedEdits() {
+            try {
+                const response = await fetch('/api/admin/content/test-admin-save');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.edits && data.edits.length > 0) {
+                        data.edits.forEach(edit => {
+                            const elements = document.querySelectorAll(edit.selector);
+                            elements.forEach(el => {
+                                el.innerHTML = edit.content;
+                            });
+                        });
+                        updateStatus(`Loaded ${data.edits.length} saved edits`);
+                    }
+                }
+            } catch (error) {
+                console.log('No saved edits');
+            }
+        }
+        
+        function makeEditable() {
+            const selectors = ['h1', 'h2', 'h3', 'p'];
+            
+            selectors.forEach(selector => {
+                document.querySelectorAll(selector).forEach(element => {
+                    // Store original content
+                    element.dataset.originalContent = element.innerHTML;
+                    element.contentEditable = true;
+                    element.style.cursor = 'text';
+                    
+                    element.addEventListener('focus', () => {
+                        element.style.outline = '2px solid #667eea';
+                        element.style.background = 'rgba(102, 126, 234, 0.1)';
+                    });
+                    
+                    element.addEventListener('blur', () => {
+                        element.style.outline = 'none';
+                        element.style.background = 'transparent';
+                    });
+                    
+                    editableElements.push(element);
+                });
+            });
+            
+            updateStatus(`Made ${editableElements.length} elements editable`);
+        }
+        
+        async function testSave() {
+            let savedCount = 0;
+            let changedCount = 0;
+            
+            for (const element of editableElements) {
+                const current = element.innerHTML;
+                const original = element.dataset.originalContent;
+                
+                if (current !== original) {
+                    changedCount++;
+                    
+                    // Save this change
+                    const selector = getSelector(element);
+                    
+                    try {
+                        const response = await fetch('/api/admin/content', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            credentials: 'include',
+                            body: JSON.stringify({
+                                page: 'test-admin-save',
+                                selector: selector,
+                                content: current
+                            })
+                        });
+                        
+                        if (response.ok) {
+                            savedCount++;
+                            // Update baseline
+                            element.dataset.originalContent = current;
+                        }
+                    } catch (error) {
+                        console.error('Save failed:', error);
+                    }
+                }
+            }
+            
+            updateStatus(`Saved ${savedCount} of ${changedCount} changes`);
+        }
+        
+        function getSelector(element) {
+            const tag = element.tagName.toLowerCase();
+            const parent = element.parentNode;
+            const siblings = Array.from(parent.children);
+            const index = siblings.indexOf(element);
+            return `${tag}:nth-child(${index + 1})`;
+        }
+        
+        async function checkDatabase() {
+            try {
+                const response = await fetch('/api/admin/content/test-admin-save');
+                const data = await response.json();
+                
+                if (data.edits && data.edits.length > 0) {
+                    let status = `Database contains ${data.edits.length} saved edits:<br>`;
+                    data.edits.forEach(edit => {
+                        status += `<br>• ${edit.selector}: "${edit.content.substring(0, 30)}..."`;
+                    });
+                    updateStatus(status);
+                } else {
+                    updateStatus('No saved edits in database');
+                }
+            } catch (error) {
+                updateStatus('Error checking database: ' + error.message, 'error');
+            }
+        }
+        
+        async function clearDatabase() {
+            try {
+                const response = await fetch('/api/admin/content/test-admin-save', {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    updateStatus('Cleared all saved edits');
+                    setTimeout(() => location.reload(), 1000);
+                }
+            } catch (error) {
+                updateStatus('Error clearing database: ' + error.message, 'error');
+            }
+        }
+        
+        function updateStatus(message, type = 'info') {
+            const statusEl = document.getElementById('statusContent');
+            statusEl.innerHTML = message;
+            statusEl.style.color = type === 'error' ? '#ef4444' : '#10b981';
+        }
+        
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', initTest);
+    </script>
+</body>
+</html>

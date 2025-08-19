@@ -120,8 +120,7 @@
                                     element.remove();
                                 } else {
                                     element.innerHTML = edit.content;
-                                    // Update the baseline to the saved content so we only detect NEW changes
-                                    element.dataset.originalContent = edit.content;
+                                    // Don't set originalContent here - storeCurrentStateAsBaseline will handle it
                                 }
                             }
                         });
