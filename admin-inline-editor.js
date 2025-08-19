@@ -2098,57 +2098,97 @@
     
     // Apply text alignment
     function applyAlignment(align) {
-        const selection = window.getSelection();
+        // Check if there's a selected element
+        const selectedElement = document.querySelector('.selected-for-alignment');
         
-        // First, try to align selected text
+        if (selectedElement) {
+            // Apply alignment to the selected block element
+            if (align === 'left') {
+                selectedElement.style.marginLeft = '0';
+                selectedElement.style.marginRight = 'auto';
+                selectedElement.style.textAlign = 'left';
+                selectedElement.style.maxWidth = '100%';
+            } else if (align === 'center') {
+                selectedElement.style.marginLeft = 'auto';
+                selectedElement.style.marginRight = 'auto';
+                selectedElement.style.textAlign = 'center';
+                selectedElement.style.maxWidth = '100%';
+            } else if (align === 'right') {
+                selectedElement.style.marginLeft = 'auto';
+                selectedElement.style.marginRight = '0';
+                selectedElement.style.textAlign = 'right';
+                selectedElement.style.maxWidth = '100%';
+            }
+            
+            // Visual feedback
+            selectedElement.style.transition = 'all 0.3s ease';
+            showAlignmentFeedback(selectedElement, align);
+            
+            // Remove selection after alignment
+            setTimeout(() => {
+                selectedElement.classList.remove('selected-for-alignment');
+                selectedElement.style.outline = '';
+            }, 1000);
+            return;
+        }
+        
+        // If no block selected, try text selection
+        const selection = window.getSelection();
         if (selection.rangeCount > 0 && selection.toString().trim()) {
             const range = selection.getRangeAt(0);
             const element = range.commonAncestorContainer.nodeType === 3 
                 ? range.commonAncestorContainer.parentElement 
                 : range.commonAncestorContainer;
             element.style.textAlign = align;
-            return;
+            showAlignmentFeedback(element, align);
+        } else {
+            // Show instruction
+            showAlignmentInstruction();
         }
-        
-        // If no text selected, look for a clicked/hovered block element
-        const hoveredElements = document.querySelectorAll('.photo-block, .text-block, .content-block, section, article, .hero-section, .features-section, .contact-section');
-        
-        hoveredElements.forEach(element => {
-            // Check if mouse is over this element
-            const rect = element.getBoundingClientRect();
-            const mouseX = window.lastMouseX || 0;
-            const mouseY = window.lastMouseY || 0;
+    }
+    
+    // Enable block selection for alignment
+    function enableBlockSelection() {
+        document.addEventListener('click', function(e) {
+            // Don't select toolbar elements
+            if (e.target.closest('#admin-toolbar')) return;
             
-            if (mouseX >= rect.left && mouseX <= rect.right && 
-                mouseY >= rect.top && mouseY <= rect.bottom) {
+            // Check if clicked element is a major block
+            const block = e.target.closest('.photo-block, .text-block, .content-block, section, article, .hero-section, .features-section, .contact-section, .image-block');
+            
+            if (block && e.shiftKey) {  // Hold Shift + Click to select for alignment
+                // Remove previous selection
+                document.querySelectorAll('.selected-for-alignment').forEach(el => {
+                    el.classList.remove('selected-for-alignment');
+                    el.style.outline = '';
+                });
                 
-                // Apply alignment to the block element
-                if (align === 'left') {
-                    element.style.marginLeft = '0';
-                    element.style.marginRight = 'auto';
-                    element.style.textAlign = 'left';
-                } else if (align === 'center') {
-                    element.style.marginLeft = 'auto';
-                    element.style.marginRight = 'auto';
-                    element.style.textAlign = 'center';
-                } else if (align === 'right') {
-                    element.style.marginLeft = 'auto';
-                    element.style.marginRight = '0';
-                    element.style.textAlign = 'right';
-                }
+                // Add selection to clicked block
+                block.classList.add('selected-for-alignment');
+                block.style.outline = '3px solid #667eea';
+                block.style.outlineOffset = '5px';
                 
-                // Visual feedback
-                element.style.transition = 'all 0.3s ease';
-                showAlignmentFeedback(element, align);
+                // Show selection feedback
+                const feedback = document.createElement('div');
+                feedback.style.cssText = `
+                    position: fixed;
+                    bottom: 100px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: #667eea;
+                    color: white;
+                    padding: 12px 20px;
+                    border-radius: 8px;
+                    font-size: 14px;
+                    z-index: 100000;
+                    animation: fadeInOut 2s ease;
+                `;
+                feedback.textContent = 'Block selected! Now click an alignment button';
+                document.body.appendChild(feedback);
+                setTimeout(() => feedback.remove(), 2000);
             }
         });
     }
-    
-    // Track mouse position for alignment
-    document.addEventListener('mousemove', (e) => {
-        window.lastMouseX = e.clientX;
-        window.lastMouseY = e.clientY;
-    });
     
     // Show alignment feedback
     function showAlignmentFeedback(element, align) {
@@ -2157,7 +2197,7 @@
             position: fixed;
             top: 20px;
             right: 20px;
-            background: #667eea;
+            background: #10b981;
             color: white;
             padding: 10px 15px;
             border-radius: 6px;
@@ -2169,6 +2209,30 @@
         document.body.appendChild(feedback);
         setTimeout(() => feedback.remove(), 1500);
     }
+    
+    // Show instruction for alignment
+    function showAlignmentInstruction() {
+        const instruction = document.createElement('div');
+        instruction.style.cssText = `
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #f59e0b;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 100000;
+            animation: fadeInOut 3s ease;
+        `;
+        instruction.textContent = 'Hold Shift + Click a block first, then choose alignment';
+        document.body.appendChild(instruction);
+        setTimeout(() => instruction.remove(), 3000);
+    }
+    
+    // Initialize block selection when admin mode starts
+    enableBlockSelection();
     
     // Apply spacing
     function applySpacing(spacing) {
