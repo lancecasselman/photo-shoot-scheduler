@@ -151,6 +151,15 @@
             const current = element.innerHTML;
             const original = element.dataset.originalContent || '';
             
+            // More detailed logging to debug
+            if (element.textContent.includes('Photography')) {
+                console.log('🔍 Checking Photography element:');
+                console.log('  Current HTML:', current);
+                console.log('  Original HTML:', original);
+                console.log('  Are they different?', current !== original);
+                console.log('  Current text:', element.textContent);
+            }
+            
             if (current !== original) {
                 // Update the baseline to the current state
                 // This "accepts" the changes without saving to database
@@ -310,20 +319,29 @@
     // Stop editing an element
     function stopEditing(element) {
         // Log what we have when stopping edit
-        console.log('Stopping edit - baseline:', element.dataset.originalContent);
-        console.log('Stopping edit - current:', element.innerHTML);
-        console.log('Stopping edit - has changed?', element.innerHTML !== element.dataset.originalContent);
+        console.log('🔴 STOPPING EDIT');
+        console.log('  Baseline stored:', element.dataset.originalContent);
+        console.log('  Current HTML:', element.innerHTML);
+        console.log('  Has changed?', element.innerHTML !== element.dataset.originalContent);
         
         element.contentEditable = false;
         element.style.outline = 'none';
         element.style.background = 'transparent';
         
-        // Don't auto-save - let user use Save All button
+        // IMPORTANT: Keep the changes in the element
+        // The innerHTML should retain the edited content
+        // Don't revert to originalContent here
         
         // Remove temporary event listeners
         element.removeEventListener('blur', handleEditBlur);
         element.removeEventListener('keydown', handleEditKeydown);
         element.removeEventListener('input', handleEditInput);
+        
+        // Mark that element has unsaved changes if it changed
+        if (element.innerHTML !== element.dataset.originalContent) {
+            element.dataset.hasUnsavedChanges = 'true';
+            console.log('✅ Marked element as having unsaved changes');
+        }
     }
     
     // Save content to database
