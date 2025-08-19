@@ -1177,7 +1177,7 @@
     function makeEditableWithDelete(element) {
         // Make all text content editable
         element.querySelectorAll('h1, h2, h3, h4, h5, h6, p, span, button, div').forEach(el => {
-            if (!el.classList.contains('block-delete-btn') && !el.classList.contains('drag-handle')) {
+            if (!el.classList.contains('block-delete-btn') && !el.classList.contains('drag-handle') && !el.classList.contains('resize-handle')) {
                 el.contentEditable = true;
             }
         });
@@ -1187,6 +1187,7 @@
         element.style.cursor = 'move';
         element.draggable = true;
         element.classList.add('draggable-block');
+        element.classList.add('resizable-block');
         
         // Add drag handle
         const dragHandle = document.createElement('div');
@@ -1243,6 +1244,41 @@
                 showFloatingMessage('Block deleted');
             }
         };
+        
+        // Add resize handles
+        const resizeHandles = ['nw', 'ne', 'sw', 'se', 'n', 's', 'e', 'w'];
+        resizeHandles.forEach(position => {
+            const handle = document.createElement('div');
+            handle.className = 'resize-handle resize-' + position;
+            handle.style.cssText = `
+                position: absolute;
+                width: 10px;
+                height: 10px;
+                background: #667eea;
+                border: 2px solid white;
+                border-radius: 50%;
+                cursor: ${getCursorForPosition(position)};
+                display: none;
+                z-index: 10001;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            `;
+            
+            // Position the handles
+            switch(position) {
+                case 'nw': handle.style.top = '-5px'; handle.style.left = '-5px'; break;
+                case 'ne': handle.style.top = '-5px'; handle.style.right = '-5px'; break;
+                case 'sw': handle.style.bottom = '-5px'; handle.style.left = '-5px'; break;
+                case 'se': handle.style.bottom = '-5px'; handle.style.right = '-5px'; break;
+                case 'n': handle.style.top = '-5px'; handle.style.left = '50%'; handle.style.transform = 'translateX(-50%)'; break;
+                case 's': handle.style.bottom = '-5px'; handle.style.left = '50%'; handle.style.transform = 'translateX(-50%)'; break;
+                case 'e': handle.style.right = '-5px'; handle.style.top = '50%'; handle.style.transform = 'translateY(-50%)'; break;
+                case 'w': handle.style.left = '-5px'; handle.style.top = '50%'; handle.style.transform = 'translateY(-50%)'; break;
+            }
+            
+            // Add resize functionality
+            handle.addEventListener('mousedown', (e) => startResize(e, element, position));
+            element.appendChild(handle);
+        });
         
         // Drag event handlers
         element.addEventListener('dragstart', (e) => {
@@ -1328,16 +1364,20 @@
             this.style.outlineOffset = '4px';
             const btn = this.querySelector('.block-delete-btn');
             const handle = this.querySelector('.drag-handle');
+            const resizeHandles = this.querySelectorAll('.resize-handle');
             if (btn) btn.style.display = 'block';
             if (handle) handle.style.display = 'flex';
+            resizeHandles.forEach(h => h.style.display = 'block');
         });
         
         element.addEventListener('mouseleave', function() {
             this.style.outline = 'none';
             const btn = this.querySelector('.block-delete-btn');
             const handle = this.querySelector('.drag-handle');
+            const resizeHandles = this.querySelectorAll('.resize-handle');
             if (btn) btn.style.display = 'none';
             if (handle) handle.style.display = 'none';
+            resizeHandles.forEach(h => h.style.display = 'none');
         });
         
         // Add controls if not already present
@@ -1521,6 +1561,111 @@
                 }
             });
         }, 100);
+    }
+    
+    // Get cursor style for resize position
+    function getCursorForPosition(position) {
+        const cursors = {
+            'nw': 'nw-resize',
+            'ne': 'ne-resize',
+            'sw': 'sw-resize',
+            'se': 'se-resize',
+            'n': 'n-resize',
+            's': 's-resize',
+            'e': 'e-resize',
+            'w': 'w-resize'
+        };
+        return cursors[position] || 'move';
+    }
+    
+    // Start resizing element
+    function startResize(e, element, position) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const startX = e.clientX;
+        const startY = e.clientY;
+        const startWidth = element.offsetWidth;
+        const startHeight = element.offsetHeight;
+        const aspectRatio = startWidth / startHeight;
+        
+        // Check if element contains an image
+        const img = element.querySelector('img');
+        const maintainAspectRatio = img !== null;
+        
+        function doResize(e) {
+            const deltaX = e.clientX - startX;
+            const deltaY = e.clientY - startY;
+            
+            let newWidth = startWidth;
+            let newHeight = startHeight;
+            
+            // Calculate new dimensions based on handle position
+            switch(position) {
+                case 'se':
+                    newWidth = startWidth + deltaX;
+                    newHeight = maintainAspectRatio ? newWidth / aspectRatio : startHeight + deltaY;
+                    break;
+                case 'sw':
+                    newWidth = startWidth - deltaX;
+                    newHeight = maintainAspectRatio ? newWidth / aspectRatio : startHeight + deltaY;
+                    element.style.left = (element.offsetLeft + deltaX) + 'px';
+                    break;
+                case 'ne':
+                    newWidth = startWidth + deltaX;
+                    newHeight = maintainAspectRatio ? newWidth / aspectRatio : startHeight - deltaY;
+                    element.style.top = (element.offsetTop + deltaY) + 'px';
+                    break;
+                case 'nw':
+                    newWidth = startWidth - deltaX;
+                    newHeight = maintainAspectRatio ? newWidth / aspectRatio : startHeight - deltaY;
+                    element.style.left = (element.offsetLeft + deltaX) + 'px';
+                    element.style.top = (element.offsetTop + deltaY) + 'px';
+                    break;
+                case 'n':
+                    newHeight = startHeight - deltaY;
+                    if (maintainAspectRatio) newWidth = newHeight * aspectRatio;
+                    element.style.top = (element.offsetTop + deltaY) + 'px';
+                    break;
+                case 's':
+                    newHeight = startHeight + deltaY;
+                    if (maintainAspectRatio) newWidth = newHeight * aspectRatio;
+                    break;
+                case 'e':
+                    newWidth = startWidth + deltaX;
+                    if (maintainAspectRatio) newHeight = newWidth / aspectRatio;
+                    break;
+                case 'w':
+                    newWidth = startWidth - deltaX;
+                    if (maintainAspectRatio) newHeight = newWidth / aspectRatio;
+                    element.style.left = (element.offsetLeft + deltaX) + 'px';
+                    break;
+            }
+            
+            // Apply minimum dimensions
+            newWidth = Math.max(50, newWidth);
+            newHeight = Math.max(50, newHeight);
+            
+            // Apply new dimensions
+            element.style.width = newWidth + 'px';
+            element.style.height = newHeight + 'px';
+            
+            // If there's an image, resize it too
+            if (img) {
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.objectFit = 'cover';
+            }
+        }
+        
+        function stopResize() {
+            document.removeEventListener('mousemove', doResize);
+            document.removeEventListener('mouseup', stopResize);
+            showFloatingMessage('Block resized');
+        }
+        
+        document.addEventListener('mousemove', doResize);
+        document.addEventListener('mouseup', stopResize);
     }
     
     // Apply editing capabilities to existing content sections
