@@ -1167,17 +1167,43 @@
         makeEditableWithDelete(element);
     }
     
-    // Make element editable with delete button
+    // Make element editable with delete button and draggable
     function makeEditableWithDelete(element) {
         // Make all text content editable
         element.querySelectorAll('h1, h2, h3, h4, h5, h6, p, span, button, div').forEach(el => {
-            if (!el.classList.contains('block-delete-btn')) {
+            if (!el.classList.contains('block-delete-btn') && !el.classList.contains('drag-handle')) {
                 el.contentEditable = true;
             }
         });
         
-        // Add container styling
+        // Add container styling and make draggable
         element.style.position = 'relative';
+        element.style.cursor = 'move';
+        element.draggable = true;
+        element.classList.add('draggable-block');
+        
+        // Add drag handle
+        const dragHandle = document.createElement('div');
+        dragHandle.className = 'drag-handle';
+        dragHandle.innerHTML = '⋮⋮';
+        dragHandle.style.cssText = `
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 30px;
+            height: 30px;
+            background: #667eea;
+            color: white;
+            border-radius: 6px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            cursor: move;
+            z-index: 10000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            user-select: none;
+        `;
         
         // Add delete button
         const deleteBtn = document.createElement('button');
@@ -1212,21 +1238,106 @@
             }
         };
         
-        // Show/hide delete button on hover
+        // Drag event handlers
+        element.addEventListener('dragstart', (e) => {
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', element.innerHTML);
+            element.classList.add('dragging');
+            element.style.opacity = '0.5';
+            
+            // Store the dragged element
+            window.draggedElement = element;
+        });
+        
+        element.addEventListener('dragend', (e) => {
+            element.classList.remove('dragging');
+            element.style.opacity = '';
+            window.draggedElement = null;
+            
+            // Remove all drop indicators
+            document.querySelectorAll('.drop-indicator').forEach(indicator => {
+                indicator.remove();
+            });
+        });
+        
+        element.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            
+            if (!window.draggedElement || window.draggedElement === element) return;
+            
+            // Remove existing drop indicators
+            document.querySelectorAll('.drop-indicator').forEach(indicator => {
+                indicator.remove();
+            });
+            
+            // Create drop indicator
+            const dropIndicator = document.createElement('div');
+            dropIndicator.className = 'drop-indicator';
+            dropIndicator.style.cssText = `
+                height: 4px;
+                background: #667eea;
+                margin: 10px 0;
+                border-radius: 2px;
+                animation: pulse 1s infinite;
+            `;
+            
+            // Determine drop position
+            const rect = element.getBoundingClientRect();
+            const midpoint = rect.top + rect.height / 2;
+            
+            if (e.clientY < midpoint) {
+                element.parentNode.insertBefore(dropIndicator, element);
+            } else {
+                element.parentNode.insertBefore(dropIndicator, element.nextSibling);
+            }
+        });
+        
+        element.addEventListener('drop', (e) => {
+            e.preventDefault();
+            
+            if (!window.draggedElement || window.draggedElement === element) return;
+            
+            // Determine drop position
+            const rect = element.getBoundingClientRect();
+            const midpoint = rect.top + rect.height / 2;
+            
+            if (e.clientY < midpoint) {
+                element.parentNode.insertBefore(window.draggedElement, element);
+            } else {
+                element.parentNode.insertBefore(window.draggedElement, element.nextSibling);
+            }
+            
+            showFloatingMessage('Block moved');
+            
+            // Remove drop indicators
+            document.querySelectorAll('.drop-indicator').forEach(indicator => {
+                indicator.remove();
+            });
+        });
+        
+        // Show/hide controls on hover
         element.addEventListener('mouseenter', function() {
             this.style.outline = '2px dashed #667eea';
             this.style.outlineOffset = '4px';
             const btn = this.querySelector('.block-delete-btn');
+            const handle = this.querySelector('.drag-handle');
             if (btn) btn.style.display = 'block';
+            if (handle) handle.style.display = 'flex';
         });
         
         element.addEventListener('mouseleave', function() {
             this.style.outline = 'none';
             const btn = this.querySelector('.block-delete-btn');
+            const handle = this.querySelector('.drag-handle');
             if (btn) btn.style.display = 'none';
+            if (handle) handle.style.display = 'none';
         });
         
-        // Add delete button if not already present
+        // Add controls if not already present
+        if (!element.querySelector('.drag-handle')) {
+            element.appendChild(dragHandle);
+        }
         if (!element.querySelector('.block-delete-btn')) {
             element.appendChild(deleteBtn);
         }
@@ -1596,12 +1707,28 @@
         
         document.body.appendChild(badge);
         
-        // Add pulse animation
+        // Add pulse animation and drag styles
         const style = document.createElement('style');
         style.textContent = `
             @keyframes pulse {
                 0%, 100% { opacity: 1; }
                 50% { opacity: 0.5; }
+            }
+            
+            .draggable-block {
+                transition: transform 0.2s;
+            }
+            
+            .draggable-block:active {
+                transform: scale(0.98);
+            }
+            
+            .dragging {
+                cursor: grabbing !important;
+            }
+            
+            .drop-indicator {
+                animation: pulse 1s infinite;
             }
         `;
         document.head.appendChild(style);
