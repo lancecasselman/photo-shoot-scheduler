@@ -7,6 +7,31 @@ const express = require('express');
 
 function registerStorageRoutes(app, isAuthenticated, normalizeUser, storageSystem) {
     
+    // Test Stripe connection
+    app.get('/api/storage/test-stripe', isAuthenticated, async (req, res) => {
+        try {
+            const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+            
+            // Test Stripe connection by fetching a small amount of data
+            const paymentMethods = await stripe.paymentMethods.list({ limit: 1 });
+            
+            res.json({ 
+                status: 'connected',
+                message: 'Stripe is properly connected',
+                hasSecretKey: !!process.env.STRIPE_SECRET_KEY,
+                hasPublicKey: !!process.env.VITE_STRIPE_PUBLIC_KEY
+            });
+        } catch (error) {
+            console.error('Stripe connection test failed:', error);
+            res.json({ 
+                status: 'error',
+                message: error.message,
+                hasSecretKey: !!process.env.STRIPE_SECRET_KEY,
+                hasPublicKey: !!process.env.VITE_STRIPE_PUBLIC_KEY
+            });
+        }
+    });
+    
     // Get user's storage summary
     app.get('/api/storage/summary', isAuthenticated, async (req, res) => {
         try {
