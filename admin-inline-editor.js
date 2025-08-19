@@ -34,11 +34,11 @@
                 isAdmin = true;
                 console.log('Admin editor activated on secure landing page');
                 
-                // FIRST: Store original content before any edits are applied
-                storeOriginalContent();
-                
-                // SECOND: Load and apply saved edits
+                // FIRST: Load and apply saved edits to the page
                 await loadSavedEdits();
+                
+                // SECOND: Store the current state (with saved edits) as baseline for detecting new changes
+                storeCurrentStateAsBaseline();
                 
                 // THIRD: Enable editing features
                 enableInlineEditing();
@@ -60,9 +60,9 @@
         }
     }
     
-    // Store original content before any edits are applied
-    function storeOriginalContent() {
-        console.log('Storing original content before applying edits...');
+    // Store current state (after saved edits) as baseline for detecting new changes
+    function storeCurrentStateAsBaseline() {
+        console.log('Storing current state as baseline for change detection...');
         
         // Select all elements that will be editable
         const editableSelectors = [
@@ -79,13 +79,14 @@
             document.querySelectorAll(selector).forEach(element => {
                 // Skip if it contains form elements
                 if (!element.querySelector('input, select, textarea, button')) {
+                    // Store the current content (which includes any saved edits) as the baseline
                     element.dataset.originalContent = element.innerHTML;
                     storedCount++;
                 }
             });
         });
         
-        console.log(`Stored original content for ${storedCount} elements`);
+        console.log(`Stored baseline content for ${storedCount} elements`);
     }
     
     // Load saved content edits
