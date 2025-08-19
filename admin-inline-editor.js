@@ -12,6 +12,7 @@
     let isAdmin = false;
     let saveTimer = null;
     let currentPage = window.location.pathname.replace('/', '') || 'index';
+    let currentUserEmail = null;
     
     // Initialize the editor system
     async function initializeAdminEditor() {
@@ -309,81 +310,92 @@
     
     // Add admin toolbar
     function addAdminToolbar() {
+        // Only show toolbar on landing page
+        const isLandingPage = window.location.pathname === '/landing.html' || 
+                             window.location.pathname === '/landing' ||
+                             (window.location.pathname === '/' && document.title.includes('Landing'));
+        
+        if (!isLandingPage) {
+            console.log('Admin toolbar hidden - not on landing page');
+            return;
+        }
+        
         const toolbar = document.createElement('div');
         toolbar.id = 'admin-toolbar';
         toolbar.innerHTML = `
             <div style="
                 position: fixed;
-                bottom: 30px;
-                left: 50%;
-                transform: translateX(-50%) scale(1.1);
-                background: linear-gradient(135deg, #000000, #2d2d2d);
-                border: 3px solid #d4af37;
-                border-radius: 50px;
-                padding: 15px 25px;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: #1a1a1a;
+                border-top: 1px solid #333;
+                padding: 8px 12px;
                 display: flex;
-                gap: 15px;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
                 z-index: 2147483647;
-                box-shadow: 0 0 50px rgba(212, 175, 55, 0.8), 0 20px 40px rgba(0,0,0,0.9);
-                backdrop-filter: blur(10px);
-                animation: toolbarGlow 3s ease-in-out infinite;
+                box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
             ">
-                <div style="
-                    background: linear-gradient(135deg, #ff0080, #ff6ec7);
-                    color: white;
-                    padding: 8px 16px;
-                    border-radius: 20px;
-                    font-weight: 900;
-                    font-size: 14px;
-                    text-transform: uppercase;
-                    letter-spacing: 2px;
-                    margin-right: 10px;
-                    border: 2px solid #fff;
-                    box-shadow: 0 4px 10px rgba(255, 0, 128, 0.5);
-                ">
-                    ⚡ ADMIN MODE
-                </div>
                 <button id="add-photo-block" style="
-                    background: linear-gradient(135deg, #d4af37, #f0c74a);
-                    color: #000000;
-                    border: 2px solid #fff;
-                    padding: 12px 24px;
-                    border-radius: 30px;
-                    font-weight: 700;
-                    font-size: 16px;
+                    background: #2a2a2a;
+                    color: #fff;
+                    border: none;
+                    padding: 6px 12px;
+                    border-radius: 6px;
+                    font-size: 13px;
                     cursor: pointer;
-                    transition: all 0.3s;
-                    box-shadow: 0 4px 10px rgba(212, 175, 55, 0.5);
+                    transition: all 0.2s;
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
                 ">
-                    + Add Photo Block
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                        <polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                    Photo
                 </button>
                 <button id="add-text-block" style="
-                    background: linear-gradient(135deg, #667eea, #7c8ff7);
-                    color: white;
-                    border: 2px solid #fff;
-                    padding: 12px 24px;
-                    border-radius: 30px;
-                    font-weight: 700;
-                    font-size: 16px;
+                    background: #2a2a2a;
+                    color: #fff;
+                    border: none;
+                    padding: 6px 12px;
+                    border-radius: 6px;
+                    font-size: 13px;
                     cursor: pointer;
-                    transition: all 0.3s;
-                    box-shadow: 0 4px 10px rgba(102, 126, 234, 0.5);
+                    transition: all 0.2s;
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
                 ">
-                    + Add Text
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="4 7 4 4 20 4 20 7"/>
+                        <line x1="9" y1="20" x2="15" y2="20"/>
+                        <line x1="12" y1="4" x2="12" y2="20"/>
+                    </svg>
+                    Text
                 </button>
+                <div style="
+                    width: 1px;
+                    height: 20px;
+                    background: #444;
+                    margin: 0 8px;
+                "></div>
                 <button id="save-all" style="
-                    background: linear-gradient(135deg, #10b981, #22d39f);
+                    background: #3b82f6;
                     color: white;
-                    border: 2px solid #fff;
-                    padding: 12px 24px;
-                    border-radius: 30px;
-                    font-weight: 700;
-                    font-size: 16px;
+                    border: none;
+                    padding: 6px 16px;
+                    border-radius: 6px;
+                    font-size: 13px;
                     cursor: pointer;
-                    transition: all 0.3s;
-                    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.5);
+                    transition: all 0.2s;
+                    font-weight: 500;
                 ">
-                    Save All
+                    Save
                 </button>
             </div>
         `;
@@ -401,20 +413,12 @@
         // Add styles for photo blocks
         const style = document.createElement('style');
         style.textContent = `
-            @keyframes toolbarGlow {
-                0%, 100% { 
-                    box-shadow: 0 0 50px rgba(212, 175, 55, 0.8), 0 20px 40px rgba(0,0,0,0.9);
-                    transform: translateX(-50%) scale(1.1);
-                }
-                50% { 
-                    box-shadow: 0 0 80px rgba(212, 175, 55, 1), 0 25px 50px rgba(0,0,0,0.95);
-                    transform: translateX(-50%) scale(1.12);
-                }
+            #admin-toolbar button:hover {
+                background: #3a3a3a !important;
             }
             
-            #admin-toolbar button:hover {
-                transform: scale(1.1) !important;
-                filter: brightness(1.2);
+            #admin-toolbar #save-all:hover {
+                background: #2563eb !important;
             }
             
             .photo-block {
