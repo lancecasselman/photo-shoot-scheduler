@@ -337,25 +337,34 @@
 
         <!-- Upgrade Options -->
         <div class="card">
-            <h2>Upgrade Storage</h2>
-            <p style="margin-bottom: 20px; color: var(--soft-brown);">Purchase additional storage in 1TB increments at $25/month each.</p>
+            <h2>Add Storage</h2>
+            <p style="margin-bottom: 20px; color: var(--soft-brown);">Add storage in 1TB increments at $25/month per TB.</p>
             
-            <div class="package-grid">
-                <div class="package-card" onclick="purchaseStorage(1)">
-                    <div class="package-size">1 TB</div>
-                    <div class="package-price">$25/month</div>
-                    <button class="btn">Purchase</button>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 20px; margin: 30px 0;">
+                <div style="text-align: center;">
+                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+                        <button class="btn btn-secondary" onclick="decrementStorage()" style="width: 40px; height: 40px; font-size: 24px; padding: 0;">−</button>
+                        <div style="min-width: 100px; text-align: center;">
+                            <div id="storage-quantity" style="font-size: 48px; font-weight: bold; color: var(--dark-brown);">1</div>
+                            <div style="font-size: 24px; color: var(--soft-brown);">TB</div>
+                        </div>
+                        <button class="btn btn-secondary" onclick="incrementStorage()" style="width: 40px; height: 40px; font-size: 24px; padding: 0;">+</button>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <div id="storage-price" style="font-size: 32px; font-weight: bold; color: var(--dark-brown);">$25</div>
+                        <div style="font-size: 16px; color: var(--soft-brown);">per month</div>
+                    </div>
+                    <button class="btn" onclick="purchaseSelectedStorage()" style="padding: 15px 40px; font-size: 18px;">
+                        Add Storage
+                    </button>
                 </div>
-                <div class="package-card" onclick="purchaseStorage(2)">
-                    <div class="package-size">2 TB</div>
-                    <div class="package-price">$50/month</div>
-                    <button class="btn">Purchase</button>
-                </div>
-                <div class="package-card" onclick="purchaseStorage(5)">
-                    <div class="package-size">5 TB</div>
-                    <div class="package-price">$125/month</div>
-                    <button class="btn">Purchase</button>
-                </div>
+            </div>
+            
+            <div style="background: #f0f0f0; padding: 15px; border-radius: 8px; margin-top: 20px;">
+                <p style="margin: 0; font-size: 14px; color: var(--soft-brown);">
+                    <strong>How it works:</strong> Each 1TB add-on is a separate monthly subscription at $25/month. 
+                    You can add multiple 1TB packages as needed and cancel them individually.
+                </p>
             </div>
         </div>
     </div>
@@ -363,6 +372,7 @@
     <script>
         let stripe;
         let storageData = null;
+        let selectedTBCount = 1;
 
         // Initialize page
         document.addEventListener('DOMContentLoaded', async function() {
@@ -507,6 +517,33 @@
             });
         }
 
+        // Increment storage quantity
+        function incrementStorage() {
+            if (selectedTBCount < 10) {
+                selectedTBCount++;
+                updateStorageDisplay();
+            }
+        }
+        
+        // Decrement storage quantity
+        function decrementStorage() {
+            if (selectedTBCount > 1) {
+                selectedTBCount--;
+                updateStorageDisplay();
+            }
+        }
+        
+        // Update storage display
+        function updateStorageDisplay() {
+            document.getElementById('storage-quantity').textContent = selectedTBCount;
+            document.getElementById('storage-price').textContent = `$${selectedTBCount * 25}`;
+        }
+        
+        // Purchase selected storage
+        async function purchaseSelectedStorage() {
+            await purchaseStorage(selectedTBCount);
+        }
+        
         // Purchase storage package
         async function purchaseStorage(tbCount) {
             try {
