@@ -367,6 +367,22 @@
         // Initialize page
         document.addEventListener('DOMContentLoaded', async function() {
             try {
+                // Check for payment success redirect
+                const urlParams = new URLSearchParams(window.location.search);
+                const paymentIntent = urlParams.get('payment_intent');
+                const paymentStatus = urlParams.get('redirect_status');
+                
+                if (paymentIntent && paymentStatus === 'succeeded') {
+                    // Payment was successful
+                    const pendingData = JSON.parse(sessionStorage.getItem('pending_storage_subscription') || '{}');
+                    if (pendingData.tbCount) {
+                        showSuccessMessage(`Successfully purchased ${pendingData.tbCount}TB storage! Your quota has been updated.`);
+                        sessionStorage.removeItem('pending_storage_subscription');
+                    }
+                    // Clean URL
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+                
                 // Initialize Stripe from server
                 const response = await fetch('/api/stripe-public-key');
                 const { publicKey } = await response.json();
@@ -596,6 +612,26 @@
             document.getElementById('loading').style.display = 'none';
             document.getElementById('error-message').textContent = message;
             document.getElementById('error').style.display = 'block';
+        }
+        
+        // Show success message
+        function showSuccessMessage(message) {
+            const successDiv = document.createElement('div');
+            successDiv.className = 'card';
+            successDiv.style.background = '#28a745';
+            successDiv.style.color = 'white';
+            successDiv.style.padding = '20px';
+            successDiv.style.marginBottom = '20px';
+            successDiv.innerHTML = `
+                <h3>✓ Success!</h3>
+                <p>${message}</p>
+            `;
+            document.getElementById('dashboard').insertBefore(successDiv, document.getElementById('dashboard').firstChild);
+            
+            // Remove message after 5 seconds
+            setTimeout(() => {
+                successDiv.remove();
+            }, 5000);
         }
     </script>
 </body>
