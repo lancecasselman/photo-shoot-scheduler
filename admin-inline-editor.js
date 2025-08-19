@@ -1051,15 +1051,33 @@
     
     // Save all changes
     async function saveAllChanges() {
+        console.log('Save All button clicked');
+        
         const editables = document.querySelectorAll('.admin-editable');
+        console.log('Found editable elements:', editables.length);
+        
         let savedCount = 0;
+        let checkedCount = 0;
         
         for (const element of editables) {
-            if (element.innerHTML !== element.dataset.originalContent) {
+            checkedCount++;
+            const current = element.innerHTML;
+            const original = element.dataset.originalContent || '';
+            
+            console.log(`Checking element ${checkedCount}:`, {
+                hasChanged: current !== original,
+                currentLength: current.length,
+                originalLength: original.length
+            });
+            
+            if (current !== original) {
+                console.log('Saving changed element...');
                 await saveContent(element);
                 savedCount++;
             }
         }
+        
+        console.log(`Save complete: ${savedCount} of ${checkedCount} elements saved`);
         
         // Show confirmation
         const toast = document.createElement('div');
