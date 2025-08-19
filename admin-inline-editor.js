@@ -205,8 +205,10 @@
     // Start editing an element
     function startEditing(element) {
         // Log the baseline before editing starts
-        console.log('Starting edit - baseline:', element.dataset.originalContent);
-        console.log('Starting edit - current:', element.innerHTML);
+        console.log('🔵 STARTING EDIT');
+        console.log('Element:', element.tagName, element.textContent.substring(0, 30));
+        console.log('Baseline stored:', element.dataset.originalContent?.substring(0, 50));
+        console.log('Current HTML:', element.innerHTML.substring(0, 50));
         
         element.contentEditable = true;
         element.focus();
@@ -224,6 +226,11 @@
         element.addEventListener('blur', handleEditBlur);
         element.addEventListener('keydown', handleEditKeydown);
         element.addEventListener('input', handleEditInput);
+        
+        // Add input listener to track changes
+        element.addEventListener('input', (e) => {
+            console.log('📝 TEXT CHANGED:', e.target.innerHTML.substring(0, 50));
+        });
     }
     
     function handleEditBlur(e) {
