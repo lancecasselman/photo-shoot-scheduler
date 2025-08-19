@@ -256,20 +256,25 @@ class StorageSystem {
                 throw new Error('Failed to create/find customer');
             }
 
+            // Create product first
+            const product = await stripe.products.create({
+                name: `Storage Add-on - ${tbCount}TB`,
+                description: `${tbCount}TB additional storage for photography platform`
+            });
+
+            // Create price for the product
+            const price = await stripe.prices.create({
+                product: product.id,
+                unit_amount: this.PACKAGE_PRICE_MONTHLY * 100 * tbCount, // Total price in cents
+                currency: 'usd',
+                recurring: { interval: 'month' }
+            });
+
             // Create subscription
             const subscription = await stripe.subscriptions.create({
                 customer: customer.id,
                 items: [{
-                    price_data: {
-                        currency: 'usd',
-                        product_data: {
-                            name: `Storage Package - ${tbCount}TB`,
-                            description: `${tbCount}TB additional storage at $${this.PACKAGE_PRICE_MONTHLY}/TB per month`
-                        },
-                        unit_amount: this.PACKAGE_PRICE_MONTHLY * 100, // Convert to cents
-                        recurring: { interval: 'month' }
-                    },
-                    quantity: tbCount
+                    price: price.id
                 }],
                 payment_behavior: 'default_incomplete',
                 expand: ['latest_invoice.payment_intent'],
