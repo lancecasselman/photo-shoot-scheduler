@@ -419,6 +419,18 @@
                     <button class="button" onclick="startOnboarding()">
                         Connect Stripe Account
                     </button>
+                    <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                        <p style="color: #666; margin-bottom: 10px;">
+                            <strong>Alternative Setup:</strong> If you're getting permission errors, you can:
+                        </p>
+                        <ol style="color: #666; margin-left: 20px;">
+                            <li>Update your Stripe API key permissions</li>
+                            <li>Or use a standard secret key instead of a restricted key</li>
+                        </ol>
+                        <p style="color: #666; margin-top: 10px;">
+                            Your current key (rk_live...) has restricted permissions.
+                        </p>
+                    </div>
                 `;
             }
         }
