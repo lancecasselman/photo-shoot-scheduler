@@ -1974,11 +1974,11 @@
     function applyEditingToExistingContent() {
         console.log('Applying editing controls to existing content...');
         
-        // Find all major content blocks - be more comprehensive
-        const allElements = document.querySelectorAll('section, article, div, header, footer, main > *, .content-section, .hero-section, .features-section, .contact-section, .gallery-section, .text-block, .photo-block, .content-block, .editable-content, .image-block');
+        // Only target major content blocks and sections, not every div
+        const majorBlocks = document.querySelectorAll('section, article, .content-section, .hero-section, .features-section, .contact-section, .gallery-section, .text-block, .photo-block, .content-block, .image-block');
         
         let appliedCount = 0;
-        allElements.forEach(element => {
+        majorBlocks.forEach(element => {
             // Skip if already has controls, is toolbar, or is too small
             if (element.querySelector('.block-delete-btn') || 
                 element.querySelector('.block-move-controls') ||
@@ -1986,7 +1986,7 @@
                 element.classList.contains('admin-toolbar') ||
                 element.tagName === 'SCRIPT' ||
                 element.tagName === 'STYLE' ||
-                element.offsetHeight < 30) {
+                element.offsetHeight < 50) {
                 return;
             }
             
