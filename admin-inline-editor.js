@@ -1646,26 +1646,26 @@
             newWidth = Math.max(50, newWidth);
             newHeight = Math.max(50, newHeight);
             
-            // Apply new dimensions
+            // Apply new dimensions to container only
             element.style.width = newWidth + 'px';
             element.style.height = newHeight + 'px';
             element.style.overflow = 'hidden';
             element.style.position = 'relative';
-            element.style.display = 'inline-block';
+            element.style.display = 'block';
             
-            // If there's an image, resize it too
+            // If there's an image, make it responsive to container
             if (img) {
-                // Remove all previous inline styles
+                // Remove any width/height attributes
                 img.removeAttribute('width');
                 img.removeAttribute('height');
                 
-                // Set new image styles for proper scaling
-                img.style.width = newWidth + 'px';
-                img.style.height = newHeight + 'px';
-                img.style.maxWidth = '100%';
+                // Make image fill the container
+                img.style.width = '100%';
+                img.style.height = '100%';
                 img.style.objectFit = 'cover';
                 img.style.display = 'block';
-                img.style.position = 'relative';
+                img.style.maxWidth = 'none';  // Remove max-width constraint
+                img.style.maxHeight = 'none'; // Remove max-height constraint
             }
         }
         
@@ -1699,25 +1699,30 @@
                 // For img elements, wrap them in a div first if not already wrapped
                 if (block.tagName === 'IMG' && !block.parentElement.classList.contains('photo-block')) {
                     const wrapper = document.createElement('div');
-                    wrapper.className = 'photo-block image-block';
+                    wrapper.className = 'photo-block image-block resizable-block';
                     
                     // Get original image dimensions
                     const imgWidth = block.naturalWidth || block.width || 300;
                     const imgHeight = block.naturalHeight || block.height || 200;
                     
-                    // Set wrapper dimensions
-                    wrapper.style.display = 'inline-block';
+                    // Set wrapper dimensions based on image
+                    wrapper.style.display = 'block';
                     wrapper.style.width = imgWidth + 'px';
                     wrapper.style.height = imgHeight + 'px';
                     wrapper.style.overflow = 'hidden';
                     wrapper.style.position = 'relative';
                     
-                    // Style the image to fit properly
-                    block.style.width = imgWidth + 'px';
-                    block.style.height = imgHeight + 'px';
+                    // Remove any width/height attributes from image
+                    block.removeAttribute('width');
+                    block.removeAttribute('height');
+                    
+                    // Make image responsive within wrapper
+                    block.style.width = '100%';
+                    block.style.height = '100%';
                     block.style.objectFit = 'cover';
                     block.style.display = 'block';
-                    block.style.position = 'relative';
+                    block.style.maxWidth = 'none';
+                    block.style.maxHeight = 'none';
                     
                     block.parentNode.insertBefore(wrapper, block);
                     wrapper.appendChild(block);
