@@ -805,13 +805,20 @@
             <div class="photo-caption admin-editable" contenteditable="true" placeholder="Enter caption..."></div>
         `;
         
-        // Find insertion point
+        // Find the main content area
         const mainContent = document.querySelector('main, .content, .container, body');
-        const insertPoint = document.querySelector('.selected-for-insert') || mainContent.lastElementChild;
         
-        if (insertPoint) {
-            insertPoint.parentNode.insertBefore(photoBlock, insertPoint.nextSibling);
+        // Insert at the top - find the first child that's not the admin toolbar
+        let firstChild = mainContent.firstElementChild;
+        while (firstChild && (firstChild.id === 'admin-toolbar' || firstChild.classList.contains('admin-toolbar'))) {
+            firstChild = firstChild.nextElementSibling;
+        }
+        
+        if (firstChild) {
+            // Insert before the first non-toolbar element
+            mainContent.insertBefore(photoBlock, firstChild);
         } else {
+            // If no children, append it
             mainContent.appendChild(photoBlock);
         }
         
@@ -982,9 +989,22 @@
         textBlock.contentEditable = true;
         textBlock.innerHTML = 'Enter your text here...';
         
-        // Find insertion point
+        // Find the main content area
         const mainContent = document.querySelector('main, .content, .container, body');
-        mainContent.appendChild(textBlock);
+        
+        // Insert at the top - find the first child that's not the admin toolbar
+        let firstChild = mainContent.firstElementChild;
+        while (firstChild && (firstChild.id === 'admin-toolbar' || firstChild.classList.contains('admin-toolbar'))) {
+            firstChild = firstChild.nextElementSibling;
+        }
+        
+        if (firstChild) {
+            // Insert before the first non-toolbar element
+            mainContent.insertBefore(textBlock, firstChild);
+        } else {
+            // If no children, append it
+            mainContent.appendChild(textBlock);
+        }
         
         // Apply full editing capabilities with arrow controls
         makeEditableWithDelete(textBlock);
