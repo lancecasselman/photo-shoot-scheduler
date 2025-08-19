@@ -327,84 +327,377 @@
                 bottom: 0;
                 left: 0;
                 right: 0;
-                background: #1a1a1a;
-                border-top: 1px solid #333;
-                padding: 8px 12px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 8px;
+                height: 120px;
+                background: rgba(255, 255, 255, 0.98);
+                backdrop-filter: blur(15px);
+                border-top: 1px solid #e2e8f0;
                 z-index: 2147483647;
-                box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+                display: flex;
+                flex-direction: column;
+                box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
             ">
-                <button id="add-photo-block" style="
-                    background: #2a2a2a;
-                    color: #fff;
-                    border: none;
-                    padding: 6px 12px;
-                    border-radius: 6px;
-                    font-size: 13px;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                    display: flex;
-                    align-items: center;
-                    gap: 4px;
-                ">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                        <circle cx="8.5" cy="8.5" r="1.5"/>
-                        <polyline points="21 15 16 10 5 21"/>
-                    </svg>
-                    Photo
-                </button>
-                <button id="add-text-block" style="
-                    background: #2a2a2a;
-                    color: #fff;
-                    border: none;
-                    padding: 6px 12px;
-                    border-radius: 6px;
-                    font-size: 13px;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                    display: flex;
-                    align-items: center;
-                    gap: 4px;
-                ">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="4 7 4 4 20 4 20 7"/>
-                        <line x1="9" y1="20" x2="15" y2="20"/>
-                        <line x1="12" y1="4" x2="12" y2="20"/>
-                    </svg>
-                    Text
-                </button>
+                <!-- Tabs Header -->
                 <div style="
-                    width: 1px;
-                    height: 20px;
-                    background: #444;
-                    margin: 0 8px;
-                "></div>
-                <button id="save-all" style="
-                    background: #3b82f6;
-                    color: white;
-                    border: none;
-                    padding: 6px 16px;
-                    border-radius: 6px;
-                    font-size: 13px;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                    font-weight: 500;
+                    height: 40px;
+                    display: flex;
+                    align-items: center;
+                    padding: 0 20px;
+                    border-bottom: 1px solid #f1f5f9;
+                    background: rgba(248, 250, 252, 0.8);
                 ">
-                    Save
-                </button>
+                    <button class="tool-tab active" data-tab="elements" style="
+                        padding: 0 20px;
+                        height: 100%;
+                        background: white;
+                        border: none;
+                        border-bottom: 2px solid #667eea;
+                        color: #667eea;
+                        font-size: 13px;
+                        font-weight: 500;
+                        cursor: pointer;
+                    ">Elements</button>
+                    <button class="tool-tab" data-tab="text" style="
+                        padding: 0 20px;
+                        height: 100%;
+                        background: none;
+                        border: none;
+                        border-bottom: 2px solid transparent;
+                        color: #64748b;
+                        font-size: 13px;
+                        font-weight: 500;
+                        cursor: pointer;
+                    ">Text Styles</button>
+                    <button class="tool-tab" data-tab="layout" style="
+                        padding: 0 20px;
+                        height: 100%;
+                        background: none;
+                        border: none;
+                        border-bottom: 2px solid transparent;
+                        color: #64748b;
+                        font-size: 13px;
+                        font-weight: 500;
+                        cursor: pointer;
+                    ">Layout</button>
+                    <button class="tool-tab" data-tab="design" style="
+                        padding: 0 20px;
+                        height: 100%;
+                        background: none;
+                        border: none;
+                        border-bottom: 2px solid transparent;
+                        color: #64748b;
+                        font-size: 13px;
+                        font-weight: 500;
+                        cursor: pointer;
+                    ">Design</button>
+                    
+                    <div style="margin-left: auto; display: flex; gap: 10px;">
+                        <button id="preview-mode" style="
+                            padding: 6px 12px;
+                            background: #f1f5f9;
+                            border: none;
+                            border-radius: 6px;
+                            color: #475569;
+                            font-size: 12px;
+                            font-weight: 500;
+                            cursor: pointer;
+                        ">Preview</button>
+                        <button id="save-all" style="
+                            padding: 6px 16px;
+                            background: #667eea;
+                            color: white;
+                            border: none;
+                            border-radius: 6px;
+                            font-size: 12px;
+                            font-weight: 500;
+                            cursor: pointer;
+                        ">Save Changes</button>
+                    </div>
+                </div>
+                
+                <!-- Tools Content -->
+                <div style="
+                    flex: 1;
+                    overflow-x: auto;
+                    overflow-y: hidden;
+                    padding: 15px 0;
+                ">
+                    <!-- Elements Tab -->
+                    <div class="tab-panel active" data-panel="elements" style="
+                        display: flex;
+                        gap: 20px;
+                        padding: 0 20px;
+                    ">
+                        <div class="tool-section">
+                            <div style="font-size: 11px; font-weight: 600; color: #64748b; margin-bottom: 8px; text-transform: uppercase;">BASIC</div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="component-btn" id="add-heading" style="
+                                    padding: 8px 12px;
+                                    background: white;
+                                    border: 1px solid #e2e8f0;
+                                    border-radius: 6px;
+                                    cursor: pointer;
+                                    font-size: 12px;
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 6px;
+                                ">
+                                    <span style="font-weight: 700;">H</span> Heading
+                                </button>
+                                <button class="component-btn" id="add-text-block" style="
+                                    padding: 8px 12px;
+                                    background: white;
+                                    border: 1px solid #e2e8f0;
+                                    border-radius: 6px;
+                                    cursor: pointer;
+                                    font-size: 12px;
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 6px;
+                                ">
+                                    <span>T</span> Text
+                                </button>
+                                <button class="component-btn" id="add-button" style="
+                                    padding: 8px 12px;
+                                    background: white;
+                                    border: 1px solid #e2e8f0;
+                                    border-radius: 6px;
+                                    cursor: pointer;
+                                    font-size: 12px;
+                                ">Button</button>
+                            </div>
+                        </div>
+                        
+                        <div class="tool-section">
+                            <div style="font-size: 11px; font-weight: 600; color: #64748b; margin-bottom: 8px; text-transform: uppercase;">MEDIA</div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="component-btn" id="add-photo-block" style="
+                                    padding: 8px 12px;
+                                    background: white;
+                                    border: 1px solid #e2e8f0;
+                                    border-radius: 6px;
+                                    cursor: pointer;
+                                    font-size: 12px;
+                                ">📷 Image</button>
+                                <button class="component-btn" id="add-gallery" style="
+                                    padding: 8px 12px;
+                                    background: white;
+                                    border: 1px solid #e2e8f0;
+                                    border-radius: 6px;
+                                    cursor: pointer;
+                                    font-size: 12px;
+                                ">🖼️ Gallery</button>
+                                <button class="component-btn" id="add-video" style="
+                                    padding: 8px 12px;
+                                    background: white;
+                                    border: 1px solid #e2e8f0;
+                                    border-radius: 6px;
+                                    cursor: pointer;
+                                    font-size: 12px;
+                                ">🎬 Video</button>
+                            </div>
+                        </div>
+                        
+                        <div class="tool-section">
+                            <div style="font-size: 11px; font-weight: 600; color: #64748b; margin-bottom: 8px; text-transform: uppercase;">SECTIONS</div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="component-btn" id="add-hero" style="
+                                    padding: 8px 12px;
+                                    background: white;
+                                    border: 1px solid #e2e8f0;
+                                    border-radius: 6px;
+                                    cursor: pointer;
+                                    font-size: 12px;
+                                ">Hero</button>
+                                <button class="component-btn" id="add-features" style="
+                                    padding: 8px 12px;
+                                    background: white;
+                                    border: 1px solid #e2e8f0;
+                                    border-radius: 6px;
+                                    cursor: pointer;
+                                    font-size: 12px;
+                                ">Features</button>
+                                <button class="component-btn" id="add-contact" style="
+                                    padding: 8px 12px;
+                                    background: white;
+                                    border: 1px solid #e2e8f0;
+                                    border-radius: 6px;
+                                    cursor: pointer;
+                                    font-size: 12px;
+                                ">Contact</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Text Styles Tab -->
+                    <div class="tab-panel" data-panel="text" style="
+                        display: none;
+                        gap: 20px;
+                        padding: 0 20px;
+                    ">
+                        <div class="tool-section">
+                            <div style="font-size: 11px; font-weight: 600; color: #64748b; margin-bottom: 8px;">FONT FAMILY</div>
+                            <select id="font-family" style="
+                                padding: 6px 10px;
+                                border: 1px solid #e2e8f0;
+                                border-radius: 6px;
+                                font-size: 12px;
+                                background: white;
+                            ">
+                                <option value="Inter">Inter</option>
+                                <option value="Playfair Display">Playfair Display</option>
+                                <option value="Montserrat">Montserrat</option>
+                                <option value="Raleway">Raleway</option>
+                                <option value="Lato">Lato</option>
+                            </select>
+                        </div>
+                        
+                        <div class="tool-section">
+                            <div style="font-size: 11px; font-weight: 600; color: #64748b; margin-bottom: 8px;">SIZE</div>
+                            <div style="display: flex; gap: 4px;">
+                                <button class="size-btn" data-size="sm" style="padding: 6px 10px; background: white; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 11px; cursor: pointer;">Small</button>
+                                <button class="size-btn" data-size="md" style="padding: 6px 10px; background: white; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 11px; cursor: pointer;">Medium</button>
+                                <button class="size-btn" data-size="lg" style="padding: 6px 10px; background: white; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 11px; cursor: pointer;">Large</button>
+                                <button class="size-btn" data-size="xl" style="padding: 6px 10px; background: white; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 11px; cursor: pointer;">XL</button>
+                            </div>
+                        </div>
+                        
+                        <div class="tool-section">
+                            <div style="font-size: 11px; font-weight: 600; color: #64748b; margin-bottom: 8px;">ALIGNMENT</div>
+                            <div style="display: flex; gap: 4px;">
+                                <button class="align-btn" data-align="left" style="padding: 6px 10px; background: white; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 11px; cursor: pointer;">Left</button>
+                                <button class="align-btn" data-align="center" style="padding: 6px 10px; background: white; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 11px; cursor: pointer;">Center</button>
+                                <button class="align-btn" data-align="right" style="padding: 6px 10px; background: white; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 11px; cursor: pointer;">Right</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Layout Tab -->
+                    <div class="tab-panel" data-panel="layout" style="
+                        display: none;
+                        gap: 20px;
+                        padding: 0 20px;
+                    ">
+                        <div class="tool-section">
+                            <div style="font-size: 11px; font-weight: 600; color: #64748b; margin-bottom: 8px;">SPACING</div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="spacing-btn" data-spacing="compact" style="padding: 6px 10px; background: white; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 11px; cursor: pointer;">Compact</button>
+                                <button class="spacing-btn" data-spacing="normal" style="padding: 6px 10px; background: white; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 11px; cursor: pointer;">Normal</button>
+                                <button class="spacing-btn" data-spacing="relaxed" style="padding: 6px 10px; background: white; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 11px; cursor: pointer;">Relaxed</button>
+                            </div>
+                        </div>
+                        
+                        <div class="tool-section">
+                            <div style="font-size: 11px; font-weight: 600; color: #64748b; margin-bottom: 8px;">COLUMNS</div>
+                            <div style="display: flex; gap: 4px;">
+                                <button class="column-btn" data-cols="1" style="padding: 6px 10px; background: white; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 11px; cursor: pointer;">1</button>
+                                <button class="column-btn" data-cols="2" style="padding: 6px 10px; background: white; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 11px; cursor: pointer;">2</button>
+                                <button class="column-btn" data-cols="3" style="padding: 6px 10px; background: white; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 11px; cursor: pointer;">3</button>
+                                <button class="column-btn" data-cols="4" style="padding: 6px 10px; background: white; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 11px; cursor: pointer;">4</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Design Tab -->
+                    <div class="tab-panel" data-panel="design" style="
+                        display: none;
+                        gap: 20px;
+                        padding: 0 20px;
+                    ">
+                        <div class="tool-section">
+                            <div style="font-size: 11px; font-weight: 600; color: #64748b; margin-bottom: 8px;">THEME</div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="theme-btn" data-theme="minimal" style="padding: 6px 12px; background: white; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 11px; cursor: pointer;">Minimal</button>
+                                <button class="theme-btn" data-theme="elegant" style="padding: 6px 12px; background: white; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 11px; cursor: pointer;">Elegant</button>
+                                <button class="theme-btn" data-theme="bold" style="padding: 6px 12px; background: white; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 11px; cursor: pointer;">Bold</button>
+                                <button class="theme-btn" data-theme="dark" style="padding: 6px 12px; background: white; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 11px; cursor: pointer;">Dark</button>
+                            </div>
+                        </div>
+                        
+                        <div class="tool-section">
+                            <div style="font-size: 11px; font-weight: 600; color: #64748b; margin-bottom: 8px;">COLORS</div>
+                            <div style="display: flex; gap: 6px;">
+                                <button class="color-btn" data-color="#000000" style="width: 28px; height: 28px; background: #000000; border: 2px solid #e2e8f0; border-radius: 4px; cursor: pointer;"></button>
+                                <button class="color-btn" data-color="#667eea" style="width: 28px; height: 28px; background: #667eea; border: 2px solid #e2e8f0; border-radius: 4px; cursor: pointer;"></button>
+                                <button class="color-btn" data-color="#ef4444" style="width: 28px; height: 28px; background: #ef4444; border: 2px solid #e2e8f0; border-radius: 4px; cursor: pointer;"></button>
+                                <button class="color-btn" data-color="#10b981" style="width: 28px; height: 28px; background: #10b981; border: 2px solid #e2e8f0; border-radius: 4px; cursor: pointer;"></button>
+                                <button class="color-btn" data-color="#f59e0b" style="width: 28px; height: 28px; background: #f59e0b; border: 2px solid #e2e8f0; border-radius: 4px; cursor: pointer;"></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         `;
         
         document.body.appendChild(toolbar);
         
-        // Add button handlers
-        document.getElementById('add-photo-block').addEventListener('click', insertPhotoBlock);
-        document.getElementById('add-text-block').addEventListener('click', insertTextBlock);
-        document.getElementById('save-all').addEventListener('click', saveAllChanges);
+        // Add tab switching functionality
+        const tabs = toolbar.querySelectorAll('.tool-tab');
+        const panels = toolbar.querySelectorAll('.tab-panel');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const targetPanel = tab.dataset.tab;
+                
+                // Update active tab
+                tabs.forEach(t => {
+                    t.classList.remove('active');
+                    t.style.background = 'none';
+                    t.style.borderBottomColor = 'transparent';
+                    t.style.color = '#64748b';
+                });
+                tab.classList.add('active');
+                tab.style.background = 'white';
+                tab.style.borderBottomColor = '#667eea';
+                tab.style.color = '#667eea';
+                
+                // Show corresponding panel
+                panels.forEach(panel => {
+                    if (panel.dataset.panel === targetPanel) {
+                        panel.style.display = 'flex';
+                    } else {
+                        panel.style.display = 'none';
+                    }
+                });
+            });
+        });
+        
+        // Add component handlers
+        document.getElementById('add-photo-block')?.addEventListener('click', insertPhotoBlock);
+        document.getElementById('add-text-block')?.addEventListener('click', insertTextBlock);
+        document.getElementById('add-heading')?.addEventListener('click', () => insertHeading());
+        document.getElementById('add-button')?.addEventListener('click', () => insertButton());
+        document.getElementById('add-gallery')?.addEventListener('click', () => insertGallery());
+        document.getElementById('add-video')?.addEventListener('click', () => insertVideo());
+        document.getElementById('add-hero')?.addEventListener('click', () => insertHeroSection());
+        document.getElementById('add-features')?.addEventListener('click', () => insertFeaturesSection());
+        document.getElementById('add-contact')?.addEventListener('click', () => insertContactSection());
+        document.getElementById('save-all')?.addEventListener('click', saveAllChanges);
+        document.getElementById('preview-mode')?.addEventListener('click', togglePreviewMode);
+        
+        // Add text style handlers
+        document.getElementById('font-family')?.addEventListener('change', (e) => applyFontFamily(e.target.value));
+        toolbar.querySelectorAll('.size-btn').forEach(btn => {
+            btn.addEventListener('click', () => applyTextSize(btn.dataset.size));
+        });
+        toolbar.querySelectorAll('.align-btn').forEach(btn => {
+            btn.addEventListener('click', () => applyAlignment(btn.dataset.align));
+        });
+        
+        // Add layout handlers
+        toolbar.querySelectorAll('.spacing-btn').forEach(btn => {
+            btn.addEventListener('click', () => applySpacing(btn.dataset.spacing));
+        });
+        toolbar.querySelectorAll('.column-btn').forEach(btn => {
+            btn.addEventListener('click', () => applyColumns(btn.dataset.cols));
+        });
+        
+        // Add design handlers
+        toolbar.querySelectorAll('.theme-btn').forEach(btn => {
+            btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
+        });
+        toolbar.querySelectorAll('.color-btn').forEach(btn => {
+            btn.addEventListener('click', () => applyColor(btn.dataset.color));
+        });
     }
     
     // Enable photo block functionality
@@ -682,6 +975,327 @@
         document.body.appendChild(toast);
         
         setTimeout(() => toast.remove(), 2000);
+    }
+    
+    // Insert heading element
+    function insertHeading() {
+        const heading = document.createElement('h2');
+        heading.contentEditable = true;
+        heading.innerHTML = 'Click to Edit Heading';
+        heading.style.cssText = `
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 20px 0;
+            color: #1a202c;
+            cursor: text;
+        `;
+        insertAtCursor(heading);
+    }
+    
+    // Insert button element
+    function insertButton() {
+        const button = document.createElement('button');
+        button.contentEditable = true;
+        button.innerHTML = 'Click Me';
+        button.style.cssText = `
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 10px 0;
+        `;
+        insertAtCursor(button);
+    }
+    
+    // Insert gallery
+    function insertGallery() {
+        const gallery = document.createElement('div');
+        gallery.className = 'photo-gallery';
+        gallery.style.cssText = `
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 10px;
+            margin: 20px 0;
+        `;
+        gallery.innerHTML = `
+            <div style="aspect-ratio: 1; background: #e2e8f0; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #718096;">
+                <span>📷 Add Image</span>
+            </div>
+            <div style="aspect-ratio: 1; background: #e2e8f0; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #718096;">
+                <span>📷 Add Image</span>
+            </div>
+            <div style="aspect-ratio: 1; background: #e2e8f0; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #718096;">
+                <span>📷 Add Image</span>
+            </div>
+        `;
+        insertAtCursor(gallery);
+    }
+    
+    // Insert video placeholder
+    function insertVideo() {
+        const video = document.createElement('div');
+        video.style.cssText = `
+            width: 100%;
+            max-width: 800px;
+            aspect-ratio: 16/9;
+            background: #000;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px auto;
+        `;
+        video.innerHTML = `
+            <div style="text-align: center; color: white;">
+                <div style="font-size: 48px; margin-bottom: 10px;">▶️</div>
+                <div>Video Placeholder</div>
+                <input type="url" placeholder="Enter video URL" style="
+                    margin-top: 10px;
+                    padding: 8px 12px;
+                    border-radius: 6px;
+                    border: 1px solid #ccc;
+                    background: white;
+                    color: black;
+                ">
+            </div>
+        `;
+        insertAtCursor(video);
+    }
+    
+    // Insert hero section
+    function insertHeroSection() {
+        const hero = document.createElement('section');
+        hero.style.cssText = `
+            min-height: 500px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 60px 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        `;
+        hero.innerHTML = `
+            <div>
+                <h1 style="font-size: 3rem; font-weight: 700; margin-bottom: 20px;" contenteditable="true">Your Amazing Title</h1>
+                <p style="font-size: 1.25rem; opacity: 0.9; margin-bottom: 30px;" contenteditable="true">Beautiful subtitle that captures attention</p>
+                <button style="padding: 14px 28px; background: white; color: #667eea; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">Get Started</button>
+            </div>
+        `;
+        insertAtCursor(hero);
+    }
+    
+    // Insert features section
+    function insertFeaturesSection() {
+        const features = document.createElement('section');
+        features.style.cssText = `
+            padding: 60px 20px;
+            background: #f8fafc;
+            border-radius: 10px;
+            margin: 20px 0;
+        `;
+        features.innerHTML = `
+            <h2 style="text-align: center; font-size: 2.5rem; font-weight: 700; margin-bottom: 40px;" contenteditable="true">Features</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px;">
+                <div style="text-align: center; padding: 20px;">
+                    <div style="font-size: 48px; margin-bottom: 15px;">✨</div>
+                    <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 10px;" contenteditable="true">Feature One</h3>
+                    <p style="color: #718096;" contenteditable="true">Description of your amazing feature</p>
+                </div>
+                <div style="text-align: center; padding: 20px;">
+                    <div style="font-size: 48px; margin-bottom: 15px;">🚀</div>
+                    <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 10px;" contenteditable="true">Feature Two</h3>
+                    <p style="color: #718096;" contenteditable="true">Description of your amazing feature</p>
+                </div>
+                <div style="text-align: center; padding: 20px;">
+                    <div style="font-size: 48px; margin-bottom: 15px;">💎</div>
+                    <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 10px;" contenteditable="true">Feature Three</h3>
+                    <p style="color: #718096;" contenteditable="true">Description of your amazing feature</p>
+                </div>
+            </div>
+        `;
+        insertAtCursor(features);
+    }
+    
+    // Insert contact section
+    function insertContactSection() {
+        const contact = document.createElement('section');
+        contact.style.cssText = `
+            padding: 60px 20px;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        `;
+        contact.innerHTML = `
+            <h2 style="font-size: 2.5rem; font-weight: 700; margin-bottom: 20px;" contenteditable="true">Get In Touch</h2>
+            <p style="color: #718096; margin-bottom: 30px;" contenteditable="true">We'd love to hear from you</p>
+            <div style="max-width: 500px; margin: 0 auto;">
+                <input type="email" placeholder="Your Email" style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 15px;">
+                <textarea placeholder="Your Message" style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 15px; min-height: 120px; resize: vertical;"></textarea>
+                <button style="width: 100%; padding: 12px; background: #667eea; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">Send Message</button>
+            </div>
+        `;
+        insertAtCursor(contact);
+    }
+    
+    // Helper function to insert at cursor or append to body
+    function insertAtCursor(element) {
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            range.insertNode(element);
+            range.collapse(false);
+        } else {
+            const container = document.querySelector('.content-container') || document.querySelector('main') || document.body;
+            container.appendChild(element);
+        }
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        makeEditable(element);
+    }
+    
+    // Apply font family
+    function applyFontFamily(fontFamily) {
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            const element = range.commonAncestorContainer.nodeType === 3 
+                ? range.commonAncestorContainer.parentElement 
+                : range.commonAncestorContainer;
+            element.style.fontFamily = fontFamily;
+        }
+    }
+    
+    // Apply text size
+    function applyTextSize(size) {
+        const sizes = {
+            'sm': '14px',
+            'md': '16px', 
+            'lg': '20px',
+            'xl': '24px'
+        };
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            const element = range.commonAncestorContainer.nodeType === 3 
+                ? range.commonAncestorContainer.parentElement 
+                : range.commonAncestorContainer;
+            element.style.fontSize = sizes[size] || '16px';
+        }
+    }
+    
+    // Apply text alignment
+    function applyAlignment(align) {
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            const element = range.commonAncestorContainer.nodeType === 3 
+                ? range.commonAncestorContainer.parentElement 
+                : range.commonAncestorContainer;
+            element.style.textAlign = align;
+        }
+    }
+    
+    // Apply spacing
+    function applySpacing(spacing) {
+        const spacings = {
+            'compact': '10px',
+            'normal': '20px',
+            'relaxed': '40px'
+        };
+        const container = document.querySelector('.content-container') || document.querySelector('main') || document.body;
+        container.style.padding = spacings[spacing] || '20px';
+    }
+    
+    // Apply columns
+    function applyColumns(cols) {
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            const element = range.commonAncestorContainer.nodeType === 3 
+                ? range.commonAncestorContainer.parentElement 
+                : range.commonAncestorContainer;
+            if (element.style.display !== 'grid') {
+                element.style.display = 'grid';
+            }
+            element.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            element.style.gap = '20px';
+        }
+    }
+    
+    // Apply theme
+    function applyTheme(theme) {
+        const themes = {
+            'minimal': { bg: '#ffffff', text: '#000000', accent: '#667eea' },
+            'elegant': { bg: '#fafafa', text: '#2d3748', accent: '#805ad5' },
+            'bold': { bg: '#1a202c', text: '#ffffff', accent: '#ed8936' },
+            'dark': { bg: '#000000', text: '#ffffff', accent: '#48bb78' }
+        };
+        const selectedTheme = themes[theme] || themes.minimal;
+        document.body.style.background = selectedTheme.bg;
+        document.body.style.color = selectedTheme.text;
+    }
+    
+    // Apply color
+    function applyColor(color) {
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            const element = range.commonAncestorContainer.nodeType === 3 
+                ? range.commonAncestorContainer.parentElement 
+                : range.commonAncestorContainer;
+            element.style.color = color;
+        }
+    }
+    
+    // Toggle preview mode
+    function togglePreviewMode() {
+        const toolbar = document.getElementById('admin-toolbar');
+        const editableElements = document.querySelectorAll('[contenteditable="true"]');
+        const button = document.getElementById('preview-mode');
+        
+        if (button.textContent === 'Preview') {
+            toolbar.style.display = 'none';
+            editableElements.forEach(el => {
+                el.contentEditable = false;
+                el.style.outline = 'none';
+            });
+            button.textContent = 'Edit';
+            
+            // Show preview indicator
+            const indicator = document.createElement('div');
+            indicator.id = 'preview-indicator';
+            indicator.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #10b981;
+                color: white;
+                padding: 8px 16px;
+                border-radius: 6px;
+                font-size: 14px;
+                z-index: 10000;
+            `;
+            indicator.textContent = 'Preview Mode';
+            document.body.appendChild(indicator);
+            
+            setTimeout(() => {
+                toolbar.style.display = '';
+                button.textContent = 'Preview';
+                editableElements.forEach(el => el.contentEditable = true);
+                document.getElementById('preview-indicator')?.remove();
+            }, 5000);
+        }
     }
     
     // Show admin badge
