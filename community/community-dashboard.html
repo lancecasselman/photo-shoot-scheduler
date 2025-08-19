@@ -1843,23 +1843,221 @@
         }
 
         function showMyProfile() {
-            showMessage('My profile coming soon!', 'info');
+            // Create and show profile modal
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>My Profile</h2>
+                        <button class="close-btn" onclick="this.closest('.modal').remove()">×</button>
+                    </div>
+                    <div class="modal-body" style="padding: 20px;">
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <div class="user-avatar" style="width: 100px; height: 100px; font-size: 36px; margin: 0 auto;">
+                                ${getInitials(currentUserProfile?.displayName || 'User')}
+                            </div>
+                            <h3 style="margin-top: 15px;">${currentUserProfile?.displayName || 'Anonymous'}</h3>
+                            <p style="color: #9CA3AF;">${currentUserProfile?.email || ''}</p>
+                        </div>
+                        
+                        <div style="background: #1A1F2E; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: center;">
+                                <div>
+                                    <div style="font-size: 24px; font-weight: bold; color: #667eea;">
+                                        ${currentUserProfile?.posts_count || 0}
+                                    </div>
+                                    <div style="color: #9CA3AF; font-size: 14px;">Posts</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 24px; font-weight: bold; color: #667eea;">
+                                        ${currentUserProfile?.followers_count || 0}
+                                    </div>
+                                    <div style="color: #9CA3AF; font-size: 14px;">Followers</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 24px; font-weight: bold; color: #667eea;">
+                                        ${currentUserProfile?.reputation_points || 0}
+                                    </div>
+                                    <div style="color: #9CA3AF; font-size: 14px;">Points</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 20px;">
+                            <label style="display: block; margin-bottom: 5px; color: #9CA3AF;">Bio</label>
+                            <textarea id="profileBio" style="width: 100%; padding: 10px; border-radius: 8px; background: #1A1F2E; color: white; border: 1px solid #374151; resize: vertical; min-height: 100px;" placeholder="Tell us about yourself...">${currentUserProfile?.bio || ''}</textarea>
+                        </div>
+                        
+                        <div style="margin-top: 15px;">
+                            <label style="display: block; margin-bottom: 5px; color: #9CA3AF;">Portfolio Link</label>
+                            <input type="url" id="profilePortfolio" style="width: 100%; padding: 10px; border-radius: 8px; background: #1A1F2E; color: white; border: 1px solid #374151;" placeholder="https://your-portfolio.com" value="${currentUserProfile?.portfolio_link || ''}">
+                        </div>
+                        
+                        <button onclick="updateProfile()" style="width: 100%; margin-top: 20px; padding: 12px; background: #667eea; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                            Save Profile
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
         }
 
         function showSavedPosts() {
-            showMessage('Saved posts coming soon!', 'info');
+            // Show saved posts in the main feed
+            const savedPostIds = JSON.parse(localStorage.getItem('savedPosts') || '[]');
+            if (savedPostIds.length === 0) {
+                showMessage('No saved posts yet', 'info');
+                return;
+            }
+            
+            // Filter posts to show only saved ones
+            const savedPosts = posts.filter(post => savedPostIds.includes(post.id));
+            if (savedPosts.length > 0) {
+                posts = savedPosts;
+                renderPosts();
+                showMessage(`Showing ${savedPosts.length} saved posts`, 'success');
+            } else {
+                showMessage('No saved posts found', 'info');
+            }
         }
 
         function showMyPosts() {
-            loadPosts(); // Filter by current user
+            // Filter posts by current user
+            if (currentUserProfile) {
+                loadPosts(`userId=${currentUserProfile.userId}`);
+                showMessage('Loading your posts...', 'info');
+            }
         }
 
         function showFollowing() {
-            showMessage('Following list coming soon!', 'info');
+            // Create and show following list modal
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Following</h2>
+                        <button class="close-btn" onclick="this.closest('.modal').remove()">×</button>
+                    </div>
+                    <div class="modal-body" style="padding: 20px;">
+                        <div id="followingList">
+                            <p style="text-align: center; color: #9CA3AF;">Loading following list...</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            // Load following list
+            loadFollowingList();
         }
 
         function showSettings() {
-            showMessage('Settings coming soon!', 'info');
+            // Create and show settings modal
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Settings</h2>
+                        <button class="close-btn" onclick="this.closest('.modal').remove()">×</button>
+                    </div>
+                    <div class="modal-body" style="padding: 20px;">
+                        <div style="margin-bottom: 20px;">
+                            <h3 style="margin-bottom: 15px;">Notifications</h3>
+                            <label style="display: flex; align-items: center; margin-bottom: 10px; cursor: pointer;">
+                                <input type="checkbox" id="notifyLikes" style="margin-right: 10px;" checked>
+                                <span>Notify me when someone likes my post</span>
+                            </label>
+                            <label style="display: flex; align-items: center; margin-bottom: 10px; cursor: pointer;">
+                                <input type="checkbox" id="notifyComments" style="margin-right: 10px;" checked>
+                                <span>Notify me when someone comments on my post</span>
+                            </label>
+                            <label style="display: flex; align-items: center; margin-bottom: 10px; cursor: pointer;">
+                                <input type="checkbox" id="notifyFollows" style="margin-right: 10px;" checked>
+                                <span>Notify me when someone follows me</span>
+                            </label>
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <h3 style="margin-bottom: 15px;">Privacy</h3>
+                            <label style="display: flex; align-items: center; margin-bottom: 10px; cursor: pointer;">
+                                <input type="checkbox" id="privateProfile" style="margin-right: 10px;">
+                                <span>Make my profile private</span>
+                            </label>
+                            <label style="display: flex; align-items: center; margin-bottom: 10px; cursor: pointer;">
+                                <input type="checkbox" id="hideEmail" style="margin-right: 10px;" checked>
+                                <span>Hide my email from other users</span>
+                            </label>
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <h3 style="margin-bottom: 15px;">Content Preferences</h3>
+                            <label style="display: block; margin-bottom: 5px; color: #9CA3AF;">Default post visibility</label>
+                            <select style="width: 100%; padding: 10px; border-radius: 8px; background: #1A1F2E; color: white; border: 1px solid #374151;">
+                                <option value="public">Public</option>
+                                <option value="followers">Followers only</option>
+                                <option value="private">Private</option>
+                            </select>
+                        </div>
+                        
+                        <button onclick="saveSettings()" style="width: 100%; padding: 12px; background: #667eea; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                            Save Settings
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        
+        // Helper functions for the new features
+        async function updateProfile() {
+            const bio = document.getElementById('profileBio').value;
+            const portfolio = document.getElementById('profilePortfolio').value;
+            
+            try {
+                const response = await fetch('/api/community/profile', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ bio, portfolio_link: portfolio })
+                });
+                
+                if (response.ok) {
+                    showMessage('Profile updated successfully!', 'success');
+                    document.querySelector('.modal').remove();
+                    loadUserProfile(); // Reload profile data
+                }
+            } catch (error) {
+                showMessage('Failed to update profile', 'error');
+            }
+        }
+        
+        async function loadFollowingList() {
+            // For now, show a placeholder list
+            const followingList = document.getElementById('followingList');
+            followingList.innerHTML = `
+                <div style="text-align: center; padding: 40px;">
+                    <p style="color: #9CA3AF; margin-bottom: 20px;">You're not following anyone yet</p>
+                    <p style="color: #6B7280; font-size: 14px;">Follow other photographers to see their posts in your feed</p>
+                </div>
+            `;
+        }
+        
+        function saveSettings() {
+            // Save settings to localStorage for now
+            const settings = {
+                notifyLikes: document.getElementById('notifyLikes').checked,
+                notifyComments: document.getElementById('notifyComments').checked,
+                notifyFollows: document.getElementById('notifyFollows').checked,
+                privateProfile: document.getElementById('privateProfile').checked,
+                hideEmail: document.getElementById('hideEmail').checked
+            };
+            
+            localStorage.setItem('communitySettings', JSON.stringify(settings));
+            showMessage('Settings saved successfully!', 'success');
+            document.querySelector('.modal').remove();
         }
     </script>
 </body>
