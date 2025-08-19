@@ -2637,7 +2637,92 @@ app.get('/api/onboarding/status', isAuthenticated, async (req, res) => {
     }
 });
 
-// Complete onboarding endpoint
+// Complete onboarding endpoint for new users
+app.post('/api/users/complete-onboarding', isAuthenticated, async (req, res) => {
+    try {
+        const {
+            username,
+            displayName,
+            firstName,
+            lastName,
+            businessName,
+            streetAddress,
+            city,
+            state,
+            zipCode,
+            businessType
+        } = req.body;
+
+        // First check if username is available
+        const usernameCheck = await pool.query(
+            'SELECT id FROM users WHERE username = $1 AND id != $2',
+            [username, req.user.uid]
+        );
+        
+        if (usernameCheck.rows.length > 0) {
+            return res.status(400).json({ error: 'Username already taken' });
+        }
+
+        // Update user profile with all onboarding data
+        await pool.query(
+            `UPDATE users 
+             SET username = $1,
+                 display_name = $2,
+                 first_name = $3,
+                 last_name = $4,
+                 business_name = $5,
+                 street_address = $6,
+                 city = $7,
+                 state = $8,
+                 zip_code = $9,
+                 business_type = $10,
+                 onboarding_completed = true,
+                 onboarding_date = NOW()
+             WHERE id = $11`,
+            [
+                username,
+                displayName,
+                firstName,
+                lastName,
+                businessName,
+                streetAddress,
+                city,
+                state,
+                zipCode,
+                businessType,
+                req.user.uid
+            ]
+        );
+
+        res.json({ success: true, message: 'Onboarding completed successfully' });
+    } catch (error) {
+        console.error('Onboarding completion error:', error);
+        res.status(500).json({ error: 'Failed to complete onboarding' });
+    }
+});
+
+// Check username availability
+app.get('/api/users/check-username', async (req, res) => {
+    try {
+        const { username } = req.query;
+        
+        if (!username || username.length < 3) {
+            return res.json({ available: false });
+        }
+        
+        const result = await pool.query(
+            'SELECT id FROM users WHERE username = $1',
+            [username.toLowerCase()]
+        );
+        
+        res.json({ available: result.rows.length === 0 });
+    } catch (error) {
+        console.error('Username check error:', error);
+        res.status(500).json({ available: false });
+    }
+});
+
+// Legacy onboarding endpoint (kept for backward compatibility)
 app.post('/api/onboarding/complete', isAuthenticated, async (req, res) => {
     try {
         const {
@@ -2883,6 +2968,22 @@ async function initializeDatabase(retryCount = 0) {
             ALTER TABLE contracts 
             ADD COLUMN IF NOT EXISTS user_id VARCHAR(255),
             ADD COLUMN IF NOT EXISTS photographer_id VARCHAR(255)
+        `);
+
+        // Add new onboarding columns to users table if they don't exist
+        await pool.query(`
+            ALTER TABLE users 
+            ADD COLUMN IF NOT EXISTS username VARCHAR(255) UNIQUE,
+            ADD COLUMN IF NOT EXISTS first_name VARCHAR(255),
+            ADD COLUMN IF NOT EXISTS last_name VARCHAR(255),
+            ADD COLUMN IF NOT EXISTS business_name VARCHAR(255),
+            ADD COLUMN IF NOT EXISTS street_address VARCHAR(255),
+            ADD COLUMN IF NOT EXISTS city VARCHAR(255),
+            ADD COLUMN IF NOT EXISTS state VARCHAR(50),
+            ADD COLUMN IF NOT EXISTS zip_code VARCHAR(20),
+            ADD COLUMN IF NOT EXISTS business_type VARCHAR(100),
+            ADD COLUMN IF NOT EXISTS onboarding_completed BOOLEAN DEFAULT FALSE,
+            ADD COLUMN IF NOT EXISTS onboarding_date TIMESTAMP
         `);
 
         // Update photographer_id to match user_id where it's missing

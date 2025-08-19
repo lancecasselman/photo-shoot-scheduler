@@ -121,6 +121,17 @@ body {
   margin: 0;
 }
 
+.form-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.form-row .form-group {
+  flex: 1;
+  margin-bottom: 0;
+}
+
 .user-info {
   background: rgba(0, 0, 0, 0.3);
   padding: 15px;
