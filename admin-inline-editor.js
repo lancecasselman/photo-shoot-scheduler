@@ -848,6 +848,9 @@
         const caption = photoBlock.querySelector('.photo-caption');
         makeElementEditable(caption);
         
+        // Apply drag and drop functionality with delete button
+        makeEditableWithDelete(photoBlock);
+        
         // Save the block
         savePhotoBlock(photoBlock);
     }
@@ -910,6 +913,9 @@
         } else {
             parent.appendChild(photoBlock);
         }
+        
+        // Apply drag and drop functionality with delete button
+        makeEditableWithDelete(photoBlock);
         
         return photoBlock;
     }
@@ -1530,11 +1536,20 @@
             makeEditableWithDelete(section);
         });
         
-        // Also apply to individual content blocks
-        const blocks = document.querySelectorAll('.text-block, .photo-block, .content-block, .editable-content');
+        // Also apply to individual content blocks including photo blocks
+        const blocks = document.querySelectorAll('.text-block, .photo-block, .content-block, .editable-content, .image-block, img');
         blocks.forEach(block => {
             if (!block.querySelector('.block-delete-btn')) {
-                makeEditableWithDelete(block);
+                // For img elements, wrap them in a div first if not already wrapped
+                if (block.tagName === 'IMG' && !block.parentElement.classList.contains('photo-block')) {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'photo-block image-block';
+                    block.parentNode.insertBefore(wrapper, block);
+                    wrapper.appendChild(block);
+                    makeEditableWithDelete(wrapper);
+                } else {
+                    makeEditableWithDelete(block);
+                }
             }
         });
     }
