@@ -2099,13 +2099,75 @@
     // Apply text alignment
     function applyAlignment(align) {
         const selection = window.getSelection();
-        if (selection.rangeCount > 0) {
+        
+        // First, try to align selected text
+        if (selection.rangeCount > 0 && selection.toString().trim()) {
             const range = selection.getRangeAt(0);
             const element = range.commonAncestorContainer.nodeType === 3 
                 ? range.commonAncestorContainer.parentElement 
                 : range.commonAncestorContainer;
             element.style.textAlign = align;
+            return;
         }
+        
+        // If no text selected, look for a clicked/hovered block element
+        const hoveredElements = document.querySelectorAll('.photo-block, .text-block, .content-block, section, article, .hero-section, .features-section, .contact-section');
+        
+        hoveredElements.forEach(element => {
+            // Check if mouse is over this element
+            const rect = element.getBoundingClientRect();
+            const mouseX = window.lastMouseX || 0;
+            const mouseY = window.lastMouseY || 0;
+            
+            if (mouseX >= rect.left && mouseX <= rect.right && 
+                mouseY >= rect.top && mouseY <= rect.bottom) {
+                
+                // Apply alignment to the block element
+                if (align === 'left') {
+                    element.style.marginLeft = '0';
+                    element.style.marginRight = 'auto';
+                    element.style.textAlign = 'left';
+                } else if (align === 'center') {
+                    element.style.marginLeft = 'auto';
+                    element.style.marginRight = 'auto';
+                    element.style.textAlign = 'center';
+                } else if (align === 'right') {
+                    element.style.marginLeft = 'auto';
+                    element.style.marginRight = '0';
+                    element.style.textAlign = 'right';
+                }
+                
+                // Visual feedback
+                element.style.transition = 'all 0.3s ease';
+                showAlignmentFeedback(element, align);
+            }
+        });
+    }
+    
+    // Track mouse position for alignment
+    document.addEventListener('mousemove', (e) => {
+        window.lastMouseX = e.clientX;
+        window.lastMouseY = e.clientY;
+    });
+    
+    // Show alignment feedback
+    function showAlignmentFeedback(element, align) {
+        const feedback = document.createElement('div');
+        feedback.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #667eea;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 14px;
+            z-index: 100000;
+            animation: fadeInOut 1.5s ease;
+        `;
+        feedback.textContent = `✓ Aligned ${align}`;
+        document.body.appendChild(feedback);
+        setTimeout(() => feedback.remove(), 1500);
     }
     
     // Apply spacing
