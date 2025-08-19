@@ -1649,12 +1649,16 @@
             // Apply new dimensions
             element.style.width = newWidth + 'px';
             element.style.height = newHeight + 'px';
+            element.style.overflow = 'hidden';
             
             // If there's an image, resize it too
             if (img) {
                 img.style.width = '100%';
                 img.style.height = '100%';
-                img.style.objectFit = 'cover';
+                img.style.maxWidth = '100%';
+                img.style.maxHeight = '100%';
+                img.style.objectFit = 'contain';
+                img.style.display = 'block';
             }
         }
         
@@ -1689,6 +1693,19 @@
                 if (block.tagName === 'IMG' && !block.parentElement.classList.contains('photo-block')) {
                     const wrapper = document.createElement('div');
                     wrapper.className = 'photo-block image-block';
+                    wrapper.style.display = 'inline-block';
+                    wrapper.style.width = block.width ? block.width + 'px' : 'auto';
+                    wrapper.style.height = block.height ? block.height + 'px' : 'auto';
+                    wrapper.style.overflow = 'hidden';
+                    
+                    // Preserve image dimensions
+                    block.style.width = '100%';
+                    block.style.height = '100%';
+                    block.style.maxWidth = '100%';
+                    block.style.maxHeight = '100%';
+                    block.style.objectFit = 'contain';
+                    block.style.display = 'block';
+                    
                     block.parentNode.insertBefore(wrapper, block);
                     wrapper.appendChild(block);
                     makeEditableWithDelete(wrapper);
