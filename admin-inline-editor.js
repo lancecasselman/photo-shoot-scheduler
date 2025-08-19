@@ -138,6 +138,59 @@
         }
     }
     
+    // Apply changes without saving to database
+    function applyChanges() {
+        console.log('Apply button clicked');
+        
+        const editables = document.querySelectorAll('.admin-editable');
+        console.log('Found editable elements:', editables.length);
+        
+        let appliedCount = 0;
+        
+        for (const element of editables) {
+            const current = element.innerHTML;
+            const original = element.dataset.originalContent || '';
+            
+            if (current !== original) {
+                // Update the baseline to the current state
+                // This "accepts" the changes without saving to database
+                element.dataset.originalContent = current;
+                appliedCount++;
+                console.log('Applied change to:', element.tagName, element.textContent.substring(0, 30));
+            }
+        }
+        
+        // Show confirmation
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #10b981;
+            color: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            z-index: 100000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        `;
+        
+        if (appliedCount > 0) {
+            toast.textContent = `✓ Applied ${appliedCount} changes (not saved to database)`;
+            toast.style.background = '#10b981';
+        } else {
+            toast.textContent = 'No changes to apply';
+            toast.style.background = '#64748b';
+        }
+        
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+        
+        console.log(`Apply complete: ${appliedCount} changes applied to baseline`);
+    }
+    
     // Enable inline editing for all text elements
     function enableInlineEditing() {
         // Select all editable text elements
@@ -481,6 +534,16 @@
                             font-weight: 500;
                             cursor: pointer;
                         ">Preview</button>
+                        <button id="apply-changes" style="
+                            padding: 6px 16px;
+                            background: #10b981;
+                            color: white;
+                            border: none;
+                            border-radius: 6px;
+                            font-size: 12px;
+                            font-weight: 500;
+                            cursor: pointer;
+                        ">Apply</button>
                         <button id="save-all" style="
                             padding: 6px 16px;
                             background: #667eea;
@@ -751,6 +814,7 @@
         document.getElementById('add-hero')?.addEventListener('click', () => insertHeroSection());
         document.getElementById('add-features')?.addEventListener('click', () => insertFeaturesSection());
         document.getElementById('add-contact')?.addEventListener('click', () => insertContactSection());
+        document.getElementById('apply-changes')?.addEventListener('click', applyChanges);
         document.getElementById('save-all')?.addEventListener('click', saveAllChanges);
         document.getElementById('preview-mode')?.addEventListener('click', togglePreviewMode);
         
