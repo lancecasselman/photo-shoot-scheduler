@@ -79,7 +79,8 @@
             document.querySelectorAll(selector).forEach(element => {
                 // Skip if it contains form elements
                 if (!element.querySelector('input, select, textarea, button')) {
-                    // Store the ORIGINAL content as baseline (before any saved edits)
+                    // Store the CURRENT content (with saved edits) as baseline
+                    // This way we only detect NEW changes made after this point
                     element.dataset.originalContent = element.innerHTML;
                     storedCount++;
                 }
