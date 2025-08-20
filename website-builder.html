@@ -2161,21 +2161,13 @@
             fileInput.type = 'file';
             fileInput.accept = 'image/*';
             
-            fileInput.addEventListener('change', async function(e) {
+            fileInput.addEventListener('change', function(e) {
                 const file = e.target.files[0];
                 if (file) {
-                    showMessage('Optimizing image...', 'info');
-                    
-                    try {
-                        // Optimize image with appropriate settings for galleries
-                        const optimizedDataUrl = await optimizeImage(file, {
-                            maxWidth: 1200,
-                            maxHeight: 1200,
-                            quality: 0.85
-                        });
-                        
-                        img.src = optimizedDataUrl;
-                        console.log('Image replaced and optimized:', file.name);
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        img.src = event.target.result;
+                        console.log('Image replaced:', file.name);
                         
                         // Flash effect to show image was updated
                         img.style.transition = 'opacity 0.3s';
@@ -2183,12 +2175,8 @@
                         setTimeout(() => {
                             img.style.opacity = '1';
                         }, 300);
-                        
-                        showMessage('Image optimized and applied!', 'success');
-                    } catch (error) {
-                        console.error('Failed to optimize image:', error);
-                        showMessage('Failed to process image', 'error');
-                    }
+                    };
+                    reader.readAsDataURL(file);
                 }
             });
             
@@ -2202,31 +2190,23 @@
             fileInput.type = 'file';
             fileInput.accept = 'image/*';
             
-            fileInput.addEventListener('change', async function(e) {
+            fileInput.addEventListener('change', function(e) {
                 const file = e.target.files[0];
                 if (file) {
-                    showMessage('Optimizing image...', 'info');
-                    
-                    try {
-                        // Optimize background images with higher resolution
-                        const optimizedDataUrl = await optimizeImage(file, {
-                            maxWidth: 1920,
-                            maxHeight: 1080,
-                            quality: 0.85
-                        });
-                        
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
                         // Parse existing background to keep gradient overlay if present
                         const currentBg = window.getComputedStyle(element).backgroundImage;
                         const hasGradient = currentBg.includes('linear-gradient');
                         
                         if (hasGradient) {
                             // Keep the gradient overlay, just replace the image URL
-                            element.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('${optimizedDataUrl}')`;
+                            element.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('${event.target.result}')`;
                         } else {
-                            element.style.backgroundImage = `url('${optimizedDataUrl}')`;
+                            element.style.backgroundImage = `url('${event.target.result}')`;
                         }
                         
-                        console.log('Background image replaced and optimized:', file.name);
+                        console.log('Background image replaced:', file.name);
                         
                         // Flash effect to show image was updated
                         element.style.transition = 'opacity 0.3s';
@@ -2234,12 +2214,8 @@
                         setTimeout(() => {
                             element.style.opacity = '1';
                         }, 300);
-                        
-                        showMessage('Image optimized and applied!', 'success');
-                    } catch (error) {
-                        console.error('Failed to optimize image:', error);
-                        showMessage('Failed to process image', 'error');
-                    }
+                    };
+                    reader.readAsDataURL(file);
                 }
             });
             
@@ -3989,79 +3965,6 @@
 
         // Image positioning configuration
         let imagePositioning = {};
-        
-        // Image optimization function
-        async function optimizeImage(file, options = {}) {
-            const {
-                maxWidth = 1920,
-                maxHeight = 1080,
-                quality = 0.85,
-                format = 'jpeg'
-            } = options;
-            
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                
-                reader.onload = function(e) {
-                    const img = new Image();
-                    
-                    img.onload = function() {
-                        // Calculate new dimensions while maintaining aspect ratio
-                        let width = img.width;
-                        let height = img.height;
-                        
-                        if (width > maxWidth || height > maxHeight) {
-                            const aspectRatio = width / height;
-                            
-                            if (width > height) {
-                                width = maxWidth;
-                                height = Math.round(width / aspectRatio);
-                            } else {
-                                height = maxHeight;
-                                width = Math.round(height * aspectRatio);
-                            }
-                        }
-                        
-                        // Create canvas for resizing
-                        const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
-                        
-                        canvas.width = width;
-                        canvas.height = height;
-                        
-                        // Apply image smoothing for better quality
-                        ctx.imageSmoothingEnabled = true;
-                        ctx.imageSmoothingQuality = 'high';
-                        
-                        // Draw resized image
-                        ctx.drawImage(img, 0, 0, width, height);
-                        
-                        // Convert to data URL with compression
-                        const optimizedDataUrl = canvas.toDataURL(`image/${format}`, quality);
-                        
-                        // Log size reduction
-                        const originalSize = Math.round(file.size / 1024);
-                        const optimizedSize = Math.round((optimizedDataUrl.length * 0.75) / 1024); // Estimate from base64
-                        console.log(`Image optimized: ${originalSize}KB → ${optimizedSize}KB (${Math.round((1 - optimizedSize/originalSize) * 100)}% reduction)`);
-                        
-                        resolve(optimizedDataUrl);
-                    };
-                    
-                    img.onerror = function() {
-                        reject(new Error('Failed to load image'));
-                    };
-                    
-                    img.src = e.target.result;
-                };
-                
-                reader.onerror = function() {
-                    reject(new Error('Failed to read file'));
-                };
-                
-                reader.readAsDataURL(file);
-            });
-        }
-        
         let isDraggingImage = false;
         let dragStartX = 0;
         let dragStartY = 0;
@@ -4310,29 +4213,18 @@
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = 'image/*';
-            input.onchange = async function(event) {
+            input.onchange = function(event) {
                 const file = event.target.files[0];
                 if (file) {
-                    showMessage('Optimizing image...', 'info');
-                    
-                    try {
-                        // Optimize images with appropriate settings
-                        const optimizedDataUrl = await optimizeImage(file, {
-                            maxWidth: 1200,
-                            maxHeight: 1200,
-                            quality: 0.85
-                        });
-                        
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
                         const imgElement = document.getElementById(imgId);
                         if (imgElement) {
-                            imgElement.src = optimizedDataUrl;
-                            console.log(`Image ${imgId} optimized and updated`);
-                            showMessage('Image optimized and applied!', 'success');
+                            imgElement.src = e.target.result;
+                            console.log(`Image ${imgId} source updated`);
                         }
-                    } catch (error) {
-                        console.error('Failed to optimize image:', error);
-                        showMessage('Failed to process image', 'error');
-                    }
+                    };
+                    reader.readAsDataURL(file);
                 }
             };
             input.click();
@@ -4349,27 +4241,16 @@
         }
 
         // Logo functions
-        async function handleLogoUpload(event) {
+        function handleLogoUpload(event) {
             const file = event.target.files[0];
             if (file) {
-                showMessage('Optimizing logo...', 'info');
-                
-                try {
-                    // Optimize logo with smaller dimensions since logos are typically smaller
-                    const optimizedDataUrl = await optimizeImage(file, {
-                        maxWidth: 400,
-                        maxHeight: 200,
-                        quality: 0.9 // Higher quality for logos
-                    });
-                    
-                    logoConfig.url = optimizedDataUrl;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    logoConfig.url = e.target.result;
                     updateNavigationPreview();
-                    console.log('Logo uploaded and optimized successfully');
-                    showMessage('Logo optimized and applied!', 'success');
-                } catch (error) {
-                    console.error('Failed to optimize logo:', error);
-                    showMessage('Failed to process logo', 'error');
-                }
+                    console.log('Logo uploaded successfully');
+                };
+                reader.readAsDataURL(file);
             }
         }
 
@@ -4398,21 +4279,13 @@
             input.type = 'file';
             input.accept = 'image/*';
             
-            input.onchange = async function(event) {
+            input.onchange = function(event) {
                 const file = event.target.files[0];
                 if (file) {
-                    showMessage('Optimizing logo...', 'info');
-                    
-                    try {
-                        // Optimize logo with smaller dimensions since logos are typically smaller
-                        const optimizedDataUrl = await optimizeImage(file, {
-                            maxWidth: 400,
-                            maxHeight: 200,
-                            quality: 0.9 // Higher quality for logos
-                        });
-                        
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
                         // Set default logo configuration
-                        logoConfig.url = optimizedDataUrl;
+                        logoConfig.url = e.target.result;
                         logoConfig.size = logoConfig.size || 40;
                         logoConfig.position = logoConfig.position || 'left';
                         
@@ -4433,11 +4306,8 @@
                         
                         // Show brief notification
                         showNotification('Logo added successfully! Use the Properties tab to customize size and position.');
-                        showMessage('Logo optimized and applied!', 'success');
-                    } catch (error) {
-                        console.error('Failed to optimize logo:', error);
-                        showMessage('Failed to process logo', 'error');
-                    }
+                    };
+                    reader.readAsDataURL(file);
                 }
             };
             
@@ -7753,25 +7623,16 @@
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = 'image/*';
-            input.onchange = async function(event) {
+            input.onchange = function(event) {
                 const file = event.target.files[0];
                 if (file) {
-                    // Show loading state
-                    showMessage('Optimizing image...', 'info');
-                    
-                    // Optimize image before using
-                    const optimizedDataUrl = await optimizeImage(file, {
-                        maxWidth: 1920,
-                        maxHeight: 1080,
-                        quality: 0.85
-                    });
-                    
-                    const element = document.getElementById(elemId);
-                    if (element) {
-                        const currentBg = element.style.backgroundImage;
-                        const newBg = currentBg.replace(/url\([^)]+\)/, `url('${optimizedDataUrl}')`);
-                        element.style.backgroundImage = newBg;
-                        showMessage('Image optimized and applied!', 'success');
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const element = document.getElementById(elemId);
+                        if (element) {
+                            const currentBg = element.style.backgroundImage;
+                            const newBg = currentBg.replace(/url\([^)]+\)/, `url('${e.target.result}')`);
+                            element.style.backgroundImage = newBg;
                         }
                     };
                     reader.readAsDataURL(file);
