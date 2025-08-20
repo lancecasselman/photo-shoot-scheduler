@@ -1,5 +1,17 @@
 /* Booking Agreements Modal Styles */
 
+/* Force all agreement text to be black - highest priority */
+#agreementContent,
+#agreementContent *,
+#agreementViewContent,
+#agreementViewContent *,
+.agreement-content-editor,
+.agreement-content-editor *,
+.agreement-content-viewer,
+.agreement-content-viewer * {
+    color: #000000 !important;
+}
+
 .booking-modal {
     display: none;
     position: fixed;
@@ -117,7 +129,25 @@
 
 /* Force all text elements to be black */
 .agreement-content-editor *,
-.agreement-content-viewer * {
+.agreement-content-viewer *,
+#agreementContent *,
+#agreementViewContent * {
+    color: #000000 !important;
+}
+
+/* Specific overrides for all possible text elements */
+.agreement-content-editor span,
+.agreement-content-viewer span,
+.agreement-content-editor div,
+.agreement-content-viewer div,
+.agreement-content-editor section,
+.agreement-content-viewer section,
+#agreementContent span,
+#agreementContent div,
+#agreementContent section,
+#agreementViewContent span,
+#agreementViewContent div,
+#agreementViewContent section {
     color: #000000 !important;
 }
 
