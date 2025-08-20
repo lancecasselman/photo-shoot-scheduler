@@ -2261,7 +2261,57 @@
             });
         }
 
-        function startEditingImage(img) {
+        async function startEditingImage(img) {
+            // Get watermark settings
+            const watermarkResponse = await fetch('/api/watermark-settings');
+            const watermarkSettings = await watermarkResponse.json();
+            const isWatermarkEnabled = watermarkSettings.enabled || false;
+            
+            // Create a dialog to ask about watermark if enabled
+            if (isWatermarkEnabled) {
+                const dialog = document.createElement('div');
+                dialog.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: white;
+                    padding: 20px;
+                    border-radius: 8px;
+                    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+                    z-index: 10000;
+                    max-width: 400px;
+                `;
+                dialog.innerHTML = `
+                    <h3 style="margin: 0 0 15px 0; font-size: 16px;">Upload Image</h3>
+                    <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
+                        <input type="checkbox" id="apply-watermark-checkbox" checked>
+                        <span style="font-size: 14px;">Apply watermark to this image</span>
+                    </label>
+                    <div style="display: flex; gap: 10px;">
+                        <button id="proceed-upload" style="flex: 1; padding: 8px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer;">Upload</button>
+                        <button id="cancel-upload" style="flex: 1; padding: 8px; background: #e2e8f0; color: #2d3748; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+                    </div>
+                `;
+                document.body.appendChild(dialog);
+                
+                // Handle upload with watermark choice
+                document.getElementById('proceed-upload').onclick = () => {
+                    const applyWatermark = document.getElementById('apply-watermark-checkbox').checked;
+                    document.body.removeChild(dialog);
+                    proceedWithImageUpload(img, applyWatermark);
+                };
+                
+                document.getElementById('cancel-upload').onclick = () => {
+                    document.body.removeChild(dialog);
+                };
+            } else {
+                // If watermark is not enabled, proceed without asking
+                proceedWithImageUpload(img, false);
+            }
+        }
+        
+        function proceedWithImageUpload(img, applyWatermark) {
             // Create hidden file input
             const fileInput = document.createElement('input');
             fileInput.type = 'file';
@@ -2284,6 +2334,7 @@
                         // Upload to R2 and get optimized version
                         const formData = new FormData();
                         formData.append('image', file);
+                        formData.append('applyWatermark', applyWatermark);
                         
                         const response = await fetch('/api/website-builder/upload-image', {
                             method: 'POST',
@@ -2300,8 +2351,15 @@
                         img.src = data.optimizedUrl;
                         img.dataset.originalUrl = data.originalUrl; // Store original URL as data attribute
                         img.dataset.uploadedImage = 'true'; // Mark as uploaded image
+                        img.dataset.hasWatermark = applyWatermark ? 'true' : 'false'; // Mark watermark status
+                        
+                        // Add visual indicator if watermarked
+                        if (applyWatermark) {
+                            addWatermarkIndicator(img);
+                        }
                         
                         console.log('Image uploaded and optimized:', file.name);
+                        console.log('Watermark applied:', applyWatermark);
                         console.log('Original backed up to R2:', data.originalKey);
                         console.log('Optimized version (85% quality):', data.optimizedKey);
                         
@@ -2326,7 +2384,91 @@
             fileInput.click();
         }
         
-        function startEditingBackgroundImage(element) {
+        // Add watermark indicator to image
+        function addWatermarkIndicator(img) {
+            // Remove existing indicator if present
+            const existingIndicator = img.parentElement?.querySelector('.watermark-indicator');
+            if (existingIndicator) {
+                existingIndicator.remove();
+            }
+            
+            // Create indicator badge
+            const indicator = document.createElement('div');
+            indicator.className = 'watermark-indicator';
+            indicator.style.cssText = `
+                position: absolute;
+                top: 5px;
+                right: 5px;
+                background: rgba(102, 126, 234, 0.9);
+                color: white;
+                padding: 2px 6px;
+                border-radius: 3px;
+                font-size: 10px;
+                font-weight: 600;
+                z-index: 10;
+                pointer-events: none;
+            `;
+            indicator.textContent = 'W';
+            indicator.title = 'Watermark applied';
+            
+            // Ensure parent has relative positioning
+            if (img.parentElement) {
+                img.parentElement.style.position = 'relative';
+                img.parentElement.appendChild(indicator);
+            }
+        }
+        
+        async function startEditingBackgroundImage(element) {
+            // Get watermark settings
+            const watermarkResponse = await fetch('/api/watermark-settings');
+            const watermarkSettings = await watermarkResponse.json();
+            const isWatermarkEnabled = watermarkSettings.enabled || false;
+            
+            // Create a dialog to ask about watermark if enabled
+            if (isWatermarkEnabled) {
+                const dialog = document.createElement('div');
+                dialog.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: white;
+                    padding: 20px;
+                    border-radius: 8px;
+                    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+                    z-index: 10000;
+                    max-width: 400px;
+                `;
+                dialog.innerHTML = `
+                    <h3 style="margin: 0 0 15px 0; font-size: 16px;">Upload Background Image</h3>
+                    <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
+                        <input type="checkbox" id="apply-watermark-checkbox" checked>
+                        <span style="font-size: 14px;">Apply watermark to this background</span>
+                    </label>
+                    <div style="display: flex; gap: 10px;">
+                        <button id="proceed-upload" style="flex: 1; padding: 8px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer;">Upload</button>
+                        <button id="cancel-upload" style="flex: 1; padding: 8px; background: #e2e8f0; color: #2d3748; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+                    </div>
+                `;
+                document.body.appendChild(dialog);
+                
+                // Handle upload with watermark choice
+                document.getElementById('proceed-upload').onclick = () => {
+                    const applyWatermark = document.getElementById('apply-watermark-checkbox').checked;
+                    document.body.removeChild(dialog);
+                    proceedWithBackgroundUpload(element, applyWatermark);
+                };
+                
+                document.getElementById('cancel-upload').onclick = () => {
+                    document.body.removeChild(dialog);
+                };
+            } else {
+                // If watermark is not enabled, proceed without asking
+                proceedWithBackgroundUpload(element, false);
+            }
+        }
+        
+        function proceedWithBackgroundUpload(element, applyWatermark) {
             // Create hidden file input
             const fileInput = document.createElement('input');
             fileInput.type = 'file';
@@ -2343,6 +2485,7 @@
                         // Upload to R2 and get optimized version
                         const formData = new FormData();
                         formData.append('image', file);
+                        formData.append('applyWatermark', applyWatermark);
                         
                         const response = await fetch('/api/website-builder/upload-image', {
                             method: 'POST',
@@ -2369,8 +2512,10 @@
                         // Store original URL as data attribute
                         element.dataset.originalBackgroundUrl = data.originalUrl;
                         element.dataset.uploadedBackground = 'true';
+                        element.dataset.hasWatermark = applyWatermark ? 'true' : 'false';
                         
                         console.log('Background uploaded and optimized:', file.name);
+                        console.log('Watermark applied:', applyWatermark);
                         console.log('Original backed up to R2:', data.originalKey);
                         console.log('Optimized version (85% quality):', data.optimizedKey);
                         

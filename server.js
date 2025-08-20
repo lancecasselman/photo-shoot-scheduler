@@ -3641,6 +3641,9 @@ app.post('/api/website-builder/upload-image',
                 'image' // fileType
             );
             
+            // Check if watermark should be applied to this specific image
+            const applyWatermark = req.body.applyWatermark === 'true';
+            
             // Get watermark settings from user preferences (stored in session or database)
             const watermarkSettings = req.session?.watermarkSettings || {
                 enabled: false,
@@ -3655,8 +3658,8 @@ app.post('/api/website-builder/upload-image',
             const sharp = require('sharp');
             let sharpInstance = sharp(req.file.buffer);
             
-            // Apply watermark if enabled
-            if (watermarkSettings.enabled && watermarkSettings.text) {
+            // Apply watermark only if enabled globally AND specifically requested for this image
+            if (applyWatermark && watermarkSettings.enabled && watermarkSettings.text) {
                 // Get image metadata to calculate watermark position
                 const metadata = await sharpInstance.metadata();
                 const watermarkWidth = watermarkSettings.text.length * watermarkSettings.fontSize * 0.6;
