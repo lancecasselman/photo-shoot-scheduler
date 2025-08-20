@@ -41,7 +41,7 @@ function createBookingAgreementModal() {
 
                     <!-- Agreement Editor -->
                     <div id="agreementEditor" class="editor-section">
-                        <div id="agreementContent" contenteditable="true" class="agreement-content-editor"></div>
+                        <div id="agreementContent" contenteditable="true" class="agreement-content-editor" style="color: #000000 !important;"></div>
                     </div>
 
                     <!-- Agreement Viewer (for sent/signed) -->
@@ -115,11 +115,33 @@ async function openBookingAgreementModal(sessionId) {
     const modal = document.getElementById('bookingAgreementModal');
     modal.style.display = 'flex';
     
+    // Inject a critical style element to force black text
+    if (!document.getElementById('forceBlackTextStyles')) {
+        const styleEl = document.createElement('style');
+        styleEl.id = 'forceBlackTextStyles';
+        styleEl.innerHTML = `
+            #bookingAgreementModal * {
+                color: #000000 !important;
+                -webkit-text-fill-color: #000000 !important;
+            }
+            #agreementContent * {
+                color: #000000 !important;
+                -webkit-text-fill-color: #000000 !important;
+            }
+            [contenteditable="true"] * {
+                color: #000000 !important;
+                -webkit-text-fill-color: #000000 !important;
+            }
+        `;
+        document.head.appendChild(styleEl);
+    }
+    
     // Force ALL text in the modal to be black
     setTimeout(() => {
         const allElements = modal.querySelectorAll('*');
         allElements.forEach(element => {
             element.style.setProperty('color', '#000000', 'important');
+            element.style.setProperty('-webkit-text-fill-color', '#000000', 'important');
         });
         
         // Specifically target the content areas
@@ -128,15 +150,19 @@ async function openBookingAgreementModal(sessionId) {
         
         if (contentEditor) {
             contentEditor.style.setProperty('color', '#000000', 'important');
+            contentEditor.style.setProperty('-webkit-text-fill-color', '#000000', 'important');
             contentEditor.querySelectorAll('*').forEach(el => {
                 el.style.setProperty('color', '#000000', 'important');
+                el.style.setProperty('-webkit-text-fill-color', '#000000', 'important');
             });
         }
         
         if (contentViewer) {
             contentViewer.style.setProperty('color', '#000000', 'important');
+            contentViewer.style.setProperty('-webkit-text-fill-color', '#000000', 'important');
             contentViewer.querySelectorAll('*').forEach(el => {
                 el.style.setProperty('color', '#000000', 'important');
+                el.style.setProperty('-webkit-text-fill-color', '#000000', 'important');
             });
         }
     }, 200);
@@ -326,7 +352,15 @@ function loadSelectedTemplate() {
     content = replaceTemplateVariables(content, session);
 
     // Load into editor
-    document.getElementById('agreementContent').innerHTML = content;
+    const editor = document.getElementById('agreementContent');
+    editor.innerHTML = content;
+    
+    // Add inline black styles to EVERY element
+    editor.style = 'color: #000000 !important;';
+    const allElements = editor.getElementsByTagName('*');
+    for (let i = 0; i < allElements.length; i++) {
+        allElements[i].style = 'color: #000000 !important;';
+    }
     
     // Force all text to be black immediately and after a delay
     const forceBlackText = () => {

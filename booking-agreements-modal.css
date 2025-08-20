@@ -63,6 +63,8 @@
 [contenteditable] * {
     color: #000000 !important;
     text-shadow: none !important;
+    -webkit-text-fill-color: #000000 !important;
+    background-color: transparent !important;
 }
 
 /* Additional specific selectors to override any other styles */
@@ -71,6 +73,19 @@
 #bookingAgreementModal span,
 #bookingAgreementModal div:not(.booking-modal-header) {
     color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
+}
+
+/* Force webkit text fill color on ALL elements */
+#bookingAgreementModal * {
+    -webkit-text-fill-color: #000000 !important;
+}
+
+/* Ensure editable content is readable */
+.agreement-content-editor[contenteditable="true"] {
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
+    caret-color: #000000 !important;
 }
 
 /* Direct child text nodes */
