@@ -8590,49 +8590,49 @@ ${contract.contract_content}
                         <form id="updateSessionForm">
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
                                 <div>
-                                    <label for="updateClientName">Client Name</label>
-                                    <input type="text" id="updateClientName" name="clientName" value="${session.clientName || ''}" required>
+                                    <label for="updateClientName" style="display: block; color: #2d3748; font-weight: 600; margin-bottom: 5px; font-size: 14px;">Client Name</label>
+                                    <input type="text" id="updateClientName" name="clientName" value="${session.clientName || ''}" style="width: 100%; padding: 8px 12px; border: 2px solid #e2e8f0; border-radius: 5px; font-size: 14px; color: #2d3748; background-color: white;" required>
                                 </div>
                                 <div>
-                                    <label for="updateSessionType">Session Type</label>
-                                    <input type="text" id="updateSessionType" name="sessionType" value="${session.sessionType || ''}" required>
+                                    <label for="updateSessionType" style="display: block; color: #2d3748; font-weight: 600; margin-bottom: 5px; font-size: 14px;">Session Type</label>
+                                    <input type="text" id="updateSessionType" name="sessionType" value="${session.sessionType || ''}" style="width: 100%; padding: 8px 12px; border: 2px solid #e2e8f0; border-radius: 5px; font-size: 14px; color: #2d3748; background-color: white;" required>
                                 </div>
                                 <div>
-                                    <label for="updateDateTime">Date & Time</label>
-                                    <input type="datetime-local" id="updateDateTime" name="dateTime" value="${session.dateTime ? new Date(session.dateTime).toISOString().slice(0, 16) : ''}" required>
+                                    <label for="updateDateTime" style="display: block; color: #2d3748; font-weight: 600; margin-bottom: 5px; font-size: 14px;">Date & Time</label>
+                                    <input type="datetime-local" id="updateDateTime" name="dateTime" value="${session.dateTime ? new Date(session.dateTime).toISOString().slice(0, 16) : ''}" style="width: 100%; padding: 8px 12px; border: 2px solid #e2e8f0; border-radius: 5px; font-size: 14px; color: #2d3748; background-color: white;" required>
                                 </div>
                                 <div>
-                                    <label for="updateLocation">Location</label>
-                                    <input type="text" id="updateLocation" name="location" value="${session.location || ''}" required>
+                                    <label for="updateLocation" style="display: block; color: #2d3748; font-weight: 600; margin-bottom: 5px; font-size: 14px;">Location</label>
+                                    <input type="text" id="updateLocation" name="location" value="${session.location || ''}" style="width: 100%; padding: 8px 12px; border: 2px solid #e2e8f0; border-radius: 5px; font-size: 14px; color: #2d3748; background-color: white;" required>
                                 </div>
                                 <div>
-                                    <label for="updatePhoneNumber">Phone</label>
-                                    <input type="tel" id="updatePhoneNumber" name="phoneNumber" value="${session.phoneNumber || ''}" required>
+                                    <label for="updatePhoneNumber" style="display: block; color: #2d3748; font-weight: 600; margin-bottom: 5px; font-size: 14px;">Phone</label>
+                                    <input type="tel" id="updatePhoneNumber" name="phoneNumber" value="${session.phoneNumber || ''}" style="width: 100%; padding: 8px 12px; border: 2px solid #e2e8f0; border-radius: 5px; font-size: 14px; color: #2d3748; background-color: white;" required>
                                 </div>
                                 <div>
-                                    <label for="updateEmail">Email</label>
-                                    <input type="email" id="updateEmail" name="email" value="${session.email || ''}" required>
+                                    <label for="updateEmail" style="display: block; color: #2d3748; font-weight: 600; margin-bottom: 5px; font-size: 14px;">Email</label>
+                                    <input type="email" id="updateEmail" name="email" value="${session.email || ''}" style="width: 100%; padding: 8px 12px; border: 2px solid #e2e8f0; border-radius: 5px; font-size: 14px; color: #2d3748; background-color: white;" required>
                                 </div>
                                 <div>
-                                    <label for="updatePrice">Price</label>
-                                    <input type="number" id="updatePrice" name="price" step="0.01" value="${session.price || ''}" required>
+                                    <label for="updatePrice" style="display: block; color: #2d3748; font-weight: 600; margin-bottom: 5px; font-size: 14px;">Price</label>
+                                    <input type="number" id="updatePrice" name="price" step="0.01" value="${session.price || ''}" style="width: 100%; padding: 8px 12px; border: 2px solid #e2e8f0; border-radius: 5px; font-size: 14px; color: #2d3748; background-color: white;" required>
                                 </div>
                                 <div>
-                                    <label for="updateDuration">Duration (minutes)</label>
-                                    <input type="number" id="updateDuration" name="duration" value="${session.duration || ''}" required>
+                                    <label for="updateDuration" style="display: block; color: #2d3748; font-weight: 600; margin-bottom: 5px; font-size: 14px;">Duration (minutes)</label>
+                                    <input type="number" id="updateDuration" name="duration" value="${session.duration || ''}" style="width: 100%; padding: 8px 12px; border: 2px solid #e2e8f0; border-radius: 5px; font-size: 14px; color: #2d3748; background-color: white;" required>
                                 </div>
                             </div>
                             
                             <div>
-                                <label for="updateNotes">Notes</label>
-                                <textarea id="updateNotes" name="notes" style="width: 100%; height: 80px; margin-bottom: 15px;">${session.notes || ''}</textarea>
+                                <label for="updateNotes" style="display: block; color: #2d3748; font-weight: 600; margin-bottom: 5px; font-size: 14px;">Notes</label>
+                                <textarea id="updateNotes" name="notes" style="width: 100%; height: 80px; margin-bottom: 15px; padding: 8px 12px; border: 2px solid #e2e8f0; border-radius: 5px; font-size: 14px; color: #2d3748; background-color: white; resize: vertical;">${session.notes || ''}</textarea>
                             </div>
                             
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
-                                <label><input type="checkbox" name="contractSigned" ${session.contractSigned ? 'checked' : ''}> Contract Signed</label>
-                                <label><input type="checkbox" name="paid" ${session.paid ? 'checked' : ''}> Paid</label>
-                                <label><input type="checkbox" name="edited" ${session.edited ? 'checked' : ''}> Edited</label>
-                                <label><input type="checkbox" name="delivered" ${session.delivered ? 'checked' : ''}> Delivered</label>
+                                <label style="display: flex; align-items: center; color: #2d3748; font-weight: 500; cursor: pointer;"><input type="checkbox" name="contractSigned" ${session.contractSigned ? 'checked' : ''} style="margin-right: 8px; width: 16px; height: 16px;"> Contract Signed</label>
+                                <label style="display: flex; align-items: center; color: #2d3748; font-weight: 500; cursor: pointer;"><input type="checkbox" name="paid" ${session.paid ? 'checked' : ''} style="margin-right: 8px; width: 16px; height: 16px;"> Paid</label>
+                                <label style="display: flex; align-items: center; color: #2d3748; font-weight: 500; cursor: pointer;"><input type="checkbox" name="edited" ${session.edited ? 'checked' : ''} style="margin-right: 8px; width: 16px; height: 16px;"> Edited</label>
+                                <label style="display: flex; align-items: center; color: #2d3748; font-weight: 500; cursor: pointer;"><input type="checkbox" name="delivered" ${session.delivered ? 'checked' : ''} style="margin-right: 8px; width: 16px; height: 16px;"> Delivered</label>
                             </div>
                             
                             <div style="display: flex; gap: 10px; justify-content: flex-end;">
