@@ -74,6 +74,85 @@
     margin-bottom: 20px;
 }
 
+/* FORCE ALL AGREEMENT TEXT TO BE BLACK - ABSOLUTE MAXIMUM PRIORITY */
+#agreementContent,
+#agreementContent *,
+#agreementContent p,
+#agreementContent li,
+#agreementContent ul,
+#agreementContent ol,
+#agreementContent span,
+#agreementContent div,
+#agreementContent strong,
+#agreementContent b,
+#agreementContent em,
+#agreementContent i,
+#agreementContent u,
+#agreementContent h1,
+#agreementContent h2,
+#agreementContent h3,
+#agreementContent h4,
+#agreementContent h5,
+#agreementContent h6,
+#agreementViewContent,
+#agreementViewContent *,
+#agreementViewContent p,
+#agreementViewContent li,
+#agreementViewContent ul,
+#agreementViewContent ol,
+#agreementViewContent span,
+#agreementViewContent div,
+#agreementViewContent strong,
+#agreementViewContent b,
+#agreementViewContent em,
+#agreementViewContent i,
+#agreementViewContent u,
+#agreementViewContent h1,
+#agreementViewContent h2,
+#agreementViewContent h3,
+#agreementViewContent h4,
+#agreementViewContent h5,
+#agreementViewContent h6,
+.agreement-content-editor,
+.agreement-content-editor *,
+.agreement-content-editor p,
+.agreement-content-editor li,
+.agreement-content-editor ul,
+.agreement-content-editor ol,
+.agreement-content-editor span,
+.agreement-content-editor div,
+.agreement-content-editor strong,
+.agreement-content-viewer,
+.agreement-content-viewer *,
+.agreement-content-viewer p,
+.agreement-content-viewer li,
+.agreement-content-viewer ul,
+.agreement-content-viewer ol,
+.agreement-content-viewer span,
+.agreement-content-viewer div,
+.agreement-content-viewer strong,
+.booking-modal-body,
+.booking-modal-body *,
+[contenteditable],
+[contenteditable] * {
+    color: #000000 !important;
+    text-shadow: none !important;
+    -webkit-text-fill-color: #000000 !important;
+    background-color: transparent !important;
+}
+
+/* Force webkit text fill color on ALL elements */
+#bookingAgreementModal * {
+    -webkit-text-fill-color: #000000 !important;
+}
+
+/* Ensure editable content is readable */
+.agreement-content-editor[contenteditable="true"] {
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
+    caret-color: #000000 !important;
+}
+
 .template-section label {
     display: block;
     margin-bottom: 8px;
