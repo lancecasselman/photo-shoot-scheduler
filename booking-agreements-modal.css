@@ -89,6 +89,16 @@
     font-size: 15px;
     background: white;
     cursor: pointer;
+    color: #2d3748;
+}
+
+.template-section select option {
+    color: #2d3748;
+    background: white;
+}
+
+.template-section select option:first-child {
+    color: #718096;
 }
 
 .agreement-content-editor,
