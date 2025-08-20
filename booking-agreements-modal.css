@@ -78,7 +78,7 @@
     display: block;
     margin-bottom: 8px;
     font-weight: 600;
-    color: #374151;
+    color: #000000;
 }
 
 .template-section select {
@@ -89,16 +89,16 @@
     font-size: 15px;
     background: white;
     cursor: pointer;
-    color: #2d3748;
+    color: #000000;
 }
 
 .template-section select option {
-    color: #2d3748;
+    color: #000000;
     background: white;
 }
 
 .template-section select option:first-child {
-    color: #718096;
+    color: #666666;
 }
 
 .agreement-content-editor,
@@ -112,6 +112,7 @@
     overflow-y: auto;
     font-size: 14px;
     line-height: 1.8;
+    color: #000000;
 }
 
 .agreement-content-editor {
@@ -125,7 +126,7 @@
 
 .agreement-content-editor h2,
 .agreement-content-viewer h2 {
-    color: #1f2937;
+    color: #000000;
     font-size: 1.5rem;
     margin: 20px 0 15px;
     border-bottom: 2px solid #e5e7eb;
@@ -134,7 +135,7 @@
 
 .agreement-content-editor h3,
 .agreement-content-viewer h3 {
-    color: #374151;
+    color: #000000;
     font-size: 1.2rem;
     margin: 18px 0 12px;
 }
@@ -143,11 +144,23 @@
 .agreement-content-viewer ul {
     margin: 12px 0;
     padding-left: 25px;
+    color: #000000;
 }
 
 .agreement-content-editor li,
 .agreement-content-viewer li {
     margin: 8px 0;
+    color: #000000;
+}
+
+.agreement-content-editor p,
+.agreement-content-viewer p {
+    color: #000000;
+}
+
+.agreement-content-editor strong,
+.agreement-content-viewer strong {
+    color: #000000;
 }
 
 .agreement-status-badge {
