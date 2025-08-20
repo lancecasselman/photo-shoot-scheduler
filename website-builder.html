@@ -5379,21 +5379,60 @@
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = 'image/*';
-            input.onchange = function(e) {
+            input.onchange = async function(e) {
                 const file = e.target.files[0];
                 if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const galleryElement = document.querySelector(`[data-gallery-id="${galleryId}"]`);
-                        if (galleryElement) {
-                            const images = galleryElement.querySelectorAll('img');
-                            if (images[imageIndex]) {
-                                images[imageIndex].src = e.target.result;
-                                console.log(`Updated image ${imageIndex} in gallery ${galleryId}`);
+                    const galleryElement = document.querySelector(`[data-gallery-id="${galleryId}"]`);
+                    if (galleryElement) {
+                        const images = galleryElement.querySelectorAll('img');
+                        if (images[imageIndex]) {
+                            const img = images[imageIndex];
+                            
+                            // Show loading state
+                            img.style.transition = 'opacity 0.3s';
+                            img.style.opacity = '0.5';
+                            
+                            try {
+                                // Upload to R2 and get optimized version
+                                const formData = new FormData();
+                                formData.append('image', file);
+                                
+                                const response = await fetch('/api/website-builder/upload-image', {
+                                    method: 'POST',
+                                    body: formData
+                                });
+                                
+                                if (!response.ok) {
+                                    throw new Error('Upload failed');
+                                }
+                                
+                                const data = await response.json();
+                                
+                                // Use the optimized URL for display
+                                img.src = data.optimizedUrl;
+                                img.dataset.originalUrl = data.originalUrl; // Store original URL as data attribute
+                                img.dataset.uploadedImage = 'true'; // Mark as uploaded image
+                                
+                                console.log(`Gallery image ${imageIndex} uploaded and optimized:`, file.name);
+                                console.log('Original backed up to R2:', data.originalKey);
+                                console.log('Optimized version (85% quality):', data.optimizedKey);
+                                
+                            } catch (error) {
+                                console.error('Error uploading gallery image:', error);
+                                // Fallback to local data URL if upload fails
+                                const reader = new FileReader();
+                                reader.onload = function(event) {
+                                    img.src = event.target.result;
+                                };
+                                reader.readAsDataURL(file);
+                            } finally {
+                                // Restore opacity
+                                setTimeout(() => {
+                                    img.style.opacity = '1';
+                                }, 300);
                             }
                         }
-                    };
-                    reader.readAsDataURL(file);
+                    }
                 }
             };
             input.click();
@@ -5405,18 +5444,55 @@
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = 'image/*';
-            input.onchange = function(e) {
+            input.onchange = async function(e) {
                 const file = e.target.files[0];
                 if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const img = button.closest('div').querySelector('img');
-                        if (img) {
-                            img.src = e.target.result;
-                            console.log('Updated about section image');
+                    const img = button.closest('div').querySelector('img');
+                    if (img) {
+                        // Show loading state
+                        img.style.transition = 'opacity 0.3s';
+                        img.style.opacity = '0.5';
+                        
+                        try {
+                            // Upload to R2 and get optimized version
+                            const formData = new FormData();
+                            formData.append('image', file);
+                            
+                            const response = await fetch('/api/website-builder/upload-image', {
+                                method: 'POST',
+                                body: formData
+                            });
+                            
+                            if (!response.ok) {
+                                throw new Error('Upload failed');
+                            }
+                            
+                            const data = await response.json();
+                            
+                            // Use the optimized URL for display
+                            img.src = data.optimizedUrl;
+                            img.dataset.originalUrl = data.originalUrl; // Store original URL as data attribute
+                            img.dataset.uploadedImage = 'true'; // Mark as uploaded image
+                            
+                            console.log('About image uploaded and optimized:', file.name);
+                            console.log('Original backed up to R2:', data.originalKey);
+                            console.log('Optimized version (85% quality):', data.optimizedKey);
+                            
+                        } catch (error) {
+                            console.error('Error uploading about image:', error);
+                            // Fallback to local data URL if upload fails
+                            const reader = new FileReader();
+                            reader.onload = function(event) {
+                                img.src = event.target.result;
+                            };
+                            reader.readAsDataURL(file);
+                        } finally {
+                            // Restore opacity
+                            setTimeout(() => {
+                                img.style.opacity = '1';
+                            }, 300);
                         }
-                    };
-                    reader.readAsDataURL(file);
+                    }
                 }
             };
             input.click();
@@ -5428,20 +5504,61 @@
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = 'image/*';
-            input.onchange = function(e) {
+            input.onchange = async function(e) {
                 const file = e.target.files[0];
                 if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const heroDiv = button.closest('div[style*="background:"]');
-                        if (heroDiv) {
+                    const heroDiv = button.closest('div[style*="background:"]');
+                    if (heroDiv) {
+                        // Show loading state
+                        heroDiv.style.transition = 'opacity 0.3s';
+                        heroDiv.style.opacity = '0.7';
+                        
+                        try {
+                            // Upload to R2 and get optimized version
+                            const formData = new FormData();
+                            formData.append('image', file);
+                            
+                            const response = await fetch('/api/website-builder/upload-image', {
+                                method: 'POST',
+                                body: formData
+                            });
+                            
+                            if (!response.ok) {
+                                throw new Error('Upload failed');
+                            }
+                            
+                            const data = await response.json();
+                            
+                            // Update background with optimized image URL
                             const currentStyle = heroDiv.style.background;
-                            const newStyle = currentStyle.replace(/url\([^)]+\)/, `url('${e.target.result}')`);
+                            const newStyle = currentStyle.replace(/url\([^)]+\)/, `url('${data.optimizedUrl}')`);
                             heroDiv.style.background = newStyle;
-                            console.log('Updated hero background image');
+                            
+                            // Store original URL as data attribute
+                            heroDiv.dataset.originalBackgroundUrl = data.originalUrl;
+                            heroDiv.dataset.uploadedBackground = 'true';
+                            
+                            console.log('Hero background uploaded and optimized:', file.name);
+                            console.log('Original backed up to R2:', data.originalKey);
+                            console.log('Optimized version (85% quality):', data.optimizedKey);
+                            
+                        } catch (error) {
+                            console.error('Error uploading hero background:', error);
+                            // Fallback to local data URL if upload fails
+                            const reader = new FileReader();
+                            reader.onload = function(event) {
+                                const currentStyle = heroDiv.style.background;
+                                const newStyle = currentStyle.replace(/url\([^)]+\)/, `url('${event.target.result}')`);
+                                heroDiv.style.background = newStyle;
+                            };
+                            reader.readAsDataURL(file);
+                        } finally {
+                            // Restore opacity
+                            setTimeout(() => {
+                                heroDiv.style.opacity = '1';
+                            }, 300);
                         }
-                    };
-                    reader.readAsDataURL(file);
+                    }
                 }
             };
             input.click();
