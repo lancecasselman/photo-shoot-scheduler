@@ -3560,6 +3560,56 @@ const uploadBuilderImage = multer({
     limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit for website images
 });
 
+// ROUTE: Update watermark settings
+app.post('/api/watermark-settings', async (req, res) => {
+    try {
+        if (!req.session || !req.session.user) {
+            return res.status(401).json({ error: 'Authentication required' });
+        }
+        
+        const { enabled, text, position, opacity, fontSize, fontColor } = req.body;
+        
+        // Store in session
+        req.session.watermarkSettings = {
+            enabled: enabled || false,
+            text: text || '',
+            position: position || 'bottom-right',
+            opacity: opacity || 0.7,
+            fontSize: fontSize || 30,
+            fontColor: fontColor || '#FFFFFF'
+        };
+        
+        res.json({ success: true, settings: req.session.watermarkSettings });
+    } catch (error) {
+        console.error('Error saving watermark settings:', error);
+        res.status(500).json({ error: 'Failed to save watermark settings' });
+    }
+});
+
+// ROUTE: Get watermark settings
+app.get('/api/watermark-settings', async (req, res) => {
+    try {
+        if (!req.session || !req.session.user) {
+            return res.status(401).json({ error: 'Authentication required' });
+        }
+        
+        // Return settings from session or defaults
+        const settings = req.session.watermarkSettings || {
+            enabled: false,
+            text: '',
+            position: 'bottom-right',
+            opacity: 0.7,
+            fontSize: 30,
+            fontColor: '#FFFFFF'
+        };
+        
+        res.json(settings);
+    } catch (error) {
+        console.error('Error getting watermark settings:', error);
+        res.status(500).json({ error: 'Failed to get watermark settings' });
+    }
+});
+
 app.post('/api/website-builder/upload-image', 
     uploadBuilderImage.single('image'),
     async (req, res) => {
@@ -3591,9 +3641,73 @@ app.post('/api/website-builder/upload-image',
                 'image' // fileType
             );
             
+            // Get watermark settings from user preferences (stored in session or database)
+            const watermarkSettings = req.session?.watermarkSettings || {
+                enabled: false,
+                text: '',
+                position: 'bottom-right', // Options: top-left, top-right, bottom-left, bottom-right, center
+                opacity: 0.7,
+                fontSize: 30,
+                fontColor: '#FFFFFF'
+            };
+            
             // Create optimized version using Sharp (85% quality JPEG)
             const sharp = require('sharp');
-            const optimizedBuffer = await sharp(req.file.buffer)
+            let sharpInstance = sharp(req.file.buffer);
+            
+            // Apply watermark if enabled
+            if (watermarkSettings.enabled && watermarkSettings.text) {
+                // Get image metadata to calculate watermark position
+                const metadata = await sharpInstance.metadata();
+                const watermarkWidth = watermarkSettings.text.length * watermarkSettings.fontSize * 0.6;
+                const watermarkHeight = watermarkSettings.fontSize * 1.5;
+                const padding = 20;
+                
+                // Calculate position based on setting
+                let left = padding, top = padding;
+                switch(watermarkSettings.position) {
+                    case 'top-right':
+                        left = metadata.width - watermarkWidth - padding;
+                        break;
+                    case 'bottom-left':
+                        top = metadata.height - watermarkHeight - padding;
+                        break;
+                    case 'bottom-right':
+                        left = metadata.width - watermarkWidth - padding;
+                        top = metadata.height - watermarkHeight - padding;
+                        break;
+                    case 'center':
+                        left = (metadata.width - watermarkWidth) / 2;
+                        top = (metadata.height - watermarkHeight) / 2;
+                        break;
+                }
+                
+                // Create SVG watermark
+                const watermarkSvg = Buffer.from(`
+                    <svg width="${watermarkWidth}" height="${watermarkHeight}">
+                        <text x="0" y="${watermarkSettings.fontSize}" 
+                              font-family="Arial, sans-serif" 
+                              font-size="${watermarkSettings.fontSize}" 
+                              fill="${watermarkSettings.fontColor}" 
+                              opacity="${watermarkSettings.opacity}"
+                              stroke="black" 
+                              stroke-width="1" 
+                              stroke-opacity="0.3">
+                            ${watermarkSettings.text}
+                        </text>
+                    </svg>
+                `);
+                
+                // Composite watermark onto image
+                sharpInstance = sharpInstance.composite([{
+                    input: watermarkSvg,
+                    left: Math.round(left),
+                    top: Math.round(top)
+                }]);
+            }
+            
+            // Convert to JPEG with optimization
+            const optimizedBuffer = await sharpInstance
                 .jpeg({ 
                     quality: 85, 
                     progressive: true,

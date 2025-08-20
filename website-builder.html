@@ -685,6 +685,7 @@
                     <button class="tool-tab" data-tab="layout">Layout</button>
                     <button class="tool-tab" data-tab="properties">Properties</button>
                     <button class="tool-tab" data-tab="pages">Pages</button>
+                    <button class="tool-tab" data-tab="watermark">Watermark</button>
                 </div>
             </div>
             <div class="tools-content">
@@ -1000,6 +1001,79 @@
                             <button class="btn btn-secondary" onclick="resetWebsite()" style="padding: 8px 12px; font-size: 12px; flex: 1; min-width: 60px;">Reset</button>
                             <button class="btn btn-secondary" onclick="openPreviewModal()" style="padding: 8px 12px; font-size: 12px; flex: 1; min-width: 60px;">Preview</button>
                         </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Watermark Tab Content -->
+            <div class="tab-panel" data-panel="watermark">
+                <div class="tools-scroll">
+                    <div class="tool-section">
+                        <div class="tool-title">Watermark Settings</div>
+                        
+                        <!-- Enable/Disable Watermark -->
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: flex; align-items: center; gap: 8px;">
+                                <input type="checkbox" id="watermark-enabled">
+                                <span>Enable Watermark</span>
+                            </label>
+                        </div>
+                        
+                        <!-- Watermark Text -->
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #64748b;">Watermark Text</label>
+                            <input type="text" id="watermark-text" placeholder="© Your Photography Business" style="width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 12px;">
+                        </div>
+                        
+                        <!-- Position -->
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #64748b;">Position</label>
+                            <select id="watermark-position" style="width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 12px;">
+                                <option value="top-left">Top Left</option>
+                                <option value="top-right">Top Right</option>
+                                <option value="bottom-left">Bottom Left</option>
+                                <option value="bottom-right" selected>Bottom Right</option>
+                                <option value="center">Center</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Opacity -->
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #64748b;">Opacity</label>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <input type="range" id="watermark-opacity" min="0" max="1" step="0.1" value="0.7" style="flex: 1;">
+                                <span id="opacity-value" style="min-width: 35px; font-size: 12px;">0.7</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Font Size -->
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #64748b;">Font Size</label>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <input type="range" id="watermark-font-size" min="10" max="100" step="5" value="30" style="flex: 1;">
+                                <span id="font-size-value" style="min-width: 35px; font-size: 12px;">30px</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Font Color -->
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #64748b;">Font Color</label>
+                            <input type="color" id="watermark-color" value="#FFFFFF" style="width: 100%; height: 35px; padding: 4px; border: 1px solid #e2e8f0; border-radius: 4px; cursor: pointer;">
+                        </div>
+                        
+                        <!-- Preview Section -->
+                        <div style="margin-bottom: 15px; padding: 15px; background: #f8fafc; border-radius: 8px; position: relative; height: 150px; overflow: hidden;">
+                            <div style="position: relative; width: 100%; height: 100%; background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgZmlsbD0iI2RkZCIvPjx0ZXh0IHRleHQtYW5jaG9yPSJtaWRkbGUiIHg9IjIwMCIgeT0iMTUwIiBzdHlsZT0iZmlsbDojOTk5O2ZvbnQtd2VpZ2h0OmJvbGQ7Zm9udC1zaXplOjE5cHg7Zm9udC1mYW1pbHk6QXJpYWwsSGVsdmV0aWNhLHNhbnMtc2VyaWY7ZG9taW5hbnQtYmFzZWxpbmU6Y2VudHJhbCI+U2FtcGxlIEltYWdlPC90ZXh0Pjwvc3ZnPg==') center/cover; border-radius: 4px;">
+                                <div id="watermark-preview" style="position: absolute; padding: 5px 10px; text-shadow: 1px 1px 2px rgba(0,0,0,0.3);">
+                                    © Your Photography Business
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Save Button -->
+                        <button onclick="saveWatermarkSettings()" style="width: 100%; padding: 10px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">
+                            Save Watermark Settings
+                        </button>
                     </div>
                 </div>
             </div>
@@ -4410,15 +4484,19 @@
             input.click();
         }
 
-        function showNotification(message) {
+        function showNotification(message, type = 'success') {
             // Create a temporary notification
             const notification = document.createElement('div');
             notification.textContent = message;
+            
+            // Set background color based on type
+            const backgroundColor = type === 'error' ? '#f56565' : '#48bb78';
+            
             notification.style.cssText = `
                 position: fixed;
                 top: 20px;
                 right: 20px;
-                background: #48bb78;
+                background: ${backgroundColor};
                 color: white;
                 padding: 12px 20px;
                 border-radius: 6px;
@@ -8116,12 +8194,123 @@
             console.log('Keyboard shortcuts initialized - Delete/Backspace to delete, Escape to deselect');
         }
 
+        // Watermark Settings Functions
+        async function loadWatermarkSettings() {
+            try {
+                const response = await fetch('/api/watermark-settings');
+                if (response.ok) {
+                    const settings = await response.json();
+                    
+                    // Update UI with loaded settings
+                    document.getElementById('watermark-enabled').checked = settings.enabled;
+                    document.getElementById('watermark-text').value = settings.text;
+                    document.getElementById('watermark-position').value = settings.position;
+                    document.getElementById('watermark-opacity').value = settings.opacity;
+                    document.getElementById('watermark-font-size').value = settings.fontSize;
+                    document.getElementById('watermark-color').value = settings.fontColor;
+                    
+                    // Update display values
+                    document.getElementById('opacity-value').textContent = settings.opacity;
+                    document.getElementById('font-size-value').textContent = settings.fontSize + 'px';
+                    
+                    // Update preview
+                    updateWatermarkPreview();
+                }
+            } catch (error) {
+                console.error('Error loading watermark settings:', error);
+            }
+        }
+        
+        function updateWatermarkPreview() {
+            const preview = document.getElementById('watermark-preview');
+            const enabled = document.getElementById('watermark-enabled').checked;
+            const text = document.getElementById('watermark-text').value || '© Your Photography Business';
+            const position = document.getElementById('watermark-position').value;
+            const opacity = document.getElementById('watermark-opacity').value;
+            const fontSize = document.getElementById('watermark-font-size').value;
+            const color = document.getElementById('watermark-color').value;
+            
+            // Update preview text
+            preview.textContent = text;
+            
+            // Update preview styles
+            preview.style.display = enabled ? 'block' : 'none';
+            preview.style.opacity = opacity;
+            preview.style.fontSize = fontSize + 'px';
+            preview.style.color = color;
+            
+            // Update position
+            const positions = {
+                'top-left': { top: '10px', left: '10px', right: 'auto', bottom: 'auto' },
+                'top-right': { top: '10px', right: '10px', left: 'auto', bottom: 'auto' },
+                'bottom-left': { bottom: '10px', left: '10px', top: 'auto', right: 'auto' },
+                'bottom-right': { bottom: '10px', right: '10px', top: 'auto', left: 'auto' },
+                'center': { top: '50%', left: '50%', transform: 'translate(-50%, -50%)', right: 'auto', bottom: 'auto' }
+            };
+            
+            const pos = positions[position] || positions['bottom-right'];
+            Object.assign(preview.style, pos);
+        }
+        
+        async function saveWatermarkSettings() {
+            const settings = {
+                enabled: document.getElementById('watermark-enabled').checked,
+                text: document.getElementById('watermark-text').value,
+                position: document.getElementById('watermark-position').value,
+                opacity: parseFloat(document.getElementById('watermark-opacity').value),
+                fontSize: parseInt(document.getElementById('watermark-font-size').value),
+                fontColor: document.getElementById('watermark-color').value
+            };
+            
+            try {
+                const response = await fetch('/api/watermark-settings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(settings)
+                });
+                
+                if (response.ok) {
+                    showNotification('Watermark settings saved successfully!', 'success');
+                } else {
+                    showNotification('Failed to save watermark settings', 'error');
+                }
+            } catch (error) {
+                console.error('Error saving watermark settings:', error);
+                showNotification('Error saving watermark settings', 'error');
+            }
+        }
+        
+        function initializeWatermarkSettings() {
+            // Load settings on initialization
+            loadWatermarkSettings();
+            
+            // Add event listeners for real-time preview updates
+            document.getElementById('watermark-enabled').addEventListener('change', updateWatermarkPreview);
+            document.getElementById('watermark-text').addEventListener('input', updateWatermarkPreview);
+            document.getElementById('watermark-position').addEventListener('change', updateWatermarkPreview);
+            
+            document.getElementById('watermark-opacity').addEventListener('input', (e) => {
+                document.getElementById('opacity-value').textContent = e.target.value;
+                updateWatermarkPreview();
+            });
+            
+            document.getElementById('watermark-font-size').addEventListener('input', (e) => {
+                document.getElementById('font-size-value').textContent = e.target.value + 'px';
+                updateWatermarkPreview();
+            });
+            
+            document.getElementById('watermark-color').addEventListener('input', updateWatermarkPreview);
+        }
+        
         // Initialize everything when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
             initializeTabs();
             initializeDragAndDrop();
             initializeFloatingToolbar(); // Initialize toolbar first
             initializePagesDragAndDrop(); // Initialize page drag and drop
+            initializeWatermarkSettings(); // Initialize watermark settings
             
             // Add template selector button
             setTimeout(() => {
