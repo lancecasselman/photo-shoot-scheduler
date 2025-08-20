@@ -604,6 +604,27 @@ class R2FileManager {
   }
 
   /**
+   * Get a signed URL for accessing a file in R2
+   */
+  async getSignedUrl(r2Key, expiresIn = 3600) {
+    try {
+      const { GetObjectCommand } = require('@aws-sdk/client-s3');
+      const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+      
+      const command = new GetObjectCommand({
+        Bucket: this.bucketName,
+        Key: r2Key
+      });
+      
+      const url = await getSignedUrl(this.s3Client, command, { expiresIn });
+      return url;
+    } catch (error) {
+      console.error('Error generating signed URL:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Download file from R2 at full resolution
    */
   async downloadFile(userId, sessionId, filename) {

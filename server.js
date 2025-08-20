@@ -3583,15 +3583,12 @@ app.post('/api/website-builder/upload-image',
             console.log(`📸 Processing website builder image upload for user ${userId}`);
             
             // Upload original full resolution to R2
-            await r2FileManager.uploadFile(
+            const originalUpload = await r2FileManager.uploadFile(
                 req.file.buffer,
                 originalKey,
-                req.file.mimetype,
-                {
-                    uploadedBy: userId,
-                    type: 'website_builder_original',
-                    originalName: req.file.originalname
-                }
+                userId,
+                'website-builder', // sessionId for website builder images
+                'image' // fileType
             );
             
             // Create optimized version using Sharp (85% quality JPEG)
@@ -3605,20 +3602,17 @@ app.post('/api/website-builder/upload-image',
                 .toBuffer();
             
             // Upload optimized version to R2
-            await r2FileManager.uploadFile(
+            const optimizedUpload = await r2FileManager.uploadFile(
                 optimizedBuffer,
                 optimizedKey,
-                'image/jpeg',
-                {
-                    uploadedBy: userId,
-                    type: 'website_builder_optimized',
-                    originalName: req.file.originalname
-                }
+                userId,
+                'website-builder', // sessionId for website builder images
+                'image' // fileType
             );
             
-            // Generate URLs
-            const optimizedUrl = await r2FileManager.getSignedUrl(optimizedKey);
-            const originalUrl = await r2FileManager.getSignedUrl(originalKey);
+            // Generate URLs using the r2Key from the upload response
+            const optimizedUrl = await r2FileManager.getSignedUrl(optimizedUpload.r2Key);
+            const originalUrl = await r2FileManager.getSignedUrl(originalUpload.r2Key);
             
             console.log(`✅ Website builder image processed: Original backed up, optimized version created`);
             
