@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watermark Settings - Photography Management System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+        }
+        
+        .back-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .section {
+            margin-bottom: 40px;
+        }
+        
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #555;
+            margin-bottom: 8px;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+        }
+        
+        select.form-control {
+            cursor: pointer;
+        }
+        
+        .toggle-group {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.4s;
+            border-radius: 26px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: #667eea;
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+        }
+        
+        .watermark-type-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .type-option {
+            flex: 1;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .type-option:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        
+        .type-option.active {
+            border-color: #667eea;
+            background: #f8f9ff;
+            color: #667eea;
+        }
+        
+        .type-option i {
+            font-size: 32px;
+            margin-bottom: 10px;
+            display: block;
+        }
+        
+        .preview-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .preview-container {
+            position: relative;
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .preview-image {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        .watermark-preview {
+            position: absolute;
+            padding: 10px 20px;
+            font-family: Arial, sans-serif;
+            user-select: none;
+        }
+        
+        .position-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-width: 300px;
+        }
+        
+        .position-btn {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .position-btn:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        
+        .position-btn.active {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+        
+        .logo-upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .logo-upload-area:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        
+        .logo-upload-area.has-logo {
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        
+        .uploaded-logo {
+            max-width: 200px;
+            max-height: 100px;
+            margin: 0 auto;
+            display: block;
+        }
+        
+        .upload-btn {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 15px;
+        }
+        
+        .upload-btn:hover {
+            background: #5a67d8;
+        }
+        
+        .apply-settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .apply-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .apply-option:hover {
+            background: #e9ecef;
+        }
+        
+        .apply-option input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        .apply-option label {
+            cursor: pointer;
+            flex: 1;
+        }
+        
+        .save-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 30px;
+            border-top: 2px solid #f0f0f0;
+        }
+        
+        .save-status {
+            color: #28a745;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .save-status.show {
+            display: block;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .btn {
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5a67d8;
+        }
+        
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+        
+        .range-slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #e0e0e0;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+        
+        .range-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+        
+        .opacity-value {
+            display: inline-block;
+            margin-left: 15px;
+            font-weight: 600;
+            color: #667eea;
+        }
+        
+        #logoFileInput {
+            display: none;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .loading.show {
+            display: block;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 Watermark Settings</h1>
+            <button class="back-btn" onclick="history.back()">← Back to Dashboard</button>
+        </div>
+        
+        <div class="content">
+            <!-- Enable/Disable Toggle -->
+            <div class="section">
+                <div class="toggle-group">
+                    <label class="form-label" style="margin: 0;">Enable Watermarking</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="enableWatermark">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span id="watermarkStatus" style="color: #666;">Disabled</span>
+                </div>
+            </div>
+            
+            <!-- Watermark Type Selection -->
+            <div class="section" id="watermarkSettings" style="display: none;">
+                <h2 class="section-title">Watermark Type</h2>
+                <div class="watermark-type-selector">
+                    <div class="type-option active" data-type="text">
+                        <i>📝</i>
+                        <strong>Text Watermark</strong>
+                        <p style="font-size: 12px; color: #666; margin-top: 5px;">Add custom text or copyright</p>
+                    </div>
+                    <div class="type-option" data-type="logo">
+                        <i>🖼️</i>
+                        <strong>Logo Watermark</strong>
+                        <p style="font-size: 12px; color: #666; margin-top: 5px;">Use your business logo</p>
+                    </div>
+                </div>
+                
+                <!-- Text Watermark Settings -->
+                <div id="textSettings">
+                    <div class="form-group">
+                        <label class="form-label">Watermark Text</label>
+                        <input type="text" class="form-control" id="watermarkText" value="© 2025 Photography" placeholder="Enter your watermark text">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Font Family</label>
+                        <select class="form-control" id="fontFamily">
+                            <option value="Arial">Arial</option>
+                            <option value="Helvetica">Helvetica</option>
+                            <option value="Times New Roman">Times New Roman</option>
+                            <option value="Georgia">Georgia</option>
+                            <option value="Courier New">Courier New</option>
+                            <option value="Verdana">Verdana</option>
+                            <option value="Impact">Impact</option>
+                            <option value="Comic Sans MS">Comic Sans MS</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Font Size</label>
+                        <select class="form-control" id="fontSize">
+                            <option value="small">Small</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="large">Large</option>
+                            <option value="extra-large">Extra Large</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Text Color</label>
+                        <input type="color" class="form-control" id="textColor" value="#ffffff" style="height: 50px; cursor: pointer;">
+                    </div>
+                </div>
+                
+                <!-- Logo Watermark Settings -->
+                <div id="logoSettings" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">Upload Logo</label>
+                        <div class="logo-upload-area" id="logoUploadArea" onclick="document.getElementById('logoFileInput').click()">
+                            <div id="uploadPlaceholder">
+                                <i style="font-size: 48px; color: #667eea;">📤</i>
+                                <p style="margin-top: 15px; color: #666;">Click to upload your logo</p>
+                                <p style="font-size: 12px; color: #999;">PNG or JPG, max 2MB</p>
+                            </div>
+                            <div id="uploadedLogoPreview" style="display: none;">
+                                <img id="logoPreview" class="uploaded-logo" alt="Logo preview">
+                                <button class="upload-btn" onclick="event.stopPropagation(); document.getElementById('logoFileInput').click()">Change Logo</button>
+                            </div>
+                        </div>
+                        <input type="file" id="logoFileInput" accept="image/png,image/jpeg,image/jpg">
+                    </div>
+                </div>
+                
+                <!-- Common Settings -->
+                <div class="form-group">
+                    <label class="form-label">Opacity <span class="opacity-value" id="opacityValue">50%</span></label>
+                    <input type="range" class="range-slider" id="opacity" min="10" max="100" value="50" step="10">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Position</label>
+                    <div class="position-grid">
+                        <button class="position-btn" data-position="top-left">↖️ Top Left</button>
+                        <button class="position-btn" data-position="top-center">⬆️ Top</button>
+                        <button class="position-btn" data-position="top-right">↗️ Top Right</button>
+                        <button class="position-btn" data-position="center-left">⬅️ Left</button>
+                        <button class="position-btn" data-position="center">⭕ Center</button>
+                        <button class="position-btn" data-position="center-right">➡️ Right</button>
+                        <button class="position-btn" data-position="bottom-left">↙️ Bottom Left</button>
+                        <button class="position-btn" data-position="bottom-center">⬇️ Bottom</button>
+                        <button class="position-btn active" data-position="bottom-right">↘️ Bottom Right</button>
+                    </div>
+                </div>
+                
+                <!-- Preview Section -->
+                <div class="section">
+                    <h2 class="section-title">Preview</h2>
+                    <div class="preview-section">
+                        <div class="preview-container">
+                            <img src="https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=500" alt="Preview" class="preview-image">
+                            <div class="watermark-preview" id="watermarkPreview" style="bottom: 20px; right: 20px; color: white; opacity: 0.5;">
+                                © 2025 Photography
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Apply Settings -->
+                <div class="section">
+                    <h2 class="section-title">Apply Watermark To</h2>
+                    <div class="apply-settings-grid">
+                        <div class="apply-option">
+                            <input type="checkbox" id="applyToGalleries" checked>
+                            <label for="applyToGalleries">
+                                <strong>Client Galleries</strong><br>
+                                <small style="color: #666;">Watermark photos in client galleries</small>
+                            </label>
+                        </div>
+                        <div class="apply-option">
+                            <input type="checkbox" id="applyToDownloads">
+                            <label for="applyToDownloads">
+                                <strong>Downloads</strong><br>
+                                <small style="color: #666;">Include watermark in downloaded files</small>
+                            </label>
+                        </div>
+                        <div class="apply-option">
+                            <input type="checkbox" id="applyToSocial" checked>
+                            <label for="applyToSocial">
+                                <strong>Social Sharing</strong><br>
+                                <small style="color: #666;">Add watermark to shared images</small>
+                            </label>
+                        </div>
+                        <div class="apply-option">
+                            <input type="checkbox" id="applyToProofs" checked>
+                            <label for="applyToProofs">
+                                <strong>Proof Galleries</strong><br>
+                                <small style="color: #666;">Watermark proof images</small>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Save Section -->
+            <div class="save-section">
+                <div class="save-status" id="saveStatus">
+                    ✅ Settings saved successfully!
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-secondary" onclick="resetSettings()">Reset to Default</button>
+                    <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+                </div>
+            </div>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p style="margin-top: 15px;">Saving settings...</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Initialize settings
+        let currentSettings = {
+            enabled: false,
+            type: 'text',
+            textContent: '© 2025 Photography',
+            fontFamily: 'Arial',
+            fontSize: 'medium',
+            color: '#ffffff',
+            opacity: 50,
+            position: 'bottom-right',
+            logoUrl: null,
+            applyToGalleries: true,
+            applyToDownloads: false,
+            applyToSocial: true,
+            applyToProofs: true
+        };
+        
+        // Load existing settings on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadSettings();
+            initializeEventListeners();
+            updatePreview();
+        });
+        
+        async function loadSettings() {
+            try {
+                const response = await fetch('/api/watermark-settings', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const settings = await response.json();
+                    
+                    // Map database fields to frontend fields
+                    currentSettings = {
+                        enabled: settings.enabled,
+                        type: settings.type,
+                        textContent: settings.text_content,
+                        fontFamily: settings.font_family,
+                        fontSize: settings.font_size,
+                        color: settings.color,
+                        opacity: settings.opacity,
+                        position: settings.position,
+                        logoUrl: settings.logo_url,
+                        applyToGalleries: settings.apply_to_galleries,
+                        applyToDownloads: settings.apply_to_downloads,
+                        applyToSocial: settings.apply_to_social,
+                        applyToProofs: settings.apply_to_proofs
+                    };
+                    
+                    // Apply settings to UI
+                    applySettingsToUI();
+                }
+            } catch (error) {
+                console.error('Error loading settings:', error);
+            }
+        }
+        
+        function applySettingsToUI() {
+            // Enable toggle
+            document.getElementById('enableWatermark').checked = currentSettings.enabled;
+            document.getElementById('watermarkStatus').textContent = currentSettings.enabled ? 'Enabled' : 'Disabled';
+            document.getElementById('watermarkSettings').style.display = currentSettings.enabled ? 'block' : 'none';
+            
+            // Type selection
+            document.querySelectorAll('.type-option').forEach(option => {
+                option.classList.toggle('active', option.dataset.type === currentSettings.type);
+            });
+            
+            // Show/hide type-specific settings
+            document.getElementById('textSettings').style.display = currentSettings.type === 'text' ? 'block' : 'none';
+            document.getElementById('logoSettings').style.display = currentSettings.type === 'logo' ? 'block' : 'none';
+            
+            // Text settings
+            document.getElementById('watermarkText').value = currentSettings.textContent;
+            document.getElementById('fontFamily').value = currentSettings.fontFamily;
+            document.getElementById('fontSize').value = currentSettings.fontSize;
+            document.getElementById('textColor').value = currentSettings.color;
+            
+            // Logo settings
+            if (currentSettings.logoUrl) {
+                document.getElementById('uploadPlaceholder').style.display = 'none';
+                document.getElementById('uploadedLogoPreview').style.display = 'block';
+                document.getElementById('logoPreview').src = currentSettings.logoUrl;
+                document.getElementById('logoUploadArea').classList.add('has-logo');
+            }
+            
+            // Common settings
+            document.getElementById('opacity').value = currentSettings.opacity;
+            document.getElementById('opacityValue').textContent = currentSettings.opacity + '%';
+            
+            // Position
+            document.querySelectorAll('.position-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.position === currentSettings.position);
+            });
+            
+            // Apply settings
+            document.getElementById('applyToGalleries').checked = currentSettings.applyToGalleries;
+            document.getElementById('applyToDownloads').checked = currentSettings.applyToDownloads;
+            document.getElementById('applyToSocial').checked = currentSettings.applyToSocial;
+            document.getElementById('applyToProofs').checked = currentSettings.applyToProofs;
+        }
+        
+        function initializeEventListeners() {
+            // Enable toggle
+            document.getElementById('enableWatermark').addEventListener('change', (e) => {
+                const enabled = e.target.checked;
+                document.getElementById('watermarkStatus').textContent = enabled ? 'Enabled' : 'Disabled';
+                document.getElementById('watermarkSettings').style.display = enabled ? 'block' : 'none';
+                currentSettings.enabled = enabled;
+                updatePreview();
+            });
+            
+            // Type selection
+            document.querySelectorAll('.type-option').forEach(option => {
+                option.addEventListener('click', () => {
+                    document.querySelectorAll('.type-option').forEach(o => o.classList.remove('active'));
+                    option.classList.add('active');
+                    
+                    const type = option.dataset.type;
+                    currentSettings.type = type;
+                    
+                    document.getElementById('textSettings').style.display = type === 'text' ? 'block' : 'none';
+                    document.getElementById('logoSettings').style.display = type === 'logo' ? 'block' : 'none';
+                    
+                    updatePreview();
+                });
+            });
+            
+            // Text settings
+            document.getElementById('watermarkText').addEventListener('input', (e) => {
+                currentSettings.textContent = e.target.value;
+                updatePreview();
+            });
+            
+            document.getElementById('fontFamily').addEventListener('change', (e) => {
+                currentSettings.fontFamily = e.target.value;
+                updatePreview();
+            });
+            
+            document.getElementById('fontSize').addEventListener('change', (e) => {
+                currentSettings.fontSize = e.target.value;
+                updatePreview();
+            });
+            
+            document.getElementById('textColor').addEventListener('input', (e) => {
+                currentSettings.color = e.target.value;
+                updatePreview();
+            });
+            
+            // Logo upload
+            document.getElementById('logoFileInput').addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    if (file.size > 2 * 1024 * 1024) {
+                        alert('Logo file must be less than 2MB');
+                        return;
+                    }
+                    
+                    // Upload logo
+                    const formData = new FormData();
+                    formData.append('logo', file);
+                    
+                    try {
+                        document.getElementById('loading').classList.add('show');
+                        
+                        const response = await fetch('/api/watermark-logo', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                            },
+                            body: formData
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            currentSettings.logoUrl = data.logoUrl;
+                            
+                            // Update UI
+                            document.getElementById('uploadPlaceholder').style.display = 'none';
+                            document.getElementById('uploadedLogoPreview').style.display = 'block';
+                            document.getElementById('logoPreview').src = data.logoUrl;
+                            document.getElementById('logoUploadArea').classList.add('has-logo');
+                            
+                            updatePreview();
+                        }
+                    } catch (error) {
+                        console.error('Error uploading logo:', error);
+                        alert('Failed to upload logo');
+                    } finally {
+                        document.getElementById('loading').classList.remove('show');
+                    }
+                }
+            });
+            
+            // Opacity slider
+            document.getElementById('opacity').addEventListener('input', (e) => {
+                currentSettings.opacity = e.target.value;
+                document.getElementById('opacityValue').textContent = e.target.value + '%';
+                updatePreview();
+            });
+            
+            // Position buttons
+            document.querySelectorAll('.position-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.position-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentSettings.position = btn.dataset.position;
+                    updatePreview();
+                });
+            });
+            
+            // Apply settings checkboxes
+            document.getElementById('applyToGalleries').addEventListener('change', (e) => {
+                currentSettings.applyToGalleries = e.target.checked;
+            });
+            
+            document.getElementById('applyToDownloads').addEventListener('change', (e) => {
+                currentSettings.applyToDownloads = e.target.checked;
+            });
+            
+            document.getElementById('applyToSocial').addEventListener('change', (e) => {
+                currentSettings.applyToSocial = e.target.checked;
+            });
+            
+            document.getElementById('applyToProofs').addEventListener('change', (e) => {
+                currentSettings.applyToProofs = e.target.checked;
+            });
+        }
+        
+        function updatePreview() {
+            const preview = document.getElementById('watermarkPreview');
+            
+            if (!currentSettings.enabled) {
+                preview.style.display = 'none';
+                return;
+            }
+            
+            preview.style.display = 'block';
+            
+            // Update content based on type
+            if (currentSettings.type === 'text') {
+                preview.innerHTML = currentSettings.textContent || '© 2025 Photography';
+                preview.style.fontFamily = currentSettings.fontFamily;
+                
+                // Set font size
+                const fontSizes = {
+                    'small': '14px',
+                    'medium': '18px',
+                    'large': '24px',
+                    'extra-large': '32px'
+                };
+                preview.style.fontSize = fontSizes[currentSettings.fontSize] || '18px';
+                
+                // Set color
+                preview.style.color = currentSettings.color;
+            } else if (currentSettings.type === 'logo' && currentSettings.logoUrl) {
+                preview.innerHTML = `<img src="${currentSettings.logoUrl}" style="max-width: 150px; max-height: 50px;">`;
+            }
+            
+            // Set opacity
+            preview.style.opacity = currentSettings.opacity / 100;
+            
+            // Set position
+            const positions = {
+                'top-left': { top: '20px', left: '20px', bottom: 'auto', right: 'auto' },
+                'top-center': { top: '20px', left: '50%', bottom: 'auto', right: 'auto', transform: 'translateX(-50%)' },
+                'top-right': { top: '20px', right: '20px', bottom: 'auto', left: 'auto' },
+                'center-left': { top: '50%', left: '20px', bottom: 'auto', right: 'auto', transform: 'translateY(-50%)' },
+                'center': { top: '50%', left: '50%', bottom: 'auto', right: 'auto', transform: 'translate(-50%, -50%)' },
+                'center-right': { top: '50%', right: '20px', bottom: 'auto', left: 'auto', transform: 'translateY(-50%)' },
+                'bottom-left': { bottom: '20px', left: '20px', top: 'auto', right: 'auto' },
+                'bottom-center': { bottom: '20px', left: '50%', top: 'auto', right: 'auto', transform: 'translateX(-50%)' },
+                'bottom-right': { bottom: '20px', right: '20px', top: 'auto', left: 'auto' }
+            };
+            
+            const pos = positions[currentSettings.position] || positions['bottom-right'];
+            Object.keys(pos).forEach(key => {
+                preview.style[key] = pos[key];
+            });
+        }
+        
+        async function saveSettings() {
+            try {
+                document.getElementById('loading').classList.add('show');
+                
+                const response = await fetch('/api/watermark-settings', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                    },
+                    body: JSON.stringify({
+                        enabled: currentSettings.enabled,
+                        type: currentSettings.type,
+                        logoUrl: currentSettings.logoUrl,
+                        textContent: currentSettings.textContent,
+                        fontFamily: currentSettings.fontFamily,
+                        fontSize: currentSettings.fontSize,
+                        color: currentSettings.color,
+                        opacity: currentSettings.opacity,
+                        position: currentSettings.position,
+                        applyToGalleries: currentSettings.applyToGalleries,
+                        applyToDownloads: currentSettings.applyToDownloads,
+                        applyToSocial: currentSettings.applyToSocial,
+                        applyToProofs: currentSettings.applyToProofs
+                    })
+                });
+                
+                if (response.ok) {
+                    document.getElementById('saveStatus').classList.add('show');
+                    setTimeout(() => {
+                        document.getElementById('saveStatus').classList.remove('show');
+                    }, 3000);
+                } else {
+                    alert('Failed to save settings');
+                }
+            } catch (error) {
+                console.error('Error saving settings:', error);
+                alert('Failed to save settings');
+            } finally {
+                document.getElementById('loading').classList.remove('show');
+            }
+        }
+        
+        function resetSettings() {
+            if (confirm('Are you sure you want to reset to default settings?')) {
+                currentSettings = {
+                    enabled: false,
+                    type: 'text',
+                    textContent: '© 2025 Photography',
+                    fontFamily: 'Arial',
+                    fontSize: 'medium',
+                    color: '#ffffff',
+                    opacity: 50,
+                    position: 'bottom-right',
+                    logoUrl: null,
+                    applyToGalleries: true,
+                    applyToDownloads: false,
+                    applyToSocial: true,
+                    applyToProofs: true
+                };
+                
+                applySettingsToUI();
+                updatePreview();
+                saveSettings();
+            }
+        }
+    </script>
+</body>
+</html>

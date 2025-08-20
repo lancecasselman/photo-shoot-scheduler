@@ -9445,6 +9445,105 @@ app.put('/api/contracts/:id', isAuthenticated, async (req, res) => {
     }
 });
 
+// Watermark settings endpoints
+app.get('/api/watermark-settings', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.user.uid;
+        
+        // Get or create watermark settings for user
+        let result = await pool.query(
+            'SELECT * FROM watermark_settings WHERE user_id = $1',
+            [userId]
+        );
+        
+        if (result.rows.length === 0) {
+            // Create default settings
+            const { v4: uuidv4 } = require('uuid');
+            const settingsId = uuidv4();
+            
+            result = await pool.query(`
+                INSERT INTO watermark_settings (
+                    id, user_id, enabled, type, text_content, font_family, 
+                    font_size, color, opacity, position,
+                    apply_to_galleries, apply_to_downloads, apply_to_social, apply_to_proofs
+                ) VALUES ($1, $2, false, 'text', '© 2025 Photography', 'Arial', 
+                    'medium', '#FFFFFF', 50, 'bottom-right',
+                    true, false, true, true)
+                RETURNING *
+            `, [settingsId, userId]);
+        }
+        
+        res.json(result.rows[0]);
+    } catch (error) {
+        console.error('Error fetching watermark settings:', error);
+        res.status(500).json({ error: 'Failed to fetch watermark settings' });
+    }
+});
+
+app.put('/api/watermark-settings', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.user.uid;
+        const settings = req.body;
+        
+        const result = await pool.query(`
+            UPDATE watermark_settings 
+            SET enabled = $2, type = $3, logo_url = $4, text_content = $5,
+                font_family = $6, font_size = $7, color = $8, opacity = $9, position = $10,
+                apply_to_galleries = $11, apply_to_downloads = $12, 
+                apply_to_social = $13, apply_to_proofs = $14,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = $1
+            RETURNING *
+        `, [
+            userId, settings.enabled, settings.type, settings.logoUrl,
+            settings.textContent, settings.fontFamily, settings.fontSize,
+            settings.color, settings.opacity, settings.position,
+            settings.applyToGalleries, settings.applyToDownloads,
+            settings.applyToSocial, settings.applyToProofs
+        ]);
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Watermark settings not found' });
+        }
+        
+        res.json(result.rows[0]);
+    } catch (error) {
+        console.error('Error updating watermark settings:', error);
+        res.status(500).json({ error: 'Failed to update watermark settings' });
+    }
+});
+
+// Upload watermark logo endpoint
+app.post('/api/watermark-logo', isAuthenticated, upload.single('logo'), async (req, res) => {
+    try {
+        const userId = req.user.uid;
+        
+        if (!req.file) {
+            return res.status(400).json({ error: 'No logo file provided' });
+        }
+        
+        // Store logo in R2
+        const logoKey = `watermarks/${userId}/logo-${Date.now()}.${req.file.originalname.split('.').pop()}`;
+        
+        // Upload to R2
+        await r2FileManager.uploadFile(req.file.buffer, logoKey, req.file.mimetype);
+        
+        // Get public URL
+        const logoUrl = r2FileManager.getPublicUrl(logoKey);
+        
+        // Update watermark settings with logo URL
+        await pool.query(
+            'UPDATE watermark_settings SET logo_url = $2, updated_at = CURRENT_TIMESTAMP WHERE user_id = $1',
+            [userId, logoUrl]
+        );
+        
+        res.json({ logoUrl });
+    } catch (error) {
+        console.error('Error uploading watermark logo:', error);
+        res.status(500).json({ error: 'Failed to upload logo' });
+    }
+});
+
 // Setup wizard endpoint - save onboarding data
 app.post('/api/setup-wizard', isAuthenticated, async (req, res) => {
     try {
@@ -9474,6 +9573,29 @@ app.post('/api/setup-wizard', isAuthenticated, async (req, res) => {
                 auto_reminders BOOLEAN DEFAULT true,
                 welcome_email_template TEXT,
                 onboarding_completed BOOLEAN DEFAULT true,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        
+        // Create watermark_settings table if it doesn't exist
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS watermark_settings (
+                id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid()::text,
+                user_id VARCHAR(255) NOT NULL UNIQUE,
+                enabled BOOLEAN DEFAULT false,
+                type VARCHAR(50) DEFAULT 'text',
+                logo_url VARCHAR(500),
+                text_content VARCHAR(255) DEFAULT '© 2025 Photography',
+                font_family VARCHAR(100) DEFAULT 'Arial',
+                font_size VARCHAR(20) DEFAULT 'medium',
+                color VARCHAR(7) DEFAULT '#FFFFFF',
+                opacity INTEGER DEFAULT 50,
+                position VARCHAR(50) DEFAULT 'bottom-right',
+                apply_to_galleries BOOLEAN DEFAULT true,
+                apply_to_downloads BOOLEAN DEFAULT false,
+                apply_to_social BOOLEAN DEFAULT true,
+                apply_to_proofs BOOLEAN DEFAULT true,
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             )
