@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - Photography Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gold: #d4af37;
+            --primary-dark: #1a1a1a;
+            --text-light: #ffffff;
+            --text-muted: #cccccc;
+            --bg-overlay: rgba(0, 0, 0, 0.7);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            color: var(--primary-gold);
+            margin-bottom: 1rem;
+        }
+
+        .content {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+
+        p {
+            margin-bottom: 20px;
+            color: var(--text-light);
+            font-size: 1.1rem;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: var(--primary-gold);
+            text-decoration: none;
+            font-weight: 500;
+            margin-bottom: 20px;
+            transition: color 0.3s ease;
+        }
+
+        .back-link:hover {
+            color: #b8941f;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .feature-item {
+            text-align: center;
+            padding: 20px;
+            background: rgba(212, 175, 55, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(212, 175, 55, 0.1);
+        }
+
+        .feature-item h3 {
+            color: var(--primary-gold);
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        .feature-item p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 15px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .content {
+                padding: 25px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="/secure-landing.html" class="back-link">← Back to Home</a>
+            <h1>About Us</h1>
+        </div>
+
+        <div class="content">
+            <p>Hey there! We built Photo Management System because photographers deserve a platform that actually gets them. Between booking, contracts, galleries, payments, and storage, running a photography business can feel like a full-time desk job. We're here to flip that around so you can spend more time behind the camera doing what you love.</p>
+
+            <p>Our mission is simple: make your workflow smoother, your business stronger, and your life easier. Whether you shoot weddings, families, seniors, or landscapes, this system was designed to be flexible enough to fit your style, but powerful enough to grow with you.</p>
+
+            <p>At the end of the day, we're photographers too—and we're building the kind of tool we always wished existed.</p>
+
+            <div class="features-grid">
+                <div class="feature-item">
+                    <h3>Built by Photographers</h3>
+                    <p>Created by people who understand your workflow and challenges</p>
+                </div>
+                <div class="feature-item">
+                    <h3>Flexible & Powerful</h3>
+                    <p>Adapts to your style while providing the tools you need to grow</p>
+                </div>
+                <div class="feature-item">
+                    <h3>Less Admin, More Art</h3>
+                    <p>Spend time creating beautiful photos, not managing spreadsheets</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
