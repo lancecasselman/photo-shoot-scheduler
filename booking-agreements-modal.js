@@ -33,9 +33,9 @@ function createBookingAgreementModal() {
                 <div class="booking-modal-body">
                     <!-- Template Selector -->
                     <div id="templateSelector" class="template-section">
-                        <label for="agreementTemplate">Select Template:</label>
-                        <select id="agreementTemplate" onchange="loadSelectedTemplate()">
-                            <option value="">Choose a template...</option>
+                        <label for="agreementTemplate" style="display: block; color: #2d3748; font-weight: 600; margin-bottom: 8px; font-size: 14px;">Select Template:</label>
+                        <select id="agreementTemplate" onchange="loadSelectedTemplate()" style="width: 100%; padding: 10px 12px; border: 2px solid #e2e8f0; border-radius: 5px; font-size: 14px; color: #2d3748; background-color: white; cursor: pointer;">
+                            <option value="" style="color: #718096;">Choose a template...</option>
                         </select>
                     </div>
 
@@ -141,12 +141,13 @@ async function loadAgreementTemplates() {
             // Populate template dropdown
             const select = document.getElementById('agreementTemplate');
             if (select) {
-                select.innerHTML = '<option value="">Choose a template...</option>';
+                select.innerHTML = '<option value="" style="color: #718096;">Choose a template...</option>';
                 agreementTemplates.forEach(template => {
                     const option = document.createElement('option');
                     option.value = template.id;
                     option.textContent = template.name;
                     option.dataset.category = template.category;
+                    option.style.color = '#2d3748';
                     select.appendChild(option);
                 });
             }
@@ -209,13 +210,14 @@ function showCreateMode(session) {
     const select = document.getElementById('agreementTemplate');
     if (select && select.options.length <= 1) {
         // Re-populate dropdown
-        select.innerHTML = '<option value="">Choose a template...</option>';
+        select.innerHTML = '<option value="" style="color: #718096;">Choose a template...</option>';
         if (agreementTemplates && agreementTemplates.length > 0) {
             agreementTemplates.forEach(template => {
                 const option = document.createElement('option');
                 option.value = template.id;
                 option.textContent = template.name;
                 option.dataset.category = template.category;
+                option.style.color = '#2d3748';
                 select.appendChild(option);
             });
             console.log('Populated dropdown with', agreementTemplates.length, 'templates');
