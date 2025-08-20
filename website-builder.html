@@ -5990,17 +5990,37 @@
                     galleries: []
                 };
                 
+                // Use a pool of real Unsplash photo IDs for consistency with other components
+                const photoPool = [
+                    '1519741497674-611481863552', // Wedding
+                    '1465495976277-4387d4b0e4a6', // Landscape
+                    '1511285560929-80b456fea0bc', // Wedding couple
+                    '1520854221256-17451cc331bf', // Wedding event
+                    '1606216794074-735e91aa2c92', // Architecture
+                    '1583939003579-730e3918a45a', // Portrait
+                    '1494790108755-2616c43f40cc', // Portrait
+                    '1506905925346-21bda4d32df4', // Mountain landscape
+                    '1511578314322-379afb476865', // Event
+                    '1581833971358-2c8b550f87b3', // Family
+                    '1507003211169-0a1dd7228f2d', // Professional headshot
+                    '1502082553048-f009c37129b9', // Nature
+                    '1518098268026-4e89f1a2cd8e', // Street photography
+                    '1476514525535-07fb3b4ae5f1', // Travel
+                    '1469474968028-56623f02e42e' // Nature landscape
+                ];
+                
                 // Generate placeholder images based on count
                 for (let i = 0; i < count; i++) {
-                    const imageNum = (i % 10) + 1; // Cycle through different images
-                    const imageUrl = `https://images.unsplash.com/photo-${1500000000000 + (imageNum * 1000000)}?w=800&q=80`;
+                    const photoId = photoPool[i % photoPool.length];
+                    const imageUrl = `https://images.unsplash.com/photo-${photoId}?w=600`;
                     
                     if (componentType === 'gallery') {
                         galleryData.images.push(imageUrl);
                     } else if (componentType === 'gallery-grid' || componentType === 'gallery-categories') {
+                        const categoryNames = ['Wedding Photography', 'Portrait Photography', 'Landscape Photography', 'Event Photography', 'Family Photography'];
                         galleryData.galleries.push({
                             name: `Gallery ${i + 1}`,
-                            category: `Category ${Math.floor(i / 3) + 1}`,
+                            category: categoryNames[i % categoryNames.length],
                             image: imageUrl
                         });
                     }
