@@ -253,6 +253,20 @@ function showViewMode(agreement, session) {
 
     // Display content
     document.getElementById('agreementViewContent').innerHTML = agreement.content;
+    
+    // Force all text to be black
+    const viewContent = document.getElementById('agreementViewContent');
+    if (viewContent) {
+        // Apply black color to all child elements
+        const allElements = viewContent.querySelectorAll('*');
+        allElements.forEach(el => {
+            el.style.color = '#000000';
+            el.style.setProperty('color', '#000000', 'important');
+        });
+        // Apply to the container itself
+        viewContent.style.color = '#000000';
+        viewContent.style.setProperty('color', '#000000', 'important');
+    }
 
     // Show status badge
     const badge = document.getElementById('agreementStatusBadge');
@@ -287,6 +301,20 @@ function loadSelectedTemplate() {
 
     // Load into editor
     document.getElementById('agreementContent').innerHTML = content;
+    
+    // Force all text to be black
+    const contentElement = document.getElementById('agreementContent');
+    if (contentElement) {
+        // Apply black color to all child elements
+        const allElements = contentElement.querySelectorAll('*');
+        allElements.forEach(el => {
+            el.style.color = '#000000';
+            el.style.setProperty('color', '#000000', 'important');
+        });
+        // Apply to the container itself
+        contentElement.style.color = '#000000';
+        contentElement.style.setProperty('color', '#000000', 'important');
+    }
 }
 
 // Replace template variables
