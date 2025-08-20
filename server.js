@@ -1256,6 +1256,36 @@ app.get('/api/subscription-status', async (req, res) => {
     }
 });
 
+// Cancel all subscriptions endpoint
+app.post('/api/subscriptions/cancel-all', async (req, res) => {
+    try {
+        // Check authentication first
+        if (!req.session || !req.session.user) {
+            console.log('🚨 SECURE: Subscription cancellation without auth');
+            return res.status(401).json({ 
+                error: 'Authentication required' 
+            });
+        }
+        
+        const userId = req.session.user.uid;
+        const { reason } = req.body;
+        
+        console.log(`📝 Processing subscription cancellation for user ${userId}`);
+        
+        const UnifiedSubscriptionManager = require('./server/unified-subscription-manager');
+        const subscriptionManager = new UnifiedSubscriptionManager(pool);
+        
+        const result = await subscriptionManager.cancelAllUserSubscriptions(userId, reason || 'user_requested');
+        
+        console.log(`✅ Subscription cancellation completed: ${result.cancelledCount}/${result.totalSubscriptions} cancelled`);
+        
+        res.json({ result });
+    } catch (error) {
+        console.error('Error cancelling subscriptions:', error);
+        res.status(500).json({ error: 'Failed to cancel subscriptions: ' + error.message });
+    }
+});
+
 // SECURE: Verify session endpoint for bulletproof security
 app.get('/api/verify-session', (req, res) => {
     console.log('🔐 SECURE: Session verification request');

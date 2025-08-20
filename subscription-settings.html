@@ -350,7 +350,7 @@
 
         async function loadSubscriptionData() {
             try {
-                const response = await fetch('/api/subscriptions/status');
+                const response = await fetch('/api/subscription-status');
                 const data = await response.json();
 
                 if (!response.ok) {
