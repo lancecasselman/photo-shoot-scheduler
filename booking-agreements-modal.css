@@ -8,8 +8,14 @@
 .agreement-content-editor,
 .agreement-content-editor *,
 .agreement-content-viewer,
-.agreement-content-viewer * {
+.agreement-content-viewer *,
+.booking-modal-body,
+.booking-modal-body *,
+[contenteditable],
+[contenteditable] * {
     color: #000000 !important;
+    text-shadow: none !important;
+    background-color: transparent !important;
 }
 
 .booking-modal {
@@ -131,8 +137,10 @@
 .agreement-content-editor *,
 .agreement-content-viewer *,
 #agreementContent *,
-#agreementViewContent * {
+#agreementViewContent *,
+.booking-modal-body * {
     color: #000000 !important;
+    text-shadow: none !important;
 }
 
 /* Specific overrides for all possible text elements */
@@ -142,13 +150,74 @@
 .agreement-content-viewer div,
 .agreement-content-editor section,
 .agreement-content-viewer section,
+.agreement-content-editor p,
+.agreement-content-viewer p,
+.agreement-content-editor h1,
+.agreement-content-viewer h1,
+.agreement-content-editor h2,
+.agreement-content-viewer h2,
+.agreement-content-editor h3,
+.agreement-content-viewer h3,
+.agreement-content-editor h4,
+.agreement-content-viewer h4,
+.agreement-content-editor h5,
+.agreement-content-viewer h5,
+.agreement-content-editor h6,
+.agreement-content-viewer h6,
+.agreement-content-editor ul,
+.agreement-content-viewer ul,
+.agreement-content-editor ol,
+.agreement-content-viewer ol,
+.agreement-content-editor li,
+.agreement-content-viewer li,
+.agreement-content-editor em,
+.agreement-content-viewer em,
+.agreement-content-editor i,
+.agreement-content-viewer i,
+.agreement-content-editor b,
+.agreement-content-viewer b,
+.agreement-content-editor strong,
+.agreement-content-viewer strong,
+.agreement-content-editor small,
+.agreement-content-viewer small,
 #agreementContent span,
 #agreementContent div,
 #agreementContent section,
+#agreementContent p,
+#agreementContent h1,
+#agreementContent h2,
+#agreementContent h3,
+#agreementContent h4,
+#agreementContent h5,
+#agreementContent h6,
+#agreementContent ul,
+#agreementContent ol,
+#agreementContent li,
+#agreementContent em,
+#agreementContent i,
+#agreementContent b,
+#agreementContent strong,
+#agreementContent small,
 #agreementViewContent span,
 #agreementViewContent div,
-#agreementViewContent section {
+#agreementViewContent section,
+#agreementViewContent p,
+#agreementViewContent h1,
+#agreementViewContent h2,
+#agreementViewContent h3,
+#agreementViewContent h4,
+#agreementViewContent h5,
+#agreementViewContent h6,
+#agreementViewContent ul,
+#agreementViewContent ol,
+#agreementViewContent li,
+#agreementViewContent em,
+#agreementViewContent i,
+#agreementViewContent b,
+#agreementViewContent strong,
+#agreementViewContent small {
     color: #000000 !important;
+    text-shadow: none !important;
 }
 
 .agreement-content-editor {
@@ -412,4 +481,19 @@
         box-shadow: none;
         padding: 0;
     }
+}
+
+/* Universal black text override - absolute final rule */
+.booking-modal * {
+    color: #000000 !important;
+}
+
+.booking-modal .booking-modal-body * {
+    color: #000000 !important;
+    text-shadow: none !important;
+}
+
+/* Override any inherited styles */
+.booking-modal [style*="color"] {
+    color: #000000 !important;
 }
