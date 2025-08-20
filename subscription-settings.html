@@ -348,12 +348,43 @@
     <script>
         let userSubscriptions = null;
 
+        // Check authentication first
+        async function checkAuthentication() {
+            try {
+                const response = await fetch('/api/auth-check');
+                const data = await response.json();
+                
+                if (!data.authenticated) {
+                    console.log('User not authenticated, redirecting to login...');
+                    window.location.href = '/auth.html';
+                    return false;
+                }
+                
+                return true;
+            } catch (error) {
+                console.error('Authentication check failed:', error);
+                window.location.href = '/auth.html';
+                return false;
+            }
+        }
+
         async function loadSubscriptionData() {
+            // Check authentication first
+            const isAuthenticated = await checkAuthentication();
+            if (!isAuthenticated) {
+                return;
+            }
+
             try {
                 const response = await fetch('/api/subscriptions/status');
                 const data = await response.json();
 
                 if (!response.ok) {
+                    if (response.status === 401) {
+                        // Redirect to login if unauthorized
+                        window.location.href = '/auth.html';
+                        return;
+                    }
                     throw new Error(data.error || 'Failed to load subscription data');
                 }
 
