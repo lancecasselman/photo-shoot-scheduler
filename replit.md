@@ -36,6 +36,17 @@ A professional photography planning tool that calculates optimal lighting times 
 ### Feature Specifications
 The system supports chronological session sorting, an integrated deposit system, and a comprehensive storage quota and billing system with real-time tracking. A robust unified file deletion system ensures complete cleanup. It includes a professional CapCut-style Website Builder with full-screen preview, drag-and-drop functionality, and editable components (formatting, alignment, fonts, colors, spacing). The website builder now includes 21 professional fonts organized into categories: Serif (6), Sans-Serif (10), Display (2), and Script (3). When creating galleries, users are prompted to specify the number of photos (with a default of 6). Gallery photos use consistent Unsplash photo IDs and include camera button overlays for easy swapping. Individual photo editing with always-visible camera buttons and drag-repositioning is supported. Button elements feature advanced page linking. Prebuilt pages (Portfolio, About, Contact) are customizable. Advanced subpage functionality supports nested structures. A full booking agreement system with e-signature capabilities and Stripe Connect Express for multi-photographer payment routing are integrated.
 
+### Website Publishing System (New)
+The platform now includes a complete website publishing infrastructure that allows photographers to publish their created websites to subdomains (photographer.yourplatform.com). The system features:
+- **Subdomain-based hosting**: Each photographer can publish their website to a unique subdomain
+- **Real-time availability checking**: Validates subdomain availability before publishing
+- **One-click publishing**: Simple publish button in the website builder
+- **Cost-efficient architecture**: Single deployment serves all photographer websites (~$0.04/month per site)
+- **Published websites database**: Stores website data, metadata, and themes in PostgreSQL
+- **Live preview**: Instant viewing of published websites at /site/[subdomain]
+- **Update capability**: Photographers can update their published websites anytime
+- **Professional plan feature**: Included with the $39/month Professional subscription
+
 ### Enhanced Onboarding System
 A 5-step wizard guides new users through setup, including username selection, business information, photography specialty, and subscription integration.
 

@@ -10003,17 +10003,165 @@ app.get('/auth.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'auth.html'));
 });
 
-// Serve public website pages - /site/:username
-app.get('/site/:username', async (req, res) => {
+// ==================== WEBSITE PUBLISHING SYSTEM ====================
+
+// Publish or update a website
+app.post('/api/website/publish', isAuthenticated, async (req, res) => {
     try {
-        const username = req.params.username;
-
-        // Get website data from PostgreSQL database
-        const result = await pool.query(
-            'SELECT * FROM websites WHERE username = $1 AND published = TRUE',
-            [username]
+        const userId = req.session.user.id;
+        const { subdomain, websiteData, pages, metadata, theme } = req.body;
+        
+        // Validate subdomain
+        if (!subdomain || !/^[a-z0-9-]+$/.test(subdomain)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid subdomain. Use only lowercase letters, numbers, and hyphens.'
+            });
+        }
+        
+        // Check if subdomain is available (excluding current user)
+        const existingCheck = await pool.query(
+            'SELECT id FROM published_websites WHERE subdomain = $1 AND user_id != $2',
+            [subdomain, userId]
         );
+        
+        if (existingCheck.rows.length > 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'This subdomain is already taken. Please choose another.'
+            });
+        }
+        
+        // Check if user already has a published website
+        const userWebsite = await pool.query(
+            'SELECT id FROM published_websites WHERE user_id = $1',
+            [userId]
+        );
+        
+        const websiteId = userWebsite.rows.length > 0 ? userWebsite.rows[0].id : uuidv4();
+        
+        if (userWebsite.rows.length > 0) {
+            // Update existing website
+            await pool.query(`
+                UPDATE published_websites 
+                SET subdomain = $1, website_data = $2, pages = $3, metadata = $4, theme = $5, 
+                    last_updated = NOW(), is_published = true
+                WHERE user_id = $6
+            `, [subdomain, JSON.stringify(websiteData), JSON.stringify(pages || {}), 
+                JSON.stringify(metadata || {}), JSON.stringify(theme || {}), userId]);
+        } else {
+            // Create new website
+            await pool.query(`
+                INSERT INTO published_websites (id, user_id, subdomain, website_data, pages, metadata, theme, is_published)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, true)
+            `, [websiteId, userId, subdomain, JSON.stringify(websiteData), JSON.stringify(pages || {}), 
+                JSON.stringify(metadata || {}), JSON.stringify(theme || {})]);
+        }
+        
+        // Update user's subdomain
+        await pool.query('UPDATE users SET subdomain = $1 WHERE id = $2', [subdomain, userId]);
+        
+        res.json({
+            success: true,
+            websiteId,
+            subdomain,
+            url: `https://${subdomain}.${req.hostname}`,
+            message: 'Website published successfully!'
+        });
+        
+    } catch (error) {
+        console.error('Error publishing website:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to publish website'
+        });
+    }
+});
 
+// Get published website data for editing
+app.get('/api/website/my-website', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.session.user.id;
+        
+        const result = await pool.query(
+            'SELECT * FROM published_websites WHERE user_id = $1',
+            [userId]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.json({
+                success: true,
+                hasWebsite: false
+            });
+        }
+        
+        const website = result.rows[0];
+        res.json({
+            success: true,
+            hasWebsite: true,
+            subdomain: website.subdomain,
+            websiteData: website.website_data,
+            pages: website.pages,
+            metadata: website.metadata,
+            theme: website.theme,
+            isPublished: website.is_published,
+            publishedAt: website.published_at,
+            url: `https://${website.subdomain}.${req.hostname}`
+        });
+        
+    } catch (error) {
+        console.error('Error getting website data:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to get website data'
+        });
+    }
+});
+
+// Check subdomain availability
+app.get('/api/website/check-subdomain/:subdomain', isAuthenticated, async (req, res) => {
+    try {
+        const { subdomain } = req.params;
+        const userId = req.session.user.id;
+        
+        // Validate subdomain format
+        if (!/^[a-z0-9-]+$/.test(subdomain)) {
+            return res.json({
+                available: false,
+                error: 'Invalid format. Use only lowercase letters, numbers, and hyphens.'
+            });
+        }
+        
+        const result = await pool.query(
+            'SELECT id FROM published_websites WHERE subdomain = $1 AND user_id != $2',
+            [subdomain, userId]
+        );
+        
+        res.json({
+            available: result.rows.length === 0,
+            subdomain
+        });
+        
+    } catch (error) {
+        console.error('Error checking subdomain:', error);
+        res.status(500).json({
+            available: false,
+            error: 'Failed to check subdomain availability'
+        });
+    }
+});
+
+// Serve published websites by subdomain
+app.get('/site/:subdomain', async (req, res) => {
+    try {
+        const subdomain = req.params.subdomain;
+        
+        // Get website data from database
+        const result = await pool.query(
+            'SELECT * FROM published_websites WHERE subdomain = $1 AND is_published = true',
+            [subdomain]
+        );
+        
         if (result.rows.length === 0) {
             return res.status(404).send(`
                 <!DOCTYPE html>
@@ -10033,8 +10181,8 @@ app.get('/site/:username', async (req, res) => {
                 </head>
                 <body>
                     <div class="error">
-                        <h1> Site Not Found</h1>
-                        <p>The photography website "${username}" doesn't exist or hasn't been published yet.</p>
+                        <h1>📷 Site Not Found</h1>
+                        <p>The photography website "${subdomain}" doesn't exist or hasn't been published yet.</p>
                         <a href="/">← Back to Photography Management System</a>
                     </div>
                 </body>
@@ -10042,13 +10190,117 @@ app.get('/site/:username', async (req, res) => {
             `);
         }
 
-        const websiteData = result.rows[0];
-        const blocks = websiteData.site_config.blocks || [];
-
-        // Generate dynamic website based on theme and content
-        const websiteHTML = generateWebsiteFromBlocks(blocks, websiteData.theme, username);
-
-        res.send(websiteHTML);
+        const website = result.rows[0];
+        const websiteData = website.website_data || {};
+        const metadata = website.metadata || {};
+        const theme = website.theme || {};
+        
+        // Render the published website
+        const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${metadata.title || 'Photography Portfolio'}</title>
+    <meta name="description" content="${metadata.description || 'Professional photography portfolio'}">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Poppins:wght@300;400;500;600;700&family=Raleway:wght@400;500;600&family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.6;
+            color: ${theme.textColor || '#2d3748'};
+            background: ${theme.backgroundColor || '#ffffff'};
+        }
+        
+        /* Navigation styles */
+        nav {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .nav-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            list-style: none;
+        }
+        
+        .nav-links a {
+            color: #2d3748;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        
+        .nav-links a:hover {
+            color: #667eea;
+        }
+        
+        /* Component styles */
+        .element {
+            position: relative;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .nav-links {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .masonry-grid {
+                columns: 1 !important;
+            }
+            
+            div[style*="grid-template-columns"] {
+                grid-template-columns: 1fr !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="website-container">
+        ${websiteData.html || ''}
+    </div>
+    
+    <script>
+        // Add any interactive functionality here
+        document.querySelectorAll('[data-page-link]').forEach(button => {
+            button.addEventListener('click', function(e) {
+                const page = this.getAttribute('data-page-link');
+                if (page) {
+                    // Handle page navigation for multi-page sites
+                    console.log('Navigate to:', page);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+        `;
+        
+        res.send(html);
 
     } catch (error) {
         console.error('Error serving public website:', error);

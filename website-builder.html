@@ -996,9 +996,9 @@
                         <div class="tool-title">Settings</div>
                         <div class="property-controls" style="display: flex; gap: 6px; flex-wrap: wrap;">
                             <button class="btn btn-primary" onclick="saveWebsite()" style="padding: 8px 12px; font-size: 12px; flex: 1; min-width: 60px;">Save</button>
+                            <button class="btn btn-primary" onclick="publishWebsite()" style="padding: 8px 12px; font-size: 12px; flex: 1; min-width: 60px; background: #10b981;">🌐 Publish</button>
                             <button class="btn btn-secondary" onclick="resetWebsite()" style="padding: 8px 12px; font-size: 12px; flex: 1; min-width: 60px;">Reset</button>
                             <button class="btn btn-secondary" onclick="openPreviewModal()" style="padding: 8px 12px; font-size: 12px; flex: 1; min-width: 60px;">Preview</button>
-                            <button class="btn btn-primary" onclick="publishWebsite()" style="padding: 8px 12px; font-size: 12px; flex: 1; min-width: 60px;">Publish</button>
                         </div>
                     </div>
                 </div>
@@ -1292,6 +1292,256 @@
             } catch (error) {
                 console.error('Error saving website:', error);
                 showMessage('Error saving website. Please try again.', 'error');
+            }
+        }
+        
+        // Publish website function
+        async function publishWebsite() {
+            try {
+                // Save current page first
+                if (currentPage) {
+                    savePage(currentPage);
+                }
+                
+                // Check if user is authenticated
+                const response = await fetch('/api/auth/status');
+                const authData = await response.json();
+                
+                if (!authData.authenticated) {
+                    showMessage('Please sign in to publish your website', 'error');
+                    window.location.href = '/auth.html?return=' + encodeURIComponent(window.location.pathname);
+                    return;
+                }
+                
+                // Get current published website data
+                const websiteResponse = await fetch('/api/website/my-website');
+                const websiteData = await websiteResponse.json();
+                
+                // Create publish dialog
+                const dialog = document.createElement('div');
+                dialog.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: white;
+                    padding: 30px;
+                    border-radius: 12px;
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                    z-index: 10000;
+                    max-width: 500px;
+                    width: 90%;
+                `;
+                
+                const existingSubdomain = websiteData.hasWebsite ? websiteData.subdomain : '';
+                const suggestedSubdomain = existingSubdomain || authData.username?.toLowerCase().replace(/[^a-z0-9]/g, '-') || '';
+                
+                dialog.innerHTML = `
+                    <h2 style="margin: 0 0 20px 0; font-size: 24px; color: #1f2937;">🌐 Publish Your Website</h2>
+                    <p style="color: #6b7280; margin-bottom: 20px;">Choose a subdomain for your photography website:</p>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">
+                            Your Website URL:
+                        </label>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="text" id="subdomain-input" 
+                                value="${suggestedSubdomain}"
+                                placeholder="your-name"
+                                style="flex: 1; padding: 10px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 16px;"
+                                pattern="[a-z0-9-]+"
+                            />
+                            <span style="color: #6b7280; font-size: 14px;">.yourplatform.com</span>
+                        </div>
+                        <small style="color: #9ca3af; display: block; margin-top: 5px;">
+                            Use only lowercase letters, numbers, and hyphens
+                        </small>
+                        <div id="availability-message" style="margin-top: 10px; font-size: 14px;"></div>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">
+                            Website Title:
+                        </label>
+                        <input type="text" id="website-title-input" 
+                            value="${pages.home?.name || 'My Photography Portfolio'}"
+                            placeholder="My Photography Portfolio"
+                            style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 16px;"
+                        />
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button onclick="cancelPublish()" 
+                            style="padding: 10px 20px; background: #e5e7eb; color: #374151; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
+                            Cancel
+                        </button>
+                        <button id="publish-confirm-btn" onclick="confirmPublish()" 
+                            style="padding: 10px 20px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
+                            ${websiteData.hasWebsite ? 'Update Website' : 'Publish Website'}
+                        </button>
+                    </div>
+                `;
+                
+                document.body.appendChild(dialog);
+                
+                // Add backdrop
+                const backdrop = document.createElement('div');
+                backdrop.id = 'publish-backdrop';
+                backdrop.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.5);
+                    z-index: 9999;
+                `;
+                document.body.appendChild(backdrop);
+                
+                // Check subdomain availability on input
+                const subdomainInput = document.getElementById('subdomain-input');
+                let checkTimeout;
+                subdomainInput.addEventListener('input', async () => {
+                    clearTimeout(checkTimeout);
+                    const subdomain = subdomainInput.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+                    subdomainInput.value = subdomain;
+                    
+                    if (subdomain.length < 3) {
+                        document.getElementById('availability-message').innerHTML = 
+                            '<span style="color: #ef4444;">Subdomain must be at least 3 characters</span>';
+                        return;
+                    }
+                    
+                    checkTimeout = setTimeout(async () => {
+                        const checkResponse = await fetch(`/api/website/check-subdomain/${subdomain}`);
+                        const checkData = await checkResponse.json();
+                        
+                        const message = document.getElementById('availability-message');
+                        if (checkData.available) {
+                            message.innerHTML = '<span style="color: #10b981;">✓ This subdomain is available!</span>';
+                        } else {
+                            message.innerHTML = '<span style="color: #ef4444;">This subdomain is already taken</span>';
+                        }
+                    }, 500);
+                });
+                
+                // Define cancel and confirm functions globally
+                window.cancelPublish = function() {
+                    document.body.removeChild(dialog);
+                    document.body.removeChild(backdrop);
+                };
+                
+                window.confirmPublish = async function() {
+                    const subdomain = document.getElementById('subdomain-input').value;
+                    const title = document.getElementById('website-title-input').value;
+                    
+                    if (!subdomain || subdomain.length < 3) {
+                        showMessage('Please enter a valid subdomain', 'error');
+                        return;
+                    }
+                    
+                    const publishBtn = document.getElementById('publish-confirm-btn');
+                    publishBtn.disabled = true;
+                    publishBtn.textContent = 'Publishing...';
+                    
+                    try {
+                        // Generate HTML from current page
+                        const canvasHTML = document.querySelector('.canvas-container').innerHTML;
+                        
+                        // Prepare publish data
+                        const publishData = {
+                            subdomain: subdomain,
+                            websiteData: {
+                                html: canvasHTML,
+                                template: currentTemplate,
+                                navStyle: navStyle,
+                                navOrder: navOrder,
+                                pages: pages,
+                                subPages: subPages
+                            },
+                            pages: pages,
+                            metadata: {
+                                title: title,
+                                description: `Professional photography portfolio by ${subdomain}`,
+                                author: authData.username
+                            },
+                            theme: {
+                                name: currentTemplate,
+                                textColor: '#2d3748',
+                                backgroundColor: '#ffffff',
+                                accentColor: '#667eea'
+                            }
+                        };
+                        
+                        // Publish website
+                        const publishResponse = await fetch('/api/website/publish', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(publishData)
+                        });
+                        
+                        const result = await publishResponse.json();
+                        
+                        if (result.success) {
+                            // Remove dialog
+                            document.body.removeChild(dialog);
+                            document.body.removeChild(backdrop);
+                            
+                            // Show success message with link
+                            const successDialog = document.createElement('div');
+                            successDialog.style.cssText = `
+                                position: fixed;
+                                top: 50%;
+                                left: 50%;
+                                transform: translate(-50%, -50%);
+                                background: white;
+                                padding: 30px;
+                                border-radius: 12px;
+                                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                                z-index: 10000;
+                                max-width: 500px;
+                                width: 90%;
+                                text-align: center;
+                            `;
+                            
+                            successDialog.innerHTML = `
+                                <div style="font-size: 48px; margin-bottom: 20px;">🎉</div>
+                                <h2 style="margin: 0 0 20px 0; font-size: 24px; color: #1f2937;">Website Published!</h2>
+                                <p style="color: #6b7280; margin-bottom: 20px;">Your website is now live at:</p>
+                                <a href="/site/${subdomain}" target="_blank" 
+                                    style="display: inline-block; padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 6px; font-weight: 500; margin-bottom: 20px;">
+                                    View Your Website →
+                                </a>
+                                <p style="color: #9ca3af; font-size: 14px;">
+                                    URL: ${subdomain}.yourplatform.com
+                                </p>
+                                <button onclick="this.parentElement.remove()" 
+                                    style="margin-top: 20px; padding: 10px 20px; background: #e5e7eb; color: #374151; border: none; border-radius: 6px; cursor: pointer;">
+                                    Close
+                                </button>
+                            `;
+                            
+                            document.body.appendChild(successDialog);
+                            
+                            showMessage('Website published successfully!', 'success');
+                        } else {
+                            showMessage(result.error || 'Failed to publish website', 'error');
+                            publishBtn.disabled = false;
+                            publishBtn.textContent = websiteData.hasWebsite ? 'Update Website' : 'Publish Website';
+                        }
+                    } catch (error) {
+                        console.error('Error publishing website:', error);
+                        showMessage('Error publishing website: ' + error.message, 'error');
+                        publishBtn.disabled = false;
+                        publishBtn.textContent = websiteData.hasWebsite ? 'Update Website' : 'Publish Website';
+                    }
+                };
+                
+            } catch (error) {
+                console.error('Error in publish process:', error);
+                showMessage('Error: ' + error.message, 'error');
             }
         }
 

@@ -48,6 +48,26 @@ export const users = pgTable("users", {
   lastAiCreditPurchase: timestamp("last_ai_credit_purchase"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  subdomain: varchar("subdomain").unique(),
+});
+
+// Published websites table for hosting photographer sites
+export const publishedWebsites = pgTable("published_websites", {
+  id: varchar("id").primaryKey().notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  subdomain: varchar("subdomain").notNull().unique(),
+  customDomain: varchar("custom_domain").unique(),
+  websiteData: jsonb("website_data").notNull(), // Stores HTML, components, settings
+  pages: jsonb("pages").default({}), // Stores multiple pages
+  metadata: jsonb("metadata").default({}), // SEO, title, etc
+  theme: jsonb("theme").default({}), // Colors, fonts, etc
+  isPublished: boolean("is_published").default(true),
+  publishedAt: timestamp("published_at").defaultNow(),
+  lastUpdated: timestamp("last_updated").defaultNow(),
+  analytics: jsonb("analytics").default({}), // View counts, etc
+  sslEnabled: boolean("ssl_enabled").default(true),
+  customDomainVerified: boolean("custom_domain_verified").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Photography sessions table with user ownership
