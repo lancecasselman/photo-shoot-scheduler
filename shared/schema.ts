@@ -338,8 +338,6 @@ export type InsertR2StorageUsage = typeof r2StorageUsage.$inferInsert;
 export type R2StorageUsage = typeof r2StorageUsage.$inferSelect;
 export type InsertR2StorageBilling = typeof r2StorageBilling.$inferInsert;
 export type R2StorageBilling = typeof r2StorageBilling.$inferSelect;
-export type InsertWatermarkSettings = typeof watermarkSettings.$inferInsert;
-export type WatermarkSettings = typeof watermarkSettings.$inferSelect;
 
 // AI Credits purchase tracking
 export const aiCreditPurchases = pgTable("ai_credit_purchases", {
@@ -362,27 +360,6 @@ export const aiCreditUsage = pgTable("ai_credit_usage", {
   prompt: text("prompt"),
   success: boolean("success").default(true),
   usedAt: timestamp("used_at").defaultNow(),
-});
-
-// Watermark settings for photographers
-export const watermarkSettings = pgTable("watermark_settings", {
-  id: varchar("id").primaryKey().notNull(),
-  userId: varchar("user_id").notNull().unique().references(() => users.id),
-  enabled: boolean("enabled").default(false),
-  type: varchar("type").default("text"), // 'logo' or 'text'
-  logoUrl: varchar("logo_url"), // R2 path if logo
-  textContent: varchar("text_content").default("© 2025 Photography"),
-  fontFamily: varchar("font_family").default("Arial"),
-  fontSize: varchar("font_size").default("medium"), // small, medium, large
-  color: varchar("color").default("#FFFFFF"), // Hex color
-  opacity: integer("opacity").default(50), // 0-100
-  position: varchar("position").default("bottom-right"), // bottom-right, bottom-left, center, diagonal
-  applyToGalleries: boolean("apply_to_galleries").default(true),
-  applyToDownloads: boolean("apply_to_downloads").default(false),
-  applyToSocial: boolean("apply_to_social").default(true),
-  applyToProofs: boolean("apply_to_proofs").default(true),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Business expenses tracking

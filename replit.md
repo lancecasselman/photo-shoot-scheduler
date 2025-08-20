@@ -36,18 +36,6 @@ A professional photography planning tool that calculates optimal lighting times 
 ### Feature Specifications
 The system supports chronological session sorting, an integrated deposit system, and a comprehensive storage quota and billing system with real-time tracking. A robust unified file deletion system ensures complete cleanup. It includes a professional CapCut-style Website Builder with full-screen preview, drag-and-drop functionality, and editable components (formatting, alignment, fonts, colors, spacing). The website builder now includes 21 professional fonts organized into categories: Serif (6), Sans-Serif (10), Display (2), and Script (3). When creating galleries, users are prompted to specify the number of photos (with a default of 6). Gallery photos use consistent Unsplash photo IDs and include camera button overlays for easy swapping. Individual photo editing with always-visible camera buttons and drag-repositioning is supported. Button elements feature advanced page linking. Prebuilt pages (Portfolio, About, Contact) are customizable. Advanced subpage functionality supports nested structures. A full booking agreement system with e-signature capabilities and Stripe Connect Express for multi-photographer payment routing are integrated.
 
-### Watermark System (New)
-The platform includes a comprehensive watermark management system that allows photographers to protect their images with customizable watermarks. Features include:
-- **Dual watermark types**: Text-based watermarks with customizable font, size, and color, or logo-based watermarks with image upload support
-- **Smart positioning**: 9 position options (corners, centers, edges) with live preview
-- **Flexible opacity control**: Adjustable from 10% to 100% for perfect visibility balance
-- **Context-aware application**: Separate settings for client galleries, downloads, social sharing, and proof galleries
-- **Server-side processing**: Uses Sharp library for efficient image processing and watermark application
-- **Caching system**: Watermark settings are cached to optimize performance
-- **Fallback handling**: Logo watermarks gracefully fall back to text if logo loading fails
-- **Dynamic sizing**: Watermarks scale appropriately based on image dimensions
-- **Database storage**: Settings stored in PostgreSQL with per-user configuration
-
 ### Website Publishing System (New)
 The platform now includes a complete website publishing infrastructure that allows photographers to publish their created websites to subdomains (photographer.photomanagementsystem.com). The system features:
 - **Subdomain-based hosting**: Each photographer can publish their website to a unique subdomain
