@@ -757,6 +757,10 @@
                                 <div class="component-icon">📷</div>
                                 <span class="component-text">Basic Gallery</span>
                             </div>
+                            <div class="component-item" draggable="true" data-component="for-sale-gallery" onclick="addComponent('for-sale-gallery')" style="cursor: pointer;">
+                                <div class="component-icon">💰</div>
+                                <span class="component-text">For Sale Gallery</span>
+                            </div>
                             <div class="component-item" draggable="true" data-component="about" onclick="addComponent('about')" style="cursor: pointer;">
                                 <div class="component-icon">👤</div>
                                 <span class="component-text">About</span>
@@ -2607,6 +2611,40 @@
                 </div>
             `;
             },
+            'for-sale-gallery': (data = {}) => {
+                const galleryId = 'for-sale-gallery-' + Date.now();
+                return `
+                <div class="element" data-type="for-sale-gallery" data-gallery-id="${galleryId}">
+                    <div style="padding: 60px 0;">
+                        <h2 style="text-align: center; color: #2d3748; margin-bottom: 50px; font-family: 'Playfair Display', serif; font-size: 2.5rem;">${data.title || 'Available Prints'}</h2>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; max-width: 1200px; margin: 0 auto;">
+                            ${(data.images || [
+                                'https://images.unsplash.com/photo-1519741497674-611481863552?w=400',
+                                'https://images.unsplash.com/photo-1520854221256-17451cc331bf?w=400',
+                                'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=400',
+                                'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=400',
+                                'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400',
+                                'https://images.unsplash.com/photo-1532274402911-5a369e4c4bb5?w=400'
+                            ]).map((img, index) => `
+                                <div style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); transition: transform 0.3s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                                    <div style="position: relative;">
+                                        <img src="${img}" style="width: 100%; height: 300px; object-fit: cover;" alt="Print ${index + 1}">
+                                        <div class="image-edit-overlay" style="position: absolute; top: 10px; right: 10px; opacity: 1; transition: none; z-index: 9999;">
+                                            <button onclick="changeGalleryImage('${galleryId}', ${index})" style="background: rgba(59, 130, 246, 0.95); border: none; color: white; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: all 0.2s;" onmouseover="this.style.background='rgba(59, 130, 246, 1)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.95)'; this.style.transform='translateY(0)'" title="Change Photo">📷</button>
+                                        </div>
+                                    </div>
+                                    <div style="padding: 20px; text-align: center;">
+                                        <h4 style="color: #2d3748; margin-bottom: 10px; font-size: 1.1rem;">Print #${index + 1}</h4>
+                                        <p style="color: #718096; font-size: 0.9rem; margin-bottom: 15px;">High-quality professional print</p>
+                                        <button style="width: 100%; background: #667eea; color: white; padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 1rem; transition: background 0.2s;" onmouseover="this.style.background='#5a67d8'" onmouseout="this.style.background='#667eea'">Purchase Print - $150</button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            },
             services: (data = {}) => `
                 <div class="element" data-type="services">
                     <div style="padding: 80px 0;">
@@ -3180,7 +3218,62 @@
                 dropZone.remove();
             }
 
-            if (componentTemplates[type]) {
+            // Check if it's a gallery type component and ask for photo count
+            if (type === 'gallery' || type === 'gallery-grid' || type === 'gallery-categories' || type === 'for-sale-gallery' || type === 'masonry' || type === 'masonry-simple') {
+                const photoCount = prompt('How many photos do you want in this gallery?', '6');
+                if (photoCount === null) {
+                    // User cancelled
+                    return;
+                }
+                
+                const count = parseInt(photoCount) || 6;
+                
+                // Create custom data for the gallery with the specified number of images
+                const galleryData = {
+                    title: type === 'for-sale-gallery' ? 'Available Prints' : 'Photo Gallery',
+                    images: [],
+                    galleries: []
+                };
+                
+                // Use a pool of real Unsplash photo IDs for consistency with other components
+                const photoPool = [
+                    '1519741497674-611481863552', // Wedding
+                    '1465495976277-4387d4b0e4a6', // Landscape
+                    '1511285560929-80b456fea0bc', // Wedding couple
+                    '1520854221256-17451cc331bf', // Wedding event
+                    '1606216794074-735e91aa2c92', // Architecture
+                    '1583939003579-730e3918a45a', // Portrait
+                    '1494790108755-2616c43f40cc', // Portrait
+                    '1506905925346-21bda4d32df4', // Mountain landscape
+                    '1511578314322-379afb476865', // Event
+                    '1581833971358-2c8b550f87b3', // Family
+                    '1507003211169-0a1dd7228f2d', // Professional headshot
+                    '1502082553048-f009c37129b9', // Nature
+                    '1518098268026-4e89f1a2cd8e', // Street photography
+                    '1476514525535-07fb3b4ae5f1', // Travel
+                    '1469474968028-56623f02e42e' // Nature landscape
+                ];
+                
+                // Generate placeholder images based on count
+                for (let i = 0; i < count; i++) {
+                    const photoId = photoPool[i % photoPool.length];
+                    const imageUrl = `https://images.unsplash.com/photo-${photoId}?w=600`;
+                    
+                    if (type === 'gallery' || type === 'for-sale-gallery' || type === 'masonry' || type === 'masonry-simple') {
+                        galleryData.images.push(imageUrl);
+                    } else if (type === 'gallery-grid' || type === 'gallery-categories') {
+                        const categoryNames = ['Wedding Photography', 'Portrait Photography', 'Landscape Photography', 'Event Photography', 'Family Photography'];
+                        galleryData.galleries.push({
+                            name: `Gallery ${i + 1}`,
+                            category: categoryNames[i % categoryNames.length],
+                            image: imageUrl
+                        });
+                    }
+                }
+                
+                const html = componentTemplates[type](galleryData);
+                canvas.insertAdjacentHTML('beforeend', html);
+            } else if (componentTemplates[type]) {
                 const html = componentTemplates[type]();
                 canvas.insertAdjacentHTML('beforeend', html);
                 
@@ -5974,7 +6067,7 @@
             console.log(`Adding component: ${componentType}`);
             
             // Check if it's a gallery type component and ask for photo count
-            if (componentType === 'gallery' || componentType === 'gallery-grid' || componentType === 'gallery-categories') {
+            if (componentType === 'gallery' || componentType === 'gallery-grid' || componentType === 'gallery-categories' || componentType === 'for-sale-gallery' || componentType === 'masonry' || componentType === 'masonry-simple') {
                 const photoCount = prompt('How many photos do you want in this gallery?', '6');
                 if (photoCount === null) {
                     // User cancelled
@@ -6014,7 +6107,7 @@
                     const photoId = photoPool[i % photoPool.length];
                     const imageUrl = `https://images.unsplash.com/photo-${photoId}?w=600`;
                     
-                    if (componentType === 'gallery') {
+                    if (componentType === 'gallery' || componentType === 'for-sale-gallery' || componentType === 'masonry' || componentType === 'masonry-simple') {
                         galleryData.images.push(imageUrl);
                     } else if (componentType === 'gallery-grid' || componentType === 'gallery-categories') {
                         const categoryNames = ['Wedding Photography', 'Portrait Photography', 'Landscape Photography', 'Event Photography', 'Family Photography'];
