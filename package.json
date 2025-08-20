@@ -32,7 +32,7 @@
     "@capacitor/splash-screen": "^7.0.1",
     "@capacitor/status-bar": "^7.0.1",
     "@google-cloud/firestore": "^7.11.3",
-    "@google-cloud/storage": "^7.16.0",
+    "@google-cloud/storage": "^7.17.0",
     "@neondatabase/serverless": "^1.0.1",
     "@sendgrid/mail": "^8.1.5",
     "@stripe/react-stripe-js": "^3.9.1",
