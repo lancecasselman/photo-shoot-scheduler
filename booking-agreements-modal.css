@@ -112,7 +112,13 @@
     overflow-y: auto;
     font-size: 14px;
     line-height: 1.8;
-    color: #000000;
+    color: #000000 !important;
+}
+
+/* Force all text elements to be black */
+.agreement-content-editor *,
+.agreement-content-viewer * {
+    color: #000000 !important;
 }
 
 .agreement-content-editor {
