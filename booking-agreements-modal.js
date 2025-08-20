@@ -114,6 +114,32 @@ async function openBookingAgreementModal(sessionId) {
     // Show modal
     const modal = document.getElementById('bookingAgreementModal');
     modal.style.display = 'flex';
+    
+    // Force ALL text in the modal to be black
+    setTimeout(() => {
+        const allElements = modal.querySelectorAll('*');
+        allElements.forEach(element => {
+            element.style.setProperty('color', '#000000', 'important');
+        });
+        
+        // Specifically target the content areas
+        const contentEditor = document.getElementById('agreementContent');
+        const contentViewer = document.getElementById('agreementViewContent');
+        
+        if (contentEditor) {
+            contentEditor.style.setProperty('color', '#000000', 'important');
+            contentEditor.querySelectorAll('*').forEach(el => {
+                el.style.setProperty('color', '#000000', 'important');
+            });
+        }
+        
+        if (contentViewer) {
+            contentViewer.style.setProperty('color', '#000000', 'important');
+            contentViewer.querySelectorAll('*').forEach(el => {
+                el.style.setProperty('color', '#000000', 'important');
+            });
+        }
+    }, 200);
 
     // Load existing agreement or show template selector
     await loadExistingAgreement(sessionId, session);
@@ -302,19 +328,41 @@ function loadSelectedTemplate() {
     // Load into editor
     document.getElementById('agreementContent').innerHTML = content;
     
-    // Force all text to be black
-    const contentElement = document.getElementById('agreementContent');
-    if (contentElement) {
-        // Apply black color to all child elements
-        const allElements = contentElement.querySelectorAll('*');
-        allElements.forEach(el => {
-            el.style.color = '#000000';
-            el.style.setProperty('color', '#000000', 'important');
-        });
-        // Apply to the container itself
-        contentElement.style.color = '#000000';
-        contentElement.style.setProperty('color', '#000000', 'important');
-    }
+    // Force all text to be black immediately and after a delay
+    const forceBlackText = () => {
+        const contentElement = document.getElementById('agreementContent');
+        if (contentElement) {
+            // Apply to the container
+            contentElement.style.setProperty('color', '#000000', 'important');
+            
+            // Apply to ALL child elements
+            const allElements = contentElement.querySelectorAll('*');
+            allElements.forEach(el => {
+                el.style.setProperty('color', '#000000', 'important');
+            });
+            
+            // Also apply to any text nodes
+            const walker = document.createTreeWalker(
+                contentElement,
+                NodeFilter.SHOW_ELEMENT,
+                null,
+                false
+            );
+            
+            let node;
+            while (node = walker.nextNode()) {
+                node.style.setProperty('color', '#000000', 'important');
+            }
+        }
+    };
+    
+    // Apply immediately
+    forceBlackText();
+    
+    // Apply again after DOM updates
+    setTimeout(forceBlackText, 50);
+    setTimeout(forceBlackText, 150);
+    setTimeout(forceBlackText, 300);
 }
 
 // Replace template variables
