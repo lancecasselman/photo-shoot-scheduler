@@ -7831,6 +7831,7 @@
             element.dataset.hasHoverPhotoChange = 'true';
             
             let changePhotoButton = null;
+            let watermarkButton = null;
             
             // Show change photo button on hover
             element.addEventListener('mouseenter', function() {
@@ -7890,6 +7891,9 @@
                                     const targetImg = element.querySelector('img') || (element.tagName === 'IMG' ? element : null);
                                     if (targetImg) {
                                         targetImg.src = imageUrl;
+                                        // Remove watermark indicator if it exists
+                                        const indicator = targetImg.parentElement.querySelector('.watermark-indicator');
+                                        if (indicator) indicator.remove();
                                         console.log('Updated img src');
                                     } else if (hasBackgroundImage) {
                                         // Update background image
@@ -7905,6 +7909,9 @@
                                         } else {
                                             element.style.backgroundImage = `url('${imageUrl}')`;
                                         }
+                                        // Remove watermark indicator if it exists
+                                        const indicator = element.querySelector('.watermark-indicator');
+                                        if (indicator) indicator.remove();
                                         console.log('Updated background image');
                                     }
                                     
@@ -7924,26 +7931,260 @@
                     element.appendChild(changePhotoButton);
                 }
                 
+                // Add watermark button
+                if (!watermarkButton) {
+                    watermarkButton = document.createElement('button');
+                    watermarkButton.className = 'watermark-button hover-watermark';
+                    watermarkButton.innerHTML = 'W';
+                    watermarkButton.title = 'Apply/Remove Watermark';
+                    watermarkButton.style.cssText = `
+                        position: absolute;
+                        top: 10px;
+                        left: 50px;
+                        width: 32px;
+                        height: 32px;
+                        background: #9f7aea;
+                        color: white;
+                        border: none;
+                        border-radius: 50%;
+                        cursor: pointer;
+                        font-size: 14px;
+                        font-weight: bold;
+                        z-index: 1000;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                        opacity: 0;
+                        transition: opacity 0.2s ease;
+                        line-height: 1;
+                    `;
+                    
+                    watermarkButton.addEventListener('click', async function(e) {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        
+                        console.log('Watermark button clicked for element:', element.id);
+                        
+                        // Check if watermarks are configured
+                        const watermarkEnabled = document.getElementById('watermark-enabled')?.checked;
+                        const watermarkText = document.getElementById('watermark-text')?.value;
+                        
+                        if (!watermarkEnabled || !watermarkText) {
+                            alert('Please enable and configure watermarks in the Watermark tab first.');
+                            return;
+                        }
+                        
+                        // Find the image
+                        const targetImg = element.querySelector('img') || (element.tagName === 'IMG' ? element : null);
+                        const hasBackgroundImage = element.style.backgroundImage && element.style.backgroundImage !== 'none';
+                        
+                        // Check if already has watermark
+                        const hasWatermark = element.querySelector('.watermark-indicator') !== null;
+                        
+                        if (hasWatermark) {
+                            // Remove watermark
+                            const indicator = element.querySelector('.watermark-indicator');
+                            if (indicator) indicator.remove();
+                            watermarkButton.style.background = '#9f7aea';
+                            showNotification('Watermark removed', 'success');
+                        } else {
+                            // Apply watermark
+                            await applyWatermarkToImage(element, targetImg, hasBackgroundImage);
+                            
+                            // Add watermark indicator
+                            if (!element.querySelector('.watermark-indicator')) {
+                                const indicator = document.createElement('div');
+                                indicator.className = 'watermark-indicator';
+                                indicator.innerHTML = 'W';
+                                indicator.style.cssText = `
+                                    position: absolute;
+                                    bottom: 10px;
+                                    right: 10px;
+                                    width: 24px;
+                                    height: 24px;
+                                    background: rgba(159, 122, 234, 0.9);
+                                    color: white;
+                                    border-radius: 50%;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    font-size: 12px;
+                                    font-weight: bold;
+                                    z-index: 999;
+                                    pointer-events: none;
+                                `;
+                                element.appendChild(indicator);
+                            }
+                            
+                            watermarkButton.style.background = '#48bb78';
+                            showNotification('Watermark applied', 'success');
+                        }
+                    });
+                    
+                    // Keep button visible when hovering over it
+                    watermarkButton.addEventListener('mouseenter', function() {
+                        watermarkButton.style.opacity = '1';
+                    });
+                    
+                    element.appendChild(watermarkButton);
+                }
+                
                 // Ensure element is positioned relative
                 if (getComputedStyle(element).position === 'static') {
                     element.style.position = 'relative';
                 }
                 
-                // Show change photo button
+                // Show buttons
                 if (changePhotoButton) {
                     changePhotoButton.style.opacity = '1';
                 }
+                if (watermarkButton) {
+                    watermarkButton.style.opacity = '1';
+                    // Update button color based on watermark status
+                    const hasWatermark = element.querySelector('.watermark-indicator') !== null;
+                    watermarkButton.style.background = hasWatermark ? '#48bb78' : '#9f7aea';
+                }
             });
             
-            // Hide change photo button when mouse leaves BOTH element and button
+            // Hide buttons when mouse leaves BOTH element and buttons
             element.addEventListener('mouseleave', function(e) {
-                // Only hide if not moving to the change photo button
+                // Only hide if not moving to the buttons
                 setTimeout(() => {
-                    if (changePhotoButton && !changePhotoButton.matches(':hover') && !element.matches(':hover')) {
+                    if (changePhotoButton && !changePhotoButton.matches(':hover') && 
+                        watermarkButton && !watermarkButton.matches(':hover') && 
+                        !element.matches(':hover')) {
                         changePhotoButton.style.opacity = '0';
+                        watermarkButton.style.opacity = '0';
                     }
                 }, 100);
             });
+        }
+        
+        // Function to apply watermark to an image
+        async function applyWatermarkToImage(element, targetImg, hasBackgroundImage) {
+            try {
+                // Get watermark settings
+                const settings = {
+                    text: document.getElementById('watermark-text').value,
+                    position: document.getElementById('watermark-position').value,
+                    opacity: parseFloat(document.getElementById('watermark-opacity').value),
+                    fontSize: parseInt(document.getElementById('watermark-font-size').value),
+                    fontColor: document.getElementById('watermark-color').value
+                };
+                
+                let imageUrl = '';
+                
+                // Get the current image URL
+                if (targetImg) {
+                    imageUrl = targetImg.src;
+                } else if (hasBackgroundImage) {
+                    const bgImage = element.style.backgroundImage;
+                    const urlMatch = bgImage.match(/url\(['"]?([^'")]+)['"]?\)/);
+                    if (urlMatch) {
+                        imageUrl = urlMatch[1];
+                    }
+                }
+                
+                if (!imageUrl) {
+                    console.error('No image URL found');
+                    return;
+                }
+                
+                // Create canvas to apply watermark
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                
+                await new Promise((resolve, reject) => {
+                    img.onload = resolve;
+                    img.onerror = reject;
+                    img.src = imageUrl;
+                });
+                
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                
+                // Draw the original image
+                ctx.drawImage(img, 0, 0);
+                
+                // Apply watermark
+                ctx.globalAlpha = settings.opacity;
+                ctx.fillStyle = settings.fontColor;
+                ctx.font = `${settings.fontSize}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                // Calculate position
+                let x, y;
+                const padding = 20;
+                const textMetrics = ctx.measureText(settings.text);
+                
+                switch(settings.position) {
+                    case 'top-left':
+                        x = textMetrics.width / 2 + padding;
+                        y = padding + settings.fontSize / 2;
+                        ctx.textAlign = 'left';
+                        break;
+                    case 'top-right':
+                        x = canvas.width - textMetrics.width / 2 - padding;
+                        y = padding + settings.fontSize / 2;
+                        ctx.textAlign = 'right';
+                        break;
+                    case 'bottom-left':
+                        x = textMetrics.width / 2 + padding;
+                        y = canvas.height - padding - settings.fontSize / 2;
+                        ctx.textAlign = 'left';
+                        break;
+                    case 'bottom-right':
+                        x = canvas.width - textMetrics.width / 2 - padding;
+                        y = canvas.height - padding - settings.fontSize / 2;
+                        ctx.textAlign = 'right';
+                        break;
+                    case 'center':
+                    default:
+                        x = canvas.width / 2;
+                        y = canvas.height / 2;
+                        ctx.textAlign = 'center';
+                        break;
+                }
+                
+                // Add text shadow for better visibility
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+                ctx.shadowBlur = 3;
+                ctx.shadowOffsetX = 1;
+                ctx.shadowOffsetY = 1;
+                
+                ctx.fillText(settings.text, x, y);
+                
+                // Convert canvas to data URL
+                const watermarkedUrl = canvas.toDataURL('image/jpeg', 0.95);
+                
+                // Update the image
+                if (targetImg) {
+                    targetImg.src = watermarkedUrl;
+                } else if (hasBackgroundImage) {
+                    const currentBg = element.style.backgroundImage;
+                    if (currentBg.includes('linear-gradient')) {
+                        // Preserve gradient overlay
+                        const gradientMatch = currentBg.match(/linear-gradient\([^)]+\)/);
+                        if (gradientMatch) {
+                            element.style.backgroundImage = `${gradientMatch[0]}, url('${watermarkedUrl}')`;
+                        } else {
+                            element.style.backgroundImage = `url('${watermarkedUrl}')`;
+                        }
+                    } else {
+                        element.style.backgroundImage = `url('${watermarkedUrl}')`;
+                    }
+                }
+                
+                console.log('Watermark applied successfully');
+                
+            } catch (error) {
+                console.error('Error applying watermark:', error);
+                showNotification('Failed to apply watermark', 'error');
+            }
         }
 
         // Add hover delete functionality to an element
