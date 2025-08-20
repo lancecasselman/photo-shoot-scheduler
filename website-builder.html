@@ -1460,14 +1460,23 @@
                             </p>
                         </div>
                         
+                        <div style="background: #e0f2fe; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #0284c7;">
+                            <p style="margin: 0; color: #075985; font-weight: 600;">
+                                🎯 We recommend using GoDaddy for simplicity!
+                            </p>
+                            <p style="margin: 5px 0 0 0; color: #0c4a6e; font-size: 14px;">
+                                GoDaddy makes domain management easy with their user-friendly interface.
+                            </p>
+                        </div>
+                        
                         <h3 style="margin: 20px 0 10px 0; font-size: 18px; color: #374151;">Step 1: Publish Your Website</h3>
                         <p style="color: #6b7280; margin-bottom: 20px;">
                             First, publish your website to get your subdomain: <strong>${subdomain}.photomanagementsystem.com</strong>
                         </p>
                         
-                        <h3 style="margin: 20px 0 10px 0; font-size: 18px; color: #374151;">Step 2: Add DNS Records</h3>
+                        <h3 style="margin: 20px 0 10px 0; font-size: 18px; color: #374151;">Step 2: Add DNS Records in GoDaddy</h3>
                         <p style="color: #6b7280; margin-bottom: 15px;">
-                            In your domain registrar (GoDaddy, Namecheap, etc.), add these DNS records:
+                            In your GoDaddy account, follow these simple steps:
                         </p>
                         
                         <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin-bottom: 20px; font-family: monospace;">
@@ -1503,13 +1512,24 @@
                             </p>
                         </div>
                         
-                        <h3 style="margin: 20px 0 10px 0; font-size: 18px; color: #374151;">Popular Registrars Instructions:</h3>
-                        <ul style="color: #6b7280; margin-bottom: 20px;">
-                            <li><strong>GoDaddy:</strong> DNS → Manage DNS → Add → CNAME</li>
-                            <li><strong>Namecheap:</strong> Domain List → Manage → Advanced DNS → Add New Record</li>
-                            <li><strong>Cloudflare:</strong> DNS → Records → Add Record → CNAME</li>
-                            <li><strong>Google Domains:</strong> DNS → Manage Custom Records → Create New Record</li>
-                        </ul>
+                        <h3 style="margin: 20px 0 10px 0; font-size: 18px; color: #374151;">GoDaddy Quick Instructions:</h3>
+                        <ol style="color: #6b7280; margin-bottom: 20px; padding-left: 20px;">
+                            <li style="margin-bottom: 10px;">Log in to your GoDaddy account</li>
+                            <li style="margin-bottom: 10px;">Go to <strong>My Products</strong> → <strong>Domains</strong></li>
+                            <li style="margin-bottom: 10px;">Click <strong>DNS</strong> next to your domain</li>
+                            <li style="margin-bottom: 10px;">Click <strong>Add</strong> and select <strong>CNAME</strong></li>
+                            <li style="margin-bottom: 10px;">Add the records shown above</li>
+                            <li style="margin-bottom: 10px;">Click <strong>Save</strong></li>
+                        </ol>
+                        
+                        <details style="margin-bottom: 20px;">
+                            <summary style="cursor: pointer; color: #667eea; font-weight: 500;">Other Registrars (click to expand)</summary>
+                            <ul style="color: #6b7280; margin-top: 10px; padding-left: 20px;">
+                                <li><strong>Namecheap:</strong> Domain List → Manage → Advanced DNS → Add New Record</li>
+                                <li><strong>Cloudflare:</strong> DNS → Records → Add Record → CNAME</li>
+                                <li><strong>Google Domains:</strong> DNS → Manage Custom Records → Create New Record</li>
+                            </ul>
+                        </details>
                         
                         <button onclick="closeCustomDomainInstructions()" 
                             style="width: 100%; padding: 12px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
