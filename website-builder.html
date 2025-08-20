@@ -2138,7 +2138,8 @@
                         z-index: 1;
                         pointer-events: none;
                     `;
-                    overlay.innerHTML = '<span style="background: white; color: black; padding: 10px 20px; border-radius: 4px;">Click to change background image</span>';
+                    // Don't add any text to the overlay - it's just for visual feedback
+                    overlay.innerHTML = '';
                     element.appendChild(overlay);
                     
                     // Show overlay on hover
