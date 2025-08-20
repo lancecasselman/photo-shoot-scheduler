@@ -377,11 +377,11 @@
             const statusDesc = document.getElementById('status-description');
 
             if (status.hasProfessionalPlan) {
-                statusTitle.textContent = 'Professional Plan Active';
+                statusTitle.textContent = '✅ Professional Plan Active';
                 statusDesc.textContent = `Your subscription includes all professional features and ${status.totalStorageGb}GB storage.`;
                 statusDiv.className = 'subscription-status';
             } else {
-                statusTitle.textContent = 'No Active Subscription';
+                statusTitle.textContent = '⚠️ No Active Subscription';
                 statusDesc.textContent = 'Subscribe to unlock professional photography management features.';
                 statusDiv.className = 'subscription-status cancelled';
             }
@@ -394,18 +394,45 @@
             document.getElementById('storage-addons').textContent = status.totalStorageTb > 0 ? 
                 `Includes ${status.totalStorageTb}TB add-ons` : 'Base storage included';
 
-            document.getElementById('billing-date').textContent = status.nextBillingDate ? 
-                new Date(status.nextBillingDate).toLocaleDateString() : 'No billing scheduled';
-            document.getElementById('billing-amount').textContent = `$${status.monthlyTotal.toFixed(2)}`;
+            // Format next billing date nicely
+            if (status.nextBillingDate) {
+                const nextDate = new Date(status.nextBillingDate);
+                const daysUntilBilling = Math.ceil((nextDate - new Date()) / (1000 * 60 * 60 * 24));
+                const formattedDate = nextDate.toLocaleDateString('en-US', { 
+                    weekday: 'long',
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+                document.getElementById('billing-date').innerHTML = `
+                    <strong>${formattedDate}</strong><br>
+                    <small style="color: #6c757d">(in ${daysUntilBilling} days)</small>
+                `;
+            } else {
+                document.getElementById('billing-date').textContent = 'No billing scheduled';
+            }
+            
+            document.getElementById('billing-amount').innerHTML = `
+                <strong style="color: #c4962d">$${status.monthlyTotal.toFixed(2)}</strong>
+                <small style="color: #6c757d">will be charged</small>
+            `;
 
             document.getElementById('payment-method').textContent = status.professionalPlatform ? 
                 formatPlatformName(status.professionalPlatform) : 'No payment method';
             document.getElementById('platform-info').textContent = getPlatformInfo(status.professionalPlatform);
 
-            // Update billing summary
-            document.getElementById('billing-professional').textContent = status.hasProfessionalPlan ? '$39.00/month' : '$0.00/month';
-            document.getElementById('billing-storage').textContent = `$${(status.totalStorageTb * 25).toFixed(2)}/month`;
-            document.getElementById('billing-total').textContent = `$${status.monthlyTotal.toFixed(2)}/month`;
+            // Update billing summary with visual indicators
+            document.getElementById('billing-professional').innerHTML = status.hasProfessionalPlan ? 
+                '<span style="color: #28a745">✓</span> $39.00/month' : '$0.00/month';
+            document.getElementById('billing-storage').innerHTML = status.totalStorageTb > 0 ?
+                `<span style="color: #28a745">✓</span> $${(status.totalStorageTb * 25).toFixed(2)}/month` :
+                '$0.00/month';
+            document.getElementById('billing-total').innerHTML = `<strong style="font-size: 1.2rem; color: #c4962d">$${status.monthlyTotal.toFixed(2)}/month</strong>`;
+            
+            // Hide cancellation section if no active subscription
+            if (!status.hasProfessionalPlan) {
+                document.querySelector('.cancellation-section').style.display = 'none';
+            }
         }
 
         function formatPlatformName(platform) {
@@ -493,7 +520,7 @@
         }
 
         function goBack() {
-            window.location.href = '/';
+            window.location.href = '/secure-app.html';
         }
 
         // Load subscription data when page loads
