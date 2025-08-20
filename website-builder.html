@@ -5018,56 +5018,7 @@
             window.close();
         }
         
-        // Page Management Functions
-        function addNewPage() {
-            const pageCount = Object.keys(pages).length;
-            const pageName = prompt('Enter page name:', `Page ${pageCount + 1}`);
-            
-            if (pageName && pageName.trim()) {
-                const pageId = pageName.toLowerCase().replace(/[^a-z0-9]/g, '-');
-                
-                // Check if page already exists
-                if (pages[pageId]) {
-                    alert('A page with this name already exists!');
-                    return;
-                }
-                
-                // Save current page before switching
-                savePage(currentPage);
-                
-                // Create new page
-                pages[pageId] = {
-                    name: pageName,
-                    template: 'modern',
-                    elements: []
-                };
-                
-                // Add to UI
-                const pagesList = document.getElementById('pages-list');
-                const pageItem = document.createElement('div');
-                pageItem.className = 'page-item';
-                pageItem.dataset.page = pageId;
-                pageItem.style.cssText = 'display: flex; align-items: center; padding: 8px; background: #f7fafc; border-radius: 4px; margin-bottom: 8px; cursor: pointer;';
-                pageItem.innerHTML = `
-                    <span class="page-name" style="flex: 1;">${pageName}</span>
-                    <button onclick="renamePage('${pageId}')" style="background: none; border: none; color: #667eea; cursor: pointer; padding: 4px; margin-right: 4px;">✏️</button>
-                    ${pageId !== 'home' ? `<button onclick="deletePage('${pageId}')" style="background: none; border: none; color: #e53e3e; cursor: pointer; padding: 4px;">🗑️</button>` : ''}
-                `;
-                
-                pageItem.addEventListener('click', function(e) {
-                    if (e.target.tagName !== 'BUTTON') {
-                        switchToPage(pageId);
-                    }
-                });
-                
-                pagesList.appendChild(pageItem);
-                
-                // Switch to new page
-                switchToPage(pageId);
-                
-                console.log(`New page created: ${pageName}`);
-            }
-        }
+        // Page Management Functions removed - using the newer implementation below
         
         function renamePage(pageId) {
             const page = pages[pageId];
@@ -6576,6 +6527,12 @@
             
             console.log(`Adding component: ${componentType}`);
             
+            // Remove drop zone if it exists
+            const dropZone = document.getElementById('drop-zone');
+            if (dropZone) {
+                dropZone.remove();
+            }
+            
             // Check if it's a gallery type component and ask for photo count
             if (componentType === 'gallery' || componentType === 'gallery-grid' || componentType === 'gallery-categories' || componentType === 'for-sale-gallery' || componentType === 'masonry' || componentType === 'masonry-simple') {
                 const photoCount = prompt('How many photos do you want in this gallery?', '6');
@@ -6588,7 +6545,7 @@
                 
                 // Create custom data for the gallery with the specified number of images
                 const galleryData = {
-                    title: 'Photo Gallery',
+                    title: componentType === 'for-sale-gallery' ? 'Available Prints' : 'Photo Gallery',
                     images: [],
                     galleries: []
                 };
