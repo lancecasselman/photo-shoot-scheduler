@@ -823,6 +823,22 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Serve root level HTML files
 app.use(express.static(__dirname));
 
+// Auth status endpoint for checking if user is authenticated
+app.get('/api/auth/status', (req, res) => {
+    if (req.session && req.session.user) {
+        res.json({
+            authenticated: true,
+            username: req.session.user.displayName || req.session.user.email,
+            email: req.session.user.email,
+            uid: req.session.user.uid
+        });
+    } else {
+        res.json({
+            authenticated: false
+        });
+    }
+});
+
 // Enhanced Address autocomplete API endpoint with improved rural address support
 app.post('/api/geocode', async (req, res) => {
   try {
