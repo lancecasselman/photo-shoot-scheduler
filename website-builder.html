@@ -2964,9 +2964,21 @@
                                 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=600'
                             ]).map((img, index) => `
                                 <div style="position: relative; overflow: hidden; border-radius: 8px;">
-                                    <img src="${img}" style="width: 100%; height: 250px; object-fit: cover; transition: transform 0.3s ease; cursor: grab;" alt="Featured" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" ondragstart="return false;">
-                                    <div class="image-edit-overlay" style="position: absolute; top: 10px; right: 10px; opacity: 1; transition: none; z-index: 9999;">
-                                        <button onclick="changeGalleryImage('${galleryId}', ${index})" style="background: rgba(59, 130, 246, 0.95); border: none; color: white; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: all 0.2s;" onmouseover="this.style.background='rgba(59, 130, 246, 1)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.95)'; this.style.transform='translateY(0)'" title="Change Photo">📷</button>
+                                    <img src="${img}" 
+                                         class="draggable-image"
+                                         style="width: 100%; height: 250px; object-fit: cover; transition: transform 0.3s ease; cursor: move;" 
+                                         alt="Featured" 
+                                         data-position-x="50"
+                                         data-position-y="50"
+                                         onmouseover="if(!this.isDragging) this.style.transform='scale(1.05)'" 
+                                         onmouseout="if(!this.isDragging) this.style.transform='scale(1)'" 
+                                         ondragstart="return false;">
+                                    <div class="image-edit-overlay" style="position: absolute; top: 10px; right: 10px; opacity: 1; transition: none; z-index: 10000; pointer-events: auto;">
+                                        <button onclick="changeGalleryImage('${galleryId}', ${index})" 
+                                                style="background: rgba(59, 130, 246, 0.95); border: none; color: white; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: all 0.2s;" 
+                                                onmouseover="this.style.background='rgba(59, 130, 246, 1)'; this.style.transform='translateY(-1px)'" 
+                                                onmouseout="this.style.background='rgba(59, 130, 246, 0.95)'; this.style.transform='translateY(0)'" 
+                                                title="Change Photo">📷</button>
                                     </div>
                                 </div>
                             `).join('')}
@@ -3039,10 +3051,19 @@
                             <p style="line-height: 1.8; color: #4a5568; font-size: 1.1rem; margin-bottom: 20px;">${data.text || 'I\'m a passionate photographer dedicated to capturing the essence of every moment. With over 10 years of experience, I specialize in creating timeless images that tell your unique story.'}</p>
                             <p style="line-height: 1.8; color: #4a5568; font-size: 1.1rem;">${data.additionalText || 'From intimate portraits to grand celebrations, I believe every photograph should evoke emotion and preserve memories for generations to come.'}</p>
                         </div>
-                        <div style="position: relative;">
-                            <img src="${data.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500'}" style="width: 100%; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.1);" alt="About">
-                            <div class="image-edit-overlay" style="position: absolute; top: 15px; right: 15px; opacity: 1; transition: none; z-index: 9999;">
-                                <button onclick="changeAboutImage(this)" style="background: rgba(59, 130, 246, 0.95); border: none; color: white; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: all 0.2s;" onmouseover="this.style.background='rgba(59, 130, 246, 1)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.95)'; this.style.transform='translateY(0)'" title="Change Photo">📷</button>
+                        <div style="position: relative; overflow: hidden; border-radius: 12px;">
+                            <img src="${data.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500'}" 
+                                 style="width: 100%; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); cursor: move; transition: transform 0.3s ease;" 
+                                 alt="About"
+                                 class="draggable-image"
+                                 data-position-x="50"
+                                 data-position-y="50">
+                            <div class="image-edit-overlay" style="position: absolute; top: 15px; right: 15px; opacity: 1; transition: none; z-index: 10000; pointer-events: auto;">
+                                <button onclick="changeAboutImage(this)" 
+                                        style="background: rgba(59, 130, 246, 0.95); border: none; color: white; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; box-shadow: 0 2px 8px rgba(0,0,0,0.4); transition: all 0.2s; display: block;" 
+                                        onmouseover="this.style.background='rgba(59, 130, 246, 1)'; this.style.transform='translateY(-1px)'" 
+                                        onmouseout="this.style.background='rgba(59, 130, 246, 0.95)'; this.style.transform='translateY(0)'" 
+                                        title="Change Photo">📷</button>
                             </div>
                         </div>
                     </div>
@@ -5625,6 +5646,64 @@
             }, 100);
         }
 
+        // Image repositioning functionality
+        function initializeImageRepositioning() {
+            document.querySelectorAll('.draggable-image').forEach(img => {
+                let isDragging = false;
+                let startX, startY;
+                let initialX = parseFloat(img.dataset.positionX || 50);
+                let initialY = parseFloat(img.dataset.positionY || 50);
+                
+                // Set initial object position
+                img.style.objectPosition = `${initialX}% ${initialY}%`;
+                img.style.objectFit = 'cover';
+                
+                img.addEventListener('mousedown', (e) => {
+                    // Don't start drag if clicking on a button
+                    if (e.target.tagName === 'BUTTON') return;
+                    
+                    isDragging = true;
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    img.style.cursor = 'grabbing';
+                    img.style.userSelect = 'none';
+                    e.preventDefault();
+                });
+                
+                document.addEventListener('mousemove', (e) => {
+                    if (!isDragging) return;
+                    
+                    const deltaX = (e.clientX - startX) / 2; // Slow down movement
+                    const deltaY = (e.clientY - startY) / 2;
+                    
+                    let newX = initialX + deltaX;
+                    let newY = initialY + deltaY;
+                    
+                    // Clamp values between 0 and 100
+                    newX = Math.max(0, Math.min(100, newX));
+                    newY = Math.max(0, Math.min(100, newY));
+                    
+                    img.style.objectPosition = `${newX}% ${newY}%`;
+                    img.dataset.positionX = newX;
+                    img.dataset.positionY = newY;
+                });
+                
+                document.addEventListener('mouseup', () => {
+                    if (isDragging) {
+                        isDragging = false;
+                        img.style.cursor = 'move';
+                        img.style.userSelect = '';
+                        
+                        // Update initial position for next drag
+                        initialX = parseFloat(img.dataset.positionX || 50);
+                        initialY = parseFloat(img.dataset.positionY || 50);
+                        
+                        console.log(`Image repositioned to: ${initialX}%, ${initialY}%`);
+                    }
+                });
+            });
+        }
+
         function refreshPagesList() {
             const pagesList = document.getElementById('pages-list');
             pagesList.innerHTML = '';
@@ -6781,6 +6860,10 @@
                     makeBlocksDraggable();
                     // Make sure components are selectable
                     makeComponentsSelectable();
+                    // Initialize image repositioning for draggable images
+                    setTimeout(() => {
+                        initializeImageRepositioning();
+                    }, 100);
                 }
                 return;
             }
@@ -6839,6 +6922,10 @@
                     makeBlocksDraggable();
                     // Make sure components are selectable
                     makeComponentsSelectable();
+                    // Initialize image repositioning for draggable images
+                    setTimeout(() => {
+                        initializeImageRepositioning();
+                    }, 100);
                 } else {
                     console.error(`Failed to create element for component: ${componentType}`);
                 }
@@ -7977,6 +8064,7 @@
             initializeCarouselHover(); // Initialize carousel hover effects
             initializeImageHandling(); // Initialize image click handling
             enableImageDragging(); // Initialize image drag repositioning
+            initializeImageRepositioning(); // Initialize image repositioning for draggable images
             initializeKeyboardShortcuts(); // Initialize keyboard shortcuts
             setupGlobalClickHandler(); // Initialize component selection system
             updateNavigationPreview(); // Initialize navigation
