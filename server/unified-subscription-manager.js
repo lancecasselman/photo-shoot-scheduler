@@ -730,7 +730,7 @@ class UnifiedSubscriptionManager {
         try {
             // Cancel subscription in Stripe
             const cancelledSubscription = await stripe.subscriptions.cancel(subscription.external_subscription_id, {
-                prorate: true // Give prorated refund
+                prorate: false // No refunds
             });
 
             console.log(`✅ Stripe subscription cancelled: ${subscription.external_subscription_id}`);
