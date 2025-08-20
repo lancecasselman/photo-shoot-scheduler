@@ -3253,10 +3253,11 @@
                                 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=400',
                                 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=400'
                             ]).map((img, index) => `
-                                <div style="position: relative; overflow: hidden; border-radius: 8px;">
-                                    <img src="${img}" style="width: 100%; height: 300px; object-fit: cover;" alt="Gallery">
+                                <div style="position: relative; overflow: hidden; border-radius: 8px;" class="gallery-item">
+                                    <img src="${img}" style="width: 100%; height: 300px; object-fit: cover;" alt="Gallery" data-gallery-index="${index}">
                                     <div class="image-edit-overlay" style="position: absolute; top: 10px; right: 10px; opacity: 1; transition: none; z-index: 9999;">
-                                        <button onclick="changeGalleryImage('${galleryId}', ${index})" style="background: rgba(59, 130, 246, 0.95); border: none; color: white; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: all 0.2s;" onmouseover="this.style.background='rgba(59, 130, 246, 1)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.95)'; this.style.transform='translateY(0)'" title="Change Photo">📷</button>
+                                        <button onclick="changeGalleryImage('${galleryId}', ${index})" style="background: rgba(59, 130, 246, 0.95); border: none; color: white; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: all 0.2s; margin-right: 5px;" onmouseover="this.style.background='rgba(59, 130, 246, 1)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.95)'; this.style.transform='translateY(0)'" title="Change Photo">📷</button>
+                                        <button onclick="toggleGalleryImageWatermark('${galleryId}', ${index}, this)" style="background: rgba(159, 122, 234, 0.95); border: none; color: white; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: all 0.2s;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'" title="Apply/Remove Watermark">W</button>
                                     </div>
                                 </div>
                             `).join('')}
@@ -3282,10 +3283,11 @@
                                 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=400',
                                 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400'
                             ]).map((img, index) => `
-                                <div style="position: relative; margin-bottom: 20px; border-radius: 8px; overflow: hidden; break-inside: avoid;">
-                                    <img src="${img}" style="width: 100%; border-radius: 8px; display: block; height: ${200 + (index % 3) * 100}px; object-fit: cover;" alt="Portfolio" ondragstart="return false;" style="cursor: grab;">
+                                <div style="position: relative; margin-bottom: 20px; border-radius: 8px; overflow: hidden; break-inside: avoid;" class="gallery-item">
+                                    <img src="${img}" style="width: 100%; border-radius: 8px; display: block; height: ${200 + (index % 3) * 100}px; object-fit: cover;" alt="Portfolio" ondragstart="return false;" style="cursor: grab;" data-gallery-index="${index}">
                                     <div class="image-edit-overlay" style="position: absolute; top: 10px; right: 10px; opacity: 1; transition: none; z-index: 9999;">
-                                        <button onclick="changeGalleryImage('${galleryId}', ${index})" style="background: rgba(59, 130, 246, 0.95); border: none; color: white; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: all 0.2s;" onmouseover="this.style.background='rgba(59, 130, 246, 1)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.95)'; this.style.transform='translateY(0)'" title="Change Photo">📷</button>
+                                        <button onclick="changeGalleryImage('${galleryId}', ${index})" style="background: rgba(59, 130, 246, 0.95); border: none; color: white; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: all 0.2s; margin-right: 5px;" onmouseover="this.style.background='rgba(59, 130, 246, 1)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.95)'; this.style.transform='translateY(0)'" title="Change Photo">📷</button>
+                                        <button onclick="toggleGalleryImageWatermark('${galleryId}', ${index}, this)" style="background: rgba(159, 122, 234, 0.95); border: none; color: white; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: all 0.2s;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'" title="Apply/Remove Watermark">W</button>
                                     </div>
                                 </div>
                             `).join('')}
@@ -3629,10 +3631,11 @@
                                 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400',
                                 'https://images.unsplash.com/photo-1532274402911-5a369e4c4bb5?w=400&h=600'
                             ]).map((img, index) => `
-                                <div style="position: relative; margin-bottom: 20px; border-radius: 8px; overflow: hidden; break-inside: avoid;">
-                                    <img src="${img}" style="width: 100%; display: block;">
+                                <div style="position: relative; margin-bottom: 20px; border-radius: 8px; overflow: hidden; break-inside: avoid;" class="gallery-item">
+                                    <img src="${img}" style="width: 100%; display: block;" data-gallery-index="${index}">
                                     <div class="image-edit-overlay" style="position: absolute; top: 10px; right: 10px; opacity: 1; transition: none; z-index: 9999;">
-                                        <button onclick="changeGalleryImage('${galleryId}', ${index})" style="background: rgba(59, 130, 246, 0.95); border: none; color: white; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: all 0.2s;" onmouseover="this.style.background='rgba(59, 130, 246, 1)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.95)'; this.style.transform='translateY(0)'" title="Change Photo">📷</button>
+                                        <button onclick="changeGalleryImage('${galleryId}', ${index})" style="background: rgba(59, 130, 246, 0.95); border: none; color: white; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: all 0.2s; margin-right: 5px;" onmouseover="this.style.background='rgba(59, 130, 246, 1)'; this.style.transform='translateY(-1px)'" onmouseout="this.style.background='rgba(59, 130, 246, 0.95)'; this.style.transform='translateY(0)'" title="Change Photo">📷</button>
+                                        <button onclick="toggleGalleryImageWatermark('${galleryId}', ${index}, this)" style="background: rgba(159, 122, 234, 0.95); border: none; color: white; padding: 8px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: all 0.2s;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'" title="Apply/Remove Watermark">W</button>
                                     </div>
                                 </div>
                             `).join('')}
@@ -5725,6 +5728,155 @@
             setTimeout(() => {
                 input.click();
             }, 100);
+        }
+        
+        // Function to toggle watermark on gallery images
+        window.toggleGalleryImageWatermark = async function(galleryId, imageIndex, button) {
+            console.log('Toggle gallery image watermark:', galleryId, imageIndex);
+            
+            // Check if watermarks are configured
+            const watermarkEnabled = document.getElementById('watermark-enabled')?.checked;
+            const watermarkText = document.getElementById('watermark-text')?.value;
+            
+            if (!watermarkEnabled || !watermarkText) {
+                alert('Please enable and configure watermarks in the Watermark tab first.');
+                return;
+            }
+            
+            const galleryElement = document.querySelector(`[data-gallery-id="${galleryId}"]`);
+            if (!galleryElement) return;
+            
+            const images = galleryElement.querySelectorAll('img');
+            const targetImg = images[imageIndex];
+            if (!targetImg) return;
+            
+            const galleryItem = targetImg.closest('.gallery-item') || targetImg.parentElement;
+            const hasWatermark = galleryItem.querySelector('.watermark-indicator') !== null;
+            
+            if (hasWatermark) {
+                // Remove watermark indicator
+                const indicator = galleryItem.querySelector('.watermark-indicator');
+                if (indicator) indicator.remove();
+                button.style.background = 'rgba(159, 122, 234, 0.95)';
+                showNotification('Watermark removed', 'success');
+            } else {
+                // Apply watermark
+                try {
+                    // Get watermark settings
+                    const settings = {
+                        text: document.getElementById('watermark-text').value,
+                        position: document.getElementById('watermark-position').value,
+                        opacity: parseFloat(document.getElementById('watermark-opacity').value),
+                        fontSize: parseInt(document.getElementById('watermark-font-size').value),
+                        fontColor: document.getElementById('watermark-color').value
+                    };
+                    
+                    // Create canvas to apply watermark
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    
+                    await new Promise((resolve, reject) => {
+                        img.onload = resolve;
+                        img.onerror = reject;
+                        img.src = targetImg.src;
+                    });
+                    
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    
+                    // Draw the original image
+                    ctx.drawImage(img, 0, 0);
+                    
+                    // Apply watermark
+                    ctx.globalAlpha = settings.opacity;
+                    ctx.fillStyle = settings.fontColor;
+                    ctx.font = `${settings.fontSize}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    
+                    // Calculate position
+                    let x, y;
+                    const padding = 20;
+                    const textMetrics = ctx.measureText(settings.text);
+                    
+                    switch(settings.position) {
+                        case 'top-left':
+                            x = textMetrics.width / 2 + padding;
+                            y = padding + settings.fontSize / 2;
+                            ctx.textAlign = 'left';
+                            break;
+                        case 'top-right':
+                            x = canvas.width - textMetrics.width / 2 - padding;
+                            y = padding + settings.fontSize / 2;
+                            ctx.textAlign = 'right';
+                            break;
+                        case 'bottom-left':
+                            x = textMetrics.width / 2 + padding;
+                            y = canvas.height - padding - settings.fontSize / 2;
+                            ctx.textAlign = 'left';
+                            break;
+                        case 'bottom-right':
+                            x = canvas.width - textMetrics.width / 2 - padding;
+                            y = canvas.height - padding - settings.fontSize / 2;
+                            ctx.textAlign = 'right';
+                            break;
+                        case 'center':
+                        default:
+                            x = canvas.width / 2;
+                            y = canvas.height / 2;
+                            ctx.textAlign = 'center';
+                            break;
+                    }
+                    
+                    // Add text shadow for better visibility
+                    ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+                    ctx.shadowBlur = 3;
+                    ctx.shadowOffsetX = 1;
+                    ctx.shadowOffsetY = 1;
+                    
+                    ctx.fillText(settings.text, x, y);
+                    
+                    // Convert canvas to data URL
+                    const watermarkedUrl = canvas.toDataURL('image/jpeg', 0.95);
+                    
+                    // Update the image
+                    targetImg.src = watermarkedUrl;
+                    
+                    // Add watermark indicator
+                    if (!galleryItem.querySelector('.watermark-indicator')) {
+                        const indicator = document.createElement('div');
+                        indicator.className = 'watermark-indicator';
+                        indicator.innerHTML = 'W';
+                        indicator.style.cssText = `
+                            position: absolute;
+                            bottom: 10px;
+                            left: 10px;
+                            width: 24px;
+                            height: 24px;
+                            background: rgba(159, 122, 234, 0.9);
+                            color: white;
+                            border-radius: 50%;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 12px;
+                            font-weight: bold;
+                            z-index: 998;
+                            pointer-events: none;
+                        `;
+                        galleryItem.appendChild(indicator);
+                    }
+                    
+                    button.style.background = 'rgba(72, 187, 120, 0.95)';
+                    showNotification('Watermark applied', 'success');
+                    
+                } catch (error) {
+                    console.error('Error applying watermark:', error);
+                    showNotification('Failed to apply watermark', 'error');
+                }
+            }
         }
 
         window.changeAboutImage = function(button) {
