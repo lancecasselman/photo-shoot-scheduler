@@ -63,6 +63,8 @@
             left: 0;
             right: 0;
             height: 200px;
+            min-height: 120px;
+            max-height: 400px;
             background: rgba(255, 255, 255, 0.98);
             backdrop-filter: blur(15px);
             border-top: 1px solid #e2e8f0;
@@ -70,6 +72,34 @@
             display: flex;
             flex-direction: column;
             box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+            transition: height 0.2s ease;
+        }
+        
+        /* Resize Handle */
+        .resize-handle {
+            position: absolute;
+            top: -5px;
+            left: 0;
+            right: 0;
+            height: 10px;
+            cursor: ns-resize;
+            z-index: 1001;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .resize-handle:hover .resize-grip {
+            background: #667eea;
+            width: 60px;
+        }
+        
+        .resize-grip {
+            width: 40px;
+            height: 4px;
+            background: #cbd5e0;
+            border-radius: 2px;
+            transition: all 0.2s;
         }
 
         .tools-header {
@@ -677,7 +707,11 @@
         </div>
 
         <!-- Bottom Tools Bar -->
-        <div class="builder-tools">
+        <div class="builder-tools" id="builder-tools">
+            <!-- Resize Handle -->
+            <div class="resize-handle" id="resize-handle">
+                <div class="resize-grip"></div>
+            </div>
             <div class="tools-header">
                 <div class="tools-tabs">
                     <button class="tool-tab active" data-tab="add">Add</button>
@@ -8304,6 +8338,57 @@
             document.getElementById('watermark-color').addEventListener('input', updateWatermarkPreview);
         }
         
+        // Toolbar Resize Functionality
+        function initializeToolbarResize() {
+            const resizeHandle = document.getElementById('resize-handle');
+            const builderTools = document.getElementById('builder-tools');
+            const builderCanvas = document.querySelector('.builder-canvas');
+            let isResizing = false;
+            let startY = 0;
+            let startHeight = 0;
+            
+            // Load saved height from localStorage
+            const savedHeight = localStorage.getItem('toolbarHeight');
+            if (savedHeight) {
+                const height = parseInt(savedHeight);
+                if (height >= 120 && height <= 400) {
+                    builderTools.style.height = height + 'px';
+                    builderCanvas.style.marginBottom = height + 'px';
+                }
+            }
+            
+            resizeHandle.addEventListener('mousedown', (e) => {
+                isResizing = true;
+                startY = e.clientY;
+                startHeight = builderTools.offsetHeight;
+                document.body.style.cursor = 'ns-resize';
+                
+                // Prevent text selection during resize
+                e.preventDefault();
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (!isResizing) return;
+                
+                const deltaY = startY - e.clientY;
+                const newHeight = Math.min(400, Math.max(120, startHeight + deltaY));
+                
+                builderTools.style.height = newHeight + 'px';
+                builderCanvas.style.marginBottom = newHeight + 'px';
+            });
+            
+            document.addEventListener('mouseup', () => {
+                if (isResizing) {
+                    isResizing = false;
+                    document.body.style.cursor = '';
+                    
+                    // Save the new height to localStorage
+                    const currentHeight = builderTools.offsetHeight;
+                    localStorage.setItem('toolbarHeight', currentHeight);
+                }
+            });
+        }
+        
         // Initialize everything when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
             initializeTabs();
@@ -8311,6 +8396,7 @@
             initializeFloatingToolbar(); // Initialize toolbar first
             initializePagesDragAndDrop(); // Initialize page drag and drop
             initializeWatermarkSettings(); // Initialize watermark settings
+            initializeToolbarResize(); // Initialize toolbar resize functionality
             
             // Add template selector button
             setTimeout(() => {
