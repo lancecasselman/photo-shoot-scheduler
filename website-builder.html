@@ -1045,54 +1045,57 @@
                     <div class="tool-section">
                         <div class="tool-title">Watermark Settings</div>
                         
-                        <!-- Enable/Disable Watermark -->
-                        <div style="margin-bottom: 15px;">
-                            <label style="display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" id="watermark-enabled">
-                                <span>Enable Watermark</span>
-                            </label>
-                        </div>
-                        
-                        <!-- Watermark Text -->
-                        <div style="margin-bottom: 15px;">
-                            <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #64748b;">Watermark Text</label>
-                            <input type="text" id="watermark-text" placeholder="© Your Photography Business" style="width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 12px;">
-                        </div>
-                        
-                        <!-- Position -->
-                        <div style="margin-bottom: 15px;">
-                            <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #64748b;">Position</label>
-                            <select id="watermark-position" style="width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 12px;">
-                                <option value="top-left">Top Left</option>
-                                <option value="top-right">Top Right</option>
-                                <option value="bottom-left">Bottom Left</option>
-                                <option value="bottom-right" selected>Bottom Right</option>
-                                <option value="center">Center</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Opacity -->
-                        <div style="margin-bottom: 15px;">
-                            <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #64748b;">Opacity</label>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <input type="range" id="watermark-opacity" min="0" max="1" step="0.1" value="0.7" style="flex: 1;">
-                                <span id="opacity-value" style="min-width: 35px; font-size: 12px;">0.7</span>
+                        <!-- Watermark Controls Container -->
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <!-- Enable Watermark Row with all controls -->
+                            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                                <!-- Enable/Disable Watermark -->
+                                <label style="display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+                                    <input type="checkbox" id="watermark-enabled">
+                                    <span style="font-size: 12px;">Enable</span>
+                                </label>
+                                
+                                <!-- Watermark Text -->
+                                <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 150px;">
+                                    <label style="font-size: 11px; color: #64748b; white-space: nowrap;">Text:</label>
+                                    <input type="text" id="watermark-text" placeholder="© Your Business" style="flex: 1; padding: 6px 8px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 11px;">
+                                </div>
+                                
+                                <!-- Position -->
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <label style="font-size: 11px; color: #64748b; white-space: nowrap;">Position:</label>
+                                    <select id="watermark-position" style="padding: 6px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 11px;">
+                                        <option value="top-left">Top Left</option>
+                                        <option value="top-right">Top Right</option>
+                                        <option value="bottom-left">Bottom Left</option>
+                                        <option value="bottom-right" selected>Bottom Right</option>
+                                        <option value="center">Center</option>
+                                    </select>
+                                </div>
                             </div>
-                        </div>
-                        
-                        <!-- Font Size -->
-                        <div style="margin-bottom: 15px;">
-                            <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #64748b;">Font Size</label>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <input type="range" id="watermark-font-size" min="10" max="100" step="5" value="30" style="flex: 1;">
-                                <span id="font-size-value" style="min-width: 35px; font-size: 12px;">30px</span>
+                            
+                            <!-- Second Row for Sliders -->
+                            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                                <!-- Opacity -->
+                                <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 120px;">
+                                    <label style="font-size: 11px; color: #64748b; white-space: nowrap;">Opacity:</label>
+                                    <input type="range" id="watermark-opacity" min="0" max="1" step="0.1" value="0.7" style="flex: 1; min-width: 60px;">
+                                    <span id="opacity-value" style="min-width: 25px; font-size: 11px;">0.7</span>
+                                </div>
+                                
+                                <!-- Font Size -->
+                                <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 120px;">
+                                    <label style="font-size: 11px; color: #64748b; white-space: nowrap;">Size:</label>
+                                    <input type="range" id="watermark-font-size" min="10" max="100" step="5" value="30" style="flex: 1; min-width: 60px;">
+                                    <span id="font-size-value" style="min-width: 30px; font-size: 11px;">30px</span>
+                                </div>
+                                
+                                <!-- Font Color -->
+                                <div style="display: flex; align-items: center; gap: 6px;">
+                                    <label style="font-size: 11px; color: #64748b; white-space: nowrap;">Color:</label>
+                                    <input type="color" id="watermark-color" value="#FFFFFF" style="width: 50px; height: 28px; padding: 2px; border: 1px solid #e2e8f0; border-radius: 4px; cursor: pointer;">
+                                </div>
                             </div>
-                        </div>
-                        
-                        <!-- Font Color -->
-                        <div style="margin-bottom: 15px;">
-                            <label style="display: block; margin-bottom: 4px; font-size: 12px; color: #64748b;">Font Color</label>
-                            <input type="color" id="watermark-color" value="#FFFFFF" style="width: 100%; height: 35px; padding: 4px; border: 1px solid #e2e8f0; border-radius: 4px; cursor: pointer;">
                         </div>
                         
                         <!-- Preview Section -->
