@@ -4,6 +4,38 @@ let currentAgreementSessionId = null;
 let currentAgreement = null;
 let agreementTemplates = [];
 
+// Immediately inject critical styles to force black text when this file loads
+(function() {
+    const criticalStyles = document.createElement('style');
+    criticalStyles.innerHTML = `
+        /* CRITICAL: Force ALL modal text to be black */
+        #bookingAgreementModal * {
+            color: #000000 !important;
+            -webkit-text-fill-color: #000000 !important;
+        }
+        #agreementContent,
+        #agreementContent * {
+            color: #000000 !important;
+            -webkit-text-fill-color: #000000 !important;
+        }
+        .agreement-content-editor,
+        .agreement-content-editor * {
+            color: #000000 !important;
+            -webkit-text-fill-color: #000000 !important;
+        }
+        [contenteditable="true"],
+        [contenteditable="true"] * {
+            color: #000000 !important;
+            -webkit-text-fill-color: #000000 !important;
+        }
+        /* Ensure white background for contrast */
+        #agreementContent {
+            background-color: white !important;
+        }
+    `;
+    document.head.appendChild(criticalStyles);
+})();
+
 // Initialize booking agreements
 async function initializeBookingAgreements() {
     console.log('Initializing booking agreements system...');
@@ -41,7 +73,7 @@ function createBookingAgreementModal() {
 
                     <!-- Agreement Editor -->
                     <div id="agreementEditor" class="editor-section">
-                        <div id="agreementContent" contenteditable="true" class="agreement-content-editor" style="color: #000000 !important;"></div>
+                        <div id="agreementContent" contenteditable="true" class="agreement-content-editor" style="color: #000000 !important; -webkit-text-fill-color: #000000 !important; background-color: white !important; padding: 20px !important; border: 2px solid #ddd !important;"></div>
                     </div>
 
                     <!-- Agreement Viewer (for sent/signed) -->
