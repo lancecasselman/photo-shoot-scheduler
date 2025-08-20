@@ -3554,6 +3554,89 @@ const upload = multer({
     }
 });
 
+// Website builder image upload endpoint - uses memory storage for optimization
+const uploadBuilderImage = multer({ 
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit for website images
+});
+
+app.post('/api/website-builder/upload-image', 
+    uploadBuilderImage.single('image'),
+    async (req, res) => {
+        try {
+            if (!req.session || !req.session.user) {
+                return res.status(401).json({ error: 'Authentication required' });
+            }
+            
+            if (!req.file) {
+                return res.status(400).json({ error: 'No image provided' });
+            }
+
+            const userId = req.session.user.uid;
+            const timestamp = Date.now();
+            const fileExt = req.file.originalname.split('.').pop();
+            
+            // Generate unique keys for R2
+            const originalKey = `website-builder/${userId}/originals/${timestamp}_original.${fileExt}`;
+            const optimizedKey = `website-builder/${userId}/optimized/${timestamp}_optimized.jpg`;
+            
+            console.log(`📸 Processing website builder image upload for user ${userId}`);
+            
+            // Upload original full resolution to R2
+            await r2FileManager.uploadFile(
+                req.file.buffer,
+                originalKey,
+                req.file.mimetype,
+                {
+                    uploadedBy: userId,
+                    type: 'website_builder_original',
+                    originalName: req.file.originalname
+                }
+            );
+            
+            // Create optimized version using Sharp (85% quality JPEG)
+            const sharp = require('sharp');
+            const optimizedBuffer = await sharp(req.file.buffer)
+                .jpeg({ 
+                    quality: 85, 
+                    progressive: true,
+                    mozjpeg: true // Better compression
+                })
+                .toBuffer();
+            
+            // Upload optimized version to R2
+            await r2FileManager.uploadFile(
+                optimizedBuffer,
+                optimizedKey,
+                'image/jpeg',
+                {
+                    uploadedBy: userId,
+                    type: 'website_builder_optimized',
+                    originalName: req.file.originalname
+                }
+            );
+            
+            // Generate URLs
+            const optimizedUrl = await r2FileManager.getSignedUrl(optimizedKey);
+            const originalUrl = await r2FileManager.getSignedUrl(originalKey);
+            
+            console.log(`✅ Website builder image processed: Original backed up, optimized version created`);
+            
+            res.json({
+                success: true,
+                optimizedUrl: optimizedUrl, // This is what displays on the website
+                originalUrl: originalUrl,   // Full resolution backup
+                originalKey: originalKey,
+                optimizedKey: optimizedKey
+            });
+            
+        } catch (error) {
+            console.error('Error processing website builder image:', error);
+            res.status(500).json({ error: 'Failed to process image: ' + error.message });
+        }
+    }
+);
+
 // Middleware - ULTRA-HIGH payload limits for mobile photography uploads
 // Body parsing middleware moved to top of file
 // Move static file serving after route definitions to ensure authentication checks run first

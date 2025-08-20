@@ -2161,22 +2161,58 @@
             fileInput.type = 'file';
             fileInput.accept = 'image/*';
             
-            fileInput.addEventListener('change', function(e) {
+            fileInput.addEventListener('change', async function(e) {
                 const file = e.target.files[0];
                 if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        img.src = event.target.result;
-                        console.log('Image replaced:', file.name);
+                    // Check if current image is a default/Unsplash image
+                    const currentSrc = img.src;
+                    const isDefaultImage = currentSrc.includes('unsplash.com') || 
+                                         currentSrc.includes('source.unsplash.com') ||
+                                         currentSrc.includes('images.unsplash.com');
+                    
+                    // Show loading state
+                    img.style.transition = 'opacity 0.3s';
+                    img.style.opacity = '0.5';
+                    
+                    try {
+                        // Upload to R2 and get optimized version
+                        const formData = new FormData();
+                        formData.append('image', file);
                         
-                        // Flash effect to show image was updated
-                        img.style.transition = 'opacity 0.3s';
-                        img.style.opacity = '0.5';
+                        const response = await fetch('/api/website-builder/upload-image', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error('Upload failed');
+                        }
+                        
+                        const data = await response.json();
+                        
+                        // Use the optimized URL for display
+                        img.src = data.optimizedUrl;
+                        img.dataset.originalUrl = data.originalUrl; // Store original URL as data attribute
+                        img.dataset.uploadedImage = 'true'; // Mark as uploaded image
+                        
+                        console.log('Image uploaded and optimized:', file.name);
+                        console.log('Original backed up to R2:', data.originalKey);
+                        console.log('Optimized version (85% quality):', data.optimizedKey);
+                        
+                    } catch (error) {
+                        console.error('Error uploading image:', error);
+                        // Fallback to local data URL if upload fails
+                        const reader = new FileReader();
+                        reader.onload = function(event) {
+                            img.src = event.target.result;
+                        };
+                        reader.readAsDataURL(file);
+                    } finally {
+                        // Restore opacity
                         setTimeout(() => {
                             img.style.opacity = '1';
                         }, 300);
-                    };
-                    reader.readAsDataURL(file);
+                    }
                 }
             });
             
@@ -2190,32 +2226,69 @@
             fileInput.type = 'file';
             fileInput.accept = 'image/*';
             
-            fileInput.addEventListener('change', function(e) {
+            fileInput.addEventListener('change', async function(e) {
                 const file = e.target.files[0];
                 if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
+                    // Show loading state
+                    element.style.transition = 'opacity 0.3s';
+                    element.style.opacity = '0.7';
+                    
+                    try {
+                        // Upload to R2 and get optimized version
+                        const formData = new FormData();
+                        formData.append('image', file);
+                        
+                        const response = await fetch('/api/website-builder/upload-image', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error('Upload failed');
+                        }
+                        
+                        const data = await response.json();
+                        
                         // Parse existing background to keep gradient overlay if present
                         const currentBg = window.getComputedStyle(element).backgroundImage;
                         const hasGradient = currentBg.includes('linear-gradient');
                         
                         if (hasGradient) {
-                            // Keep the gradient overlay, just replace the image URL
-                            element.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('${event.target.result}')`;
+                            // Keep the gradient overlay, use optimized image
+                            element.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('${data.optimizedUrl}')`;
                         } else {
-                            element.style.backgroundImage = `url('${event.target.result}')`;
+                            element.style.backgroundImage = `url('${data.optimizedUrl}')`;
                         }
                         
-                        console.log('Background image replaced:', file.name);
+                        // Store original URL as data attribute
+                        element.dataset.originalBackgroundUrl = data.originalUrl;
+                        element.dataset.uploadedBackground = 'true';
                         
-                        // Flash effect to show image was updated
-                        element.style.transition = 'opacity 0.3s';
-                        element.style.opacity = '0.7';
+                        console.log('Background uploaded and optimized:', file.name);
+                        console.log('Original backed up to R2:', data.originalKey);
+                        console.log('Optimized version (85% quality):', data.optimizedKey);
+                        
+                    } catch (error) {
+                        console.error('Error uploading background image:', error);
+                        // Fallback to local data URL if upload fails
+                        const reader = new FileReader();
+                        reader.onload = function(event) {
+                            const currentBg = window.getComputedStyle(element).backgroundImage;
+                            const hasGradient = currentBg.includes('linear-gradient');
+                            
+                            if (hasGradient) {
+                                element.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('${event.target.result}')`;
+                            } else {
+                                element.style.backgroundImage = `url('${event.target.result}')`;
+                            }
+                        };
+                        reader.readAsDataURL(file);
+                    } finally {
+                        // Restore opacity
                         setTimeout(() => {
                             element.style.opacity = '1';
                         }, 300);
-                    };
-                    reader.readAsDataURL(file);
+                    }
                 }
             });
             
