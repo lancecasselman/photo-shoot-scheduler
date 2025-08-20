@@ -151,27 +151,18 @@
         const editables = document.querySelectorAll('.admin-editable');
         console.log('Found editable elements:', editables.length);
         
-        let appliedCount = 0;
+        let changedCount = 0;
         
         for (const element of editables) {
             const current = element.innerHTML;
             const original = element.dataset.originalContent || '';
             
-            // More detailed logging to debug
-            if (element.textContent.includes('Photography')) {
-                console.log('🔍 Checking Photography element:');
-                console.log('  Current HTML:', current);
-                console.log('  Original HTML:', original);
-                console.log('  Are they different?', current !== original);
-                console.log('  Current text:', element.textContent);
-            }
-            
             if (current !== original) {
-                // Update the baseline to the current state
-                // This "accepts" the changes without saving to database
-                element.dataset.originalContent = current;
-                appliedCount++;
-                console.log('Applied change to:', element.tagName, element.textContent.substring(0, 30));
+                // Mark as previewed but DON'T update the baseline
+                // This way Save can still detect and save the changes
+                element.dataset.previewApplied = 'true';
+                changedCount++;
+                console.log('Preview applied to:', element.tagName, element.textContent.substring(0, 30));
             }
         }
         
@@ -192,8 +183,8 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         `;
         
-        if (appliedCount > 0) {
-            toast.textContent = `✓ Applied ${appliedCount} changes (not saved to database)`;
+        if (changedCount > 0) {
+            toast.textContent = `✓ Applied ${changedCount} changes (not saved to database)`;
             toast.style.background = '#10b981';
         } else {
             toast.textContent = 'No changes to apply';
@@ -203,7 +194,7 @@
         document.body.appendChild(toast);
         setTimeout(() => toast.remove(), 3000);
         
-        console.log(`Apply complete: ${appliedCount} changes applied to baseline`);
+        console.log(`Apply complete: ${changedCount} changes marked for preview`);
     }
     
     // Enable inline editing for all text elements
@@ -294,16 +285,14 @@
         selection.removeAllRanges();
         selection.addRange(range);
         
-        // Add event listeners
-        element.addEventListener('blur', handleEditBlur);
-        element.addEventListener('keydown', handleEditKeydown);
-        element.addEventListener('input', handleEditInput);
+        // Add event listeners - store references for proper removal
+        element._handleEditBlur = handleEditBlur;
+        element._handleEditKeydown = handleEditKeydown;
+        element._handleEditInput = handleEditInput;
         
-        // Track real-time changes
-        element.addEventListener('input', (e) => {
-            console.log('📝 TEXT CHANGED to:', e.target.innerHTML.substring(0, 50));
-            console.log('  Text content:', e.target.textContent.substring(0, 50));
-        });
+        element.addEventListener('blur', element._handleEditBlur);
+        element.addEventListener('keydown', element._handleEditKeydown);
+        element.addEventListener('input', element._handleEditInput);
     }
     
     function handleEditBlur(e) {
@@ -326,8 +315,10 @@
     }
     
     function handleEditInput(e) {
-        // No auto-save - user will use Save All button
-        // This preserves changes for manual save
+        // Track changes as user types
+        console.log('📝 Input event - current content:', e.target.innerHTML.substring(0, 50));
+        // Store the edited content as user types
+        e.target.dataset.liveContent = e.target.innerHTML;
     }
     
     // Stop editing an element
@@ -351,10 +342,19 @@
         element.innerHTML = editedContent;
         console.log('  Content after stopping edit:', element.innerHTML.substring(0, 50));
         
-        // Remove temporary event listeners
-        element.removeEventListener('blur', handleEditBlur);
-        element.removeEventListener('keydown', handleEditKeydown);
-        element.removeEventListener('input', handleEditInput);
+        // Remove temporary event listeners using stored references
+        if (element._handleEditBlur) {
+            element.removeEventListener('blur', element._handleEditBlur);
+            delete element._handleEditBlur;
+        }
+        if (element._handleEditKeydown) {
+            element.removeEventListener('keydown', element._handleEditKeydown);
+            delete element._handleEditKeydown;
+        }
+        if (element._handleEditInput) {
+            element.removeEventListener('input', element._handleEditInput);
+            delete element._handleEditInput;
+        }
         
         // Mark that element has unsaved changes if it changed
         if (element.innerHTML !== element.dataset.originalContent) {
