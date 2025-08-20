@@ -27,13 +27,13 @@ jobs:
       run: npm ci
     
     - name: Run tests
-      run: echo "Tests placeholder - no tests configured yet" && exit 0
+      run: npm test
       
     - name: Check code formatting
       run: npm run format:check || true
       
     - name: Security audit
-      run: npm audit --audit-level moderate || echo "Security audit completed with warnings"
+      run: npm audit --audit-level moderate
 
   deploy:
     needs: test
