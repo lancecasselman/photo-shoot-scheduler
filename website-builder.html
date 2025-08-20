@@ -5373,7 +5373,7 @@
         }
 
         // Individual photo change functions
-        function changeGalleryImage(galleryId, imageIndex) {
+        window.changeGalleryImage = function(galleryId, imageIndex) {
             console.log(`Changing image ${imageIndex} in gallery ${galleryId}`);
             
             const input = document.createElement('input');
@@ -5438,7 +5438,7 @@
             input.click();
         }
 
-        function changeAboutImage(button) {
+        window.changeAboutImage = function(button) {
             console.log('Changing about section image');
             
             const input = document.createElement('input');
@@ -5498,7 +5498,7 @@
             input.click();
         }
 
-        function changeHeroBackground(button) {
+        window.changeHeroBackground = function(button) {
             console.log('Changing hero background image');
             
             const input = document.createElement('input');
