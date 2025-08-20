@@ -5379,6 +5379,13 @@
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = 'image/*';
+            input.style.position = 'fixed';
+            input.style.top = '0';
+            input.style.left = '0';
+            input.style.zIndex = '999999';
+            input.style.opacity = '0';
+            document.body.appendChild(input);
+            
             input.onchange = async function(e) {
                 const file = e.target.files[0];
                 if (file) {
@@ -5434,8 +5441,14 @@
                         }
                     }
                 }
+                // Clean up the input element after use
+                document.body.removeChild(input);
             };
-            input.click();
+            
+            // Trigger the click after the input is in the DOM
+            setTimeout(() => {
+                input.click();
+            }, 100);
         }
 
         window.changeAboutImage = function(button) {
@@ -5444,6 +5457,13 @@
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = 'image/*';
+            input.style.position = 'fixed';
+            input.style.top = '0';
+            input.style.left = '0';
+            input.style.zIndex = '999999';
+            input.style.opacity = '0';
+            document.body.appendChild(input);
+            
             input.onchange = async function(e) {
                 const file = e.target.files[0];
                 if (file) {
@@ -5494,8 +5514,14 @@
                         }
                     }
                 }
+                // Clean up the input element after use
+                document.body.removeChild(input);
             };
-            input.click();
+            
+            // Trigger the click after the input is in the DOM
+            setTimeout(() => {
+                input.click();
+            }, 100);
         }
 
         window.changeHeroBackground = function(button) {
@@ -5504,6 +5530,13 @@
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = 'image/*';
+            input.style.position = 'fixed';
+            input.style.top = '0';
+            input.style.left = '0';
+            input.style.zIndex = '999999';
+            input.style.opacity = '0';
+            document.body.appendChild(input);
+            
             input.onchange = async function(e) {
                 const file = e.target.files[0];
                 if (file) {
@@ -5560,8 +5593,14 @@
                         }
                     }
                 }
+                // Clean up the input element after use
+                document.body.removeChild(input);
             };
-            input.click();
+            
+            // Trigger the click after the input is in the DOM
+            setTimeout(() => {
+                input.click();
+            }, 100);
         }
 
         function refreshPagesList() {
