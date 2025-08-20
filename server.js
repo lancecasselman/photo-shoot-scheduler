@@ -3163,6 +3163,29 @@ async function initializeDatabase(retryCount = 0) {
                 UNIQUE(user_id, billing_month)
             )
         `);
+        
+        // Create watermark_settings table for watermark configuration
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS watermark_settings (
+                id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid()::text,
+                user_id VARCHAR(255) NOT NULL UNIQUE,
+                enabled BOOLEAN DEFAULT false,
+                type VARCHAR(50) DEFAULT 'text',
+                logo_url VARCHAR(500),
+                text_content VARCHAR(255) DEFAULT '© 2025 Photography',
+                font_family VARCHAR(100) DEFAULT 'Arial',
+                font_size VARCHAR(20) DEFAULT 'medium',
+                color VARCHAR(7) DEFAULT '#FFFFFF',
+                opacity INTEGER DEFAULT 50,
+                position VARCHAR(50) DEFAULT 'bottom-right',
+                apply_to_galleries BOOLEAN DEFAULT true,
+                apply_to_downloads BOOLEAN DEFAULT false,
+                apply_to_social BOOLEAN DEFAULT true,
+                apply_to_proofs BOOLEAN DEFAULT true,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
 
         console.log('Database tables initialized successfully');
     } catch (error) {
