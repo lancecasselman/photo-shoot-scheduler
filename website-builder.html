@@ -5563,9 +5563,25 @@
                             const data = await response.json();
                             
                             // Update background with optimized image URL
-                            const currentStyle = heroDiv.style.background;
-                            const newStyle = currentStyle.replace(/url\([^)]+\)/, `url('${data.optimizedUrl}')`);
-                            heroDiv.style.background = newStyle;
+                            // Keep the gradient overlay, just replace the image URL
+                            const currentStyle = heroDiv.style.background || '';
+                            console.log('Current background style:', currentStyle);
+                            
+                            // Check if there's a gradient overlay
+                            if (currentStyle.includes('linear-gradient')) {
+                                // Replace the URL part while keeping the gradient
+                                const newStyle = currentStyle.replace(/url\([^)]+\)/, `url('${data.optimizedUrl}')`);
+                                heroDiv.style.background = newStyle;
+                                console.log('Updated background with gradient:', newStyle);
+                            } else {
+                                // Set new background with gradient overlay
+                                heroDiv.style.background = `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('${data.optimizedUrl}')`;
+                                console.log('Set new background with gradient');
+                            }
+                            
+                            // Ensure background properties are set correctly
+                            heroDiv.style.backgroundSize = 'cover';
+                            heroDiv.style.backgroundPosition = 'center';
                             
                             // Store original URL as data attribute
                             heroDiv.dataset.originalBackgroundUrl = data.originalUrl;
@@ -5580,9 +5596,15 @@
                             // Fallback to local data URL if upload fails
                             const reader = new FileReader();
                             reader.onload = function(event) {
-                                const currentStyle = heroDiv.style.background;
-                                const newStyle = currentStyle.replace(/url\([^)]+\)/, `url('${event.target.result}')`);
-                                heroDiv.style.background = newStyle;
+                                const currentStyle = heroDiv.style.background || '';
+                                if (currentStyle.includes('linear-gradient')) {
+                                    const newStyle = currentStyle.replace(/url\([^)]+\)/, `url('${event.target.result}')`);
+                                    heroDiv.style.background = newStyle;
+                                } else {
+                                    heroDiv.style.background = `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('${event.target.result}')`;
+                                }
+                                heroDiv.style.backgroundSize = 'cover';
+                                heroDiv.style.backgroundPosition = 'center';
                             };
                             reader.readAsDataURL(file);
                         } finally {
