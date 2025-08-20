@@ -5648,17 +5648,35 @@
 
         // Image repositioning functionality
         function initializeImageRepositioning() {
-            document.querySelectorAll('.draggable-image').forEach(img => {
+            const draggableImages = document.querySelectorAll('.draggable-image');
+            console.log(`Initializing drag repositioning for ${draggableImages.length} images`);
+            
+            draggableImages.forEach((img, index) => {
+                // Skip if already initialized
+                if (img.dataset.dragInitialized === 'true') {
+                    console.log(`Image ${index} already initialized, skipping`);
+                    return;
+                }
+                
+                img.dataset.dragInitialized = 'true';
+                
                 let isDragging = false;
                 let startX, startY;
-                let initialX = parseFloat(img.dataset.positionX || 50);
-                let initialY = parseFloat(img.dataset.positionY || 50);
+                let currentX = parseFloat(img.dataset.positionX || 50);
+                let currentY = parseFloat(img.dataset.positionY || 50);
                 
-                // Set initial object position
-                img.style.objectPosition = `${initialX}% ${initialY}%`;
+                // Set initial object position and styles
+                img.style.objectPosition = `${currentX}% ${currentY}%`;
                 img.style.objectFit = 'cover';
+                img.style.cursor = 'move';
+                img.style.userSelect = 'none';
                 
-                img.addEventListener('mousedown', (e) => {
+                // Add visual indicator that image is draggable
+                img.title = 'Click and drag to reposition image';
+                
+                console.log(`Initialized image ${index} at position ${currentX}%, ${currentY}%`);
+                
+                const handleMouseDown = (e) => {
                     // Don't start drag if clicking on a button
                     if (e.target.tagName === 'BUTTON') return;
                     
@@ -5666,18 +5684,21 @@
                     startX = e.clientX;
                     startY = e.clientY;
                     img.style.cursor = 'grabbing';
-                    img.style.userSelect = 'none';
                     e.preventDefault();
-                });
+                    e.stopPropagation();
+                    
+                    console.log(`Started dragging image ${index}`);
+                };
                 
-                document.addEventListener('mousemove', (e) => {
+                const handleMouseMove = (e) => {
                     if (!isDragging) return;
                     
-                    const deltaX = (e.clientX - startX) / 2; // Slow down movement
-                    const deltaY = (e.clientY - startY) / 2;
+                    const rect = img.getBoundingClientRect();
+                    const deltaX = ((e.clientX - startX) / rect.width) * 100;
+                    const deltaY = ((e.clientY - startY) / rect.height) * 100;
                     
-                    let newX = initialX + deltaX;
-                    let newY = initialY + deltaY;
+                    let newX = currentX - deltaX; // Inverted for more natural feel
+                    let newY = currentY - deltaY;
                     
                     // Clamp values between 0 and 100
                     newX = Math.max(0, Math.min(100, newX));
@@ -5686,21 +5707,108 @@
                     img.style.objectPosition = `${newX}% ${newY}%`;
                     img.dataset.positionX = newX;
                     img.dataset.positionY = newY;
-                });
+                };
                 
-                document.addEventListener('mouseup', () => {
+                const handleMouseUp = () => {
                     if (isDragging) {
                         isDragging = false;
                         img.style.cursor = 'move';
-                        img.style.userSelect = '';
                         
-                        // Update initial position for next drag
-                        initialX = parseFloat(img.dataset.positionX || 50);
-                        initialY = parseFloat(img.dataset.positionY || 50);
+                        // Update current position for next drag
+                        currentX = parseFloat(img.dataset.positionX || 50);
+                        currentY = parseFloat(img.dataset.positionY || 50);
                         
-                        console.log(`Image repositioned to: ${initialX}%, ${initialY}%`);
+                        console.log(`Image ${index} repositioned to: ${currentX}%, ${currentY}%`);
+                    }
+                };
+                
+                // Add event listeners
+                img.addEventListener('mousedown', handleMouseDown);
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', handleMouseUp);
+                
+                // Also handle mouse leave to stop dragging
+                img.addEventListener('mouseleave', () => {
+                    if (isDragging) {
+                        handleMouseUp();
                     }
                 });
+            });
+        }
+        
+        // Hero background repositioning functionality
+        function initializeHeroBackgroundRepositioning() {
+            const heroSections = document.querySelectorAll('.hero-section');
+            console.log(`Initializing hero background repositioning for ${heroSections.length} sections`);
+            
+            heroSections.forEach((hero, index) => {
+                // Skip if already initialized
+                if (hero.dataset.bgDragInitialized === 'true') {
+                    return;
+                }
+                
+                hero.dataset.bgDragInitialized = 'true';
+                
+                let isDragging = false;
+                let startX, startY;
+                let currentX = parseFloat(hero.dataset.bgPositionX || 50);
+                let currentY = parseFloat(hero.dataset.bgPositionY || 50);
+                
+                // Set initial background position
+                hero.style.backgroundPosition = `${currentX}% ${currentY}%`;
+                hero.style.cursor = 'move';
+                hero.title = 'Click and drag to reposition background';
+                
+                const handleMouseDown = (e) => {
+                    // Don't start drag if clicking on text or buttons
+                    if (e.target !== hero && !e.target.classList.contains('hero-content')) {
+                        return;
+                    }
+                    
+                    isDragging = true;
+                    startX = e.clientX;
+                    startY = e.clientY;
+                    hero.style.cursor = 'grabbing';
+                    e.preventDefault();
+                    
+                    console.log(`Started dragging hero background ${index}`);
+                };
+                
+                const handleMouseMove = (e) => {
+                    if (!isDragging) return;
+                    
+                    const rect = hero.getBoundingClientRect();
+                    const deltaX = ((e.clientX - startX) / rect.width) * 100;
+                    const deltaY = ((e.clientY - startY) / rect.height) * 100;
+                    
+                    let newX = currentX - deltaX;
+                    let newY = currentY - deltaY;
+                    
+                    // Clamp values
+                    newX = Math.max(0, Math.min(100, newX));
+                    newY = Math.max(0, Math.min(100, newY));
+                    
+                    hero.style.backgroundPosition = `${newX}% ${newY}%`;
+                    hero.dataset.bgPositionX = newX;
+                    hero.dataset.bgPositionY = newY;
+                };
+                
+                const handleMouseUp = () => {
+                    if (isDragging) {
+                        isDragging = false;
+                        hero.style.cursor = 'move';
+                        
+                        currentX = parseFloat(hero.dataset.bgPositionX || 50);
+                        currentY = parseFloat(hero.dataset.bgPositionY || 50);
+                        
+                        console.log(`Hero background ${index} repositioned to: ${currentX}%, ${currentY}%`);
+                    }
+                };
+                
+                // Add event listeners
+                hero.addEventListener('mousedown', handleMouseDown);
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', handleMouseUp);
             });
         }
 
@@ -6863,6 +6971,7 @@
                     // Initialize image repositioning for draggable images
                     setTimeout(() => {
                         initializeImageRepositioning();
+                        initializeHeroBackgroundRepositioning();
                     }, 100);
                 }
                 return;
@@ -6925,6 +7034,7 @@
                     // Initialize image repositioning for draggable images
                     setTimeout(() => {
                         initializeImageRepositioning();
+                        initializeHeroBackgroundRepositioning();
                     }, 100);
                 } else {
                     console.error(`Failed to create element for component: ${componentType}`);
@@ -8064,7 +8174,14 @@
             initializeCarouselHover(); // Initialize carousel hover effects
             initializeImageHandling(); // Initialize image click handling
             enableImageDragging(); // Initialize image drag repositioning
-            initializeImageRepositioning(); // Initialize image repositioning for draggable images
+            
+            // Initialize repositioning with a delay to ensure elements are loaded
+            setTimeout(() => {
+                initializeImageRepositioning(); // Initialize image repositioning for draggable images
+                initializeHeroBackgroundRepositioning(); // Initialize hero background repositioning
+                console.log('Repositioning functions initialized');
+            }, 500);
+            
             initializeKeyboardShortcuts(); // Initialize keyboard shortcuts
             setupGlobalClickHandler(); // Initialize component selection system
             updateNavigationPreview(); // Initialize navigation
