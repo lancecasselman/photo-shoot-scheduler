@@ -1357,6 +1357,11 @@
                             Use only lowercase letters, numbers, and hyphens
                         </small>
                         <div id="availability-message" style="margin-top: 10px; font-size: 14px;"></div>
+                        
+                        <button onclick="showCustomDomainInstructions()" 
+                            style="margin-top: 10px; background: none; border: none; color: #667eea; cursor: pointer; font-size: 14px; text-decoration: underline;">
+                            Want to use your own domain? See instructions →
+                        </button>
                     </div>
                     
                     <div style="margin-bottom: 20px;">
@@ -1424,6 +1429,115 @@
                         }
                     }, 500);
                 });
+                
+                // Show custom domain instructions
+                window.showCustomDomainInstructions = function() {
+                    const subdomain = document.getElementById('subdomain-input').value || 'your-subdomain';
+                    
+                    const instructionsDialog = document.createElement('div');
+                    instructionsDialog.style.cssText = `
+                        position: fixed;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        background: white;
+                        padding: 30px;
+                        border-radius: 12px;
+                        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                        z-index: 10001;
+                        max-width: 600px;
+                        width: 90%;
+                        max-height: 80vh;
+                        overflow-y: auto;
+                    `;
+                    
+                    instructionsDialog.innerHTML = `
+                        <h2 style="margin: 0 0 20px 0; font-size: 24px; color: #1f2937;">🔗 Connect Your Custom Domain</h2>
+                        
+                        <div style="background: #f0f9ff; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <p style="margin: 0; color: #0369a1; font-weight: 500;">
+                                ✨ Custom domains are included with your Professional plan!
+                            </p>
+                        </div>
+                        
+                        <h3 style="margin: 20px 0 10px 0; font-size: 18px; color: #374151;">Step 1: Publish Your Website</h3>
+                        <p style="color: #6b7280; margin-bottom: 20px;">
+                            First, publish your website to get your subdomain: <strong>${subdomain}.photomanagementsystem.com</strong>
+                        </p>
+                        
+                        <h3 style="margin: 20px 0 10px 0; font-size: 18px; color: #374151;">Step 2: Add DNS Records</h3>
+                        <p style="color: #6b7280; margin-bottom: 15px;">
+                            In your domain registrar (GoDaddy, Namecheap, etc.), add these DNS records:
+                        </p>
+                        
+                        <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin-bottom: 20px; font-family: monospace;">
+                            <div style="margin-bottom: 15px;">
+                                <strong style="color: #1f2937;">For the main domain (example.com):</strong><br>
+                                <div style="background: white; padding: 10px; border-radius: 4px; margin-top: 10px;">
+                                    Type: <span style="color: #059669;">CNAME</span><br>
+                                    Name: <span style="color: #059669;">@</span> or <span style="color: #059669;">www</span><br>
+                                    Value: <span style="color: #059669; user-select: all; cursor: text;">${subdomain}.photomanagementsystem.com</span><br>
+                                    TTL: <span style="color: #059669;">3600</span> (or Automatic)
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <strong style="color: #1f2937;">For www subdomain (www.example.com):</strong><br>
+                                <div style="background: white; padding: 10px; border-radius: 4px; margin-top: 10px;">
+                                    Type: <span style="color: #059669;">CNAME</span><br>
+                                    Name: <span style="color: #059669;">www</span><br>
+                                    Value: <span style="color: #059669; user-select: all; cursor: text;">${subdomain}.photomanagementsystem.com</span><br>
+                                    TTL: <span style="color: #059669;">3600</span> (or Automatic)
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <h3 style="margin: 20px 0 10px 0; font-size: 18px; color: #374151;">Step 3: Wait for DNS Propagation</h3>
+                        <p style="color: #6b7280; margin-bottom: 20px;">
+                            DNS changes typically take 15 minutes to 48 hours to propagate worldwide. Most updates work within 1-2 hours.
+                        </p>
+                        
+                        <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <p style="margin: 0; color: #92400e;">
+                                <strong>💡 Pro Tip:</strong> Some registrars use "Host" instead of "Name". Use "@" for the root domain and "www" for the www subdomain.
+                            </p>
+                        </div>
+                        
+                        <h3 style="margin: 20px 0 10px 0; font-size: 18px; color: #374151;">Popular Registrars Instructions:</h3>
+                        <ul style="color: #6b7280; margin-bottom: 20px;">
+                            <li><strong>GoDaddy:</strong> DNS → Manage DNS → Add → CNAME</li>
+                            <li><strong>Namecheap:</strong> Domain List → Manage → Advanced DNS → Add New Record</li>
+                            <li><strong>Cloudflare:</strong> DNS → Records → Add Record → CNAME</li>
+                            <li><strong>Google Domains:</strong> DNS → Manage Custom Records → Create New Record</li>
+                        </ul>
+                        
+                        <button onclick="closeCustomDomainInstructions()" 
+                            style="width: 100%; padding: 12px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
+                            Got it! Close Instructions
+                        </button>
+                    `;
+                    
+                    document.body.appendChild(instructionsDialog);
+                    
+                    // Add backdrop for instructions
+                    const instructionsBackdrop = document.createElement('div');
+                    instructionsBackdrop.id = 'instructions-backdrop';
+                    instructionsBackdrop.style.cssText = `
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background: rgba(0, 0, 0, 0.7);
+                        z-index: 10000;
+                    `;
+                    document.body.appendChild(instructionsBackdrop);
+                    
+                    window.closeCustomDomainInstructions = function() {
+                        document.body.removeChild(instructionsDialog);
+                        document.body.removeChild(instructionsBackdrop);
+                    };
+                };
                 
                 // Define cancel and confirm functions globally
                 window.cancelPublish = function() {
