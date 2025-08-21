@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - Photography Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #ffffff;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #d4af37, #f4e487);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #d4af37, #f4e487);
+            color: #1a1a1a;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc2626, #ef4444);
+            color: white;
+        }
+
+        .filters-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .filter-group label {
+            color: #d4af37;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        select, input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 6px;
+            padding: 10px 12px;
+            color: white;
+            font-size: 0.9rem;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #d4af37;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+        }
+
+        .bulk-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            color: #d4af37;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .users-table {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+
+        .table-header {
+            background: rgba(212, 175, 55, 0.1);
+            padding: 20px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-header h3 {
+            color: #d4af37;
+            font-size: 1.2rem;
+        }
+
+        .table-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-input {
+            padding: 8px 35px 8px 12px;
+            width: 250px;
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #888;
+        }
+
+        .table-content {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 15px 20px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.03);
+            color: #d4af37;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #d4af37, #f4e487);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        .user-details h4 {
+            font-size: 0.95rem;
+            margin-bottom: 2px;
+        }
+
+        .user-details p {
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-active {
+            background: rgba(74, 222, 128, 0.2);
+            color: #4ade80;
+        }
+
+        .status-trial {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+        }
+
+        .status-cancelled {
+            background: rgba(248, 113, 113, 0.2);
+            color: #f87171;
+        }
+
+        .status-suspended {
+            background: rgba(156, 163, 175, 0.2);
+            color: #9ca3af;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: none;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn.view {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+
+        .action-btn.edit {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+        }
+
+        .action-btn.suspend {
+            background: rgba(248, 113, 113, 0.2);
+            color: #f87171;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(255, 255, 255, 0.1);
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 25px;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .page-info {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .page-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .page-btn {
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .page-btn:hover {
+            background: rgba(212, 175, 55, 0.2);
+            border-color: #d4af37;
+        }
+
+        .page-btn.active {
+            background: linear-gradient(135deg, #d4af37, #f4e487);
+            color: #1a1a1a;
+            border-color: #d4af37;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            color: #888;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(212, 175, 55, 0.3);
+            border-top: 4px solid #d4af37;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #2d2d2d;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            color: #d4af37;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #d4af37;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 6px;
+            color: white;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            margin-top: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .filters {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .table-controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .search-input {
+                width: 100%;
+            }
+            
+            th, td {
+                padding: 10px 12px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>User Management</h1>
+            <div class="header-actions">
+                <button class="btn btn-secondary" onclick="exportUsers()">Export Users</button>
+                <button class="btn" onclick="refreshData()">Refresh</button>
+            </div>
+        </div>
+
+        <div class="filters-section">
+            <div class="filters">
+                <div class="filter-group">
+                    <label>Status</label>
+                    <select id="statusFilter" onchange="filterUsers()">
+                        <option value="">All Statuses</option>
+                        <option value="active">Active</option>
+                        <option value="trial">Trial</option>
+                        <option value="cancelled">Cancelled</option>
+                        <option value="suspended">Suspended</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Plan Type</label>
+                    <select id="planFilter" onchange="filterUsers()">
+                        <option value="">All Plans</option>
+                        <option value="professional">Professional</option>
+                        <option value="free">Free</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Join Date</label>
+                    <select id="joinDateFilter" onchange="filterUsers()">
+                        <option value="">All Time</option>
+                        <option value="today">Today</option>
+                        <option value="week">This Week</option>
+                        <option value="month">This Month</option>
+                        <option value="quarter">This Quarter</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Sort By</label>
+                    <select id="sortFilter" onchange="filterUsers()">
+                        <option value="created_desc">Newest First</option>
+                        <option value="created_asc">Oldest First</option>
+                        <option value="revenue_desc">Highest Revenue</option>
+                        <option value="sessions_desc">Most Sessions</option>
+                        <option value="storage_desc">Most Storage</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="bulk-actions">
+                <label>
+                    <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                    Select All
+                </label>
+                <button class="btn btn-secondary" onclick="sendBulkEmail()" disabled id="bulkEmailBtn">
+                    Send Email
+                </button>
+                <button class="btn btn-danger" onclick="bulkSuspend()" disabled id="bulkSuspendBtn">
+                    Suspend Selected
+                </button>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Total Users</h3>
+                <div class="stat-value" id="totalUsers">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Active Subscribers</h3>
+                <div class="stat-value" id="activeSubscribers">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Trial Users</h3>
+                <div class="stat-value" id="trialUsers">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Monthly Revenue</h3>
+                <div class="stat-value" id="monthlyRevenue">$0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Avg Storage Usage</h3>
+                <div class="stat-value" id="avgStorage">0 GB</div>
+            </div>
+        </div>
+
+        <div class="users-table">
+            <div class="table-header">
+                <h3>Photographers</h3>
+                <div class="table-controls">
+                    <div class="search-box">
+                        <input type="text" class="search-input" id="searchInput" 
+                               placeholder="Search users..." onkeyup="searchUsers()">
+                        <span class="search-icon">🔍</span>
+                    </div>
+                </div>
+            </div>
+            <div class="table-content">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>
+                                <input type="checkbox" id="headerCheckbox" onchange="toggleSelectAll()">
+                            </th>
+                            <th>User</th>
+                            <th>Plan</th>
+                            <th>Status</th>
+                            <th>Revenue</th>
+                            <th>Sessions</th>
+                            <th>Storage</th>
+                            <th>Joined</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <tr>
+                            <td colspan="9" class="loading">
+                                <div class="spinner"></div>
+                                Loading users...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="pagination">
+                <div class="page-info" id="pageInfo">
+                    Showing 0 - 0 of 0 users
+                </div>
+                <div class="page-controls" id="pageControls">
+                    <!-- Pagination buttons will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Details Modal -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">User Details</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modalBody">
+                <!-- User details will be inserted here -->
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+                <button class="btn" onclick="saveUserChanges()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let allUsers = [];
+        let filteredUsers = [];
+        let currentPage = 1;
+        let usersPerPage = 25;
+        let selectedUsers = new Set();
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUsers();
+        });
+
+        async function loadUsers() {
+            try {
+                showLoading();
+                
+                const response = await fetch('/api/admin/users', {
+                    method: 'GET',
+                    credentials: 'same-origin'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load users');
+                }
+                
+                const data = await response.json();
+                allUsers = data.users || [];
+                filteredUsers = [...allUsers];
+                
+                updateStats(data.stats);
+                renderUsersTable();
+                
+            } catch (error) {
+                console.error('Error loading users:', error);
+                showError('Failed to load users. Please try again.');
+            }
+        }
+
+        function updateStats(stats) {
+            document.getElementById('totalUsers').textContent = stats?.total || 0;
+            document.getElementById('activeSubscribers').textContent = stats?.active || 0;
+            document.getElementById('trialUsers').textContent = stats?.trial || 0;
+            document.getElementById('monthlyRevenue').textContent = formatCurrency(stats?.revenue || 0);
+            document.getElementById('avgStorage').textContent = formatStorage(stats?.avgStorage || 0);
+        }
+
+        function renderUsersTable() {
+            const tbody = document.getElementById('usersTableBody');
+            const startIndex = (currentPage - 1) * usersPerPage;
+            const endIndex = startIndex + usersPerPage;
+            const pageUsers = filteredUsers.slice(startIndex, endIndex);
+
+            if (pageUsers.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" style="text-align: center; color: #888; padding: 40px;">
+                            No users found matching your criteria
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = pageUsers.map(user => `
+                <tr>
+                    <td>
+                        <input type="checkbox" class="user-checkbox" 
+                               value="${user.uid}" onchange="toggleUserSelection('${user.uid}')">
+                    </td>
+                    <td>
+                        <div class="user-info">
+                            <div class="user-avatar">
+                                ${getUserInitials(user.displayName || user.email)}
+                            </div>
+                            <div class="user-details">
+                                <h4>${user.displayName || 'No Name'}</h4>
+                                <p>${user.email}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="status-badge ${getPlanClass(user.plan)}">
+                            ${user.plan || 'Free'}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="status-badge ${getStatusClass(user.status)}">
+                            ${user.status || 'Unknown'}
+                        </span>
+                    </td>
+                    <td>${formatCurrency(user.revenue || 0)}</td>
+                    <td>${user.sessions || 0}</td>
+                    <td>${formatStorage(user.storage || 0)}</td>
+                    <td>${formatDate(user.createdAt)}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="action-btn view" onclick="viewUser('${user.uid}')">
+                                View
+                            </button>
+                            <button class="action-btn edit" onclick="editUser('${user.uid}')">
+                                Edit
+                            </button>
+                            <button class="action-btn suspend" onclick="suspendUser('${user.uid}')">
+                                ${user.status === 'suspended' ? 'Restore' : 'Suspend'}
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+
+            updatePagination();
+        }
+
+        function filterUsers() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            const planFilter = document.getElementById('planFilter').value;
+            const joinDateFilter = document.getElementById('joinDateFilter').value;
+            const sortFilter = document.getElementById('sortFilter').value;
+
+            filteredUsers = allUsers.filter(user => {
+                if (statusFilter && user.status !== statusFilter) return false;
+                if (planFilter && user.plan !== planFilter) return false;
+                
+                if (joinDateFilter) {
+                    const joinDate = new Date(user.createdAt);
+                    const now = new Date();
+                    
+                    switch (joinDateFilter) {
+                        case 'today':
+                            if (joinDate.toDateString() !== now.toDateString()) return false;
+                            break;
+                        case 'week':
+                            const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                            if (joinDate < weekAgo) return false;
+                            break;
+                        case 'month':
+                            if (joinDate.getMonth() !== now.getMonth() || 
+                                joinDate.getFullYear() !== now.getFullYear()) return false;
+                            break;
+                        case 'quarter':
+                            const quarterStart = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
+                            if (joinDate < quarterStart) return false;
+                            break;
+                    }
+                }
+                
+                return true;
+            });
+
+            // Apply sorting
+            filteredUsers.sort((a, b) => {
+                switch (sortFilter) {
+                    case 'created_desc':
+                        return new Date(b.createdAt) - new Date(a.createdAt);
+                    case 'created_asc':
+                        return new Date(a.createdAt) - new Date(b.createdAt);
+                    case 'revenue_desc':
+                        return (b.revenue || 0) - (a.revenue || 0);
+                    case 'sessions_desc':
+                        return (b.sessions || 0) - (a.sessions || 0);
+                    case 'storage_desc':
+                        return (b.storage || 0) - (a.storage || 0);
+                    default:
+                        return 0;
+                }
+            });
+
+            currentPage = 1;
+            renderUsersTable();
+        }
+
+        function searchUsers() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            
+            if (!query.trim()) {
+                filteredUsers = [...allUsers];
+            } else {
+                filteredUsers = allUsers.filter(user => 
+                    user.email.toLowerCase().includes(query) ||
+                    (user.displayName || '').toLowerCase().includes(query)
+                );
+            }
+            
+            currentPage = 1;
+            renderUsersTable();
+        }
+
+        function toggleSelectAll() {
+            const selectAllCheckbox = document.getElementById('selectAll');
+            const userCheckboxes = document.querySelectorAll('.user-checkbox');
+            
+            userCheckboxes.forEach(checkbox => {
+                checkbox.checked = selectAllCheckbox.checked;
+                if (selectAllCheckbox.checked) {
+                    selectedUsers.add(checkbox.value);
+                } else {
+                    selectedUsers.delete(checkbox.value);
+                }
+            });
+            
+            updateBulkActionButtons();
+        }
+
+        function toggleUserSelection(userId) {
+            if (selectedUsers.has(userId)) {
+                selectedUsers.delete(userId);
+            } else {
+                selectedUsers.add(userId);
+            }
+            
+            updateBulkActionButtons();
+        }
+
+        function updateBulkActionButtons() {
+            const bulkEmailBtn = document.getElementById('bulkEmailBtn');
+            const bulkSuspendBtn = document.getElementById('bulkSuspendBtn');
+            
+            const hasSelections = selectedUsers.size > 0;
+            bulkEmailBtn.disabled = !hasSelections;
+            bulkSuspendBtn.disabled = !hasSelections;
+        }
+
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+            const startIndex = (currentPage - 1) * usersPerPage;
+            const endIndex = Math.min(startIndex + usersPerPage, filteredUsers.length);
+
+            document.getElementById('pageInfo').textContent = 
+                `Showing ${startIndex + 1} - ${endIndex} of ${filteredUsers.length} users`;
+
+            const pageControls = document.getElementById('pageControls');
+            pageControls.innerHTML = '';
+
+            // Previous button
+            if (currentPage > 1) {
+                const prevBtn = document.createElement('button');
+                prevBtn.className = 'page-btn';
+                prevBtn.textContent = 'Previous';
+                prevBtn.onclick = () => changePage(currentPage - 1);
+                pageControls.appendChild(prevBtn);
+            }
+
+            // Page numbers
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, startPage + 4);
+
+            for (let i = startPage; i <= endPage; i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
+                pageBtn.textContent = i;
+                pageBtn.onclick = () => changePage(i);
+                pageControls.appendChild(pageBtn);
+            }
+
+            // Next button
+            if (currentPage < totalPages) {
+                const nextBtn = document.createElement('button');
+                nextBtn.className = 'page-btn';
+                nextBtn.textContent = 'Next';
+                nextBtn.onclick = () => changePage(currentPage + 1);
+                pageControls.appendChild(nextBtn);
+            }
+        }
+
+        function changePage(page) {
+            currentPage = page;
+            renderUsersTable();
+        }
+
+        async function viewUser(userId) {
+            try {
+                const response = await fetch(`/api/admin/users/${userId}`, {
+                    credentials: 'same-origin'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load user details');
+                }
+                
+                const user = await response.json();
+                showUserModal(user, 'view');
+                
+            } catch (error) {
+                console.error('Error loading user details:', error);
+                alert('Failed to load user details');
+            }
+        }
+
+        async function editUser(userId) {
+            try {
+                const response = await fetch(`/api/admin/users/${userId}`, {
+                    credentials: 'same-origin'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load user details');
+                }
+                
+                const user = await response.json();
+                showUserModal(user, 'edit');
+                
+            } catch (error) {
+                console.error('Error loading user details:', error);
+                alert('Failed to load user details');
+            }
+        }
+
+        function showUserModal(user, mode) {
+            const modal = document.getElementById('userModal');
+            const modalBody = document.getElementById('modalBody');
+            
+            const isEditable = mode === 'edit';
+            
+            modalBody.innerHTML = `
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="userEmail" value="${user.email}" ${isEditable ? '' : 'readonly'}>
+                </div>
+                <div class="form-group">
+                    <label>Display Name</label>
+                    <input type="text" id="userDisplayName" value="${user.displayName || ''}" ${isEditable ? '' : 'readonly'}>
+                </div>
+                <div class="form-group">
+                    <label>Plan</label>
+                    <select id="userPlan" ${isEditable ? '' : 'disabled'}>
+                        <option value="free" ${user.plan === 'free' ? 'selected' : ''}>Free</option>
+                        <option value="professional" ${user.plan === 'professional' ? 'selected' : ''}>Professional</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="userStatus" ${isEditable ? '' : 'disabled'}>
+                        <option value="active" ${user.status === 'active' ? 'selected' : ''}>Active</option>
+                        <option value="trial" ${user.status === 'trial' ? 'selected' : ''}>Trial</option>
+                        <option value="suspended" ${user.status === 'suspended' ? 'selected' : ''}>Suspended</option>
+                        <option value="cancelled" ${user.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Storage Used</label>
+                    <input type="text" value="${formatStorage(user.storage || 0)}" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Total Sessions</label>
+                    <input type="text" value="${user.sessions || 0}" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Monthly Revenue</label>
+                    <input type="text" value="${formatCurrency(user.revenue || 0)}" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Joined Date</label>
+                    <input type="text" value="${formatDate(user.createdAt)}" readonly>
+                </div>
+            `;
+            
+            modal.style.display = 'block';
+            modal.dataset.userId = user.uid;
+            modal.dataset.mode = mode;
+        }
+
+        function closeModal() {
+            document.getElementById('userModal').style.display = 'none';
+        }
+
+        async function saveUserChanges() {
+            const modal = document.getElementById('userModal');
+            const userId = modal.dataset.userId;
+            const mode = modal.dataset.mode;
+            
+            if (mode !== 'edit') {
+                closeModal();
+                return;
+            }
+            
+            try {
+                const updatedUser = {
+                    email: document.getElementById('userEmail').value,
+                    displayName: document.getElementById('userDisplayName').value,
+                    plan: document.getElementById('userPlan').value,
+                    status: document.getElementById('userStatus').value
+                };
+                
+                const response = await fetch(`/api/admin/users/${userId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify(updatedUser)
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to update user');
+                }
+                
+                alert('User updated successfully');
+                closeModal();
+                loadUsers(); // Refresh the table
+                
+            } catch (error) {
+                console.error('Error updating user:', error);
+                alert('Failed to update user');
+            }
+        }
+
+        async function suspendUser(userId) {
+            if (!confirm('Are you sure you want to suspend this user?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/admin/users/${userId}/suspend`, {
+                    method: 'POST',
+                    credentials: 'same-origin'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to suspend user');
+                }
+                
+                alert('User suspended successfully');
+                loadUsers(); // Refresh the table
+                
+            } catch (error) {
+                console.error('Error suspending user:', error);
+                alert('Failed to suspend user');
+            }
+        }
+
+        // Utility functions
+        function getUserInitials(name) {
+            if (!name) return '?';
+            return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+        }
+
+        function getPlanClass(plan) {
+            switch (plan?.toLowerCase()) {
+                case 'professional': return 'status-active';
+                case 'free': return 'status-trial';
+                default: return 'status-trial';
+            }
+        }
+
+        function getStatusClass(status) {
+            switch (status?.toLowerCase()) {
+                case 'active': return 'status-active';
+                case 'trial': return 'status-trial';
+                case 'cancelled': return 'status-cancelled';
+                case 'suspended': return 'status-suspended';
+                default: return 'status-trial';
+            }
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD'
+            }).format(amount || 0);
+        }
+
+        function formatStorage(bytes) {
+            if (bytes === 0) return '0 GB';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            return new Date(dateString).toLocaleDateString();
+        }
+
+        function showLoading() {
+            // Show loading states
+        }
+
+        function showError(message) {
+            console.error(message);
+            alert(message);
+        }
+
+        async function refreshData() {
+            await loadUsers();
+        }
+
+        function exportUsers() {
+            // Create CSV export of filtered users
+            const csvContent = generateUsersCSV(filteredUsers);
+            downloadCSV(csvContent, 'photographers-export.csv');
+        }
+
+        function generateUsersCSV(users) {
+            const headers = [
+                'Email', 'Display Name', 'Plan', 'Status', 'Revenue', 
+                'Sessions', 'Storage (GB)', 'Joined Date'
+            ];
+            
+            const rows = users.map(user => [
+                user.email,
+                user.displayName || '',
+                user.plan || 'Free',
+                user.status || 'Unknown',
+                user.revenue || 0,
+                user.sessions || 0,
+                Math.round((user.storage || 0) / (1024 * 1024 * 1024) * 100) / 100,
+                formatDate(user.createdAt)
+            ]);
+
+            return [headers, ...rows].map(row => row.join(',')).join('\n');
+        }
+
+        function downloadCSV(csvContent, filename) {
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function sendBulkEmail() {
+            if (selectedUsers.size === 0) {
+                alert('Please select users to email');
+                return;
+            }
+            
+            const message = prompt('Enter message to send to selected users:');
+            if (!message) return;
+            
+            // TODO: Implement bulk email functionality
+            alert(`Email would be sent to ${selectedUsers.size} users`);
+        }
+
+        function bulkSuspend() {
+            if (selectedUsers.size === 0) {
+                alert('Please select users to suspend');
+                return;
+            }
+            
+            if (!confirm(`Are you sure you want to suspend ${selectedUsers.size} users?`)) {
+                return;
+            }
+            
+            // TODO: Implement bulk suspend functionality
+            alert(`${selectedUsers.size} users would be suspended`);
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('userModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>

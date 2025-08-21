@@ -72,6 +72,11 @@ const createProductionRoutes = require('./server/production-routes');
 const SupportSystem = require('./server/support-system');
 const createSupportRoutes = require('./server/support-routes');
 
+// Import analytics and data export systems
+const AnalyticsSystem = require('./server/analytics-system');
+const DataExportSystem = require('./server/data-export-system');
+const BackupSystem = require('./server/backup-system');
+
 // Database schema imports
 const { businessExpenses } = require('./shared/schema');
 const { eq, and, desc, asc, between } = require('drizzle-orm');
@@ -286,6 +291,39 @@ const supportSystem = new SupportSystem(pool);
         console.log('✅ Support system initialized');
     } catch (error) {
         console.warn('Support system initialization skipped:', error.message);
+    }
+})();
+
+// Initialize analytics system
+const analyticsSystem = new AnalyticsSystem(pool);
+(async () => {
+    try {
+        await analyticsSystem.initializeTables();
+        console.log('✅ Analytics system initialized');
+    } catch (error) {
+        console.warn('Analytics system initialization skipped:', error.message);
+    }
+})();
+
+// Initialize data export system
+const dataExportSystem = new DataExportSystem(pool, r2FileManager);
+(async () => {
+    try {
+        await dataExportSystem.initializeTables();
+        console.log('✅ Data export system initialized');
+    } catch (error) {
+        console.warn('Data export system initialization skipped:', error.message);
+    }
+})();
+
+// Initialize backup system
+const backupSystem = new BackupSystem(pool, r2FileManager);
+(async () => {
+    try {
+        await backupSystem.initialize();
+        console.log('✅ Backup system initialized with automated schedules');
+    } catch (error) {
+        console.warn('Backup system initialization skipped:', error.message);
     }
 })();
 
@@ -1536,6 +1574,236 @@ app.use('/api/system', createProductionRoutes(healthCheck, logger));
 
 // Support system routes
 app.use('/api/support', createSupportRoutes(supportSystem, isAuthenticated));
+
+// Analytics routes (admin only)
+app.get('/api/admin/analytics', async (req, res) => {
+    try {
+        // Check admin access
+        if (!req.session || !req.session.user || req.session.user.email !== 'lancecasselman@icloud.com') {
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const timeframe = parseInt(req.query.timeframe) || 30;
+        const analytics = await analyticsSystem.getPlatformAnalytics(timeframe);
+        
+        res.json(analytics);
+    } catch (error) {
+        console.error('Error fetching analytics:', error);
+        res.status(500).json({ error: 'Failed to fetch analytics' });
+    }
+});
+
+// Data export routes
+app.post('/api/export/request', isAuthenticated, async (req, res) => {
+    try {
+        const { format, includeFiles } = req.body;
+        const userId = req.session.user.uid;
+        
+        const exportResult = await dataExportSystem.exportUserData(
+            userId, 
+            format || 'json', 
+            includeFiles !== false
+        );
+        
+        // Store export request
+        await pool.query(`
+            INSERT INTO data_export_requests 
+            (user_id, export_id, format, file_path, file_size, expires_at)
+            VALUES ($1, $2, $3, $4, $5, $6)
+        `, [
+            userId, 
+            exportResult.exportId, 
+            exportResult.format,
+            exportResult.filePath,
+            exportResult.size,
+            new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+        ]);
+        
+        res.json({
+            success: true,
+            exportId: exportResult.exportId,
+            downloadUrl: exportResult.downloadUrl,
+            size: exportResult.size,
+            format: exportResult.format
+        });
+        
+    } catch (error) {
+        console.error('Error creating data export:', error);
+        res.status(500).json({ error: 'Failed to create data export' });
+    }
+});
+
+app.get('/api/export/download/:exportId', isAuthenticated, async (req, res) => {
+    try {
+        const { exportId } = req.params;
+        const userId = req.session.user.uid;
+        
+        // Verify export belongs to user
+        const exportRecord = await pool.query(`
+            SELECT * FROM data_export_requests
+            WHERE export_id = $1 AND user_id = $2 AND expires_at > NOW()
+        `, [exportId, userId]);
+        
+        if (exportRecord.rows.length === 0) {
+            return res.status(404).json({ error: 'Export not found or expired' });
+        }
+        
+        const record = exportRecord.rows[0];
+        const filePath = record.file_path;
+        
+        // Check if file exists
+        const fs = require('fs');
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).json({ error: 'Export file not found' });
+        }
+        
+        // Set appropriate headers
+        const filename = `user-data-export-${exportId}.${record.format}`;
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.setHeader('Content-Type', 'application/octet-stream');
+        
+        // Stream file to client
+        const fileStream = fs.createReadStream(filePath);
+        fileStream.pipe(res);
+        
+    } catch (error) {
+        console.error('Error downloading export:', error);
+        res.status(500).json({ error: 'Failed to download export' });
+    }
+});
+
+// User management routes (admin only)
+app.get('/api/admin/users', async (req, res) => {
+    try {
+        // Check admin access
+        if (!req.session || !req.session.user || req.session.user.email !== 'lancecasselman@icloud.com') {
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        // Get all users with subscription and usage data
+        const users = await pool.query(`
+            SELECT 
+                u.uid, u.email, u.display_name, u.created_at,
+                us.plan_type as plan, us.status,
+                COALESCE(
+                    CASE WHEN us.plan_type = 'professional' THEN 39 ELSE 0 END + 
+                    (us.storage_add_ons * 25), 0
+                ) as revenue,
+                COALESCE(session_count.count, 0) as sessions,
+                COALESCE(ss.storage_used, 0) as storage
+            FROM users u
+            LEFT JOIN user_subscriptions us ON u.uid = us.user_id AND us.status = 'active'
+            LEFT JOIN storage_summary ss ON u.uid = ss.user_id
+            LEFT JOIN (
+                SELECT user_id, COUNT(*) as count
+                FROM sessions
+                GROUP BY user_id
+            ) session_count ON u.uid = session_count.user_id
+            ORDER BY u.created_at DESC
+        `);
+
+        // Get summary stats
+        const stats = await pool.query(`
+            SELECT 
+                COUNT(*) as total,
+                COUNT(CASE WHEN us.status = 'active' AND us.plan_type = 'professional' THEN 1 END) as active,
+                COUNT(CASE WHEN us.status = 'trial' OR us.plan_type IS NULL THEN 1 END) as trial,
+                COALESCE(SUM(CASE WHEN us.plan_type = 'professional' THEN 39 ELSE 0 END), 0) as revenue,
+                COALESCE(AVG(ss.storage_used), 0) as avg_storage
+            FROM users u
+            LEFT JOIN user_subscriptions us ON u.uid = us.user_id
+            LEFT JOIN storage_summary ss ON u.uid = ss.user_id
+        `);
+
+        res.json({
+            users: users.rows,
+            stats: stats.rows[0]
+        });
+
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        res.status(500).json({ error: 'Failed to fetch users' });
+    }
+});
+
+app.get('/api/admin/users/:userId', async (req, res) => {
+    try {
+        // Check admin access
+        if (!req.session || !req.session.user || req.session.user.email !== 'lancecasselman@icloud.com') {
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const { userId } = req.params;
+
+        const user = await pool.query(`
+            SELECT 
+                u.*, 
+                us.plan_type as plan, us.status, us.storage_add_ons,
+                ss.storage_used as storage,
+                COUNT(DISTINCT s.id) as sessions,
+                COALESCE(
+                    CASE WHEN us.plan_type = 'professional' THEN 39 ELSE 0 END + 
+                    (us.storage_add_ons * 25), 0
+                ) as revenue
+            FROM users u
+            LEFT JOIN user_subscriptions us ON u.uid = us.user_id AND us.status = 'active'
+            LEFT JOIN storage_summary ss ON u.uid = ss.user_id
+            LEFT JOIN sessions s ON u.uid = s.user_id
+            WHERE u.uid = $1
+            GROUP BY u.uid, us.plan_type, us.status, us.storage_add_ons, ss.storage_used
+        `, [userId]);
+
+        if (user.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        res.json(user.rows[0]);
+
+    } catch (error) {
+        console.error('Error fetching user details:', error);
+        res.status(500).json({ error: 'Failed to fetch user details' });
+    }
+});
+
+// Backup management routes (admin only)
+app.get('/api/admin/backups', async (req, res) => {
+    try {
+        // Check admin access
+        if (!req.session || !req.session.user || req.session.user.email !== 'lancecasselman@icloud.com') {
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const backupStatus = await backupSystem.getBackupStatus();
+        res.json(backupStatus);
+
+    } catch (error) {
+        console.error('Error fetching backup status:', error);
+        res.status(500).json({ error: 'Failed to fetch backup status' });
+    }
+});
+
+app.post('/api/admin/backups/create', async (req, res) => {
+    try {
+        // Check admin access
+        if (!req.session || !req.session.user || req.session.user.email !== 'lancecasselman@icloud.com') {
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const { backupType } = req.body;
+        const userId = req.session.user.uid;
+
+        const backup = await backupSystem.createManualBackup(backupType, userId);
+        
+        res.json({
+            success: true,
+            backup
+        });
+
+    } catch (error) {
+        console.error('Error creating backup:', error);
+        res.status(500).json({ error: 'Failed to create backup' });
+    }
+});
 
 // Object Storage Routes for Gallery and Raw Storage
 const objectStorageService = new ObjectStorageService();
