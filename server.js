@@ -13783,8 +13783,11 @@ app.post('/api/stripe-connect/onboard', isAuthenticated, async (req, res) => {
         
         console.log('✅ STRIPE: No existing Stripe account found, proceeding with creation');
         
-        // Create Express account
-        const accountResult = await stripeConnectManager.createExpressAccount(userEmail, 'Photography Business');
+        // Create Express account with photographer's business name if available
+        const businessName = req.session.user.displayName ? 
+            `${req.session.user.displayName} Photography` : 
+            'Photography Business';
+        const accountResult = await stripeConnectManager.createExpressAccount(userEmail, businessName);
         if (!accountResult.success) {
             return res.status(500).json({
                 success: false,

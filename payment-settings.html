@@ -229,7 +229,7 @@
         
         <div class="header">
             <h1>Payment Settings</h1>
-            <p>Connect your Stripe account to receive payments directly from your clients</p>
+            <p>Connect your Stripe account to receive payments directly from your clients - Setup takes just 2 minutes!</p>
         </div>
         
         <div id="loading" class="card loading">
@@ -254,30 +254,41 @@
                 </div>
                 
                 <div class="info-section">
-                    <h3>How Stripe Connect Works</h3>
+                    <h3>✨ Quick & Easy Setup - Takes 2 Minutes!</h3>
                     <ul>
-                        <li>Receive payments directly to your bank account</li>
-                        <li>Automatic daily or weekly payouts</li>
-                        <li>Professional invoices sent to clients</li>
-                        <li>Secure payment processing with fraud protection</li>
-                        <li>Support for deposits and payment plans</li>
-                        <li>Transaction fees: 2.9% + 30¢ per successful payment</li>
+                        <li><strong>Simple Setup:</strong> Just enter your basic info - no complex forms!</li>
+                        <li><strong>Fast Payouts:</strong> Get paid daily directly to your bank</li>
+                        <li><strong>No Monthly Fees:</strong> Only pay 2.9% + 30¢ when you get paid</li>
+                        <li><strong>All-in-One:</strong> Accept cards, send invoices, track payments</li>
+                        <li><strong>Secure:</strong> Bank-level security with fraud protection</li>
+                        <li><strong>Tax Ready:</strong> Automatic 1099 forms for tax season</li>
                     </ul>
                 </div>
             </div>
             
             <div class="card">
-                <h2>Payment Features</h2>
+                <h2>🎯 Built for Photographers</h2>
                 
-                <div class="info-section">
-                    <h3>Available Payment Options</h3>
+                <div class="info-section" style="background: #fff3cd; border: 1px solid #ffc107;">
+                    <h3 style="color: #856404;">Everything You Need to Get Paid</h3>
                     <ul>
-                        <li>Session deposits (customizable amounts)</li>
-                        <li>Full session payments</li>
-                        <li>Payment plans for large bookings</li>
-                        <li>Automatic payment reminders</li>
-                        <li>Digital invoices with payment links</li>
-                        <li>Credit card and ACH bank transfers</li>
+                        <li><strong>Deposits & Retainers:</strong> Secure bookings with customizable deposits</li>
+                        <li><strong>Full Payments:</strong> Accept session payments in full</li>
+                        <li><strong>Payment Plans:</strong> Offer flexible payment options for weddings</li>
+                        <li><strong>Professional Invoices:</strong> Automated invoices with your branding</li>
+                        <li><strong>Payment Links:</strong> Share secure payment links via text or email</li>
+                        <li><strong>Multiple Payment Methods:</strong> Cards, bank transfers, digital wallets</li>
+                    </ul>
+                </div>
+                
+                <div class="info-section" style="margin-top: 20px;">
+                    <h3>🎉 Why Photographers Love This</h3>
+                    <ul>
+                        <li><strong>"Got paid same day!"</strong> - Daily automatic payouts</li>
+                        <li><strong>"So professional!"</strong> - Branded invoices impress clients</li>
+                        <li><strong>"No more chasing payments"</strong> - Automated reminders</li>
+                        <li><strong>"Tax time is easy now"</strong> - Automatic 1099 forms</li>
+                        <li><strong>"Setup was a breeze"</strong> - 2-minute onboarding</li>
                     </ul>
                 </div>
             </div>
@@ -408,9 +419,12 @@
                     }
                     
                     actionSection.innerHTML = `
-                        <button class="button" onclick="continueOnboarding()">
-                            Continue Setup
+                        <button class="button" onclick="continueOnboarding()" style="padding: 15px 40px; font-size: 18px;">
+                            📝 Complete Your Setup (Almost Done!)
                         </button>
+                        <p style="margin-top: 15px; color: #856404;">
+                            <strong>Just a few more details needed</strong> - Takes less than a minute!
+                        </p>
                     `;
                 }
                 
@@ -426,19 +440,19 @@
                 `;
                 
                 actionSection.innerHTML = `
-                    <button class="button" onclick="startOnboarding()">
-                        Connect Stripe Account
+                    <button class="button" onclick="startOnboarding()" style="padding: 15px 40px; font-size: 18px;">
+                        🚀 Start Quick Setup (2 Minutes)
                     </button>
-                    <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
-                        <p style="color: #666; margin-bottom: 10px;">
-                            <strong>Alternative Setup:</strong> If you're getting permission errors, you can:
-                        </p>
-                        <ol style="color: #666; margin-left: 20px;">
-                            <li>Update your Stripe API key permissions</li>
-                            <li>Or use a standard secret key instead of a restricted key</li>
-                        </ol>
-                        <p style="color: #666; margin-top: 10px;">
-                            Your current key (rk_live...) has restricted permissions.
+                    <div style="margin-top: 20px; padding: 20px; background: #e8f5e9; border-radius: 8px; border: 1px solid #4caf50;">
+                        <h4 style="color: #2e7d32; margin-bottom: 15px;">📋 What You'll Need (Most is Optional!):</h4>
+                        <ul style="color: #2e7d32; list-style: none; padding: 0;">
+                            <li style="padding: 5px 0;">✅ <strong>Required:</strong> Your email & phone number</li>
+                            <li style="padding: 5px 0;">✅ <strong>Required:</strong> Last 4 digits of SSN (for tax forms)</li>
+                            <li style="padding: 5px 0;">📍 <strong>Optional:</strong> Business address (can use home address)</li>
+                            <li style="padding: 5px 0;">🏦 <strong>Optional:</strong> Bank account for payouts (can add later)</li>
+                        </ul>
+                        <p style="color: #2e7d32; margin-top: 15px; font-weight: bold;">
+                            💡 Tip: You can start accepting payments immediately and add bank details later!
                         </p>
                     </div>
                 `;

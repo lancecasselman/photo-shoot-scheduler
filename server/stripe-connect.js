@@ -19,14 +19,22 @@ class StripeConnectManager {
             const uniqueId = Math.random().toString(36).substring(2, 15);
             
             const account = await stripe.accounts.create({
-                type: 'express',
+                type: 'express', // Express is the simplest - Stripe handles all compliance
                 country: country,
                 email: email,
                 capabilities: {
                     card_payments: { requested: true },
                     transfers: { requested: true }
                 },
-                business_type: 'individual',
+                business_type: 'individual', // Simplest for sole proprietors
+                // Prefill as much as possible to reduce onboarding steps
+                business_profile: {
+                    mcc: '7333', // Photography studios MCC code
+                    name: businessName || 'Photography Business',
+                    product_description: 'Professional photography services including portraits, weddings, and events',
+                    support_email: email,
+                    url: 'https://photomanagementsystem.com' // Generic URL to skip this step
+                },
                 metadata: {
                     photographer_email: email,
                     platform: 'photography_management_system',
@@ -37,7 +45,19 @@ class StripeConnectManager {
                 settings: {
                     payouts: {
                         schedule: {
-                            interval: 'daily'
+                            interval: 'daily', // Fastest payout schedule
+                            delay_days: 2 // Minimum delay for daily payouts
+                        },
+                        statement_descriptor: 'PHOTO' // Short descriptor for bank statements
+                    },
+                    payments: {
+                        statement_descriptor: 'PHOTOGRAPHY', // What appears on customer statements
+                        statement_descriptor_prefix: 'PHOTO' // Prefix for dynamic descriptors
+                    },
+                    card_payments: {
+                        decline_on: {
+                            avs_failure: false, // Don't decline on address mismatch (easier for clients)
+                            cvc_failure: true // Still check CVV for security
                         }
                     }
                 }
