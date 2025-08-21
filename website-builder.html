@@ -816,6 +816,14 @@
                                 <div class="component-icon">🔘</div>
                                 <span class="component-text">Button</span>
                             </div>
+                            <div class="component-item" draggable="true" data-component="blog" onclick="addComponent('blog')" style="cursor: pointer;">
+                                <div class="component-icon">📝</div>
+                                <span class="component-text">Blog Post</span>
+                            </div>
+                            <div class="component-item" onclick="openBlogGenerator()" style="cursor: pointer; background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
+                                <div class="component-icon">✨</div>
+                                <span class="component-text">AI Blog</span>
+                            </div>
                             <div class="component-item" draggable="true" data-component="contact" onclick="addComponent('contact')" style="cursor: pointer;">
                                 <div class="component-icon">📧</div>
                                 <span class="component-text">Contact</span>
@@ -3662,6 +3670,31 @@
                     <div style="text-align: center; padding: 20px;">
                         <button style="background: #667eea; color: white; padding: 15px 30px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: 600; transition: background-color 0.3s;" data-page-link="" onmouseover="this.style.backgroundColor='#5a67d8'" onmouseout="this.style.backgroundColor='#667eea'">${data.text || 'Click Me'}</button>
                     </div>
+                </div>
+            `,
+            blog: (data = {}) => `
+                <div class="element" data-type="blog">
+                    <article style="max-width: 800px; margin: 0 auto; padding: 60px 20px;">
+                        <h1 style="font-family: 'Playfair Display', serif; font-size: 42px; margin-bottom: 20px; color: #1a202c; line-height: 1.2;">${data.title || 'Blog Post Title'}</h1>
+                        <div style="color: #718096; margin-bottom: 30px; font-size: 14px;">
+                            <span>${data.author || 'Your Name'}</span> • 
+                            <span>${data.date || new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                        </div>
+                        <div style="line-height: 1.8; color: #4a5568; font-size: 16px;">
+                            ${data.content || `
+                                <p style="margin-bottom: 20px;">This is where your blog content goes. You can share your photography insights, tips, behind-the-scenes stories, and connect with your audience through engaging content.</p>
+                                <p style="margin-bottom: 20px;">Use the AI Blog Generator to create SEO-optimized content that showcases your expertise and helps potential clients find you online.</p>
+                                <p style="margin-bottom: 20px;">Regular blogging helps establish your authority in photography, improves your website's search engine rankings, and gives visitors a reason to return to your site.</p>
+                            `}
+                        </div>
+                        ${data.tags ? `
+                            <div style="margin-top: 40px; padding-top: 30px; border-top: 1px solid #e2e8f0;">
+                                <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                                    ${data.tags.map(tag => `<span style="background: #f7fafc; color: #4a5568; padding: 6px 12px; border-radius: 20px; font-size: 13px;">#${tag}</span>`).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </article>
                 </div>
             `,
             header: (data = {}) => `
@@ -7010,6 +7043,145 @@
             closePageLinkModal();
             
             console.log(`Text converted to page link: "${originalText}" -> ${selectedPage}`);
+        }
+        
+        // Open AI Blog Generator
+        function openBlogGenerator() {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+            `;
+            
+            const iframe = document.createElement('iframe');
+            iframe.src = '/blog-generator-component.html';
+            iframe.style.cssText = `
+                width: 90%;
+                height: 90%;
+                max-width: 1200px;
+                border: none;
+                border-radius: 12px;
+                background: white;
+            `;
+            
+            const closeBtn = document.createElement('button');
+            closeBtn.textContent = '✕';
+            closeBtn.style.cssText = `
+                position: absolute;
+                top: 20px;
+                right: 20px;
+                background: white;
+                border: none;
+                font-size: 24px;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                cursor: pointer;
+                z-index: 10001;
+            `;
+            closeBtn.onclick = () => document.body.removeChild(modal);
+            
+            modal.appendChild(iframe);
+            modal.appendChild(closeBtn);
+            document.body.appendChild(modal);
+
+            // Listen for messages from the blog generator
+            window.addEventListener('message', function(event) {
+                if (event.data.type === 'ADD_BLOG_POST') {
+                    // Add the blog post to the canvas
+                    const blogData = {
+                        title: event.data.title,
+                        content: formatBlogContent(event.data.content),
+                        author: 'By You',
+                        date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+                        tags: extractKeywords(event.data.content)
+                    };
+                    
+                    // Add blog component to the canvas
+                    const canvas = document.getElementById('canvas');
+                    const blogHTML = componentTemplates.blog(blogData);
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = blogHTML;
+                    const blogElement = tempDiv.firstElementChild;
+                    
+                    canvas.appendChild(blogElement);
+                    initializeEditableElement(blogElement);
+                    
+                    // Save to page
+                    const currentPageData = pages[currentPage];
+                    if (currentPageData) {
+                        currentPageData.content = canvas.innerHTML;
+                        saveWebsiteData();
+                    }
+                    
+                    document.body.removeChild(modal);
+                    alert('Blog post added to your website!');
+                }
+            });
+        }
+        
+        // Format blog content from markdown to HTML
+        function formatBlogContent(markdown) {
+            let html = markdown
+                .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+                .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+                .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.+?)\*/g, '<em>$1</em>')
+                .replace(/\n\n/g, '</p><p>')
+                .replace(/^- (.+)$/gm, '<li>$1</li>');
+            
+            if (!html.startsWith('<')) {
+                html = '<p>' + html + '</p>';
+            }
+            
+            // Handle lists
+            html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+            
+            return html;
+        }
+        
+        // Extract keywords from content for tags
+        function extractKeywords(content) {
+            const keywords = [];
+            const commonWords = ['the', 'is', 'at', 'which', 'on', 'and', 'a', 'an', 'as', 'are', 'was', 'were', 'be', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'can', 'could', 'to', 'of', 'in', 'for', 'with', 'by', 'from', 'about'];
+            
+            // Extract words from content
+            const words = content.toLowerCase().match(/\b[a-z]+\b/g) || [];
+            const wordCount = {};
+            
+            words.forEach(word => {
+                if (word.length > 4 && !commonWords.includes(word)) {
+                    wordCount[word] = (wordCount[word] || 0) + 1;
+                }
+            });
+            
+            // Get top 5 most frequent words as tags
+            Object.entries(wordCount)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5)
+                .forEach(([word]) => keywords.push(word));
+            
+            return keywords;
+        }
+        
+        // Initialize editable element (for newly added blog posts)
+        function initializeEditableElement(element) {
+            makeElementsEditable();
+            makeImagesEditable();
+            // Re-initialize text editing for the new element
+            element.querySelectorAll('h1, h2, h3, p, span').forEach(textEl => {
+                textEl.classList.add('editable-text');
+                textEl.style.cursor = 'text';
+            });
         }
         
         // Initialize text editing with comprehensive toolbar support
