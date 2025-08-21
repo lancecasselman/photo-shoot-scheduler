@@ -179,7 +179,7 @@
         }
 
         .user-avatar {
-            width: 48px;
+            min-width: 48px;
             height: 48px;
             border-radius: 50%;
             background: linear-gradient(135deg, #667eea, #764ba2);
@@ -188,6 +188,34 @@
             justify-content: center;
             color: white;
             font-weight: bold;
+            font-size: 0.75rem;
+            flex-shrink: 0;
+            padding: 0 8px;
+            text-align: center;
+            line-height: 1;
+            max-width: 120px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .user-avatar.clickable {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .user-avatar.clickable:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .author-name.clickable {
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .author-name.clickable:hover {
+            color: #667eea;
         }
 
         .post-input {
@@ -932,7 +960,7 @@
                     💬
                     <span class="badge-count" id="messageCount" style="display: none;">0</span>
                 </div>
-                <div class="user-avatar" id="userAvatar">U</div>
+                <div class="user-avatar clickable" id="userAvatar" onclick="showMyProfile()" title="View your profile">User</div>
             </div>
         </div>
     </header>
@@ -979,7 +1007,7 @@
             <!-- Create Post -->
             <div class="create-post">
                 <div class="create-post-header">
-                    <div class="user-avatar" id="createPostAvatar">U</div>
+                    <div class="user-avatar" id="createPostAvatar">User</div>
                     <input type="text" class="post-input" placeholder="Share your photography journey..." onclick="openCreatePost()">
                 </div>
                 <div class="create-post-actions">
@@ -1189,14 +1217,34 @@
             }
         }
 
-        // Update user display
+        // Update user display - show full username instead of initials
         function updateUserDisplay() {
             if (currentUser) {
-                const initials = currentUser.displayName ? 
-                    currentUser.displayName.split(' ').map(n => n[0]).join('').toUpperCase() : 
-                    'U';
-                document.getElementById('userAvatar').textContent = initials;
-                document.getElementById('createPostAvatar').textContent = initials;
+                const displayName = currentUser.displayName || 'User';
+                document.getElementById('userAvatar').textContent = displayName;
+                document.getElementById('createPostAvatar').textContent = displayName;
+                
+                // Update tooltip
+                document.getElementById('userAvatar').title = `View ${displayName}'s profile`;
+            }
+        }
+
+        // View user profile
+        function viewUserProfile(userId, userName) {
+            console.log(`👤 Viewing profile for: ${userName} (ID: ${userId})`);
+            
+            // For now, show a simple alert with user info
+            // This can be expanded to show a full profile modal
+            alert(`Profile: ${userName}\n\nUser ID: ${userId}\n\nThis will be expanded to show:\n• User's posts\n• Photography portfolio\n• Bio and specialties\n• Contact information`);
+            
+            // Future: Open profile modal or navigate to profile page
+            // openUserProfileModal(userId, userName);
+        }
+
+        // Show current user's profile
+        function showMyProfile() {
+            if (currentUser) {
+                viewUserProfile(currentUser.userId, currentUser.displayName || 'User');
             }
         }
 
@@ -1288,9 +1336,11 @@
                 <div class="post-card ${postClass}" data-post-id="${post.id}">
                     <div class="post-header">
                         <div class="post-author">
-                            <div class="user-avatar">${getInitials(post.user_name || post.userName)}</div>
+                            <div class="user-avatar clickable" onclick="viewUserProfile('${post.user_id}', '${post.user_name || post.userName}')" title="View ${post.user_name || post.userName}'s profile">
+                                ${post.user_name || post.userName}
+                            </div>
                             <div class="author-info">
-                                <div class="author-name">${post.user_name || post.userName}</div>
+                                <div class="author-name clickable" onclick="viewUserProfile('${post.user_id}', '${post.user_name || post.userName}')">${post.user_name || post.userName}</div>
                                 <div class="post-time">${formatTime(post.created_at || post.createdAt)}</div>
                                 ${post.user_id === currentUser?.userId ? '<span style="color: #4CAF50; font-size: 0.75rem;">(You)</span>' : ''}
                             </div>
@@ -1348,7 +1398,7 @@
                     </div>
 
                     <div class="comment-input-wrapper">
-                        <div class="user-avatar">${currentUser ? getInitials(currentUser.displayName) : 'U'}</div>
+                        <div class="user-avatar">${currentUser ? (currentUser.displayName || 'You') : 'User'}</div>
                         <input type="text" class="comment-input" placeholder="Add a comment..." 
                                onkeypress="handleCommentKeypress(event, '${post.id}')">
                     </div>
