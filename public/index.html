@@ -54,7 +54,7 @@
         <div class="description">
             Professional photography business management platform
         </div>
-        <a href="/" class="launch-button">
+        <a href="/app" class="launch-button">
             Launch Application
         </a>
     </div>
@@ -72,10 +72,10 @@
                     if (window.Capacitor.isNativePlatform()) {
                         e.preventDefault();
                         // Navigate to main app in native context
-                        window.location.href = '/';
+                        window.location.href = '/app';
                     } else {
                         // Web platform - allow normal navigation
-                        window.location.href = '/';
+                        window.location.href = '/app';
                     }
                 });
             }
