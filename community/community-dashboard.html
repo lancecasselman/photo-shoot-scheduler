@@ -876,8 +876,8 @@
             position: fixed;
             bottom: 20px;
             right: 20px;
-            width: 350px;
-            height: 500px;
+            width: 400px;
+            height: 550px;
             background: #1a1a1a;
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.5);
@@ -898,10 +898,17 @@
             align-items: center;
         }
 
-        .messages-list {
+        .messages-content {
             flex: 1;
             overflow-y: auto;
             padding: 1rem;
+        }
+
+        .messages-input {
+            padding: 1rem;
+            border-top: 1px solid #333;
+            display: flex;
+            align-items: center;
         }
 
         .message-item {
@@ -922,27 +929,40 @@
             background: rgba(102, 126, 234, 0.1);
         }
 
-        .message-content {
-            flex: 1;
+        .message-bubble {
+            max-width: 70%;
+            padding: 0.75rem 1rem;
+            border-radius: 18px;
+            margin-bottom: 0.5rem;
+            word-wrap: break-word;
         }
 
-        .message-sender {
-            font-weight: 600;
-            color: #fff;
-            font-size: 0.9rem;
+        .message-bubble.sent {
+            background: #667eea;
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
         }
 
-        .message-preview {
-            color: #999;
-            font-size: 0.85rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+        .message-bubble.received {
+            background: #2a2a2a;
+            color: #e0e0e0;
+            margin-right: auto;
+            border-bottom-left-radius: 4px;
         }
 
-        .message-time {
-            color: #666;
+        .message-info {
             font-size: 0.75rem;
+            color: #666;
+            margin-bottom: 0.25rem;
+        }
+
+        .message-info.sent {
+            text-align: right;
+        }
+
+        .message-info.received {
+            text-align: left;
         }
     </style>
 </head>
@@ -1133,11 +1153,16 @@
     <!-- Messages Modal -->
     <div class="messages-modal" id="messagesModal">
         <div class="messages-header">
-            <h3 style="color: #fff;">Messages</h3>
+            <h3 style="color: #fff;" id="messagesTitle">Messages</h3>
             <button class="modal-close" onclick="toggleMessages()">×</button>
         </div>
-        <div class="messages-list" id="messagesList">
-            <!-- Messages will be loaded here -->
+        <div class="messages-content" id="messagesContent">
+            <!-- Messages conversation will be loaded here -->
+        </div>
+        <div class="messages-input" id="messagesInput" style="display: none;">
+            <input type="text" id="messageText" placeholder="Type your message..." 
+                   onkeypress="handleMessageKeypress(event)" style="flex: 1; padding: 10px; border: none; border-radius: 20px; background: #2a2a2a; color: #fff; margin-right: 10px;">
+            <button onclick="sendMessage()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 20px; cursor: pointer;">Send</button>
         </div>
     </div>
 
@@ -1233,12 +1258,216 @@
         function viewUserProfile(userId, userName) {
             console.log(`👤 Viewing profile for: ${userName} (ID: ${userId})`);
             
-            // For now, show a simple alert with user info
-            // This can be expanded to show a full profile modal
-            alert(`Profile: ${userName}\n\nUser ID: ${userId}\n\nThis will be expanded to show:\n• User's posts\n• Photography portfolio\n• Bio and specialties\n• Contact information`);
+            // Show profile options
+            const options = [
+                `👤 View ${userName}'s Profile`,
+                `💬 Send Message to ${userName}`,
+                `📷 View ${userName}'s Posts`,
+                '❌ Cancel'
+            ];
             
-            // Future: Open profile modal or navigate to profile page
-            // openUserProfileModal(userId, userName);
+            const choice = prompt(`Profile Actions for ${userName}:\n\n1. ${options[0]}\n2. ${options[1]}\n3. ${options[2]}\n4. ${options[3]}\n\nEnter choice (1-4):`);
+            
+            switch(choice) {
+                case '1':
+                    showUserProfileModal(userId, userName);
+                    break;
+                case '2':
+                    startMessageConversation(userId, userName);
+                    break;
+                case '3':
+                    filterUserPosts(userId, userName);
+                    break;
+                default:
+                    // Cancel or invalid choice
+                    break;
+            }
+        }
+
+        // Start a message conversation with a user
+        function startMessageConversation(userId, userName) {
+            console.log(`💬 Starting conversation with: ${userName} (ID: ${userId})`);
+            
+            // Set current conversation
+            window.currentConversation = { userId, userName };
+            
+            // Load messages and show chat modal
+            loadMessagesWithUser(userId, userName);
+            showMessagesModal(userName);
+        }
+
+        // Load messages with a specific user
+        async function loadMessagesWithUser(userId, userName) {
+            try {
+                const response = await fetch(`/api/community/messages/${userId}`, {
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const messages = await response.json();
+                    renderMessagesConversation(messages, userName);
+                } else {
+                    console.error('Failed to load messages:', response.status);
+                }
+            } catch (error) {
+                console.error('Error loading messages:', error);
+            }
+        }
+
+        // Show user profile modal (placeholder)
+        function showUserProfileModal(userId, userName) {
+            alert(`📷 ${userName}'s Profile\n\nUser ID: ${userId}\n\nProfile features coming soon:\n• Photography portfolio\n• Bio and specialties\n• Skills and experience\n• Contact information\n• Recent activity`);
+        }
+
+        // Filter posts by specific user
+        function filterUserPosts(userId, userName) {
+            console.log(`🔍 Filtering posts by: ${userName}`);
+            loadPosts(`userId=${userId}`);
+        }
+
+        // Show messages modal
+        function showMessagesModal(userName = null) {
+            const modal = document.getElementById('messagesModal');
+            const title = document.getElementById('messagesTitle');
+            const input = document.getElementById('messagesInput');
+            
+            if (userName) {
+                title.textContent = `💬 Chat with ${userName}`;
+                input.style.display = 'flex';
+            } else {
+                title.textContent = 'Messages';
+                input.style.display = 'none';
+            }
+            
+            modal.classList.add('active');
+        }
+
+        // Render messages conversation
+        function renderMessagesConversation(messages, userName) {
+            const content = document.getElementById('messagesContent');
+            
+            if (messages.length === 0) {
+                content.innerHTML = `
+                    <div style="text-align: center; color: #999; padding: 2rem;">
+                        <div style="font-size: 2rem; margin-bottom: 1rem;">💬</div>
+                        <p>No messages yet with ${userName}</p>
+                        <p style="font-size: 0.9rem;">Start the conversation!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const currentUserId = currentUser?.userId;
+            
+            content.innerHTML = messages.map(message => {
+                const isSent = message.sender_id === currentUserId;
+                const timeAgo = formatTime(message.created_at);
+                
+                return `
+                    <div>
+                        <div class="message-info ${isSent ? 'sent' : 'received'}">
+                            ${isSent ? 'You' : message.sender_name} • ${timeAgo}
+                        </div>
+                        <div class="message-bubble ${isSent ? 'sent' : 'received'}">
+                            ${message.message}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Scroll to bottom
+            content.scrollTop = content.scrollHeight;
+        }
+
+        // Handle message input keypress
+        function handleMessageKeypress(event) {
+            if (event.key === 'Enter' && event.target.value.trim()) {
+                sendMessage();
+            }
+        }
+
+        // Send message
+        async function sendMessage() {
+            const messageInput = document.getElementById('messageText');
+            const messageText = messageInput.value.trim();
+            
+            if (!messageText || !window.currentConversation) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/community/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        receiverId: window.currentConversation.userId,
+                        receiverName: window.currentConversation.userName,
+                        message: messageText
+                    }),
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    messageInput.value = '';
+                    // Reload conversation to show new message
+                    await loadMessagesWithUser(window.currentConversation.userId, window.currentConversation.userName);
+                } else {
+                    alert('Failed to send message. Please try again.');
+                }
+            } catch (error) {
+                console.error('Error sending message:', error);
+                alert('Error sending message. Please check your connection.');
+            }
+        }
+
+        // Toggle messages modal
+        function toggleMessages() {
+            const modal = document.getElementById('messagesModal');
+            if (modal.classList.contains('active')) {
+                modal.classList.remove('active');
+                window.currentConversation = null;
+            } else {
+                showMessagesModal();
+                loadRecentConversations();
+            }
+        }
+
+        // Load recent conversations (placeholder)
+        function loadRecentConversations() {
+            const content = document.getElementById('messagesContent');
+            content.innerHTML = `
+                <div style="text-align: center; color: #999; padding: 2rem;">
+                    <div style="font-size: 2rem; margin-bottom: 1rem;">📬</div>
+                    <h3>Message Center</h3>
+                    <p>Click on any user's profile to start a conversation!</p>
+                    <p style="font-size: 0.9rem; margin-top: 1rem;">Recent conversations will appear here once you start chatting with other photographers.</p>
+                </div>
+            `;
+        }
+
+        // Update unread message count
+        async function updateUnreadMessageCount() {
+            try {
+                const response = await fetch('/api/community/messages/unread/count', {
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const { count } = await response.json();
+                    const badge = document.getElementById('messageCount');
+                    
+                    if (count > 0) {
+                        badge.textContent = count > 99 ? '99+' : count;
+                        badge.style.display = 'block';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                }
+            } catch (error) {
+                console.error('Error updating message count:', error);
+            }
         }
 
         // Show current user's profile
