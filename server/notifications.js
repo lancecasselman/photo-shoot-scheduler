@@ -156,6 +156,56 @@ const emailTemplates = {
                 </div>
             </div>
         `
+    }),
+    
+    clientInvoice: (clientName, sessionType, amount, paymentNumber, totalPayments, businessName, businessEmail, invoiceUrl) => ({
+        subject: `Invoice from ${businessName} - ${sessionType} Session`,
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px; text-align: center;">
+                    <h1 style="margin: 0; font-size: 28px;">${businessName}</h1>
+                    <p style="margin: 10px 0 0; font-size: 16px; opacity: 0.9;">Professional Photography Services</p>
+                </div>
+                
+                <div style="padding: 30px; background: #f8f9fa; border-radius: 10px; margin: 20px 0;">
+                    <h2 style="color: #333; margin-top: 0;">Hi ${clientName},</h2>
+                    <p style="color: #666; line-height: 1.6;">Your invoice is ready for your ${sessionType} photography session.</p>
+                    
+                    <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #ddd;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding: 10px 0; border-bottom: 1px solid #eee;"><strong>Session Type:</strong></td>
+                                <td style="padding: 10px 0; border-bottom: 1px solid #eee; text-align: right;">${sessionType}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 10px 0; border-bottom: 1px solid #eee;"><strong>Amount Due:</strong></td>
+                                <td style="padding: 10px 0; border-bottom: 1px solid #eee; text-align: right; font-size: 20px; color: #667eea;"><strong>$${amount}</strong></td>
+                            </tr>
+                            ${paymentNumber ? `
+                            <tr>
+                                <td style="padding: 10px 0;"><strong>Payment:</strong></td>
+                                <td style="padding: 10px 0; text-align: right;">${paymentNumber} of ${totalPayments}</td>
+                            </tr>
+                            ` : ''}
+                        </table>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${invoiceUrl}" style="background: #667eea; color: white; padding: 15px 40px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">View & Pay Invoice</a>
+                    </div>
+                    
+                    <p style="color: #666; text-align: center; margin-top: 20px;">
+                        Thank you for choosing ${businessName}!
+                    </p>
+                </div>
+                
+                <div style="text-align: center; padding: 20px; color: #999; font-size: 14px; border-top: 1px solid #eee;">
+                    <p style="margin: 5px 0;"><strong>${businessName}</strong></p>
+                    <p style="margin: 5px 0;">Contact: ${businessEmail}</p>
+                    <p style="margin: 15px 0 5px; font-size: 12px;">This invoice was sent by ${businessName} using Photography Management System</p>
+                </div>
+            </div>
+        `
     })
 };
 
@@ -181,6 +231,33 @@ async function sendEmail(to, template, ...args) {
 
         await sgMail.send(msg);
         console.log(` Email sent successfully to ${to}: ${emailContent.subject}`);
+        return { success: true };
+    } catch (error) {
+        console.error(' Email send error:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+// Send email with custom sender information (for invoices)
+async function sendEmailWithSender(to, subject, html, fromEmail, fromName) {
+    if (!sendGridConfigured) {
+        console.log(' Email not sent - SendGrid not configured');
+        return { success: false, error: 'SendGrid not configured' };
+    }
+
+    try {
+        const msg = {
+            to: to,
+            from: {
+                email: fromEmail || 'lance@thelegacyphotography.com',
+                name: fromName || 'The Legacy Photography'
+            },
+            subject: subject,
+            html: html
+        };
+
+        await sgMail.send(msg);
+        console.log(` Email sent successfully to ${to} from ${fromName}: ${subject}`);
         return { success: true };
     } catch (error) {
         console.error(' Email send error:', error);
@@ -252,6 +329,8 @@ async function broadcastReminder(subscribers, message) {
 
 module.exports = {
     initializeNotificationServices,
+    sendEmail,
+    sendEmailWithSender,
     sendWelcomeEmail,
     sendBillingNotification,
     sendFeatureUpdate,

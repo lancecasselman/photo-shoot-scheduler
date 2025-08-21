@@ -1,6 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
 const { db } = require('./db.ts');
-const { paymentPlans, paymentRecords, photographySessions } = require('../shared/schema');
+const { paymentPlans, paymentRecords, photographySessions, users } = require('../shared/schema');
 const { eq, and, lte, gte, sql } = require('drizzle-orm');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
@@ -254,6 +254,18 @@ class PaymentPlanManager {
         .where(eq(photographySessions.id, payment.sessionId));
 
       if (!session) throw new Error('Session not found');
+      
+      // Get photographer's business information
+      const [photographer] = await db.select()
+        .from(users)
+        .where(eq(users.id, session.userId));
+      
+      if (!photographer) throw new Error('Photographer not found');
+      
+      // Use photographer's business name and email for invoicing
+      const businessName = photographer.businessName || 
+                          (photographer.displayName ? `${photographer.displayName} Photography` : 'Photography Business');
+      const businessEmail = photographer.email || 'noreply@photomanagementsystem.com';
 
       // Create Stripe invoice
       let stripeInvoice = null;
@@ -282,10 +294,11 @@ class PaymentPlanManager {
               sessionId: session.id,
               paymentId: payment.id,
               paymentNumber: payment.paymentNumber.toString(),
-              photographerName: 'Lance - The Legacy Photography',
+              photographerName: businessName,
+              photographerEmail: businessEmail,
               customInvoiceUrl: invoiceCustomUrl
             },
-            footer: `Thank you for choosing Lance - The Legacy Photography!\n\nYou can add an optional tip and view full invoice details at:\n${invoiceCustomUrl}\n\nContact: lance@thelegacyphotography.com`
+            footer: `Thank you for choosing ${businessName}!\n\nYou can add an optional tip and view full invoice details at:\n${invoiceCustomUrl}\n\nContact: ${businessEmail}`
           });
 
           // Add main invoice item

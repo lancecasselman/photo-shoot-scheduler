@@ -8099,6 +8099,25 @@ app.post('/api/create-invoice', isAuthenticated, async (req, res) => {
     const { sessionId, clientName, email, amount, description, dueDate, isDeposit, depositAmount, totalAmount, includeTip } = req.body;
 
     try {
+        // Get photographer's business information
+        const userId = req.user.uid || req.user.id;
+        const photographerResult = await pool.query(
+            'SELECT business_name, email, display_name FROM users WHERE id = $1',
+            [userId]
+        );
+        
+        const photographer = photographerResult.rows[0];
+        if (!photographer) {
+            return res.status(404).json({ error: 'Photographer profile not found' });
+        }
+        
+        // Use photographer's business information
+        const businessName = photographer.business_name || 
+                           (photographer.display_name ? `${photographer.display_name} Photography` : 'Photography Business');
+        const businessEmail = photographer.email || 'noreply@photomanagementsystem.com';
+        
+        console.log(`Creating invoice for ${businessName} (${businessEmail})`);
+
         if (!process.env.STRIPE_SECRET_KEY) {
             return res.status(500).json({ error: 'Stripe not configured. Please add STRIPE_SECRET_KEY.' });
         }
@@ -8117,7 +8136,9 @@ app.post('/api/create-invoice', isAuthenticated, async (req, res) => {
                 details: 'To send real invoices, provide your complete Stripe secret key (100+ characters) from your Stripe Dashboard',
                 clientName: clientName,
                 amount: amount,
-                description: description
+                description: description,
+                businessName: businessName,
+                businessEmail: businessEmail
             });
         }
 
@@ -8135,11 +8156,12 @@ app.post('/api/create-invoice', isAuthenticated, async (req, res) => {
                 customer = await stripe.customers.create({
                     email: email,
                     name: clientName,
-                    description: `Client of Lance - The Legacy Photography`,
+                    description: `Client of ${businessName}`,
                     metadata: {
                         sessionId: sessionId,
-                        businessName: 'The Legacy Photography',
-                        businessEmail: 'lance@thelegacyphotography.com'
+                        businessName: businessName,
+                        businessEmail: businessEmail,
+                        photographerId: userId
                     }
                 });
                 console.log('Created new Stripe customer:', customer.id);
@@ -8156,7 +8178,7 @@ app.post('/api/create-invoice', isAuthenticated, async (req, res) => {
         // Create invoice description based on type
         let invoiceDescription = description;
         
-        let customFooter = 'Thank you for choosing Lance - The Legacy Photography! Contact: lance@thelegacyphotography.com';
+        let customFooter = `Thank you for choosing ${businessName}! Contact: ${businessEmail}`;
 
         if (isDeposit) {
             const remainingBalance = totalAmount - depositAmount;
@@ -8166,14 +8188,14 @@ app.post('/api/create-invoice', isAuthenticated, async (req, res) => {
         // Create invoice with proper collection method for manual sending
         const invoice = await stripe.invoices.create({
             customer: customer.id,
-            description: `Lance - The Legacy Photography: ${invoiceDescription}`,
+            description: `${businessName}: ${invoiceDescription}`,
             collection_method: 'send_invoice',
             days_until_due: daysUntilDue,
             footer: customFooter,
             custom_fields: [
                 {
                     name: 'Photographer',
-                    value: 'Lance - The Legacy Photography'
+                    value: businessName
                 },
                 {
                     name: 'Session ID',
@@ -8183,8 +8205,9 @@ app.post('/api/create-invoice', isAuthenticated, async (req, res) => {
             metadata: {
                 sessionId: sessionId,
                 clientName: clientName,
-                businessName: 'The Legacy Photography',
-                businessEmail: 'lance@thelegacyphotography.com',
+                businessName: businessName,
+                businessEmail: businessEmail,
+                photographerId: userId,
                 isDeposit: isDeposit ? 'true' : 'false'
             }
         });
@@ -8199,8 +8222,9 @@ app.post('/api/create-invoice', isAuthenticated, async (req, res) => {
             metadata: {
                 sessionId: sessionId,
                 clientName: clientName,
-                photographer: 'Lance - The Legacy Photography',
-                businessEmail: 'lance@thelegacyphotography.com',
+                photographer: businessName,
+                businessEmail: businessEmail,
+                photographerId: userId,
                 isDeposit: isDeposit ? 'true' : 'false'
             }
         });
@@ -8216,7 +8240,8 @@ app.post('/api/create-invoice', isAuthenticated, async (req, res) => {
                 metadata: {
                     sessionId: sessionId,
                     tipItem: 'true',
-                    businessName: 'Lance - The Legacy Photography'
+                    businessName: businessName,
+                    photographerId: userId
                 }
             });
         }
