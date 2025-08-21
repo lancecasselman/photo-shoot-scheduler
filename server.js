@@ -85,6 +85,7 @@ const { eq, and, desc, asc, between } = require('drizzle-orm');
 // Import AI services
 const { AIServices } = require('./server/ai-services');
 const { AI_CREDIT_BUNDLES, isValidBundle } = require('./shared/ai-credit-bundles');
+const BlogGenerator = require('./server/blog-generator');
 
 // REMOVED: Old storage system - will be rebuilt from scratch
 const UnifiedFileDeletion = require('./server/unified-file-deletion');
@@ -332,6 +333,7 @@ const paymentPlanManager = new PaymentPlanManager();
 const paymentScheduler = new PaymentScheduler();
 const contractManager = new ContractManager();
 const aiServices = new AIServices();
+const blogGenerator = new BlogGenerator();
 
 // Initialize new storage system
 const storageSystem = new StorageSystem(pool, r2FileManager);
@@ -6010,19 +6012,27 @@ app.post('/api/ai/pricing-copy', async (req, res) => {
 // Business Management AI Endpoints
 app.post('/api/ai/generate-blog', isAuthenticated, async (req, res) => {
     try {
-        const { prompt } = req.body;
+        const { 
+            topic, 
+            style = 'professional', 
+            length = 'medium', 
+            keywords = [], 
+            photographyType = 'general',
+            tone = 'informative' 
+        } = req.body;
+        
         const normalizedUser = normalizeUserForLance(req.user);
         const userId = normalizedUser.uid;
 
-        if (!prompt || !prompt.trim()) {
+        if (!topic || !topic.trim()) {
             return res.status(400).json({ 
                 success: false, 
-                error: 'Blog prompt is required' 
+                error: 'Blog topic is required' 
             });
         }
 
         // Check AI credits (2 credits for blog posts - longer content)
-        const creditsNeeded = 2;
+        const creditsNeeded = length === 'long' ? 3 : 2;
         const availableCredits = await getUserAiCredits(userId);
 
         if (availableCredits < creditsNeeded) {
@@ -6035,7 +6045,7 @@ app.post('/api/ai/generate-blog', isAuthenticated, async (req, res) => {
         }
 
         // Use AI credits
-        const creditsUsed = await useAiCredits(userId, creditsNeeded, 'blog_generation', prompt);
+        const creditsUsed = await useAiCredits(userId, creditsNeeded, 'blog_generation', topic);
         if (!creditsUsed) {
             return res.status(402).json({
                 success: false,
@@ -6044,11 +6054,17 @@ app.post('/api/ai/generate-blog', isAuthenticated, async (req, res) => {
         }
 
         try {
-            const blogContent = await aiServices.generateBlogPost(prompt);
+            const blogContent = await blogGenerator.generateBlogPost({
+                topic,
+                style,
+                length,
+                keywords,
+                photographyType,
+                tone
+            });
             
             res.json({
-                success: true,
-                content: blogContent,
+                ...blogContent,
                 creditsUsed: creditsNeeded,
                 remainingCredits: availableCredits - creditsNeeded
             });
@@ -6073,7 +6089,108 @@ app.post('/api/ai/generate-blog', isAuthenticated, async (req, res) => {
         console.error('AI blog generation error:', error);
         res.status(500).json({ 
             success: false,
-            error: 'Failed to generate blog post', 
+            error: 'Failed to generate blog post',
+            details: error.message 
+        });
+    }
+});
+
+// Generate blog post ideas
+app.post('/api/ai/generate-blog-ideas', isAuthenticated, async (req, res) => {
+    try {
+        const { photographyType = 'general', count = 10 } = req.body;
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
+
+        // Check AI credits (1 credit for ideas generation)
+        const creditsNeeded = 1;
+        const availableCredits = await getUserAiCredits(userId);
+
+        if (availableCredits < creditsNeeded) {
+            return res.status(402).json({
+                success: false,
+                error: 'Insufficient AI credits',
+                creditsNeeded,
+                availableCredits
+            });
+        }
+
+        // Use AI credits
+        await useAiCredits(userId, creditsNeeded, 'blog_ideas', photographyType);
+
+        try {
+            const ideas = await blogGenerator.generateBlogIdeas(photographyType, count);
+            
+            res.json({
+                ...ideas,
+                creditsUsed: creditsNeeded,
+                remainingCredits: availableCredits - creditsNeeded
+            });
+        } catch (aiError) {
+            // Refund credits on failure
+            await pool.query('UPDATE users SET ai_credits = ai_credits + $1 WHERE id = $2', [creditsNeeded, userId]);
+            throw aiError;
+        }
+
+    } catch (error) {
+        console.error('AI blog ideas generation error:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Failed to generate blog ideas',
+            details: error.message 
+        });
+    }
+});
+
+// Generate SEO metadata for blog post
+app.post('/api/ai/generate-seo-metadata', isAuthenticated, async (req, res) => {
+    try {
+        const { title, content } = req.body;
+        const normalizedUser = normalizeUserForLance(req.user);
+        const userId = normalizedUser.uid;
+
+        if (!title || !content) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Title and content are required' 
+            });
+        }
+
+        // Check AI credits (1 credit for SEO metadata)
+        const creditsNeeded = 1;
+        const availableCredits = await getUserAiCredits(userId);
+
+        if (availableCredits < creditsNeeded) {
+            return res.status(402).json({
+                success: false,
+                error: 'Insufficient AI credits',
+                creditsNeeded,
+                availableCredits
+            });
+        }
+
+        // Use AI credits
+        await useAiCredits(userId, creditsNeeded, 'seo_metadata', title);
+
+        try {
+            const metadata = await blogGenerator.generateSEOMetadata(title, content);
+            
+            res.json({
+                ...metadata,
+                creditsUsed: creditsNeeded,
+                remainingCredits: availableCredits - creditsNeeded
+            });
+        } catch (aiError) {
+            // Refund credits on failure
+            await pool.query('UPDATE users SET ai_credits = ai_credits + $1 WHERE id = $2', [creditsNeeded, userId]);
+            throw aiError;
+        }
+
+    } catch (error) {
+        console.error('AI SEO metadata generation error:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Failed to generate SEO metadata', 
             details: error.message 
         });
     }
