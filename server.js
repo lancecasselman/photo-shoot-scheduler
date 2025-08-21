@@ -1,5 +1,5 @@
-//  PRODUCTION READY CONFIGURATION
-const DEV_MODE = process.env.NODE_ENV !== 'production'; // Auto-detect based on NODE_ENV
+//  PRODUCTION READY CONFIGURATION - CRITICAL SECURITY FIX
+const DEV_MODE = false; // SECURITY: Always enforce authentication - no dev bypass
 const PRODUCTION_CONFIG = require('./production.config.js');
 
 // SUCCESS: PREMIUM MODE IMPLEMENTATION
@@ -710,26 +710,16 @@ const isAuthenticated = (req, res, next) => {
         
         // Check for session existence and basic structure
         if (!req.session) {
-            // DEV_MODE bypass only if no session at all AND not Stripe Connect
-            if (DEV_MODE && !isStripeConnectRoute) {
-                req.user = { uid: 'dev-user', email: 'dev@example.com' };
-                return next();
-            }
             return res.status(401).json({ 
-                message: 'No session found',
+                message: 'No session found - authentication required',
                 redirectTo: '/auth.html'
             });
         }
 
         // Check for user data in session
         if (!req.session.user) {
-            // DEV_MODE bypass only if no user in session AND not Stripe Connect
-            if (DEV_MODE && !isStripeConnectRoute) {
-                req.user = { uid: 'dev-user', email: 'dev@example.com' };
-                return next();
-            }
             return res.status(401).json({ 
-                message: 'No user data in session',
+                message: 'No user data in session - authentication required',
                 redirectTo: '/auth.html'
             });
         }
@@ -11171,45 +11161,46 @@ app.get('/index.html', (req, res) => {
 
 // Serve main app with authentication AND subscription requirement
 app.get('/app', async (req, res) => {
-    if (!DEV_MODE) {
-        // Check authentication in production mode
-        if (!req.session || !req.session.user) {
-            return res.redirect('/auth.html?return=/app');
-        }
+    // SECURITY: Always check authentication - no dev mode bypass
+    if (!req.session || !req.session.user) {
+        console.log('🚫 SECURITY: Blocked unauthenticated access to /app');
+        return res.redirect('/auth.html?return=/app');
+    }
+    
+    // Check subscription status
+    const userId = req.session.user.uid;
+    const userEmail = req.session.user.email;
+    
+    // Admin whitelist bypass
+    const adminEmails = [
+        'lancecasselman@icloud.com',
+        'lancecasselman2011@gmail.com',
+        'lance@thelegacyphotography.com'
+    ];
+    
+    if (!adminEmails.includes(userEmail.toLowerCase())) {
+        // Check subscription
+        const UnifiedSubscriptionManager = require('./server/unified-subscription-manager');
+        const subscriptionManager = new UnifiedSubscriptionManager(pool);
+        const status = await subscriptionManager.getUserSubscriptionStatus(userId);
         
-        // Check subscription status
-        const userId = req.session.user.uid;
-        const userEmail = req.session.user.email;
-        
-        // Admin whitelist bypass
-        const adminEmails = [
-            'lancecasselman@icloud.com',
-            'lancecasselman2011@gmail.com',
-            'lance@thelegacyphotography.com'
-        ];
-        
-        if (!adminEmails.includes(userEmail.toLowerCase())) {
-            // Check subscription
-            const UnifiedSubscriptionManager = require('./server/unified-subscription-manager');
-            const subscriptionManager = new UnifiedSubscriptionManager(pool);
-            const status = await subscriptionManager.getUserSubscriptionStatus(userId);
-            
-            if (!status.hasProfessionalPlan || status.professionalStatus !== 'active') {
-                console.log(`🔒 Blocking access to /app for ${userEmail} - No active subscription`);
-                return res.redirect('/subscription-checkout.html?message=subscription_required');
-            }
+        if (!status.hasProfessionalPlan || status.professionalStatus !== 'active') {
+            console.log(`🔒 Blocking access to /app for ${userEmail} - No active subscription`);
+            return res.redirect('/subscription-checkout.html?message=subscription_required');
         }
     }
+    
+    console.log(`✅ SECURITY: Authenticated access to /app granted for ${userEmail}`);
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // Alternative dashboard route
 app.get('/dashboard', async (req, res) => {
-    if (!DEV_MODE) {
-        // Check authentication in production mode
-        if (!req.session || !req.session.user) {
-            return res.redirect('/auth.html?return=/dashboard');
-        }
+    // SECURITY: Always check authentication - no dev mode bypass
+    if (!req.session || !req.session.user) {
+        console.log('🚫 SECURITY: Blocked unauthenticated access to /dashboard');
+        return res.redirect('/auth.html?return=/dashboard');
+    }
         
         // Check subscription status
         const userId = req.session.user.uid;
@@ -11233,7 +11224,8 @@ app.get('/dashboard', async (req, res) => {
                 return res.redirect('/subscription-checkout.html?message=subscription_required');
             }
         }
-    }
+    
+    console.log(`✅ SECURITY: Authenticated access to /dashboard granted for ${userEmail}`);
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 

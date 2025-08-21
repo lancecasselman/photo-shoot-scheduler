@@ -28,7 +28,9 @@ Cloudflare R2 serves as the primary cloud storage with session-aware file paths 
 Capacitor integration enables native mobile app capabilities for iOS and Android, including direct photo uploads, offline functionality through local storage and synchronization. **Android platform configured for Google Play Store deployment** with production-ready build configuration, signing setup, and store-optimized permissions.
 
 ### Photography Community Platform
-A social platform featuring a multi-tab feed system with customizable post types, advanced image optimization (using Sharp and Cloudflare R2), social features (like, comment, save, share), user profiles with reputation points, community tools, direct messaging, and automatic EXIF extraction.
+A social platform featuring a multi-tab feed system with customizable post types, advanced image optimization (using Sharp and Cloudflare R2), social features (like, comment, save, share), user profiles with reputation points, community tools, **comprehensive direct messaging system**, and automatic EXIF extraction.
+
+**Enhanced User Interactions**: Full username display instead of initials, clickable user profiles with action menus (view profile, send message, view posts), and complete user-to-user messaging infrastructure with conversation management and real-time message delivery.
 
 ### Watermark System
 Professional watermarking feature allowing photographers to add text watermarks to their images automatically. Supports customizable positioning (top-left, top-right, bottom-left, bottom-right, center), adjustable opacity and font size, color selection, and live preview. Watermarks are applied during image processing using Sharp library at 85% JPEG quality.
@@ -67,6 +69,8 @@ Includes specific handling for Replit's development environment constraints, res
 
 ### Streamlined Authentication System
 Authentication and subscription verification is handled exclusively at the server level through secure routes, providing a cleaner user experience.
+
+**CRITICAL SECURITY FIX (Aug 21, 2025)**: Removed all DEV_MODE authentication bypasses to prevent unauthorized access to protected routes. All session management routes now require proper Firebase authentication with no development mode exceptions. This ensures production-level security across all deployment environments.
 
 ### Production Deployment Infrastructure (New)
 Complete production-ready configuration with security hardening, monitoring, and performance optimization. **GitHub deployment verified successful** with workflow fixes:
