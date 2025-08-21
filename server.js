@@ -11895,9 +11895,23 @@ app.get('/invoice.html', (req, res) => {
 app.use('/assets', express.static(path.join(__dirname, 'public')));
 
 // Serve specific public files that need to be accessible
-app.use('/icon-192.png', express.static(path.join(__dirname, 'icon-192.png')));
-app.use('/manifest.json', express.static(path.join(__dirname, 'manifest.json')));
-app.use('/hero-background.jpg', express.static(path.join(__dirname, 'hero-background.jpg')));
+app.get('/icon-192.png', (req, res) => {
+    res.sendFile(path.join(__dirname, 'icon-192.png'));
+});
+app.get('/manifest.json', (req, res) => {
+    res.sendFile(path.join(__dirname, 'manifest.json'));
+});
+
+// Create a placeholder hero background if missing
+app.get('/hero-background.jpg', (req, res) => {
+    const heroPath = path.join(__dirname, 'hero-background.jpg');
+    if (require('fs').existsSync(heroPath)) {
+        res.sendFile(heroPath);
+    } else {
+        // Redirect to a professional photography background from Unsplash
+        res.redirect('https://images.unsplash.com/photo-1606983340126-99ab4feaa64a?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');
+    }
+});
 
 // SECURITY: Root directory static serving removed to prevent bypassing secure routes
 
