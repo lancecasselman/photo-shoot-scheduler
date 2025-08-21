@@ -1,7 +1,10 @@
-# Node
+# Node dependencies and cache
 node_modules/
 npm-debug.log
 yarn-error.log
+.npm/
+.yarn/
+package-lock.json
 
 # Capacitor build artifacts
 android/
@@ -36,3 +39,18 @@ logs/
 # Temporary files
 .tmp/
 tmp/
+
+# Large asset directories (use Git LFS)
+attached_assets/
+uploads/
+local-backups/
+.cache/
+.local/
+.pythonlibs/
+.upm/
+.config/
+
+# Runtime files
+*.pid
+*.lock
+uv.lock
