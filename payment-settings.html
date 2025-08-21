@@ -306,7 +306,7 @@
                 // SECURITY FIX: Enhanced authentication verification
                 console.log('🔐 SECURITY: Verifying user authentication for payment settings');
                 
-                const authResponse = await fetch('/api/check-auth', {
+                const authResponse = await fetch('/api/auth/user', {
                     credentials: 'include'
                 });
                 
@@ -317,11 +317,13 @@
                 }
                 
                 const authData = await authResponse.json();
-                console.log('🔐 SECURITY: User authenticated as:', authData.email);
+                console.log('🔐 SECURITY: User authenticated as:', authData.user?.email || authData.email);
                 
-                // Store user identity for validation
-                window.currentUserEmail = authData.email;
-                window.currentUserId = authData.uid;
+                // Store user identity for validation - handle both response formats
+                window.currentUserEmail = authData.user?.email || authData.email;
+                window.currentUserId = authData.user?.uid || authData.uid || authData.id;
+                
+                console.log('🔐 SECURITY: Stored email for validation:', window.currentUserEmail);
                 
                 // Load Stripe Connect status
                 await loadStripeStatus();
@@ -471,7 +473,7 @@
                     credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-User-Validation': window.currentUserEmail // Additional validation header
+                        'X-User-Validation': window.currentUserEmail || '' // Send empty string if not set
                     }
                 });
                 
