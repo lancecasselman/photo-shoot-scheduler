@@ -68,6 +68,10 @@ const HealthCheck = require('./server/health-check');
 const logger = require('./server/production-logger');
 const createProductionRoutes = require('./server/production-routes');
 
+// Import support system
+const SupportSystem = require('./server/support-system');
+const createSupportRoutes = require('./server/support-routes');
+
 // Database schema imports
 const { businessExpenses } = require('./shared/schema');
 const { eq, and, desc, asc, between } = require('drizzle-orm');
@@ -273,6 +277,17 @@ const pool = new Pool({
 
 // Initialize health check system
 const healthCheck = new HealthCheck(pool);
+
+// Initialize support system
+const supportSystem = new SupportSystem(pool);
+(async () => {
+    try {
+        await supportSystem.initializeTables();
+        console.log('✅ Support system initialized');
+    } catch (error) {
+        console.warn('Support system initialization skipped:', error.message);
+    }
+})();
 
 // Add comprehensive error handling for database pool
 pool.on('error', (err) => {
@@ -1518,6 +1533,9 @@ registerStorageRoutes(app, isAuthenticated, normalizeUserForLance, storageSystem
 
 // Production monitoring routes
 app.use('/api/system', createProductionRoutes(healthCheck, logger));
+
+// Support system routes
+app.use('/api/support', createSupportRoutes(supportSystem, isAuthenticated));
 
 // Object Storage Routes for Gallery and Raw Storage
 const objectStorageService = new ObjectStorageService();
