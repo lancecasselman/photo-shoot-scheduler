@@ -4751,11 +4751,45 @@
 
         .expense-form,
         .trip-form {
-            background: var(--bg-secondary);
+            background: #ffffff;
             border-radius: var(--border-radius);
             padding: var(--spacing-lg);
             margin-bottom: var(--spacing-lg);
             box-shadow: var(--shadow-soft);
+            border: 1px solid #e0e0e0;
+        }
+
+        .expense-form label,
+        .trip-form label {
+            color: #333333;
+        }
+
+        .expense-form input,
+        .expense-form select,
+        .trip-form input,
+        .trip-form select {
+            background: #ffffff;
+            color: #333333;
+            border: 1px solid #ddd;
+        }
+
+        /* White background for expense tracker section */
+        #expensesSection {
+            background: #ffffff;
+            border-radius: var(--border-radius);
+            padding: var(--spacing-lg);
+            margin: var(--spacing-md) 0;
+            border: 1px solid #e0e0e0;
+        }
+
+        #expensesSection h2 {
+            color: #333333;
+        }
+
+        .expenses-table-container {
+            background: #ffffff;
+            border-radius: var(--border-radius);
+            padding: var(--spacing-md);
         }
 
         .form-row {
@@ -4827,27 +4861,34 @@
         .business-table {
             width: 100%;
             border-collapse: collapse;
-            background: var(--bg-secondary);
+            background: #ffffff;
             border-radius: var(--border-radius);
             overflow: hidden;
             box-shadow: var(--shadow-soft);
+            border: 1px solid #e0e0e0;
         }
 
         .business-table th,
         .business-table td {
             padding: var(--spacing-sm);
             text-align: left;
-            border-bottom: 1px solid var(--accent-beige);
+            border-bottom: 1px solid #e0e0e0;
+            color: #333333;
         }
 
         .business-table th {
-            background: var(--gold-muted);
-            color: var(--bg-secondary);
+            background: #f8f9fa;
+            color: #333333;
             font-weight: 600;
+            border-bottom: 2px solid #e0e0e0;
         }
 
         .business-table tr:hover {
-            background: var(--accent-beige);
+            background: #f5f5f5;
+        }
+
+        .business-table tbody tr {
+            background: #ffffff;
         }
 
         .table-actions {
