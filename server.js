@@ -929,11 +929,11 @@ app.use((req, res, next) => {
     }
 });
 
-// Serve static files from public directory (for invoice.html and other public assets)
-app.use(express.static(path.join(__dirname, 'public')));
+// SECURITY: Removed global static serving - use specific routes instead
+// This was allowing index.html to bypass the secure landing page system
 
-// Serve root level HTML files
-app.use(express.static(__dirname));
+// REMOVED: Root level static serving to prevent bypassing secure routes
+// This was serving index.html directly and bypassing our secure landing page route
 
 // Auth status endpoint for checking if user is authenticated
 app.get('/api/auth/status', (req, res) => {
@@ -11891,11 +11891,15 @@ app.get('/invoice.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'invoice.html'));
 });
 
-// Serve public directory files directly at root level
-app.use(express.static(path.join(__dirname, 'public')));
+// Serve public assets under /assets path only
+app.use('/assets', express.static(path.join(__dirname, 'public')));
 
-// SECURITY: Removed static root directory serving to prevent bypass of secure routes
-// This was serving index.html which allowed bypassing our secure authentication system
+// Serve specific public files that need to be accessible
+app.use('/icon-192.png', express.static(path.join(__dirname, 'icon-192.png')));
+app.use('/manifest.json', express.static(path.join(__dirname, 'manifest.json')));
+app.use('/hero-background.jpg', express.static(path.join(__dirname, 'hero-background.jpg')));
+
+// SECURITY: Root directory static serving removed to prevent bypassing secure routes
 
 // Start server
 // Premium subscription middleware
