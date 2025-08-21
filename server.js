@@ -256,16 +256,19 @@ async function updateRawStorageUsage(userId, fileSizeTB, fileSizeMB, fileCount) 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    // Optimized connection pool configuration for stability
-    max: 20, // Increased pool size
-    min: 2, // Keep minimum connections alive
-    idleTimeoutMillis: 30000, // Increased idle timeout
-    connectionTimeoutMillis: 10000, // Longer timeout for failed connections
-    acquireTimeoutMillis: 60000, // Increased acquire timeout
-    maxUses: 7500, // Higher max uses for better connection recycling
+    // Multi-photographer SaaS platform configuration - supports hundreds of photographers
+    max: process.env.NODE_ENV === 'production' ? 100 : 20, // Production: 100 connections for scale
+    min: process.env.NODE_ENV === 'production' ? 10 : 2,   // Production: Higher minimum for performance
+    idleTimeoutMillis: 60000, // Longer idle timeout for busy periods
+    connectionTimeoutMillis: 15000, // More time for connection establishment
+    acquireTimeoutMillis: 120000, // Extended acquire timeout for peak loads
+    maxUses: 10000, // Higher max uses for better connection recycling
     keepAlive: true,
-    keepAliveInitialDelayMillis: 10000, // Longer initial delay
+    keepAliveInitialDelayMillis: 15000, // Longer initial delay for stability
     allowExitOnIdle: false, // Prevent pool from exiting
+    // Additional production optimizations
+    statementTimeout: 30000, // 30 second query timeout
+    queryTimeout: 25000,     // 25 second query timeout
 });
 
 // Initialize health check system

@@ -25,11 +25,13 @@ module.exports = {
     optionsSuccessStatus: 200
   },
 
-  // Rate Limiting
+  // Rate Limiting - Multi-photographer platform configuration
   rateLimit: {
     windowMs: (process.env.RATE_LIMIT_WINDOW || 15) * 60 * 1000, // 15 minutes
-    max: process.env.RATE_LIMIT_MAX || 100, // limit each IP to 100 requests per windowMs
-    message: 'Too many requests from this IP, please try again later.'
+    max: process.env.RATE_LIMIT_MAX || 500, // Higher limit for multiple photographers per IP
+    message: 'Too many requests from this IP, please try again later.',
+    // Skip rate limiting for authenticated photographers during peak usage
+    skip: (req) => req.path.includes('/api/system/') // Skip for health checks
   },
 
   // File Upload Limits
@@ -52,15 +54,22 @@ module.exports = {
     }
   },
 
-  // Database Configuration
+  // Database Configuration - Multi-photographer SaaS platform
   database: {
     pool: {
-      min: 2,
-      max: 10,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 2000
+      min: 10,  // Higher minimum for hundreds of photographers
+      max: 100, // Support concurrent usage from many photographers
+      idleTimeoutMillis: 60000,
+      connectionTimeoutMillis: 15000,
+      acquireTimeoutMillis: 120000,
+      maxUses: 10000,
+      statementTimeout: 30000,
+      queryTimeout: 25000
     },
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+    // Multi-tenant optimizations
+    enableQueryLogging: false, // Disable in production for performance
+    enableConnectionMetrics: true
   },
 
   // Logging Configuration
