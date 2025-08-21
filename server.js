@@ -1,5 +1,6 @@
-//  TOGGLEABLE AUTH GUARD SYSTEM
-const DEV_MODE = false; // 👉 Authentication enabled - production mode
+//  PRODUCTION READY CONFIGURATION
+const DEV_MODE = process.env.NODE_ENV !== 'production'; // Auto-detect based on NODE_ENV
+const PRODUCTION_CONFIG = require('./production.config.js');
 
 // SUCCESS: PREMIUM MODE IMPLEMENTATION
 const PREMIUM_FEATURES = {
@@ -17,6 +18,12 @@ const { v4: uuidv4 } = require('uuid');
 const { Pool } = require('pg');
 const session = require('express-session');
 const connectPg = require('connect-pg-simple');
+
+// Production middleware
+const helmet = require('helmet');
+const compression = require('compression');
+const cors = require('cors');
+const rateLimit = require('express-rate-limit');
 
 // Firebase Admin SDK for server-side authentication
 const admin = require('firebase-admin');
@@ -55,6 +62,11 @@ const SubscriptionAuthMiddleware = require('./server/subscription-auth-middlewar
 
 // Import object storage services
 const { ObjectStorageService } = require('./server/objectStorage');
+
+// Import production monitoring
+const HealthCheck = require('./server/health-check');
+const logger = require('./server/production-logger');
+const createProductionRoutes = require('./server/production-routes');
 
 // Database schema imports
 const { businessExpenses } = require('./shared/schema');
@@ -255,6 +267,9 @@ const pool = new Pool({
     keepAliveInitialDelayMillis: 10000, // Longer initial delay
     allowExitOnIdle: false, // Prevent pool from exiting
 });
+
+// Initialize health check system
+const healthCheck = new HealthCheck(pool);
 
 // Add comprehensive error handling for database pool
 pool.on('error', (err) => {
@@ -743,6 +758,41 @@ process.on('uncaughtException', (error) => {
     // For uncaught exceptions, we should restart gracefully
     setTimeout(() => process.exit(1), 1000);
 });
+
+// Production Security Middleware
+if (process.env.NODE_ENV === 'production') {
+    // Trust proxy for Replit/production deployment
+    app.set('trust proxy', 1);
+    
+    // Security headers with Helmet
+    app.use(helmet({
+        contentSecurityPolicy: {
+            directives: {
+                defaultSrc: ["'self'"],
+                scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://js.stripe.com", "https://fonts.googleapis.com"],
+                styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+                fontSrc: ["'self'", "https://fonts.gstatic.com"],
+                imgSrc: ["'self'", "data:", "https:", "blob:"],
+                connectSrc: ["'self'", "https://api.stripe.com"],
+                frameSrc: ["'self'", "https://js.stripe.com"]
+            }
+        },
+        crossOriginEmbedderPolicy: false
+    }));
+    
+    // CORS for production
+    app.use(cors(PRODUCTION_CONFIG.cors));
+    
+    // Rate limiting
+    const limiter = rateLimit(PRODUCTION_CONFIG.rateLimit);
+    app.use('/api/', limiter);
+    
+    // Compression for all responses
+    app.use(compression());
+    
+    // Request logging middleware
+    app.use(logger.requestLogger.bind(logger));
+}
 
 // Body parsing middleware (must be before routes)
 app.use(express.json({ limit: '100gb' }));
@@ -1462,6 +1512,9 @@ app.use('/api/community', (req, res, next) => {
 
 // Register new storage system routes
 registerStorageRoutes(app, isAuthenticated, normalizeUserForLance, storageSystem);
+
+// Production monitoring routes
+app.use('/api/system', createProductionRoutes(healthCheck, logger));
 
 // Object Storage Routes for Gallery and Raw Storage
 const objectStorageService = new ObjectStorageService();
