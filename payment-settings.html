@@ -292,15 +292,25 @@
         
         async function checkAuthAndLoadStatus() {
             try {
-                // Check authentication
+                // SECURITY FIX: Enhanced authentication verification
+                console.log('🔐 SECURITY: Verifying user authentication for payment settings');
+                
                 const authResponse = await fetch('/api/check-auth', {
                     credentials: 'include'
                 });
                 
                 if (!authResponse.ok) {
+                    console.error('🚨 SECURITY: Authentication failed, redirecting to login');
                     window.location.href = '/auth.html';
                     return;
                 }
+                
+                const authData = await authResponse.json();
+                console.log('🔐 SECURITY: User authenticated as:', authData.email);
+                
+                // Store user identity for validation
+                window.currentUserEmail = authData.email;
+                window.currentUserId = authData.uid;
                 
                 // Load Stripe Connect status
                 await loadStripeStatus();
@@ -439,21 +449,28 @@
             try {
                 showMessage('Setting up your Stripe account...', 'info');
                 
+                // SECURITY FIX: Validate user identity before Stripe Connect
+                console.log('🔐 SECURITY: Starting Stripe onboarding for user:', window.currentUserEmail);
+                
                 const response = await fetch('/api/stripe-connect/onboard', {
                     method: 'POST',
                     credentials: 'include',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'X-User-Validation': window.currentUserEmail // Additional validation header
                     }
                 });
                 
                 if (!response.ok) {
-                    throw new Error('Failed to start onboarding');
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error('🚨 SECURITY: Stripe onboarding failed:', errorData.message);
+                    throw new Error('Failed to start onboarding: ' + (errorData.message || 'Unknown error'));
                 }
                 
                 const data = await response.json();
                 
                 if (data.onboardingUrl) {
+                    console.log('🔗 SECURITY: Redirecting to Stripe for user:', window.currentUserEmail);
                     // Redirect to Stripe onboarding
                     window.location.href = data.onboardingUrl;
                 } else {

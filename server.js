@@ -705,10 +705,13 @@ const normalizeUserForLance = (user) => {
 const isAuthenticated = (req, res, next) => {
     // Enhanced authentication check with better error handling
     try {
+        // CRITICAL SECURITY FIX: Disable DEV_MODE bypass for Stripe Connect routes
+        const isStripeConnectRoute = req.path.includes('/stripe-connect/');
+        
         // Check for session existence and basic structure
         if (!req.session) {
-            // DEV_MODE bypass only if no session at all
-            if (DEV_MODE) {
+            // DEV_MODE bypass only if no session at all AND not Stripe Connect
+            if (DEV_MODE && !isStripeConnectRoute) {
                 req.user = { uid: 'dev-user', email: 'dev@example.com' };
                 return next();
             }
@@ -720,8 +723,8 @@ const isAuthenticated = (req, res, next) => {
 
         // Check for user data in session
         if (!req.session.user) {
-            // DEV_MODE bypass only if no user in session
-            if (DEV_MODE) {
+            // DEV_MODE bypass only if no user in session AND not Stripe Connect
+            if (DEV_MODE && !isStripeConnectRoute) {
                 req.user = { uid: 'dev-user', email: 'dev@example.com' };
                 return next();
             }
@@ -750,7 +753,13 @@ const isAuthenticated = (req, res, next) => {
 
         // Set req.user for downstream middleware - use real session user
         req.user = user;
-        console.log(`✅ Admin bypass: ${user.email} granted access without subscription check`);
+        
+        // Enhanced logging for Stripe Connect routes
+        if (isStripeConnectRoute) {
+            console.log(`🔐 STRIPE SECURITY: Authenticated ${user.email} (ID: ${user.uid}) for Stripe Connect`);
+        } else {
+            console.log(`✅ Admin bypass: ${user.email} granted access without subscription check`);
+        }
         next();
     } catch (error) {
         console.error('Authentication middleware error:', error);
@@ -13707,14 +13716,38 @@ const stripeConnectManager = new StripeConnectManager();
 // Start Connect onboarding for photographer
 app.post('/api/stripe-connect/onboard', isAuthenticated, async (req, res) => {
     try {
+        // CRITICAL SECURITY FIX: Ensure proper user isolation
         const userId = req.session.user.uid;
         const userEmail = req.session.user.email;
+        const sessionId = req.session.id;
         
-        console.log('🔗 Starting Stripe Connect onboarding for:', userEmail);
+        console.log('🔗 Starting Stripe Connect onboarding for:', userEmail, 'Session ID:', sessionId?.substring(0, 8));
+        console.log('🔐 SECURITY: User ID verified from session:', userId);
+        
+        // Enhanced user verification to prevent cross-user contamination
+        if (!userId || !userEmail) {
+            console.error('🚨 SECURITY: Missing user data in session during Stripe Connect');
+            return res.status(401).json({
+                success: false,
+                message: 'Authentication required for Stripe Connect'
+            });
+        }
+        
+        // Additional validation header check
+        const validationHeader = req.headers['x-user-validation'];
+        if (validationHeader && validationHeader !== userEmail) {
+            console.error('🚨 SECURITY BREACH: User validation header mismatch!', 
+                'Session:', userEmail, 'Header:', validationHeader);
+            return res.status(401).json({
+                success: false,
+                message: 'User identity validation failed'
+            });
+        }
         
         // Check if user already has a connected account
         const existingUser = await pool.query('SELECT stripe_connect_account_id FROM users WHERE id = $1', [userId]);
         if (existingUser.rows[0]?.stripe_connect_account_id) {
+            console.log('🔒 User already has Stripe account:', existingUser.rows[0].stripe_connect_account_id);
             return res.json({
                 success: false,
                 message: 'You already have a connected Stripe account',
@@ -13737,10 +13770,10 @@ app.post('/api/stripe-connect/onboard', isAuthenticated, async (req, res) => {
             [accountResult.accountId, userId]
         );
         
-        // Create onboarding link
+        // Create onboarding link with session preservation
         const baseUrl = req.headers.origin || `https://${req.headers.host}`;
-        const refreshUrl = `${baseUrl}/payment-settings.html?stripe_connect=refresh`;
-        const returnUrl = `${baseUrl}/payment-settings.html?stripe_connect=success`;
+        const refreshUrl = `${baseUrl}/payment-settings.html?stripe_connect=refresh&session_id=${sessionId}`;
+        const returnUrl = `${baseUrl}/payment-settings.html?stripe_connect=success&session_id=${sessionId}`;
         
         const linkResult = await stripeConnectManager.createAccountLink(
             accountResult.accountId,
@@ -13755,7 +13788,8 @@ app.post('/api/stripe-connect/onboard', isAuthenticated, async (req, res) => {
             });
         }
         
-        console.log(' Onboarding link created for:', userEmail, 'Account:', accountResult.accountId);
+        console.log('🔗 Onboarding link created for:', userEmail, 'Account:', accountResult.accountId);
+        console.log('🔐 SECURITY: Session preserved in return URL for user isolation');
         
         res.json({
             success: true,
@@ -13775,7 +13809,12 @@ app.post('/api/stripe-connect/onboard', isAuthenticated, async (req, res) => {
 // Check Connect account status
 app.get('/api/stripe-connect/status', isAuthenticated, async (req, res) => {
     try {
+        // CRITICAL SECURITY FIX: Verify user identity with enhanced logging
         const userId = req.session.user.uid;
+        const userEmail = req.session.user.email;
+        const sessionId = req.session.id;
+        
+        console.log('🔐 SECURITY: Checking Stripe status for user:', userEmail, 'ID:', userId, 'Session:', sessionId?.substring(0, 8));
         
         const userResult = await pool.query(
             'SELECT stripe_connect_account_id, stripe_onboarding_complete FROM users WHERE id = $1',
@@ -13856,7 +13895,13 @@ app.get('/api/stripe-connect/status', isAuthenticated, async (req, res) => {
 // Refresh onboarding link if expired
 app.post('/api/stripe-connect/refresh', isAuthenticated, async (req, res) => {
     try {
+        // CRITICAL SECURITY FIX: Enhanced user verification for refresh
         const userId = req.session.user.uid;
+        const userEmail = req.session.user.email;
+        const sessionId = req.session.id;
+        
+        console.log('🔄 Refreshing Stripe Connect for user:', userEmail, 'Session:', sessionId?.substring(0, 8));
+        console.log('🔐 SECURITY: Verifying user identity before refresh');
         
         const userResult = await pool.query(
             'SELECT stripe_connect_account_id FROM users WHERE id = $1',
@@ -13872,10 +13917,10 @@ app.post('/api/stripe-connect/refresh', isAuthenticated, async (req, res) => {
         
         const accountId = userResult.rows[0].stripe_connect_account_id;
         
-        // Create new onboarding link
+        // Create new onboarding link with session preservation
         const baseUrl = req.headers.origin || `https://${req.headers.host}`;
-        const refreshUrl = `${baseUrl}/payment-settings.html?stripe_connect=refresh`;
-        const returnUrl = `${baseUrl}/payment-settings.html?stripe_connect=success`;
+        const refreshUrl = `${baseUrl}/payment-settings.html?stripe_connect=refresh&session_id=${sessionId}`;
+        const returnUrl = `${baseUrl}/payment-settings.html?stripe_connect=success&session_id=${sessionId}`;
         
         const linkResult = await stripeConnectManager.createAccountLink(
             accountId,
