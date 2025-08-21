@@ -929,8 +929,18 @@ app.use((req, res, next) => {
     }
 });
 
-// SECURITY: Removed global static serving - use specific routes instead
-// This was allowing index.html to bypass the secure landing page system
+// Serve static files for authenticated users (JS, CSS, assets)
+// Order matters: specific routes first, then static serving for assets
+app.use(express.static(path.join(__dirname), {
+    index: false, // Prevent serving index.html automatically
+    setHeaders: (res, path) => {
+        // Only serve non-HTML files to prevent bypassing secure routes
+        if (path.endsWith('.html') && !path.includes('public')) {
+            res.status(404).send('Not Found');
+            return;
+        }
+    }
+}));
 
 // REMOVED: Root level static serving to prevent bypassing secure routes
 // This was serving index.html directly and bypassing our secure landing page route
@@ -11891,8 +11901,11 @@ app.get('/invoice.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'invoice.html'));
 });
 
-// Serve public assets under /assets path only
+// Serve public assets under /assets path
 app.use('/assets', express.static(path.join(__dirname, 'public')));
+
+// Serve static directory for authenticated app assets
+app.use('/static', express.static(path.join(__dirname, 'static')));
 
 // Serve specific public files that need to be accessible
 app.get('/icon-192.png', (req, res) => {
