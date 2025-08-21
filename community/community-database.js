@@ -16,7 +16,7 @@ class CommunityDatabase {
                     user_id VARCHAR(255) NOT NULL,
                     user_name VARCHAR(255),
                     user_avatar TEXT,
-                    type VARCHAR(50) CHECK (type IN ('photo', 'video', 'text', 'help', 'tip', 'marketplace', 'before_after')),
+                    type VARCHAR(50) CHECK (type IN ('photo', 'video', 'text', 'help', 'tip', 'marketplace', 'before_after', 'event', 'mentor')),
                     title TEXT,
                     content TEXT,
                     image_urls JSONB,

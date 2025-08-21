@@ -1044,6 +1044,8 @@
                             <option value="tip">Photography Tip</option>
                             <option value="marketplace">Marketplace Listing</option>
                             <option value="before_after">Before/After</option>
+                            <option value="event">Event Announcement</option>
+                            <option value="mentor">Mentor Offer</option>
                         </select>
                     </div>
 
@@ -1198,9 +1200,11 @@
             }
         }
 
-        // Load posts
+        // Load posts - each type creates its own separate thread
         async function loadPosts(type = null) {
             try {
+                console.log(`📝 Loading posts for category: ${type || 'all'}`);
+                
                 const url = type ? `/api/community/posts?type=${type}` : '/api/community/posts';
                 const response = await fetch(url, {
                     credentials: 'include'
@@ -1208,23 +1212,70 @@
 
                 if (response.ok) {
                     posts = await response.json();
+                    console.log(`✅ Loaded ${posts.length} posts for category: ${type || 'all'}`);
                     renderPosts();
+                } else {
+                    console.error('Failed to load posts:', response.status);
+                    document.getElementById('postsContainer').innerHTML = 
+                        '<p style="text-align: center; color: #ff6b6b; padding: 2rem;">Failed to load posts. Please try again.</p>';
                 }
             } catch (error) {
                 console.error('Error loading posts:', error);
+                document.getElementById('postsContainer').innerHTML = 
+                    '<p style="text-align: center; color: #ff6b6b; padding: 2rem;">Error loading posts. Please check your connection.</p>';
             }
         }
 
-        // Render posts
+        // Render posts - each category shows only its own posts
         function renderPosts() {
             const container = document.getElementById('postsContainer');
 
             if (posts.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: #999; padding: 2rem;">No posts yet. Be the first to share!</p>';
+                const categoryName = getCategoryDisplayName(currentTab);
+                container.innerHTML = `
+                    <div style="text-align: center; color: #999; padding: 3rem;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">📝</div>
+                        <h3>No ${categoryName} posts yet</h3>
+                        <p>Be the first to share in this category!</p>
+                        <button class="btn" onclick="openCreatePost(getCategoryPostType(currentTab))" style="margin-top: 1rem;">
+                            Create First Post
+                        </button>
+                    </div>
+                `;
                 return;
             }
 
             container.innerHTML = posts.map(post => createPostHTML(post)).join('');
+        }
+
+        // Get display name for category
+        function getCategoryDisplayName(tab) {
+            const names = {
+                'feed': 'feed',
+                'showcase': 'showcase',
+                'help': 'help desk',
+                'tips': 'tips & tutorials',
+                'videos': 'video academy',
+                'marketplace': 'marketplace',
+                'events': 'events',
+                'mentors': 'mentor match'
+            };
+            return names[tab] || 'general';
+        }
+
+        // Get post type for category
+        function getCategoryPostType(tab) {
+            const types = {
+                'feed': 'photo',
+                'showcase': 'photo',
+                'help': 'help',
+                'tips': 'tip',
+                'videos': 'video',
+                'marketplace': 'marketplace',
+                'events': 'event',
+                'mentors': 'mentor'
+            };
+            return types[tab] || 'photo';
         }
 
         // Create post HTML
@@ -1320,33 +1371,55 @@
             `;
         }
 
-        // Switch tab
+        // Switch tab - each category acts as its own separate thread
         function switchTab(tab) {
             currentTab = tab;
+            console.log(`🔄 Switching to category thread: ${tab}`);
 
             // Update active tab
             document.querySelectorAll('.nav-tab').forEach(t => {
                 t.classList.toggle('active', t.dataset.tab === tab);
             });
 
-            // Load appropriate content
+            // Clear current posts to show loading
+            document.getElementById('postsContainer').innerHTML = '<div class="spinner"></div>';
+
+            // Load content specific to each category thread
             switch(tab) {
                 case 'feed':
+                    // General feed shows all posts
                     loadPosts();
                     break;
                 case 'showcase':
+                    // Show off work - photo posts only
                     loadPosts('photo');
                     break;
                 case 'help':
+                    // Help desk - help posts only
                     loadPosts('help');
                     break;
                 case 'tips':
+                    // Tips & tutorials - tip posts only
                     loadPosts('tip');
                     break;
+                case 'videos':
+                    // Video academy - video posts only
+                    loadPosts('video');
+                    break;
                 case 'marketplace':
+                    // Marketplace - marketplace posts only
                     loadPosts('marketplace');
                     break;
+                case 'events':
+                    // Events - event posts
+                    loadPosts('event');
+                    break;
+                case 'mentors':
+                    // Mentor match - mentor posts
+                    loadPosts('mentor');
+                    break;
                 default:
+                    // Default to general feed
                     loadPosts();
             }
         }
@@ -1366,7 +1439,7 @@
             document.getElementById('imagePreview').innerHTML = '';
         }
 
-        // Update post form based on type
+        // Update post form based on type - each category has specific fields
         function updatePostForm() {
             const type = document.getElementById('postType').value;
             const cameraGroup = document.getElementById('cameraSettingsGroup');
@@ -1378,18 +1451,26 @@
             priceGroup.style.display = 'none';
             imageGroup.style.display = 'block';
 
-            // Show relevant fields
+            // Show relevant fields based on post type
             switch(type) {
                 case 'photo':
                 case 'before_after':
+                    // Photo posts show camera settings
                     cameraGroup.style.display = 'block';
                     break;
+                case 'video':
+                    // Video posts can have images (thumbnails) but no camera settings
+                    break;
                 case 'marketplace':
+                    // Marketplace posts require pricing
                     priceGroup.style.display = 'block';
                     break;
                 case 'text':
                 case 'help':
                 case 'tip':
+                case 'event':
+                case 'mentor':
+                    // Text-based posts don't need images
                     imageGroup.style.display = 'none';
                     break;
             }
