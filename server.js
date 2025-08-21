@@ -929,18 +929,8 @@ app.use((req, res, next) => {
     }
 });
 
-// Serve static files for authenticated users (JS, CSS, assets)
-// Order matters: specific routes first, then static serving for assets
-app.use(express.static(path.join(__dirname), {
-    index: false, // Prevent serving index.html automatically
-    setHeaders: (res, path) => {
-        // Only serve non-HTML files to prevent bypassing secure routes
-        if (path.endsWith('.html') && !path.includes('public')) {
-            res.status(404).send('Not Found');
-            return;
-        }
-    }
-}));
+// SECURITY: Controlled static file serving - only after routes are defined
+// This prevents conflicts with custom routes and headers already sent errors
 
 // REMOVED: Root level static serving to prevent bypassing secure routes
 // This was serving index.html directly and bypassing our secure landing page route
@@ -11926,7 +11916,14 @@ app.get('/hero-background.jpg', (req, res) => {
     }
 });
 
-// SECURITY: Root directory static serving removed to prevent bypassing secure routes
+// Add static file serving at the END to prevent route conflicts
+app.use(express.static(path.join(__dirname), {
+    index: false, // Never serve index.html automatically
+    etag: false,
+    lastModified: false
+}));
+
+// SECURITY: Static serving moved to end to prevent route bypass
 
 // Start server
 // Premium subscription middleware
