@@ -529,9 +529,11 @@ class PaymentPlanManager {
 
       // Get session details
       const sessionResult = await client.query(`
-        SELECT client_name, session_type, date_time, email
-        FROM photography_sessions 
-        WHERE id = $1
+        SELECT s.client_name, s.session_type, s.date_time, s.email, s.user_id,
+               u.business_name, u.email as photographer_email, u.display_name
+        FROM photography_sessions s
+        LEFT JOIN users u ON s.user_id = u.id
+        WHERE s.id = $1
       `, [payment.session_id]);
 
       if (sessionResult.rows.length === 0) {
@@ -539,6 +541,11 @@ class PaymentPlanManager {
       }
 
       const session = sessionResult.rows[0];
+      
+      // Determine photographer business name
+      const businessName = session.business_name || 
+                          (session.display_name ? `${session.display_name} Photography` : 'Photography Business');
+      const businessEmail = session.photographer_email || 'noreply@photomanagementsystem.com';
 
       return {
         id: payment.id,
@@ -552,6 +559,10 @@ class PaymentPlanManager {
           sessionType: session.session_type,
           dateTime: session.date_time,
           email: session.email
+        },
+        photographer: {
+          businessName: businessName,
+          email: businessEmail
         },
         stripeInvoiceUrl: payment.stripe_invoice_url
       };

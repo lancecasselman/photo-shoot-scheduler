@@ -4125,16 +4125,24 @@ app.get('/api/sessions/:sessionId/public', async (req, res) => {
     try {
         const { sessionId } = req.params;
 
-        const result = await pool.query(
-            'SELECT * FROM photography_sessions WHERE id = $1',
-            [sessionId]
-        );
+        const result = await pool.query(`
+            SELECT s.*, u.business_name, u.email as photographer_email, u.display_name
+            FROM photography_sessions s
+            LEFT JOIN users u ON s.user_id = u.id
+            WHERE s.id = $1
+        `, [sessionId]);
 
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Session not found' });
         }
 
         const row = result.rows[0];
+        
+        // Determine photographer business name
+        const businessName = row.business_name || 
+                            (row.display_name ? `${row.display_name} Photography` : 'Photography Business');
+        const businessEmail = row.photographer_email || 'noreply@photomanagementsystem.com';
+        
         // Return only essential session data for invoices (no sensitive data)
         const session = {
             id: row.id,
@@ -4149,7 +4157,11 @@ app.get('/api/sessions/:sessionId/public', async (req, res) => {
             deposit_amount: parseFloat(row.deposit_amount || 0),
             duration: row.duration,
             notes: row.notes,
-            createdAt: row.created_at
+            createdAt: row.created_at,
+            photographer: {
+                businessName: businessName,
+                email: businessEmail
+            }
         };
 
         console.log(` Public session data requested for invoice: ${sessionId}`);

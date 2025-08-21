@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Photography Invoice - The Legacy Photography</title>
+    <title>Photography Invoice</title>
     <script src="https://js.stripe.com/v3/"></script>
     <style>
         body {
@@ -367,9 +367,9 @@
 <body>
     <div class="invoice-container">
         <div class="header">
-            <h1>The Legacy Photography</h1>
+            <h1 id="business-name">Loading...</h1>
             <p>Professional Photography Services</p>
-            <p>Email: lance@thelegacyphotography.com</p>
+            <p id="business-email">Loading...</p>
         </div>
         
         <div id="loading" class="message">Loading invoice details...</div>
@@ -609,7 +609,8 @@
                             clientName: 'Photography Client',
                             sessionType: 'Photography Session',
                             dateTime: new Date().toISOString()
-                        }
+                        },
+                        photographer: null // Will be fetched from session data
                     };
                     
                     console.log(' Invoice data created from URL:', invoiceData);
@@ -666,6 +667,12 @@
         function displayInvoiceData() {
             document.getElementById('loading').style.display = 'none';
             document.getElementById('invoice-content').style.display = 'block';
+            
+            // Update photographer business information
+            if (invoiceData.photographer) {
+                document.getElementById('business-name').textContent = invoiceData.photographer.businessName;
+                document.getElementById('business-email').textContent = `Email: ${invoiceData.photographer.email}`;
+            }
             
             // Fill in invoice details
             document.getElementById('payment-number').textContent = invoiceData.paymentNumber;
@@ -879,7 +886,13 @@
                         invoiceData.session.dateTime = sessionData.dateTime || sessionData.date_time || new Date().toISOString();
                         invoiceData.session.phoneNumber = sessionData.phoneNumber || sessionData.phone_number;
                         
+                        // Fetch photographer information from session data
+                        if (sessionData.photographer) {
+                            invoiceData.photographer = sessionData.photographer;
+                        }
+                        
                         console.log(' Invoice data updated with session details:', invoiceData.session);
+                        console.log(' Photographer details:', invoiceData.photographer);
                         
                         // Refresh the display with updated session data
                         displayInvoiceData();
