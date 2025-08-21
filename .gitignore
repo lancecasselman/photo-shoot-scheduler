@@ -4,7 +4,7 @@ npm-debug.log
 yarn-error.log
 .npm/
 .yarn/
-package-lock.json
+# package-lock.json (commented out - keeping in git for dependency consistency)
 
 # Capacitor build artifacts
 # android/ (commented out to allow Android folder in git)
