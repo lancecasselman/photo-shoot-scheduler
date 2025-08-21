@@ -4968,6 +4968,161 @@
             margin: var(--spacing-md) 0;
         }
 
+        /* Override all dark backgrounds in business sections */
+        .business-section,
+        .business-section *,
+        #expensesSection *,
+        #mileageSection *,
+        #reportsSection *,
+        #aiAssistant * {
+            background: transparent !important;
+        }
+
+        /* Specifically target containers that need white backgrounds */
+        .business-section,
+        #expensesSection,
+        #mileageSection, 
+        #reportsSection,
+        #aiAssistant,
+        .expenses-table-container,
+        .mileage-table-container {
+            background: #ffffff !important;
+            border: 1px solid #e0e0e0 !important;
+        }
+
+        /* Forms and inputs in business sections */
+        .business-section form,
+        .business-section .form-container,
+        .expense-form,
+        .trip-form,
+        .home-base-setup,
+        .setup-card,
+        .report-content,
+        .ai-content {
+            background: #ffffff !important;
+            border: 1px solid #e0e0e0 !important;
+        }
+
+        /* Override any remaining dark card styles */
+        .business-section .card,
+        .business-section .panel,
+        .business-section .container,
+        .financial-summary,
+        .summary-grid {
+            background: #ffffff !important;
+            color: #333333 !important;
+        }
+
+        /* Force white backgrounds on all business management elements */
+        .business-tabs .business-tab,
+        .ai-tab-content,
+        .ai-history,
+        .prompt-container,
+        .output-container,
+        .rich-text-editor,
+        .form-actions,
+        .table-actions,
+        .date-range-selector,
+        .report-date-range,
+        .summary-card,
+        .financial-card {
+            background: #ffffff !important;
+            color: #333333 !important;
+            border: 1px solid #e0e0e0 !important;
+        }
+
+        /* Override dark text colors in business sections */
+        .business-section h1,
+        .business-section h2,
+        .business-section h3,
+        .business-section h4,
+        .business-section p,
+        .business-section span,
+        .business-section div,
+        .business-section label,
+        #expensesSection *,
+        #mileageSection *,
+        #reportsSection *,
+        #aiAssistant * {
+            color: #333333 !important;
+        }
+
+        /* Inputs and form elements */
+        .business-section input[type="text"],
+        .business-section input[type="number"],
+        .business-section input[type="date"],
+        .business-section input[type="email"],
+        .business-section select,
+        .business-section textarea {
+            background: #ffffff !important;
+            border: 1px solid #ddd !important;
+            color: #333333 !important;
+        }
+
+        /* Tables and their components */
+        .business-table,
+        .business-table thead,
+        .business-table tbody,
+        .business-table tr,
+        .business-table th,
+        .business-table td {
+            background: #ffffff !important;
+            color: #333333 !important;
+        }
+
+        .business-table th {
+            background: #f8f9fa !important;
+            border-bottom: 2px solid #e0e0e0 !important;
+        }
+
+        /* Business navigation and tabs - force white backgrounds */
+        .business-nav,
+        .business-nav-btn,
+        .business-nav-btn.active,
+        .business-nav-btn:hover {
+            background: #ffffff !important;
+            color: #333333 !important;
+            border: 1px solid #e0e0e0 !important;
+        }
+
+        .business-nav-btn.active {
+            background: #f8f9fa !important;
+            border-bottom: 2px solid #007bff !important;
+        }
+
+        /* Global override for all elements in business sections */
+        div[class*="business"],
+        div[id*="business"],
+        .business-section > *,
+        .business-section * {
+            background: transparent !important;
+            color: #333333 !important;
+        }
+
+        /* Specifically force main containers to white */
+        .business-section,
+        #expensesSection,
+        #mileageSection,
+        #reportsSection,
+        #aiAssistant,
+        .expenses-table-container,
+        .mileage-table-container,
+        .ai-content,
+        .report-content {
+            background: #ffffff !important;
+            border: 1px solid #e0e0e0 !important;
+            color: #333333 !important;
+        }
+
+        /* Override any CSS variable backgrounds */
+        .business-section [style*="background"],
+        #expensesSection [style*="background"],
+        #mileageSection [style*="background"],
+        #reportsSection [style*="background"],
+        #aiAssistant [style*="background"] {
+            background: #ffffff !important;
+        }
+
         .form-row {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
