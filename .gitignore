@@ -7,7 +7,7 @@ yarn-error.log
 package-lock.json
 
 # Capacitor build artifacts
-android/
+# android/ (commented out to allow Android folder in git)
 !ios/App/
 !ios/App/App.xcodeproj
 !ios/App/App.xcworkspace
