@@ -712,7 +712,7 @@ const isAuthenticated = (req, res, next) => {
         if (!req.session) {
             return res.status(401).json({ 
                 message: 'No session found - authentication required',
-                redirectTo: '/auth.html'
+                redirectTo: '/secure-login.html'
             });
         }
 
@@ -720,7 +720,7 @@ const isAuthenticated = (req, res, next) => {
         if (!req.session.user) {
             return res.status(401).json({ 
                 message: 'No user data in session - authentication required',
-                redirectTo: '/auth.html'
+                redirectTo: '/secure-login.html'
             });
         }
 
@@ -730,14 +730,14 @@ const isAuthenticated = (req, res, next) => {
         if (!user.uid || typeof user.uid !== 'string' || user.uid.length === 0) {
             return res.status(401).json({ 
                 message: 'Invalid user ID',
-                redirectTo: '/auth.html'
+                redirectTo: '/secure-login.html'
             });
         }
 
         if (!user.email || typeof user.email !== 'string' || !user.email.includes('@')) {
             return res.status(401).json({ 
                 message: 'Invalid email',
-                redirectTo: '/auth.html'
+                redirectTo: '/secure-login.html'
             });
         }
 
@@ -755,7 +755,7 @@ const isAuthenticated = (req, res, next) => {
         console.error('Authentication middleware error:', error);
         return res.status(500).json({ 
             message: 'Authentication error',
-            redirectTo: '/auth.html'
+            redirectTo: '/secure-login.html'
         });
     }
 };
@@ -11164,7 +11164,7 @@ app.get('/app', async (req, res) => {
     // SECURITY: Always check authentication - no dev mode bypass
     if (!req.session || !req.session.user) {
         console.log('🚫 SECURITY: Blocked unauthenticated access to /app');
-        return res.redirect('/auth.html?return=/app');
+        return res.redirect('/secure-login.html?return=/app');
     }
     
     // Check subscription status
@@ -11199,7 +11199,7 @@ app.get('/dashboard', async (req, res) => {
     // SECURITY: Always check authentication - no dev mode bypass
     if (!req.session || !req.session.user) {
         console.log('🚫 SECURITY: Blocked unauthenticated access to /dashboard');
-        return res.redirect('/auth.html?return=/dashboard');
+        return res.redirect('/secure-login.html?return=/dashboard');
     }
         
         // Check subscription status
