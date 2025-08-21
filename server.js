@@ -13723,6 +13723,7 @@ app.post('/api/stripe-connect/onboard', isAuthenticated, async (req, res) => {
         
         console.log('🔗 Starting Stripe Connect onboarding for:', userEmail, 'Session ID:', sessionId?.substring(0, 8));
         console.log('🔐 SECURITY: User ID verified from session:', userId);
+        console.log('🔐 SECURITY: Full session user object:', JSON.stringify(req.session.user, null, 2));
         
         // Enhanced user verification to prevent cross-user contamination
         if (!userId || !userEmail) {
@@ -13745,15 +13746,22 @@ app.post('/api/stripe-connect/onboard', isAuthenticated, async (req, res) => {
         }
         
         // Check if user already has a connected account
-        const existingUser = await pool.query('SELECT stripe_connect_account_id FROM users WHERE id = $1', [userId]);
+        console.log('🔍 STRIPE: Checking for existing Stripe account for user:', userId, 'Email:', userEmail);
+        const existingUser = await pool.query('SELECT stripe_connect_account_id, email FROM users WHERE id = $1', [userId]);
+        
         if (existingUser.rows[0]?.stripe_connect_account_id) {
-            console.log('🔒 User already has Stripe account:', existingUser.rows[0].stripe_connect_account_id);
+            console.log('🔒 STRIPE: User already has Stripe account:', existingUser.rows[0].stripe_connect_account_id);
+            console.log('🔒 STRIPE: Database email for user:', existingUser.rows[0].email);
+            console.log('🔒 STRIPE: Session email:', userEmail);
+            
             return res.json({
                 success: false,
                 message: 'You already have a connected Stripe account',
                 accountId: existingUser.rows[0].stripe_connect_account_id
             });
         }
+        
+        console.log('✅ STRIPE: No existing Stripe account found, proceeding with creation');
         
         // Create Express account
         const accountResult = await stripeConnectManager.createExpressAccount(userEmail, 'Photography Business');
@@ -13765,15 +13773,27 @@ app.post('/api/stripe-connect/onboard', isAuthenticated, async (req, res) => {
         }
         
         // Save account ID to database
-        await pool.query(
-            'UPDATE users SET stripe_connect_account_id = $1 WHERE id = $2',
+        console.log('💾 STRIPE: Saving account ID to database:', accountResult.accountId, 'for user:', userId);
+        const updateResult = await pool.query(
+            'UPDATE users SET stripe_connect_account_id = $1 WHERE id = $2 RETURNING id, email, stripe_connect_account_id',
             [accountResult.accountId, userId]
         );
         
-        // Create onboarding link with session preservation
+        if (updateResult.rows.length > 0) {
+            console.log('✅ STRIPE: Database updated successfully for user:', updateResult.rows[0]);
+        } else {
+            console.error('❌ STRIPE: Failed to update database for user:', userId);
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to save Stripe account to database'
+            });
+        }
+        
+        // Create onboarding link with session preservation and user isolation
         const baseUrl = req.headers.origin || `https://${req.headers.host}`;
-        const refreshUrl = `${baseUrl}/payment-settings.html?stripe_connect=refresh&session_id=${sessionId}`;
-        const returnUrl = `${baseUrl}/payment-settings.html?stripe_connect=success&session_id=${sessionId}`;
+        const userHash = Buffer.from(userEmail).toString('base64').substring(0, 8); // Create unique user identifier
+        const refreshUrl = `${baseUrl}/payment-settings.html?stripe_connect=refresh&session_id=${sessionId}&user=${userHash}`;
+        const returnUrl = `${baseUrl}/payment-settings.html?stripe_connect=success&session_id=${sessionId}&user=${userHash}`;
         
         const linkResult = await stripeConnectManager.createAccountLink(
             accountResult.accountId,
@@ -13815,6 +13835,7 @@ app.get('/api/stripe-connect/status', isAuthenticated, async (req, res) => {
         const sessionId = req.session.id;
         
         console.log('🔐 SECURITY: Checking Stripe status for user:', userEmail, 'ID:', userId, 'Session:', sessionId?.substring(0, 8));
+        console.log('🔐 SECURITY: Full session object for status check:', JSON.stringify(req.session.user, null, 2));
         
         const userResult = await pool.query(
             'SELECT stripe_connect_account_id, stripe_onboarding_complete FROM users WHERE id = $1',

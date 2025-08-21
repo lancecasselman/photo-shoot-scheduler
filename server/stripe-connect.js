@@ -11,6 +11,13 @@ class StripeConnectManager {
     // Create Express Account for photographer
     async createExpressAccount(email, businessName, country = 'US') {
         try {
+            console.log('🔧 STRIPE: Creating new Express account for email:', email);
+            console.log('🔧 STRIPE: Business name:', businessName, 'Country:', country);
+            
+            // Create unique Express account - each photographer gets their own
+            // Add unique identifier to prevent any account cross-contamination
+            const uniqueId = Math.random().toString(36).substring(2, 15);
+            
             const account = await stripe.accounts.create({
                 type: 'express',
                 country: country,
@@ -20,6 +27,13 @@ class StripeConnectManager {
                     transfers: { requested: true }
                 },
                 business_type: 'individual',
+                metadata: {
+                    photographer_email: email,
+                    platform: 'photography_management_system',
+                    unique_id: uniqueId,
+                    business_name: businessName || 'Photography Business',
+                    created_at: new Date().toISOString()
+                },
                 settings: {
                     payouts: {
                         schedule: {
@@ -29,7 +43,11 @@ class StripeConnectManager {
                 }
             });
 
-            console.log(' Express account created:', account.id, 'for:', email);
+            console.log('✅ STRIPE: Express account created successfully!');
+            console.log('✅ STRIPE: Account ID:', account.id);
+            console.log('✅ STRIPE: Account email:', account.email);
+            console.log('✅ STRIPE: Account status:', account.details_submitted ? 'Details submitted' : 'Needs onboarding');
+            
             return {
                 success: true,
                 accountId: account.id,
@@ -37,10 +55,21 @@ class StripeConnectManager {
             };
 
         } catch (error) {
-            console.error('❌ Error creating Express account:', error.message);
+            console.error('❌ STRIPE: Error creating Express account for:', email);
+            console.error('❌ STRIPE: Error details:', error.message);
+            console.error('❌ STRIPE: Error type:', error.type);
+            console.error('❌ STRIPE: Error code:', error.code);
+            
+            // Log the full error for debugging
+            if (error.raw) {
+                console.error('❌ STRIPE: Raw error:', JSON.stringify(error.raw, null, 2));
+            }
+            
             return {
                 success: false,
-                error: error.message
+                error: error.message,
+                errorType: error.type,
+                errorCode: error.code
             };
         }
     }

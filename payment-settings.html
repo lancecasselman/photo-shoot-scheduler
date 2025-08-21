@@ -542,12 +542,30 @@
             document.getElementById('content').style.display = 'block';
         }
         
-        // Check for return from Stripe
+        // Check for return from Stripe with enhanced user validation
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('stripe_connect') === 'success') {
-            showMessage('Successfully connected your Stripe account!', 'success');
-            // Remove query params
+            const userParam = urlParams.get('user');
+            console.log('🔐 STRIPE RETURN: Success return with user param:', userParam);
+            console.log('🔐 STRIPE RETURN: Current user email:', window.currentUserEmail);
+            
+            // Validate user parameter matches current user
+            if (userParam && window.currentUserEmail) {
+                const currentUserHash = btoa(window.currentUserEmail).substring(0, 8);
+                if (userParam === currentUserHash) {
+                    showMessage('Successfully connected your Stripe account!', 'success');
+                } else {
+                    console.error('🚨 STRIPE SECURITY: User parameter mismatch on return');
+                    showMessage('Security validation failed. Please try connecting again.', 'error');
+                }
+            } else {
+                showMessage('Successfully connected your Stripe account!', 'success');
+            }
+            
+            // Remove query params and reload status
             window.history.replaceState({}, document.title, window.location.pathname);
+            setTimeout(() => loadStripeStatus(), 1000);
+            
         } else if (urlParams.get('stripe_connect') === 'refresh') {
             showMessage('Please complete your Stripe account setup', 'info');
             // Remove query params
