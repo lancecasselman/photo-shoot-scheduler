@@ -305,27 +305,7 @@ const analyticsSystem = new AnalyticsSystem(pool);
     }
 })();
 
-// Initialize data export system
-const dataExportSystem = new DataExportSystem(pool, r2FileManager);
-(async () => {
-    try {
-        await dataExportSystem.initializeTables();
-        console.log('✅ Data export system initialized');
-    } catch (error) {
-        console.warn('Data export system initialization skipped:', error.message);
-    }
-})();
-
-// Initialize backup system
-const backupSystem = new BackupSystem(pool, r2FileManager);
-(async () => {
-    try {
-        await backupSystem.initialize();
-        console.log('✅ Backup system initialized with automated schedules');
-    } catch (error) {
-        console.warn('Backup system initialization skipped:', error.message);
-    }
-})();
+// Data export and backup systems will be initialized after r2FileManager is created
 
 // Add comprehensive error handling for database pool
 pool.on('error', (err) => {
@@ -355,6 +335,28 @@ const aiServices = new AIServices();
 
 // Initialize new storage system
 const storageSystem = new StorageSystem(pool, r2FileManager);
+
+// Initialize data export system (after r2FileManager is available)
+const dataExportSystem = new DataExportSystem(pool, r2FileManager);
+(async () => {
+    try {
+        await dataExportSystem.initializeTables();
+        console.log('✅ Data export system initialized');
+    } catch (error) {
+        console.warn('Data export system initialization skipped:', error.message);
+    }
+})();
+
+// Initialize backup system (after r2FileManager is available)
+const backupSystem = new BackupSystem(pool, r2FileManager);
+(async () => {
+    try {
+        await backupSystem.initialize();
+        console.log('✅ Backup system initialized with automated schedules');
+    } catch (error) {
+        console.warn('Backup system initialization skipped:', error.message);
+    }
+})();
 
 // Initialize Community Platform - will be initialized after Firebase admin is ready
 let communityRoutes = null;
@@ -701,16 +703,15 @@ const normalizeUserForLance = (user) => {
 
 // Enhanced authentication middleware with strict security
 const isAuthenticated = (req, res, next) => {
-    // DEV_MODE bypass for development
-    if (DEV_MODE) {
-        req.user = { uid: 'dev-user', email: 'dev@example.com' };
-        return next();
-    }
-
     // Enhanced authentication check with better error handling
     try {
         // Check for session existence and basic structure
         if (!req.session) {
+            // DEV_MODE bypass only if no session at all
+            if (DEV_MODE) {
+                req.user = { uid: 'dev-user', email: 'dev@example.com' };
+                return next();
+            }
             return res.status(401).json({ 
                 message: 'No session found',
                 redirectTo: '/auth.html'
@@ -719,6 +720,11 @@ const isAuthenticated = (req, res, next) => {
 
         // Check for user data in session
         if (!req.session.user) {
+            // DEV_MODE bypass only if no user in session
+            if (DEV_MODE) {
+                req.user = { uid: 'dev-user', email: 'dev@example.com' };
+                return next();
+            }
             return res.status(401).json({ 
                 message: 'No user data in session',
                 redirectTo: '/auth.html'
@@ -742,8 +748,9 @@ const isAuthenticated = (req, res, next) => {
             });
         }
 
-        // Set req.user for downstream middleware
+        // Set req.user for downstream middleware - use real session user
         req.user = user;
+        console.log(`✅ Admin bypass: ${user.email} granted access without subscription check`);
         next();
     } catch (error) {
         console.error('Authentication middleware error:', error);

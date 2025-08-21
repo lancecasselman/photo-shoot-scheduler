@@ -433,6 +433,14 @@ async function loadSessions() {
         } else {
             console.error('renderSessions function not found in window scope');
         }
+        // Clear any existing error messages when sessions load successfully
+        const messageContainer = document.getElementById('messageContainer');
+        if (messageContainer) {
+            // Remove all existing error messages
+            const errorMessages = messageContainer.querySelectorAll('.message-error');
+            errorMessages.forEach(msg => msg.remove());
+        }
+        
         console.log('Successfully loaded', sessions.length, 'sessions');
 
         // Initialize business dashboard with real session data
