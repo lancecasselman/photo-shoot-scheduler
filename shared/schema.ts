@@ -408,3 +408,127 @@ export type InsertAiCreditUsage = typeof aiCreditUsage.$inferInsert;
 export type AiCreditUsage = typeof aiCreditUsage.$inferSelect;
 export type InsertBusinessExpense = typeof businessExpenses.$inferInsert;
 export type BusinessExpense = typeof businessExpenses.$inferSelect;
+
+// Community Platform Tables
+export const communityProfiles = pgTable("community_profiles", {
+  id: varchar("id").primaryKey().notNull(),
+  userId: varchar("user_id").notNull().unique().references(() => users.id),
+  displayName: varchar("display_name").notNull(),
+  bio: text("bio").default(""),
+  avatarUrl: varchar("avatar_url"),
+  specialty: varchar("specialty"), // portrait, landscape, wedding, etc.
+  location: varchar("location"),
+  experienceLevel: varchar("experience_level").default("beginner"), // beginner, intermediate, professional
+  reputationPoints: integer("reputation_points").default(0),
+  followersCount: integer("followers_count").default(0),
+  followingCount: integer("following_count").default(0),
+  postsCount: integer("posts_count").default(0),
+  isVerified: boolean("is_verified").default(false),
+  websiteUrl: varchar("website_url"),
+  socialLinks: jsonb("social_links").default({}),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const communityPosts = pgTable("community_posts", {
+  id: varchar("id").primaryKey().notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  userName: varchar("user_name").notNull(),
+  userAvatar: varchar("user_avatar"),
+  type: varchar("type").notNull().default("photo"), // photo, story, tip, question, showcase, sale
+  title: varchar("title"),
+  content: text("content"),
+  imageUrls: jsonb("image_urls").default({}), // Array of image URLs
+  videoUrl: varchar("video_url"),
+  cameraSettings: jsonb("camera_settings").default({}), // EXIF data, camera, lens, etc.
+  location: varchar("location"),
+  price: decimal("price", { precision: 10, scale: 2 }), // For sale posts
+  tags: jsonb("tags").default([]), // Photography tags/categories
+  likesCount: integer("likes_count").default(0),
+  commentsCount: integer("comments_count").default(0),
+  sharesCount: integer("shares_count").default(0),
+  savesCount: integer("saves_count").default(0),
+  viewsCount: integer("views_count").default(0),
+  isPublic: boolean("is_public").default(true),
+  isFeatured: boolean("is_featured").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const communityLikes = pgTable("community_likes", {
+  id: varchar("id").primaryKey().notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  postId: varchar("post_id").notNull().references(() => communityPosts.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const communityComments = pgTable("community_comments", {
+  id: varchar("id").primaryKey().notNull(),
+  postId: varchar("post_id").notNull().references(() => communityPosts.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  userName: varchar("user_name").notNull(),
+  userAvatar: varchar("user_avatar"),
+  parentCommentId: varchar("parent_comment_id").references(() => communityComments.id),
+  content: text("content").notNull(),
+  likesCount: integer("likes_count").default(0),
+  isEdited: boolean("is_edited").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const communitySaves = pgTable("community_saves", {
+  id: varchar("id").primaryKey().notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  postId: varchar("post_id").notNull().references(() => communityPosts.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const communityFollows = pgTable("community_follows", {
+  id: varchar("id").primaryKey().notNull(),
+  followerId: varchar("follower_id").notNull().references(() => users.id),
+  followingId: varchar("following_id").notNull().references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const communityMessages = pgTable("community_messages", {
+  id: varchar("id").primaryKey().notNull(),
+  senderId: varchar("sender_id").notNull().references(() => users.id),
+  senderName: varchar("sender_name").notNull(),
+  receiverId: varchar("receiver_id").notNull().references(() => users.id),
+  receiverName: varchar("receiver_name").notNull(),
+  message: text("message").notNull(),
+  isRead: boolean("is_read").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const communityChallenges = pgTable("community_challenges", {
+  id: varchar("id").primaryKey().notNull(),
+  title: varchar("title").notNull(),
+  description: text("description").notNull(),
+  theme: varchar("theme").notNull(), // weekly theme, technique focus, etc.
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  participantsCount: integer("participants_count").default(0),
+  submissionsCount: integer("submissions_count").default(0),
+  prizeDescription: text("prize_description"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Community type exports
+export type InsertCommunityProfile = typeof communityProfiles.$inferInsert;
+export type CommunityProfile = typeof communityProfiles.$inferSelect;
+export type InsertCommunityPost = typeof communityPosts.$inferInsert;
+export type CommunityPost = typeof communityPosts.$inferSelect;
+export type InsertCommunityLike = typeof communityLikes.$inferInsert;
+export type CommunityLike = typeof communityLikes.$inferSelect;
+export type InsertCommunityComment = typeof communityComments.$inferInsert;
+export type CommunityComment = typeof communityComments.$inferSelect;
+export type InsertCommunitySave = typeof communitySaves.$inferInsert;
+export type CommunitySave = typeof communitySaves.$inferSelect;
+export type InsertCommunityFollow = typeof communityFollows.$inferInsert;
+export type CommunityFollow = typeof communityFollows.$inferSelect;
+export type InsertCommunityMessage = typeof communityMessages.$inferInsert;
+export type CommunityMessage = typeof communityMessages.$inferSelect;
+export type InsertCommunityChallenge = typeof communityChallenges.$inferInsert;
+export type CommunityChallenge = typeof communityChallenges.$inferSelect;
