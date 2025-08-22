@@ -38,8 +38,8 @@ android {
 }
 
 dependencies {
-    // Capacitor version from package.json
-    def CAP_VER = "7.0.2"
+    // Capacitor version from package.json (@capacitor/core: 7.4.3, plugins: 7.0.2)
+    def CAP_VER = "7.4.3"
     
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
@@ -47,15 +47,15 @@ dependencies {
     implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
     
     // Capacitor Maven dependencies
-    implementation "com.capacitorjs:capacitor-android:7.4.3"
-    implementation "com.capacitorjs:app:$CAP_VER"
-    implementation "com.capacitorjs:camera:$CAP_VER"
-    implementation "com.capacitorjs:device:$CAP_VER"
-    implementation "com.capacitorjs:keyboard:$CAP_VER"
-    implementation "com.capacitorjs:network:$CAP_VER"
-    implementation "com.capacitorjs:push-notifications:$CAP_VER"
-    implementation "com.capacitorjs:splash-screen:$CAP_VER"
-    implementation "com.capacitorjs:status-bar:$CAP_VER"
+    implementation "com.capacitorjs:capacitor-android:$CAP_VER"
+    implementation "com.capacitorjs:app:7.0.2"
+    implementation "com.capacitorjs:camera:7.0.2"
+    implementation "com.capacitorjs:device:7.0.2"
+    implementation "com.capacitorjs:keyboard:7.0.2"
+    implementation "com.capacitorjs:network:7.0.2"
+    implementation "com.capacitorjs:push-notifications:7.0.2"
+    implementation "com.capacitorjs:splash-screen:7.0.2"
+    implementation "com.capacitorjs:status-bar:7.0.2"
     
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
@@ -66,6 +66,12 @@ dependencies {
     if (cordovaPluginsDir.exists()) {
         implementation project(':capacitor-cordova-android-plugins')
     }
+}
+
+// Apply Capacitor build with Cordova conditional check
+def cordovaVars = file('../capacitor-cordova-android-plugins/cordova.variables.gradle')
+if (cordovaVars.exists()) {
+    apply from: cordovaVars
 }
 
 apply from: 'capacitor.build.gradle'
