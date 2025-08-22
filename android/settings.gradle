@@ -17,11 +17,7 @@ dependencyResolutionManagement {
 rootProject.name = "Photography Manager"
 
 include ':app'
+include ':capacitor-cordova-android-plugins'
+project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins/')
 
-def cordovaPluginsDir = new File(rootDir, 'capacitor-cordova-android-plugins')
-if (cordovaPluginsDir.exists()) {
-    include ':capacitor-cordova-android-plugins'
-    project(':capacitor-cordova-android-plugins').projectDir = cordovaPluginsDir
-}
-
-// Removed apply from: 'capacitor.settings.gradle' - using Maven dependencies instead
+apply from: 'capacitor.settings.gradle'
