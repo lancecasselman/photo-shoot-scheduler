@@ -21,8 +21,10 @@ ios/App/build/
 .DS_Store
 
 # Environment and secrets
+.env
 .env.local
 .env.production
+.env.bucket
 
 # Build outputs
 dist/
