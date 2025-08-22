@@ -55,6 +55,7 @@ dependencies {
 }
 
 apply from: 'capacitor.build.gradle'
+apply from: '../capacitor-build-fix.gradle'
 
 try {
     def servicesJSON = file('google-services.json')

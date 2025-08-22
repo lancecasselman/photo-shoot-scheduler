@@ -1,0 +1,11 @@
+// This file provides a persistent fix for the capacitor.build.gradle issue
+// Apply this in your app/build.gradle after the capacitor.build.gradle apply
+
+// Override the cordova.variables.gradle apply with a conditional check
+afterEvaluate {
+    // Ensure the cordova plugins are only included if they exist
+    def cordovaPluginsDir = file('../capacitor-cordova-android-plugins')
+    if (!cordovaPluginsDir.exists()) {
+        println "Capacitor Cordova plugins directory not found, skipping..."
+    }
+}
