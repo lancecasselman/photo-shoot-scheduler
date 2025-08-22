@@ -7,11 +7,7 @@ android {
   }
 }
 
-// Conditionally apply cordova.variables.gradle if it exists
-def cordovaVars = file('../capacitor-cordova-android-plugins/cordova.variables.gradle')
-if (cordovaVars.exists()) {
-    apply from: cordovaVars
-}
+apply from: "../capacitor-cordova-android-plugins/cordova.variables.gradle"
 dependencies {
     implementation project(':capacitor-app')
     implementation project(':capacitor-camera')
