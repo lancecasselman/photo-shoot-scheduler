@@ -51,12 +51,10 @@ const config: CapacitorConfig = {
       spinnerColor: '#999999'
     },
     StatusBar: {
-      style: 'default',
+      style: 'light',
       backgroundColor: '#000000'
     },
     Keyboard: {
-      resize: 'body',
-      style: 'dark',
       resizeOnFullScreen: true
     }
   }
