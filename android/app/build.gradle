@@ -42,23 +42,15 @@ dependencies {
     implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
     implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
     implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
-    
-    // Capacitor dependencies using Maven Central
-    def CAP_VER = "7.4.3"  // match @capacitor/* in package.json
-    implementation "com.capacitorjs:core:$CAP_VER"
-    implementation "com.capacitorjs:app:$CAP_VER"
-    implementation "com.capacitorjs:camera:$CAP_VER"
-    implementation "com.capacitorjs:device:$CAP_VER"
-    implementation "com.capacitorjs:keyboard:$CAP_VER"
-    implementation "com.capacitorjs:network:$CAP_VER"
-    implementation "com.capacitorjs:push-notifications:$CAP_VER"
-    implementation "com.capacitorjs:splash-screen:$CAP_VER"
-    implementation "com.capacitorjs:status-bar:$CAP_VER"
+    implementation project(':capacitor-android')
+    implementation project(':capacitor-cordova-android-plugins')
     
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
 }
+
+apply from: 'capacitor.build.gradle'
 
 try {
     def servicesJSON = file('google-services.json')
