@@ -1,55 +1,5 @@
-pluginManagement {
-  repositories {
-    gradlePluginPortal()
-    google()
-    mavenCentral()
-    maven { url 'https://maven.capacitorjs.com/' } // optional
-  }
-}
-
-dependencyResolutionManagement {
-  repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
-  repositories {
-    google()
-    mavenCentral()
-    maven { url 'https://maven.capacitorjs.com/' } // optional
-  }
-}
-
-rootProject.name = "App"
 include ':app'
+include ':capacitor-cordova-android-plugins'
+project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins/')
 
-// --- Capacitor core (NOTE: points to /capacitor subfolder) ---
-include ':capacitor-android'
-project(':capacitor-android').projectDir = new File('../node_modules/@capacitor/android/capacitor')
-
-// --- Include ONLY plugins you actually have installed ---
-// Each one must point to its /android subfolder
-
-include ':capacitor-app'
-project(':capacitor-app').projectDir = new File('../node_modules/@capacitor/app/android')
-
-include ':capacitor-camera'
-project(':capacitor-camera').projectDir = new File('../node_modules/@capacitor/camera/android')
-
-include ':capacitor-device'
-project(':capacitor-device').projectDir = new File('../node_modules/@capacitor/device/android')
-
-include ':capacitor-keyboard'
-project(':capacitor-keyboard').projectDir = new File('../node_modules/@capacitor/keyboard/android')
-
-include ':capacitor-network'
-project(':capacitor-network').projectDir = new File('../node_modules/@capacitor/network/android')
-
-include ':capacitor-push-notifications'
-project(':capacitor-push-notifications').projectDir = new File('../node_modules/@capacitor/push-notifications/android')
-
-include ':capacitor-splash-screen'
-project(':capacitor-splash-screen').projectDir = new File('../node_modules/@capacitor/splash-screen/android')
-
-include ':capacitor-status-bar'
-project(':capacitor-status-bar').projectDir = new File('../node_modules/@capacitor/status-bar/android')
-
-// Cordova shim ONLY if this folder exists in your repo
-// include ':capacitor-cordova-android-plugins'
-// project(':capacitor-cordova-android-plugins').projectDir = new File('../capacitor-cordova-android-plugins')
+apply from: 'capacitor.settings.gradle'
