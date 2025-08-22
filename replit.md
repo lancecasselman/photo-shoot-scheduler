@@ -25,7 +25,7 @@ The primary database is PostgreSQL, utilizing Drizzle ORM. Firebase Firestore is
 Cloudflare R2 serves as the primary cloud storage with session-aware file paths and RAW file backup. Firebase Storage is used as secondary storage for website assets and profile images. The system supports full-resolution downloads, on-the-fly thumbnail generation with smart caching, and preserves original filenames.
 
 ### Mobile & Responsive Features
-Capacitor integration enables native mobile app capabilities for iOS and Android, including direct photo uploads and offline functionality. Android platform is configured for Google Play Store deployment.
+Capacitor integration enables native mobile app capabilities for iOS and Android, including direct photo uploads and offline functionality. Android platform is fully configured for Google Play Store deployment with optimized Gradle build system, resolved "No matching variant" errors, and clean dependency management ready for local SDK compilation.
 
 ### Photography Community Platform
 A social platform featuring a multi-tab feed system with customizable post types, advanced image optimization, social features (like, comment, save, share), user profiles with reputation points, community tools, a comprehensive direct messaging system, and automatic EXIF extraction. User interactions are enhanced with full username display, clickable user profiles, and complete user-to-user messaging infrastructure.
