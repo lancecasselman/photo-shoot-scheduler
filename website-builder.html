@@ -1023,14 +1023,29 @@
                     
                     <!-- Templates Section -->
                     <div class="tool-section">
-                        <div class="tool-title">Templates</div>
-                        <div class="template-list">
-                            <div class="template-card active" onclick="selectTemplate('modern')">
-                                <div class="template-name">Modern</div>
+                        <div class="tool-title">Professional Templates</div>
+                        <div class="template-list" style="display: grid; gap: 8px;">
+                            <div class="template-card" onclick="loadTemplate('wedding')" style="background: linear-gradient(135deg, #f093fb, #f5576c); color: white;">
+                                <div class="template-name" style="font-weight: 600;">Wedding Photography</div>
+                                <div style="font-size: 10px; opacity: 0.9;">Romantic • Elegant • Timeless</div>
                             </div>
-                            <div class="template-card" onclick="selectTemplate('elegant')">
-                                <div class="template-name">Elegant</div>
+                            <div class="template-card" onclick="loadTemplate('portrait')" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
+                                <div class="template-name" style="font-weight: 600;">Portrait Professional</div>
+                                <div style="font-size: 10px; opacity: 0.9;">Headshots • Families • Branding</div>
                             </div>
+                            <div class="template-card" onclick="loadTemplate('realestate')" style="background: linear-gradient(135deg, #f093fb, #f5576c); color: white;">
+                                <div class="template-name" style="font-weight: 600;">Real Estate</div>
+                                <div style="font-size: 10px; opacity: 0.9;">Properties • Virtual Tours • HDR</div>
+                            </div>
+                            <div class="template-card" onclick="loadTemplate('fineart')" style="background: linear-gradient(135deg, #2d3748, #4a5568); color: white;">
+                                <div class="template-name" style="font-weight: 600;">Fine Art Gallery</div>
+                                <div style="font-size: 10px; opacity: 0.9;">Exhibitions • Collections • Artist</div>
+                            </div>
+                            <div class="template-card" onclick="loadTemplate('event')" style="background: linear-gradient(135deg, #38a169, #48bb78); color: white;">
+                                <div class="template-name" style="font-weight: 600;">Event Coverage</div>
+                                <div style="font-size: 10px; opacity: 0.9;">Corporate • Conferences • Live</div>
+                            </div>
+                            <button onclick="clearCanvas()" style="width: 100%; padding: 8px; background: #e2e8f0; color: #2d3748; border: none; border-radius: 4px; cursor: pointer; font-size: 11px; margin-top: 8px;">Start from Scratch</button>
                         </div>
                     </div>
 
@@ -2986,91 +3001,258 @@
             }
         }
 
-        // Templates
+        // Professional Photography Templates with Full Customization
         const templates = {
-            modern: {
-                name: 'Modern Photography',
+            // Wedding Photography Template
+            wedding: {
+                name: 'Wedding Elegance',
+                category: 'Wedding Photography',
                 elements: [
                     {
-                        type: 'hero',
+                        type: 'wedding-hero',
                         content: {
-                            title: 'Capturing Life\'s Beautiful Moments',
-                            subtitle: 'Professional photography services for weddings, portraits, and special events',
-                            backgroundImage: 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=1200'
+                            title: 'Timeless Wedding Photography',
+                            subtitle: 'Capturing Your Love Story',
+                            backgroundImage: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1920'
                         }
                     },
                     {
-                        type: 'about',
+                        type: 'wedding-intro',
                         content: {
-                            title: 'About Me',
-                            text: 'I\'m a passionate photographer dedicated to capturing the essence of every moment. With over 10 years of experience, I specialize in creating timeless images that tell your unique story.',
-                            image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400'
+                            title: 'Your Wedding, Your Story',
+                            text: 'Every wedding is unique, and I\'m here to capture yours authentically. From the quiet moments of preparation to the joy of celebration, I document your day with an artistic eye and genuine emotion.',
+                            image: 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=800'
                         }
                     },
                     {
-                        type: 'gallery',
+                        type: 'wedding-packages',
                         content: {
-                            title: 'Portfolio',
-                            images: [
-                                'https://images.unsplash.com/photo-1519741497674-611481863552?w=400',
-                                'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=400',
-                                'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400',
-                                'https://images.unsplash.com/photo-1520854221256-17451cc331bf?w=400'
+                            title: 'Wedding Collections',
+                            packages: [
+                                { name: 'Essential', hours: '6 hours', photos: '400+ edited', price: '$2,500' },
+                                { name: 'Premium', hours: '8 hours', photos: '600+ edited', price: '$3,500' },
+                                { name: 'Luxury', hours: 'Full day', photos: '800+ edited', price: '$5,000' }
                             ]
                         }
                     },
                     {
-                        type: 'contact',
+                        type: 'wedding-gallery',
                         content: {
-                            title: 'Get In Touch',
-                            email: 'hello@photographer.com',
-                            phone: '(555) 123-4567',
-                            address: '123 Photography Lane, Studio City, CA 90210'
+                            title: 'Recent Weddings',
+                            images: [
+                                'https://images.unsplash.com/photo-1520854221256-17451cc331bf?w=600',
+                                'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=600',
+                                'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=600',
+                                'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=600',
+                                'https://images.unsplash.com/photo-1519741497674-611481863552?w=600',
+                                'https://images.unsplash.com/photo-1537633552985-df8429e8048b?w=600'
+                            ]
+                        }
+                    },
+                    {
+                        type: 'testimonials',
+                        content: {
+                            title: 'Love Stories',
+                            testimonials: [
+                                { text: 'The photos are absolutely stunning! Every moment was captured perfectly.', author: 'Sarah & Mike' },
+                                { text: 'Professional, creative, and so easy to work with. Highly recommend!', author: 'Emily & James' }
+                            ]
                         }
                     }
                 ]
             },
-            elegant: {
-                name: 'Elegant Portfolio',
+            
+            // Portrait Photography Template
+            portrait: {
+                name: 'Portrait Professional',
+                category: 'Portrait Photography',
                 elements: [
                     {
-                        type: 'elegant-hero',
+                        type: 'portrait-hero',
                         content: {
-                            title: 'Visual Storytelling',
-                            subtitle: 'Fine Art & Portrait Photography',
-                            backgroundImage: 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=1600',
-                            overlayOpacity: 0.6
+                            title: 'Professional Portraits That Tell Your Story',
+                            subtitle: 'Headshots • Personal Branding • Family Portraits',
+                            backgroundImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1920'
                         }
                     },
                     {
-                        type: 'elegant-featured',
+                        type: 'portrait-services',
                         content: {
-                            title: 'Featured Work',
-                            image: 'https://images.unsplash.com/photo-1594736797933-d0501ba2fe65?w=800',
-                            description: 'Capturing the essence of natural beauty through carefully composed portraits and landscapes.'
-                        }
-                    },
-                    {
-                        type: 'elegant-gallery-grid',
-                        content: {
-                            title: 'Gallery Collections',
-                            galleries: [
-                                {
-                                    name: 'Portraits',
-                                    image: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=500',
-                                    category: 'Fine Art Portraits'
-                                },
-                                {
-                                    name: 'Landscapes',
-                                    image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=500',
-                                    category: 'Natural Beauty'
-                                },
-                                {
-                                    name: 'Architecture',
-                                    image: 'https://images.unsplash.com/photo-1511818966892-d7d671e672a2?w=500',
-                                    category: 'Urban Stories'
-                                }
+                            title: 'Portrait Services',
+                            services: [
+                                { name: 'Professional Headshots', description: 'Corporate and LinkedIn ready portraits', icon: '👔' },
+                                { name: 'Personal Branding', description: 'Images that showcase your personality', icon: '⭐' },
+                                { name: 'Family Portraits', description: 'Timeless family memories', icon: '👨‍👩‍👧‍👦' },
+                                { name: 'Senior Portraits', description: 'Celebrate this milestone', icon: '🎓' }
                             ]
+                        }
+                    },
+                    {
+                        type: 'portrait-gallery',
+                        content: {
+                            title: 'Portfolio',
+                            categories: ['Headshots', 'Families', 'Seniors', 'Personal Branding'],
+                            images: [
+                                'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=600',
+                                'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600',
+                                'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=600',
+                                'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=600'
+                            ]
+                        }
+                    },
+                    {
+                        type: 'portrait-process',
+                        content: {
+                            title: 'The Experience',
+                            steps: [
+                                { number: '01', title: 'Consultation', description: 'We discuss your vision and goals' },
+                                { number: '02', title: 'Session', description: 'Relaxed, professional photo session' },
+                                { number: '03', title: 'Selection', description: 'Choose your favorite images' },
+                                { number: '04', title: 'Delivery', description: 'Receive your edited portraits' }
+                            ]
+                        }
+                    }
+                ]
+            },
+            
+            // Real Estate Photography Template
+            realestate: {
+                name: 'Real Estate Showcase',
+                category: 'Real Estate Photography',
+                elements: [
+                    {
+                        type: 'realestate-hero',
+                        content: {
+                            title: 'Real Estate Photography That Sells',
+                            subtitle: 'Professional Property Photography & Virtual Tours',
+                            backgroundImage: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1920'
+                        }
+                    },
+                    {
+                        type: 'realestate-services',
+                        content: {
+                            title: 'Services',
+                            services: [
+                                { name: 'HDR Photography', price: 'From $150', description: '25-40 professional photos' },
+                                { name: 'Aerial/Drone', price: 'From $200', description: 'Stunning aerial perspectives' },
+                                { name: 'Virtual Tours', price: 'From $300', description: '360° interactive tours' },
+                                { name: 'Twilight Shoots', price: 'From $250', description: 'Golden hour photography' }
+                            ]
+                        }
+                    },
+                    {
+                        type: 'realestate-portfolio',
+                        content: {
+                            title: 'Recent Properties',
+                            properties: [
+                                { image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600', address: '123 Luxury Lane', price: '$1.2M' },
+                                { image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600', address: '456 Modern Ave', price: '$850K' },
+                                { image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600', address: '789 Estate Dr', price: '$2.5M' }
+                            ]
+                        }
+                    },
+                    {
+                        type: 'realestate-stats',
+                        content: {
+                            title: 'Why Professional Photography Matters',
+                            stats: [
+                                { number: '32%', label: 'Sell Faster' },
+                                { number: '47%', label: 'Higher Asking Price' },
+                                { number: '118%', label: 'More Online Views' }
+                            ]
+                        }
+                    }
+                ]
+            },
+            
+            // Fine Art Photography Template
+            fineart: {
+                name: 'Fine Art Gallery',
+                category: 'Fine Art Photography',
+                elements: [
+                    {
+                        type: 'fineart-hero',
+                        content: {
+                            title: 'Fine Art Photography',
+                            subtitle: 'Exploring Light, Form & Emotion',
+                            backgroundImage: 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=1920',
+                            overlayOpacity: 0.4
+                        }
+                    },
+                    {
+                        type: 'fineart-statement',
+                        content: {
+                            title: 'Artist Statement',
+                            text: 'My work explores the intersection of light and shadow, capturing fleeting moments that reveal the extraordinary in the ordinary. Each image is a meditation on time, memory, and the human experience.',
+                            signature: 'Your Name'
+                        }
+                    },
+                    {
+                        type: 'fineart-collections',
+                        content: {
+                            title: 'Collections',
+                            collections: [
+                                { name: 'Solitude', image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600', year: '2024' },
+                                { name: 'Urban Dreams', image: 'https://images.unsplash.com/photo-1511818966892-d7d671e672a2?w=600', year: '2023' },
+                                { name: 'Natural Forms', image: 'https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=600', year: '2023' }
+                            ]
+                        }
+                    },
+                    {
+                        type: 'fineart-exhibitions',
+                        content: {
+                            title: 'Exhibitions',
+                            exhibitions: [
+                                { venue: 'Gallery Modern', location: 'New York', date: 'March 2024' },
+                                { venue: 'Art Space LA', location: 'Los Angeles', date: 'January 2024' }
+                            ]
+                        }
+                    }
+                ]
+            },
+            
+            // Event Photography Template
+            event: {
+                name: 'Event Coverage Pro',
+                category: 'Event Photography',
+                elements: [
+                    {
+                        type: 'event-hero',
+                        content: {
+                            title: 'Professional Event Photography',
+                            subtitle: 'Corporate Events • Conferences • Celebrations',
+                            backgroundImage: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1920'
+                        }
+                    },
+                    {
+                        type: 'event-services',
+                        content: {
+                            title: 'Event Coverage',
+                            services: [
+                                { name: 'Corporate Events', description: 'Conferences, product launches, team building' },
+                                { name: 'Social Events', description: 'Galas, fundraisers, celebrations' },
+                                { name: 'Live Coverage', description: 'Real-time social media posting' },
+                                { name: 'Multi-day Events', description: 'Complete conference coverage' }
+                            ]
+                        }
+                    },
+                    {
+                        type: 'event-portfolio',
+                        content: {
+                            title: 'Recent Events',
+                            images: [
+                                'https://images.unsplash.com/photo-1511578314322-379afb476865?w=600',
+                                'https://images.unsplash.com/photo-1505236858219-8359eb29e329?w=600',
+                                'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=600',
+                                'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=600'
+                            ]
+                        }
+                    },
+                    {
+                        type: 'event-clients',
+                        content: {
+                            title: 'Trusted By',
+                            logos: ['Google', 'Microsoft', 'Apple', 'Amazon', 'Meta']
                         }
                     }
                 ]
@@ -3697,6 +3879,176 @@
                     </article>
                 </div>
             `,
+            
+            // Wedding Photography Components with Full Customization
+            'wedding-hero': (data = {}) => `
+                <div class="element" data-type="wedding-hero">
+                    <div style="position: relative; height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('${data.backgroundImage || 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1920'}') center/cover;">
+                        <div class="image-edit-overlay" style="position: absolute; top: 20px; right: 20px; z-index: 9999;">
+                            <button onclick="changeHeroBackground(this)" style="background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); color: white; padding: 12px 16px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;">📷 Change Background</button>
+                        </div>
+                        <div style="text-align: center; color: white; padding: 0 20px;">
+                            <h1 style="font-family: 'Playfair Display', serif; font-size: clamp(3rem, 7vw, 5rem); margin-bottom: 20px; font-weight: 300; letter-spacing: 2px;">${data.title || 'Timeless Wedding Photography'}</h1>
+                            <p style="font-size: 1.4rem; font-weight: 300; letter-spacing: 3px; text-transform: uppercase;">${data.subtitle || 'Capturing Your Love Story'}</p>
+                        </div>
+                    </div>
+                </div>
+            `,
+            
+            'wedding-intro': (data = {}) => `
+                <div class="element" data-type="wedding-intro">
+                    <div style="padding: 80px 20px; background: #fafafa;">
+                        <div style="max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center;">
+                            <div>
+                                <h2 style="font-family: 'Playfair Display', serif; font-size: 3rem; margin-bottom: 30px; color: #2d3748;">${data.title || 'Your Wedding, Your Story'}</h2>
+                                <p style="font-size: 1.1rem; line-height: 1.8; color: #4a5568;">${data.text || 'Every wedding is unique, and I\'m here to capture yours authentically.'}</p>
+                            </div>
+                            <div style="position: relative;">
+                                <img src="${data.image || 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=800'}" style="width: 100%; height: 500px; object-fit: cover; border-radius: 8px;">
+                                <div class="image-edit-overlay" style="position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; z-index: 9999;">
+                                    <button onclick="changeImage(this)" style="background: rgba(59, 130, 246, 0.95); border: none; color: white; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;">📷</button>
+                                    <button onclick="toggleWatermark(this)" style="background: rgba(159, 122, 234, 0.95); border: none; color: white; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;">W</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            
+            'wedding-packages': (data = {}) => `
+                <div class="element" data-type="wedding-packages">
+                    <div style="padding: 80px 20px; background: white;">
+                        <h2 style="font-family: 'Playfair Display', serif; font-size: 3rem; text-align: center; margin-bottom: 60px; color: #2d3748;">${data.title || 'Wedding Collections'}</h2>
+                        <div style="max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 40px;">
+                            ${(data.packages || [
+                                { name: 'Essential', hours: '6 hours', photos: '400+ edited', price: '$2,500' },
+                                { name: 'Premium', hours: '8 hours', photos: '600+ edited', price: '$3,500' },
+                                { name: 'Luxury', hours: 'Full day', photos: '800+ edited', price: '$5,000' }
+                            ]).map(pkg => `
+                                <div style="text-align: center; padding: 40px; background: #f7fafc; border-radius: 8px;">
+                                    <h3 style="font-family: 'Montserrat', sans-serif; font-size: 1.5rem; margin-bottom: 20px; color: #667eea;">${pkg.name}</h3>
+                                    <p style="font-size: 2.5rem; font-weight: 300; margin-bottom: 30px; color: #2d3748;">${pkg.price}</p>
+                                    <p style="margin-bottom: 10px; color: #4a5568;">${pkg.hours}</p>
+                                    <p style="color: #4a5568;">${pkg.photos}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `,
+            
+            'wedding-gallery': (data = {}) => {
+                const galleryId = 'wedding-gallery-' + Date.now();
+                return `
+                    <div class="element" data-type="wedding-gallery" data-gallery-id="${galleryId}">
+                        <div style="padding: 80px 20px; background: #fafafa;">
+                            <h2 style="font-family: 'Playfair Display', serif; font-size: 3rem; text-align: center; margin-bottom: 60px; color: #2d3748;">${data.title || 'Recent Weddings'}</h2>
+                            <div style="max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px;">
+                                ${(data.images || [
+                                    'https://images.unsplash.com/photo-1520854221256-17451cc331bf?w=600',
+                                    'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=600',
+                                    'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?w=600',
+                                    'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=600',
+                                    'https://images.unsplash.com/photo-1519741497674-611481863552?w=600',
+                                    'https://images.unsplash.com/photo-1537633552985-df8429e8048b?w=600'
+                                ]).map((img, index) => `
+                                    <div style="position: relative; overflow: hidden; border-radius: 8px;">
+                                        <img src="${img}" style="width: 100%; height: 400px; object-fit: cover; transition: transform 0.3s;" data-gallery-index="${index}">
+                                        <div class="image-edit-overlay" style="position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; z-index: 9999;">
+                                            <button onclick="changeGalleryImage('${galleryId}', ${index})" style="background: rgba(59, 130, 246, 0.95); border: none; color: white; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;">📷</button>
+                                            <button onclick="toggleGalleryImageWatermark('${galleryId}', ${index}, this)" style="background: rgba(159, 122, 234, 0.95); border: none; color: white; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;">W</button>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            },
+            
+            // Portrait Photography Components
+            'portrait-hero': (data = {}) => `
+                <div class="element" data-type="portrait-hero">
+                    <div style="position: relative; min-height: 80vh; display: flex; align-items: center; background: linear-gradient(90deg, #1a1a1a 50%, transparent 50%), url('${data.backgroundImage || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1920'}') right center/cover;">
+                        <div class="image-edit-overlay" style="position: absolute; top: 20px; right: 20px; z-index: 9999;">
+                            <button onclick="changeHeroBackground(this)" style="background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); color: white; padding: 12px 16px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;">📷 Change Background</button>
+                        </div>
+                        <div style="padding: 60px; max-width: 600px;">
+                            <h1 style="font-family: 'Playfair Display', serif; font-size: clamp(2.5rem, 5vw, 4rem); margin-bottom: 20px; color: white;">${data.title || 'Professional Portraits That Tell Your Story'}</h1>
+                            <p style="font-size: 1.2rem; color: #cbd5e0; margin-bottom: 30px;">${data.subtitle || 'Headshots • Personal Branding • Family Portraits'}</p>
+                            <button style="background: white; color: #1a1a1a; padding: 15px 40px; border: none; font-size: 14px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; border-radius: 4px;">Book Session</button>
+                        </div>
+                    </div>
+                </div>
+            `,
+            
+            'portrait-services': (data = {}) => `
+                <div class="element" data-type="portrait-services">
+                    <div style="padding: 80px 20px; background: white;">
+                        <h2 style="font-family: 'Playfair Display', serif; font-size: 3rem; text-align: center; margin-bottom: 60px; color: #2d3748;">${data.title || 'Portrait Services'}</h2>
+                        <div style="max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 40px;">
+                            ${(data.services || [
+                                { name: 'Professional Headshots', description: 'Corporate and LinkedIn ready portraits', icon: '👔' },
+                                { name: 'Personal Branding', description: 'Images that showcase your personality', icon: '⭐' }
+                            ]).map(service => `
+                                <div style="text-align: center; padding: 30px;">
+                                    <div style="font-size: 3rem; margin-bottom: 20px;">${service.icon}</div>
+                                    <h3 style="font-size: 1.3rem; margin-bottom: 15px; color: #2d3748;">${service.name}</h3>
+                                    <p style="color: #718096; line-height: 1.6;">${service.description}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `,
+            
+            // Real Estate Photography Components
+            'realestate-hero': (data = {}) => `
+                <div class="element" data-type="realestate-hero">
+                    <div style="position: relative; height: 90vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('${data.backgroundImage || 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1920'}') center/cover;">
+                        <div class="image-edit-overlay" style="position: absolute; top: 20px; right: 20px; z-index: 9999;">
+                            <button onclick="changeHeroBackground(this)" style="background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); color: white; padding: 12px 16px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;">📷 Change Background</button>
+                        </div>
+                        <div style="text-align: center; color: white; padding: 0 20px;">
+                            <h1 style="font-family: 'Montserrat', sans-serif; font-size: clamp(2.5rem, 6vw, 4rem); margin-bottom: 20px; font-weight: 700;">${data.title || 'Real Estate Photography That Sells'}</h1>
+                            <p style="font-size: 1.3rem; font-weight: 300; margin-bottom: 40px;">${data.subtitle || 'Professional Property Photography & Virtual Tours'}</p>
+                            <button style="background: #ff6b6b; color: white; padding: 15px 40px; border: none; font-size: 16px; font-weight: 600; cursor: pointer; border-radius: 4px;">Get Quote</button>
+                        </div>
+                    </div>
+                </div>
+            `,
+            
+            'realestate-portfolio': (data = {}) => {
+                const portfolioId = 'realestate-portfolio-' + Date.now();
+                return `
+                    <div class="element" data-type="realestate-portfolio" data-gallery-id="${portfolioId}">
+                        <div style="padding: 80px 20px; background: #f8f9fa;">
+                            <h2 style="font-family: 'Montserrat', sans-serif; font-size: 2.5rem; text-align: center; margin-bottom: 60px; color: #2d3748; font-weight: 700;">${data.title || 'Recent Properties'}</h2>
+                            <div style="max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 30px;">
+                                ${(data.properties || [
+                                    { image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600', address: '123 Luxury Lane', price: '$1.2M' },
+                                    { image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600', address: '456 Modern Ave', price: '$850K' },
+                                    { image: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600', address: '789 Estate Dr', price: '$2.5M' }
+                                ]).map((property, index) => `
+                                    <div style="background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                        <div style="position: relative;">
+                                            <img src="${property.image}" style="width: 100%; height: 300px; object-fit: cover;">
+                                            <div class="image-edit-overlay" style="position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; z-index: 9999;">
+                                                <button onclick="changeGalleryImage('${portfolioId}', ${index})" style="background: rgba(59, 130, 246, 0.95); border: none; color: white; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;">📷</button>
+                                                <button onclick="toggleGalleryImageWatermark('${portfolioId}', ${index}, this)" style="background: rgba(159, 122, 234, 0.95); border: none; color: white; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;">W</button>
+                                            </div>
+                                        </div>
+                                        <div style="padding: 20px;">
+                                            <h3 style="font-size: 1.2rem; margin-bottom: 10px; color: #2d3748;">${property.address}</h3>
+                                            <p style="font-size: 1.5rem; font-weight: 700; color: #ff6b6b;">${property.price}</p>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            },
             header: (data = {}) => `
                 <div class="element" data-type="header">
                     <div style="text-align: center; padding: 60px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
@@ -3909,7 +4261,30 @@
                 makeAllElementsDeletable(); // Make all template elements deletable
                 makeAllElementsPhotoEditable(); // Make all template photos have camera buttons
                 initializeTouchToEdit();
+                makeTextEditable(); // Ensure all text has floating toolbar
+                makeImagesEditable(); // Ensure all images have camera and watermark buttons
             }, 100);
+        }
+        
+        function clearCanvas() {
+            const canvas = document.getElementById('canvas');
+            canvas.innerHTML = `
+                <div id="drop-zone" style="height: 400px; border: 2px dashed #cbd5e0; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #718096; font-size: 1.2rem; margin: 40px 20px;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">📷</div>
+                        <p>Drag components here to build your website</p>
+                        <p style="font-size: 0.9rem; margin-top: 0.5rem;">Or select a professional template to get started</p>
+                    </div>
+                </div>
+            `;
+            
+            // Clear current page content
+            pages[currentPage] = { 
+                name: pages[currentPage]?.name || 'Home', 
+                content: canvas.innerHTML
+            };
+            
+            saveWebsiteData();
         }
 
         function loadPageContent(pageId) {
@@ -3986,7 +4361,8 @@
             }
 
             // Check if it's a gallery type component and ask for photo count
-            if (type === 'gallery' || type === 'gallery-grid' || type === 'gallery-categories' || type === 'for-sale-gallery' || type === 'masonry' || type === 'masonry-simple') {
+            if (type === 'gallery' || type === 'gallery-grid' || type === 'gallery-categories' || type === 'for-sale-gallery' || type === 'masonry' || type === 'masonry-simple' || 
+                type === 'wedding-gallery' || type === 'portrait-gallery' || type === 'realestate-portfolio' || type === 'fineart-collections' || type === 'event-portfolio') {
                 const photoCount = prompt('How many photos do you want in this gallery?', '6');
                 if (photoCount === null) {
                     // User cancelled
