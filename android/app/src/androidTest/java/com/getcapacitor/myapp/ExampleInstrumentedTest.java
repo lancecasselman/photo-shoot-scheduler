@@ -17,10 +17,10 @@ import org.junit.runner.RunWith;
 public class ExampleInstrumentedTest {
 
     @Test
-    public void useAppContext() {
+    public void useAppContext() throws Exception {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
-        assertEquals("com.thelegacyphotography.photomanager", appContext.getPackageName());
+        assertEquals("com.getcapacitor.app", appContext.getPackageName());
     }
 }

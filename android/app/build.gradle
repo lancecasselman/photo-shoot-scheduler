@@ -37,30 +37,22 @@ android {
     }
 }
 
+repositories {
+    flatDir{
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
 dependencies {
-    // Capacitor version from package.json
-    def CAP_VER = "7.4.3"
-    
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
     implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
     implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
-    
-    // Capacitor core via Maven
-    implementation "com.capacitorjs:capacitor-android:$CAP_VER"
-    
-    // Capacitor plugins via Maven
-    implementation "com.capacitorjs:app:$CAP_VER"
-    implementation "com.capacitorjs:camera:$CAP_VER"
-    implementation "com.capacitorjs:device:$CAP_VER"
-    implementation "com.capacitorjs:keyboard:$CAP_VER"
-    implementation "com.capacitorjs:network:$CAP_VER"
-    implementation "com.capacitorjs:push-notifications:$CAP_VER"
-    implementation "com.capacitorjs:splash-screen:$CAP_VER"
-    implementation "com.capacitorjs:status-bar:$CAP_VER"
-    
+    implementation project(':capacitor-android')
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    implementation project(':capacitor-cordova-android-plugins')
 }
 
 apply from: 'capacitor.build.gradle'
@@ -73,4 +65,3 @@ try {
 } catch(Exception e) {
     logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
 }
-
