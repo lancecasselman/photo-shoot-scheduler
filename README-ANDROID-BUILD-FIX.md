@@ -105,11 +105,28 @@ ls -la android/capacitor-cordova-android-plugins/build.gradle
 cd android && ./gradlew assembleDebug
 ```
 
+## Common IDE Issues
+
+### IntelliJ/Android Studio Disposal Error
+If you see this error when closing Android Studio:
+```
+java.lang.IllegalStateException: Must not dispose default project
+```
+
+This is an IDE bug, not a project configuration issue. Solutions:
+1. **Ignore the error** - it doesn't affect your build
+2. **Restart Android Studio** if it becomes unresponsive
+3. **File → Invalidate Caches and Restart** in Android Studio
+4. **Update Android Studio** to the latest version
+
+This error doesn't prevent building or running your app.
+
 ## Success Indicators
 ✅ `cordova.variables.gradle` file exists  
 ✅ Java 17 used consistently  
 ✅ All 8 Capacitor plugins synced  
 ✅ No Gradle version conflicts  
 ✅ Repository management configured properly  
+✅ IDE errors are cosmetic and don't affect builds
 
 Your Android project is now ready for Google Play Store deployment!
