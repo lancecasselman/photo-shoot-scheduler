@@ -4334,6 +4334,245 @@
                     </div>
                 `;
             },
+            // Fine Art Photography Components
+            'fineart-hero': (data = {}) => `
+                <div class="element" data-type="fineart-hero">
+                    <div style="position: relative; height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(rgba(0,0,0,${data.overlayOpacity || 0.4}), rgba(0,0,0,${data.overlayOpacity || 0.4})), url('${data.backgroundImage || 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=1920'}') center/cover;">
+                        <div class="image-edit-overlay" style="position: absolute; top: 20px; right: 20px; z-index: 9999;">
+                            <button onclick="changeHeroBackground(this)" style="background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); color: white; padding: 12px 16px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;">Change Background</button>
+                        </div>
+                        <div style="text-align: center; color: white; padding: 0 20px;">
+                            <h1 style="font-family: 'Playfair Display', serif; font-size: clamp(3rem, 7vw, 5rem); margin-bottom: 20px; font-weight: 300; letter-spacing: 4px; text-transform: uppercase;">${data.title || 'Fine Art Photography'}</h1>
+                            <div style="width: 100px; height: 1px; background: white; margin: 30px auto;"></div>
+                            <p style="font-size: 1.2rem; font-weight: 300; letter-spacing: 2px; text-transform: uppercase;">${data.subtitle || 'Exploring Light, Form & Emotion'}</p>
+                        </div>
+                    </div>
+                </div>
+            `,
+            
+            'fineart-statement': (data = {}) => `
+                <div class="element" data-type="fineart-statement">
+                    <div style="padding: 100px 20px; background: white;">
+                        <div style="max-width: 800px; margin: 0 auto; text-align: center;">
+                            <h2 style="font-family: 'Playfair Display', serif; font-size: 2.5rem; margin-bottom: 40px; color: #2d3748;">${data.title || 'Artist Statement'}</h2>
+                            <p style="font-size: 1.2rem; line-height: 2; color: #4a5568; font-style: italic; margin-bottom: 40px;">${data.text || 'My work explores the intersection of light and shadow, capturing fleeting moments that reveal the extraordinary in the ordinary. Each image is a meditation on time, memory, and the human experience.'}</p>
+                            <div style="font-family: 'Dancing Script', cursive; font-size: 2rem; color: #667eea;">${data.signature || 'Your Name'}</div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            
+            'fineart-collections': (data = {}) => {
+                const collectionsId = 'fineart-collections-' + Date.now();
+                return `
+                    <div class="element" data-type="fineart-collections" data-gallery-id="${collectionsId}">
+                        <div style="padding: 80px 20px; background: #fafafa;">
+                            <h2 style="font-family: 'Playfair Display', serif; font-size: 3rem; text-align: center; margin-bottom: 60px; color: #2d3748;">${data.title || 'Collections'}</h2>
+                            <div style="max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 40px;">
+                                ${(data.collections || [
+                                    { name: 'Solitude', image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600', year: '2024' },
+                                    { name: 'Urban Dreams', image: 'https://images.unsplash.com/photo-1511818966892-d7d671e672a2?w=600', year: '2023' },
+                                    { name: 'Natural Forms', image: 'https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=600', year: '2023' }
+                                ]).map((collection, index) => `
+                                    <div style="cursor: pointer; transition: transform 0.3s;">
+                                        <div style="position: relative; overflow: hidden; border-radius: 0;">
+                                            <img src="${collection.image}" style="width: 100%; height: 450px; object-fit: cover; transition: transform 0.5s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                                            <div class="image-edit-overlay" style="position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; z-index: 9999;">
+                                                <button onclick="changeGalleryImage('${collectionsId}', ${index})" style="background: rgba(59, 130, 246, 0.95); border: none; color: white; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;">Change</button>
+                                                <button onclick="toggleGalleryImageWatermark('${collectionsId}', ${index}, this)" style="background: rgba(159, 122, 234, 0.95); border: none; color: white; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;">W</button>
+                                            </div>
+                                        </div>
+                                        <h3 style="font-family: 'Playfair Display', serif; font-size: 1.8rem; margin: 20px 0 10px; color: #2d3748;">${collection.name}</h3>
+                                        <p style="color: #718096; font-size: 1rem; letter-spacing: 2px;">${collection.year}</p>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            },
+            
+            'fineart-exhibitions': (data = {}) => `
+                <div class="element" data-type="fineart-exhibitions">
+                    <div style="padding: 80px 20px; background: #1a1a1a; color: white;">
+                        <h2 style="font-family: 'Playfair Display', serif; font-size: 3rem; text-align: center; margin-bottom: 60px;">${data.title || 'Exhibitions'}</h2>
+                        <div style="max-width: 800px; margin: 0 auto;">
+                            ${(data.exhibitions || [
+                                { venue: 'Gallery Modern', location: 'New York', date: 'March 2024' },
+                                { venue: 'Art Space LA', location: 'Los Angeles', date: 'January 2024' }
+                            ]).map(exhibition => `
+                                <div style="padding: 30px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <div>
+                                            <h3 style="font-size: 1.5rem; margin-bottom: 10px;">${exhibition.venue}</h3>
+                                            <p style="color: #cbd5e0;">${exhibition.location}</p>
+                                        </div>
+                                        <div style="text-align: right;">
+                                            <p style="font-size: 1.1rem; letter-spacing: 1px;">${exhibition.date}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `,
+            
+            // Event Photography Components
+            'event-hero': (data = {}) => `
+                <div class="element" data-type="event-hero">
+                    <div style="position: relative; height: 90vh; display: flex; align-items: center; background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('${data.backgroundImage || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1920'}') center/cover;">
+                        <div class="image-edit-overlay" style="position: absolute; top: 20px; right: 20px; z-index: 9999;">
+                            <button onclick="changeHeroBackground(this)" style="background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); color: white; padding: 12px 16px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 600;">Change Background</button>
+                        </div>
+                        <div style="padding: 0 40px; max-width: 800px;">
+                            <h1 style="font-family: 'Montserrat', sans-serif; font-size: clamp(2.5rem, 6vw, 4.5rem); margin-bottom: 20px; color: white; font-weight: 700;">${data.title || 'Professional Event Photography'}</h1>
+                            <p style="font-size: 1.3rem; color: #e2e8f0; margin-bottom: 30px; line-height: 1.6;">${data.subtitle || 'Corporate Events • Conferences • Celebrations'}</p>
+                            <button style="background: #38a169; color: white; padding: 15px 40px; border: none; font-size: 16px; font-weight: 600; cursor: pointer; border-radius: 4px;">Get Quote</button>
+                        </div>
+                    </div>
+                </div>
+            `,
+            
+            'event-services': (data = {}) => `
+                <div class="element" data-type="event-services">
+                    <div style="padding: 80px 20px; background: white;">
+                        <h2 style="font-family: 'Montserrat', sans-serif; font-size: 2.5rem; text-align: center; margin-bottom: 60px; color: #2d3748; font-weight: 700;">${data.title || 'Event Coverage'}</h2>
+                        <div style="max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px;">
+                            ${(data.services || [
+                                { name: 'Corporate Events', description: 'Conferences, product launches, team building' },
+                                { name: 'Social Events', description: 'Galas, fundraisers, celebrations' },
+                                { name: 'Live Coverage', description: 'Real-time social media posting' },
+                                { name: 'Multi-day Events', description: 'Complete conference coverage' }
+                            ]).map((service, index) => `
+                                <div style="padding: 40px 30px; background: #f7fafc; border-left: 4px solid #38a169; transition: transform 0.3s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                                    <h3 style="font-size: 1.4rem; margin-bottom: 15px; color: #2d3748; font-weight: 600;">${service.name}</h3>
+                                    <p style="color: #718096; line-height: 1.6;">${service.description}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `,
+            
+            'event-portfolio': (data = {}) => {
+                const portfolioId = 'event-portfolio-' + Date.now();
+                return `
+                    <div class="element" data-type="event-portfolio" data-gallery-id="${portfolioId}">
+                        <div style="padding: 80px 20px; background: #fafafa;">
+                            <h2 style="font-family: 'Montserrat', sans-serif; font-size: 2.5rem; text-align: center; margin-bottom: 60px; color: #2d3748; font-weight: 700;">${data.title || 'Recent Events'}</h2>
+                            <div style="max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px;">
+                                ${(data.images || [
+                                    'https://images.unsplash.com/photo-1511578314322-379afb476865?w=600',
+                                    'https://images.unsplash.com/photo-1505236858219-8359eb29e329?w=600',
+                                    'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=600',
+                                    'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=600'
+                                ]).map((img, index) => `
+                                    <div style="position: relative; overflow: hidden; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                        <img src="${img}" style="width: 100%; height: 350px; object-fit: cover;">
+                                        <div class="image-edit-overlay" style="position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; z-index: 9999;">
+                                            <button onclick="changeGalleryImage('${portfolioId}', ${index})" style="background: rgba(59, 130, 246, 0.95); border: none; color: white; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;">Change</button>
+                                            <button onclick="toggleGalleryImageWatermark('${portfolioId}', ${index}, this)" style="background: rgba(159, 122, 234, 0.95); border: none; color: white; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;">W</button>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            },
+            
+            'event-clients': (data = {}) => `
+                <div class="element" data-type="event-clients">
+                    <div style="padding: 80px 20px; background: white;">
+                        <h2 style="font-family: 'Montserrat', sans-serif; font-size: 2.5rem; text-align: center; margin-bottom: 60px; color: #2d3748; font-weight: 700;">${data.title || 'Trusted By'}</h2>
+                        <div style="max-width: 1000px; margin: 0 auto; display: flex; justify-content: space-around; align-items: center; flex-wrap: wrap; gap: 40px;">
+                            ${(data.logos || ['Google', 'Microsoft', 'Apple', 'Amazon', 'Meta']).map(logo => `
+                                <div style="font-size: 1.5rem; color: #cbd5e0; font-weight: 600; letter-spacing: 1px;">${logo}</div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `,
+            
+            // Shared Components  
+            'testimonials': (data = {}) => `
+                <div class="element" data-type="testimonials">
+                    <div style="padding: 80px 20px; background: #f8f9fa;">
+                        <h2 style="font-family: 'Playfair Display', serif; font-size: 2.5rem; text-align: center; margin-bottom: 60px; color: #2d3748;">${data.title || 'Client Testimonials'}</h2>
+                        <div style="max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 40px;">
+                            ${(data.testimonials || [
+                                { text: 'Amazing photographer! Captured our special day perfectly.', author: 'Sarah & John', rating: 5 },
+                                { text: 'Professional, creative, and a joy to work with. Highly recommend!', author: 'Michael Davis', rating: 5 },
+                                { text: 'Exceeded all our expectations. The photos are stunning!', author: 'Emily Chen', rating: 5 }
+                            ]).map(testimonial => `
+                                <div style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                    <div style="color: #f59e0b; font-size: 1.5rem; margin-bottom: 20px;">${'★'.repeat(testimonial.rating)}${'☆'.repeat(5-testimonial.rating)}</div>
+                                    <p style="font-style: italic; color: #4a5568; line-height: 1.8; margin-bottom: 20px;">"${testimonial.text}"</p>
+                                    <div style="font-weight: 600; color: #2d3748;">— ${testimonial.author}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `,
+            
+            'contact': (data = {}) => `
+                <div class="element" data-type="contact">
+                    <div style="padding: 80px 20px; background: white;">
+                        <h2 style="font-family: 'Playfair Display', serif; font-size: 2.5rem; text-align: center; margin-bottom: 60px; color: #2d3748;">${data.title || 'Get In Touch'}</h2>
+                        <div style="max-width: 600px; margin: 0 auto;">
+                            <form style="display: flex; flex-direction: column; gap: 20px;">
+                                <input type="text" placeholder="Your Name" style="padding: 15px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 16px;">
+                                <input type="email" placeholder="Your Email" style="padding: 15px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 16px;">
+                                <input type="tel" placeholder="Phone Number" style="padding: 15px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 16px;">
+                                <select style="padding: 15px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 16px; background: white;">
+                                    <option>Select Service</option>
+                                    <option>Wedding Photography</option>
+                                    <option>Portrait Session</option>
+                                    <option>Event Coverage</option>
+                                    <option>Commercial Photography</option>
+                                </select>
+                                <textarea placeholder="Tell us about your project" style="padding: 15px; border: 1px solid #e2e8f0; border-radius: 4px; font-size: 16px; min-height: 150px; resize: vertical;"></textarea>
+                                <button type="submit" style="background: #667eea; color: white; padding: 15px 30px; border: none; border-radius: 4px; font-size: 16px; font-weight: 600; cursor: pointer;">Send Message</button>
+                            </form>
+                            <div style="margin-top: 60px; text-align: center;">
+                                <p style="color: #718096; margin-bottom: 10px;">${data.email || 'hello@photography.com'}</p>
+                                <p style="color: #718096; margin-bottom: 10px;">${data.phone || '(555) 123-4567'}</p>
+                                <p style="color: #718096;">${data.location || 'New York, NY'}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            
+            'pricing': (data = {}) => `
+                <div class="element" data-type="pricing">
+                    <div style="padding: 80px 20px; background: #f8f9fa;">
+                        <h2 style="font-family: 'Playfair Display', serif; font-size: 2.5rem; text-align: center; margin-bottom: 60px; color: #2d3748;">${data.title || 'Investment'}</h2>
+                        <div style="max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
+                            ${(data.packages || [
+                                { name: 'Basic', price: '$500', features: ['2 Hour Session', '50 Edited Photos', 'Online Gallery', 'Print Release'] },
+                                { name: 'Professional', price: '$1,500', features: ['4 Hour Coverage', '150 Edited Photos', 'Online Gallery', 'Print Release', '10 Prints'], featured: true },
+                                { name: 'Premium', price: '$3,000', features: ['8 Hour Coverage', 'Unlimited Photos', 'Online Gallery', 'Print Release', '20 Prints', 'Album'] }
+                            ]).map(pkg => `
+                                <div style="background: white; padding: 40px 30px; border-radius: 8px; ${pkg.featured ? 'transform: scale(1.05); box-shadow: 0 10px 30px rgba(0,0,0,0.15);' : 'box-shadow: 0 4px 6px rgba(0,0,0,0.1);'}">
+                                    ${pkg.featured ? '<div style="background: #667eea; color: white; padding: 5px 15px; text-align: center; margin: -40px -30px 30px; border-radius: 8px 8px 0 0; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Most Popular</div>' : ''}
+                                    <h3 style="font-size: 1.8rem; margin-bottom: 10px; color: #2d3748; text-align: center;">${pkg.name}</h3>
+                                    <div style="font-size: 2.5rem; font-weight: 700; color: #667eea; text-align: center; margin-bottom: 30px;">${pkg.price}</div>
+                                    <ul style="list-style: none; padding: 0;">
+                                        ${pkg.features.map(feature => `
+                                            <li style="padding: 10px 0; border-bottom: 1px solid #e2e8f0; color: #4a5568;">✓ ${feature}</li>
+                                        `).join('')}
+                                    </ul>
+                                    <button style="width: 100%; background: ${pkg.featured ? '#667eea' : 'transparent'}; color: ${pkg.featured ? 'white' : '#667eea'}; border: 2px solid #667eea; padding: 12px; margin-top: 30px; border-radius: 4px; font-weight: 600; cursor: pointer;">Choose Package</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `,
+            
             header: (data = {}) => `
                 <div class="element" data-type="header">
                     <div style="text-align: center; padding: 60px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
