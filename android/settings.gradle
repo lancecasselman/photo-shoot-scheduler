@@ -7,17 +7,18 @@ pluginManagement {
 }
 
 dependencyResolutionManagement {
+    // Strict mode: no module-level repos
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
         mavenCentral()
+        // No libs directory exists, so no flatDir needed
     }
 }
 
 rootProject.name = "Photography Manager"
 
+// Keep only :app
 include ':app'
-include ':capacitor-cordova-android-plugins'
-project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins/')
 
 apply from: 'capacitor.settings.gradle'
