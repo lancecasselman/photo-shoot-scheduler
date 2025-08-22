@@ -3,73 +3,6 @@
  * Checks subscription status and redirects users without active subscriptions
  */
 
-// IMMEDIATE BLOCKING - Run this instantly when script loads
-(function() {
-    // Only run on main app pages
-    const path = window.location.pathname;
-    if (path === '/' || path === '/index.html') {
-        console.log('🚨 SUBSCRIPTION GUARD ACTIVE - Checking access...');
-        
-        // Hide everything immediately
-        const hideStyle = document.createElement('style');
-        hideStyle.id = 'immediate-block';
-        hideStyle.innerHTML = 'body { display: none !important; }';
-        (document.head || document.documentElement).appendChild(hideStyle);
-        
-        // Check subscription immediately
-        fetch('/api/check-auth')
-            .then(r => r.json())
-            .then(authData => {
-                if (!authData.authenticated) {
-                    console.log('🚨 Not authenticated - redirecting to login');
-                    window.location.replace('/auth.html');
-                    return;
-                }
-                
-                // Check user email for admin bypass
-                return fetch('/api/current-user');
-            })
-            .then(r => r && r.json())
-            .then(userData => {
-                if (!userData) return;
-                
-                const adminEmails = [
-                    'lancecasselman@icloud.com',
-                    'lancecasselman2011@gmail.com',
-                    'lance@thelegacyphotography.com'
-                ];
-                
-                if (adminEmails.includes(userData.email)) {
-                    console.log('✅ Admin bypass - showing app');
-                    document.getElementById('immediate-block').remove();
-                    return;
-                }
-                
-                // Check subscription
-                return fetch('/api/subscription-status');
-            })
-            .then(r => r && r.json())
-            .then(subData => {
-                if (!subData) return;
-                
-                console.log('🚨 Subscription status:', subData.status);
-                
-                if (!subData.status || !subData.status.hasProfessionalPlan) {
-                    console.log('🚨 NO SUBSCRIPTION - BLOCKING ACCESS');
-                    window.location.replace('/subscription-checkout.html?message=subscription_required');
-                } else {
-                    console.log('✅ Subscription verified - showing app');
-                    const block = document.getElementById('immediate-block');
-                    if (block) block.remove();
-                }
-            })
-            .catch(err => {
-                console.error('🚨 Subscription check error:', err);
-                window.location.replace('/auth.html');
-            });
-    }
-})();
-
 class SubscriptionAccessGuard {
     constructor() {
         this.subscriptionStatus = null;
@@ -111,18 +44,34 @@ class SubscriptionAccessGuard {
     }
 
     guardMainAppAccess() {
-        // Only run on main app pages (not landing, auth, etc.)
-        const protectedPages = ['/', '/index.html'];
+        // Skip subscription checks on actual landing page and auth pages only
         const currentPath = window.location.pathname;
-
-        if (protectedPages.includes(currentPath)) {
-            this.enforceSubscriptionAccess();
+        const authPages = ['/auth.html', '/auth', '/login'];
+        
+        // Check if this is the real landing page (not the app served at root)
+        const isLandingPage = document.querySelector('.landing-hero') || document.querySelector('.pricing-section') || document.title.includes('Complete Business Platform');
+        
+        if (authPages.includes(currentPath) || (currentPath === '/' && isLandingPage)) {
+            console.log('Skipping subscription check for:', currentPath);
+            return;
         }
+
+        // Enforce subscription on all app pages
+        this.enforceSubscriptionAccess();
     }
 
     async enforceSubscriptionAccess() {
-        // Authentication is now handled at the server level - always enable app features
-        console.log('✅ Subscription check bypassed - server-level authentication active');
+        const status = await this.checkSubscriptionStatus();
+
+        if (!status) return; // Auth check failed, already redirected
+
+        // Check if user has active professional plan
+        if (!status.hasProfessionalPlan || status.professionalStatus !== 'active') {
+            this.showSubscriptionRequiredModal(status);
+            return;
+        }
+
+        // User has active subscription - allow access
         this.enableAppFeatures();
     }
 
@@ -142,7 +91,7 @@ class SubscriptionAccessGuard {
                             <h4>Current Status:</h4>
                             <p><strong>Professional Plan:</strong> ${status.hasProfessionalPlan ? 'Yes' : 'No'}</p>
                             <p><strong>Status:</strong> ${status.professionalStatus || 'None'}</p>
-                            <p><strong>Storage:</strong> ${status.totalStorageGb || 0}GB</p>
+                            <p><strong>Storage:</strong> ${status.totalStorageGb}GB</p>
                             <p><strong>Monthly Total:</strong> $${(status.monthlyTotal || 0).toFixed(2)}</p>
                         </div>
                     </div>
@@ -329,7 +278,7 @@ class SubscriptionAccessGuard {
             form.addEventListener('submit', this.preventAction);
         });
         
-        console.log('✅ App features enabled - server authentication active');
+        console.log('🔒 App features disabled - subscription required');
     }
 
     preventAction(event) {
@@ -359,124 +308,11 @@ class SubscriptionAccessGuard {
     }
 }
 
-// Initialize subscription guard IMMEDIATELY - don't wait for DOM
-(function() {
-    console.log('🔐 Subscription guard initializing...');
-    
-    // Hide the app immediately until subscription is verified
-    const style = document.createElement('style');
-    style.id = 'subscription-block';
-    style.textContent = `
-        body { 
-            display: none !important; 
-            opacity: 0 !important;
-        }
-    `;
-    if (document.head) {
-        document.head.appendChild(style);
-    } else {
-        document.documentElement.appendChild(style);
-    }
-    
-    // Create guard instance
+// Initialize subscription guard on page load
+document.addEventListener('DOMContentLoaded', () => {
     window.subscriptionGuard = new SubscriptionAccessGuard();
-    
-    // Run subscription check immediately
-    async function checkSubscriptionNow() {
-        console.log('🔐 Running subscription check...');
-        try {
-            // Check if we're on a protected page
-            const protectedPages = ['/', '/index.html'];
-            const currentPath = window.location.pathname;
-            
-            console.log('🔐 Current path:', currentPath);
-            
-            if (!protectedPages.includes(currentPath)) {
-                console.log('🔐 Not a protected page, allowing access');
-                const blockStyle = document.getElementById('subscription-block');
-                if (blockStyle) blockStyle.remove();
-                document.body.style.display = '';
-                document.body.style.opacity = '';
-                return;
-            }
-            
-            console.log('🔐 Protected page detected, checking authentication...');
-            
-            // Check authentication first
-            const authResponse = await fetch('/api/check-auth');
-            if (!authResponse.ok) {
-                console.log('🔐 Not authenticated, redirecting to login');
-                window.location.href = '/auth.html';
-                return;
-            }
-            
-            console.log('🔐 User authenticated, checking admin status...');
-            
-            // Admin whitelist bypass
-            const whitelistedEmails = [
-                'lancecasselman@icloud.com',
-                'lancecasselman2011@gmail.com', 
-                'lance@thelegacyphotography.com'
-            ];
-            
-            // Check current user email
-            const userResponse = await fetch('/api/current-user');
-            if (userResponse.ok) {
-                const userData = await userResponse.json();
-                console.log('🔐 User email:', userData.email);
-                if (userData.email && whitelistedEmails.includes(userData.email)) {
-                    console.log('✅ Admin account detected - bypassing subscription check');
-                    const blockStyle = document.getElementById('subscription-block');
-                    if (blockStyle) blockStyle.remove();
-                    document.body.style.display = '';
-                    document.body.style.opacity = '';
-                    return;
-                }
-            }
-            
-            console.log('🔐 Not admin, checking subscription status...');
-            
-            // Check subscription status
-            const subResponse = await fetch('/api/subscription-status');
-            const data = await subResponse.json();
-            
-            console.log('🔐 Subscription data:', data.status);
-            
-            if (!data.status || !data.status.hasProfessionalPlan || data.status.professionalStatus !== 'active') {
-                // No active subscription - redirect immediately
-                console.log('🔒 No active subscription detected - blocking access');
-                console.log('🔒 Redirecting to subscription checkout...');
-                window.location.href = '/subscription-checkout.html?message=subscription_required';
-                return;
-            }
-            
-            // User has subscription - show the app
-            console.log('✅ Subscription verified - allowing access');
-            const blockStyle = document.getElementById('subscription-block');
-            if (blockStyle) blockStyle.remove();
-            document.body.style.display = '';
-            document.body.style.opacity = '';
-            
-        } catch (error) {
-            console.error('🔐 Subscription check error:', error);
-            // On error, redirect to auth for safety
-            window.location.href = '/auth.html';
-        }
-    }
-    
-    // Run the check immediately - don't wait for anything
-    console.log('🔐 Starting immediate subscription check');
-    checkSubscriptionNow();
-    
-    // Also run when DOM is ready (backup)
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-            window.subscriptionGuard.init();
-        });
-    } else {
-        setTimeout(() => window.subscriptionGuard.init(), 100);
-    }
-})();
+    window.subscriptionGuard.init();
+});
 
 // Export for use in other scripts
 if (typeof module !== 'undefined' && module.exports) {

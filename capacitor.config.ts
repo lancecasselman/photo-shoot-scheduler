@@ -8,8 +8,6 @@ const config: CapacitorConfig = {
   server: {
     androidScheme: 'https',
     hostname: 'localhost',
-    url: undefined, // Load from local assets
-    cleartext: true, // Allow HTTP for development
     allowNavigation: [
       'https://photoshcheduleapp.firebaseapp.com',
       'https://*.replit.dev',
