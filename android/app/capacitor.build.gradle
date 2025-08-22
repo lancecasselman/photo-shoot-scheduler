@@ -7,17 +7,15 @@ android {
   }
 }
 
-apply from: "../capacitor-cordova-android-plugins/cordova.variables.gradle"
-dependencies {
-    implementation project(':capacitor-app')
-    implementation project(':capacitor-camera')
-    implementation project(':capacitor-device')
-    implementation project(':capacitor-keyboard')
-    implementation project(':capacitor-network')
-    implementation project(':capacitor-push-notifications')
-    implementation project(':capacitor-splash-screen')
-    implementation project(':capacitor-status-bar')
+// Conditionally apply cordova.variables.gradle if it exists
+def cordovaVars = file('../capacitor-cordova-android-plugins/cordova.variables.gradle')
+if (cordovaVars.exists()) {
+    apply from: cordovaVars
+}
 
+dependencies {
+    // Dependencies are now handled via Maven in app/build.gradle
+    // to avoid local subproject issues
 }
 
 
