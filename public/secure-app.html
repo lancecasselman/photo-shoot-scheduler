@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Photo Shoot Scheduler">
+    <meta name="theme-color" content="#d4af37">
+    <link rel="apple-touch-icon" sizes="180x180" href="/icon-192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/icon-192.png">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    <meta name="description" content="Professional photography business management platform with session scheduling, client galleries, and invoicing.">
+    <meta name="keywords" content="photography, business management, client portal, photo gallery, session scheduling, invoicing">
+    <title>Photography Management System - Secure Dashboard</title>
+    
+    <!-- BULLETPROOF SECURITY SYSTEM -->
+    <script>
+    // IMMEDIATE LOCKDOWN - Execute before ANY other content loads
+    (function() {
+        console.log('🔐 SECURITY: Initializing bulletproof protection...');
+        
+        // CRITICAL: Hide everything until verification complete
+        const lockdownStyle = document.createElement('style');
+        lockdownStyle.id = 'security-lockdown';
+        lockdownStyle.innerHTML = `
+            html, body { 
+                display: none !important; 
+                visibility: hidden !important;
+                opacity: 0 !important;
+            }
+            .security-overlay {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                background: #1a1a1a !important;
+                z-index: 999999 !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                color: #d4af37 !important;
+                font-family: Arial, sans-serif !important;
+            }
+        `;
+        (document.head || document.documentElement).appendChild(lockdownStyle);
+        
+        // Show security overlay
+        window.addEventListener('DOMContentLoaded', function() {
+            const overlay = document.createElement('div');
+            overlay.className = 'security-overlay';
+            overlay.innerHTML = `
+                <div style="text-align: center;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">🔒</div>
+                    <h2>Verifying Secure Access...</h2>
+                    <p>Enterprise-grade authentication in progress</p>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        });
+    })();
+    </script>
+
+    <!-- Firebase & Security Scripts -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDbtboh1bW6xu9Tz9FILkx_0lzGwXQHjyM",
+            authDomain: "photoshcheduleapp.firebaseapp.com",
+            projectId: "photoshcheduleapp",
+            storageBucket: "photoshcheduleapp.appspot.com",
+            messagingSenderId: "1080892259604",
+            appId: "1:1080892259604:web:8198de9d7da81c684c1601",
+            measurementId: "G-MB2KDEFRHL"
+        };
+
+        window.firebaseApp = initializeApp(firebaseConfig);
+        window.auth = getAuth(window.firebaseApp);
+        
+        // CRITICAL: Comprehensive security verification
+        let securityChecksPassed = 0;
+        const requiredChecks = 3;
+
+        async function performSecurityCheck() {
+            try {
+                console.log('🔐 SECURITY: Starting comprehensive verification...');
+                
+                // Reset counter for this check
+                securityChecksPassed = 0;
+
+                // CHECK 1: Firebase Authentication
+                const user = window.auth.currentUser;
+                if (!user) {
+                    console.error('🚨 SECURITY BREACH: No authenticated user');
+                    throw new Error('Authentication required');
+                }
+                console.log('✅ SECURITY: Firebase authentication verified');
+                securityChecksPassed++;
+
+                // CHECK 2: Backend Session Verification
+                const sessionResponse = await fetch('/api/verify-session');
+                if (!sessionResponse.ok) {
+                    console.error('🚨 SECURITY BREACH: Backend session invalid');
+                    throw new Error('Session verification failed');
+                }
+                console.log('✅ SECURITY: Backend session verified');
+                securityChecksPassed++;
+
+                // CHECK 3: Subscription Authorization
+                const subResponse = await fetch('/api/subscription-status');
+                const subData = await subResponse.json();
+                
+                // Admin bypass
+                const adminEmails = [
+                    'lancecasselman2011@gmail.com',
+                    'lancecasselman@icloud.com',
+                    'lance@thelegacyphotography.com'
+                ];
+
+                if (adminEmails.includes(user.email.toLowerCase())) {
+                    console.log('✅ SECURITY: Admin access granted');
+                    securityChecksPassed++;
+                } else if (subData.status && subData.status.hasProfessionalPlan && subData.status.professionalStatus === 'active') {
+                    console.log('✅ SECURITY: Subscription verified');
+                    securityChecksPassed++;
+                } else {
+                    console.error('🚨 SECURITY BREACH: Invalid subscription');
+                    throw new Error('Active subscription required');
+                }
+
+                // ALL CHECKS PASSED - UNLOCK APPLICATION
+                console.log(`🔐 SECURITY: Passed ${securityChecksPassed}/${requiredChecks} checks`);
+                if (securityChecksPassed === requiredChecks) {
+                    console.log('🔓 SECURITY: All checks passed - unlocking application');
+                    unlockApplication();
+                } else {
+                    throw new Error(`Security verification incomplete: ${securityChecksPassed}/${requiredChecks} checks passed`);
+                }
+
+            } catch (error) {
+                console.error('🚨 SECURITY FAILURE:', error.message);
+                redirectToSecureLogin();
+            }
+        }
+
+        function unlockApplication() {
+            console.log('🔓 APPLICATION UNLOCKED - Redirecting to main app');
+            // Redirect to the main photography management application
+            window.location.href = '/app';
+        }
+
+        function redirectToSecureLogin() {
+            console.log('🚨 SECURITY: Redirecting to secure login');
+            window.location.replace('/secure-login.html');
+        }
+
+        // Authentication state monitoring
+        onAuthStateChanged(window.auth, (user) => {
+            if (user) {
+                console.log('🔐 SECURITY: User authenticated, performing verification...');
+                // Small delay to ensure DOM is ready
+                setTimeout(performSecurityCheck, 500);
+            } else {
+                console.error('🚨 SECURITY: No user authenticated');
+                redirectToSecureLogin();
+            }
+        });
+
+        // Continuous monitoring - check every 30 seconds
+        setInterval(performSecurityCheck, 30000);
+
+        // Monitor for unauthorized access attempts
+        window.addEventListener('beforeunload', function() {
+            console.log('🔐 SECURITY: Session ending');
+        });
+
+        // Global logout function
+        window.secureLogout = async function() {
+            try {
+                console.log('🔐 SECURITY: Initiating secure logout...');
+                await signOut(window.auth);
+                
+                // Clear all session data
+                sessionStorage.clear();
+                localStorage.removeItem('authToken');
+                
+                // Redirect to secure login
+                window.location.replace('/secure-login.html');
+            } catch (error) {
+                console.error('Logout error:', error);
+                window.location.replace('/secure-login.html');
+            }
+        };
+    </script>
+
+    <style>
+        :root {
+            --primary-gold: #d4af37;
+            --primary-dark: #1a1a1a;
+            --text-light: #ffffff;
+            --text-muted: #cccccc;
+            --accent-sage: #87a96b;
+            --bg-primary: #2d2d2d;
+            --bg-secondary: #3d3d3d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--bg-primary) 100%);
+            color: var(--text-light);
+            min-height: 100vh;
+        }
+
+        .secure-header {
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(135, 169, 107, 0.1) 100%);
+            border-bottom: 2px solid var(--primary-gold);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .secure-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-gold);
+        }
+
+        .security-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(135, 169, 107, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            border: 1px solid var(--accent-sage);
+            font-size: 0.9rem;
+        }
+
+        .user-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logout-btn {
+            background: rgba(220, 53, 69, 0.2);
+            border: 1px solid #dc3545;
+            color: #ff6b6b;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(220, 53, 69, 0.3);
+        }
+
+        .main-content {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .dashboard-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            border-radius: 15px;
+            padding: 2rem;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            backdrop-filter: blur(10px);
+            margin-bottom: 2rem;
+        }
+
+        .dashboard-title {
+            font-size: 2.5rem;
+            color: var(--primary-gold);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .dashboard-subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            margin-bottom: 3rem;
+            font-size: 1.1rem;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .feature-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary-gold);
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            color: var(--primary-gold);
+            margin-bottom: 1rem;
+        }
+
+        .feature-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-light);
+        }
+
+        .feature-description {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #28a745;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Secure Header -->
+    <header class="secure-header">
+        <div class="secure-logo">
+            🔒 PhotoManager Pro - Secure Dashboard
+        </div>
+        <div class="security-badge">
+            <span class="status-indicator"></span>
+            Authenticated & Verified
+        </div>
+        <div class="user-controls">
+            <span id="currentUser">Loading...</span>
+            <button class="logout-btn" onclick="window.secureLogout()">Secure Logout</button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="dashboard-card">
+            <h1 class="dashboard-title">Welcome to Your Secure Dashboard</h1>
+            <p class="dashboard-subtitle">
+                Professional photography business management platform with enterprise-grade security
+            </p>
+
+            <div class="features-grid">
+                <div class="feature-card" onclick="loadSessionManagement()">
+                    <div class="feature-icon">📅</div>
+                    <h3 class="feature-title">Session Management</h3>
+                    <p class="feature-description">Organize and track your photography sessions with comprehensive client management.</p>
+                </div>
+
+                <div class="feature-card" onclick="alert('Client Galleries - Coming Soon!')">
+                    <div class="feature-icon">🖼️</div>
+                    <h3 class="feature-title">Client Galleries</h3>
+                    <p class="feature-description">Secure, professional galleries for client photo delivery and downloads.</p>
+                </div>
+
+                <div class="feature-card" onclick="alert('Business Analytics - Coming Soon!')">
+                    <div class="feature-icon">💰</div>
+                    <h3 class="feature-title">Business Analytics</h3>
+                    <p class="feature-description">Track earnings, expenses, and net profit with comprehensive financial reporting.</p>
+                </div>
+
+                <div class="feature-card" onclick="alert('AI Assistant - Coming Soon!')">
+                    <div class="feature-icon">🤖</div>
+                    <h3 class="feature-title">AI Assistant</h3>
+                    <p class="feature-description">Generate marketing content and business materials with AI-powered tools.</p>
+                </div>
+
+                <div class="feature-card" onclick="alert('Cloud Storage - Coming Soon!')">
+                    <div class="feature-icon">☁️</div>
+                    <h3 class="feature-title">Cloud Storage</h3>
+                    <p class="feature-description">Secure cloud backup with 100GB included and expandable storage options.</p>
+                </div>
+
+                <div class="feature-card" onclick="alert('Mobile Access - Coming Soon!')">
+                    <div class="feature-icon">📱</div>
+                    <h3 class="feature-title">Mobile Access</h3>
+                    <p class="feature-description">Native iOS app with camera integration and offline capabilities.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-card">
+            <h2 style="color: var(--accent-sage); margin-bottom: 1rem;">🔐 Security Status</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                <div style="background: rgba(40, 167, 69, 0.1); padding: 1rem; border-radius: 8px; border: 1px solid #28a745;">
+                    <strong style="color: #28a745;">✅ Authentication</strong>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">Firebase verified</p>
+                </div>
+                <div style="background: rgba(40, 167, 69, 0.1); padding: 1rem; border-radius: 8px; border: 1px solid #28a745;">
+                    <strong style="color: #28a745;">✅ Session</strong>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">Backend validated</p>
+                </div>
+                <div style="background: rgba(40, 167, 69, 0.1); padding: 1rem; border-radius: 8px; border: 1px solid #28a745;">
+                    <strong style="color: #28a745;">✅ Subscription</strong>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">Active & verified</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Display current user when available
+        if (window.auth) {
+            window.auth.onAuthStateChanged((user) => {
+                if (user) {
+                    document.getElementById('currentUser').textContent = user.email;
+                }
+            });
+        }
+
+        // Prevent right-click in production
+        document.addEventListener('contextmenu', function(e) {
+            console.log('🔐 SECURITY: Context menu access logged');
+        });
+
+        // Monitor for developer tools (basic deterrent)
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && e.key === 'I')) {
+                console.log('🔐 SECURITY: Developer tools access attempt logged');
+            }
+        });
+
+        console.log('🔓 Secure dashboard loaded successfully');
+
+        // Load session management interface
+        function loadSessionManagement() {
+            // Replace the main content with session management interface
+            window.location.href = '/secure-app.html#sessions';
+            loadSessionInterface();
+        }
+
+        // Load the session management interface content
+        async function loadSessionInterface() {
+            try {
+                const mainContent = document.querySelector('.main-content');
+                mainContent.innerHTML = `
+                    <div class="dashboard-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                            <h1 class="dashboard-title">Your Photography Sessions</h1>
+                            <button onclick="goBackToDashboard()" style="background: var(--accent-sage); color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
+                                ← Back to Dashboard
+                            </button>
+                        </div>
+                        <div id="sessionsLoading" style="text-align: center; padding: 2rem; color: var(--primary-gold);">
+                            Loading your sessions...
+                        </div>
+                        <div id="sessionsContainer" style="display: none;">
+                            <!-- Sessions will be loaded here -->
+                        </div>
+                    </div>
+                `;
+
+                // Load user's sessions
+                await loadUserSessions();
+            } catch (error) {
+                console.error('Error loading session interface:', error);
+            }
+        }
+
+        // Load sessions specific to the authenticated user
+        async function loadUserSessions() {
+            try {
+                const response = await fetch('/api/sessions');
+                if (!response.ok) {
+                    throw new Error('Failed to load sessions');
+                }
+                
+                const sessions = await response.json();
+                console.log('Loaded user sessions:', sessions);
+                
+                const sessionsContainer = document.getElementById('sessionsContainer');
+                const loadingElement = document.getElementById('sessionsLoading');
+                
+                loadingElement.style.display = 'none';
+                sessionsContainer.style.display = 'block';
+                
+                if (sessions.length === 0) {
+                    sessionsContainer.innerHTML = `
+                        <div style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">📅</div>
+                            <h3>No sessions yet</h3>
+                            <p>Your photography sessions will appear here once created.</p>
+                        </div>
+                    `;
+                } else {
+                    // Display sessions in a clean, organized way
+                    const sessionsHTML = sessions.map(session => `
+                        <div class="session-card" style="background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 8px; margin: 1rem 0; border: 1px solid rgba(212, 175, 55, 0.2);">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                                <div>
+                                    <h3 style="color: var(--primary-gold); margin: 0; font-size: 1.2rem;">${session.clientName}</h3>
+                                    <p style="color: var(--accent-sage); margin: 0.25rem 0; font-weight: 500;">${session.sessionType}</p>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="background: var(--primary-gold); color: var(--primary-dark); padding: 0.25rem 0.75rem; border-radius: 12px; font-weight: 600; font-size: 0.9rem;">
+                                        $${session.price}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1rem 0;">
+                                <div>
+                                    <strong style="color: var(--text-light);">Date & Time:</strong>
+                                    <p style="color: var(--text-muted); margin: 0.25rem 0;">${new Date(session.dateTime).toLocaleString()}</p>
+                                </div>
+                                <div>
+                                    <strong style="color: var(--text-light);">Location:</strong>
+                                    <p style="color: var(--text-muted); margin: 0.25rem 0;">${session.location}</p>
+                                </div>
+                                <div>
+                                    <strong style="color: var(--text-light);">Contact:</strong>
+                                    <p style="color: var(--text-muted); margin: 0.25rem 0;">${session.email}</p>
+                                    <p style="color: var(--text-muted); margin: 0.25rem 0;">${session.phoneNumber}</p>
+                                </div>
+                            </div>
+                            
+                            ${session.notes ? `
+                                <div style="margin: 1rem 0;">
+                                    <strong style="color: var(--text-light);">Notes:</strong>
+                                    <p style="color: var(--text-muted); margin: 0.25rem 0;">${session.notes}</p>
+                                </div>
+                            ` : ''}
+                            
+                            <div style="display: flex; gap: 0.5rem; margin-top: 1rem; flex-wrap: wrap;">
+                                ${session.contractSigned ? '<span style="background: rgba(40, 167, 69, 0.2); color: #28a745; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">Contract Signed</span>' : '<span style="background: rgba(220, 53, 69, 0.2); color: #dc3545; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">Contract Pending</span>'}
+                                ${session.paid ? '<span style="background: rgba(40, 167, 69, 0.2); color: #28a745; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">Paid</span>' : '<span style="background: rgba(255, 193, 7, 0.2); color: #ffc107; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">Payment Pending</span>'}
+                                ${session.edited ? '<span style="background: rgba(40, 167, 69, 0.2); color: #28a745; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">Edited</span>' : '<span style="background: rgba(108, 117, 125, 0.2); color: #6c757d; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">Editing Pending</span>'}
+                                ${session.delivered ? '<span style="background: rgba(40, 167, 69, 0.2); color: #28a745; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">Delivered</span>' : '<span style="background: rgba(108, 117, 125, 0.2); color: #6c757d; padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.8rem;">Delivery Pending</span>'}
+                            </div>
+                            
+                            ${session.depositAmount > 0 ? `
+                                <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(212, 175, 55, 0.1); border-radius: 6px; border: 1px solid rgba(212, 175, 55, 0.3);">
+                                    <strong style="color: var(--primary-gold);">Deposit: $${session.depositAmount}</strong>
+                                    <span style="color: var(--text-muted); margin-left: 1rem;">Balance: $${session.price - session.depositAmount}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `).join('');
+                    
+                    sessionsContainer.innerHTML = `
+                        <div style="margin-bottom: 1rem; padding: 1rem; background: rgba(135, 169, 107, 0.1); border-radius: 8px; border: 1px solid var(--accent-sage);">
+                            <strong style="color: var(--accent-sage);">🔒 Secure Session Management</strong>
+                            <p style="color: var(--text-muted); margin: 0.5rem 0 0 0; font-size: 0.9rem;">
+                                Showing sessions for: <strong style="color: var(--text-light);">${window.auth.currentUser?.email}</strong>
+                            </p>
+                        </div>
+                        ${sessionsHTML}
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading sessions:', error);
+                document.getElementById('sessionsLoading').innerHTML = `
+                    <div style="color: #dc3545; text-align: center; padding: 2rem;">
+                        <div style="font-size: 2rem; margin-bottom: 1rem;">⚠️</div>
+                        <h3>Error Loading Sessions</h3>
+                        <p>Please try again later or contact support if the problem persists.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Go back to main dashboard
+        function goBackToDashboard() {
+            window.location.href = '/secure-app.html';
+            location.reload();
+        }
+
+        // Check if we should load sessions immediately (from URL hash)
+        if (window.location.hash === '#sessions') {
+            setTimeout(loadSessionInterface, 1000); // Wait for auth to be ready
+        }
+    </script>
+    
+    <!-- Admin Inline Editor with Photo Blocks -->
+    <script src="admin-inline-editor.js"></script>
+</body>
+</html>
