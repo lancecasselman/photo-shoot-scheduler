@@ -1,34 +1,31 @@
 pluginManagement {
-    repositories {
-        google()
-        mavenCentral()
-        gradlePluginPortal()
-        maven { url 'https://maven.capacitorjs.com/' }
-    }
+  repositories {
+    gradlePluginPortal()
+    google()
+    mavenCentral()
+    maven { url 'https://maven.capacitorjs.com/' } // optional
+  }
 }
 
 dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
-    repositories {
-        google()
-        mavenCentral()
-        maven { url 'https://maven.capacitorjs.com/' }
-    }
+  repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+  repositories {
+    google()
+    mavenCentral()
+    maven { url 'https://maven.capacitorjs.com/' } // optional
+  }
 }
 
-rootProject.name = "Photography Manager"
-
+rootProject.name = "App"
 include ':app'
 
-// Capacitor Core Android
+// --- Capacitor core (NOTE: points to /capacitor subfolder) ---
 include ':capacitor-android'
 project(':capacitor-android').projectDir = new File('../node_modules/@capacitor/android/capacitor')
 
-// Capacitor Cordova Android Plugins
-include ':capacitor-cordova-android-plugins'
-project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins/')
+// --- Include ONLY plugins you actually have installed ---
+// Each one must point to its /android subfolder
 
-// Capacitor Plugins
 include ':capacitor-app'
 project(':capacitor-app').projectDir = new File('../node_modules/@capacitor/app/android')
 
@@ -53,4 +50,6 @@ project(':capacitor-splash-screen').projectDir = new File('../node_modules/@capa
 include ':capacitor-status-bar'
 project(':capacitor-status-bar').projectDir = new File('../node_modules/@capacitor/status-bar/android')
 
-apply from: 'capacitor.settings.gradle'
+// Cordova shim ONLY if this folder exists in your repo
+// include ':capacitor-cordova-android-plugins'
+// project(':capacitor-cordova-android-plugins').projectDir = new File('../capacitor-cordova-android-plugins')
