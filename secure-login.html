@@ -42,6 +42,20 @@
             try {
                 showLoading('Verifying subscription...');
                 
+                // Android/Mobile debugging
+                const isAndroid = /Android/i.test(navigator.userAgent);
+                const isCapacitor = window.Capacitor !== undefined;
+                console.log('🔍 AUTH DEBUG:', { 
+                    userEmail: user.email, 
+                    isAndroid, 
+                    isCapacitor,
+                    userAgent: navigator.userAgent 
+                });
+                
+                // Get fresh token for verification
+                const idToken = await user.getIdToken(true); // Force refresh
+                console.log('🎫 TOKEN: Retrieved fresh ID token for verification');
+                
                 // First verify session with backend
                 const authResponse = await fetch('/api/verify-auth', {
                     method: 'POST',
@@ -50,21 +64,35 @@
                     },
                     credentials: 'include', // Ensure cookies are included for Android
                     body: JSON.stringify({ 
-                        idToken: await user.getIdToken()
+                        idToken: idToken
                     })
                 });
 
+                console.log('🔐 AUTH RESPONSE:', { 
+                    status: authResponse.status, 
+                    statusText: authResponse.statusText,
+                    ok: authResponse.ok 
+                });
+
                 if (!authResponse.ok) {
-                    throw new Error('Backend verification failed');
+                    const errorText = await authResponse.text();
+                    console.error('❌ Backend verification failed:', errorText);
+                    throw new Error(`Backend verification failed: ${authResponse.status} - ${errorText}`);
                 }
 
                 // Check subscription status
                 const subResponse = await fetch('/api/subscription-status', {
                     credentials: 'include' // Ensure cookies are included for Android
                 });
-                const subData = await subResponse.json();
                 
-                console.log('Subscription check:', subData);
+                console.log('📋 SUBSCRIPTION RESPONSE:', { 
+                    status: subResponse.status, 
+                    statusText: subResponse.statusText,
+                    ok: subResponse.ok 
+                });
+                
+                const subData = await subResponse.json();
+                console.log('📋 Subscription check result:', subData);
 
                 // Admin bypass
                 const adminEmails = [
@@ -98,8 +126,24 @@
                 window.location.href = '/secure-app.html';
 
             } catch (error) {
-                console.error('Verification error:', error);
-                showError('Authentication failed. Please try again.');
+                console.error('🚨 VERIFICATION ERROR:', error);
+                console.error('🚨 ERROR DETAILS:', {
+                    message: error.message,
+                    stack: error.stack,
+                    name: error.name
+                });
+                
+                // More specific error messages for debugging
+                let errorMessage = 'Authentication failed. Please try again.';
+                if (error.message.includes('Backend verification failed')) {
+                    errorMessage = `Server verification failed. Error: ${error.message}`;
+                } else if (error.message.includes('subscription')) {
+                    errorMessage = `Subscription check failed. Error: ${error.message}`;
+                } else if (error.message.includes('fetch')) {
+                    errorMessage = `Network error. Please check your connection and try again.`;
+                }
+                
+                showError(errorMessage);
                 hideLoading();
             }
         };
