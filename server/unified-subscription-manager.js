@@ -245,26 +245,17 @@ class UnifiedSubscriptionManager {
                 throw new Error('User must have Professional plan first');
             }
 
-            // Create checkout session for Storage Add-on
-            const totalPrice = this.STORAGE_ADD_ON_PRICE * tbCount;
+            // Create checkout session for Storage Add-on using Stripe Price ID
+            if (!process.env.STRIPE_STORAGE_ADDON_PRICE_ID) {
+                throw new Error('STRIPE_STORAGE_ADDON_PRICE_ID environment variable is required');
+            }
+
             const session = await stripe.checkout.sessions.create({
                 customer: customer.id,
                 payment_method_types: ['card'],
                 mode: 'subscription',
                 line_items: [{
-                    price_data: {
-                        currency: 'usd',
-                        product_data: {
-                            name: `Storage Add-on - ${tbCount}TB`,
-                            description: `${tbCount}TB additional cloud storage`,
-                            metadata: {
-                                plan_type: 'storage_addon',
-                                storage_tb: tbCount.toString()
-                            }
-                        },
-                        unit_amount: this.STORAGE_ADD_ON_PRICE * 100,
-                        recurring: { interval: 'month' }
-                    },
+                    price: process.env.STRIPE_STORAGE_ADDON_PRICE_ID, // Use your actual Stripe Price ID
                     quantity: tbCount
                 }],
                 metadata: {
@@ -312,16 +303,15 @@ class UnifiedSubscriptionManager {
                 }
             });
 
-            // Create storage subscription
+            // Create storage subscription using Stripe Price ID
+            if (!process.env.STRIPE_STORAGE_ADDON_PRICE_ID) {
+                throw new Error('STRIPE_STORAGE_ADDON_PRICE_ID environment variable is required');
+            }
+
             const subscription = await stripe.subscriptions.create({
                 customer: customer.id,
                 items: [{
-                    price_data: {
-                        currency: 'usd',
-                        product: product.id,
-                        unit_amount: this.STORAGE_ADD_ON_PRICE * 100,
-                        recurring: { interval: 'month' }
-                    },
+                    price: process.env.STRIPE_STORAGE_ADDON_PRICE_ID, // Use your actual Stripe Price ID
                     quantity: tbCount
                 }],
                 metadata: {
