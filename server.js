@@ -1357,6 +1357,30 @@ app.get('/api/subscription-status', async (req, res) => {
                 error: 'Authentication required' 
             });
         }
+
+        const user = req.session.user;
+        console.log('📱 SUBSCRIPTION: Checking status for user:', { 
+            email: user.email, 
+            uid: user.uid 
+        });
+
+        // Admin bypass for Lance's emails
+        const adminEmails = [
+            'lancecasselman2011@gmail.com',
+            'lancecasselman@icloud.com',
+            'lance@thelegacyphotography.com'
+        ];
+
+        if (adminEmails.includes(user.email)) {
+            console.log('🔑 ADMIN: Subscription bypass for admin user:', user.email);
+            return res.json({
+                status: {
+                    hasProfessionalPlan: true,
+                    professionalStatus: 'active',
+                    isAdmin: true
+                }
+            });
+        }
         
         const userId = req.session.user.uid;
         const UnifiedSubscriptionManager = require('./server/unified-subscription-manager');
@@ -1437,13 +1461,20 @@ app.post('/api/verify-auth', async (req, res) => {
 
         console.log('✅ SECURE: Token verified for', email);
 
-        // Create/update session
-        req.session.user = {
+        // Create/update session with normalization for Lance's emails
+        const normalizedUser = normalizeUserForLance({
             uid: uid,
             email: email,
             displayName: name || email,
             photoURL: picture
-        };
+        });
+        
+        req.session.user = normalizedUser;
+        console.log('📱 SESSION: Created session for user:', { 
+            email: normalizedUser.email, 
+            uid: normalizedUser.uid,
+            canonical_email: normalizedUser.canonical_email 
+        });
 
         // Save session
         req.session.save((err) => {

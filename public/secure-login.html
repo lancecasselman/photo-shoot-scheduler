@@ -48,6 +48,7 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
+                    credentials: 'include', // Ensure cookies are included for Android
                     body: JSON.stringify({ 
                         idToken: await user.getIdToken()
                     })
@@ -58,7 +59,9 @@
                 }
 
                 // Check subscription status
-                const subResponse = await fetch('/api/subscription-status');
+                const subResponse = await fetch('/api/subscription-status', {
+                    credentials: 'include' // Ensure cookies are included for Android
+                });
                 const subData = await subResponse.json();
                 
                 console.log('Subscription check:', subData);
@@ -71,8 +74,11 @@
                 ];
 
                 if (adminEmails.includes(user.email)) {
-                    console.log('Admin access granted');
-                    window.location.href = '/secure-app.html';
+                    console.log('Admin access granted for:', user.email);
+                    showLoading('Admin access granted. Loading app...');
+                    setTimeout(() => {
+                        window.location.href = '/secure-app.html';
+                    }, 1000);
                     return;
                 }
 
