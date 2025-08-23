@@ -12971,26 +12971,6 @@ END:VCALENDAR`;
     <!-- Include main script file -->
     <script src="script.js?v=1755136100&customizable=deposit"></script>
     
-    <script>
-        // Initialize auth check only for secure app - not landing page
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🔐 SECURE APP: Starting authentication check...');
-            
-            // Trigger authentication check
-            checkAuth().then(authenticated => {
-                if (authenticated) {
-                    console.log('✅ SECURE APP: User authenticated, initializing app...');
-                    if (typeof initializeAppContent === 'function') {
-                        initializeAppContent();
-                    }
-                } else {
-                    console.log('❌ SECURE APP: Authentication failed, redirecting...');
-                    // Auth check in script.js will handle redirect
-                }
-            });
-        });
-    </script>
-    
     <!-- Subscription onboarding removed - file was missing and causing 404 errors -->
     <script>
         // Check if user just completed subscription

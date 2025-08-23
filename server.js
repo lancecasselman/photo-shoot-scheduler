@@ -11272,10 +11272,10 @@ function generatePublicWebsite(websiteData) {
 `;
 }
 
-// SECURE ROOT ROUTE - Always serve secure landing page
+// ROOT ROUTE - Serve landing page
 app.get('/', (req, res) => {
     console.log('🏠 HOME: Serving public landing page');
-    res.sendFile(path.join(__dirname, 'secure-landing.html'));
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // Secure login page
