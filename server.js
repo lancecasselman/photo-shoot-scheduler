@@ -3354,11 +3354,15 @@ app.post('/api/create-subscription', isAuthenticated, async (req, res) => {
         const { plan } = req.body;
         const user = req.user;
 
-        // Define price IDs for each plan - Updated to $39/month Professional plan
+        // Use environment variable for Professional plan price ID
         const priceIds = {
-            professional: 'price_professional_39',  // $39/month Professional
-            storage_1tb: 'price_storage_1tb_25'     // $25/month per 1TB storage add-on
+            professional: process.env.STRIPE_PRICE_ID,  // Your actual $39/month Professional plan
+            storage_1tb: 'price_storage_1tb_25'        // $25/month per 1TB storage add-on (create this in Stripe if needed)
         };
+
+        if (!priceIds.professional) {
+            throw new Error('STRIPE_PRICE_ID environment variable is required');
+        }
 
         // Create or retrieve Stripe customer
         let customerId = user.stripe_customer_id;

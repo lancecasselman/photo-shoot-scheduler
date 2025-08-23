@@ -134,16 +134,15 @@ class UnifiedSubscriptionManager {
                 }
             });
 
-            // Create subscription (test mode - will create without payment method)
+            // Create subscription using your Stripe Price ID
+            if (!process.env.STRIPE_PRICE_ID) {
+                throw new Error('STRIPE_PRICE_ID environment variable is required');
+            }
+
             const subscription = await stripe.subscriptions.create({
                 customer: customer.id,
                 items: [{
-                    price_data: {
-                        currency: 'usd',
-                        product: product.id,
-                        unit_amount: this.PROFESSIONAL_PLAN_PRICE * 100,
-                        recurring: { interval: 'month' }
-                    }
+                    price: process.env.STRIPE_PRICE_ID // Use your actual Stripe Price ID
                 }],
                 // For test mode, create as active without payment requirement
                 collection_method: 'charge_automatically',
@@ -197,25 +196,17 @@ class UnifiedSubscriptionManager {
             // Create or get Stripe customer
             let customer = await this.getOrCreateStripeCustomer(userId, email);
             
-            // Create checkout session for Professional Plan
+            // Create checkout session for Professional Plan using your Stripe Price ID
+            if (!process.env.STRIPE_PRICE_ID) {
+                throw new Error('STRIPE_PRICE_ID environment variable is required');
+            }
+
             const session = await stripe.checkout.sessions.create({
                 customer: customer.id,
                 payment_method_types: ['card'],
                 mode: 'subscription',
                 line_items: [{
-                    price_data: {
-                        currency: 'usd',
-                        product_data: {
-                            name: 'Professional Photography Plan',
-                            description: `Professional plan with ${this.BASE_STORAGE_GB}GB storage`,
-                            metadata: {
-                                plan_type: 'professional',
-                                storage_gb: this.BASE_STORAGE_GB.toString()
-                            }
-                        },
-                        unit_amount: this.PROFESSIONAL_PLAN_PRICE * 100,
-                        recurring: { interval: 'month' }
-                    },
+                    price: process.env.STRIPE_PRICE_ID, // Use your actual Stripe Price ID
                     quantity: 1
                 }],
                 metadata: {
