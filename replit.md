@@ -16,7 +16,7 @@ The system utilizes a static HTML/CSS/JavaScript multi-page application with van
 The backend is built on a Node.js/Express server handling API routes and business logic. Authentication and subscription verification are handled exclusively at the server level through secure routes.
 
 ### Authentication & Authorization
-Firebase Authentication supports email/password and Google OAuth, implementing role-based access for administrative functions and subscriber management. All session management routes require proper Firebase authentication with no development mode exceptions.
+Firebase Authentication supports email/password and Google OAuth, implementing role-based access for administrative functions and subscriber management. All session management routes require proper Firebase authentication with no development mode exceptions. Enhanced Android authentication includes token-based fallback system for installed apps, Android-specific session handling with CORS configuration, and comprehensive debugging for mobile authentication flows.
 
 ### Database Architecture
 The primary database is PostgreSQL, utilizing Drizzle ORM. Firebase Firestore is used for real-time data synchronization, creating a hybrid storage strategy. Published websites data, metadata, and themes are stored in PostgreSQL.
@@ -25,7 +25,15 @@ The primary database is PostgreSQL, utilizing Drizzle ORM. Firebase Firestore is
 Cloudflare R2 serves as the primary cloud storage with session-aware file paths and RAW file backup. Firebase Storage is used as secondary storage for website assets and profile images. The system supports full-resolution downloads, on-the-fly thumbnail generation with smart caching, and preserves original filenames.
 
 ### Mobile & Responsive Features
-Capacitor integration enables native mobile app capabilities for iOS and Android, including direct photo uploads and offline functionality. Android platform is fully configured for Google Play Store deployment with optimized Gradle build system, resolved "No matching variant" errors, and clean dependency management ready for local SDK compilation. Landing page flow correctly implemented - Android app now starts directly with landing page instead of launch screen.
+Capacitor integration enables native mobile app capabilities for iOS and Android, including direct photo uploads and offline functionality. Android platform is fully configured for Google Play Store deployment with optimized Gradle build system, resolved "No matching variant" errors, and clean dependency management ready for local SDK compilation. Landing page flow correctly implemented - Android app now starts directly with landing page instead of launch screen. 
+
+**Android Authentication Enhancements (August 2025):**
+- Fixed Capacitor hostname configuration to connect to Replit server instead of localhost
+- Implemented token-based authentication fallback for installed Android apps where cookie sessions may not persist
+- Enhanced CORS configuration with Android and Capacitor-specific origins and credential handling
+- Added comprehensive authentication debugging with Android/mobile device detection
+- Session configuration optimized for Android compatibility with sameSite 'none' and Android-specific session ID generation
+- Created authentication test page (/test-auth.html) for debugging mobile authentication flows
 
 ### Photography Community Platform
 A social platform featuring a multi-tab feed system with customizable post types, advanced image optimization, social features (like, comment, save, share), user profiles with reputation points, community tools, a comprehensive direct messaging system, and automatic EXIF extraction. User interactions are enhanced with full username display, clickable user profiles, and complete user-to-user messaging infrastructure.

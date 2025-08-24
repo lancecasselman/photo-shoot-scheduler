@@ -56,15 +56,25 @@
                 const idToken = await user.getIdToken(true); // Force refresh
                 console.log('🎫 TOKEN: Retrieved fresh ID token for verification');
                 
-                // First verify session with backend
+                // First verify session with backend with Android-specific headers
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                
+                // Add Android-specific headers for session handling
+                if (isAndroid || isCapacitor) {
+                    headers['X-Android-App'] = 'true';
+                    headers['X-Capacitor-App'] = 'true';
+                }
+                
                 const authResponse = await fetch('/api/verify-auth', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: headers,
                     credentials: 'include', // Ensure cookies are included for Android
                     body: JSON.stringify({ 
-                        idToken: idToken
+                        idToken: idToken,
+                        isAndroid: isAndroid,
+                        isCapacitor: isCapacitor
                     })
                 });
 
@@ -80,8 +90,15 @@
                     throw new Error(`Backend verification failed: ${authResponse.status} - ${errorText}`);
                 }
 
-                // Check subscription status
+                // Check subscription status with Android headers
+                const subHeaders = {};
+                if (isAndroid || isCapacitor) {
+                    subHeaders['X-Android-App'] = 'true';
+                    subHeaders['X-Capacitor-App'] = 'true';
+                }
+                
                 const subResponse = await fetch('/api/subscription-status', {
+                    headers: subHeaders,
                     credentials: 'include' // Ensure cookies are included for Android
                 });
                 

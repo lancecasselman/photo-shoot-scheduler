@@ -704,7 +704,7 @@ const normalizeUserForLance = (user) => {
 };
 
 // Enhanced authentication middleware with strict security
-const isAuthenticated = (req, res, next) => {
+const isAuthenticated = async (req, res, next) => {
     // Enhanced authentication check with better error handling
     try {
         // CRITICAL SECURITY FIX: Disable DEV_MODE bypass for Stripe Connect routes
@@ -737,6 +737,31 @@ const isAuthenticated = (req, res, next) => {
 
         // Check for user data in session
         if (!req.session.user) {
+            // For Android apps, try token-based authentication fallback
+            if ((isAndroid || isCapacitor) && req.session.androidAuth) {
+                console.log('🔄 ANDROID: Attempting token-based auth fallback');
+                try {
+                    // Verify stored token is still valid (within 1 hour)
+                    const tokenAge = Date.now() - req.session.androidAuth.timestamp;
+                    if (tokenAge < 3600000) { // 1 hour
+                        const decodedToken = await admin.auth().verifyIdToken(req.session.androidAuth.idToken);
+                        const normalizedUser = normalizeUserForLance({
+                            uid: decodedToken.uid,
+                            email: decodedToken.email,
+                            displayName: decodedToken.name || decodedToken.email,
+                            photoURL: decodedToken.picture
+                        });
+                        req.session.user = normalizedUser;
+                        req.user = normalizedUser;
+                        console.log('✅ ANDROID: Token fallback authentication successful');
+                        next();
+                        return;
+                    }
+                } catch (error) {
+                    console.log('❌ ANDROID: Token fallback failed:', error.message);
+                }
+            }
+            
             console.log('❌ AUTH: No user data in session, session ID:', req.session.id);
             return res.status(401).json({ 
                 message: 'No user data in session - authentication required',
@@ -914,9 +939,21 @@ app.use(session({
         httpOnly: false,
         secure: false,
         maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
-        sameSite: 'none', // Changed from 'lax' to 'none' for Android compatibility
+        sameSite: 'none', // For Android compatibility
         path: '/',
         domain: undefined
+    },
+    // Android-specific session handling
+    genid: function(req) {
+        const userAgent = req.headers['user-agent'] || '';
+        const isAndroid = userAgent.includes('Android');
+        const isCapacitor = userAgent.includes('CapacitorHttp');
+        
+        // Generate Android-compatible session ID
+        if (isAndroid || isCapacitor) {
+            return 'android-' + require('crypto').randomBytes(16).toString('hex');
+        }
+        return require('crypto').randomBytes(16).toString('hex');
     }
 }));
 
@@ -1494,21 +1531,23 @@ app.get('/api/verify-session', (req, res) => {
 // SECURE: Verify auth with Firebase token
 app.post('/api/verify-auth', async (req, res) => {
     try {
-        const { idToken } = req.body;
+        const { idToken, isAndroid, isCapacitor } = req.body;
         
         // Android/Mobile debugging
         const userAgent = req.headers['user-agent'] || '';
-        const isAndroid = userAgent.includes('Android');
-        const isCapacitor = userAgent.includes('CapacitorHttp');
+        const detectedAndroid = userAgent.includes('Android');
+        const detectedCapacitor = userAgent.includes('CapacitorHttp');
+        const isAndroidApp = isAndroid || detectedAndroid || detectedCapacitor;
         
         console.log('🔐 VERIFY-AUTH DEBUG:', {
             hasToken: !!idToken,
             tokenLength: idToken ? idToken.length : 0,
-            isAndroid,
-            isCapacitor,
+            isAndroid: isAndroidApp,
+            isCapacitor: detectedCapacitor,
             sessionId: req.session?.id,
             hasExistingSession: !!req.session,
-            userAgent: userAgent.substring(0, 100)
+            userAgent: userAgent.substring(0, 100),
+            hasAndroidHeaders: !!(req.headers['x-android-app'] || req.headers['x-capacitor-app'])
         });
         
         if (!idToken) {
@@ -1533,13 +1572,24 @@ app.post('/api/verify-auth', async (req, res) => {
         });
         
         req.session.user = normalizedUser;
+        
+        // For Android apps, also store authentication token for fallback
+        if (isAndroidApp) {
+            req.session.androidAuth = {
+                idToken: idToken,
+                timestamp: Date.now(),
+                userAgent: userAgent
+            };
+            console.log('📱 ANDROID: Stored authentication token for fallback');
+        }
+        
         console.log('📱 SESSION: Created session for user:', { 
             email: normalizedUser.email, 
             uid: normalizedUser.uid,
             canonical_email: normalizedUser.canonical_email,
             sessionId: req.session.id,
-            isAndroid,
-            isCapacitor
+            isAndroid: isAndroidApp,
+            isCapacitor: detectedCapacitor
         });
 
         // Save session with enhanced debugging
@@ -1548,7 +1598,7 @@ app.post('/api/verify-auth', async (req, res) => {
                 console.error('❌ SESSION SAVE ERROR:', err);
                 return res.status(500).json({ 
                     error: 'Session creation failed', 
-                    debug: { isAndroid, isCapacitor, sessionId: req.session.id }
+                    debug: { isAndroid: isAndroidApp, isCapacitor: detectedCapacitor, sessionId: req.session.id }
                 });
             }
             
@@ -1556,7 +1606,8 @@ app.post('/api/verify-auth', async (req, res) => {
             res.json({ 
                 success: true, 
                 message: 'Authentication successful',
-                debug: { isAndroid, isCapacitor, sessionId: req.session.id }
+                sessionId: req.session.id,
+                debug: { isAndroid: isAndroidApp, isCapacitor: detectedCapacitor, sessionId: req.session.id }
             });
         });
 
