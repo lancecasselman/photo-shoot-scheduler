@@ -7,14 +7,15 @@ const config: CapacitorConfig = {
   webDir: 'public',
   server: {
     androidScheme: 'https',
-    hostname: 'localhost',
+    hostname: '8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev',
     allowNavigation: [
       'https://photoshcheduleapp.firebaseapp.com',
       'https://*.replit.dev',
       'https://*.firebaseapp.com',
       'https://*.googleapis.com',
       'https://accounts.google.com',
-      'https://www.googleapis.com'
+      'https://www.googleapis.com',
+      'https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev'
     ]
   },
   ios: {
@@ -27,7 +28,7 @@ const config: CapacitorConfig = {
   android: {
     allowMixedContent: true,
     captureInput: true,
-    webContentsDebuggingEnabled: false,
+    webContentsDebuggingEnabled: true,
     buildOptions: {
       keystorePath: undefined,
       keystoreAlias: undefined,

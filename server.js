@@ -710,19 +710,38 @@ const isAuthenticated = (req, res, next) => {
         // CRITICAL SECURITY FIX: Disable DEV_MODE bypass for Stripe Connect routes
         const isStripeConnectRoute = req.path.includes('/stripe-connect/');
         
+        // Android/Mobile debugging
+        const userAgent = req.headers['user-agent'] || '';
+        const isAndroid = userAgent.includes('Android');
+        const isCapacitor = userAgent.includes('CapacitorHttp');
+        
+        console.log('🔍 AUTH MIDDLEWARE DEBUG:', { 
+            path: req.path,
+            isAndroid,
+            isCapacitor,
+            hasSession: !!req.session,
+            hasUser: !!(req.session && req.session.user),
+            sessionId: req.session?.id,
+            userAgent: userAgent.substring(0, 100)
+        });
+        
         // Check for session existence and basic structure
         if (!req.session) {
+            console.log('❌ AUTH: No session found');
             return res.status(401).json({ 
                 message: 'No session found - authentication required',
-                redirectTo: '/secure-login.html'
+                redirectTo: '/secure-login.html',
+                debug: { isAndroid, isCapacitor }
             });
         }
 
         // Check for user data in session
         if (!req.session.user) {
+            console.log('❌ AUTH: No user data in session, session ID:', req.session.id);
             return res.status(401).json({ 
                 message: 'No user data in session - authentication required',
-                redirectTo: '/secure-login.html'
+                redirectTo: '/secure-login.html',
+                debug: { isAndroid, isCapacitor, sessionId: req.session.id }
             });
         }
 
@@ -1346,6 +1365,20 @@ app.get('/api/status', (req, res) => {
 // Subscription status endpoint - SECURE VERSION
 app.get('/api/subscription-status', async (req, res) => {
     try {
+        // Android/Mobile debugging
+        const userAgent = req.headers['user-agent'] || '';
+        const isAndroid = userAgent.includes('Android');
+        const isCapacitor = userAgent.includes('CapacitorHttp');
+        
+        console.log('📋 SUBSCRIPTION STATUS DEBUG:', {
+            isAndroid,
+            isCapacitor,
+            hasSession: !!req.session,
+            hasUser: !!(req.session && req.session.user),
+            sessionId: req.session?.id,
+            userAgent: userAgent.substring(0, 100)
+        });
+        
         // Check authentication first
         if (!req.session || !req.session.user) {
             console.log('🚨 SECURE: Subscription check without auth');
@@ -1354,14 +1387,17 @@ app.get('/api/subscription-status', async (req, res) => {
                     hasProfessionalPlan: false, 
                     professionalStatus: 'inactive' 
                 },
-                error: 'Authentication required' 
+                error: 'Authentication required',
+                debug: { isAndroid, isCapacitor }
             });
         }
 
         const user = req.session.user;
         console.log('📱 SUBSCRIPTION: Checking status for user:', { 
             email: user.email, 
-            uid: user.uid 
+            uid: user.uid,
+            isAndroid,
+            isCapacitor
         });
 
         // Admin bypass for Lance's emails
@@ -1449,7 +1485,23 @@ app.post('/api/verify-auth', async (req, res) => {
     try {
         const { idToken } = req.body;
         
+        // Android/Mobile debugging
+        const userAgent = req.headers['user-agent'] || '';
+        const isAndroid = userAgent.includes('Android');
+        const isCapacitor = userAgent.includes('CapacitorHttp');
+        
+        console.log('🔐 VERIFY-AUTH DEBUG:', {
+            hasToken: !!idToken,
+            tokenLength: idToken ? idToken.length : 0,
+            isAndroid,
+            isCapacitor,
+            sessionId: req.session?.id,
+            hasExistingSession: !!req.session,
+            userAgent: userAgent.substring(0, 100)
+        });
+        
         if (!idToken) {
+            console.log('❌ VERIFY-AUTH: No ID token provided');
             return res.status(400).json({ error: 'ID token required' });
         }
 
@@ -1473,23 +1525,45 @@ app.post('/api/verify-auth', async (req, res) => {
         console.log('📱 SESSION: Created session for user:', { 
             email: normalizedUser.email, 
             uid: normalizedUser.uid,
-            canonical_email: normalizedUser.canonical_email 
+            canonical_email: normalizedUser.canonical_email,
+            sessionId: req.session.id,
+            isAndroid,
+            isCapacitor
         });
 
-        // Save session
+        // Save session with enhanced debugging
         req.session.save((err) => {
             if (err) {
-                console.error('Session save error:', err);
-                return res.status(500).json({ error: 'Session creation failed' });
+                console.error('❌ SESSION SAVE ERROR:', err);
+                return res.status(500).json({ 
+                    error: 'Session creation failed', 
+                    debug: { isAndroid, isCapacitor, sessionId: req.session.id }
+                });
             }
             
-            console.log('✅ SECURE: Session created for', email);
-            res.json({ success: true, message: 'Authentication successful' });
+            console.log('✅ SECURE: Session saved successfully for', email, 'Session ID:', req.session.id);
+            res.json({ 
+                success: true, 
+                message: 'Authentication successful',
+                debug: { isAndroid, isCapacitor, sessionId: req.session.id }
+            });
         });
 
     } catch (error) {
         console.error('🚨 SECURE: Token verification failed:', error);
-        res.status(401).json({ error: 'Invalid token' });
+        console.error('🚨 ERROR DETAILS:', {
+            message: error.message,
+            code: error.code,
+            stack: error.stack
+        });
+        res.status(401).json({ 
+            error: 'Invalid token',
+            debug: { 
+                isAndroid: userAgent.includes('Android'),
+                isCapacitor: userAgent.includes('CapacitorHttp'),
+                errorCode: error.code 
+            }
+        });
     }
 });
 
