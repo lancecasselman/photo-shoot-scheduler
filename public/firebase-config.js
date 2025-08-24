@@ -1,53 +1,97 @@
-// Firebase Configuration - Using latest service account credentials
-const firebaseConfig = {
+// Firebase Configuration for Photography Management System
+// This file ensures consistent Firebase configuration across all platforms
+
+export const firebaseConfig = {
     apiKey: "AIzaSyDbtboh1bW6xu9Tz9FILkx_0lzGwXQHjyM",
-    authDomain: "photoshcheduleapp.firebaseapp.com", 
-    projectId: "photoshcheduleapp",
+    authDomain: "photoshcheduleapp.firebaseapp.com",
+    projectId: "photoshcheduleapp", 
     storageBucket: "photoshcheduleapp.appspot.com",
     messagingSenderId: "1080892259604",
     appId: "1:1080892259604:web:8198de9d7da81c684c1601",
     measurementId: "G-MB2KDEFRHL"
 };
 
-// Initialize Firebase with improved error handling and duplicate prevention
-(function() {
-    try {
-        // Prevent multiple initialization warnings by checking for existing Firebase apps
-        if (window.firebaseInitialized === true || (typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length > 0)) {
-            console.log('Firebase already initialized, skipping duplicate initialization');
-            if (!window.firebaseAuth && firebase.auth) {
-                window.firebaseAuth = firebase.auth();
-                // Firebase storage removed - using R2 exclusively
-            }
-            return;
-        }
-        
-        // Check if Firebase is already loaded globally
-        if (typeof firebase === 'undefined') {
-            console.error('Firebase SDK not loaded. Please ensure Firebase scripts are included.');
-            return;
-        }
-        
-        // Check if Firebase app is already initialized
-        if (firebase.apps && firebase.apps.length > 0) {
-            console.log('Firebase already initialized, using existing instance');
-            window.firebaseInitialized = true;
-            
-            // Set global references for compatibility
-            window.firebaseAuth = firebase.auth();
-            // Firebase storage removed - using R2 exclusively
-        } else {
-            // Initialize Firebase for the first time
-            firebase.initializeApp(firebaseConfig);
-            console.log('Firebase client initialized with storage bucket:', firebaseConfig.storageBucket);
-            
-            // Set global references for compatibility
-            window.firebaseAuth = firebase.auth();
-            // Firebase storage removed - using R2 exclusively
-            window.firebaseInitialized = true;
-        }
-    } catch (error) {
-        console.error('Firebase initialization error:', error);
-        window.firebaseInitialized = false;
+// Android-specific authentication configuration
+export const androidAuthConfig = {
+    // Enable persistence for Android apps
+    persistence: true,
+    
+    // Enhanced debugging for Android
+    enableLogging: true,
+    
+    // Android-specific timeout settings
+    timeoutMs: 30000,
+    
+    // Custom claims for Android authentication
+    customClaims: {
+        platform: 'android',
+        app_version: '1.0'
     }
-})();
+};
+
+// Initialize Firebase for Android with proper configuration
+export async function initializeFirebaseForAndroid() {
+    try {
+        // Check if running in Capacitor environment
+        const isCapacitor = window.Capacitor !== undefined;
+        const isAndroid = /Android/i.test(navigator.userAgent);
+        
+        console.log('🔥 FIREBASE INIT:', { isCapacitor, isAndroid });
+        
+        if (isAndroid || isCapacitor) {
+            console.log('📱 ANDROID: Initializing Firebase with Android-specific configuration');
+            
+            // Android-specific initialization
+            return {
+                ...firebaseConfig,
+                ...androidAuthConfig,
+                android: {
+                    // Package name must match android/app/build.gradle
+                    packageName: 'com.thelegacyphotography.photomanager',
+                    // Enable automatic verification
+                    autoVerify: true,
+                    // Custom scheme for deep linking
+                    customScheme: 'photomanager'
+                }
+            };
+        }
+        
+        return firebaseConfig;
+        
+    } catch (error) {
+        console.error('❌ FIREBASE INIT ERROR:', error);
+        throw error;
+    }
+}
+
+// Test Firebase connectivity for Android
+export async function testFirebaseConnectivity() {
+    try {
+        console.log('🧪 TESTING: Firebase connectivity...');
+        
+        // Test Firebase auth connectivity
+        const authUrl = `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${firebaseConfig.apiKey}`;
+        const testResponse = await fetch(authUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                returnSecureToken: true
+            })
+        });
+        
+        if (testResponse.status === 400) {
+            // Expected error for test request - Firebase is reachable
+            console.log('✅ FIREBASE: Connectivity test passed');
+            return true;
+        }
+        
+        console.log('⚠️ FIREBASE: Unexpected response:', testResponse.status);
+        return false;
+        
+    } catch (error) {
+        console.error('❌ FIREBASE: Connectivity test failed:', error);
+        return false;
+    }
+}

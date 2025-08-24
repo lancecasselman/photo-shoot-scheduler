@@ -25,19 +25,24 @@
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getAuth, signInWithEmailAndPassword, connectAuthEmulator } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { firebaseConfig, testFirebaseConnectivity } from '/firebase-config.js';
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDbtboh1bW6xu9Tz9FILkx_0lzGwXQHjyM",
-            authDomain: "photoshcheduleapp.firebaseapp.com",
-            projectId: "photoshcheduleapp",
-            storageBucket: "photoshcheduleapp.appspot.com",
-            messagingSenderId: "1080892259604",
-            appId: "1:1080892259604:web:8198de9d7da81c684c1601"
-        };
+        // Initialize Firebase with enhanced Android support
 
+        // Enhanced Firebase initialization for Android
+        console.log('🔥 FIREBASE: Initializing for Android environment...');
         window.firebaseApp = initializeApp(firebaseConfig);
         window.auth = getAuth(window.firebaseApp);
+        
+        // Test Firebase connectivity on Android
+        testFirebaseConnectivity().then(connected => {
+            if (connected) {
+                log('✅ Firebase connectivity verified', 'success');
+            } else {
+                log('❌ Firebase connectivity issues detected', 'error');
+            }
+        });
         
         function log(message, type = 'info') {
             const logsDiv = document.getElementById('logs');
@@ -61,7 +66,12 @@
 
         window.loginWithFirebase = async () => {
             try {
-                log('Starting Firebase authentication...', 'info');
+                log('🔐 Starting Firebase authentication...', 'info');
+                
+                // Enhanced logging for Android debugging
+                const isAndroid = /Android/i.test(navigator.userAgent);
+                const isCapacitor = window.Capacitor !== undefined;
+                log(`Platform: Android=${isAndroid}, Capacitor=${isCapacitor}`, 'info');
                 
                 const userCredential = await signInWithEmailAndPassword(
                     window.auth, 
@@ -69,37 +79,64 @@
                     'password123'
                 );
                 
-                log(`Firebase login successful: ${userCredential.user.email}`, 'success');
+                log(`✅ Firebase login successful: ${userCredential.user.email}`, 'success');
+                log(`User ID: ${userCredential.user.uid}`, 'success');
                 
-                const idToken = await userCredential.user.getIdToken();
-                log(`Got Firebase token (length: ${idToken.length})`, 'success');
+                // Get token with enhanced debugging
+                const idToken = await userCredential.user.getIdToken(true); // Force fresh token
+                log(`🎫 Got Firebase token (length: ${idToken.length})`, 'success');
                 
-                // Now authenticate with the server
-                log('Authenticating with server...', 'info');
+                // Verify token locally first
+                try {
+                    const tokenParts = idToken.split('.');
+                    const payload = JSON.parse(atob(tokenParts[1]));
+                    log(`Token payload: exp=${new Date(payload.exp * 1000)}, iat=${new Date(payload.iat * 1000)}`, 'info');
+                } catch (tokenError) {
+                    log(`Token parsing failed: ${tokenError.message}`, 'error');
+                }
+                
+                // Authenticate with server using enhanced Android headers
+                log('🌐 Authenticating with server...', 'info');
+                
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'User-Agent': `${navigator.userAgent} PhotoManager/1.0`
+                };
+                
+                // Add platform-specific headers
+                if (isAndroid) headers['X-Android-App'] = 'true';
+                if (isCapacitor) headers['X-Capacitor-App'] = 'true';
                 
                 const response = await fetch('/api/auth/login', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Android-App': 'true',
-                        'X-Capacitor-App': 'true'
-                    },
+                    headers: headers,
                     credentials: 'include',
-                    body: JSON.stringify({ idToken })
+                    body: JSON.stringify({ 
+                        idToken,
+                        platform: isAndroid ? 'android' : 'web',
+                        capacitor: isCapacitor
+                    })
                 });
+                
+                log(`Server response: ${response.status} ${response.statusText}`, response.ok ? 'success' : 'error');
                 
                 if (response.ok) {
                     const result = await response.json();
-                    log(`Server authentication successful!`, 'success');
+                    log(`✅ Server authentication successful!`, 'success');
                     log(`Session ID: ${result.sessionId}`, 'success');
-                    log(`User: ${result.user.email}`, 'success');
+                    log(`User: ${result.user?.email || 'N/A'}`, 'success');
+                    
+                    // Test immediate API access
+                    setTimeout(() => testSessionAccess(), 1000);
                 } else {
-                    const error = await response.text();
-                    log(`Server authentication failed: ${response.status} - ${error}`, 'error');
+                    const errorText = await response.text();
+                    log(`❌ Server authentication failed: ${response.status}`, 'error');
+                    log(`Error details: ${errorText}`, 'error');
                 }
                 
             } catch (error) {
-                log(`Authentication error: ${error.message}`, 'error');
+                log(`❌ Authentication error: ${error.message}`, 'error');
+                log(`Error stack: ${error.stack}`, 'error');
             }
         };
 
