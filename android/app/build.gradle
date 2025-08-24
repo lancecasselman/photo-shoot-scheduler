@@ -36,12 +36,27 @@ dependencies {
     implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
     implementation project(':capacitor-android')
     
-    // Firebase Authentication dependencies with BOM for version management
-    implementation platform('com.google.firebase:firebase-bom:32.8.1')
-    implementation 'com.google.firebase:firebase-auth-ktx'
-    implementation 'com.google.firebase:firebase-firestore-ktx'
-    implementation 'com.google.firebase:firebase-storage-ktx'
-    implementation 'com.google.android.gms:play-services-auth:21.0.0'
+    // Firebase Authentication - explicit version control to prevent conflicts
+    implementation platform('com.google.firebase:firebase-bom:33.1.2')
+    
+    // Exclude firebase-common from all Firebase dependencies to prevent duplicates
+    implementation('com.google.firebase:firebase-auth-ktx') {
+        exclude group: 'com.google.firebase', module: 'firebase-common'
+        exclude group: 'com.google.firebase', module: 'firebase-components'
+    }
+    implementation('com.google.firebase:firebase-firestore-ktx') {
+        exclude group: 'com.google.firebase', module: 'firebase-common'
+        exclude group: 'com.google.firebase', module: 'firebase-components'
+    }
+    implementation('com.google.firebase:firebase-storage-ktx') {
+        exclude group: 'com.google.firebase', module: 'firebase-common'
+        exclude group: 'com.google.firebase', module: 'firebase-components'
+    }
+    
+    // Include specific versions to resolve conflicts
+    implementation 'com.google.firebase:firebase-common:21.0.0'
+    implementation 'com.google.firebase:firebase-components:17.1.5'
+    implementation 'com.google.android.gms:play-services-auth:21.2.0'
     
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
