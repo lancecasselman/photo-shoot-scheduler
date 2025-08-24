@@ -32,7 +32,7 @@ allprojects {
             force 'com.google.firebase:firebase-auth:22.3.1'
             force 'com.google.firebase:firebase-firestore:24.10.0'
             
-            // Block newer conflicting versions
+            // Block newer conflicting versions aggressively
             eachDependency { details ->
                 if (details.requested.group == 'com.google.firebase') {
                     if (details.requested.name == 'firebase-common') {
@@ -41,14 +41,18 @@ allprojects {
                     if (details.requested.name == 'firebase-firestore') {
                         details.useVersion '24.10.0'
                     }
+                    if (details.requested.name == 'firebase-common-ktx') {
+                        details.useVersion '20.4.3'
+                    }
                 }
             }
         }
         
-        // Exclude problematic dependencies entirely
+        // Exclude ALL problematic KTX and newer dependencies
         exclude group: 'com.google.firebase', module: 'firebase-firestore-ktx'
         exclude group: 'com.google.firebase', module: 'firebase-auth-ktx'
         exclude group: 'com.google.firebase', module: 'firebase-storage-ktx'
+        exclude group: 'com.google.firebase', module: 'firebase-common-ktx'
     }
 }
 

@@ -45,9 +45,10 @@ dependencies {
         exclude group: 'com.google.firebase', module: 'firebase-storage'
     }
     
-    // Only include firestore if absolutely needed - exclude from auth
+    // Only include firestore if absolutely needed - exclude all conflicting modules
     implementation('com.google.firebase:firebase-firestore:24.10.0') {
         exclude group: 'com.google.firebase', module: 'firebase-common'
+        exclude group: 'com.google.firebase', module: 'firebase-common-ktx'
         exclude group: 'com.google.firebase', module: 'firebase-auth'
     }
     
