@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Android Auth Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #000; color: #0f0; }
+        button { padding: 10px; margin: 5px; background: #333; color: #0f0; border: 1px solid #555; }
+        .log { background: #111; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { color: #0f0; }
+        .error { color: #f00; }
+        .info { color: #ff0; }
+    </style>
+</head>
+<body>
+    <h1>🤖 ANDROID AUTH TEST</h1>
+    
+    <button onclick="testEnvironment()">📱 TEST ENVIRONMENT</button>
+    <button onclick="loginWithFirebase()">🔐 FIREBASE LOGIN</button>
+    <button onclick="testSessionAccess()">📋 SESSION ACCESS</button>
+    <button onclick="clearLogs()">🗑️ CLEAR LOGS</button>
+    
+    <div id="logs"></div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDbtboh1bW6xu9Tz9FILkx_0lzGwXQHjyM",
+            authDomain: "photoshcheduleapp.firebaseapp.com",
+            projectId: "photoshcheduleapp",
+            storageBucket: "photoshcheduleapp.appspot.com",
+            messagingSenderId: "1080892259604",
+            appId: "1:1080892259604:web:8198de9d7da81c684c1601"
+        };
+
+        window.firebaseApp = initializeApp(firebaseConfig);
+        window.auth = getAuth(window.firebaseApp);
+        
+        function log(message, type = 'info') {
+            const logsDiv = document.getElementById('logs');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+            logsDiv.innerHTML += `<div class="log ${className}">[${timestamp}] ${message}</div>`;
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+
+        window.clearLogs = () => document.getElementById('logs').innerHTML = '';
+
+        window.testEnvironment = () => {
+            const isAndroid = /Android/i.test(navigator.userAgent);
+            const isCapacitor = window.Capacitor !== undefined;
+            
+            log(`Environment: Android=${isAndroid}, Capacitor=${isCapacitor}`, 'info');
+            log(`User Agent: ${navigator.userAgent}`, 'info');
+            log(`Cookies Enabled: ${navigator.cookieEnabled}`, 'info');
+            log(`Origin: ${window.location.origin}`, 'info');
+        };
+
+        window.loginWithFirebase = async () => {
+            try {
+                log('Starting Firebase authentication...', 'info');
+                
+                const userCredential = await signInWithEmailAndPassword(
+                    window.auth, 
+                    'lancecasselman@icloud.com', 
+                    'password123'
+                );
+                
+                log(`Firebase login successful: ${userCredential.user.email}`, 'success');
+                
+                const idToken = await userCredential.user.getIdToken();
+                log(`Got Firebase token (length: ${idToken.length})`, 'success');
+                
+                // Now authenticate with the server
+                log('Authenticating with server...', 'info');
+                
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Android-App': 'true',
+                        'X-Capacitor-App': 'true'
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ idToken })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    log(`Server authentication successful!`, 'success');
+                    log(`Session ID: ${result.sessionId}`, 'success');
+                    log(`User: ${result.user.email}`, 'success');
+                } else {
+                    const error = await response.text();
+                    log(`Server authentication failed: ${response.status} - ${error}`, 'error');
+                }
+                
+            } catch (error) {
+                log(`Authentication error: ${error.message}`, 'error');
+            }
+        };
+
+        window.testSessionAccess = async () => {
+            try {
+                log('Testing session access...', 'info');
+                
+                const response = await fetch('/api/debug/session', {
+                    method: 'GET',
+                    headers: {
+                        'X-Android-App': 'true',
+                        'X-Capacitor-App': 'true'
+                    },
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const sessionData = await response.json();
+                    log(`Session check successful!`, 'success');
+                    log(`Has session: ${sessionData.hasSession}`, sessionData.hasSession ? 'success' : 'error');
+                    log(`Has user: ${sessionData.hasUser}`, sessionData.hasUser ? 'success' : 'error');
+                    log(`Session ID: ${sessionData.sessionId}`, 'info');
+                    if (sessionData.userEmail) log(`User email: ${sessionData.userEmail}`, 'success');
+                } else {
+                    log(`Session check failed: ${response.status}`, 'error');
+                }
+                
+            } catch (error) {
+                log(`Session test error: ${error.message}`, 'error');
+            }
+        };
+
+        // Auto-run environment test
+        window.onload = () => {
+            log('🤖 Android Auth Test Ready', 'success');
+            testEnvironment();
+        };
+    </script>
+</body>
+</html>

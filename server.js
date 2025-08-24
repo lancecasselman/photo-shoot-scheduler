@@ -1020,6 +1020,33 @@ app.get('/api/auth/status', (req, res) => {
     }
 });
 
+// Debug session endpoint for Android testing
+app.get('/api/debug/session', (req, res) => {
+    const userAgent = req.headers['user-agent'] || '';
+    const isAndroid = userAgent.includes('Android');
+    const isCapacitor = userAgent.includes('CapacitorHttp');
+    
+    const sessionInfo = {
+        hasSession: !!req.session,
+        sessionId: req.session?.id,
+        hasUser: !!(req.session && req.session.user),
+        userEmail: req.session?.user?.email,
+        userUid: req.session?.user?.uid,
+        hasAndroidAuth: !!(req.session?.androidAuth),
+        androidAuthTimestamp: req.session?.androidAuth?.timestamp,
+        androidAuthAge: req.session?.androidAuth ? Date.now() - req.session.androidAuth.timestamp : null,
+        isAndroid,
+        isCapacitor,
+        userAgent: userAgent.substring(0, 100),
+        cookies: req.headers.cookie || 'none',
+        origin: req.headers.origin || 'none',
+        timestamp: new Date().toISOString()
+    };
+    
+    console.log('🔍 DEBUG SESSION REQUEST:', sessionInfo);
+    res.json(sessionInfo);
+});
+
 // Enhanced Address autocomplete API endpoint with improved rural address support
 app.post('/api/geocode', async (req, res) => {
   try {
@@ -1170,6 +1197,72 @@ app.post('/api/distance', async (req, res) => {
     console.error('Distance Matrix API error:', error);
     res.status(500).json({ error: 'Distance calculation service error' });
   }
+});
+
+// Android-specific login endpoint with enhanced debugging
+app.post('/api/auth/login', async (req, res) => {
+    try {
+        const { idToken } = req.body;
+        const userAgent = req.headers['user-agent'] || '';
+        const isAndroid = userAgent.includes('Android');
+        const isCapacitor = userAgent.includes('CapacitorHttp');
+        
+        console.log('🤖 ANDROID LOGIN REQUEST:', {
+            hasToken: !!idToken,
+            tokenLength: idToken ? idToken.length : 0,
+            isAndroid,
+            isCapacitor,
+            userAgent: userAgent.substring(0, 100),
+            headers: req.headers
+        });
+        
+        if (!idToken) {
+            return res.status(400).json({ error: 'Firebase ID token required' });
+        }
+        
+        // Verify Firebase token
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+        const normalizedUser = normalizeUserForLance({
+            uid: decodedToken.uid,
+            email: decodedToken.email,
+            displayName: decodedToken.name || decodedToken.email,
+            photoURL: decodedToken.picture
+        });
+        
+        // Create session
+        req.session.user = normalizedUser;
+        req.user = normalizedUser;
+        
+        // Store Android auth token for fallback
+        if (isAndroid || isCapacitor) {
+            req.session.androidAuth = {
+                idToken: idToken,
+                timestamp: Date.now(),
+                userAgent: userAgent
+            };
+            console.log('📱 ANDROID: Stored authentication token for fallback');
+        }
+        
+        // Save session
+        req.session.save((err) => {
+            if (err) {
+                console.error('❌ SESSION SAVE ERROR:', err);
+                return res.status(500).json({ error: 'Session creation failed' });
+            }
+            
+            console.log('✅ ANDROID LOGIN SUCCESS:', normalizedUser.email, 'Session ID:', req.session.id);
+            res.json({ 
+                success: true, 
+                message: 'Authentication successful',
+                sessionId: req.session.id,
+                user: normalizedUser
+            });
+        });
+        
+    } catch (error) {
+        console.error('❌ ANDROID LOGIN ERROR:', error);
+        res.status(401).json({ error: 'Authentication failed', details: error.message });
+    }
 });
 
 // Firebase Authentication Routes
@@ -12245,6 +12338,11 @@ app.get('/hero-background.jpg', (req, res) => {
 });
 
 // Add static file serving at the END to prevent route conflicts
+// Serve test pages for debugging
+app.get('/test-android-auth.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'test-android-auth.html'));
+});
+
 app.use(express.static(path.join(__dirname), {
     index: false, // Never serve index.html automatically
     etag: false,

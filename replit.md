@@ -33,7 +33,10 @@ Capacitor integration enables native mobile app capabilities for iOS and Android
 - Enhanced CORS configuration with Android and Capacitor-specific origins and credential handling
 - Added comprehensive authentication debugging with Android/mobile device detection
 - Session configuration optimized for Android compatibility with sameSite 'none' and Android-specific session ID generation
-- Created authentication test page (/test-auth.html) for debugging mobile authentication flows
+- Created authentication test pages (/test-auth.html, /test-android-auth.html) for debugging mobile authentication flows
+- Added dedicated `/api/auth/login` endpoint for Android apps with enhanced debugging and token storage
+- Implemented `/api/debug/session` endpoint for real-time session state monitoring
+- Cleaned up deprecated flatDir repositories from Android Gradle configuration for modern compatibility
 
 ### Photography Community Platform
 A social platform featuring a multi-tab feed system with customizable post types, advanced image optimization, social features (like, comment, save, share), user profiles with reputation points, community tools, a comprehensive direct messaging system, and automatic EXIF extraction. User interactions are enhanced with full username display, clickable user profiles, and complete user-to-user messaging infrastructure.
