@@ -23,23 +23,32 @@ allprojects {
         mavenCentral()
     }
     
-    // Force consistent Firebase versions to prevent conflicts
+    // Aggressive Firebase conflict resolution
     configurations.all {
         resolutionStrategy {
-            // Force specific Firebase versions to resolve conflicts
-            force 'com.google.firebase:firebase-common:21.0.0'
+            // Force exact versions to eliminate conflicts
+            force 'com.google.firebase:firebase-common:20.4.3'
             force 'com.google.firebase:firebase-components:17.1.5'
             force 'com.google.firebase:firebase-auth:22.3.1'
-            force 'com.google.firebase:firebase-firestore:24.11.1'
-            force 'com.google.firebase:firebase-storage:20.3.0'
+            force 'com.google.firebase:firebase-firestore:24.10.0'
             
-            // Exclude problematic transitive dependencies
+            // Block newer conflicting versions
             eachDependency { details ->
-                if (details.requested.group == 'com.google.firebase' && details.requested.name == 'firebase-common') {
-                    details.useVersion '21.0.0'
+                if (details.requested.group == 'com.google.firebase') {
+                    if (details.requested.name == 'firebase-common') {
+                        details.useVersion '20.4.3'
+                    }
+                    if (details.requested.name == 'firebase-firestore') {
+                        details.useVersion '24.10.0'
+                    }
                 }
             }
         }
+        
+        // Exclude problematic dependencies entirely
+        exclude group: 'com.google.firebase', module: 'firebase-firestore-ktx'
+        exclude group: 'com.google.firebase', module: 'firebase-auth-ktx'
+        exclude group: 'com.google.firebase', module: 'firebase-storage-ktx'
     }
 }
 
