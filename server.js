@@ -914,13 +914,13 @@ app.use(session({
         httpOnly: false,
         secure: false,
         maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
-        sameSite: 'lax',
+        sameSite: 'none', // Changed from 'lax' to 'none' for Android compatibility
         path: '/',
         domain: undefined
     }
 }));
 
-// CORS configuration for custom domains
+// CORS configuration for custom domains and Android app
 app.use((req, res, next) => {
     const allowedOrigins = [
         'https://photomanagementsystem.com',
@@ -928,20 +928,31 @@ app.use((req, res, next) => {
         /\.replit\.app$/,
         /\.replit\.dev$/,
         'http://localhost:5000',
-        'https://localhost:5000'
+        'https://localhost:5000',
+        'capacitor://localhost',
+        'ionic://localhost',
+        'https://localhost'
     ];
 
     const origin = req.headers.origin;
-    if (allowedOrigins.some(allowed => {
+    const userAgent = req.headers['user-agent'] || '';
+    const isAndroid = userAgent.includes('Android');
+    const isCapacitor = userAgent.includes('CapacitorHttp');
+    
+    // Enhanced CORS for Android and Capacitor apps
+    if (origin && (allowedOrigins.some(allowed => {
         if (typeof allowed === 'string') return allowed === origin;
         return allowed.test(origin);
-    })) {
+    }) || isCapacitor || isAndroid)) {
         res.header('Access-Control-Allow-Origin', origin);
+    } else if (!origin || isCapacitor || isAndroid) {
+        // For Android apps without origin or Capacitor requests
+        res.header('Access-Control-Allow-Origin', '*');
     }
 
     res.header('Access-Control-Allow-Credentials', 'true');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cookie');
 
     if (req.method === 'OPTIONS') {
         res.sendStatus(200);
