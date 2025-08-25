@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security - Photography Management System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gold: #d4af37;
+            --primary-dark: #1a1a1a;
+            --text-light: #ffffff;
+            --text-muted: #cccccc;
+            --bg-overlay: rgba(0, 0, 0, 0.7);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            color: var(--primary-gold);
+            margin-bottom: 1rem;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+        }
+
+        .content {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 40px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+
+        h2 {
+            color: var(--primary-gold);
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            margin-top: 30px;
+        }
+
+        h2:first-of-type {
+            margin-top: 0;
+        }
+
+        p {
+            margin-bottom: 20px;
+            color: var(--text-light);
+        }
+
+        ul {
+            margin-bottom: 20px;
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
+            color: var(--text-light);
+        }
+
+        .back-link {
+            display: inline-block;
+            color: var(--primary-gold);
+            text-decoration: none;
+            font-weight: 500;
+            margin-bottom: 20px;
+            transition: color 0.3s ease;
+        }
+
+        .back-link:hover {
+            color: #b8941f;
+        }
+
+        .security-badge {
+            display: inline-block;
+            background: var(--primary-gold);
+            color: var(--primary-dark);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin: 10px 10px 10px 0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 15px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .content {
+                padding: 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="/" class="back-link">← Back to Home</a>
+            <h1>Security</h1>
+            <p>Your data security is our top priority</p>
+        </div>
+
+        <div class="content">
+            <p>We understand that your photography business depends on the security and confidentiality of your client data and images. That's why we've implemented enterprise-grade security measures to protect your information.</p>
+
+            <h2>Data Encryption</h2>
+            <div class="security-badge">AES-256 Encryption</div>
+            <div class="security-badge">TLS 1.3</div>
+            <div class="security-badge">End-to-End Security</div>
+            <p>All data is encrypted both in transit and at rest using industry-standard AES-256 encryption. Your photos, client information, and business data are protected with the same security standards used by financial institutions.</p>
+
+            <h2>Cloud Storage Security</h2>
+            <p>Your photos are stored on Cloudflare R2, one of the world's most secure cloud storage platforms. Features include:</p>
+            <ul>
+                <li>Multiple data center redundancy</li>
+                <li>Automatic backups with 99.999999999% durability</li>
+                <li>Access controls and permission management</li>
+                <li>DDoS protection and threat monitoring</li>
+            </ul>
+
+            <h2>Authentication & Access Control</h2>
+            <p>We use Firebase Authentication, Google's enterprise-grade authentication service, which provides:</p>
+            <ul>
+                <li>Multi-factor authentication (MFA) support</li>
+                <li>Secure OAuth 2.0 implementation</li>
+                <li>Session management and automatic timeout</li>
+                <li>Brute force attack protection</li>
+            </ul>
+
+            <h2>Payment Security</h2>
+            <div class="security-badge">PCI DSS Compliant</div>
+            <div class="security-badge">Stripe Verified</div>
+            <p>All payment processing is handled by Stripe, a PCI DSS Level 1 certified payment processor. We never store your credit card information on our servers.</p>
+
+            <h2>Database Security</h2>
+            <p>Our PostgreSQL databases are hosted on Neon with:</p>
+            <ul>
+                <li>SSL/TLS encryption for all connections</li>
+                <li>Regular automated backups</li>
+                <li>Network isolation and firewall protection</li>
+                <li>24/7 monitoring and threat detection</li>
+            </ul>
+
+            <h2>Infrastructure Security</h2>
+            <p>Our application infrastructure includes:</p>
+            <ul>
+                <li>Rate limiting to prevent abuse</li>
+                <li>DDoS protection and traffic filtering</li>
+                <li>Regular security audits and updates</li>
+                <li>Automated vulnerability scanning</li>
+                <li>Secure development practices</li>
+            </ul>
+
+            <h2>Privacy by Design</h2>
+            <p>Security and privacy are built into every aspect of our platform:</p>
+            <ul>
+                <li>Minimal data collection - we only collect what's necessary</li>
+                <li>Data anonymization where possible</li>
+                <li>Right to deletion and data portability</li>
+                <li>Transparent privacy controls</li>
+            </ul>
+
+            <h2>Incident Response</h2>
+            <p>In the unlikely event of a security incident, we have a comprehensive response plan:</p>
+            <ul>
+                <li>Immediate threat isolation and containment</li>
+                <li>Prompt user notification within 72 hours</li>
+                <li>Forensic analysis and remediation</li>
+                <li>Regulatory compliance reporting</li>
+            </ul>
+
+            <h2>Compliance & Certifications</h2>
+            <div class="security-badge">GDPR Compliant</div>
+            <div class="security-badge">SOC 2 Type II</div>
+            <div class="security-badge">ISO 27001</div>
+            <p>We maintain compliance with major security and privacy frameworks to ensure your data is protected according to the highest international standards.</p>
+
+            <h2>Your Role in Security</h2>
+            <p>You can help keep your account secure by:</p>
+            <ul>
+                <li>Using strong, unique passwords</li>
+                <li>Enabling two-factor authentication</li>
+                <li>Regularly reviewing account activity</li>
+                <li>Reporting suspicious activity immediately</li>
+                <li>Keeping your contact information updated</li>
+            </ul>
+
+            <h2>Questions About Security?</h2>
+            <p>If you have questions about our security practices or need to report a security concern, please contact our security team at <strong>security@photomanagementsystem.com</strong></p>
+        </div>
+    </div>
+</body>
+</html>
