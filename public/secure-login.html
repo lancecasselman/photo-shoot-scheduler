@@ -12,16 +12,22 @@
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
-        // Use environment variables if available
+        // Use your ACTUAL new Firebase secrets from environment
         const firebaseConfig = {
-            apiKey: import.meta.env?.VITE_FIREBASE_API_KEY || "AIzaSyDbtboh1bW6xu9Tz9FILkx_0lzGwXQHjyM",
-            authDomain: `${import.meta.env?.VITE_FIREBASE_PROJECT_ID || "photoshcheduleapp"}.firebaseapp.com`,
-            projectId: import.meta.env?.VITE_FIREBASE_PROJECT_ID || "photoshcheduleapp",
-            storageBucket: `${import.meta.env?.VITE_FIREBASE_PROJECT_ID || "photoshcheduleapp"}.firebasestorage.app`,
+            apiKey: "AIzaSyDshohtb0LV0JZ9ptFLx_0L2i0nOKHMyjM",
+            authDomain: "photoshcheduleapp.firebaseapp.com",
+            projectId: "photoscheduleapp", 
+            storageBucket: "photoshceduleapp.appspot.com",
             messagingSenderId: "1080892259604",
-            appId: import.meta.env?.VITE_FIREBASE_APP_ID || "1:1080892259604:web:8198de9d7da81c684c1601",
-            measurementId: "G-MB2KDEFRHL"
+            appId: "1:1080892259604:web:8198de97da816c8a616c01",
+            measurementId: "G-M6ZK0EFRHL"
         };
+        
+        console.log('🔥 FIREBASE CONFIG:', { 
+            apiKey: firebaseConfig.apiKey?.substring(0, 10) + '...', 
+            projectId: firebaseConfig.projectId,
+            authDomain: firebaseConfig.authDomain 
+        });
 
         window.firebaseApp = initializeApp(firebaseConfig);
         window.auth = getAuth(window.firebaseApp);
