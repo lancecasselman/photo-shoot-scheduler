@@ -2,12 +2,12 @@
 // This file ensures consistent Firebase configuration across all platforms
 
 export const firebaseConfig = {
-    apiKey: "AIzaSyChc_dG-N5V0M87SkVTZM7mgj2lFjr95k4",
-    authDomain: "photoshcheduleapp.firebaseapp.com",
-    projectId: "photoshcheduleapp", 
-    storageBucket: "photoshcheduleapp.firebasestorage.app",
+    apiKey: import.meta.env?.VITE_FIREBASE_API_KEY || "AIzaSyChc_dG-N5V0M87SkVTZM7mgj2lFjr95k4",
+    authDomain: `${import.meta.env?.VITE_FIREBASE_PROJECT_ID || "photoshcheduleapp"}.firebaseapp.com`,
+    projectId: import.meta.env?.VITE_FIREBASE_PROJECT_ID || "photoshcheduleapp",
+    storageBucket: `${import.meta.env?.VITE_FIREBASE_PROJECT_ID || "photoshcheduleapp"}.firebasestorage.app`,
     messagingSenderId: "1080892259604",
-    appId: "1:1080892259604:android:adca7798177026c04c1601"
+    appId: import.meta.env?.VITE_FIREBASE_APP_ID || "1:1080892259604:android:adca7798177026c04c1601"
 };
 
 // Android-specific authentication configuration
