@@ -274,10 +274,19 @@
                     console.log('Method 1 (window.open _system) result:', opened);
                     
                     // Method 2: If Capacitor is available, try Browser plugin
-                    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Browser) {
-                        setTimeout(() => {
-                            window.Capacitor.Plugins.Browser.open({ url: authUrl });
-                            console.log('Method 2 (Capacitor Browser) executed');
+                    if (window.Capacitor && window.Capacitor.Plugins) {
+                        setTimeout(async () => {
+                            try {
+                                const { Browser } = window.Capacitor.Plugins;
+                                if (Browser) {
+                                    await Browser.open({ url: authUrl });
+                                    console.log('Method 2 (Capacitor Browser) executed successfully');
+                                } else {
+                                    console.log('Browser plugin not available');
+                                }
+                            } catch (browserError) {
+                                console.error('Browser plugin error:', browserError);
+                            }
                         }, 100);
                     }
                     

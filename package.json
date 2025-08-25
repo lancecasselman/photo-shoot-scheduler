@@ -22,6 +22,7 @@
     "@aws-sdk/s3-request-presigner": "^3.872.0",
     "@capacitor/android": "^7.4.3",
     "@capacitor/app": "7.0.2",
+    "@capacitor/browser": "^7.0.2",
     "@capacitor/camera": "7.0.2",
     "@capacitor/core": "^7.4.3",
     "@capacitor/device": "7.0.2",
