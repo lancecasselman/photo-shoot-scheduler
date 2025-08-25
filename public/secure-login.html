@@ -41,6 +41,11 @@
             try {
                 showLoading('Verifying subscription...');
                 
+                // Check if this is an Android authentication request
+                const urlParams = new URLSearchParams(window.location.search);
+                const isAndroidAuth = urlParams.get('android') === 'true';
+                const androidRedirect = urlParams.get('redirect');
+                
                 // Android/Mobile debugging
                 const isAndroid = /Android/i.test(navigator.userAgent);
                 const isCapacitor = window.Capacitor !== undefined;
@@ -48,6 +53,8 @@
                     userEmail: user.email, 
                     isAndroid, 
                     isCapacitor,
+                    isAndroidAuth,
+                    androidRedirect,
                     userAgent: navigator.userAgent 
                 });
                 
@@ -119,10 +126,21 @@
 
                 if (adminEmails.includes(user.email)) {
                     console.log('Admin access granted for:', user.email);
-                    showLoading('Admin access granted. Loading app...');
-                    setTimeout(() => {
-                        window.location.href = '/secure-app.html';
-                    }, 1000);
+                    
+                    if (isAndroidAuth && androidRedirect) {
+                        // Android admin authentication - redirect back to app
+                        showLoading('Admin access granted. Redirecting to Android app...');
+                        console.log('📱 ANDROID ADMIN: Redirecting to:', androidRedirect);
+                        setTimeout(() => {
+                            window.location.href = androidRedirect;
+                        }, 1000);
+                    } else {
+                        // Normal web admin authentication
+                        showLoading('Admin access granted. Loading app...');
+                        setTimeout(() => {
+                            window.location.href = '/secure-app.html';
+                        }, 1000);
+                    }
                     return;
                 }
 
@@ -133,13 +151,29 @@
                     await window.signOut(window.auth);
                     showError('No active subscription found. Redirecting to homepage...');
                     setTimeout(() => {
-                        window.location.href = '/?message=subscription_required';
+                        if (isAndroidAuth) {
+                            // For Android, close the browser - app will handle the subscription issue
+                            window.close();
+                        } else {
+                            window.location.href = '/?message=subscription_required';
+                        }
                     }, 2000);
                     return;
                 }
 
                 console.log('Subscription verified, redirecting to app');
-                window.location.href = '/secure-app.html';
+                
+                if (isAndroidAuth && androidRedirect) {
+                    // Android authentication - redirect back to app with deep link
+                    showLoading('Authentication successful! Redirecting to app...');
+                    console.log('📱 ANDROID: Redirecting to app:', androidRedirect);
+                    setTimeout(() => {
+                        window.location.href = androidRedirect;
+                    }, 1000);
+                } else {
+                    // Normal web authentication
+                    window.location.href = '/secure-app.html';
+                }
 
             } catch (error) {
                 console.error('🚨 VERIFICATION ERROR:', error);
