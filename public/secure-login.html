@@ -10,15 +10,17 @@
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
+        // Use environment variables if available
         const firebaseConfig = {
-            apiKey: "AIzaSyChc_dG-N5V0M87SkVTZM7mgj2lFjr95k4",
-            authDomain: "photoshcheduleapp.firebaseapp.com",
-            projectId: "photoshcheduleapp",
-            storageBucket: "photoshcheduleapp.firebasestorage.app",
+            apiKey: import.meta.env?.VITE_FIREBASE_API_KEY || "AIzaSyDbtboh1bW6xu9Tz9FILkx_0lzGwXQHjyM",
+            authDomain: `${import.meta.env?.VITE_FIREBASE_PROJECT_ID || "photoshcheduleapp"}.firebaseapp.com`,
+            projectId: import.meta.env?.VITE_FIREBASE_PROJECT_ID || "photoshcheduleapp",
+            storageBucket: `${import.meta.env?.VITE_FIREBASE_PROJECT_ID || "photoshcheduleapp"}.firebasestorage.app`,
             messagingSenderId: "1080892259604",
-            appId: "1:1080892259604:android:adca7798177026c04c1601"
+            appId: import.meta.env?.VITE_FIREBASE_APP_ID || "1:1080892259604:web:8198de9d7da81c684c1601",
+            measurementId: "G-MB2KDEFRHL"
         };
 
         window.firebaseApp = initializeApp(firebaseConfig);
@@ -26,6 +28,12 @@
         window.signInWithEmailAndPassword = signInWithEmailAndPassword;
         window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
         window.signOut = signOut;
+        
+        // Google Auth Provider
+        window.googleProvider = new GoogleAuthProvider();
+        window.signInWithPopup = signInWithPopup;
+        window.signInWithRedirect = signInWithRedirect;
+        window.getRedirectResult = getRedirectResult;
 
         // Check if user is already authenticated
         onAuthStateChanged(window.auth, async (user) => {
@@ -41,11 +49,6 @@
             try {
                 showLoading('Verifying subscription...');
                 
-                // Check if this is an Android authentication request
-                const urlParams = new URLSearchParams(window.location.search);
-                const isAndroidAuth = urlParams.get('android') === 'true';
-                const androidRedirect = urlParams.get('redirect');
-                
                 // Android/Mobile debugging
                 const isAndroid = /Android/i.test(navigator.userAgent);
                 const isCapacitor = window.Capacitor !== undefined;
@@ -53,8 +56,6 @@
                     userEmail: user.email, 
                     isAndroid, 
                     isCapacitor,
-                    isAndroidAuth,
-                    androidRedirect,
                     userAgent: navigator.userAgent 
                 });
                 
@@ -62,25 +63,15 @@
                 const idToken = await user.getIdToken(true); // Force refresh
                 console.log('🎫 TOKEN: Retrieved fresh ID token for verification');
                 
-                // First verify session with backend with Android-specific headers
-                const headers = {
-                    'Content-Type': 'application/json'
-                };
-                
-                // Add Android-specific headers for session handling
-                if (isAndroid || isCapacitor) {
-                    headers['X-Android-App'] = 'true';
-                    headers['X-Capacitor-App'] = 'true';
-                }
-                
+                // First verify session with backend
                 const authResponse = await fetch('/api/verify-auth', {
                     method: 'POST',
-                    headers: headers,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     credentials: 'include', // Ensure cookies are included for Android
                     body: JSON.stringify({ 
-                        idToken: idToken,
-                        isAndroid: isAndroid,
-                        isCapacitor: isCapacitor
+                        idToken: idToken
                     })
                 });
 
@@ -96,15 +87,8 @@
                     throw new Error(`Backend verification failed: ${authResponse.status} - ${errorText}`);
                 }
 
-                // Check subscription status with Android headers
-                const subHeaders = {};
-                if (isAndroid || isCapacitor) {
-                    subHeaders['X-Android-App'] = 'true';
-                    subHeaders['X-Capacitor-App'] = 'true';
-                }
-                
+                // Check subscription status
                 const subResponse = await fetch('/api/subscription-status', {
-                    headers: subHeaders,
                     credentials: 'include' // Ensure cookies are included for Android
                 });
                 
@@ -126,21 +110,10 @@
 
                 if (adminEmails.includes(user.email)) {
                     console.log('Admin access granted for:', user.email);
-                    
-                    if (isAndroidAuth && androidRedirect) {
-                        // Android admin authentication - redirect back to app
-                        showLoading('Admin access granted. Redirecting to Android app...');
-                        console.log('📱 ANDROID ADMIN: Redirecting to:', androidRedirect);
-                        setTimeout(() => {
-                            window.location.href = androidRedirect;
-                        }, 1000);
-                    } else {
-                        // Normal web admin authentication
-                        showLoading('Admin access granted. Loading app...');
-                        setTimeout(() => {
-                            window.location.href = '/secure-app.html';
-                        }, 1000);
-                    }
+                    showLoading('Admin access granted. Loading app...');
+                    setTimeout(() => {
+                        window.location.href = '/secure-app.html';
+                    }, 1000);
                     return;
                 }
 
@@ -151,29 +124,13 @@
                     await window.signOut(window.auth);
                     showError('No active subscription found. Redirecting to homepage...');
                     setTimeout(() => {
-                        if (isAndroidAuth) {
-                            // For Android, close the browser - app will handle the subscription issue
-                            window.close();
-                        } else {
-                            window.location.href = '/?message=subscription_required';
-                        }
+                        window.location.href = '/?message=subscription_required';
                     }, 2000);
                     return;
                 }
 
                 console.log('Subscription verified, redirecting to app');
-                
-                if (isAndroidAuth && androidRedirect) {
-                    // Android authentication - redirect back to app with deep link
-                    showLoading('Authentication successful! Redirecting to app...');
-                    console.log('📱 ANDROID: Redirecting to app:', androidRedirect);
-                    setTimeout(() => {
-                        window.location.href = androidRedirect;
-                    }, 1000);
-                } else {
-                    // Normal web authentication
-                    window.location.href = '/secure-app.html';
-                }
+                window.location.href = '/secure-app.html';
 
             } catch (error) {
                 console.error('🚨 VERIFICATION ERROR:', error);
@@ -444,6 +401,21 @@
             </button>
         </form>
 
+        <div style="text-align: center; margin: 1.5rem 0; position: relative;">
+            <hr style="border: none; height: 1px; background: rgba(255,255,255,0.2); margin: 1rem 0;">
+            <span style="position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--primary-dark); padding: 0 1rem; color: var(--text-muted); font-size: 0.9rem;">or</span>
+        </div>
+
+        <button type="button" class="btn" id="googleSignInBtn" style="background: #4285f4; color: white; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+            <svg width="18" height="18" viewBox="0 0 24 24">
+                <path fill="white" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="white" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="white" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="white" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            <span>Continue with Google</span>
+        </button>
+
         <div class="toggle-text">
             <p>Don't have an account? <a href="/subscription-checkout.html" style="color: var(--primary-gold); text-decoration: none; font-weight: 500;">Sign Up & Subscribe</a></p>
         </div>
@@ -463,6 +435,63 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('loginForm');
+
+            // Handle Google sign-in
+            const googleSignInBtn = document.getElementById('googleSignInBtn');
+            googleSignInBtn.addEventListener('click', async function() {
+                try {
+                    showLoading('Signing in with Google...');
+                    hideMessage();
+                    
+                    // Check if mobile/Capacitor - use redirect, otherwise use popup
+                    const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                    const isCapacitor = window.Capacitor !== undefined;
+                    
+                    let result;
+                    if (isMobile || isCapacitor) {
+                        console.log('📱 MOBILE: Using Google redirect authentication');
+                        await window.signInWithRedirect(window.auth, window.googleProvider);
+                        // Result will be handled by redirect result listener
+                        return;
+                    } else {
+                        console.log('💻 DESKTOP: Using Google popup authentication');
+                        result = await window.signInWithPopup(window.auth, window.googleProvider);
+                    }
+                    
+                    console.log('✅ GOOGLE AUTH: Successful login:', result.user.email);
+                    
+                    // Verify subscription and redirect
+                    await window.verifyAndRedirect(result.user);
+
+                } catch (error) {
+                    console.error('❌ GOOGLE AUTH: Error:', error);
+                    hideLoading();
+                    
+                    let errorMessage = 'Google sign-in failed. Please try again.';
+                    if (error.code === 'auth/popup-closed-by-user') {
+                        errorMessage = 'Sign-in cancelled. Please try again.';
+                    } else if (error.code === 'auth/popup-blocked') {
+                        errorMessage = 'Pop-up blocked. Please allow pop-ups and try again.';
+                    } else if (error.code === 'auth/cancelled-popup-request') {
+                        errorMessage = 'Sign-in cancelled. Please try again.';
+                    }
+                    
+                    showError(errorMessage);
+                }
+            });
+
+            // Handle redirect result for mobile devices
+            window.getRedirectResult(window.auth).then((result) => {
+                if (result && result.user) {
+                    console.log('📱 REDIRECT RESULT: Google authentication successful:', result.user.email);
+                    showLoading('Google sign-in successful. Verifying subscription...');
+                    window.verifyAndRedirect(result.user);
+                }
+            }).catch((error) => {
+                console.error('❌ REDIRECT RESULT: Error:', error);
+                hideLoading();
+                showError('Google sign-in failed: ' + error.message);
+            });
 
             // Handle login form submission
             form.addEventListener('submit', async function(e) {
