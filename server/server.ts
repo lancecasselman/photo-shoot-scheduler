@@ -145,13 +145,13 @@ async function handleApiRequest(method: string, pathname: string, req: any, res:
       } else if (pathname === '/api/sessions' && method === 'POST') {
         result = await storage.createSession(data);
       } else if (pathname.startsWith('/api/sessions/') && method === 'PUT') {
-        const id = parseInt(pathname.split('/')[3]);
+        const id = pathname.split('/')[3];
         result = await storage.updateSession(id, data);
       } else if (pathname.startsWith('/api/sessions/') && method === 'DELETE') {
-        const id = parseInt(pathname.split('/')[3]);
+        const id = pathname.split('/')[3];
         result = await storage.deleteSession(id);
       } else if (pathname === '/api/users' && method === 'POST') {
-        result = await storage.createUser(data);
+        result = await storage.upsertUser(data);
       } else if (pathname.startsWith('/api/users/') && method === 'GET') {
         const id = pathname.split('/')[3];
         result = await storage.getUser(id);
