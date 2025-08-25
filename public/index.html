@@ -235,17 +235,29 @@
     <script>
         // Android external browser authentication flow
         document.getElementById('launchAppBtn')?.addEventListener('click', (e) => {
-            // Detect if running in Android Capacitor app
-            const isCapacitor = window.Capacitor !== undefined;
+            // More comprehensive Capacitor and Android detection
+            const isCapacitor = !!(window.Capacitor || window.capacitor);
             const isAndroid = /Android/i.test(navigator.userAgent);
+            const isWebView = !!(window.chrome && window.chrome.webstore === undefined);
+            const hasNativeMethod = !!(window.open && window.open.toString().includes('[native code]'));
             
-            console.log('🚀 LAUNCH APP CLICKED:', { isCapacitor, isAndroid });
+            console.log('🚀 LAUNCH APP CLICKED - DEBUG INFO:', { 
+                isCapacitor, 
+                isAndroid, 
+                isWebView,
+                hasNativeMethod,
+                userAgent: navigator.userAgent,
+                windowCapacitor: !!window.Capacitor,
+                windowcapacitor: !!window.capacitor,
+                href: window.location.href
+            });
             
-            if (isCapacitor || isAndroid) {
+            // For now, let's force external browser for ALL Android devices
+            if (isAndroid) {
                 // For Android: Use external browser authentication
                 e.preventDefault(); // Prevent default link navigation
                 
-                console.log('📱 ANDROID: Opening external browser for authentication...');
+                console.log('📱 ANDROID DETECTED: Opening external browser for authentication...');
                 
                 // Get current domain for the redirect URL
                 const currentDomain = window.location.origin;
@@ -253,10 +265,34 @@
                 // Create authentication URL with Android-specific parameters
                 const authUrl = `${currentDomain}/secure-login.html?android=true&redirect=photomanager://auth/success`;
                 
-                // Open device browser
-                window.open(authUrl, '_system');
+                console.log('🌐 Attempting to open browser with URL:', authUrl);
                 
-                console.log('🌐 Opened browser with URL:', authUrl);
+                // Try multiple methods to open external browser
+                try {
+                    // Method 1: Standard window.open with _system
+                    const opened = window.open(authUrl, '_system');
+                    console.log('Method 1 (window.open _system) result:', opened);
+                    
+                    // Method 2: If Capacitor is available, try Browser plugin
+                    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Browser) {
+                        setTimeout(() => {
+                            window.Capacitor.Plugins.Browser.open({ url: authUrl });
+                            console.log('Method 2 (Capacitor Browser) executed');
+                        }, 100);
+                    }
+                    
+                    // Method 3: Direct location change as fallback
+                    setTimeout(() => {
+                        console.log('Method 3 (location change) executing...');
+                        window.location.href = authUrl;
+                    }, 200);
+                    
+                } catch (error) {
+                    console.error('🚨 Error opening external browser:', error);
+                    // Fallback to normal navigation
+                    window.location.href = authUrl;
+                }
+                
             } else {
                 // For web/desktop: Use normal navigation
                 console.log('💻 WEB: Using normal navigation to secure-login.html');
