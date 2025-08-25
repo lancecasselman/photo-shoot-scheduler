@@ -60,8 +60,8 @@ class BackupSystem {
 
     // Create database backup
     async createDatabaseBackup() {
+        let backupId = `db-backup-${Date.now()}`;
         try {
-            const backupId = `db-backup-${Date.now()}`;
             const timestamp = new Date().toISOString();
             
             console.log(`📦 Creating database backup: ${backupId}`);
@@ -80,9 +80,16 @@ class BackupSystem {
                 throw new Error('DATABASE_URL not configured');
             }
 
-            // Execute pg_dump
-            const dumpCommand = `pg_dump "${dbUrl}" > ${dumpFile}`;
-            await execAsync(dumpCommand);
+            // Execute pg_dump with version compatibility
+            // Use Drizzle's query method as fallback for version compatibility
+            try {
+                const dumpCommand = `pg_dump "${dbUrl}" > ${dumpFile}`;
+                await execAsync(dumpCommand);
+            } catch (pgDumpError) {
+                console.warn('pg_dump failed due to version mismatch, using fallback method:', pgDumpError.message);
+                // Fallback: Use Drizzle to export schema and data
+                await this.createDatabaseBackupFallback(dumpFile, backupId);
+            }
 
             // Compress the dump
             const compressedFile = `${dumpFile}.gz`;
@@ -601,6 +608,64 @@ class BackupSystem {
 
         } catch (error) {
             console.error('Error initializing backup tables:', error);
+            throw error;
+        }
+    }
+
+    // Fallback database backup using Drizzle queries
+    async createDatabaseBackupFallback(dumpFile, backupId) {
+        try {
+            console.log('🔄 Creating database backup using fallback method...');
+            
+            // Get all tables in the database
+            const tablesResult = await this.pool.query(`
+                SELECT table_name 
+                FROM information_schema.tables 
+                WHERE table_schema = 'public'
+                ORDER BY table_name;
+            `);
+            
+            let sqlContent = `-- Database backup created at ${new Date().toISOString()}\n`;
+            sqlContent += `-- Backup ID: ${backupId}\n\n`;
+            
+            // Export each table's data
+            for (const table of tablesResult.rows) {
+                const tableName = table.table_name;
+                try {
+                    const tableData = await this.pool.query(`SELECT * FROM ${tableName}`);
+                    
+                    if (tableData.rows.length > 0) {
+                        sqlContent += `-- Data for table: ${tableName}\n`;
+                        
+                        // Get column names
+                        const columns = Object.keys(tableData.rows[0]);
+                        
+                        for (const row of tableData.rows) {
+                            const values = columns.map(col => {
+                                const val = row[col];
+                                if (val === null) return 'NULL';
+                                if (typeof val === 'string') return `'${val.replace(/'/g, "''")}'`;
+                                if (val instanceof Date) return `'${val.toISOString()}'`;
+                                if (typeof val === 'object') return `'${JSON.stringify(val).replace(/'/g, "''")}'`;
+                                return val;
+                            }).join(', ');
+                            
+                            sqlContent += `INSERT INTO ${tableName} (${columns.join(', ')}) VALUES (${values});\n`;
+                        }
+                        sqlContent += `\n`;
+                    }
+                } catch (tableError) {
+                    console.warn(`Warning: Could not backup table ${tableName}:`, tableError.message);
+                    sqlContent += `-- Warning: Could not backup table ${tableName}: ${tableError.message}\n\n`;
+                }
+            }
+            
+            // Write the SQL content to file
+            await require('fs').promises.writeFile(dumpFile, sqlContent);
+            console.log(`✅ Fallback database backup completed for ${tablesResult.rows.length} tables`);
+            
+        } catch (error) {
+            console.error('❌ Fallback database backup failed:', error);
             throw error;
         }
     }

@@ -12,14 +12,11 @@ if (!process.env.DATABASE_URL) {
 }
 
 export const pool = new Pool({
-  user: process.env.DB_USER || 'postgres',
-  host: process.env.DB_HOST || 'localhost',
-  database: process.env.DB_NAME || 'photography_scheduler',
-  password: process.env.DB_PASSWORD || '',
-  port: parseInt(process.env.DB_PORT || '5432'),
+  connectionString: process.env.DATABASE_URL,
   max: 20,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
+  connectionTimeoutMillis: 10000,  // Increased timeout
+  allowExitOnIdle: true            // Allow process to exit when idle
 });
 
 // Monitor pool connections
