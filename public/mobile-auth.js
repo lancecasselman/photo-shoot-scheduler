@@ -12,28 +12,59 @@ class MobileAuthHandler {
 
     detectMobile() {
         const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+        const isAndroid = /Android/i.test(userAgent);
+        const isCapacitor = window.Capacitor !== undefined;
+        
+        console.log('🔍 MOBILE DETECTION:', { 
+            userAgent, 
+            isMobile, 
+            isAndroid, 
+            isCapacitor 
+        });
+        
+        return isMobile;
+    }
+
+    detectAndroid() {
+        return /Android/i.test(navigator.userAgent);
     }
 
     async initializeAuth() {
         if (!window.firebaseAuth) {
-            console.error('Firebase auth not initialized');
+            console.error('❌ Firebase auth not initialized');
             return false;
         }
 
-        // Configure auth for mobile
+        // Configure auth for mobile with enhanced Android support
         if (this.isMobile) {
             try {
+                const isAndroid = this.detectAndroid();
+                
+                console.log('📱 MOBILE AUTH INIT:', { 
+                    isMobile: this.isMobile, 
+                    isAndroid, 
+                    isCapacitor: this.isCapacitor 
+                });
+
                 // Enable persistence for mobile
                 await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
                 
                 // Use device language
                 firebase.auth().useDeviceLanguage();
                 
-                console.log('Mobile Firebase auth configured successfully');
+                // Android-specific configuration
+                if (isAndroid) {
+                    console.log('🤖 ANDROID: Applying Android-specific auth settings');
+                    
+                    // Set additional timeout for Android
+                    firebase.auth().timeout = 30000;
+                }
+                
+                console.log('✅ Mobile Firebase auth configured successfully');
                 return true;
             } catch (error) {
-                console.error('Error configuring mobile auth:', error);
+                console.error('❌ Error configuring mobile auth:', error);
                 return false;
             }
         }

@@ -27,9 +27,10 @@ class NativeAuthHandler {
     // Initialize authentication system
     async initialize() {
         try {
-            // For iOS/Capacitor, use native authentication flow
-            if (this.isCapacitor || this.isIOS) {
-                console.log('Initializing iOS native authentication...');
+            // For iOS/Android/Capacitor, use native authentication flow
+            const isAndroid = /Android/i.test(navigator.userAgent);
+            if (this.isCapacitor || this.isIOS || isAndroid) {
+                console.log('Initializing mobile native authentication...', { isAndroid, isIOS: this.isIOS, isCapacitor: this.isCapacitor });
                 await this.initializeNativeAuth();
             } else {
                 console.log('Initializing web authentication...');
@@ -46,18 +47,27 @@ class NativeAuthHandler {
         }
     }
 
-    // Native iOS authentication using Firebase
+    // Native Mobile authentication using Firebase (iOS and Android)
     async initializeNativeAuth() {
         try {
-            // Initialize Firebase with environment variables
+            // Detect platform for proper configuration
+            const isAndroid = /Android/i.test(navigator.userAgent);
+            const isCapacitor = window.Capacitor !== undefined;
+            
+            console.log('🔍 PLATFORM DETECTION:', { isAndroid, isCapacitor, userAgent: navigator.userAgent });
+            
+            // Use Android-specific configuration for Android devices
             const firebaseConfig = {
-                apiKey: window.VITE_FIREBASE_API_KEY || 'AIzaSyDUrKzJb_0wt4KRhR1vBLCB1Jyb5gEWSJ4',
-                authDomain: 'photoshcheduleapp.firebaseapp.com',
-                projectId: window.VITE_FIREBASE_PROJECT_ID || 'photoshcheduleapp',
-                storageBucket: 'photoshcheduleapp.appspot.com',
-                messagingSenderId: '1080892259604',
-                appId: window.VITE_FIREBASE_APP_ID || '1:1080892259604:web:8198de9d7da81c684c1601'
+                apiKey: "AIzaSyChc_dG-N5V0M87SkVTZM7mgj2lFjr95k4",
+                authDomain: "photoshcheduleapp.firebaseapp.com",
+                projectId: "photoshcheduleapp",
+                storageBucket: "photoshcheduleapp.firebasestorage.app",
+                messagingSenderId: "1080892259604",
+                // Use Android app ID for Android, web for iOS
+                appId: isAndroid || isCapacitor ? "1:1080892259604:android:adca7798177026c04c1601" : "1:1080892259604:web:8198de9d7da81c684c1601"
             };
+            
+            console.log('🔥 FIREBASE CONFIG:', { ...firebaseConfig, apiKey: '***' });
 
             if (!firebase.apps.length) {
                 firebase.initializeApp(firebaseConfig);

@@ -1003,8 +1003,21 @@ app.use((req, res, next) => {
     }
 
     res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cookie');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Cookie, X-Android-App, X-Capacitor-App');
+    res.header('Access-Control-Max-Age', '86400');
+
+    // Enhanced Android debugging
+    if (isAndroid || isCapacitor) {
+        console.log('🤖 ANDROID CORS:', {
+            origin,
+            userAgent: userAgent.substring(0, 50),
+            method: req.method,
+            headers: Object.keys(req.headers),
+            isAndroid,
+            isCapacitor
+        });
+    }
 
     if (req.method === 'OPTIONS') {
         res.sendStatus(200);
@@ -1364,6 +1377,82 @@ app.post('/api/auth/firebase-verify', async (req, res) => {
     } catch (error) {
         console.error('Firebase verification error:', error);
         res.status(500).json({ message: 'Verification failed' });
+    }
+});
+
+// Missing endpoint that secure-login.html is trying to use
+app.post('/api/verify-auth', async (req, res) => {
+    try {
+        const { idToken, isAndroid, isCapacitor } = req.body;
+        
+        console.log('🔐 VERIFY-AUTH: Received verification request', {
+            hasToken: !!idToken,
+            isAndroid,
+            isCapacitor,
+            userAgent: req.get('User-Agent')
+        });
+
+        if (!idToken) {
+            return res.status(400).json({ error: 'Missing ID token' });
+        }
+
+        // Verify the Firebase token using admin SDK
+        try {
+            const decodedToken = await admin.auth().verifyIdToken(idToken);
+            
+            console.log('🎫 TOKEN VERIFIED:', {
+                uid: decodedToken.uid,
+                email: decodedToken.email,
+                isAndroid,
+                isCapacitor
+            });
+
+            // Get normalized user ID (for Lance's accounts)
+            const normalizedUser = normalizeUserForLance({
+                uid: decodedToken.uid,
+                email: decodedToken.email
+            });
+
+            // Create/update session with Android-specific flags
+            req.session.user = {
+                uid: normalizedUser.uid,
+                email: decodedToken.email,
+                displayName: decodedToken.name || '',
+                photoURL: decodedToken.picture || '',
+                isAndroid: isAndroid || false,
+                isCapacitor: isCapacitor || false,
+                verifiedAt: new Date().toISOString()
+            };
+
+            // Force session save with proper error handling
+            const sessionSavePromise = new Promise((resolve, reject) => {
+                req.session.save((err) => {
+                    if (err) {
+                        console.error('❌ Session save error:', err);
+                        reject(err);
+                    } else {
+                        console.log('✅ Session saved for:', decodedToken.email);
+                        resolve();
+                    }
+                });
+            });
+
+            await sessionSavePromise;
+
+            res.json({
+                success: true,
+                user: req.session.user,
+                sessionId: req.session.id
+            });
+
+        } catch (tokenError) {
+            console.error('❌ Token verification failed:', tokenError);
+            return res.status(401).json({ error: 'Invalid authentication token' });
+        }
+
+    } catch (error) {
+        console.error('❌ VERIFY-AUTH ERROR:', error);
+        res.status(500).json({ error: 'Authentication verification failed' });
     }
 });
 
