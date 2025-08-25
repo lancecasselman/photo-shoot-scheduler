@@ -1,4 +1,6 @@
 
+import { randomUUID } from 'crypto';
+
 const sessions = new Map();
 
 export function createSession(sessionId, userData) {
@@ -40,7 +42,8 @@ export function destroySession(sessionId) {
 }
 
 export function generateSessionId() {
-  return Math.random().toString(36).substring(2) + Date.now().toString(36);
+  // Use cryptographically secure random UUID
+  return randomUUID();
 }
 
 // Clean up old sessions (older than 7 days)

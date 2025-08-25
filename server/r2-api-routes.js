@@ -11,10 +11,48 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
     fileSize: 5 * 1024 * 1024 * 1024, // 5GB max file size (R2 technical limit)
+    files: 10, // Max 10 files per request to prevent DOS
   },
   fileFilter: (req, file, cb) => {
-    // Accept all file types - photographers need to store everything
-    cb(null, true);
+    // Security: Validate file types - allow photography-related files
+    const allowedMimeTypes = [
+      // Images
+      'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/bmp',
+      'image/webp', 'image/tiff', 'image/svg+xml',
+      // RAW formats
+      'image/x-canon-cr2', 'image/x-canon-crw', 'image/x-nikon-nef',
+      'image/x-sony-arw', 'image/x-fuji-raf', 'image/x-olympus-orf',
+      'image/x-pentax-pef', 'image/x-panasonic-rw2', 'image/x-adobe-dng',
+      // Video formats
+      'video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/x-matroska',
+      // Audio formats
+      'audio/wav', 'audio/flac', 'audio/aiff', 'audio/mpeg',
+      // Documents
+      'application/pdf', 'text/plain',
+      // Adobe files
+      'image/vnd.adobe.photoshop', 'application/postscript'
+    ];
+
+    // Check file extension as backup validation
+    const allowedExtensions = [
+      '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.tiff', '.svg',
+      '.cr2', '.cr3', '.crw', '.nef', '.nrw', '.arw', '.srf', '.sr2', '.raf',
+      '.orf', '.pef', '.ptx', '.rw2', '.dng', '.3fr', '.dcr', '.k25', '.kdc',
+      '.erf', '.fff', '.iiq', '.mos', '.mrw', '.raw', '.rwz', '.x3f',
+      '.mp4', '.mov', '.avi', '.mkv', '.wmv', '.m4v',
+      '.wav', '.flac', '.aiff', '.m4a', '.mp3',
+      '.pdf', '.txt', '.psd', '.ai', '.eps'
+    ];
+
+    const fileExt = require('path').extname(file.originalname).toLowerCase();
+    const isMimeAllowed = allowedMimeTypes.includes(file.mimetype);
+    const isExtAllowed = allowedExtensions.includes(fileExt);
+
+    if (isMimeAllowed || isExtAllowed) {
+      cb(null, true);
+    } else {
+      cb(new Error(`File type not allowed: ${file.mimetype} (${fileExt}). Only photography-related files are permitted.`));
+    }
   }
 });
 

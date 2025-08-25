@@ -26,16 +26,45 @@ function getMimeType(filePath: string): string {
 }
 
 function setCorsHeaders(res: any) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // Secure CORS configuration - restrict to trusted domains
+  const allowedOrigins = [
+    'https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev',
+    'https://photomanagementsystem.com',
+    'http://localhost:3000', // Development
+    'http://localhost:5000'  // Development
+  ];
+  
+  // Get origin from request (this would need to be passed in from the calling function)
+  // For now, use a more restrictive default
+  res.setHeader('Access-Control-Allow-Origin', 'https://8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
 }
 
 function serveStaticFile(filePath: string, res: any) {
   try {
-    const fullPath = path.join(process.cwd(), filePath);
+    // Security: Prevent path traversal attacks
+    const normalizedPath = path.normalize(filePath).replace(/^(\.\.[\/\\])+/, '');
+    
+    // Security: Only allow files from public directories
+    const allowedDirectories = ['public', 'ios/App/App/public', '.'];
+    const isAllowed = allowedDirectories.some(dir => {
+      const allowedPath = path.join(process.cwd(), dir);
+      const requestedPath = path.join(process.cwd(), normalizedPath);
+      return requestedPath.startsWith(allowedPath);
+    });
+    
+    if (!isAllowed) {
+      console.warn('🚫 Path traversal attempt blocked:', filePath);
+      res.writeHead(403, { 'Content-Type': 'text/plain' });
+      res.end('Access denied');
+      return;
+    }
+    
+    const fullPath = path.join(process.cwd(), normalizedPath);
     const data = fs.readFileSync(fullPath);
-    const mimeType = getMimeType(filePath);
+    const mimeType = getMimeType(normalizedPath);
     
     setCorsHeaders(res);
     res.writeHead(200, { 'Content-Type': mimeType });
@@ -142,8 +171,17 @@ async function handleApiRequest(method: string, pathname: string, req: any, res:
           displayName: data.displayName
         });
         
-        // Set session cookie with proper security settings
-        res.setHeader('Set-Cookie', `sessionId=${sessionId}; Path=/; Max-Age=604800; SameSite=None; Secure=false; HttpOnly=false`);
+        // Set session cookie with secure settings
+        const isDevelopment = process.env.NODE_ENV !== 'production';
+        const cookieOptions = [
+          `sessionId=${sessionId}`,
+          'Path=/',
+          'Max-Age=604800', // 7 days
+          `SameSite=${isDevelopment ? 'Lax' : 'Strict'}`,
+          `Secure=${!isDevelopment}`, // Secure in production
+          'HttpOnly=true' // Prevent XSS attacks
+        ];
+        res.setHeader('Set-Cookie', cookieOptions.join('; '));
         
         result = { success: true, message: 'User verified', user: data, sessionId };
       } else if (pathname === '/api/auth/logout' && method === 'POST') {

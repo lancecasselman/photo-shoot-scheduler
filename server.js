@@ -116,16 +116,29 @@ async function getUserAiCredits(userId) {
     }
 }
 
+// Create a simple lock mechanism for AI credits to prevent race conditions
+const aiCreditsLocks = new Map();
+
 async function useAiCredits(userId, amount, operation, details) {
+    // Simple race condition prevention - wait if another operation is in progress
+    if (aiCreditsLocks.has(userId)) {
+        await new Promise(resolve => setTimeout(resolve, 100)); // Brief delay
+        if (aiCreditsLocks.has(userId)) {
+            throw new Error('Another AI credit operation is in progress. Please try again.');
+        }
+    }
+    
+    aiCreditsLocks.set(userId, true);
+    
     let client;
     try {
         client = await pool.connect();
         
-        // Use a transaction to ensure data consistency
+        // Use a transaction with row-level locking to ensure data consistency
         await client.query('BEGIN');
         
-        // First check if user has enough credits
-        const result = await client.query('SELECT ai_credits FROM users WHERE id = $1', [userId]);
+        // Lock the user row and get current credits - prevents concurrent modifications
+        const result = await client.query('SELECT ai_credits FROM users WHERE id = $1 FOR UPDATE', [userId]);
         const currentCredits = result.rows[0]?.ai_credits || 0;
         
         if (currentCredits < amount) {
@@ -133,7 +146,7 @@ async function useAiCredits(userId, amount, operation, details) {
             throw new Error('Insufficient AI credits');
         }
 
-        // Deduct credits
+        // Deduct credits atomically
         await client.query('UPDATE users SET ai_credits = ai_credits - $1 WHERE id = $2', [amount, userId]);
 
         // Log the usage
@@ -155,6 +168,8 @@ async function useAiCredits(userId, amount, operation, details) {
         }
         throw error;
     } finally {
+        // Always clean up the lock and connection
+        aiCreditsLocks.delete(userId);
         if (client) {
             try {
                 client.release();
