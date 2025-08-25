@@ -523,12 +523,22 @@
                 }
             });
 
-            // Handle redirect result for mobile devices
-            window.getRedirectResult(window.auth).then((result) => {
+            // Handle redirect result for mobile devices - this runs when user returns from Google
+            window.getRedirectResult(window.auth).then(async (result) => {
                 if (result && result.user) {
                     console.log('📱 REDIRECT RESULT: Google authentication successful:', result.user.email);
                     showLoading('Google sign-in successful. Verifying subscription...');
-                    window.verifyAndRedirect(result.user);
+                    
+                    try {
+                        // Wait for the verification process to complete
+                        await window.verifyAndRedirect(result.user);
+                    } catch (error) {
+                        console.error('❌ REDIRECT VERIFICATION: Error:', error);
+                        hideLoading();
+                        showError('Verification failed after Google sign-in: ' + error.message);
+                    }
+                } else {
+                    console.log('📱 REDIRECT RESULT: No redirect result found (normal for first page load)');
                 }
             }).catch((error) => {
                 console.error('❌ REDIRECT RESULT: Error:', error);
