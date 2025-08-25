@@ -11646,7 +11646,7 @@ function generatePublicWebsite(websiteData) {
 // ROOT ROUTE - Serve landing page
 app.get('/', (req, res) => {
     console.log('🏠 HOME: Serving public landing page');
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Secure login page
@@ -11680,8 +11680,8 @@ app.get('/auth.html', (req, res) => {
 });
 
 app.get('/index.html', (req, res) => {
-    console.log('🔄 REDIRECT: /index.html → /secure-app.html');
-    res.redirect(301, '/secure-app.html');
+    console.log('🏠 INDEX: Serving public landing page');
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Serve main app with authentication AND subscription requirement
