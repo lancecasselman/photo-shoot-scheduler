@@ -112,18 +112,23 @@
                     console.log('Admin access granted for:', user.email);
                     showLoading('Admin access granted. Loading app...');
                     setTimeout(() => {
-                        // Check if running in Android Capacitor app
-                        const isCapacitor = window.Capacitor !== undefined;
+                        // Check if running in Android app (improved detection)
                         const isAndroid = /Android/i.test(navigator.userAgent);
+                        const isCapacitor = window.Capacitor !== undefined;
+                        const isAndroidApp = isAndroid && (isCapacitor || window.location.hostname.includes('replit.dev'));
                         
-                        if (isCapacitor && isAndroid) {
+                        console.log('🔍 REDIRECT DEBUG (ADMIN):', { isAndroid, isCapacitor, isAndroidApp, hostname: window.location.hostname });
+                        
+                        if (isAndroidApp) {
                             console.log('🤖 ANDROID APP (ADMIN): Closing authentication and returning to app');
-                            // For Android app, close the browser and return to app
-                            if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Browser) {
-                                window.Capacitor.Plugins.Browser.close();
-                            } else {
-                                // Fallback: try to close the window
+                            // Multiple methods to close/redirect for Android
+                            try {
+                                // Method 1: Close current tab/window
                                 window.close();
+                            } catch (e) {
+                                console.log('window.close failed, trying history.back');
+                                // Method 2: Go back in history  
+                                window.history.back();
                             }
                         } else {
                             console.log('🌐 WEB BROWSER (ADMIN): Redirecting to secure app');
@@ -147,18 +152,23 @@
 
                 console.log('Subscription verified, redirecting to app');
                 
-                // Check if running in Android Capacitor app
-                const isCapacitor = window.Capacitor !== undefined;
+                // Check if running in Android app (improved detection)
                 const isAndroid = /Android/i.test(navigator.userAgent);
+                const isCapacitor = window.Capacitor !== undefined;
+                const isAndroidApp = isAndroid && (isCapacitor || window.location.hostname.includes('replit.dev'));
                 
-                if (isCapacitor && isAndroid) {
+                console.log('🔍 REDIRECT DEBUG:', { isAndroid, isCapacitor, isAndroidApp, hostname: window.location.hostname });
+                
+                if (isAndroidApp) {
                     console.log('🤖 ANDROID APP: Closing authentication and returning to app');
-                    // For Android app, close the browser and return to app
-                    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Browser) {
-                        window.Capacitor.Plugins.Browser.close();
-                    } else {
-                        // Fallback: try to close the window
+                    // Multiple methods to close/redirect for Android
+                    try {
+                        // Method 1: Close current tab/window
                         window.close();
+                    } catch (e) {
+                        console.log('window.close failed, trying history.back');
+                        // Method 2: Go back in history  
+                        window.history.back();
                     }
                 } else {
                     console.log('🌐 WEB BROWSER: Redirecting to secure app');
