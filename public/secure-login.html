@@ -112,7 +112,23 @@
                     console.log('Admin access granted for:', user.email);
                     showLoading('Admin access granted. Loading app...');
                     setTimeout(() => {
-                        window.location.href = '/secure-app.html';
+                        // Check if running in Android Capacitor app
+                        const isCapacitor = window.Capacitor !== undefined;
+                        const isAndroid = /Android/i.test(navigator.userAgent);
+                        
+                        if (isCapacitor && isAndroid) {
+                            console.log('🤖 ANDROID APP (ADMIN): Closing authentication and returning to app');
+                            // For Android app, close the browser and return to app
+                            if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Browser) {
+                                window.Capacitor.Plugins.Browser.close();
+                            } else {
+                                // Fallback: try to close the window
+                                window.close();
+                            }
+                        } else {
+                            console.log('🌐 WEB BROWSER (ADMIN): Redirecting to secure app');
+                            window.location.href = '/secure-app.html';
+                        }
                     }, 1000);
                     return;
                 }
@@ -130,7 +146,24 @@
                 }
 
                 console.log('Subscription verified, redirecting to app');
-                window.location.href = '/secure-app.html';
+                
+                // Check if running in Android Capacitor app
+                const isCapacitor = window.Capacitor !== undefined;
+                const isAndroid = /Android/i.test(navigator.userAgent);
+                
+                if (isCapacitor && isAndroid) {
+                    console.log('🤖 ANDROID APP: Closing authentication and returning to app');
+                    // For Android app, close the browser and return to app
+                    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Browser) {
+                        window.Capacitor.Plugins.Browser.close();
+                    } else {
+                        // Fallback: try to close the window
+                        window.close();
+                    }
+                } else {
+                    console.log('🌐 WEB BROWSER: Redirecting to secure app');
+                    window.location.href = '/secure-app.html';
+                }
 
             } catch (error) {
                 console.error('🚨 VERIFICATION ERROR:', error);
