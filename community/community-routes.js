@@ -50,16 +50,20 @@ router.get('/profile', requireAuth, async (req, res) => {
         const userId = req.session.user.uid || req.session.user.id;
         const userEmail = req.session.user.email;
 
-        // Set proper display name, especially for Lance (admin)
+        // Set proper display name, ensuring Lance (Admin) is consistent
+        const lanceEmails = [
+            'lancecasselman@icloud.com',
+            'lancecasselman2011@gmail.com',
+            'lance@thelegacyphotography.com'
+        ];
+        
         let displayName = req.session.user.displayName || userEmail || 'Anonymous';
-        if (!req.session.user.displayName || req.session.user.displayName === req.session.user.email) {
-            if (userEmail && userEmail.includes('lance')) {
-                displayName = 'Lance (Admin)';
-            } else {
-                // Extract name from email
-                const emailName = userEmail ? userEmail.split('@')[0] : 'User';
-                displayName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
-            }
+        if (userEmail && lanceEmails.includes(userEmail.toLowerCase())) {
+            displayName = 'Lance (Admin)';
+        } else if (!req.session.user.displayName || req.session.user.displayName === req.session.user.email) {
+            // Extract name from email for other users
+            const emailName = userEmail ? userEmail.split('@')[0] : 'User';
+            displayName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
         }
 
         const profile = await db.getOrCreateProfile(userId, displayName);
@@ -147,16 +151,24 @@ router.post('/posts', requireAuth, upload.array('images', 10), async (req, res) 
         // Get the user's profile to ensure we have the correct display name
         const profile = await db.getOrCreateProfile(userId, req.session.user.displayName || userEmail);
         
-        // Set proper display name with same logic as profile endpoint
+        // Set proper display name with consistent Lance (Admin) handling
+        const lanceEmails = [
+            'lancecasselman@icloud.com',
+            'lancecasselman2011@gmail.com',
+            'lance@thelegacyphotography.com'
+        ];
+        
         let userName = profile.display_name || req.session.user.displayName || userEmail || 'Anonymous';
-        if (!profile.display_name || profile.display_name === userEmail) {
-            if (userEmail && userEmail.includes('lance')) {
-                userName = 'Lance (Admin)';
-            } else {
-                // Extract name from email
-                const emailName = userEmail ? userEmail.split('@')[0] : 'User';
-                userName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
+        if (userEmail && lanceEmails.includes(userEmail.toLowerCase())) {
+            userName = 'Lance (Admin)';
+            // Update profile with the proper display name if needed
+            if (profile.display_name !== 'Lance (Admin)') {
+                await db.updateProfile(userId, { display_name: userName });
             }
+        } else if (!profile.display_name || profile.display_name === userEmail) {
+            // Extract name from email for other users
+            const emailName = userEmail ? userEmail.split('@')[0] : 'User';
+            userName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
             // Update profile with the proper display name
             await db.updateProfile(userId, { display_name: userName });
         }
@@ -314,16 +326,24 @@ router.post('/posts/:postId/comments', requireAuth, async (req, res) => {
         // Get the user's profile to ensure we have the correct display name
         const profile = await db.getOrCreateProfile(userId, req.session.user.displayName || userEmail);
         
-        // Set proper display name with same logic as profile endpoint
+        // Set proper display name with consistent Lance (Admin) handling
+        const lanceEmails = [
+            'lancecasselman@icloud.com',
+            'lancecasselman2011@gmail.com',
+            'lance@thelegacyphotography.com'
+        ];
+        
         let userName = profile.display_name || req.session.user.displayName || userEmail || 'Anonymous';
-        if (!profile.display_name || profile.display_name === userEmail) {
-            if (userEmail && userEmail.includes('lance')) {
-                userName = 'Lance (Admin)';
-            } else {
-                // Extract name from email
-                const emailName = userEmail ? userEmail.split('@')[0] : 'User';
-                userName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
+        if (userEmail && lanceEmails.includes(userEmail.toLowerCase())) {
+            userName = 'Lance (Admin)';
+            // Update profile with the proper display name if needed
+            if (profile.display_name !== 'Lance (Admin)') {
+                await db.updateProfile(userId, { display_name: userName });
             }
+        } else if (!profile.display_name || profile.display_name === userEmail) {
+            // Extract name from email for other users
+            const emailName = userEmail ? userEmail.split('@')[0] : 'User';
+            userName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
             // Update profile with the proper display name
             await db.updateProfile(userId, { display_name: userName });
         }

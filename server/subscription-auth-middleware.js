@@ -155,7 +155,7 @@ class SubscriptionAuthMiddleware {
                 'lance@thelegacyphotography.com'
             ];
 
-            if (!adminEmails.includes(req.session.user.email)) {
+            if (!adminEmails.includes(req.session.user.email?.toLowerCase())) {
                 return res.status(403).json({ error: 'Admin access required' });
             }
 
