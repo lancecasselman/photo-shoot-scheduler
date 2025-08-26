@@ -371,6 +371,11 @@
         }
 
         function displaySubscriptionData(status) {
+            // Ensure all numeric values have defaults
+            const monthlyTotal = status.monthlyTotal || 0;
+            const totalStorageGb = status.totalStorageGb || 100;
+            const totalStorageTb = status.totalStorageTb || 0;
+            
             // Update status
             const statusDiv = document.getElementById('subscription-status');
             const statusTitle = document.getElementById('status-title');
@@ -378,7 +383,7 @@
 
             if (status.hasProfessionalPlan) {
                 statusTitle.textContent = 'Professional Plan Active';
-                statusDesc.textContent = `Your subscription includes all professional features and ${status.totalStorageGb}GB storage.`;
+                statusDesc.textContent = `Your subscription includes all professional features and ${totalStorageGb}GB storage.`;
                 statusDiv.className = 'subscription-status';
             } else {
                 statusTitle.textContent = 'No Active Subscription';
@@ -390,13 +395,13 @@
             document.getElementById('current-plan').textContent = status.hasProfessionalPlan ? 'Professional Plan' : 'No Plan';
             document.getElementById('plan-price').textContent = status.hasProfessionalPlan ? '$39/month' : 'Not subscribed';
             
-            document.getElementById('storage-amount').textContent = `${status.totalStorageGb} GB`;
-            document.getElementById('storage-addons').textContent = status.totalStorageTb > 0 ? 
-                `Includes ${status.totalStorageTb}TB add-ons` : 'Base storage included';
+            document.getElementById('storage-amount').textContent = `${totalStorageGb} GB`;
+            document.getElementById('storage-addons').textContent = totalStorageTb > 0 ? 
+                `Includes ${totalStorageTb}TB add-ons` : 'Base storage included';
 
             document.getElementById('billing-date').textContent = status.nextBillingDate ? 
                 new Date(status.nextBillingDate).toLocaleDateString() : 'No billing scheduled';
-            document.getElementById('billing-amount').textContent = `$${status.monthlyTotal.toFixed(2)}`;
+            document.getElementById('billing-amount').textContent = `$${monthlyTotal.toFixed(2)}`;
 
             document.getElementById('payment-method').textContent = status.professionalPlatform ? 
                 formatPlatformName(status.professionalPlatform) : 'No payment method';
@@ -404,8 +409,8 @@
 
             // Update billing summary
             document.getElementById('billing-professional').textContent = status.hasProfessionalPlan ? '$39.00/month' : '$0.00/month';
-            document.getElementById('billing-storage').textContent = `$${(status.totalStorageTb * 25).toFixed(2)}/month`;
-            document.getElementById('billing-total').textContent = `$${status.monthlyTotal.toFixed(2)}/month`;
+            document.getElementById('billing-storage').textContent = `$${(totalStorageTb * 25).toFixed(2)}/month`;
+            document.getElementById('billing-total').textContent = `$${monthlyTotal.toFixed(2)}/month`;
         }
 
         function formatPlatformName(platform) {

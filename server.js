@@ -1658,6 +1658,11 @@ app.get('/api/subscription-status', async (req, res) => {
                 status: {
                     hasProfessionalPlan: true,
                     professionalStatus: 'active',
+                    professionalPlatform: 'stripe',
+                    totalStorageGb: 100,
+                    totalStorageTb: 0,
+                    monthlyTotal: 39,
+                    nextBillingDate: null,
                     isAdmin: true
                 }
             });
