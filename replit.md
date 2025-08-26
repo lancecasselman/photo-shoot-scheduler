@@ -25,21 +25,18 @@ The primary database is PostgreSQL, utilizing Drizzle ORM. Firebase Firestore is
 Cloudflare R2 serves as the primary cloud storage with session-aware file paths and RAW file backup. Firebase Storage is used as secondary storage for website assets and profile images. The system supports full-resolution downloads, on-the-fly thumbnail generation with smart caching, and preserves original filenames.
 
 ### Mobile & Responsive Features
-Capacitor integration enables native mobile app capabilities for iOS and Android, including direct photo uploads and offline functionality. Android platform is fully configured for Google Play Store deployment with optimized Gradle build system, resolved "No matching variant" errors, and clean dependency management ready for local SDK compilation. Landing page flow correctly implemented - Android app now starts directly with landing page instead of launch screen. 
+**Strategic Decision (August 2025): Web-App Only Approach**
+Transitioned from native mobile app development to a web-app only strategy for simplified maintenance and faster development cycles. The platform now focuses entirely on delivering an exceptional mobile-responsive web experience that works seamlessly across all devices and browsers.
 
-**Android Authentication Enhancements (August 2025):**
-- Fixed Capacitor hostname configuration to connect to Replit server instead of localhost
-- Implemented token-based authentication fallback for installed Android apps where cookie sessions may not persist
-- Enhanced CORS configuration with Android and Capacitor-specific origins and credential handling
-- Added comprehensive authentication debugging with Android/mobile device detection
-- Session configuration optimized for Android compatibility with sameSite 'none' and Android-specific session ID generation
-- Created authentication test pages (/test-auth.html, /test-android-auth.html) for debugging mobile authentication flows
-- Added dedicated `/api/auth/login` endpoint for Android apps with enhanced debugging and token storage
-- Implemented `/api/debug/session` endpoint for real-time session state monitoring
-- Cleaned up deprecated flatDir repositories from Android Gradle configuration for modern compatibility
-- Resolved Firebase dependency conflicts with updated BOM 33.1.2 and aggressive exclusion strategy
-- Enhanced Gradle configuration for dependency resolution and build stability
-- Verified clean dependency tree with single firebase-common source eliminating duplicate classes
+**Benefits of Web-App Only:**
+- Single codebase for all platforms (web, mobile, tablet)
+- Instant deployment of updates without app store approval processes
+- No app store fees or complex mobile build processes
+- Progressive Web App (PWA) capabilities for app-like experience
+- Superior visual control and immediate feedback for UI adjustments
+- Streamlined authentication flow without mobile-specific complexities
+- Camera access and file uploads work natively in modern mobile browsers
+- Users can install web app to home screen for native app feel
 
 ### Photography Community Platform
 A social platform featuring a multi-tab feed system with customizable post types, advanced image optimization, social features (like, comment, save, share), user profiles with reputation points, community tools, a comprehensive direct messaging system, and automatic EXIF extraction. User interactions are enhanced with full username display, clickable user profiles, and complete user-to-user messaging infrastructure.
