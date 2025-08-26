@@ -105,8 +105,7 @@ Professional-grade client support infrastructure with automatic issue resolution
 - **Uppy**: Advanced file upload interface.
 - **Google Fonts**: Typography system.
 
-### Mobile Development
-- **Capacitor**: Cross-platform mobile app development.
+
 
 ### APIs
 - **Google Distance Matrix API**: For mileage tracking.
