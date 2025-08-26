@@ -1070,13 +1070,8 @@
         </main>
 
         <!-- Right Sidebar -->
-        <aside class="right-sidebar">
-            <div class="trending-section">
-                <h3 class="trending-title"> Top Contributors</h3>
-                <div id="topContributors">
-                    <!-- Top contributors will be loaded here -->
-                </div>
-            </div>
+        <aside class="right-sidebar" style="display: none;">
+            <!-- Right sidebar removed for cleaner interface -->
         </aside>
     </div>
 
@@ -1184,7 +1179,7 @@
         document.addEventListener('DOMContentLoaded', async () => {
             await initializeUser();
             await loadPosts();
-            loadTopContributors();
+            // Top Contributors removed for cleaner interface
             setupEventListeners();
         });
 
@@ -2121,27 +2116,7 @@
             }
         }
 
-        // Load top contributors
-        function loadTopContributors() {
-            const contributors = [
-                { name: 'Sarah Johnson', points: 1250 },
-                { name: 'Mike Chen', points: 980 },
-                { name: 'Emily Davis', points: 875 },
-                { name: 'Alex Turner', points: 720 },
-                { name: 'Lisa Wong', points: 650 }
-            ];
-
-            const container = document.getElementById('topContributors');
-            container.innerHTML = contributors.map(user => `
-                <div class="trending-item" onclick="viewProfile('${user.name}')">
-                    <div class="user-avatar">${getInitials(user.name)}</div>
-                    <div class="trending-info">
-                        <div style="color: #fff; font-weight: 600;">${user.name}</div>
-                        <div class="trending-count">${user.points} points</div>
-                    </div>
-                </div>
-            `).join('');
-        }
+        // Top Contributors function removed for cleaner interface
 
         // Utility functions
         function getInitials(name) {
