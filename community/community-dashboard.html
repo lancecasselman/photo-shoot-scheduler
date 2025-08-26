@@ -2060,20 +2060,26 @@
                 return;
             }
 
-            container.innerHTML = comments.map(comment => `
-                <div class="comment" data-comment-id="${comment.id}">
-                    <div class="comment-avatar">${getInitials(comment.userName || comment.user_name)}</div>
-                    <div class="comment-content">
-                        <div class="comment-header" style="display: flex; justify-content: space-between; align-items: center;">
-                            <div class="comment-author">${comment.userName || comment.user_name}</div>
-                            ${comment.user_id === currentUser?.userId ? `
-                                <button class="comment-delete-btn" onclick="deleteComment('${comment.id}', '${postId}')" style="background: none; border: none; color: #ff4444; cursor: pointer; font-size: 0.8rem; padding: 2px 6px;">Delete</button>
-                            ` : ''}
+            container.innerHTML = comments.map(comment => {
+                // Get the proper display name
+                const displayName = comment.user_name || comment.userName || 'Anonymous';
+                const initials = getInitials(displayName);
+                
+                return `
+                    <div class="comment" data-comment-id="${comment.id}">
+                        <div class="comment-avatar" title="${displayName}">${initials}</div>
+                        <div class="comment-content">
+                            <div class="comment-header" style="display: flex; justify-content: space-between; align-items: center;">
+                                <div class="comment-author">${displayName}</div>
+                                ${comment.user_id === currentUser?.userId ? `
+                                    <button class="comment-delete-btn" onclick="deleteComment('${comment.id}', '${postId}')" style="background: none; border: none; color: #ff4444; cursor: pointer; font-size: 0.8rem; padding: 2px 6px;">Delete</button>
+                                ` : ''}
+                            </div>
+                            <div class="comment-text">${comment.content}</div>
                         </div>
-                        <div class="comment-text">${comment.content}</div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         // Handle comment keypress
@@ -2154,8 +2160,27 @@
 
         // Utility functions
         function getInitials(name) {
-            if (!name) return 'U';
-            return name.split(' ').map(n => n[0]).join('').toUpperCase();
+            if (!name || name === 'undefined' || name === 'null') return 'U';
+            
+            // Handle email addresses - extract username part
+            if (name.includes('@')) {
+                name = name.split('@')[0];
+            }
+            
+            // If it's "Lance (Admin)", just use "LA"
+            if (name.includes('(Admin)')) {
+                return 'LA';
+            }
+            
+            // Get first letter of each word (up to 2 letters)
+            const parts = name.trim().split(' ').filter(p => p.length > 0);
+            if (parts.length === 1) {
+                // Single word - use first 2 letters
+                return parts[0].substring(0, 2).toUpperCase();
+            } else {
+                // Multiple words - use first letter of first 2 words
+                return parts.slice(0, 2).map(n => n[0]).join('').toUpperCase();
+            }
         }
 
         function formatTime(timestamp) {

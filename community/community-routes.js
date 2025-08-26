@@ -142,23 +142,29 @@ router.get('/posts/:postId', async (req, res) => {
 router.post('/posts', requireAuth, upload.array('images', 10), async (req, res) => {
     try {
         const userId = req.session.user.uid || req.session.user.id;
-
-        // Set proper display name, especially for Lance (admin)
-        let userName = req.session.user.displayName || req.session.user.email || 'Anonymous';
-        if (!req.session.user.displayName || req.session.user.displayName === req.session.user.email) {
-            if (req.session.user.email && req.session.user.email.includes('lance')) {
+        const userEmail = req.session.user.email;
+        
+        // Get the user's profile to ensure we have the correct display name
+        const profile = await db.getOrCreateProfile(userId, req.session.user.displayName || userEmail);
+        
+        // Set proper display name with same logic as profile endpoint
+        let userName = profile.display_name || req.session.user.displayName || userEmail || 'Anonymous';
+        if (!profile.display_name || profile.display_name === userEmail) {
+            if (userEmail && userEmail.includes('lance')) {
                 userName = 'Lance (Admin)';
             } else {
                 // Extract name from email
-                const emailName = req.session.user.email ? req.session.user.email.split('@')[0] : 'User';
+                const emailName = userEmail ? userEmail.split('@')[0] : 'User';
                 userName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
             }
+            // Update profile with the proper display name
+            await db.updateProfile(userId, { display_name: userName });
         }
 
         const postData = {
             userId,
             userName,
-            userAvatar: req.session.user.photoURL || null,
+            userAvatar: req.session.user.photoURL || profile.avatar_url || null,
             type: req.body.type || 'text',
             title: req.body.title,
             content: req.body.content,
@@ -303,13 +309,30 @@ router.get('/posts/:postId/comments', async (req, res) => {
 router.post('/posts/:postId/comments', requireAuth, async (req, res) => {
     try {
         const userId = req.session.user.uid || req.session.user.id;
-        const userName = req.session.user.displayName || req.session.user.email || 'Anonymous';
+        const userEmail = req.session.user.email;
+        
+        // Get the user's profile to ensure we have the correct display name
+        const profile = await db.getOrCreateProfile(userId, req.session.user.displayName || userEmail);
+        
+        // Set proper display name with same logic as profile endpoint
+        let userName = profile.display_name || req.session.user.displayName || userEmail || 'Anonymous';
+        if (!profile.display_name || profile.display_name === userEmail) {
+            if (userEmail && userEmail.includes('lance')) {
+                userName = 'Lance (Admin)';
+            } else {
+                // Extract name from email
+                const emailName = userEmail ? userEmail.split('@')[0] : 'User';
+                userName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
+            }
+            // Update profile with the proper display name
+            await db.updateProfile(userId, { display_name: userName });
+        }
 
         const commentData = {
             postId: req.params.postId,
             userId,
             userName,
-            userAvatar: req.session.user.photoURL || null,
+            userAvatar: req.session.user.photoURL || profile.avatar_url || null,
             parentCommentId: req.body.parentCommentId || null,
             content: req.body.content
         };
