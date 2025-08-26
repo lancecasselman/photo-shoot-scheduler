@@ -1072,13 +1072,6 @@
         <!-- Right Sidebar -->
         <aside class="right-sidebar">
             <div class="trending-section">
-                <h3 class="trending-title"> Trending Topics</h3>
-                <div id="trendingTopics">
-                    <!-- Trending topics will be loaded here -->
-                </div>
-            </div>
-
-            <div class="trending-section">
                 <h3 class="trending-title"> Top Contributors</h3>
                 <div id="topContributors">
                     <!-- Top contributors will be loaded here -->
@@ -1191,7 +1184,6 @@
         document.addEventListener('DOMContentLoaded', async () => {
             await initializeUser();
             await loadPosts();
-            loadTrendingTopics();
             loadTopContributors();
             setupEventListeners();
         });
@@ -2127,28 +2119,6 @@
                     console.error('Error posting comment:', error);
                 }
             }
-        }
-
-        // Load trending topics
-        function loadTrendingTopics() {
-            const topics = [
-                { tag: 'goldenhour', count: 234 },
-                { tag: 'portrait', count: 189 },
-                { tag: 'landscape', count: 156 },
-                { tag: 'streetphotography', count: 134 },
-                { tag: 'wedding', count: 98 }
-            ];
-
-            const container = document.getElementById('trendingTopics');
-            container.innerHTML = topics.map((topic, index) => `
-                <div class="trending-item" onclick="searchTag('${topic.tag}')">
-                    <div class="trending-number">${index + 1}</div>
-                    <div class="trending-info">
-                        <div class="trending-tag">#${topic.tag}</div>
-                        <div class="trending-count">${topic.count} posts</div>
-                    </div>
-                </div>
-            `).join('');
         }
 
         // Load top contributors
