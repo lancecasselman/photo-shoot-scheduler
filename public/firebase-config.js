@@ -2,12 +2,12 @@
 // This file ensures consistent Firebase configuration across all platforms
 
 export const firebaseConfig = {
-    apiKey: "AIzaSyDshohtb0LV0JZ9ptFLx_0L2i0nOKHMyjM",
+    apiKey: "AIzaSyDbtboh1bW6xu9Tz9FILkx_0lzGwXQHjyM",
     authDomain: "photoshcheduleapp.firebaseapp.com",
-    projectId: "photoscheduleapp",
-    storageBucket: "photoshceduleapp.appspot.com",
+    projectId: "photoshcheduleapp",
+    storageBucket: "photoshcheduleapp.appspot.com",
     messagingSenderId: "1080892259604",
-    appId: "1:1080892259604:web:8198de97da816c8a616c01"
+    appId: "1:1080892259604:web:8198de9d7da81c684c1601"
 };
 
 // Android-specific authentication configuration

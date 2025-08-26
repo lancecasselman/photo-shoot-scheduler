@@ -16,7 +16,14 @@ The system utilizes a static HTML/CSS/JavaScript multi-page application with van
 The backend is built on a Node.js/Express server handling API routes and business logic. Authentication and subscription verification are handled exclusively at the server level through secure routes.
 
 ### Authentication & Authorization
-Firebase Authentication supports email/password and Google OAuth, implementing role-based access for administrative functions and subscriber management. All session management routes require proper Firebase authentication with no development mode exceptions. Enhanced Android authentication includes token-based fallback system for installed apps, Android-specific session handling with CORS configuration, and comprehensive debugging for mobile authentication flows.
+Firebase Authentication (Project: photoshcheduleapp) supports email/password and Google OAuth, implementing role-based access for administrative functions and subscriber management. All session management routes require proper Firebase authentication with no development mode exceptions. Enhanced Android authentication includes token-based fallback system for installed apps, Android-specific session handling with CORS configuration, and comprehensive debugging for mobile authentication flows.
+
+**Firebase Project Configuration:**
+- Project ID: `photoshcheduleapp`
+- Auth Domain: `photoshcheduleapp.firebaseapp.com`
+- Storage Bucket: `photoshcheduleapp.appspot.com`
+- App ID: `1:1080892259604:web:8198de9d7da81c684c1601`
+- Messaging Sender ID: `1080892259604`
 
 ### Database Architecture
 The primary database is PostgreSQL, utilizing Drizzle ORM. Firebase Firestore is used for real-time data synchronization, creating a hybrid storage strategy. Published websites data, metadata, and themes are stored in PostgreSQL.
