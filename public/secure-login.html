@@ -37,6 +37,13 @@
         
         // Google Auth Provider
         window.googleProvider = new GoogleAuthProvider();
+        
+        // Force English and optimize for mobile
+        window.googleProvider.setCustomParameters({
+            'hl': 'en',
+            'prompt': 'select_account'
+        });
+        
         window.signInWithPopup = signInWithPopup;
         window.signInWithRedirect = signInWithRedirect;
         window.getRedirectResult = getRedirectResult;
