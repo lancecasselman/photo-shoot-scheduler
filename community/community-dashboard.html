@@ -503,6 +503,20 @@
             font-size: 0.9rem;
         }
 
+        .comment-delete-btn {
+            background: none;
+            border: none;
+            color: #ff4444;
+            cursor: pointer;
+            font-size: 0.8rem;
+            padding: 2px 6px;
+        }
+
+        .comment-delete-btn:hover {
+            color: #ff6666 !important;
+            text-decoration: underline;
+        }
+
         .comment-input-wrapper {
             padding: 1rem;
             border-top: 1px solid #333;
@@ -1938,6 +1952,56 @@
             }
         }
 
+        // Delete comment
+        async function deleteComment(commentId, postId) {
+            if (!confirm('Are you sure you want to delete this comment?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/community/comments/${commentId}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    // Remove the comment from the DOM
+                    const commentElement = document.querySelector(`[data-comment-id="${commentId}"]`);
+                    if (commentElement) {
+                        commentElement.style.animation = 'fadeOut 0.3s';
+                        setTimeout(() => {
+                            commentElement.remove();
+                            // Update comment count
+                            const post = posts.find(p => p.id === postId);
+                            if (post) {
+                                post.commentsCount = Math.max(0, (post.commentsCount || 0) - 1);
+                                // Update the comment count display
+                                const commentBtn = document.querySelector(`[data-post-id="${postId}"] .action-btn:nth-child(2)`);
+                                if (commentBtn) {
+                                    commentBtn.innerHTML = `💬 ${post.commentsCount}`;
+                                }
+                            }
+                            // Check if no comments left
+                            const remainingComments = document.querySelectorAll(`#comments-${postId} .comment`);
+                            if (remainingComments.length === 1) { // Will be 0 after removal
+                                setTimeout(() => {
+                                    document.getElementById(`comments-${postId}`).innerHTML = 
+                                        '<p style="text-align: center; color: #999; padding: 1rem;">No comments yet</p>';
+                                }, 300);
+                            }
+                        }, 300);
+                    }
+                    showMessage('Comment deleted successfully');
+                } else {
+                    const error = await response.json();
+                    showMessage(error.error || 'Failed to delete comment', 'error');
+                }
+            } catch (error) {
+                console.error('Error deleting comment:', error);
+                showMessage('Failed to delete comment', 'error');
+            }
+        }
+
         async function toggleLike(postId) {
             try {
                 const response = await fetch(`/api/community/posts/${postId}/like`, {
@@ -1997,10 +2061,15 @@
             }
 
             container.innerHTML = comments.map(comment => `
-                <div class="comment">
-                    <div class="comment-avatar">${getInitials(comment.userName)}</div>
+                <div class="comment" data-comment-id="${comment.id}">
+                    <div class="comment-avatar">${getInitials(comment.userName || comment.user_name)}</div>
                     <div class="comment-content">
-                        <div class="comment-author">${comment.userName}</div>
+                        <div class="comment-header" style="display: flex; justify-content: space-between; align-items: center;">
+                            <div class="comment-author">${comment.userName || comment.user_name}</div>
+                            ${comment.user_id === currentUser?.userId ? `
+                                <button class="comment-delete-btn" onclick="deleteComment('${comment.id}', '${postId}')" style="background: none; border: none; color: #ff4444; cursor: pointer; font-size: 0.8rem; padding: 2px 6px;">Delete</button>
+                            ` : ''}
+                        </div>
                         <div class="comment-text">${comment.content}</div>
                     </div>
                 </div>

@@ -322,6 +322,33 @@ router.post('/posts/:postId/comments', requireAuth, async (req, res) => {
     }
 });
 
+// Delete comment
+router.delete('/comments/:commentId', requireAuth, async (req, res) => {
+    try {
+        const commentId = req.params.commentId;
+        const userId = req.session.user.uid || req.session.user.id;
+
+        // Get comment to verify ownership
+        const comment = await db.getCommentById(commentId);
+        
+        if (!comment) {
+            return res.status(404).json({ error: 'Comment not found' });
+        }
+
+        if (comment.user_id !== userId) {
+            return res.status(403).json({ error: 'Not authorized to delete this comment' });
+        }
+
+        // Delete the comment from database
+        await db.deleteComment(commentId);
+
+        res.json({ success: true, message: 'Comment deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting comment:', error);
+        res.status(500).json({ error: 'Failed to delete comment' });
+    }
+});
+
 // Search posts
 router.get('/search', async (req, res) => {
     try {

@@ -471,6 +471,36 @@ class CommunityDatabase {
         }
     }
 
+    // Get comment by ID
+    async getCommentById(commentId) {
+        try {
+            const query = 'SELECT * FROM community_comments WHERE id = $1';
+            const result = await this.pool.query(query, [commentId]);
+            return result.rows[0];
+        } catch (error) {
+            console.error('Error getting comment:', error);
+            throw error;
+        }
+    }
+
+    // Delete comment
+    async deleteComment(commentId) {
+        try {
+            // First decrease the comment count on the post
+            const comment = await this.getCommentById(commentId);
+            if (comment) {
+                await this.updatePostStats(comment.post_id, 'comments_count', -1);
+            }
+            
+            const query = 'DELETE FROM community_comments WHERE id = $1 RETURNING *';
+            const result = await this.pool.query(query, [commentId]);
+            return result.rows[0];
+        } catch (error) {
+            console.error('Error deleting comment:', error);
+            throw error;
+        }
+    }
+
     // Search operations
     async searchPosts(searchTerm, filters = {}) {
         let query = `
