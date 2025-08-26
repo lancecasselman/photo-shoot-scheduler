@@ -1196,6 +1196,17 @@
             setupEventListeners();
         });
 
+        // Check if current user is admin
+        function isAdmin() {
+            if (!currentUser || !currentUser.email) return false;
+            const adminEmails = [
+                'lancecasselman@icloud.com',
+                'lancecasselman2011@gmail.com',
+                'lance@thelegacyphotography.com'
+            ];
+            return adminEmails.includes(currentUser.email.toLowerCase());
+        }
+
         // Initialize user
         async function initializeUser() {
             try {
@@ -1592,7 +1603,7 @@
                                 ${post.user_id === currentUser?.userId ? '<span style="color: #4CAF50; font-size: 0.75rem;">(You)</span>' : ''}
                             </div>
                         </div>
-                        ${post.user_id === currentUser?.userId ? `
+                        ${(post.user_id === currentUser?.userId || isAdmin()) ? `
                             <div class="post-menu" onclick="togglePostMenu('${post.id}', event)">⋮</div>
                             <div class="post-menu-dropdown" id="menu-${post.id}" style="display: none;">
                                 <button onclick="deletePost('${post.id}')">Delete Post</button>
@@ -2075,7 +2086,7 @@
                         <div class="comment-content">
                             <div class="comment-header" style="display: flex; justify-content: space-between; align-items: center;">
                                 <div class="comment-author">${displayName}</div>
-                                ${comment.user_id === currentUser?.userId ? `
+                                ${(comment.user_id === currentUser?.userId || isAdmin()) ? `
                                     <button class="comment-delete-btn" onclick="deleteComment('${comment.id}', '${postId}')" style="background: none; border: none; color: #ff4444; cursor: pointer; font-size: 0.8rem; padding: 2px 6px;">Delete</button>
                                 ` : ''}
                             </div>

@@ -268,7 +268,19 @@ router.delete('/posts/:postId', requireAuth, async (req, res) => {
         }
 
         const userId = req.session.user.uid || req.session.user.id;
-        if (post.user_id !== userId) {
+        const userEmail = req.session.user.email;
+        
+        // Check if user is admin
+        const adminEmails = [
+            'lancecasselman@icloud.com',
+            'lancecasselman2011@gmail.com',
+            'lance@thelegacyphotography.com'
+        ];
+        
+        const isAdmin = userEmail && adminEmails.includes(userEmail.toLowerCase());
+        
+        // Allow deletion if user owns the post OR is admin
+        if (post.user_id !== userId && !isAdmin) {
             return res.status(403).json({ error: 'Not authorized to delete this post' });
         }
 
@@ -370,6 +382,16 @@ router.delete('/comments/:commentId', requireAuth, async (req, res) => {
     try {
         const commentId = req.params.commentId;
         const userId = req.session.user.uid || req.session.user.id;
+        const userEmail = req.session.user.email;
+
+        // Check if user is admin
+        const adminEmails = [
+            'lancecasselman@icloud.com',
+            'lancecasselman2011@gmail.com',
+            'lance@thelegacyphotography.com'
+        ];
+        
+        const isAdmin = userEmail && adminEmails.includes(userEmail.toLowerCase());
 
         // Get comment to verify ownership
         const comment = await db.getCommentById(commentId);
@@ -378,7 +400,8 @@ router.delete('/comments/:commentId', requireAuth, async (req, res) => {
             return res.status(404).json({ error: 'Comment not found' });
         }
 
-        if (comment.user_id !== userId) {
+        // Allow deletion if user owns the comment OR is admin
+        if (comment.user_id !== userId && !isAdmin) {
             return res.status(403).json({ error: 'Not authorized to delete this comment' });
         }
 
