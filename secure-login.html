@@ -29,8 +29,17 @@
         window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
         window.signOut = signOut;
         
-        // Google Auth Provider
+        // Google Auth Provider with custom parameters
         window.googleProvider = new GoogleAuthProvider();
+        
+        // Add custom parameters for better compatibility
+        window.googleProvider.addScope('email');
+        window.googleProvider.addScope('profile');
+        window.googleProvider.setCustomParameters({
+            prompt: 'select_account',
+            hd: '' // Allow any domain
+        });
+        
         window.signInWithPopup = signInWithPopup;
         window.signInWithRedirect = signInWithRedirect;
         window.getRedirectResult = getRedirectResult;
@@ -497,6 +506,13 @@
                         errorMessage = 'Google sign-in not enabled. Please contact support.';
                     } else if (error.code === 'auth/invalid-api-key') {
                         errorMessage = 'Invalid Firebase configuration. Please contact support.';
+                    } else if (error.message && error.message.includes('domain is authorized')) {
+                        errorMessage = 'Domain authorization issue. Trying alternative method...';
+                        // Try email/password instead
+                        setTimeout(() => {
+                            document.querySelector('#email').focus();
+                            showInfo('Please use email/password login instead of Google for now.');
+                        }, 2000);
                     } else {
                         errorMessage = `Google sign-in failed: ${error.message}`;
                     }
