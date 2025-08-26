@@ -466,6 +466,21 @@
                     showLoading('Signing in with Google...');
                     hideMessage();
                     
+                    // Check current domain authorization
+                    const currentDomain = window.location.hostname;
+                    const isReplotDomain = currentDomain.includes('replit.dev') || currentDomain.includes('worf.replit.dev');
+                    
+                    if (isReplotDomain) {
+                        // For Replit domains, show helpful message about domain authorization
+                        hideLoading();
+                        showError('Google login requires domain authorization. Please use email/password login or contact support to authorize this domain.');
+                        setTimeout(() => {
+                            document.querySelector('#email').focus();
+                            showInfo('Use your email and password to sign in.');
+                        }, 3000);
+                        return;
+                    }
+                    
                     // Check if mobile/Capacitor - use redirect, otherwise use popup
                     const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
                     const isCapacitor = window.Capacitor !== undefined;
