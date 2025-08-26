@@ -45,6 +45,20 @@
             }
         });
 
+        // Add comprehensive Firebase initialization debug logging
+        console.log('🔥 FIREBASE CONFIG:', {
+            apiKey: firebaseConfig.apiKey ? firebaseConfig.apiKey.substring(0, 10) + '...' : 'MISSING',
+            authDomain: firebaseConfig.authDomain,
+            projectId: firebaseConfig.projectId,
+            appId: firebaseConfig.appId ? firebaseConfig.appId.substring(0, 20) + '...' : 'MISSING'
+        });
+        
+        console.log('🔥 FIREBASE AUTH STATE:', {
+            authInitialized: !!window.auth,
+            appInitialized: !!window.firebaseApp,
+            googleProviderReady: !!window.googleProvider
+        });
+
         window.verifyAndRedirect = async function(user) {
             try {
                 showLoading('Verifying subscription...');
@@ -465,6 +479,9 @@
 
                 } catch (error) {
                     console.error('❌ GOOGLE AUTH: Error:', error);
+                    console.error('❌ GOOGLE AUTH: Error Code:', error.code);
+                    console.error('❌ GOOGLE AUTH: Error Message:', error.message);
+                    console.error('❌ GOOGLE AUTH: Full Error Object:', JSON.stringify(error, null, 2));
                     hideLoading();
                     
                     let errorMessage = 'Google sign-in failed. Please try again.';
@@ -474,6 +491,14 @@
                         errorMessage = 'Pop-up blocked. Please allow pop-ups and try again.';
                     } else if (error.code === 'auth/cancelled-popup-request') {
                         errorMessage = 'Sign-in cancelled. Please try again.';
+                    } else if (error.code === 'auth/unauthorized-domain') {
+                        errorMessage = 'Domain not authorized. Please contact support.';
+                    } else if (error.code === 'auth/operation-not-allowed') {
+                        errorMessage = 'Google sign-in not enabled. Please contact support.';
+                    } else if (error.code === 'auth/invalid-api-key') {
+                        errorMessage = 'Invalid Firebase configuration. Please contact support.';
+                    } else {
+                        errorMessage = `Google sign-in failed: ${error.message}`;
                     }
                     
                     showError(errorMessage);
