@@ -112,6 +112,95 @@
             color: var(--primary-dark);
         }
 
+        /* Pricing Section */
+        .pricing-section {
+            padding: 100px 20px;
+            background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
+            text-align: center;
+        }
+
+        .pricing-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2rem, 6vw, 3rem);
+            color: var(--primary-gold);
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .pricing-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            margin-bottom: 3rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .pricing-card {
+            max-width: 400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 16px;
+            padding: 40px 30px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .plan-name {
+            font-size: 1.5rem;
+            color: var(--primary-gold);
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .plan-price {
+            font-size: 3rem;
+            color: var(--text-light);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .plan-price .currency {
+            font-size: 2rem;
+            vertical-align: top;
+        }
+
+        .plan-period {
+            color: var(--text-muted);
+            font-size: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .features-list {
+            list-style: none;
+            text-align: left;
+            margin-bottom: 2rem;
+        }
+
+        .features-list li {
+            padding: 10px 0;
+            color: var(--text-light);
+            position: relative;
+            padding-left: 25px;
+        }
+
+        .features-list li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--primary-gold);
+            font-weight: bold;
+        }
+
+        .storage-addon {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
         @keyframes fadeInUp {
             from {
                 opacity: 0;
@@ -196,7 +285,7 @@
                 with powerful tools designed for professional photographers.
             </p>
             <div class="cta-buttons">
-                <a id="launchAppBtn" href="secure-login.html" class="btn btn-primary">Launch Application</a>
+                <a href="#pricing" class="btn btn-primary">Get Started</a>
                 <a href="#features" class="btn btn-secondary">Learn More</a>
             </div>
         </div>
@@ -232,13 +321,37 @@
         </div>
     </div>
 
-    <script>
-        // Explicit navigation for the launch button (keeps it working if JS is disabled via href)
-        document.getElementById('launchAppBtn')?.addEventListener('click', (e) => {
-            // Allow default <a> navigation; no extra logic needed
-            console.log('Navigating to application login...');
-        });
+    <!-- Pricing Section -->
+    <div id="pricing" class="pricing-section">
+        <h2 class="pricing-title">Simple, Transparent Pricing</h2>
+        <p class="pricing-subtitle">No setup fees. No hidden costs. Cancel anytime.</p>
+        
+        <div class="pricing-card">
+            <div class="plan-name">Professional Plan</div>
+            <div class="plan-price">
+                <span class="currency">$</span>39
+            </div>
+            <div class="plan-period">/month</div>
+            
+            <ul class="features-list">
+                <li>Unlimited client sessions</li>
+                <li>100GB cloud storage</li>
+                <li>Professional invoicing</li>
+                <li>Client gallery sharing</li>
+                <li>Mobile app access</li>
+                <li>AI-powered tools</li>
+                <li>Email support</li>
+            </ul>
+            
+            <a href="subscription-checkout.html" class="btn btn-primary">Get Started</a>
+            
+            <div class="storage-addon">
+                Storage Add-ons: $25/TB/month
+            </div>
+        </div>
+    </div>
 
+    <script>
         // Smooth scrolling for anchor links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
