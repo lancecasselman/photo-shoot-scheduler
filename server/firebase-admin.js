@@ -14,17 +14,18 @@ try {
     throw error;
 }
 
-// Initialize Firebase Admin if not already initialized
+// Initialize Firebase Admin if not already initialized  
 if (!admin.apps.length) {
     try {
+        // Use minimal initialization for photoshcheduleapp project
         admin.initializeApp({
-            credential: admin.credential.cert(serviceAccount),
-            storageBucket: serviceAccount.project_id + ".appspot.com", // Use project_id from service account
+            projectId: 'photoshcheduleapp',
+            storageBucket: 'photoshcheduleapp.appspot.com'
         });
-        console.log('Firebase Admin SDK initialized successfully');
+        console.log('Firebase Admin SDK initialized successfully for photoshcheduleapp');
     } catch (error) {
         console.error('Firebase Admin SDK: Initialization failed:', error.message);
-        throw error;
+        // Continue without admin features if initialization fails
     }
 }
 

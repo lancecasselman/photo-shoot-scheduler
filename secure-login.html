@@ -12,14 +12,14 @@
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
-        // Use environment variables if available - Enhanced Firebase config
+        // Use SINGLE consistent Firebase config for photoshcheduleapp
         const firebaseConfig = {
-            apiKey: import.meta.env?.VITE_FIREBASE_API_KEY || "AIzaSyDbtboh1bW6xu9Tz9FILkx_0lzGwXQHjyM",
-            authDomain: `${import.meta.env?.VITE_FIREBASE_PROJECT_ID || "photoshcheduleapp"}.firebaseapp.com`,
-            projectId: import.meta.env?.VITE_FIREBASE_PROJECT_ID || "photoshcheduleapp",
-            storageBucket: `${import.meta.env?.VITE_FIREBASE_PROJECT_ID || "photoshcheduleapp"}.appspot.com`,
+            apiKey: "AIzaSyDbtboh1bW6xu9Tz9FILkx_0lzGwXQHjyM",
+            authDomain: "photoshcheduleapp.firebaseapp.com",
+            projectId: "photoshcheduleapp",
+            storageBucket: "photoshcheduleapp.appspot.com",
             messagingSenderId: "1080892259604",
-            appId: import.meta.env?.VITE_FIREBASE_APP_ID || "1:1080892259604:web:8198de9d7da81c684c1601",
+            appId: "1:1080892259604:web:8198de9d7da81c684c1601",
             measurementId: "G-MB2KDEFRHL"
         };
         
@@ -545,26 +545,33 @@
                         if (isReplit) {
                             console.log('📱 MOBILE REPLIT: Attempting direct authentication methods...');
                             
-                            // Detect known mobile OAuth issues on Replit
-                            console.warn('⚠️ KNOWN ISSUE: Google OAuth on mobile browsers in Replit environment');
-                            console.warn('⚠️ This is a Firebase/Replit limitation, not a code issue');
+                            // Try authentication now that conflicts are resolved
+                            console.log('📱 MOBILE REPLIT: Testing Google auth with cleaned configuration...');
                             
-                            // Show immediate user-friendly message
-                            hideLoading();
-                            showError('Google login is not available on mobile browsers in development mode.');
-                            setTimeout(() => {
-                                showInfo('Please use email/password login below. Google login works on desktop browsers.');
-                                document.querySelector('#email')?.focus();
-                            }, 1500);
-                            
-                            // Still attempt authentication for logging purposes
                             try {
                                 result = await window.signInWithPopup(window.auth, window.googleProvider);
-                                // If somehow it works, continue
-                                console.log('✅ Unexpected success on mobile!', result.user.email);
-                            } catch (error) {
-                                console.log('📱 Expected failure on mobile Replit:', error.code);
-                                return; // Exit gracefully
+                                console.log('✅ MOBILE SUCCESS: Google authentication worked!', result.user.email);
+                            } catch (popupError) {
+                                console.log('📱 POPUP failed, trying redirect...', popupError.code);
+                                
+                                if (popupError.code === 'auth/popup-blocked' || 
+                                    popupError.code === 'auth/network-request-failed') {
+                                    
+                                    try {
+                                        await window.signInWithRedirect(window.auth, window.googleProvider);
+                                        return; // Will be handled by redirect handler
+                                    } catch (redirectError) {
+                                        console.error('📱 Both popup and redirect failed:', redirectError);
+                                        hideLoading();
+                                        showError('Google login failed. Please use email/password login below.');
+                                        setTimeout(() => {
+                                            document.querySelector('#email')?.focus();
+                                        }, 1000);
+                                        return;
+                                    }
+                                } else {
+                                    throw popupError;
+                                }
                             }
                         } else {
                             // Non-Replit mobile: Use standard flow
