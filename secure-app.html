@@ -7062,12 +7062,16 @@ ${contract.contract_content}
             
             if (details.style.display === 'none') {
                 details.style.display = 'block';
-                expandIcon.textContent = '▲';
-                expandIcon.style.transform = 'rotate(180deg)';
+                if (expandIcon) {
+                    expandIcon.textContent = '▲';
+                    expandIcon.style.transform = 'rotate(180deg)';
+                }
             } else {
                 details.style.display = 'none';
-                expandIcon.textContent = '▼';
-                expandIcon.style.transform = 'rotate(0deg)';
+                if (expandIcon) {
+                    expandIcon.textContent = '▼';
+                    expandIcon.style.transform = 'rotate(0deg)';
+                }
             }
         }
 
@@ -16540,7 +16544,7 @@ END:VCALENDAR`;
     <script src="admin-inline-editor.js"></script>
     
     <!-- Mobile Floating Action Button -->
-    <button class="mobile-fab" id="mobileFab" style="display: none;" onclick="showAddSessionModal()">
+    <button class="mobile-fab" id="mobileFab" style="display: none;" onclick="document.getElementById('addSessionBtn').click()">
         <svg viewBox="0 0 24 24" fill="currentColor">
             <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
         </svg>
