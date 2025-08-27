@@ -15,10 +15,6 @@
     <meta name="keywords" content="photography, business management, client portal, photo gallery, session scheduling, invoicing">
     <title>Photography Management System - Professional Photography Business Platform</title>
     
-    <!-- Mobile Platform CSS Framework -->
-    <link rel="stylesheet" href="/mobile-platform.css">
-    <link rel="stylesheet" href="/mobile-sessions.css">
-    
     <!-- Authentication is handled at the server level via /app route -->
     
     <!-- Remove problematic script references that cause refresh loops -->
@@ -6783,14 +6779,12 @@ ${contract.contract_content}
             }
             
             const container = document.getElementById('sessionsContainer');
-            const isMobile = window.innerWidth <= 768;
             
             if (sessions.length === 0) {
                 container.innerHTML = `
-                    <div class="${isMobile ? 'empty-state-mobile' : 'empty-state'}">
-                        ${isMobile ? '<svg class="empty-state-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>' : ''}
-                        <h3 class="${isMobile ? 'empty-state-title' : ''}">No sessions yet</h3>
-                        <p class="${isMobile ? 'empty-state-text' : ''}">Add your first photography session above!</p>
+                    <div class="empty-state">
+                        <h3>No sessions yet</h3>
+                        <p>Add your first photography session above!</p>
                     </div>
                 `;
                 return;
@@ -6802,117 +6796,6 @@ ${contract.contract_content}
             const sessionElements = [];
             
             for (const session of visibleSessions) {
-                // Check if we should use mobile or desktop card layout
-                if (isMobile) {
-                    // Mobile card layout
-                    const sessionDate = new Date(session.dateTime);
-                    const formattedDate = sessionDate.toLocaleDateString('en-US', { 
-                        weekday: 'short', 
-                        month: 'short', 
-                        day: 'numeric' 
-                    });
-                    const formattedTime = sessionDate.toLocaleTimeString('en-US', { 
-                        hour: 'numeric', 
-                        minute: '2-digit' 
-                    });
-                    
-                    const mobileCard = `
-                        <div class="session-card-mobile" data-session-id="${session.id}">
-                            <div class="session-card-header" onclick="toggleSessionDetails('${session.id}')">
-                                <span class="session-type-badge">${session.sessionType}</span>
-                                <div class="session-client-name">${session.clientName}</div>
-                                <div class="session-date-time">
-                                    <svg class="session-info-icon" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/>
-                                    </svg>
-                                    ${formattedDate} at ${formattedTime}
-                                </div>
-                            </div>
-                            
-                            <div class="session-card-body">
-                                <div class="session-info-grid">
-                                    <div class="session-info-item">
-                                        <svg class="session-info-icon" viewBox="0 0 24 24" fill="currentColor">
-                                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                                        </svg>
-                                        <span class="session-info-value">${session.location}</span>
-                                    </div>
-                                    
-                                    <div class="session-info-item">
-                                        <svg class="session-info-icon" viewBox="0 0 24 24" fill="currentColor">
-                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
-                                        </svg>
-                                        <span class="session-info-value">$${session.price.toFixed(2)}</span>
-                                    </div>
-                                    
-                                    ${session.phoneNumber ? `
-                                    <div class="session-info-item">
-                                        <svg class="session-info-icon" viewBox="0 0 24 24" fill="currentColor">
-                                            <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
-                                        </svg>
-                                        <span class="session-info-value">${session.phoneNumber}</span>
-                                    </div>
-                                    ` : ''}
-                                </div>
-                            </div>
-                            
-                            <div class="session-status-row">
-                                <span class="status-chip ${session.contractSigned ? 'active' : 'inactive'}">
-                                    Contract ${session.contractSigned ? 'Signed' : 'Pending'}
-                                </span>
-                                <span class="status-chip ${session.paid ? 'active' : 'pending'}">
-                                    ${session.paid ? 'Paid' : 'Payment Due'}
-                                </span>
-                                <span class="status-chip ${session.delivered ? 'active' : 'inactive'}">
-                                    ${session.delivered ? 'Delivered' : 'Not Delivered'}
-                                </span>
-                            </div>
-                            
-                            <div class="session-card-actions">
-                                <button class="session-action-btn primary" onclick="toggleSessionDetails('${session.id}'); event.stopPropagation();">
-                                    View Details
-                                </button>
-                                <button class="session-action-btn secondary" onclick="openUpdateSessionModal('${session.id}'); event.stopPropagation();">
-                                    Edit
-                                </button>
-                                ${!session.contractSigned ? `
-                                <button class="session-action-btn secondary" onclick="openBookingAgreementModal('${session.id}'); event.stopPropagation();">
-                                    Contract
-                                </button>` : ''}
-                                ${!session.paid ? `
-                                <button class="session-action-btn secondary" onclick="createInvoiceWithTipping('${session.id}'); event.stopPropagation();">
-                                    Invoice
-                                </button>` : ''}
-                            </div>
-                            
-                            <!-- Hidden expandable details section -->
-                            <div class="session-details" id="details-${session.id}" style="display: none;">
-                                <div class="detail-section">
-                                    <h4>Contact Info</h4>
-                                    <div class="detail-item">
-                                        <strong>Email:</strong> <a href="mailto:${session.email}">${session.email}</a>
-                                    </div>
-                                    <div class="detail-item">
-                                        <strong>Phone:</strong> ${session.phoneNumber}
-                                    </div>
-                                </div>
-                                <div class="detail-section">
-                                    <h4>Actions</h4>
-                                    <div class="action-buttons" style="display: flex; flex-wrap: wrap; gap: 8px;">
-                                        <button onclick="openBookingAgreementModal('${session.id}'); event.stopPropagation();" class="btn btn-secondary">Booking Agreement</button>
-                                        <button onclick="createInvoiceWithTipping('${session.id}'); event.stopPropagation();" class="btn btn-secondary">Send Invoice</button>
-                                        <button onclick="sendDepositInvoice('${session.id}'); event.stopPropagation();" class="btn btn-secondary">Send Deposit</button>
-                                        <button onclick="openGalleryWindow('${session.id}'); event.stopPropagation();" class="btn btn-primary">Open Gallery</button>
-                                        <button onclick="sendGalleryToClient('${session.id}'); event.stopPropagation();" class="btn btn-success">Send to Client</button>
-                                        <button onclick="deleteSession('${session.id}'); event.stopPropagation();" class="btn btn-danger">Delete</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                    sessionElements.push(mobileCard);
-                } else {
-                    // Desktop card layout (existing)
                 const sessionId = session.id;
                 const sessionHTML = `
                 <div class="session-list-item" data-session-id="${sessionId}" onclick="toggleSessionDetails('${sessionId}')">
@@ -7074,7 +6957,6 @@ ${contract.contract_content}
                 </div>
                 `;
                 sessionElements.push(sessionHTML);
-                } // Close the else block for desktop
             }
             
             container.innerHTML = sessionElements.join('');
@@ -7089,16 +6971,12 @@ ${contract.contract_content}
             
             if (details.style.display === 'none') {
                 details.style.display = 'block';
-                if (expandIcon) {
-                    expandIcon.textContent = '▲';
-                    expandIcon.style.transform = 'rotate(180deg)';
-                }
+                expandIcon.textContent = '▲';
+                expandIcon.style.transform = 'rotate(180deg)';
             } else {
                 details.style.display = 'none';
-                if (expandIcon) {
-                    expandIcon.textContent = '▼';
-                    expandIcon.style.transform = 'rotate(0deg)';
-                }
+                expandIcon.textContent = '▼';
+                expandIcon.style.transform = 'rotate(0deg)';
             }
         }
 
@@ -16569,153 +16447,6 @@ END:VCALENDAR`;
     
     <!-- Admin Inline Editor with Photo Blocks -->
     <script src="admin-inline-editor.js"></script>
-    
-    <!-- Mobile Floating Action Button -->
-    <button class="mobile-fab" id="mobileFab" style="display: none;" onclick="if(document.getElementById('addSessionBtn')) document.getElementById('addSessionBtn').click(); else document.querySelector('.add-session-btn')?.click();">
-        <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-        </svg>
-    </button>
-    
-    <!-- Mobile Platform Navigation -->
-    <nav class="mobile-nav" id="mobileNav" style="display: none;">
-        <ul class="mobile-nav-list">
-            <li class="mobile-nav-item">
-                <a href="#" class="mobile-nav-link" data-tab="calendar">
-                    <svg class="mobile-nav-icon" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
-                    </svg>
-                    <span>Calendar</span>
-                </a>
-            </li>
-            <li class="mobile-nav-item">
-                <a href="#" class="mobile-nav-link active" data-tab="sessions">
-                    <svg class="mobile-nav-icon" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2l-5.5 9h11z M12 22l5.5-9h-11z M3.5 9L12 2l-1.5 7z M20.5 9L12 2l1.5 7z"/>
-                    </svg>
-                    <span>Sessions</span>
-                </a>
-            </li>
-            <li class="mobile-nav-item">
-                <a href="#" class="mobile-nav-link" data-tab="clients">
-                    <svg class="mobile-nav-icon" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
-                    </svg>
-                    <span>Clients</span>
-                </a>
-            </li>
-            <li class="mobile-nav-item">
-                <a href="#" class="mobile-nav-link" data-tab="gallery">
-                    <svg class="mobile-nav-icon" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
-                    </svg>
-                    <span>Gallery</span>
-                </a>
-            </li>
-            <li class="mobile-nav-item">
-                <a href="#" class="mobile-nav-link" data-tab="more">
-                    <svg class="mobile-nav-icon" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
-                    </svg>
-                    <span>More</span>
-                </a>
-            </li>
-        </ul>
-    </nav>
-    
-    <!-- Mobile Platform JavaScript -->
-    <script>
-        // Mobile platform initialization
-        document.addEventListener('DOMContentLoaded', function() {
-            // Check if we're on mobile viewport
-            const checkMobileView = () => {
-                const isMobile = window.innerWidth <= 768;
-                const mobileNav = document.getElementById('mobileNav');
-                const desktopNav = document.querySelector('.sidebar-nav');
-                const mobileFab = document.getElementById('mobileFab');
-                
-                if (isMobile) {
-                    // Show mobile nav and FAB
-                    if (mobileNav) mobileNav.style.display = 'block';
-                    if (mobileFab) mobileFab.style.display = 'flex';
-                    if (desktopNav) desktopNav.style.display = 'none';
-                    
-                    // Add mobile container class to body
-                    document.body.classList.add('mobile-view');
-                    
-                    // Adjust content padding for mobile nav
-                    const mainContent = document.querySelector('.main-content');
-                    if (mainContent) {
-                        mainContent.style.paddingBottom = '80px';
-                    }
-                    
-                    // Hide desktop "Add Session" button on mobile
-                    const addSessionBtn = document.querySelector('.add-session-btn');
-                    if (addSessionBtn) addSessionBtn.style.display = 'none';
-                } else {
-                    // Show desktop nav
-                    if (mobileNav) mobileNav.style.display = 'none';
-                    if (mobileFab) mobileFab.style.display = 'none';
-                    if (desktopNav) desktopNav.style.display = 'block';
-                    
-                    // Remove mobile container class
-                    document.body.classList.remove('mobile-view');
-                    
-                    // Reset content padding
-                    const mainContent = document.querySelector('.main-content');
-                    if (mainContent) {
-                        mainContent.style.paddingBottom = '';
-                    }
-                    
-                    // Show desktop "Add Session" button 
-                    const addSessionBtn = document.querySelector('.add-session-btn');
-                    if (addSessionBtn) addSessionBtn.style.display = '';
-                }
-            };
-            
-            // Initial check
-            checkMobileView();
-            
-            // Check on resize
-            let resizeTimer;
-            window.addEventListener('resize', () => {
-                clearTimeout(resizeTimer);
-                resizeTimer = setTimeout(checkMobileView, 250);
-            });
-            
-            // Mobile navigation click handlers
-            const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
-            mobileNavLinks.forEach(link => {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    
-                    // Remove active class from all links
-                    mobileNavLinks.forEach(l => l.classList.remove('active'));
-                    
-                    // Add active class to clicked link
-                    this.classList.add('active');
-                    
-                    // Get tab name
-                    const tabName = this.dataset.tab;
-                    
-                    // Map mobile tabs to existing desktop tabs
-                    const tabMapping = {
-                        'calendar': 'calendar',
-                        'sessions': 'sessions',
-                        'clients': 'clients',
-                        'gallery': 'gallery',
-                        'more': 'settings'
-                    };
-                    
-                    // Trigger existing tab switching logic
-                    const desktopTab = tabMapping[tabName];
-                    if (desktopTab && window.switchToTab) {
-                        window.switchToTab(desktopTab);
-                    }
-                });
-            });
-        });
-    </script>
 
 </body>
 </html>

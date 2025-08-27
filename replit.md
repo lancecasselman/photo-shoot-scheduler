@@ -6,14 +6,11 @@ A streamlined photography business management platform designed for professional
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 Website Builder Interface: CapCut-style with full-screen preview and bottom toolbar with horizontal scrolling tools.
-Keep user logged in during development sessions.
 
 ## System Architecture
 
 ### Frontend Architecture
 The system utilizes a static HTML/CSS/JavaScript multi-page application with vanilla JavaScript, employing a responsive, mobile-first design using CSS Grid and Flexbox. It incorporates PWA capabilities via a service worker for offline functionality and a component-based UI with tabbed navigation. The CapCut-style Website Builder features full-screen preview, drag-and-drop functionality, editable components (formatting, alignment, fonts, colors, spacing), and includes 21 professional fonts categorized into Serif, Sans-Serif, Display, and Script. The bottom toolbar is resizable with saved preferences.
-
-**Mobile Interface (August 2025):** Complete mobile-optimized interface with bottom navigation bar, floating action button, card-based session layouts, and touch-optimized interactions. All desktop functionality preserved with responsive design switching at 768px viewport width.
 
 ### Backend Architecture
 The backend is built on a Node.js/Express server handling API routes and business logic. Authentication and subscription verification are handled exclusively at the server level through secure routes.
