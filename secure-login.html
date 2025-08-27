@@ -471,15 +471,11 @@
                     const isCapacitor = window.Capacitor !== undefined;
                     const isReplit = window.location.hostname.includes('replit.dev') || window.location.hostname.includes('worf.replit.dev');
                     
-                    // Show domain authorization error for Replit
+                    // Debug Google authentication on Replit
                     if (isReplit) {
-                        hideLoading();
-                        showError('Google login requires domain authorization. The current Replit domain needs to be added to Firebase authorized domains.');
-                        setTimeout(() => {
-                            showInfo('Please use email/password login while Google authentication is being set up.');
-                            document.querySelector('#email').focus();
-                        }, 3000);
-                        return;
+                        console.log('🔧 REPLIT DEBUG: Domain should be authorized, attempting Google auth...');
+                        console.log('🔧 Current domain:', window.location.hostname);
+                        console.log('🔧 Firebase config:', window.firebase?.app()?.options || 'Not available');
                     }
                     
                     let result;
@@ -491,8 +487,17 @@
                             return;
                         } catch (error) {
                             console.error('📱 MOBILE: Google redirect failed:', error);
+                            console.error('📱 ERROR DETAILS:', {
+                                code: error.code,
+                                message: error.message,
+                                details: error
+                            });
                             hideLoading();
-                            showError('Google login failed. Please try email/password login.');
+                            showError(`Google mobile login failed: ${error.message}`);
+                            setTimeout(() => {
+                                showInfo('Please try email/password login instead.');
+                                document.querySelector('#email').focus();
+                            }, 3000);
                             return;
                         }
                     } else {
@@ -501,8 +506,17 @@
                             result = await window.signInWithPopup(window.auth, window.googleProvider);
                         } catch (error) {
                             console.error('💻 DESKTOP: Google popup failed:', error);
+                            console.error('💻 ERROR DETAILS:', {
+                                code: error.code,
+                                message: error.message,
+                                details: error
+                            });
                             hideLoading();
-                            showError('Google login failed: ' + error.message);
+                            showError(`Google desktop login failed: ${error.message}`);
+                            setTimeout(() => {
+                                showInfo('Please try email/password login instead.');
+                                document.querySelector('#email').focus();
+                            }, 3000);
                             return;
                         }
                     }
