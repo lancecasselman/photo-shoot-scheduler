@@ -17,6 +17,7 @@
     
     <!-- Mobile Platform CSS Framework -->
     <link rel="stylesheet" href="/mobile-platform.css">
+    <link rel="stylesheet" href="/mobile-sessions.css">
     
     <!-- Authentication is handled at the server level via /app route -->
     
@@ -6782,12 +6783,14 @@ ${contract.contract_content}
             }
             
             const container = document.getElementById('sessionsContainer');
+            const isMobile = window.innerWidth <= 768;
             
             if (sessions.length === 0) {
                 container.innerHTML = `
-                    <div class="empty-state">
-                        <h3>No sessions yet</h3>
-                        <p>Add your first photography session above!</p>
+                    <div class="${isMobile ? 'empty-state-mobile' : 'empty-state'}">
+                        ${isMobile ? '<svg class="empty-state-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>' : ''}
+                        <h3 class="${isMobile ? 'empty-state-title' : ''}">No sessions yet</h3>
+                        <p class="${isMobile ? 'empty-state-text' : ''}">Add your first photography session above!</p>
                     </div>
                 `;
                 return;
@@ -6799,6 +6802,90 @@ ${contract.contract_content}
             const sessionElements = [];
             
             for (const session of visibleSessions) {
+                // Check if we should use mobile or desktop card layout
+                if (isMobile) {
+                    // Mobile card layout
+                    const sessionDate = new Date(session.dateTime);
+                    const formattedDate = sessionDate.toLocaleDateString('en-US', { 
+                        weekday: 'short', 
+                        month: 'short', 
+                        day: 'numeric' 
+                    });
+                    const formattedTime = sessionDate.toLocaleTimeString('en-US', { 
+                        hour: 'numeric', 
+                        minute: '2-digit' 
+                    });
+                    
+                    const mobileCard = `
+                        <div class="session-card-mobile" data-session-id="${session.id}">
+                            <div class="session-card-header" onclick="toggleSessionDetails('${session.id}')">
+                                <span class="session-type-badge">${session.sessionType}</span>
+                                <div class="session-client-name">${session.clientName}</div>
+                                <div class="session-date-time">
+                                    <svg class="session-info-icon" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/>
+                                    </svg>
+                                    ${formattedDate} at ${formattedTime}
+                                </div>
+                            </div>
+                            
+                            <div class="session-card-body">
+                                <div class="session-info-grid">
+                                    <div class="session-info-item">
+                                        <svg class="session-info-icon" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                                        </svg>
+                                        <span class="session-info-value">${session.location}</span>
+                                    </div>
+                                    
+                                    <div class="session-info-item">
+                                        <svg class="session-info-icon" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                                        </svg>
+                                        <span class="session-info-value">$${session.price.toFixed(2)}</span>
+                                    </div>
+                                    
+                                    ${session.phoneNumber ? `
+                                    <div class="session-info-item">
+                                        <svg class="session-info-icon" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+                                        </svg>
+                                        <span class="session-info-value">${session.phoneNumber}</span>
+                                    </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                            
+                            <div class="session-status-row">
+                                <span class="status-chip ${session.contractSigned ? 'active' : 'inactive'}">
+                                    Contract ${session.contractSigned ? 'Signed' : 'Pending'}
+                                </span>
+                                <span class="status-chip ${session.paid ? 'active' : 'pending'}">
+                                    ${session.paid ? 'Paid' : 'Payment Due'}
+                                </span>
+                                <span class="status-chip ${session.delivered ? 'active' : 'inactive'}">
+                                    ${session.delivered ? 'Delivered' : 'Not Delivered'}
+                                </span>
+                            </div>
+                            
+                            <div class="session-card-actions">
+                                <button class="session-action-btn primary" onclick="toggleSessionDetails('${session.id}'); event.stopPropagation();">
+                                    View Details
+                                </button>
+                                <button class="session-action-btn secondary" onclick="editSession('${session.id}'); event.stopPropagation();">
+                                    Edit
+                                </button>
+                            </div>
+                            
+                            <!-- Hidden expandable details section -->
+                            <div class="session-details" id="details-${session.id}" style="display: none;">
+                                <!-- Details content moved here for mobile -->
+                            </div>
+                        </div>
+                    `;
+                    sessionElements.push(mobileCard);
+                } else {
+                    // Desktop card layout (existing)
                 const sessionId = session.id;
                 const sessionHTML = `
                 <div class="session-list-item" data-session-id="${sessionId}" onclick="toggleSessionDetails('${sessionId}')">
@@ -6960,6 +7047,7 @@ ${contract.contract_content}
                 </div>
                 `;
                 sessionElements.push(sessionHTML);
+                } // Close the else block for desktop
             }
             
             container.innerHTML = sessionElements.join('');
@@ -16451,6 +16539,13 @@ END:VCALENDAR`;
     <!-- Admin Inline Editor with Photo Blocks -->
     <script src="admin-inline-editor.js"></script>
     
+    <!-- Mobile Floating Action Button -->
+    <button class="mobile-fab" id="mobileFab" style="display: none;" onclick="showAddSessionModal()">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+        </svg>
+    </button>
+    
     <!-- Mobile Platform Navigation -->
     <nav class="mobile-nav" id="mobileNav" style="display: none;">
         <ul class="mobile-nav-list">
@@ -16506,10 +16601,12 @@ END:VCALENDAR`;
                 const isMobile = window.innerWidth <= 768;
                 const mobileNav = document.getElementById('mobileNav');
                 const desktopNav = document.querySelector('.sidebar-nav');
+                const mobileFab = document.getElementById('mobileFab');
                 
                 if (isMobile) {
-                    // Show mobile nav
+                    // Show mobile nav and FAB
                     if (mobileNav) mobileNav.style.display = 'block';
+                    if (mobileFab) mobileFab.style.display = 'flex';
                     if (desktopNav) desktopNav.style.display = 'none';
                     
                     // Add mobile container class to body
@@ -16520,9 +16617,14 @@ END:VCALENDAR`;
                     if (mainContent) {
                         mainContent.style.paddingBottom = '80px';
                     }
+                    
+                    // Hide desktop "Add Session" button on mobile
+                    const addSessionBtn = document.querySelector('.add-session-btn');
+                    if (addSessionBtn) addSessionBtn.style.display = 'none';
                 } else {
                     // Show desktop nav
                     if (mobileNav) mobileNav.style.display = 'none';
+                    if (mobileFab) mobileFab.style.display = 'none';
                     if (desktopNav) desktopNav.style.display = 'block';
                     
                     // Remove mobile container class
@@ -16533,6 +16635,10 @@ END:VCALENDAR`;
                     if (mainContent) {
                         mainContent.style.paddingBottom = '';
                     }
+                    
+                    // Show desktop "Add Session" button 
+                    const addSessionBtn = document.querySelector('.add-session-btn');
+                    if (addSessionBtn) addSessionBtn.style.display = '';
                 }
             };
             
