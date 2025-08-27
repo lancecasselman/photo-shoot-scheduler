@@ -948,12 +948,11 @@
 
         .client-name {
             font-size: 1.6em;
-            color: #ffffff;
+            color: #000000 !important;
             margin: 0 0 var(--spacing-xs) 0;
             font-weight: 700;
             font-family: var(--font-heading);
             letter-spacing: -0.02em;
-            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
             transition: all 0.3s ease;
             position: relative;
         }
@@ -991,7 +990,7 @@
             display: flex;
             gap: var(--spacing-md);
             font-size: 0.9em;
-            color: var(--text-secondary);
+            color: #000000 !important;
             flex-wrap: wrap;
             font-family: var(--font-body);
         }
@@ -1021,15 +1020,15 @@
 
         .session-date {
             font-weight: 600;
-            color: var(--text-primary);
+            color: #000000 !important;
         }
 
         .session-location {
-            color: var(--accent-sage);
+            color: #000000 !important;
         }
 
         .session-price {
-            color: var(--gold-muted);
+            color: #000000 !important;
             font-weight: 600;
             font-size: 1.1em;
         }
@@ -1060,14 +1059,13 @@
         .detail-section h4,
         .session-file-actions h4,
         .session-notes h4 {
-            color: #ffffff;
+            color: #000000 !important;
             font-family: var(--font-heading);
             margin: 0 0 var(--spacing-sm) 0;
             font-size: 1.2rem;
-            border-bottom: 2px solid var(--accent-sage);
+            border-bottom: 2px solid #e5e7eb;
             padding-bottom: var(--spacing-xs);
             font-weight: 600;
-            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
         }
 
         .detail-item {
@@ -4116,7 +4114,15 @@
         }
         
         /* GLOBAL OVERRIDE: Force all text to be black */
-        body * {
+        body *,
+        .session-list-item *,
+        .session-info *,
+        .session-meta *,
+        label,
+        span,
+        p,
+        h1, h2, h3, h4, h5, h6,
+        div {
             color: #000000 !important;
         }
 
@@ -5517,21 +5523,21 @@
                     <!-- Collapsible Filter Sections -->
                     <div id="status-filters" class="filter-dropdown" style="display: none; background: rgba(16, 185, 129, 0.08); border-radius: 12px; padding: 20px; margin: 10px 0; border-left: 4px solid var(--primary-accent); backdrop-filter: blur(10px); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);">
                         <div class="checkbox-filters" style="display: flex; gap: 24px; flex-wrap: wrap;">
-                            <label style="display: flex; align-items: center; gap: 10px; color: var(--text-primary); font-weight: 500; cursor: pointer; transition: all 0.3s ease;"><input type="checkbox" id="filterContractSigned" onchange="filterSessions()" style="margin: 0; accent-color: var(--primary-accent); transform: scale(1.1);"> Contract Signed</label>
-                            <label style="display: flex; align-items: center; gap: 10px; color: var(--text-primary); font-weight: 500; cursor: pointer; transition: all 0.3s ease;"><input type="checkbox" id="filterPaid" onchange="filterSessions()" style="margin: 0; accent-color: var(--primary-accent); transform: scale(1.1);"> Paid</label>
-                            <label style="display: flex; align-items: center; gap: 10px; color: var(--text-primary); font-weight: 500; cursor: pointer; transition: all 0.3s ease;"><input type="checkbox" id="filterDelivered" onchange="filterSessions()" style="margin: 0; accent-color: var(--primary-accent); transform: scale(1.1);">  Delivered</label>
+                            <label style="display: flex; align-items: center; gap: 10px; color: #000000; font-weight: 500; cursor: pointer; transition: all 0.3s ease;"><input type="checkbox" id="filterContractSigned" onchange="filterSessions()" style="margin: 0; accent-color: var(--primary-accent); transform: scale(1.1);"> Contract Signed</label>
+                            <label style="display: flex; align-items: center; gap: 10px; color: #000000; font-weight: 500; cursor: pointer; transition: all 0.3s ease;"><input type="checkbox" id="filterPaid" onchange="filterSessions()" style="margin: 0; accent-color: var(--primary-accent); transform: scale(1.1);"> Paid</label>
+                            <label style="display: flex; align-items: center; gap: 10px; color: #000000; font-weight: 500; cursor: pointer; transition: all 0.3s ease;"><input type="checkbox" id="filterDelivered" onchange="filterSessions()" style="margin: 0; accent-color: var(--primary-accent); transform: scale(1.1);">  Delivered</label>
                         </div>
                     </div>
 
                     <div id="date-filters" class="filter-dropdown" style="display: none; background: rgba(16, 185, 129, 0.08); border-radius: 12px; padding: 20px; margin: 10px 0; border-left: 4px solid var(--primary-accent); backdrop-filter: blur(10px); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);">
                         <div class="date-range-controls" style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
                             <div style="display: flex; align-items: center; gap: 10px;">
-                                <label style="color: var(--text-primary); font-weight: 600;">From:</label>
+                                <label style="color: #000000; font-weight: 600;">From:</label>
                                 <input type="date" id="dateFromFilter" onchange="filterSessions()" style="padding: 10px; border: 2px solid var(--primary-accent); border-radius: 6px; background: var(--bg-elevated); color: var(--text-primary);">
                             </div>
-                            <span style="color: var(--text-primary); font-weight: 600;">to</span>
+                            <span style="color: #000000; font-weight: 600;">to</span>
                             <div style="display: flex; align-items: center; gap: 10px;">
-                                <label style="color: var(--text-primary); font-weight: 600;">To:</label>
+                                <label style="color: #000000; font-weight: 600;">To:</label>
                                 <input type="date" id="dateToFilter" onchange="filterSessions()" style="padding: 10px; border: 2px solid var(--primary-accent); border-radius: 6px; background: var(--bg-elevated); color: var(--text-primary);">
                             </div>
                         </div>
@@ -5814,7 +5820,7 @@
                 <div id="contractSendModal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000;">
                     <div class="modal-content" style="background: white; margin: 50px auto; padding: 30px; width: 90%; max-width: 600px; border-radius: 10px;">
                         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #d4af37; padding-bottom: 15px;">
-                            <h2 style="color: #8b7355; margin: 0;">${modalTitle}</h2>
+                            <h2 style="color: #000000; margin: 0;">${modalTitle}</h2>
                             <button onclick="closeContractSendModal()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
                         </div>
                         
@@ -5826,7 +5832,7 @@
                         
                         <div class="contract-send-info" style="margin-bottom: 25px;">
                             <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                                <h4 style="color: #8b7355; margin: 0 0 15px 0;">Contract Details</h4>
+                                <h4 style="color: #000000; margin: 0 0 15px 0;">Contract Details</h4>
                                 <p><strong>Title:</strong> ${contractData.contract?.contract_title || 'Contract'}</p>
                                 <p><strong>Client:</strong> ${contractData.contract?.client_name || 'Client'}</p>
                                 <p><strong>Email:</strong> ${contractData.contract?.client_email || 'No email'}</p>
@@ -6162,7 +6168,7 @@ ${contract.contract_content}
                     </div>
                     <div style="padding:30px;">
                         <div style="background:rgba(212,175,55,0.1);border:1px solid #d4af37;border-radius:12px;padding:20px;margin-bottom:25px;text-align:center;">
-                            <h4 style="color:#d4af37;margin:0 0 10px 0;">${session.clientName}</h4>
+                            <h4 style="color:#000000;margin:0 0 10px 0;">${session.clientName}</h4>
                             <p style="margin:0;opacity:0.8;">${session.sessionType} - ${new Date(session.dateTime).toLocaleDateString()}</p>
                             <p style="margin:0;opacity:0.8;"> ${session.email} |  ${session.phoneNumber}</p>
                         </div>
@@ -6196,7 +6202,7 @@ ${contract.contract_content}
                         </div>
                         
                         <div id="paymentCalculation" style="background:rgba(212,175,55,0.1);border:1px solid #d4af37;border-radius:12px;padding:20px;margin:20px 0;text-align:center;display:none;">
-                            <h5 style="color:#d4af37;margin:0 0 15px 0;"> Payment Breakdown</h5>
+                            <h5 style="color:#000000;margin:0 0 15px 0;"> Payment Breakdown</h5>
                             <div id="calculationResults"></div>
                         </div>
                         
