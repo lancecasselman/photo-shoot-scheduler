@@ -75,21 +75,23 @@
             transition: height 0.2s ease;
         }
         
-        /* Resize Handle */
+        /* Resize Handle - Mobile Optimized */
         .resize-handle {
             position: absolute;
-            top: -5px;
+            top: -8px;
             left: 0;
             right: 0;
-            height: 10px;
+            height: 16px; /* Increased for better mobile touch target */
             cursor: ns-resize;
             z-index: 1001;
             display: flex;
             justify-content: center;
             align-items: center;
+            touch-action: none; /* Prevents browser scroll interference */
         }
         
-        .resize-handle:hover .resize-grip {
+        .resize-handle:hover .resize-grip,
+        .resize-handle:active .resize-grip {
             background: #667eea;
             width: 60px;
         }
@@ -100,6 +102,52 @@
             background: #cbd5e0;
             border-radius: 2px;
             transition: all 0.2s;
+            position: relative;
+        }
+        
+        /* Mobile-specific improvements */
+        @media (max-width: 768px) {
+            .resize-handle {
+                height: 20px; /* Even larger touch target on mobile */
+                top: -10px;
+            }
+            
+            .resize-grip {
+                width: 50px; /* Wider grip on mobile */
+                height: 5px; /* Thicker grip on mobile */
+                background: #94a3b8; /* More visible on mobile */
+            }
+            
+            .resize-handle:active .resize-grip {
+                background: #667eea;
+                width: 70px;
+                box-shadow: 0 0 8px rgba(102, 126, 234, 0.3);
+            }
+            
+            /* Mobile toolbar improvements */
+            .builder-tools {
+                min-height: 140px; /* Larger minimum height on mobile */
+            }
+            
+            .tools-content {
+                padding: 10px 15px; /* More padding on mobile */
+            }
+            
+            .component-item {
+                min-height: 60px; /* Larger touch targets */
+                padding: 10px;
+            }
+            
+            .tool-tab {
+                padding: 0 15px; /* Larger touch targets for tabs */
+                min-height: 40px;
+            }
+            
+            /* Improve scrolling on mobile */
+            .horizontal-scroll {
+                -webkit-overflow-scrolling: touch;
+                scroll-behavior: smooth;
+            }
         }
 
         .tools-header {
@@ -2599,14 +2647,22 @@
                 element.style.position = 'relative';
                 element.appendChild(dragHandle);
                 
-                // Show handle on hover
+                // Show handle on hover and touch (mobile-friendly)
                 element.addEventListener('mouseenter', () => {
                     dragHandle.style.opacity = '0.8';
                 });
                 
                 element.addEventListener('mouseleave', () => {
-                    dragHandle.style.opacity = '0';
+                    if (!isDragging) dragHandle.style.opacity = '0';
                 });
+                
+                // Mobile: Show handle on touch/tap
+                element.addEventListener('touchstart', () => {
+                    dragHandle.style.opacity = '0.8';
+                    setTimeout(() => {
+                        if (!isDragging) dragHandle.style.opacity = '0';
+                    }, 3000); // Hide after 3 seconds if not dragging
+                }, { passive: true });
                 
                 // Make draggable
                 let isDragging = false;
@@ -2614,10 +2670,13 @@
                 let initialY;
                 let yOffset = 0;
                 
+                // Mobile-friendly drag events (both mouse and touch)
                 dragHandle.addEventListener('mousedown', dragStart);
+                dragHandle.addEventListener('touchstart', dragStart, { passive: false });
                 
                 function dragStart(e) {
-                    initialY = e.clientY - yOffset;
+                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                    initialY = clientY - yOffset;
                     isDragging = true;
                     
                     element.style.cursor = 'grabbing';
@@ -2625,21 +2684,27 @@
                     element.style.transition = 'none';
                     element.style.zIndex = '1000';
                     
+                    // Add both mouse and touch listeners
                     document.addEventListener('mousemove', drag);
                     document.addEventListener('mouseup', dragEnd);
+                    document.addEventListener('touchmove', drag, { passive: false });
+                    document.addEventListener('touchend', dragEnd);
+                    
+                    e.preventDefault();
                 }
                 
                 function drag(e) {
                     if (!isDragging) return;
                     
                     e.preventDefault();
-                    currentY = e.clientY - initialY;
+                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                    currentY = clientY - initialY;
                     yOffset = currentY;
                     
                     element.style.transform = `translateY(${currentY}px)`;
                     
                     // Check for swap positions
-                    checkSwapPosition(element, e.clientY);
+                    checkSwapPosition(element, clientY);
                 }
                 
                 function dragEnd(e) {
@@ -2653,8 +2718,11 @@
                     
                     yOffset = 0;
                     
+                    // Remove all event listeners
                     document.removeEventListener('mousemove', drag);
                     document.removeEventListener('mouseup', dragEnd);
+                    document.removeEventListener('touchmove', drag);
+                    document.removeEventListener('touchend', dragEnd);
                 }
             });
         }
@@ -10084,7 +10152,7 @@
             }
         }
         
-        // Toolbar Resize Functionality
+        // Toolbar Resize Functionality - Mobile Friendly with Touch Support
         function initializeToolbarResize() {
             const resizeHandle = document.getElementById('resize-handle');
             const builderTools = document.getElementById('builder-tools');
@@ -10103,36 +10171,93 @@
                 }
             }
             
-            resizeHandle.addEventListener('mousedown', (e) => {
+            // Enhanced mobile-friendly resize handle styling
+            resizeHandle.style.cursor = 'ns-resize';
+            resizeHandle.style.touchAction = 'none'; // Prevents scrolling during drag
+            
+            // Start resize function (works for both mouse and touch)
+            function startResize(clientY, event) {
                 isResizing = true;
-                startY = e.clientY;
+                startY = clientY;
                 startHeight = builderTools.offsetHeight;
                 document.body.style.cursor = 'ns-resize';
+                document.body.style.userSelect = 'none'; // Prevent text selection
                 
-                // Prevent text selection during resize
-                e.preventDefault();
-            });
+                // Visual feedback for mobile
+                resizeHandle.style.background = 'rgba(102, 126, 234, 0.2)';
+                
+                // Prevent default behavior
+                event.preventDefault();
+                event.stopPropagation();
+            }
             
-            document.addEventListener('mousemove', (e) => {
+            // Continue resize function (works for both mouse and touch)
+            function continueResize(clientY) {
                 if (!isResizing) return;
                 
-                const deltaY = startY - e.clientY;
+                const deltaY = startY - clientY;
                 const newHeight = Math.min(400, Math.max(120, startHeight + deltaY));
                 
                 builderTools.style.height = newHeight + 'px';
                 builderCanvas.style.marginBottom = newHeight + 'px';
-            });
+                
+                // Provide visual feedback on mobile
+                const percentage = ((newHeight - 120) / (400 - 120) * 100).toFixed(0);
+                resizeHandle.querySelector('.resize-grip').style.width = Math.max(40, 40 + (percentage / 5)) + 'px';
+            }
             
-            document.addEventListener('mouseup', () => {
+            // End resize function (works for both mouse and touch)
+            function endResize() {
                 if (isResizing) {
                     isResizing = false;
                     document.body.style.cursor = '';
+                    document.body.style.userSelect = '';
+                    resizeHandle.style.background = '';
+                    
+                    // Reset visual feedback
+                    resizeHandle.querySelector('.resize-grip').style.width = '';
                     
                     // Save the new height to localStorage
                     const currentHeight = builderTools.offsetHeight;
                     localStorage.setItem('toolbarHeight', currentHeight);
+                    
+                    console.log('📱 TOOLBAR: Resize completed, height saved:', currentHeight);
                 }
+            }
+            
+            // Mouse Events (Desktop)
+            resizeHandle.addEventListener('mousedown', (e) => {
+                startResize(e.clientY, e);
             });
+            
+            document.addEventListener('mousemove', (e) => {
+                continueResize(e.clientY);
+            });
+            
+            document.addEventListener('mouseup', endResize);
+            
+            // Touch Events (Mobile) - PRIMARY FIX
+            resizeHandle.addEventListener('touchstart', (e) => {
+                const touch = e.touches[0];
+                startResize(touch.clientY, e);
+                console.log('📱 TOOLBAR: Touch resize started');
+            }, { passive: false });
+            
+            document.addEventListener('touchmove', (e) => {
+                if (!isResizing) return;
+                const touch = e.touches[0];
+                continueResize(touch.clientY);
+                e.preventDefault(); // Prevent scrolling
+            }, { passive: false });
+            
+            document.addEventListener('touchend', (e) => {
+                endResize();
+                console.log('📱 TOOLBAR: Touch resize ended');
+            });
+            
+            document.addEventListener('touchcancel', endResize);
+            
+            console.log('📱 TOOLBAR: Mobile-friendly resize initialized with touch support');
         }
         
         // Initialize everything when DOM is loaded
