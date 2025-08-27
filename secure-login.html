@@ -552,21 +552,34 @@
                                 result = await window.signInWithPopup(window.auth, window.googleProvider);
                                 console.log('✅ MOBILE SUCCESS: Google authentication worked!', result.user.email);
                             } catch (popupError) {
-                                console.log('📱 POPUP failed, trying redirect...', popupError.code);
+                                console.log('📱 POPUP failed:', popupError.code, popupError.message);
                                 
+                                // Handle domain authorization error specifically
+                                if (popupError.code === 'auth/unauthorized-domain') {
+                                    hideLoading();
+                                    showError(`Domain authorization required. Please add ${window.location.hostname} to Firebase authorized domains.`);
+                                    setTimeout(() => {
+                                        showInfo('Use email/password login below while domain is being authorized.');
+                                        document.querySelector('#email')?.focus();
+                                    }, 3000);
+                                    return;
+                                }
+                                
+                                // Handle network/popup issues
                                 if (popupError.code === 'auth/popup-blocked' || 
                                     popupError.code === 'auth/network-request-failed') {
                                     
+                                    console.log('📱 Trying redirect authentication...');
                                     try {
                                         await window.signInWithRedirect(window.auth, window.googleProvider);
                                         return; // Will be handled by redirect handler
                                     } catch (redirectError) {
                                         console.error('📱 Both popup and redirect failed:', redirectError);
                                         hideLoading();
-                                        showError('Google login failed. Please use email/password login below.');
+                                        showError(`Google login failed: ${redirectError.message}. Please use email/password login.`);
                                         setTimeout(() => {
                                             document.querySelector('#email')?.focus();
-                                        }, 1000);
+                                        }, 1500);
                                         return;
                                     }
                                 } else {
