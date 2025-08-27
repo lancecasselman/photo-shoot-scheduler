@@ -12253,7 +12253,7 @@ END:VCALENDAR`;
                 
                 // Force redirect to auth page with replace to prevent back button issues
                 console.log('Redirecting to auth page...');
-                window.location.replace('/auth.html');
+                window.location.replace('/secure-login.html');
                 
             } catch (error) {
                 console.error('Logout error:', error);
@@ -12261,7 +12261,7 @@ END:VCALENDAR`;
                 localStorage.clear();
                 sessionStorage.clear();
                 localStorage.setItem('manualLogout', 'true');
-                window.location.replace('/auth.html');
+                window.location.replace('/secure-login.html');
             }
         }
 

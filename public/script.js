@@ -30,7 +30,7 @@ async function checkAuth() {
     }
 
     // Check if we just came from auth page
-    const fromAuth = document.referrer.includes('auth.html') || sessionStorage.getItem('fromAuth') === 'true';
+    const fromAuth = document.referrer.includes('secure-login.html') || sessionStorage.getItem('fromAuth') === 'true';
     
     // Check if we're on iOS and use native auth handler
     if (window.nativeAuth && (window.nativeAuth.isIOS || window.nativeAuth.isCapacitor)) {
@@ -96,7 +96,7 @@ async function checkAuth() {
         console.error('Auth check failed:', error);
         
         // Only redirect on network errors if not coming from auth page
-        if (!fromAuth && !sessionStorage.getItem('fromAuth') && !document.referrer.includes('auth.html')) {
+        if (!fromAuth && !sessionStorage.getItem('fromAuth') && !document.referrer.includes('secure-login.html')) {
             // Only redirect on certain error types
             if (error.message && (error.message.includes('Failed to fetch') || error.message.includes('NetworkError'))) {
                 console.log(' AUTH CHECK: Network error detected, scheduling redirect...');
@@ -166,9 +166,9 @@ function redirectToAuth() {
     // Debug stack trace to see who called this function
     console.log('🚨 REDIRECT STACK TRACE:', new Error().stack);
     
-    if (window.location.pathname !== '/auth.html') {
+    if (window.location.pathname !== '/secure-login.html') {
         console.log('🚨 PERFORMING REDIRECT TO AUTH.HTML...');
-        window.location.href = '/auth.html';
+        window.location.href = '/secure-login.html';
     } else {
         console.log('🚨 Already on auth page, skipping redirect');
     }
@@ -2203,7 +2203,7 @@ async function firebaseLogout() {
         console.log('Logout complete, redirecting...');
         
         // Force redirect with page reload
-        window.location.replace('/auth.html');
+        window.location.replace('/secure-login.html');
         
     } catch (error) {
         console.error('Logout error:', error);
@@ -2214,7 +2214,7 @@ async function firebaseLogout() {
         sessionStorage.clear();
         localStorage.setItem('manualLogout', 'true');
         
-        window.location.replace('/auth.html');
+        window.location.replace('/secure-login.html');
     }
 }
 
@@ -2227,7 +2227,7 @@ async function initializePage() {
 
     // Add delay if coming from auth page to allow session establishment
     const urlParams = new URLSearchParams(window.location.search);
-    const fromAuth = document.referrer.includes('auth.html') || sessionStorage.getItem('fromAuth') === 'true';
+    const fromAuth = document.referrer.includes('secure-login.html') || sessionStorage.getItem('fromAuth') === 'true';
     
     if (fromAuth) {
         console.log(' INIT PAGE: Coming from auth page - clearing logout flags and waiting for session establishment...');
@@ -2294,7 +2294,7 @@ window.addEventListener('load', function() {
     
     // Check if we're stuck in a redirect loop
     const urlParams = new URLSearchParams(window.location.search);
-    const fromAuth = document.referrer.includes('auth.html') || sessionStorage.getItem('fromAuth') === 'true';
+    const fromAuth = document.referrer.includes('secure-login.html') || sessionStorage.getItem('fromAuth') === 'true';
     console.log(' MAIN APP: Coming from auth?', fromAuth);
     
     initializePage();

@@ -20,7 +20,7 @@ class SubscriptionAuthMiddleware {
             if (!req.session?.user?.uid) {
                 return res.status(401).json({ 
                     error: 'Authentication required',
-                    redirectTo: '/auth.html'
+                    redirectTo: '/secure-login.html'
                 });
             }
 
