@@ -29,16 +29,29 @@
         window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
         window.signOut = signOut;
         
-        // Google Auth Provider with custom parameters
+        // Google Auth Provider with enhanced mobile compatibility
         window.googleProvider = new GoogleAuthProvider();
         
         // Add custom parameters for better compatibility
         window.googleProvider.addScope('email');
         window.googleProvider.addScope('profile');
-        window.googleProvider.setCustomParameters({
+        
+        // Enhanced parameters for mobile compatibility
+        const isMobileDetected = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const customParams = {
             prompt: 'select_account',
-            hd: '' // Allow any domain
-        });
+            hd: '', // Allow any domain
+        };
+        
+        // Add mobile-specific parameters
+        if (isMobileDetected) {
+            customParams.display = 'popup';
+            customParams.access_type = 'online';
+        }
+        
+        window.googleProvider.setCustomParameters(customParams);
+        
+        console.log('🔧 Google Provider configured for mobile:', { isMobileDetected, customParams });
         
         window.signInWithPopup = signInWithPopup;
         window.signInWithRedirect = signInWithRedirect;
@@ -471,11 +484,22 @@
                     const isCapacitor = window.Capacitor !== undefined;
                     const isReplit = window.location.hostname.includes('replit.dev') || window.location.hostname.includes('worf.replit.dev');
                     
-                    // Debug Google authentication on Replit
+                    // Enhanced mobile Google authentication strategy
                     if (isReplit) {
                         console.log('🔧 REPLIT DEBUG: Domain should be authorized, attempting Google auth...');
                         console.log('🔧 Current domain:', window.location.hostname);
                         console.log('🔧 Firebase config:', window.firebase?.app()?.options || 'Not available');
+                        
+                        // For mobile on Replit, temporarily redirect to email/password
+                        if (isMobile) {
+                            hideLoading();
+                            showError('Mobile Google login is experiencing issues on Replit. Please use email/password login.');
+                            setTimeout(() => {
+                                showInfo('Enter your email and password below to sign in.');
+                                document.querySelector('#email').focus();
+                            }, 2000);
+                            return;
+                        }
                     }
                     
                     let result;
