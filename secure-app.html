@@ -201,47 +201,47 @@
             box-sizing: border-box;
         }
         
-        /* Dark Modern Photography Platform Design System */
+        /* Clean Professional Photography Platform Design System */
         :root {
-            /* Dark Modern Color Palette */
-            --primary-accent: #00D4AA;
-            --primary-accent-hover: #00BF9A;
-            --primary-accent-dark: #00A085;
-            --secondary-accent: #0077FF;
-            --warning-accent: #FF6B35;
+            /* Professional Color Palette */
+            --primary-accent: #2563eb;
+            --primary-accent-hover: #1d4ed8;
+            --primary-accent-dark: #1e40af;
+            --secondary-accent: #3b82f6;
+            --warning-accent: #f59e0b;
             
-            /* Dark Backgrounds */
-            --bg-primary: #0A0A0B;
-            --bg-secondary: #141419;
-            --bg-tertiary: #1A1A21;
-            --bg-card: #1F1F28;
-            --bg-elevated: #252530;
-            --bg-input: #2A2A35;
+            /* Light Backgrounds */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            --bg-card: #ffffff;
+            --bg-elevated: #ffffff;
+            --bg-input: #f8fafc;
             
             /* Border Colors */
-            --border-primary: #2A2A35;
-            --border-secondary: #35353F;
-            --border-accent: rgba(0, 212, 170, 0.3);
-            --border-focus: #00D4AA;
+            --border-primary: #e5e7eb;
+            --border-secondary: #d1d5db;
+            --border-accent: rgba(37, 99, 235, 0.2);
+            --border-focus: #2563eb;
             
             /* Text Colors */
-            --text-primary: #FFFFFF;
-            --text-secondary: #B4B4B8;
-            --text-muted: #8A8A95;
-            --text-inverse: #0A0A0B;
+            --text-primary: #1f2937;
+            --text-secondary: #4b5563;
+            --text-muted: #6b7280;
+            --text-inverse: #ffffff;
             
             /* Accent Colors */
-            --accent-teal: rgba(0, 212, 170, 0.1);
-            --accent-teal-medium: rgba(0, 212, 170, 0.2);
-            --accent-blue: rgba(0, 119, 255, 0.1);
-            --accent-orange: rgba(255, 107, 53, 0.1);
+            --accent-blue-light: rgba(37, 99, 235, 0.1);
+            --accent-blue-medium: rgba(37, 99, 235, 0.2);
+            --accent-green: rgba(16, 185, 129, 0.1);
+            --accent-amber: rgba(245, 158, 11, 0.1);
             
-            /* Modern Shadows */
-            --shadow-soft: 0 4px 24px rgba(0, 0, 0, 0.15);
-            --shadow-medium: 0 8px 32px rgba(0, 0, 0, 0.25);
-            --shadow-large: 0 16px 48px rgba(0, 0, 0, 0.35);
-            --shadow-accent: 0 4px 20px rgba(0, 212, 170, 0.15);
-            --shadow-hover: 0 8px 32px rgba(0, 212, 170, 0.2);
+            /* Subtle Shadows */
+            --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.05);
+            --shadow-medium: 0 4px 6px rgba(0, 0, 0, 0.05);
+            --shadow-large: 0 10px 15px rgba(0, 0, 0, 0.08);
+            --shadow-accent: 0 2px 8px rgba(37, 99, 235, 0.1);
+            --shadow-hover: 0 4px 12px rgba(37, 99, 235, 0.15);
             
             /* Typography */
             --font-heading: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -262,17 +262,17 @@
             font-family: var(--font-body);
             line-height: 1.6;
             color: var(--text-primary);
-            background: var(--bg-primary);
+            background: var(--bg-secondary);
             min-height: 100vh;
             font-weight: 400;
-            font-size: 16px;
+            font-size: 15px;
             overflow-x: visible !important;
             position: relative;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
         
-        /* Dark modern background pattern */
+        /* Clean professional background */
         body::before {
             content: '';
             position: fixed;
@@ -497,10 +497,10 @@
         }
 
         .mobile-menu .nav-link:hover {
-            background: var(--accent-teal);
-            color: var(--text-primary);
+            background: var(--accent-blue-light);
+            color: var(--primary-accent);
             transform: translateX(6px);
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+            box-shadow: var(--shadow-hover);
         }
 
         .mobile-menu .nav-link.active {
@@ -533,14 +533,13 @@
             outline: none;
         }
         
-        /* Modern Dark Main Content */
+        /* Clean Professional Main Content */
         .main-content {
-            background: radial-gradient(ellipse at top, rgba(16, 185, 129, 0.05) 0%, transparent 50%),
-                        linear-gradient(145deg, #0f0f0f 0%, #1a1a1a 100%);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            padding: var(--spacing-xl);
+            background: var(--bg-primary);
+            border: 1px solid var(--border-primary);
+            border-radius: 12px;
+            box-shadow: var(--shadow-medium);
+            padding: var(--spacing-lg);
             min-height: calc(100vh - var(--spacing-xl));
             position: relative;
             overflow: hidden;
@@ -561,16 +560,14 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: var(--spacing-md) var(--spacing-lg);
+            padding: var(--spacing-sm) var(--spacing-md);
             background: var(--bg-card);
             border: 1px solid var(--border-primary);
-            border-radius: var(--border-radius);
+            border-radius: 8px;
             box-shadow: var(--shadow-soft);
-            margin-bottom: var(--spacing-lg);
+            margin-bottom: var(--spacing-md);
             position: relative;
             z-index: 1001;
-            backdrop-filter: blur(20px);
-            background: linear-gradient(135deg, var(--bg-card) 0%, rgba(26, 26, 26, 0.95) 100%);
         }
 
         .header-left {
@@ -653,24 +650,24 @@
         /* Removed user avatar styling */
         
         .logout-btn {
-            background: linear-gradient(135deg, #dc3545, #ff6b7a);
-            color: var(--text-inverse);
-            border: none;
-            padding: 10px 20px;
-            border-radius: var(--border-radius-sm);
+            background: white;
+            color: var(--text-primary);
+            border: 1px solid var(--border-primary);
+            padding: 8px 16px;
+            border-radius: 6px;
             text-decoration: none;
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
-            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+            font-weight: 500;
             cursor: pointer;
-            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.25);
+            box-shadow: var(--shadow-soft);
             white-space: nowrap;
         }
         
         .logout-btn:hover {
-            background: linear-gradient(135deg, #c82333, #ff5161);
-            transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(220, 53, 69, 0.35);
+            background: #fee2e2;
+            border-color: #ef4444;
+            color: #dc2626;
         }
         
         .logout-btn:active {
@@ -781,41 +778,37 @@
         input:focus, textarea:focus, select:focus {
             outline: none;
             border-color: var(--border-focus);
-            box-shadow: 0 0 0 3px var(--accent-teal-medium);
-            transform: translateY(-1px);
+            box-shadow: 0 0 0 3px var(--accent-blue-light);
             background: var(--bg-elevated);
         }
         
         .btn {
-            padding: var(--spacing-sm) var(--spacing-md);
-            border: none;
-            border-radius: var(--border-radius-sm);
-            font-size: 1rem;
+            padding: 8px 16px;
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+            font-size: 0.875rem;
             font-weight: 500;
             font-family: var(--font-body);
             cursor: pointer;
-            transition: all 0.3s ease;
-            margin: var(--spacing-xs);
+            transition: all 0.2s ease;
+            margin: 4px;
             box-shadow: var(--shadow-soft);
             position: relative;
             overflow: hidden;
         }
         
         .btn-primary {
-            background: linear-gradient(135deg, var(--primary-accent) 0%, var(--primary-accent-hover) 100%);
-            color: var(--text-inverse);
-            font-weight: 600;
-            border-radius: var(--border-radius);
-            border: none;
-            box-shadow: var(--shadow-accent);
-            letter-spacing: 0.02em;
-            font-size: 0.95rem;
+            background: var(--primary-accent);
+            color: white;
+            font-weight: 500;
+            border: 1px solid var(--primary-accent);
+            box-shadow: var(--shadow-soft);
         }
         
         .btn-primary:hover {
-            background: linear-gradient(135deg, var(--primary-accent-hover) 0%, var(--primary-accent-dark) 100%);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-hover);
+            background: var(--primary-accent-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-medium);
         }
         
         .btn-primary:active {
@@ -824,40 +817,36 @@
         }
         
         .btn-secondary {
-            background: var(--bg-elevated);
+            background: white;
             color: var(--text-primary);
-            border: 1px solid var(--border-secondary);
+            border: 1px solid var(--border-primary);
         }
         
         .btn-secondary:hover {
-            background: var(--bg-input);
-            border-color: var(--border-accent);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-medium);
+            background: var(--bg-secondary);
+            border-color: var(--primary-accent);
         }
         
         .btn-danger {
-            background: rgba(0, 0, 0, 0.7);
-            color: #ff6b6b;
-            border: 1px solid rgba(255, 107, 107, 0.4);
+            background: #ef4444;
+            color: white;
+            border: 1px solid #ef4444;
         }
         
         .btn-danger:hover {
-            background: rgba(255, 107, 107, 0.1);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.2);
+            background: #dc2626;
+            border-color: #dc2626;
         }
         
-        /* Modern dark action buttons */
+        /* Clean professional action buttons */
         .btn-edit, .btn-calendar, .btn-call, 
         .btn-text, .btn-warning, .btn-contract, .btn-success,
         .btn-invoice, .btn-email {
-            background: var(--bg-elevated);
+            background: white;
             color: var(--text-primary);
-            border: 1px solid var(--border-secondary);
+            border: 1px solid var(--border-primary);
             font-weight: 500;
-            font-size: 0.9rem;
-            letter-spacing: 0.01em;
+            font-size: 0.875rem;
             text-align: center;
         }
         
@@ -865,11 +854,9 @@
         .btn-call:hover, .btn-text:hover,
         .btn-warning:hover, .btn-contract:hover, .btn-success:hover,
         .btn-invoice:hover, .btn-email:hover {
-            background: var(--accent-teal);
-            color: var(--text-primary);
-            border-color: var(--border-accent);
-            transform: translateY(-2px) scale(1.02);
-            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.2);
+            background: var(--accent-blue-light);
+            color: var(--primary-accent);
+            border-color: var(--primary-accent);
         }
         
         .sessions-grid {
@@ -881,18 +868,17 @@
             padding: 20px 0;
         }
         
-        /* Modern Dark Session Cards */
+        /* Clean Professional Session Cards */
         .session-list-item {
-            background: linear-gradient(145deg, #1a1a1a 0%, #242424 50%, #1a1a1a 100%);
-            border-radius: 16px;
-            margin-bottom: var(--spacing-lg);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border-primary);
+            transition: all 0.2s ease;
             cursor: pointer;
             overflow: hidden;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            box-shadow: var(--shadow-soft);
             position: relative;
-            backdrop-filter: blur(20px);
         }
         
         .session-list-item::before {
@@ -909,8 +895,9 @@
         }
 
         .session-list-item:hover {
-            transform: translateY(-8px) scale(1.02);
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+            border-color: var(--primary-accent);
         }
         
         .session-list-item:hover::before {
@@ -5508,17 +5495,17 @@
                 <div class="filter-controls-compact">
                     <!-- Filter Toggle Buttons -->
                     <div class="filter-toggle-row" style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px;">
-                        <button type="button" class="filter-toggle-btn" onclick="toggleFilterSection('status')" style="background: linear-gradient(135deg, var(--primary-accent) 0%, var(--primary-accent-hover) 100%); color: white; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);">
-                             Status Filters <span id="status-indicator" style="opacity: 0.8; margin-left: 6px;">▼</span>
+                        <button type="button" class="filter-toggle-btn" onclick="toggleFilterSection('status')" style="background: var(--primary-accent); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.2s ease; box-shadow: var(--shadow-soft);">
+                            Status Filters <span id="status-indicator" style="opacity: 0.8; margin-left: 6px;">▼</span>
                         </button>
-                        <button type="button" class="filter-toggle-btn" onclick="toggleFilterSection('date')" style="background: linear-gradient(135deg, var(--primary-accent) 0%, var(--primary-accent-hover) 100%); color: white; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);">
+                        <button type="button" class="filter-toggle-btn" onclick="toggleFilterSection('date')" style="background: var(--primary-accent); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.2s ease; box-shadow: var(--shadow-soft);">
                             Date Range <span id="date-indicator" style="opacity: 0.8; margin-left: 6px;">▼</span>
                         </button>
-                        <button type="button" class="filter-toggle-btn" onclick="toggleFilterSection('type')" style="background: linear-gradient(135deg, var(--primary-accent) 0%, var(--primary-accent-hover) 100%); color: white; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);">
+                        <button type="button" class="filter-toggle-btn" onclick="toggleFilterSection('type')" style="background: var(--primary-accent); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.2s ease; box-shadow: var(--shadow-soft);">
                             Session Type <span id="type-indicator" style="opacity: 0.8; margin-left: 6px;">▼</span>
                         </button>
-                        <button type="button" class="filter-toggle-btn" onclick="toggleFilterSection('sort')" style="background: linear-gradient(135deg, var(--primary-accent) 0%, var(--primary-accent-hover) 100%); color: white; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);">
-                             Sort Options <span id="sort-indicator" style="opacity: 0.8; margin-left: 6px;">▼</span>
+                        <button type="button" class="filter-toggle-btn" onclick="toggleFilterSection('sort')" style="background: var(--primary-accent); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.2s ease; box-shadow: var(--shadow-soft);">
+                            Sort Options <span id="sort-indicator" style="opacity: 0.8; margin-left: 6px;">▼</span>
                         </button>
                     </div>
 
@@ -5858,7 +5845,7 @@
                             
                             <button onclick="sendViaText('${contractId}', '${contractData.signingUrl}', '${contractData.contract?.client_name}', '${contractData.contract?.client_phone}', event)" 
                                     class="btn btn-success" style="width: 100%; margin-bottom: 15px; padding: 15px; font-size: 16px;">
-                                💬 Send via Text Message
+                                Send via Text Message
                             </button>
                         </div>
                     </div>
@@ -6065,12 +6052,12 @@ ${contract.contract_content}
         async function sendViaText(contractId, signingUrl, clientName, clientPhone, event) {
             // Declare button variables at function scope
             const smsBtn = event ? event.target : document.querySelector('button[onclick*="sendViaText"]');
-            const originalText = smsBtn ? smsBtn.innerHTML : '💬 Send via Text Message';
+            const originalText = smsBtn ? smsBtn.innerHTML : 'Send via Text Message';
             
             try {
                 // Show loading state
                 if (smsBtn) {
-                    smsBtn.innerHTML = '💬 Sending SMS...';
+                    smsBtn.innerHTML = 'Sending SMS...';
                     smsBtn.disabled = true;
                 }
                 
@@ -6935,7 +6922,7 @@ ${contract.contract_content}
                             <h4>Files & Storage</h4>
                             <div class="file-action-buttons">
                                 <button onclick="openGalleryWindow('${sessionId}'); event.stopPropagation();" class="btn btn-primary"> Open Gallery</button>
-                                <button onclick="openRawStorageWindow('${sessionId}'); event.stopPropagation();" class="btn btn-primary">📁 Open Raw Storage</button>
+                                <button onclick="openRawStorageWindow('${sessionId}'); event.stopPropagation();" class="btn btn-primary">Open Raw Storage</button>
                                 <button onclick="sendGalleryToClient('${sessionId}'); event.stopPropagation();" class="btn btn-success"> Send to Client</button>
                             </div>
                         </div>
@@ -7099,13 +7086,17 @@ ${contract.contract_content}
             modal.innerHTML = `
                 <div class="payment-plan-modal" style="max-width: 500px;">
                     <div class="modal-header">
-                        <h3>Upload Files - ${folderType === 'gallery' ? ' Gallery' : '📁 Raw Storage'}</h3>
+                        <h3>Upload Files - ${folderType === 'gallery' ? 'Gallery' : 'Raw Storage'}</h3>
                         <button class="close-btn" onclick="closeFileUploadModal()">&times;</button>
                     </div>
                     <div style="padding: 20px; color: white;">
                         <div class="upload-area" style="border: 2px dashed #d4af37; border-radius: 8px; padding: 40px; text-align: center; margin-bottom: 20px; background: rgba(212, 175, 55, 0.1);">
                             <input type="file" id="fileInput" multiple style="display: none;" accept="*/*">
-                            <div style="color: #d4af37; font-size: 48px; margin-bottom: 15px;">📁</div>
+                            <div style="color: #2563eb; font-size: 48px; margin-bottom: 15px;">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/>
+                                </svg>
+                            </div>
                             <p style="margin: 0 0 15px 0; color: #d4af37;">Drop files here or click to select</p>
                             <button onclick="document.getElementById('fileInput').click()" class="btn btn-primary">Choose Files</button>
                         </div>
@@ -9584,7 +9575,7 @@ END:VCALENDAR`;
                                 </button>
                                 
                                 <button class="btn btn-success btn-block mb-3" onclick="openMessagingApp('${contractData.signingUrl}', '${contractData.contract.client_name}')">
-                                    💬 Open Messaging App
+                                    Open Messaging App
                                 </button>
 
                                 <div class="manual-options mt-3 p-3" style="background: #f8f9fa; border-radius: 8px;">
@@ -12482,9 +12473,9 @@ END:VCALENDAR`;
                 
                 <div class="ai-tabs">
                     <button class="ai-tab-btn active" onclick="showAITab('blogWriter')"> Blog Writer</button>
-                    <button class="ai-tab-btn" onclick="showAITab('socialMedia')">📱 Social Media</button>
+                    <button class="ai-tab-btn" onclick="showAITab('socialMedia')">Social Media</button>
                     <button class="ai-tab-btn" onclick="showAITab('quickIdeas')"> Quick Ideas</button>
-                    <button class="ai-tab-btn" onclick="showAITab('history')">📚 History</button>
+                    <button class="ai-tab-btn" onclick="showAITab('history')">History</button>
                 </div>
                 
                 <!-- Blog Writer Tab -->
@@ -12507,7 +12498,7 @@ END:VCALENDAR`;
                 
                 <!-- Social Media Tab -->
                 <div id="socialMediaTab" class="ai-tab-content">
-                    <h3>📱 Social Media Post Builder</h3>
+                    <h3>Social Media Post Builder</h3>
                     <div class="ai-input-section">
                         <div class="social-platform">
                             <label for="socialPlatform">Platform:</label>
@@ -12820,7 +12811,7 @@ END:VCALENDAR`;
                 <!-- Stripe Connect Status Card -->
                 <div class="setting-card" id="stripe-status-card">
                     <div class="card-header">
-                        <h3>🔗 Stripe Connect</h3>
+                        <h3>Stripe Connect</h3>
                         <div class="status-indicator" id="stripe-status-indicator">
                             <span class="status-dot checking"></span>
                             <span class="status-text" id="stripe-status-text">Checking connection...</span>
@@ -16156,7 +16147,7 @@ END:VCALENDAR`;
                 container.innerHTML = `
                     <!-- Top Toolbar -->
                     <div class="wb-top-toolbar">
-                        <div class="wb-logo">📸 PhotoSite Builder</div>
+                        <div class="wb-logo">PhotoSite Builder</div>
                         <div class="wb-toolbar-separator"></div>
                         
                         <div class="wb-toolbar-group">
@@ -16172,13 +16163,13 @@ END:VCALENDAR`;
                         
                         <div class="wb-toolbar-group">
                             <button class="wb-toolbar-btn active" onclick="WebsiteBuilder.switchDevice('desktop')">
-                                <span>🖥️</span> Desktop
+                                Desktop
                             </button>
                             <button class="wb-toolbar-btn" onclick="WebsiteBuilder.switchDevice('tablet')">
-                                <span>📱</span> Tablet  
+                                Tablet  
                             </button>
                             <button class="wb-toolbar-btn" onclick="WebsiteBuilder.switchDevice('mobile')">
-                                <span>📱</span> Mobile
+                                Mobile
                             </button>
                         </div>
                         
@@ -16225,19 +16216,19 @@ END:VCALENDAR`;
                     <div class="wb-bottom-toolbar">
                         <div class="wb-toolbar-group">
                             <button class="wb-toolbar-btn" onclick="WebsiteBuilder.addPhotoSlider()">
-                                <span>🖼️</span> Photo Slider
+                                Photo Slider
                             </button>
                             <button class="wb-toolbar-btn" onclick="WebsiteBuilder.addLightboxGallery()">
-                                <span>🔍</span> Gallery
+                                Gallery
                             </button>
                             <button class="wb-toolbar-btn" onclick="WebsiteBuilder.addVideoBackground()">
-                                <span>🎥</span> Video BG
+                                Video BG
                             </button>
                             <button class="wb-toolbar-btn" onclick="WebsiteBuilder.addParallaxSection()">
-                                <span>📐</span> Parallax
+                                Parallax
                             </button>
                             <button class="wb-toolbar-btn" onclick="WebsiteBuilder.addTestimonialSlider()">
-                                <span>💬</span> Testimonials
+                                Testimonials
                             </button>
                         </div>
                         
@@ -16245,16 +16236,16 @@ END:VCALENDAR`;
                         
                         <div class="wb-toolbar-group">
                             <button class="wb-toolbar-btn" onclick="WebsiteBuilder.addText()">
-                                <span>📝</span> Text
+                                Text
                             </button>
                             <button class="wb-toolbar-btn" onclick="WebsiteBuilder.addImage()">
-                                <span>🖼️</span> Image
+                                Image
                             </button>
                             <button class="wb-toolbar-btn" onclick="WebsiteBuilder.addButton()">
-                                <span>🔘</span> Button
+                                Button
                             </button>
                             <button class="wb-toolbar-btn" onclick="WebsiteBuilder.addDivider()">
-                                <span>➖</span> Divider
+                                Divider
                             </button>
                         </div>
                         
@@ -16262,19 +16253,19 @@ END:VCALENDAR`;
                         
                         <div class="wb-toolbar-group">
                             <button class="wb-toolbar-btn" onclick="WebsiteBuilder.selectTemplate('minimal')">
-                                <span>🎨</span> Minimal
+                                Minimal
                             </button>
                             <button class="wb-toolbar-btn" onclick="WebsiteBuilder.selectTemplate('wedding')">
-                                <span>💒</span> Wedding
+                                Wedding
                             </button>
                             <button class="wb-toolbar-btn" onclick="WebsiteBuilder.selectTemplate('cinematic')">
-                                <span>🎬</span> Cinematic
+                                Cinematic
                             </button>
                             <button class="wb-toolbar-btn" onclick="WebsiteBuilder.selectTemplate('portrait')">
-                                <span>👤</span> Portrait
+                                Portrait
                             </button>
                             <button class="wb-toolbar-btn" onclick="WebsiteBuilder.selectTemplate('commercial')">
-                                <span>🏢</span> Commercial
+                                Commercial
                             </button>
                         </div>
                     </div>
