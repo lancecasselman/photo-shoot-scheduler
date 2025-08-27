@@ -466,19 +466,45 @@
                     showLoading('Signing in with Google...');
                     hideMessage();
                     
-                    // Check if mobile/Capacitor - use redirect, otherwise use popup
+                    // Enhanced mobile detection and error handling
                     const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
                     const isCapacitor = window.Capacitor !== undefined;
+                    const isReplit = window.location.hostname.includes('replit.dev') || window.location.hostname.includes('worf.replit.dev');
+                    
+                    // Show domain authorization error for Replit
+                    if (isReplit) {
+                        hideLoading();
+                        showError('Google login requires domain authorization. The current Replit domain needs to be added to Firebase authorized domains.');
+                        setTimeout(() => {
+                            showInfo('Please use email/password login while Google authentication is being set up.');
+                            document.querySelector('#email').focus();
+                        }, 3000);
+                        return;
+                    }
                     
                     let result;
                     if (isMobile || isCapacitor) {
                         console.log('📱 MOBILE: Using Google redirect authentication');
-                        await window.signInWithRedirect(window.auth, window.googleProvider);
-                        // Result will be handled by redirect result listener
-                        return;
+                        try {
+                            await window.signInWithRedirect(window.auth, window.googleProvider);
+                            // Result will be handled by redirect result listener
+                            return;
+                        } catch (error) {
+                            console.error('📱 MOBILE: Google redirect failed:', error);
+                            hideLoading();
+                            showError('Google login failed. Please try email/password login.');
+                            return;
+                        }
                     } else {
                         console.log('💻 DESKTOP: Using Google popup authentication');
-                        result = await window.signInWithPopup(window.auth, window.googleProvider);
+                        try {
+                            result = await window.signInWithPopup(window.auth, window.googleProvider);
+                        } catch (error) {
+                            console.error('💻 DESKTOP: Google popup failed:', error);
+                            hideLoading();
+                            showError('Google login failed: ' + error.message);
+                            return;
+                        }
                     }
                     
                     console.log('✅ GOOGLE AUTH: Successful login:', result.user.email);

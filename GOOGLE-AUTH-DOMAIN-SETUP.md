@@ -6,6 +6,9 @@ Google authentication is failing because the Replit domain is not authorized in 
 ## Current Domain
 `8b52078f-2876-41ad-b7b4-15cd08bb6e7e-00-26t6e4y6vz596.worf.replit.dev`
 
+## Status
+❌ STILL NEEDS TO BE ADDED - Google login failing on mobile preview
+
 ## To Fix Google Authentication:
 
 ### Step 1: Add Domain to Firebase
