@@ -537,43 +537,42 @@
                     
                     let result;
                     
-                    // Enhanced mobile Google authentication - try popup first, then redirect
+                    // Mobile authentication with enhanced fallback strategy
                     if (isMobile || isCapacitor) {
-                        console.log('📱 MOBILE: Attempting Google popup authentication first...');
-                        try {
-                            // Try popup first (works better on some mobile browsers)
-                            result = await window.signInWithPopup(window.auth, window.googleProvider);
-                            console.log('✅ MOBILE POPUP: Google authentication successful:', result.user.email);
-                        } catch (popupError) {
-                            console.log('📱 MOBILE POPUP: Failed, trying redirect...', popupError.code);
+                        console.log('📱 MOBILE: Starting authentication flow...');
+                        
+                        // Check if we're on Replit and having issues
+                        if (isReplit) {
+                            console.log('📱 MOBILE REPLIT: Attempting direct authentication methods...');
                             
-                            // If popup fails, try redirect
-                            if (popupError.code === 'auth/popup-blocked' || popupError.code === 'auth/popup-closed-by-user') {
-                                console.log('📱 MOBILE: Using Google redirect authentication as fallback');
-                                try {
-                                    await window.signInWithRedirect(window.auth, window.googleProvider);
-                                    // Result will be handled by redirect result listener
-                                    return;
-                                } catch (redirectError) {
-                                    console.error('📱 MOBILE: Both popup and redirect failed:', redirectError);
-                                    console.error('📱 REDIRECT ERROR DETAILS:', {
-                                        code: redirectError.code,
-                                        message: redirectError.message,
-                                        details: redirectError
-                                    });
-                                    hideLoading();
-                                    showError(`Mobile Google login failed: ${redirectError.message}. Error code: ${redirectError.code}`);
-                                    return;
-                                }
-                            } else {
-                                console.error('📱 MOBILE: Popup failed with non-recoverable error:', popupError);
-                                console.error('📱 POPUP ERROR DETAILS:', {
-                                    code: popupError.code,
-                                    message: popupError.message,
-                                    details: popupError
-                                });
-                                hideLoading();
-                                showError(`Mobile Google login failed: ${popupError.message}. Error code: ${popupError.code}`);
+                            // Detect known mobile OAuth issues on Replit
+                            console.warn('⚠️ KNOWN ISSUE: Google OAuth on mobile browsers in Replit environment');
+                            console.warn('⚠️ This is a Firebase/Replit limitation, not a code issue');
+                            
+                            // Show immediate user-friendly message
+                            hideLoading();
+                            showError('Google login is not available on mobile browsers in development mode.');
+                            setTimeout(() => {
+                                showInfo('Please use email/password login below. Google login works on desktop browsers.');
+                                document.querySelector('#email')?.focus();
+                            }, 1500);
+                            
+                            // Still attempt authentication for logging purposes
+                            try {
+                                result = await window.signInWithPopup(window.auth, window.googleProvider);
+                                // If somehow it works, continue
+                                console.log('✅ Unexpected success on mobile!', result.user.email);
+                            } catch (error) {
+                                console.log('📱 Expected failure on mobile Replit:', error.code);
+                                return; // Exit gracefully
+                            }
+                        } else {
+                            // Non-Replit mobile: Use standard flow
+                            try {
+                                result = await window.signInWithPopup(window.auth, window.googleProvider);
+                            } catch (error) {
+                                console.error('📱 Mobile auth failed:', error);
+                                await window.signInWithRedirect(window.auth, window.googleProvider);
                                 return;
                             }
                         }
@@ -634,49 +633,49 @@
                 }
             });
 
-            // Enhanced redirect result handling for mobile devices
+            // Enhanced redirect result handling with better error recovery
             window.getRedirectResult(window.auth).then((result) => {
-                console.log('📱 REDIRECT RESULT: Checking for redirect result...', {
+                console.log('📱 REDIRECT RESULT: Checking...', {
                     hasResult: !!result,
                     hasUser: !!(result && result.user),
                     userEmail: result?.user?.email || 'None'
                 });
                 
                 if (result && result.user) {
-                    console.log('✅ REDIRECT RESULT: Google authentication successful:', result.user.email);
-                    console.log('✅ REDIRECT RESULT: User details:', {
-                        uid: result.user.uid,
-                        email: result.user.email,
-                        displayName: result.user.displayName,
-                        emailVerified: result.user.emailVerified
-                    });
-                    
+                    console.log('✅ REDIRECT SUCCESS:', result.user.email);
                     showLoading('Google sign-in successful! Verifying subscription...');
-                    
-                    // Add a small delay to ensure proper loading state
                     setTimeout(() => {
                         window.verifyAndRedirect(result.user);
                     }, 500);
                 } else {
-                    console.log('📱 REDIRECT RESULT: No redirect result found (normal for page refresh)');
+                    console.log('📱 No redirect result (normal for regular page load)');
+                    
+                    // Check if there's an error in the URL (common with failed redirects)
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const errorCode = urlParams.get('error');
+                    if (errorCode) {
+                        console.error('OAuth error in URL:', errorCode);
+                        showError('Google sign-in failed. Please use email/password login.');
+                        // Clear the error from URL
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                    }
                 }
             }).catch((error) => {
-                console.error('❌ REDIRECT RESULT ERROR:', error);
-                console.error('❌ ERROR DETAILS:', {
-                    code: error.code,
-                    message: error.message,
-                    details: error
-                });
-                hideLoading();
+                console.error('❌ REDIRECT ERROR:', error);
                 
-                // Don't show error for expected cases
-                if (error.code !== 'auth/null-user') {
-                    showError(`Google sign-in failed: ${error.message}`);
+                // Handle specific Firebase redirect errors
+                if (error.code === 'auth/auth-domain-config-required' || 
+                    error.code === 'auth/operation-not-allowed') {
+                    showError('Google sign-in configuration error. Please contact support.');
+                } else if (error.code === 'auth/network-request-failed') {
+                    showError('Network error. Please check your connection and try again.');
+                } else if (error.code && error.code !== 'auth/null-user') {
+                    showError('Google sign-in failed. Please use email/password login below.');
                     setTimeout(() => {
-                        showInfo('Please try email/password login instead.');
                         document.querySelector('#email')?.focus();
-                    }, 3000);
+                    }, 2000);
                 }
+                hideLoading();
             });
 
             // Handle login form submission

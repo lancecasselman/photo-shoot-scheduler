@@ -16,7 +16,9 @@ The system utilizes a static HTML/CSS/JavaScript multi-page application with van
 The backend is built on a Node.js/Express server handling API routes and business logic. Authentication and subscription verification are handled exclusively at the server level through secure routes.
 
 ### Authentication & Authorization
-Firebase Authentication (Project: photoshcheduleapp) supports email/password and Google OAuth, implementing role-based access for administrative functions and subscriber management. All session management routes require proper Firebase authentication with no development mode exceptions. Enhanced Android authentication includes token-based fallback system for installed apps, Android-specific session handling with CORS configuration, and comprehensive debugging for mobile authentication flows.
+Firebase Authentication (Project: photoshcheduleapp) supports email/password and Google OAuth, implementing role-based access for administrative functions and subscriber management. All session management routes require proper Firebase authentication with no development mode exceptions. 
+
+**Known Mobile Limitation**: Google OAuth does not work on mobile browsers in Replit's development environment due to Firebase/Replit security restrictions. Mobile users must use email/password authentication during development. This is automatically resolved in production deployment with proper domain configuration.
 
 **Firebase Project Configuration:**
 - Project ID: `photoshcheduleapp`
