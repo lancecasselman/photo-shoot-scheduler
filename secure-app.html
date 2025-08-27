@@ -6872,14 +6872,41 @@ ${contract.contract_content}
                                 <button class="session-action-btn primary" onclick="toggleSessionDetails('${session.id}'); event.stopPropagation();">
                                     View Details
                                 </button>
-                                <button class="session-action-btn secondary" onclick="editSession('${session.id}'); event.stopPropagation();">
+                                <button class="session-action-btn secondary" onclick="openUpdateSessionModal('${session.id}'); event.stopPropagation();">
                                     Edit
                                 </button>
+                                ${!session.contractSigned ? `
+                                <button class="session-action-btn secondary" onclick="openBookingAgreementModal('${session.id}'); event.stopPropagation();">
+                                    Contract
+                                </button>` : ''}
+                                ${!session.paid ? `
+                                <button class="session-action-btn secondary" onclick="createInvoiceWithTipping('${session.id}'); event.stopPropagation();">
+                                    Invoice
+                                </button>` : ''}
                             </div>
                             
                             <!-- Hidden expandable details section -->
                             <div class="session-details" id="details-${session.id}" style="display: none;">
-                                <!-- Details content moved here for mobile -->
+                                <div class="detail-section">
+                                    <h4>Contact Info</h4>
+                                    <div class="detail-item">
+                                        <strong>Email:</strong> <a href="mailto:${session.email}">${session.email}</a>
+                                    </div>
+                                    <div class="detail-item">
+                                        <strong>Phone:</strong> ${session.phoneNumber}
+                                    </div>
+                                </div>
+                                <div class="detail-section">
+                                    <h4>Actions</h4>
+                                    <div class="action-buttons" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                        <button onclick="openBookingAgreementModal('${session.id}'); event.stopPropagation();" class="btn btn-secondary">Booking Agreement</button>
+                                        <button onclick="createInvoiceWithTipping('${session.id}'); event.stopPropagation();" class="btn btn-secondary">Send Invoice</button>
+                                        <button onclick="sendDepositInvoice('${session.id}'); event.stopPropagation();" class="btn btn-secondary">Send Deposit</button>
+                                        <button onclick="openGalleryWindow('${session.id}'); event.stopPropagation();" class="btn btn-primary">Open Gallery</button>
+                                        <button onclick="sendGalleryToClient('${session.id}'); event.stopPropagation();" class="btn btn-success">Send to Client</button>
+                                        <button onclick="deleteSession('${session.id}'); event.stopPropagation();" class="btn btn-danger">Delete</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     `;
@@ -16544,7 +16571,7 @@ END:VCALENDAR`;
     <script src="admin-inline-editor.js"></script>
     
     <!-- Mobile Floating Action Button -->
-    <button class="mobile-fab" id="mobileFab" style="display: none;" onclick="document.getElementById('addSessionBtn').click()">
+    <button class="mobile-fab" id="mobileFab" style="display: none;" onclick="if(document.getElementById('addSessionBtn')) document.getElementById('addSessionBtn').click(); else document.querySelector('.add-session-btn')?.click();">
         <svg viewBox="0 0 24 24" fill="currentColor">
             <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
         </svg>
