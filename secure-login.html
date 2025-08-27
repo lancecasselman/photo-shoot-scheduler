@@ -12,16 +12,23 @@
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
-        // Use environment variables if available
+        // Use environment variables if available - Enhanced Firebase config
         const firebaseConfig = {
             apiKey: import.meta.env?.VITE_FIREBASE_API_KEY || "AIzaSyDbtboh1bW6xu9Tz9FILkx_0lzGwXQHjyM",
             authDomain: `${import.meta.env?.VITE_FIREBASE_PROJECT_ID || "photoshcheduleapp"}.firebaseapp.com`,
             projectId: import.meta.env?.VITE_FIREBASE_PROJECT_ID || "photoshcheduleapp",
-            storageBucket: `${import.meta.env?.VITE_FIREBASE_PROJECT_ID || "photoshcheduleapp"}.firebasestorage.app`,
+            storageBucket: `${import.meta.env?.VITE_FIREBASE_PROJECT_ID || "photoshcheduleapp"}.appspot.com`,
             messagingSenderId: "1080892259604",
             appId: import.meta.env?.VITE_FIREBASE_APP_ID || "1:1080892259604:web:8198de9d7da81c684c1601",
             measurementId: "G-MB2KDEFRHL"
         };
+        
+        console.log('🔧 FIREBASE CONFIG DEBUG:', {
+            authDomain: firebaseConfig.authDomain,
+            storageBucket: firebaseConfig.storageBucket,
+            projectId: firebaseConfig.projectId,
+            currentDomain: window.location.hostname
+        });
 
         window.firebaseApp = initializeApp(firebaseConfig);
         window.auth = getAuth(window.firebaseApp);
@@ -490,39 +497,51 @@
                         console.log('🔧 Current domain:', window.location.hostname);
                         console.log('🔧 Firebase config:', window.firebase?.app()?.options || 'Not available');
                         
-                        // For mobile on Replit, temporarily redirect to email/password
-                        if (isMobile) {
-                            hideLoading();
-                            showError('Mobile Google login is experiencing issues on Replit. Please use email/password login.');
-                            setTimeout(() => {
-                                showInfo('Enter your email and password below to sign in.');
-                                document.querySelector('#email').focus();
-                            }, 2000);
-                            return;
-                        }
+                        // Continue with Google auth even on mobile - let's fix it properly
+                        console.log('🔧 MOBILE REPLIT: Proceeding with Google authentication debugging...');
                     }
                     
                     let result;
+                    
+                    // Enhanced mobile Google authentication - try popup first, then redirect
                     if (isMobile || isCapacitor) {
-                        console.log('📱 MOBILE: Using Google redirect authentication');
+                        console.log('📱 MOBILE: Attempting Google popup authentication first...');
                         try {
-                            await window.signInWithRedirect(window.auth, window.googleProvider);
-                            // Result will be handled by redirect result listener
-                            return;
-                        } catch (error) {
-                            console.error('📱 MOBILE: Google redirect failed:', error);
-                            console.error('📱 ERROR DETAILS:', {
-                                code: error.code,
-                                message: error.message,
-                                details: error
-                            });
-                            hideLoading();
-                            showError(`Google mobile login failed: ${error.message}`);
-                            setTimeout(() => {
-                                showInfo('Please try email/password login instead.');
-                                document.querySelector('#email').focus();
-                            }, 3000);
-                            return;
+                            // Try popup first (works better on some mobile browsers)
+                            result = await window.signInWithPopup(window.auth, window.googleProvider);
+                            console.log('✅ MOBILE POPUP: Google authentication successful:', result.user.email);
+                        } catch (popupError) {
+                            console.log('📱 MOBILE POPUP: Failed, trying redirect...', popupError.code);
+                            
+                            // If popup fails, try redirect
+                            if (popupError.code === 'auth/popup-blocked' || popupError.code === 'auth/popup-closed-by-user') {
+                                console.log('📱 MOBILE: Using Google redirect authentication as fallback');
+                                try {
+                                    await window.signInWithRedirect(window.auth, window.googleProvider);
+                                    // Result will be handled by redirect result listener
+                                    return;
+                                } catch (redirectError) {
+                                    console.error('📱 MOBILE: Both popup and redirect failed:', redirectError);
+                                    console.error('📱 REDIRECT ERROR DETAILS:', {
+                                        code: redirectError.code,
+                                        message: redirectError.message,
+                                        details: redirectError
+                                    });
+                                    hideLoading();
+                                    showError(`Mobile Google login failed: ${redirectError.message}. Error code: ${redirectError.code}`);
+                                    return;
+                                }
+                            } else {
+                                console.error('📱 MOBILE: Popup failed with non-recoverable error:', popupError);
+                                console.error('📱 POPUP ERROR DETAILS:', {
+                                    code: popupError.code,
+                                    message: popupError.message,
+                                    details: popupError
+                                });
+                                hideLoading();
+                                showError(`Mobile Google login failed: ${popupError.message}. Error code: ${popupError.code}`);
+                                return;
+                            }
                         }
                     } else {
                         console.log('💻 DESKTOP: Using Google popup authentication');
@@ -536,11 +555,7 @@
                                 details: error
                             });
                             hideLoading();
-                            showError(`Google desktop login failed: ${error.message}`);
-                            setTimeout(() => {
-                                showInfo('Please try email/password login instead.');
-                                document.querySelector('#email').focus();
-                            }, 3000);
+                            showError(`Google desktop login failed: ${error.message}. Error code: ${error.code}`);
                             return;
                         }
                     }
