@@ -561,17 +561,49 @@
                 }
             });
 
-            // Handle redirect result for mobile devices
+            // Enhanced redirect result handling for mobile devices
             window.getRedirectResult(window.auth).then((result) => {
+                console.log('📱 REDIRECT RESULT: Checking for redirect result...', {
+                    hasResult: !!result,
+                    hasUser: !!(result && result.user),
+                    userEmail: result?.user?.email || 'None'
+                });
+                
                 if (result && result.user) {
-                    console.log('📱 REDIRECT RESULT: Google authentication successful:', result.user.email);
-                    showLoading('Google sign-in successful. Verifying subscription...');
-                    window.verifyAndRedirect(result.user);
+                    console.log('✅ REDIRECT RESULT: Google authentication successful:', result.user.email);
+                    console.log('✅ REDIRECT RESULT: User details:', {
+                        uid: result.user.uid,
+                        email: result.user.email,
+                        displayName: result.user.displayName,
+                        emailVerified: result.user.emailVerified
+                    });
+                    
+                    showLoading('Google sign-in successful! Verifying subscription...');
+                    
+                    // Add a small delay to ensure proper loading state
+                    setTimeout(() => {
+                        window.verifyAndRedirect(result.user);
+                    }, 500);
+                } else {
+                    console.log('📱 REDIRECT RESULT: No redirect result found (normal for page refresh)');
                 }
             }).catch((error) => {
-                console.error('❌ REDIRECT RESULT: Error:', error);
+                console.error('❌ REDIRECT RESULT ERROR:', error);
+                console.error('❌ ERROR DETAILS:', {
+                    code: error.code,
+                    message: error.message,
+                    details: error
+                });
                 hideLoading();
-                showError('Google sign-in failed: ' + error.message);
+                
+                // Don't show error for expected cases
+                if (error.code !== 'auth/null-user') {
+                    showError(`Google sign-in failed: ${error.message}`);
+                    setTimeout(() => {
+                        showInfo('Please try email/password login instead.');
+                        document.querySelector('#email')?.focus();
+                    }, 3000);
+                }
             });
 
             // Handle login form submission
