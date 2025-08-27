@@ -58,10 +58,10 @@ class NativeAuthHandler {
             
             // Use Android-specific configuration for Android devices
             const firebaseConfig = {
-                apiKey: "AIzaSyChc_dG-N5V0M87SkVTZM7mgj2lFjr95k4",
+                apiKey: "AIzaSyDbtboh1bW6xu9Tz9FILkx_0lzGwXQHjyM",
                 authDomain: "photoshcheduleapp.firebaseapp.com",
                 projectId: "photoshcheduleapp",
-                storageBucket: "photoshcheduleapp.firebasestorage.app",
+                storageBucket: "photoshcheduleapp.appspot.com",
                 messagingSenderId: "1080892259604",
                 // Use Android app ID for Android, web for iOS
                 appId: isAndroid || isCapacitor ? "1:1080892259604:android:adca7798177026c04c1601" : "1:1080892259604:web:8198de9d7da81c684c1601"
