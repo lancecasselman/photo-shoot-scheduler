@@ -35,6 +35,13 @@ Cloudflare R2 serves as the primary cloud storage with session-aware file paths 
 **Strategic Decision (August 2025): Web-App Only Approach**
 Transitioned from native mobile app development to a web-app only strategy for simplified maintenance and faster development cycles. The platform now focuses entirely on delivering an exceptional mobile-responsive web experience that works seamlessly across all devices and browsers.
 
+**Mobile Website Builder Enhancements (August 2025):**
+- Added comprehensive touch event support for toolbar resizing
+- Enhanced mobile responsiveness with larger touch targets (20px vs 10px)
+- Fixed component drag functionality for mobile devices with touchstart/touchmove/touchend events
+- Improved visual feedback for touch interactions with active states
+- Added mobile-specific CSS optimizations for better usability
+
 **Benefits of Web-App Only:**
 - Single codebase for all platforms (web, mobile, tablet)
 - Instant deployment of updates without app store approval processes
