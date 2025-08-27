@@ -225,9 +225,9 @@
             --border-focus: #2563eb;
             
             /* Text Colors */
-            --text-primary: #1f2937;
-            --text-secondary: #4b5563;
-            --text-muted: #6b7280;
+            --text-primary: #000000;
+            --text-secondary: #000000;
+            --text-muted: #333333;
             --text-inverse: #ffffff;
             
             /* Accent Colors */
@@ -261,7 +261,7 @@
         body {
             font-family: var(--font-body);
             line-height: 1.6;
-            color: var(--text-primary);
+            color: #000000;
             background: var(--bg-secondary);
             min-height: 100vh;
             font-weight: 400;
@@ -331,7 +331,7 @@
             font-family: var(--font-heading);
             font-size: 1.75rem;
             font-weight: 700;
-            color: var(--text-primary);
+            color: #000000;
             margin: 0;
             display: flex;
             align-items: center;
@@ -489,7 +489,7 @@
         .mobile-menu .nav-link {
             display: block;
             padding: var(--spacing-sm);
-            color: var(--text-secondary);
+            color: #000000;
             text-decoration: none;
             border-radius: var(--border-radius-sm);
             transition: all 0.3s ease;
@@ -643,7 +643,7 @@
             gap: var(--spacing-sm);
             font-size: 0.95rem;
             box-shadow: var(--shadow-soft);
-            color: var(--text-primary);
+            color: #000000;
             margin-bottom: var(--spacing-md);
         }
         
@@ -651,7 +651,7 @@
         
         .logout-btn {
             background: white;
-            color: var(--text-primary);
+            color: #000000;
             border: 1px solid var(--border-primary);
             padding: 8px 16px;
             border-radius: 6px;
@@ -698,7 +698,7 @@
         }
         
         .session-form h2 {
-            color: var(--text-primary);
+            color: #000000;
             font-family: var(--font-heading);
             font-size: 1.8rem;
             margin-bottom: var(--spacing-lg);
@@ -734,7 +734,7 @@
         label {
             margin-bottom: var(--spacing-xs);
             font-weight: 600;
-            color: var(--text-primary);
+            color: #000000;
             font-size: 0.95rem;
             font-family: var(--font-body);
         }
@@ -744,7 +744,7 @@
             border: 1px solid var(--border-secondary);
             border-radius: var(--border-radius);
             background: var(--bg-input);
-            color: var(--text-primary);
+            color: #000000;
             font-size: 1rem;
             font-family: var(--font-body);
             transition: all 0.3s ease;
@@ -755,7 +755,7 @@
         input[type="datetime-local"] {
             position: relative;
             background: var(--bg-secondary) !important;
-            color: var(--text-primary) !important;
+            color: #000000 !important;
             cursor: pointer;
         }
 
@@ -768,7 +768,7 @@
         }
 
         input[type="datetime-local"]::-webkit-datetime-edit {
-            color: var(--text-primary);
+            color: #000000;
         }
         
         input::placeholder, textarea::placeholder {
@@ -818,7 +818,7 @@
         
         .btn-secondary {
             background: white;
-            color: var(--text-primary);
+            color: #000000;
             border: 1px solid var(--border-primary);
         }
         
@@ -843,7 +843,7 @@
         .btn-text, .btn-warning, .btn-contract, .btn-success,
         .btn-invoice, .btn-email {
             background: white;
-            color: var(--text-primary);
+            color: #000000;
             border: 1px solid var(--border-primary);
             font-weight: 500;
             font-size: 0.875rem;
@@ -4113,6 +4113,11 @@
             33% { content: '.'; }
             66% { content: '..'; }
             100% { content: '...'; }
+        }
+        
+        /* GLOBAL OVERRIDE: Force all text to be black */
+        body * {
+            color: #000000 !important;
         }
 
         /* Golden Hour Times Styles */
