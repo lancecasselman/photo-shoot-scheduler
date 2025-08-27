@@ -201,95 +201,126 @@
             box-sizing: border-box;
         }
         
-        /* Clean Professional Photography Platform Design System */
+        /* Sophisticated Editorial Design System - Magazine Quality */
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+        
         :root {
-            /* Professional Color Palette */
-            --primary-accent: #2563eb;
-            --primary-accent-hover: #1d4ed8;
-            --primary-accent-dark: #1e40af;
-            --secondary-accent: #3b82f6;
-            --warning-accent: #f59e0b;
+            /* Editorial Color Palette - Minimal & Sophisticated */
+            --primary-accent: #000000;
+            --primary-accent-hover: #333333;
+            --primary-accent-dark: #111111;
+            --secondary-accent: #666666;
+            --warning-accent: #d4af37;
             
-            /* Light Backgrounds */
+            /* Sophisticated Backgrounds */
             --bg-primary: #ffffff;
-            --bg-secondary: #f8fafc;
-            --bg-tertiary: #f1f5f9;
+            --bg-secondary: #fafafa;
+            --bg-tertiary: #f5f5f5;
             --bg-card: #ffffff;
             --bg-elevated: #ffffff;
-            --bg-input: #f8fafc;
+            --bg-input: #fafafa;
+            --bg-glass: rgba(255, 255, 255, 0.85);
+            --bg-overlay: rgba(255, 255, 255, 0.95);
             
-            /* Border Colors */
-            --border-primary: #e5e7eb;
-            --border-secondary: #d1d5db;
-            --border-accent: rgba(37, 99, 235, 0.2);
-            --border-focus: #2563eb;
+            /* Minimal Border Colors */
+            --border-primary: #f0f0f0;
+            --border-secondary: #e8e8e8;
+            --border-accent: rgba(0, 0, 0, 0.06);
+            --border-focus: #000000;
             
-            /* Text Colors */
+            /* High Contrast Text */
             --text-primary: #000000;
             --text-secondary: #000000;
-            --text-muted: #333333;
+            --text-muted: #666666;
             --text-inverse: #ffffff;
             
-            /* Accent Colors */
-            --accent-blue-light: rgba(37, 99, 235, 0.1);
-            --accent-blue-medium: rgba(37, 99, 235, 0.2);
-            --accent-green: rgba(16, 185, 129, 0.1);
-            --accent-amber: rgba(245, 158, 11, 0.1);
+            /* Sophisticated Accent Colors */
+            --accent-black-light: rgba(0, 0, 0, 0.04);
+            --accent-black-medium: rgba(0, 0, 0, 0.08);
+            --accent-green: rgba(0, 100, 0, 0.08);
+            --accent-amber: rgba(212, 175, 55, 0.08);
             
-            /* Subtle Shadows */
-            --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.05);
-            --shadow-medium: 0 4px 6px rgba(0, 0, 0, 0.05);
-            --shadow-large: 0 10px 15px rgba(0, 0, 0, 0.08);
-            --shadow-accent: 0 2px 8px rgba(37, 99, 235, 0.1);
-            --shadow-hover: 0 4px 12px rgba(37, 99, 235, 0.15);
+            /* Editorial Shadows - Subtle Depth */
+            --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.04);
+            --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.06);
+            --shadow-large: 0 12px 32px rgba(0, 0, 0, 0.08);
+            --shadow-accent: 0 8px 24px rgba(0, 0, 0, 0.04);
+            --shadow-hover: 0 16px 48px rgba(0, 0, 0, 0.08);
+            --shadow-editorial: 0 20px 60px rgba(0, 0, 0, 0.1);
             
-            /* Typography */
-            --font-heading: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            /* Magazine Typography */
+            --font-heading: 'Playfair Display', 'Georgia', serif;
+            --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-display: 'Space Grotesk', sans-serif;
             
-            /* Modern Spacing & Border Radius */
-            --border-radius: 16px;
-            --border-radius-sm: 8px;
-            --border-radius-lg: 24px;
-            --spacing-xs: 8px;
-            --spacing-sm: 16px;
-            --spacing-md: 24px;
-            --spacing-lg: 32px;
-            --spacing-xl: 48px;
+            /* Sophisticated Spacing & Border Radius */
+            --border-radius: 0;
+            --border-radius-sm: 2px;
+            --border-radius-lg: 0;
+            --spacing-xs: 12px;
+            --spacing-sm: 24px;
+            --spacing-md: 40px;
+            --spacing-lg: 64px;
+            --spacing-xl: 96px;
+            --spacing-xxl: 144px;
+            
+            /* Grid System */
+            --grid-columns: 12;
+            --grid-gap: 32px;
+            --container-max: 1440px;
         }
 
         body {
             font-family: var(--font-body);
-            line-height: 1.6;
+            line-height: 1.8;
             color: #000000;
-            background: var(--bg-secondary);
+            background: #ffffff;
             min-height: 100vh;
             font-weight: 400;
-            font-size: 15px;
-            overflow-x: visible !important;
+            font-size: 16px;
+            overflow-x: hidden;
             position: relative;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+            letter-spacing: -0.01em;
         }
         
-        /* Clean professional background */
-        body::before {
-            content: '';
+        /* Sophisticated Editorial Grid Layout */
+        .magazine-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: 100vh;
+            background: #ffffff;
+        }
+        
+        /* Elegant Fixed Sidebar */
+        .editorial-sidebar {
             position: fixed;
-            top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: radial-gradient(circle at 1px 1px, rgba(0, 212, 170, 0.03) 1px, transparent 0);
-            background-size: 32px 32px;
-            pointer-events: none;
-            z-index: -1;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: #fafafa;
+            border-right: 1px solid var(--border-primary);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
         }
         
+        /* Main Content Area with Offset */
+        .editorial-content {
+            margin-left: 280px;
+            min-height: 100vh;
+            background: #ffffff;
+            position: relative;
+        }
+        
+        /* Swiss Design Grid Container */
         .container {
-            max-width: 1200px;
+            max-width: var(--container-max);
             margin: 0 auto;
-            padding: var(--spacing-md);
+            padding: var(--spacing-lg) var(--spacing-md);
             overflow: visible !important;
             min-height: 100vh;
         }
@@ -300,39 +331,34 @@
             }
         }
         
-        /* Modern Dark Header */
-        .app-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: var(--spacing-lg) var(--spacing-xl);
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
-            backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            margin-bottom: var(--spacing-xl);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .app-header::before {
-            content: '';
-            position: absolute;
+        /* Minimal Top Bar - Magazine Style */
+        .editorial-header {
+            position: fixed;
             top: 0;
-            left: 0;
+            left: 280px;
             right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, var(--primary-accent), transparent);
-            opacity: 0.8;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-primary);
+            z-index: 90;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 var(--spacing-lg);
         }
         
-        .logo {
+        /* Logo - Editorial Typography */
+        .editorial-logo {
             font-family: var(--font-heading);
-            font-size: 1.75rem;
-            font-weight: 700;
+            font-size: 2.5rem;
+            font-weight: 900;
             color: #000000;
+            letter-spacing: -0.03em;
             margin: 0;
+            padding: var(--spacing-lg) var(--spacing-md);
+            border-bottom: 1px solid var(--border-primary);
             display: flex;
             align-items: center;
             gap: 12px;
@@ -675,48 +701,36 @@
             box-shadow: 0 2px 8px rgba(220, 53, 69, 0.25);
         }
         
+        /* Editorial Form Panel - Side Drawer Style */
         .session-form {
-            background: var(--bg-card);
-            padding: var(--spacing-xl);
-            border-radius: var(--border-radius-lg);
-            box-shadow: var(--shadow-medium);
+            background: white;
+            padding: var(--spacing-xxl) var(--spacing-xl);
             margin-bottom: var(--spacing-xl);
-            border: 1px solid var(--border-primary);
+            border: none;
             position: relative;
-            overflow: hidden;
+            overflow: visible;
         }
         
+        /* Minimalist Form Header */
         .session-form::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, var(--primary-accent), var(--secondary-accent), var(--primary-accent));
-            border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+            width: 60px;
+            height: 3px;
+            background: #000000;
         }
         
+        /* Editorial Typography for Forms */
         .session-form h2 {
             color: #000000;
             font-family: var(--font-heading);
-            font-size: 1.8rem;
-            margin-bottom: var(--spacing-lg);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-weight: 700;
-        }
-        
-        .session-form h2::before {
-            content: '';
-            width: 32px;
-            height: 32px;
-            background: linear-gradient(135deg, var(--primary-accent), var(--primary-accent-hover));
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            font-size: 3rem;
+            margin-bottom: var(--spacing-xl);
+            font-weight: 400;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
         }
         
         .form-grid {
@@ -739,16 +753,18 @@
             font-family: var(--font-body);
         }
         
+        /* Sophisticated Minimal Inputs */
         input, textarea, select {
-            padding: 16px 18px;
-            border: 1px solid var(--border-secondary);
-            border-radius: var(--border-radius);
-            background: var(--bg-input);
+            padding: 20px 0;
+            border: none;
+            border-bottom: 1px solid var(--border-secondary);
+            border-radius: 0;
+            background: transparent;
             color: #000000;
-            font-size: 1rem;
+            font-size: 1.1rem;
             font-family: var(--font-body);
             transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(212, 175, 55, 0.05);
+            box-shadow: none;
         }
 
         /* Photography Management System datetime input styling */
@@ -775,56 +791,65 @@
             color: var(--text-muted);
         }
         
+        /* Elegant Focus States */
         input:focus, textarea:focus, select:focus {
             outline: none;
-            border-color: var(--border-focus);
-            box-shadow: 0 0 0 3px var(--accent-blue-light);
-            background: var(--bg-elevated);
+            border-color: #000000;
+            border-bottom: 2px solid #000000;
+            box-shadow: none;
+            background: transparent;
         }
         
+        /* Editorial Button Design - Minimal & Sophisticated */
         .btn {
-            padding: 8px 16px;
-            border: 1px solid var(--border-primary);
-            border-radius: 6px;
+            padding: 16px 32px;
+            border: 2px solid #000000;
+            border-radius: 0;
             font-size: 0.875rem;
-            font-weight: 500;
-            font-family: var(--font-body);
+            font-weight: 600;
+            font-family: var(--font-display);
             cursor: pointer;
-            transition: all 0.2s ease;
-            margin: 4px;
-            box-shadow: var(--shadow-soft);
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            margin: 8px;
+            box-shadow: none;
             position: relative;
             overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
         }
         
+        /* Primary Button - Black & White */
         .btn-primary {
-            background: var(--primary-accent);
+            background: #000000;
             color: white;
-            font-weight: 500;
-            border: 1px solid var(--primary-accent);
-            box-shadow: var(--shadow-soft);
+            font-weight: 600;
+            border: 2px solid #000000;
+            box-shadow: none;
         }
         
+        /* Sophisticated Hover States */
         .btn-primary:hover {
-            background: var(--primary-accent-hover);
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-medium);
+            background: white;
+            color: #000000;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
         }
         
         .btn-primary:active {
             transform: translateY(0);
-            box-shadow: var(--shadow-accent);
+            box-shadow: none;
         }
         
+        /* Secondary Button - Outlined */
         .btn-secondary {
-            background: white;
+            background: transparent;
             color: #000000;
-            border: 1px solid var(--border-primary);
+            border: 1px solid #000000;
         }
         
         .btn-secondary:hover {
-            background: var(--bg-secondary);
-            border-color: var(--primary-accent);
+            background: #000000;
+            color: white;
         }
         
         .btn-danger {
@@ -868,91 +893,97 @@
             padding: 20px 0;
         }
         
-        /* Clean Professional Session Cards */
+        /* Magazine-Style Session Cards - Editorial Layout */
         .session-list-item {
             background: white;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            border: 1px solid var(--border-primary);
-            transition: all 0.2s ease;
-            cursor: pointer;
-            overflow: hidden;
-            box-shadow: var(--shadow-soft);
+            border: none;
+            margin-bottom: var(--spacing-lg);
             position: relative;
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            cursor: pointer;
+            overflow: visible;
+            box-shadow: 0 1px 0 0 var(--border-primary);
         }
         
+        /* Sophisticated Card Structure */
         .session-list-item::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, #10b981, transparent);
-            border-radius: 2px 2px 0 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.02) 100%);
             opacity: 0;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.6s ease;
+            pointer-events: none;
         }
-
+        
+        /* Editorial Hover Effect */
         .session-list-item:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-medium);
-            border-color: var(--primary-accent);
+            transform: translateY(-8px);
+            box-shadow: 0 1px 0 0 #000000, var(--shadow-editorial);
         }
         
         .session-list-item:hover::before {
             opacity: 1;
         }
         
-        .session-list-item::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.02) 0%, transparent 50%);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            pointer-events: none;
+        /* Magazine-Style Image Container */
+        .session-image-container {
+            position: relative;
+            height: 280px;
+            overflow: hidden;
+            background: var(--bg-tertiary);
         }
         
-        .session-list-item:hover::after {
-            opacity: 1;
+        .session-image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        
+        .session-list-item:hover .session-image-container img {
+            transform: scale(1.05);
         }
 
+        /* Editorial Session Header - Asymmetrical Layout */
         .session-list-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: var(--spacing-lg);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
-            backdrop-filter: blur(10px);
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: var(--grid-gap);
+            align-items: start;
+            padding: var(--spacing-xl) var(--spacing-lg);
+            border-bottom: 1px solid var(--border-primary);
+            background: white;
             position: relative;
         }
         
+        /* Typography Hierarchy */
         .session-list-header::after {
             content: '';
             position: absolute;
-            bottom: 0;
-            left: 20px;
-            right: 20px;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            bottom: -1px;
+            left: var(--spacing-lg);
+            width: 60px;
+            height: 3px;
+            background: #000000;
         }
 
         .session-info {
             flex: 1;
         }
 
+        /* Editorial Typography - Client Name */
         .client-name {
-            font-size: 1.6em;
+            font-family: var(--font-heading);
+            font-size: 2.8rem;
             color: #000000 !important;
             margin: 0 0 var(--spacing-xs) 0;
-            font-weight: 700;
-            font-family: var(--font-heading);
-            letter-spacing: -0.02em;
+            font-weight: 300;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
             transition: all 0.3s ease;
             position: relative;
         }
@@ -5389,26 +5420,46 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Header with Hamburger Menu -->
-        <div class="header">
-            <div class="header-left">
-                <button class="hamburger-menu" onclick="toggleMobileMenu()">
-                    <span class="hamburger-line"></span>
-                    <span class="hamburger-line"></span>
-                    <span class="hamburger-line"></span>
-                </button>
-                <div class="logo">Photography Management System</div>
+    <!-- Magazine Layout Structure -->
+    <div class="magazine-layout">
+        <!-- Elegant Fixed Sidebar -->
+        <aside class="editorial-sidebar">
+            <div class="editorial-logo">Photography Studio</div>
+            <nav class="sidebar-navigation" style="flex: 1; padding: var(--spacing-lg);">
+                <ul style="list-style: none; padding: 0; margin: 0;">
+                    <li style="margin-bottom: 2px;"><a href="#sessions" onclick="showSessions()" class="nav-link" style="display: block; padding: 16px 24px; color: #000; text-decoration: none; font-weight: 500; transition: all 0.3s ease; border-left: 3px solid transparent;">Sessions</a></li>
+                    <li style="margin-bottom: 2px;"><a href="#booking" onclick="showBookingWizard()" class="nav-link" style="display: block; padding: 16px 24px; color: #000; text-decoration: none; font-weight: 500; transition: all 0.3s ease; border-left: 3px solid transparent;">New Booking</a></li>
+                    <li style="margin-bottom: 2px;"><a href="#contracts" onclick="showContracts()" class="nav-link" style="display: block; padding: 16px 24px; color: #000; text-decoration: none; font-weight: 500; transition: all 0.3s ease; border-left: 3px solid transparent;">Contracts</a></li>
+                    <li style="margin-bottom: 2px;"><a href="#invoices" onclick="showInvoiceManager()" class="nav-link" style="display: block; padding: 16px 24px; color: #000; text-decoration: none; font-weight: 500; transition: all 0.3s ease; border-left: 3px solid transparent;">Invoices</a></li>
+                    <li style="margin-bottom: 2px;"><a href="#upload" onclick="showBulkUpload()" class="nav-link" style="display: block; padding: 16px 24px; color: #000; text-decoration: none; font-weight: 500; transition: all 0.3s ease; border-left: 3px solid transparent;">Upload</a></li>
+                    <li style="margin-bottom: 2px;"><a href="#gallery" onclick="showGalleryManager()" class="nav-link" style="display: block; padding: 16px 24px; color: #000; text-decoration: none; font-weight: 500; transition: all 0.3s ease; border-left: 3px solid transparent;">Gallery</a></li>
+                    <li style="margin-bottom: 2px;"><a href="#website-builder" onclick="showWebsiteBuilder()" class="nav-link" style="display: block; padding: 16px 24px; color: #000; text-decoration: none; font-weight: 500; transition: all 0.3s ease; border-left: 3px solid transparent;">Website</a></li>
+                    <li style="margin-bottom: 2px;"><a href="#community" onclick="showCommunity()" class="nav-link" style="display: block; padding: 16px 24px; color: #000; text-decoration: none; font-weight: 500; transition: all 0.3s ease; border-left: 3px solid transparent;">Community</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer" style="padding: var(--spacing-lg); border-top: 1px solid var(--border-primary);">
+                <a href="/secure-login.html" onclick="handleLogout(event)" class="logout-btn" style="width: 100%; text-align: center;">Logout</a>
             </div>
-            
-            <div class="header-right">
-                <div id="userInfo" class="user-info" style="display: block;">
-                    <span id="userName">Loading...</span>
+        </aside>
+        
+        <!-- Main Content Area -->
+        <main class="editorial-content">
+            <!-- Minimal Top Bar -->
+            <header class="editorial-header">
+                <div class="header-breadcrumb" style="font-family: var(--font-display); text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.875rem; color: #666;">Dashboard / Sessions</div>
+                <div class="header-actions" style="display: flex; align-items: center; gap: 24px;">
+                    <span class="user-name" id="userDisplay" style="font-weight: 500;"></span>
                 </div>
+            </header>
+            
+            <div class="container" style="padding-top: calc(80px + var(--spacing-lg));">
+            
+            <!-- User Info moved to editorial header -->
+            <div id="userInfo" class="user-info" style="display: none;">
+                <span id="userName">Loading...</span>
             </div>
             
-            <!-- Mobile Dropdown Menu - inside header for proper positioning -->
-        <div class="mobile-menu" id="mobileMenu">
+            <!-- Removed mobile menu - using sidebar navigation -->
             <nav class="nav-menu">
                 <ul>
                     <li class="nav-item">
