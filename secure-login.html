@@ -30,8 +30,37 @@
             currentDomain: window.location.hostname
         });
 
+        // Initialize Firebase with enhanced mobile session handling
         window.firebaseApp = initializeApp(firebaseConfig);
         window.auth = getAuth(window.firebaseApp);
+        
+        // Enhanced mobile browser detection and session handling
+        const isMobileBrowser = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const isInReplit = window.location.hostname.includes('replit.dev');
+        
+        if (isMobileBrowser && isInReplit) {
+            console.log('🔧 MOBILE REPLIT: Configuring enhanced session handling...');
+            
+            // Clear any stale Firebase auth state that might cause redirect issues
+            try {
+                // Clear potentially corrupted Firebase auth state
+                const authKeys = Object.keys(localStorage).filter(key => 
+                    key.startsWith('firebase:') || key.includes('auth')
+                );
+                authKeys.forEach(key => {
+                    console.log('🧹 Clearing stale auth key:', key);
+                    localStorage.removeItem(key);
+                });
+                
+                // Ensure session storage is working
+                sessionStorage.setItem('firebase_test', 'test');
+                sessionStorage.removeItem('firebase_test');
+                console.log('✅ Session storage verified working');
+            } catch (e) {
+                console.warn('⚠️ Storage issue detected:', e);
+            }
+        }
+        
         window.signInWithEmailAndPassword = signInWithEmailAndPassword;
         window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
         window.signOut = signOut;
@@ -43,22 +72,27 @@
         window.googleProvider.addScope('email');
         window.googleProvider.addScope('profile');
         
-        // Enhanced parameters for mobile compatibility
-        const isMobileDetected = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        // Enhanced Google provider configuration for mobile compatibility
         const customParams = {
             prompt: 'select_account',
             hd: '', // Allow any domain
         };
         
-        // Add mobile-specific parameters
-        if (isMobileDetected) {
-            customParams.display = 'popup';
+        // Configure for mobile browsers
+        if (isMobileBrowser) {
+            // Remove display=popup which can cause issues on mobile
             customParams.access_type = 'online';
+            // Add state parameter to help with redirect handling
+            customParams.state = 'replit_mobile_auth_' + Date.now();
         }
         
         window.googleProvider.setCustomParameters(customParams);
         
-        console.log('🔧 Google Provider configured for mobile:', { isMobileDetected, customParams });
+        console.log('🔧 Google Provider configured for mobile:', { 
+            isMobileBrowser, 
+            customParams,
+            authDomain: firebaseConfig.authDomain 
+        });
         
         window.signInWithPopup = signInWithPopup;
         window.signInWithRedirect = signInWithRedirect;
