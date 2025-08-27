@@ -54,6 +54,92 @@
     padding: 16px;
 }
 
+/* Mobile Details Section Styling */
+.session-details {
+    padding: 16px;
+    background: #f7fafc;
+    border-top: 1px solid #e2e8f0;
+}
+
+.session-details .detail-section {
+    margin-bottom: 16px;
+}
+
+.session-details .detail-section:last-child {
+    margin-bottom: 0;
+}
+
+.session-details h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 12px;
+}
+
+.session-details .detail-item {
+    font-size: 14px;
+    color: #4a5568;
+    margin-bottom: 8px;
+    line-height: 1.5;
+}
+
+.session-details .detail-item strong {
+    font-weight: 500;
+    color: #2d3748;
+    margin-right: 4px;
+}
+
+.session-details .detail-item a {
+    color: #1a365d;
+    text-decoration: none;
+}
+
+.session-details .action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.session-details .btn {
+    padding: 10px 14px;
+    font-size: 13px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e0;
+    background: white;
+    color: #2d3748;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.session-details .btn:active {
+    transform: scale(0.95);
+}
+
+.session-details .btn-secondary {
+    background: white;
+    color: #1a365d;
+    border: 1px solid #cbd5e0;
+}
+
+.session-details .btn-primary {
+    background: #1a365d;
+    color: white;
+    border: 1px solid #1a365d;
+}
+
+.session-details .btn-success {
+    background: #22543d;
+    color: white;
+    border: 1px solid #22543d;
+}
+
+.session-details .btn-danger {
+    background: #e53e3e;
+    color: white;
+    border: 1px solid #e53e3e;
+}
+
 .session-info-grid {
     display: grid;
     gap: 12px;

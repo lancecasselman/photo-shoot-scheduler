@@ -195,6 +195,22 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Responsive breakpoints */
+@media (max-width: 768px) {
+  /* Force mobile layout */
+  body.mobile-view .main-content {
+    margin-left: 0 !important;
+    padding: 16px !important;
+    padding-bottom: 100px !important;
+  }
+  
+  /* Ensure session container uses full width */
+  #sessionsContainer {
+    width: 100%;
+    padding: 0;
+  }
+}
+
 /* Card component */
 .card {
   background: var(--surface-elevated);
