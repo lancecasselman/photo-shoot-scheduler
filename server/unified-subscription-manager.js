@@ -855,19 +855,31 @@ class UnifiedSubscriptionManager {
         try {
             console.log(`📝 Recording subscription: User ${userId}, Plan ${planType}, Amount $${amount}`);
             
-            // Insert or update subscription record
+            // Get the Stripe customer ID for this user
+            const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+            let customerId = null;
+            try {
+                const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+                customerId = subscription.customer;
+            } catch (err) {
+                console.log('Could not retrieve customer ID from subscription');
+            }
+            
+            // Insert or update subscription record with correct column names
             await client.query(`
                 INSERT INTO subscriptions (
-                    user_id, provider, provider_subscription_id, plan_type, 
-                    status, current_period_start, current_period_end, amount, created_at
+                    user_id, subscription_type, platform, 
+                    external_subscription_id, external_customer_id, 
+                    status, price_amount, current_period_start, 
+                    current_period_end, created_at
                 )
-                VALUES ($1, $2, $3, $4, $5, NOW(), NOW() + INTERVAL '1 month', $6, NOW())
-                ON CONFLICT (provider, provider_subscription_id) DO UPDATE SET
+                VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW() + INTERVAL '1 month', NOW())
+                ON CONFLICT (external_subscription_id) DO UPDATE SET
                     status = EXCLUDED.status,
-                    plan_type = EXCLUDED.plan_type,
-                    amount = EXCLUDED.amount,
+                    subscription_type = EXCLUDED.subscription_type,
+                    price_amount = EXCLUDED.price_amount,
                     updated_at = NOW()
-            `, [userId, 'stripe', subscriptionId, planType, 'active', amount]);
+            `, [userId, planType, 'stripe', subscriptionId, customerId, 'active', amount]);
             
             console.log(`✅ Subscription recorded successfully for user: ${userId}`);
         } catch (error) {
@@ -896,41 +908,70 @@ class UnifiedSubscriptionManager {
             const subscriptions = subscriptionsResult.rows;
             let hasProfessionalPlan = false;
             let totalStorageGb = 0;
+            let baseStorageGb = 0;
             let professionalStatus = 'inactive';
-            let storageAddonCount = 0;
+            let totalStorageTb = 0;
+            let monthlyTotal = 0;
+            let activeSubscriptionCount = 0;
+            let nextBillingDate = null;
             
             // Calculate totals from active subscriptions
             for (const sub of subscriptions) {
-                if (sub.plan_type === 'professional') {
+                activeSubscriptionCount++;
+                monthlyTotal += parseFloat(sub.price_amount || 0);
+                
+                if (!nextBillingDate || (sub.current_period_end && sub.current_period_end < nextBillingDate)) {
+                    nextBillingDate = sub.current_period_end;
+                }
+                
+                if (sub.subscription_type === 'professional') {
                     hasProfessionalPlan = true;
                     professionalStatus = 'active';
-                    totalStorageGb = 100; // Professional plan includes 100GB
-                } else if (sub.plan_type && sub.plan_type.includes('storage_')) {
+                    baseStorageGb = 100; // Professional plan includes 100GB
+                    totalStorageGb = 100;
+                } else if (sub.subscription_type && sub.subscription_type.includes('storage_')) {
                     // Storage addon
-                    const tbMatch = sub.plan_type.match(/storage_(\d+)tb/);
+                    const tbMatch = sub.subscription_type.match(/storage_(\d+)tb/);
                     if (tbMatch) {
                         const tb = parseInt(tbMatch[1]);
+                        totalStorageTb += tb;
                         totalStorageGb += tb * 1024; // Convert TB to GB
-                        storageAddonCount++;
                     }
                 }
             }
             
-            // Update or insert summary
+            // Update or insert summary with correct column names
             await client.query(`
                 INSERT INTO user_subscription_summary (
-                    user_id, has_professional_plan, professional_status,
-                    total_storage_gb, storage_addon_count, 
-                    last_updated, created_at
+                    user_id, has_professional_plan, professional_platform,
+                    professional_status, total_storage_tb, base_storage_gb,
+                    total_storage_gb, active_subscriptions, monthly_total,
+                    next_billing_date, updated_at
                 )
-                VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
                 ON CONFLICT (user_id) DO UPDATE SET
                     has_professional_plan = EXCLUDED.has_professional_plan,
+                    professional_platform = EXCLUDED.professional_platform,
                     professional_status = EXCLUDED.professional_status,
+                    total_storage_tb = EXCLUDED.total_storage_tb,
+                    base_storage_gb = EXCLUDED.base_storage_gb,
                     total_storage_gb = EXCLUDED.total_storage_gb,
-                    storage_addon_count = EXCLUDED.storage_addon_count,
-                    last_updated = NOW()
-            `, [userId, hasProfessionalPlan, professionalStatus, totalStorageGb, storageAddonCount]);
+                    active_subscriptions = EXCLUDED.active_subscriptions,
+                    monthly_total = EXCLUDED.monthly_total,
+                    next_billing_date = EXCLUDED.next_billing_date,
+                    updated_at = NOW()
+            `, [
+                userId, 
+                hasProfessionalPlan, 
+                hasProfessionalPlan ? 'stripe' : null,
+                professionalStatus, 
+                totalStorageTb,
+                baseStorageGb,
+                totalStorageGb, 
+                activeSubscriptionCount,
+                monthlyTotal,
+                nextBillingDate
+            ]);
             
             // Also update the users table subscription_status
             await client.query(`
@@ -939,7 +980,7 @@ class UnifiedSubscriptionManager {
                 WHERE id = $1
             `, [userId, professionalStatus]);
             
-            console.log(`✅ Subscription summary updated: Professional=${hasProfessionalPlan}, Storage=${totalStorageGb}GB`);
+            console.log(`✅ Subscription summary updated: Professional=${hasProfessionalPlan}, Storage=${totalStorageGb}GB, Monthly=$${monthlyTotal}`);
         } catch (error) {
             console.error('❌ Error updating subscription summary:', error);
             throw error;
