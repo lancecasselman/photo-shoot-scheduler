@@ -230,33 +230,7 @@ function createSubscriptionRoutes(pool) {
         }
     });
 
-    // Stripe webhook handler
-    router.post('/webhook/stripe', express.raw({type: 'application/json'}), async (req, res) => {
-        console.log('🔔 Stripe webhook received at /api/subscriptions/webhook/stripe');
-        
-        try {
-            const sig = req.headers['stripe-signature'];
-            console.log('📝 Webhook signature present:', !!sig);
-            let event;
-
-            try {
-                event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
-                console.log(`✅ Webhook event verified: ${event.type}, ID: ${event.id}`);
-            } catch (err) {
-                console.error('❌ Webhook signature verification failed:', err.message);
-                console.error('Make sure STRIPE_WEBHOOK_SECRET is correctly configured');
-                return res.status(400).send(`Webhook Error: ${err.message}`);
-            }
-
-            console.log(`🎯 Processing webhook event: ${event.type}`);
-            await subscriptionManager.processStripeWebhook(event);
-            console.log(`✅ Webhook processed successfully: ${event.type}`);
-            res.json({ received: true });
-        } catch (error) {
-            console.error('❌ Error processing Stripe webhook:', error);
-            res.status(500).json({ success: false, error: error.message });
-        }
-    });
+    // Stripe webhook handler moved to server.js before body parsers for proper raw body handling
 
     // Test endpoints for development
     if (process.env.NODE_ENV !== 'production') {

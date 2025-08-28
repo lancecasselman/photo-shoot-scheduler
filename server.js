@@ -917,16 +917,43 @@ if (process.env.NODE_ENV === 'production') {
     app.use(logger.requestLogger.bind(logger));
 }
 
-// Body parsing middleware (must be before routes)
-// Skip JSON parsing for Stripe webhook endpoint (needs raw body for signature verification)
-app.use((req, res, next) => {
-    if (req.originalUrl === '/api/subscriptions/webhook/stripe') {
-        // Skip JSON parsing for webhook - it will use express.raw() in its route
-        next();
-    } else {
-        express.json({ limit: '100gb' })(req, res, next);
+// IMPORTANT: Set up Stripe webhook route BEFORE body parsers
+// This webhook needs the raw body for signature verification
+app.post('/api/subscriptions/webhook/stripe', express.raw({type: 'application/json'}), async (req, res) => {
+    console.log('🔔 Stripe webhook received at /api/subscriptions/webhook/stripe');
+    
+    try {
+        const sig = req.headers['stripe-signature'];
+        console.log('📝 Webhook signature present:', !!sig);
+        let event;
+
+        try {
+            const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+            event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+            console.log(`✅ Webhook event verified: ${event.type}, ID: ${event.id}`);
+        } catch (err) {
+            console.error('❌ Webhook signature verification failed:', err.message);
+            console.error('Make sure STRIPE_WEBHOOK_SECRET is correctly configured');
+            return res.status(400).send(`Webhook Error: ${err.message}`);
+        }
+
+        console.log(`🎯 Processing webhook event: ${event.type}`);
+        
+        // Process the webhook event using subscription manager
+        const UnifiedSubscriptionManager = require('./server/unified-subscription-manager');
+        const subscriptionManager = new UnifiedSubscriptionManager(pool);
+        await subscriptionManager.processStripeWebhook(event);
+        
+        console.log(`✅ Webhook processed successfully: ${event.type}`);
+        res.json({ received: true });
+    } catch (error) {
+        console.error('❌ Error processing Stripe webhook:', error);
+        res.status(500).json({ success: false, error: error.message });
     }
 });
+
+// Body parsing middleware (must be before other routes but AFTER webhook)
+app.use(express.json({ limit: '100gb' }));
 app.use(express.urlencoded({ extended: true, limit: '100gb' }));
 
 // Session configuration with fallback mechanism
@@ -12700,7 +12727,7 @@ async function startServer() {
     // Start automated payment scheduler
     paymentScheduler.start();
     
-    // Register subscription management routes
+    // Register subscription management routes (webhook is handled separately before body parsers)
     app.use('/api/subscriptions', createSubscriptionRoutes(pool));
     
     // Subscription status check for frontend
