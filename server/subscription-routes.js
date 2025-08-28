@@ -48,21 +48,34 @@ function createSubscriptionRoutes(pool) {
                         const userCreationData = {
                             email: email,
                             displayName: name,
-                            emailVerified: true
+                            emailVerified: false // Will be verified after payment
                         };
                         
                         // Add password if provided (for new accounts)
                         if (password) {
                             userCreationData.password = password;
+                        } else {
+                            // Generate a secure temporary password if none provided
+                            userCreationData.password = require('crypto').randomBytes(16).toString('hex');
                         }
                         
                         userRecord = await firebase.auth().createUser(userCreationData);
-                        console.log(`✅ Created new Firebase user: ${userRecord.uid}`);
+                        console.log(`✅ Created new Firebase user: ${userRecord.uid} with password`);
                     } catch (createError) {
                         if (createError.code === 'auth/email-already-exists') {
                             // Email exists, get the existing user
                             userRecord = await firebase.auth().getUserByEmail(email);
                             console.log(`✅ Using existing Firebase user: ${userRecord.uid}`);
+                            
+                            // Update password if provided for existing user
+                            if (password) {
+                                try {
+                                    await firebase.auth().updateUser(userRecord.uid, { password });
+                                    console.log(`🔐 Updated password for existing user: ${userRecord.uid}`);
+                                } catch (pwError) {
+                                    console.log(`⚠️ Could not update password: ${pwError.message}`);
+                                }
+                            }
                         } else {
                             throw createError;
                         }

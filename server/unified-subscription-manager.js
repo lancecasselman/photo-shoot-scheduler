@@ -481,6 +481,10 @@ class UnifiedSubscriptionManager {
     async processStripeWebhook(event) {
         try {
             switch (event.type) {
+                case 'checkout.session.completed':
+                    await this.handleCheckoutSessionCompleted(event.data.object);
+                    break;
+                    
                 case 'customer.subscription.created':
                 case 'customer.subscription.updated':
                     await this.handleStripeSubscriptionChange(event.data.object);
@@ -843,6 +847,143 @@ class UnifiedSubscriptionManager {
         return match ? parseInt(match[1]) : 1;
     }
 
+    async handleCheckoutSessionCompleted(session) {
+        console.log(`✅ Processing checkout session: ${session.id}`);
+        
+        try {
+            // Get the full session details with line items expanded
+            const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
+                expand: ['customer', 'subscription', 'line_items']
+            });
+            
+            // Extract metadata from the session
+            const { userId, type, planType } = fullSession.metadata || {};
+            const customerEmail = fullSession.customer_email || fullSession.customer?.email;
+            const customerId = fullSession.customer?.id || fullSession.customer;
+            
+            // Check if we have a userId from the checkout (user was created before payment)
+            const hasUserId = !!userId;
+            
+            if (hasUserId) {
+                // User was already created during checkout (new flow)
+                console.log(`📈 Updating subscription for user created during checkout: ${userId}`);
+                
+                // Update subscription status in database
+                const client = await this.pool.connect();
+                try {
+                    // Update user subscription status
+                    await client.query(`
+                        UPDATE users SET
+                            subscription_status = 'active',
+                            stripe_customer_id = $2,
+                            updated_at = NOW()
+                        WHERE id = $1
+                    `, [userId, customerId]);
+                    
+                    // Record the subscription details
+                    if (fullSession.subscription) {
+                        const subscriptionId = typeof fullSession.subscription === 'string' 
+                            ? fullSession.subscription 
+                            : fullSession.subscription.id;
+                        
+                        await this.recordStripeSubscription(
+                            userId,
+                            subscriptionId,
+                            planType || 'professional',
+                            39.00
+                        );
+                        
+                        // Update user subscription summary
+                        await this.updateUserSubscriptionSummary(userId);
+                    }
+                    
+                    console.log(`✅ Subscription activated for user: ${userId}`);
+                } finally {
+                    client.release();
+                }
+                
+            } else if (customerEmail && !userId) {
+                // Edge case: No userId in metadata but we have email (fallback for old flow)
+                console.log(`⚠️ Fallback: Processing subscription for email without userId: ${customerEmail}`);
+                
+                const firebase = require('firebase-admin');
+                
+                try {
+                    // Try to find existing user by email
+                    let userRecord;
+                    try {
+                        userRecord = await firebase.auth().getUserByEmail(customerEmail);
+                        console.log(`📧 Found existing Firebase user: ${userRecord.uid}`);
+                    } catch (error) {
+                        if (error.code === 'auth/user-not-found') {
+                            // Create user as fallback (shouldn't happen in new flow)
+                            console.log(`⚠️ Creating user in webhook (should have been created during checkout)`);
+                            userRecord = await firebase.auth().createUser({
+                                email: customerEmail,
+                                emailVerified: false,
+                                displayName: fullSession.customer_details?.name || customerEmail.split('@')[0]
+                            });
+                            console.log(`✅ Created fallback Firebase user: ${userRecord.uid}`);
+                        } else {
+                            throw error;
+                        }
+                    }
+                    
+                    // Update database
+                    const client = await this.pool.connect();
+                    try {
+                        await client.query(`
+                            INSERT INTO users (
+                                id, email, username, display_name, 
+                                subscription_status, stripe_customer_id, 
+                                created_at, onboarding_complete
+                            )
+                            VALUES ($1, $2, $3, $4, $5, $6, NOW(), false)
+                            ON CONFLICT (id) DO UPDATE SET
+                                subscription_status = EXCLUDED.subscription_status,
+                                stripe_customer_id = EXCLUDED.stripe_customer_id,
+                                updated_at = NOW()
+                        `, [
+                            userRecord.uid,
+                            customerEmail,
+                            customerEmail.split('@')[0],
+                            fullSession.customer_details?.name || customerEmail.split('@')[0],
+                            'active',
+                            customerId
+                        ]);
+                        
+                        // Record subscription
+                        if (fullSession.subscription) {
+                            const subscriptionId = typeof fullSession.subscription === 'string' 
+                                ? fullSession.subscription 
+                                : fullSession.subscription.id;
+                            
+                            await this.recordStripeSubscription(
+                                userRecord.uid,
+                                subscriptionId,
+                                'professional',
+                                39.00
+                            );
+                        }
+                    } finally {
+                        client.release();
+                    }
+                } catch (error) {
+                    console.error('❌ Error in fallback user creation:', error);
+                    throw error;
+                }
+            } else {
+                console.log(`⚠️ Unexpected state in checkout session - no userId or email found`);
+            }
+            
+            console.log(`✅ Checkout session processing complete for: ${customerEmail || userId}`);
+            
+        } catch (error) {
+            console.error('❌ Error handling checkout session:', error);
+            throw error;
+        }
+    }
+    
     async handleStripeSubscriptionChange(subscription) {
         // Update subscription in database
         console.log(`🔄 Handling Stripe subscription change: ${subscription.id}`);
