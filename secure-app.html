@@ -256,20 +256,6 @@
             --spacing-md: 24px;
             --spacing-lg: 32px;
             --spacing-xl: 48px;
-            
-            /* Responsive Design Variables */
-            --mobile-breakpoint: 768px;
-            --tablet-breakpoint: 1024px;
-            --desktop-breakpoint: 1280px;
-            --touch-target-size: 44px;
-            --mobile-nav-height: 60px;
-            --desktop-sidebar-width: 280px;
-            --container-max-width: 1440px;
-            
-            /* Fluid Typography */
-            --font-size-base: clamp(14px, 2vw, 16px);
-            --font-size-heading: clamp(24px, 4vw, 36px);
-            --font-size-subheading: clamp(18px, 3vw, 24px);
         }
 
         body {
@@ -279,13 +265,11 @@
             background: var(--bg-secondary);
             min-height: 100vh;
             font-weight: 400;
-            font-size: var(--font-size-base);
-            overflow-x: hidden;
+            font-size: 15px;
+            overflow-x: visible !important;
             position: relative;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
-            margin: 0;
-            padding: 0;
         }
         
         /* Clean professional background */
@@ -302,49 +286,34 @@
             z-index: -1;
         }
         
-        /* Mobile-First Container */
         .container {
-            width: 100%;
+            max-width: 1200px;
             margin: 0 auto;
-            padding: var(--spacing-sm);
+            padding: var(--spacing-md);
+            overflow: visible !important;
             min-height: 100vh;
-            position: relative;
         }
         
-        @media (min-width: 768px) {
+        @media (max-width: 768px) {
             .container {
-                padding: var(--spacing-md);
-                max-width: var(--container-max-width);
+                padding: var(--spacing-sm);
             }
         }
         
-        @media (min-width: 1024px) {
-            .container {
-                padding: var(--spacing-lg);
-                margin-left: var(--desktop-sidebar-width);
-                width: calc(100% - var(--desktop-sidebar-width));
-            }
-        }
-        
-        /* Responsive Header */
+        /* Modern Dark Header */
         .app-header {
-            display: none; /* Hidden on mobile, using bottom nav instead */
-        }
-        
-        @media (min-width: 1024px) {
-            .app-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: var(--spacing-md) var(--spacing-lg);
-                background: var(--bg-elevated);
-                border-bottom: 1px solid var(--border-primary);
-                box-shadow: var(--shadow-soft);
-                margin-bottom: var(--spacing-lg);
-                position: sticky;
-                top: 0;
-                z-index: 100;
-            }
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-lg) var(--spacing-xl);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            margin-bottom: var(--spacing-xl);
+            position: relative;
+            overflow: hidden;
         }
         
         .app-header::before {
@@ -890,61 +859,26 @@
             border-color: var(--primary-accent);
         }
         
-        /* Mobile-First Responsive Grid */
         .sessions-grid {
             display: grid;
-            grid-template-columns: 1fr;
-            gap: var(--spacing-md);
-            padding: var(--spacing-sm) 0;
-            margin-bottom: calc(var(--mobile-nav-height) + var(--spacing-lg));
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 32px;
+            overflow: visible !important;
+            z-index: auto;
+            padding: 20px 0;
         }
         
-        @media (min-width: 768px) {
-            .sessions-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: var(--spacing-lg);
-                padding: var(--spacing-md) 0;
-            }
-        }
-        
-        @media (min-width: 1024px) {
-            .sessions-grid {
-                grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-                margin-bottom: var(--spacing-lg);
-            }
-        }
-        
-        @media (min-width: 1440px) {
-            .sessions-grid {
-                grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-            }
-        }
-        
-        /* Mobile-Optimized Session Cards */
+        /* Clean Professional Session Cards */
         .session-list-item {
-            background: var(--bg-elevated);
-            border-radius: var(--border-radius);
-            margin-bottom: var(--spacing-sm);
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 16px;
             border: 1px solid var(--border-primary);
             transition: all 0.2s ease;
             cursor: pointer;
             overflow: hidden;
             box-shadow: var(--shadow-soft);
             position: relative;
-            min-height: var(--touch-target-size);
-        }
-        
-        /* Touch-friendly card interactions */
-        @media (max-width: 1024px) {
-            .session-list-item {
-                position: relative;
-                -webkit-tap-highlight-color: transparent;
-            }
-            
-            .session-list-item:active {
-                transform: scale(0.98);
-                box-shadow: var(--shadow-soft);
-            }
         }
         
         .session-list-item::before {
@@ -4190,136 +4124,6 @@
         h1, h2, h3, h4, h5, h6,
         div {
             color: #000000 !important;
-        }
-        
-        /* Mobile Bottom Navigation */
-        .mobile-bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: var(--mobile-nav-height);
-            background: var(--bg-elevated);
-            border-top: 1px solid var(--border-primary);
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            z-index: 1000;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-            padding: 0 var(--spacing-xs);
-        }
-        
-        .mobile-bottom-nav .nav-tab {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: var(--spacing-xs) 0;
-            text-decoration: none;
-            color: var(--text-muted);
-            font-size: 11px;
-            min-height: var(--touch-target-size);
-            transition: all 0.3s ease;
-            position: relative;
-        }
-        
-        .mobile-bottom-nav .nav-tab.active {
-            color: var(--primary-accent);
-        }
-        
-        .mobile-bottom-nav .nav-tab.active::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 20%;
-            right: 20%;
-            height: 2px;
-            background: var(--primary-accent);
-            animation: slideIn 0.3s ease;
-        }
-        
-        .mobile-bottom-nav .nav-icon {
-            font-size: 20px;
-            margin-bottom: 4px;
-        }
-        
-        @keyframes slideIn {
-            from { width: 0; }
-            to { width: 60%; }
-        }
-        
-        @media (min-width: 1024px) {
-            .mobile-bottom-nav {
-                display: none;
-            }
-        }
-        
-        /* Desktop Sidebar Navigation */
-        .desktop-sidebar {
-            display: none;
-        }
-        
-        @media (min-width: 1024px) {
-            .desktop-sidebar {
-                display: block;
-                position: fixed;
-                left: 0;
-                top: 0;
-                width: var(--desktop-sidebar-width);
-                height: 100vh;
-                background: var(--bg-elevated);
-                border-right: 1px solid var(--border-primary);
-                padding: var(--spacing-lg) var(--spacing-md);
-                overflow-y: auto;
-                z-index: 500;
-            }
-            
-            .desktop-sidebar .sidebar-logo {
-                font-size: 24px;
-                font-weight: 700;
-                color: var(--text-primary);
-                margin-bottom: var(--spacing-xl);
-                padding-bottom: var(--spacing-md);
-                border-bottom: 1px solid var(--border-primary);
-            }
-            
-            .desktop-sidebar .sidebar-nav {
-                list-style: none;
-                padding: 0;
-            }
-            
-            .desktop-sidebar .sidebar-item {
-                margin-bottom: var(--spacing-xs);
-            }
-            
-            .desktop-sidebar .sidebar-link {
-                display: flex;
-                align-items: center;
-                padding: var(--spacing-sm) var(--spacing-md);
-                color: var(--text-secondary);
-                text-decoration: none;
-                border-radius: var(--border-radius-sm);
-                transition: all 0.3s ease;
-                font-weight: 500;
-            }
-            
-            .desktop-sidebar .sidebar-link:hover {
-                background: var(--bg-hover);
-                color: var(--primary-accent);
-                transform: translateX(4px);
-            }
-            
-            .desktop-sidebar .sidebar-link.active {
-                background: var(--accent-blue-light);
-                color: var(--primary-accent);
-                font-weight: 600;
-            }
-            
-            .desktop-sidebar .sidebar-icon {
-                margin-right: var(--spacing-sm);
-                font-size: 18px;
-            }
         }
 
         /* Golden Hour Times Styles */
