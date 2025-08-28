@@ -479,14 +479,18 @@ class UnifiedSubscriptionManager {
      * Process Stripe webhook
      */
     async processStripeWebhook(event) {
+        console.log(`📨 Processing Stripe webhook: ${event.type} (ID: ${event.id})`);
+        
         try {
             switch (event.type) {
                 case 'checkout.session.completed':
+                    console.log('💳 Checkout session completed event received');
                     await this.handleCheckoutSessionCompleted(event.data.object);
                     break;
                     
                 case 'customer.subscription.created':
                 case 'customer.subscription.updated':
+                    console.log(`📝 Subscription ${event.type.split('.')[2]} event received`);
                     await this.handleStripeSubscriptionChange(event.data.object);
                     break;
                 
@@ -511,9 +515,12 @@ class UnifiedSubscriptionManager {
                 externalEventId: event.id,
                 eventData: event.data.object
             });
+            
+            console.log(`✅ Successfully processed webhook: ${event.type}`);
 
         } catch (error) {
             console.error('❌ Error processing Stripe webhook:', error);
+            console.error('Stack trace:', error.stack);
             throw error;
         }
     }
@@ -866,20 +873,33 @@ class UnifiedSubscriptionManager {
             }
             
             // Insert or update subscription record with correct column names
-            await client.query(`
-                INSERT INTO subscriptions (
-                    user_id, subscription_type, platform, 
-                    external_subscription_id, external_customer_id, 
-                    status, price_amount, current_period_start, 
-                    current_period_end, created_at
-                )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW() + INTERVAL '1 month', NOW())
-                ON CONFLICT (external_subscription_id) DO UPDATE SET
-                    status = EXCLUDED.status,
-                    subscription_type = EXCLUDED.subscription_type,
-                    price_amount = EXCLUDED.price_amount,
-                    updated_at = NOW()
-            `, [userId, planType, 'stripe', subscriptionId, customerId, 'active', amount]);
+            // First check if the subscription exists
+            const existing = await client.query(`
+                SELECT id FROM subscriptions WHERE external_subscription_id = $1
+            `, [subscriptionId]);
+            
+            if (existing.rows.length > 0) {
+                // Update existing subscription
+                await client.query(`
+                    UPDATE subscriptions SET
+                        status = $1,
+                        subscription_type = $2,
+                        price_amount = $3,
+                        updated_at = NOW()
+                    WHERE external_subscription_id = $4
+                `, ['active', planType, amount, subscriptionId]);
+            } else {
+                // Insert new subscription
+                await client.query(`
+                    INSERT INTO subscriptions (
+                        user_id, subscription_type, platform, 
+                        external_subscription_id, external_customer_id, 
+                        status, price_amount, current_period_start, 
+                        current_period_end, created_at
+                    )
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW() + INTERVAL '1 month', NOW())
+                `, [userId, planType, 'stripe', subscriptionId, customerId, 'active', amount]);
+            }
             
             console.log(`✅ Subscription recorded successfully for user: ${userId}`);
         } catch (error) {

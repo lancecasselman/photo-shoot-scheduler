@@ -231,21 +231,28 @@ function createSubscriptionRoutes(pool) {
 
     // Stripe webhook handler
     router.post('/webhook/stripe', express.raw({type: 'application/json'}), async (req, res) => {
+        console.log('🔔 Stripe webhook received at /api/subscriptions/webhook/stripe');
+        
         try {
             const sig = req.headers['stripe-signature'];
+            console.log('📝 Webhook signature present:', !!sig);
             let event;
 
             try {
                 event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+                console.log(`✅ Webhook event verified: ${event.type}, ID: ${event.id}`);
             } catch (err) {
-                console.error('Webhook signature verification failed:', err.message);
+                console.error('❌ Webhook signature verification failed:', err.message);
+                console.error('Make sure STRIPE_WEBHOOK_SECRET is correctly configured');
                 return res.status(400).send(`Webhook Error: ${err.message}`);
             }
 
+            console.log(`🎯 Processing webhook event: ${event.type}`);
             await subscriptionManager.processStripeWebhook(event);
+            console.log(`✅ Webhook processed successfully: ${event.type}`);
             res.json({ received: true });
         } catch (error) {
-            console.error('Error processing Stripe webhook:', error);
+            console.error('❌ Error processing Stripe webhook:', error);
             res.status(500).json({ success: false, error: error.message });
         }
     });
@@ -267,6 +274,37 @@ function createSubscriptionRoutes(pool) {
                     res.status(400).json({ success: false, error: 'Invalid subscription type' });
                 }
             } catch (error) {
+                res.status(500).json({ success: false, error: error.message });
+            }
+        });
+        
+        // Manual subscription recording for testing
+        router.post('/test/record-subscription', async (req, res) => {
+            try {
+                const { userId, subscriptionId } = req.body;
+                
+                console.log(`🧪 TEST: Manually recording subscription for user ${userId}`);
+                
+                // Record the subscription
+                await subscriptionManager.recordStripeSubscription(
+                    userId,
+                    subscriptionId || 'test_sub_' + Date.now(),
+                    'professional',
+                    39.00
+                );
+                
+                // Update the summary
+                await subscriptionManager.updateUserSubscriptionSummary(userId);
+                
+                console.log(`✅ TEST: Subscription recorded successfully`);
+                res.json({ 
+                    success: true, 
+                    message: 'Subscription recorded successfully',
+                    userId,
+                    subscriptionId: subscriptionId || 'test_sub_' + Date.now()
+                });
+            } catch (error) {
+                console.error('❌ TEST: Error recording subscription:', error);
                 res.status(500).json({ success: false, error: error.message });
             }
         });
