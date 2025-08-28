@@ -4354,17 +4354,28 @@
         }
 
         .collapsible-content {
-            max-height: 2500px;
+            max-height: none !important;
             opacity: 1;
-            overflow: visible;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: visible !important;
+            transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            padding-bottom: 20px;
         }
 
         .collapsible-content.collapsed {
-            max-height: 0;
+            max-height: 0 !important;
             opacity: 0;
             padding-top: 0;
             padding-bottom: 0;
+            overflow: hidden !important;
+        }
+        
+        /* Ensure the Add Session button is always visible */
+        #sessionForm button[type="submit"] {
+            margin-top: 20px;
+            display: block !important;
+            visibility: visible !important;
+            width: auto;
+            min-width: 150px;
         }
 
         .session-form {
@@ -5587,7 +5598,7 @@
                 <h2>Add New Session</h2>
                 <span class="collapse-icon" id="sessionFormIcon">▼</span>
             </div>
-            <div class="collapsible-content" id="sessionFormContent">
+            <div class="collapsible-content" id="sessionFormContent" style="max-height: none !important; overflow: visible !important;">
             <form id="sessionForm">
                 <div class="form-grid">
                     <div class="form-group">
@@ -5662,7 +5673,7 @@
                     </div>
                 </div>
                 
-                <button type="submit" class="btn btn-primary">Add Session</button>
+                <button type="submit" class="btn btn-primary" style="margin-top: 30px !important; padding: 15px 30px !important; font-size: 1.1rem !important; background: linear-gradient(135deg, #d4af37, #b8941f) !important; display: block !important;">Add Session</button>
 
             </form>
             </div>
@@ -6611,6 +6622,17 @@ ${contract.contract_content}
             // Set up event listeners immediately (doesn't require auth)
             setupEventListeners();
             setMinDateTime();
+            
+            // Ensure the session form is expanded by default
+            const sessionFormContent = document.getElementById('sessionFormContent');
+            const sessionFormIcon = document.getElementById('sessionFormIcon');
+            if (sessionFormContent && sessionFormContent.classList.contains('collapsed')) {
+                sessionFormContent.classList.remove('collapsed');
+                if (sessionFormIcon) {
+                    sessionFormIcon.textContent = '▼';
+                    sessionFormIcon.classList.remove('rotated');
+                }
+            }
             
             console.log(' INDEX PAGE: UI elements prepared, waiting for authentication...');
             console.log(' INDEX PAGE: Document loaded successfully');
