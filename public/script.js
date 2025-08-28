@@ -167,7 +167,7 @@ function redirectToAuth() {
     console.log('🚨 REDIRECT STACK TRACE:', new Error().stack);
     
     if (window.location.pathname !== '/secure-login.html') {
-        console.log('🚨 PERFORMING REDIRECT TO SECURE-LOGIN.HTML...');
+        console.log('🚨 PERFORMING REDIRECT TO AUTH.HTML...');
         window.location.href = '/secure-login.html';
     } else {
         console.log('🚨 Already on auth page, skipping redirect');
