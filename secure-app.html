@@ -4528,7 +4528,7 @@
 
         .card-content h3 {
             margin: 0 0 var(--spacing-xs) 0;
-            color: #000000;
+            color: #000000 !important;
             font-size: 0.9rem;
             font-weight: 500;
         }
@@ -4536,13 +4536,13 @@
         .card-content .amount {
             font-size: 2rem;
             font-weight: 600;
-            color: #000000;
+            color: #000000 !important;
             margin-bottom: var(--spacing-xs);
         }
 
         .card-content .period {
             font-size: 0.85rem;
-            color: var(--text-light);
+            color: #000000 !important;
         }
 
         .dashboard-charts {
@@ -12481,9 +12481,9 @@ END:VCALENDAR`;
                     <div class="financial-card profit">
                         <div class="card-icon">📈</div>
                         <div class="card-content">
-                            <h3>Net Profit</h3>
-                            <div class="amount" id="netProfit">$0.00</div>
-                            <div class="period" id="profitPeriod">This Month</div>
+                            <h3 style="color: #000000 !important;">Net Profit</h3>
+                            <div class="amount" id="netProfit" style="color: #000000 !important;">$2170.00</div>
+                            <div class="period" id="profitPeriod" style="color: #000000 !important;">This Month</div>
                         </div>
                     </div>
                 </div>
