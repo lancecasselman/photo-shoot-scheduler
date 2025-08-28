@@ -426,12 +426,24 @@
                 
                 <div class="form-row">
                     <label for="email">Email Address</label>
-                    <input type="email" id="email" required>
+                    <input type="email" id="email" required placeholder="your@email.com">
+                    <small style="color: #666; margin-top: 4px; display: block;">This will be your login email</small>
+                </div>
+                
+                <div class="form-row">
+                    <label for="password">Create Password</label>
+                    <input type="password" id="password" required placeholder="At least 8 characters">
+                    <small style="color: #666; margin-top: 4px; display: block;">Must be at least 8 characters with a mix of letters and numbers</small>
+                </div>
+                
+                <div class="form-row">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input type="password" id="confirmPassword" required placeholder="Re-enter your password">
                 </div>
                 
                 <div class="form-row">
                     <label for="name">Full Name</label>
-                    <input type="text" id="name" required>
+                    <input type="text" id="name" required placeholder="First and Last Name">
                 </div>
                 
                 <div class="form-row">
@@ -594,10 +606,29 @@
             
             try {
                 const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
                 const name = document.getElementById('name').value;
                 
-                if (!email || !name) {
+                if (!email || !name || !password || !confirmPassword) {
                     throw new Error('Please fill in all required fields');
+                }
+                
+                // Validate password requirements
+                if (password.length < 8) {
+                    throw new Error('Password must be at least 8 characters long');
+                }
+                
+                // Check if passwords match
+                if (password !== confirmPassword) {
+                    throw new Error('Passwords do not match');
+                }
+                
+                // Check password strength (at least one letter and one number)
+                const hasLetter = /[a-zA-Z]/.test(password);
+                const hasNumber = /[0-9]/.test(password);
+                if (!hasLetter || !hasNumber) {
+                    throw new Error('Password must contain at least one letter and one number');
                 }
                 
                 // Create subscription based on selected plan
@@ -605,7 +636,7 @@
                 
                 if (selectedPlan === 'professional') {
                     endpoint = '/api/subscriptions/professional/stripe';
-                    data = { email, name, createAccount: true }; // Enable account creation
+                    data = { email, password, name, createAccount: true }; // Enable account creation with password
                 } else if (selectedPlan === 'storage') {
                     endpoint = '/api/subscriptions/storage/stripe';
                     data = { tbCount: storageQuantity };

@@ -23,12 +23,20 @@ function createSubscriptionRoutes(pool) {
     // Create Professional Plan (Stripe) - Web only (handles both existing users and new account creation)
     router.post('/professional/stripe', async (req, res) => {
         try {
-            const { email, name, createAccount = false } = req.body;
+            const { email, password, name, createAccount = false } = req.body;
             let userId;
 
             // If creating account with subscription, handle account creation
             if (createAccount && email && name) {
                 console.log('🔔 Creating/getting account with Professional Plan subscription');
+                
+                // Validate password if provided (for new accounts)
+                if (password && password.length < 8) {
+                    return res.status(400).json({ 
+                        success: false, 
+                        error: 'Password must be at least 8 characters long' 
+                    });
+                }
                 
                 // Create user account first
                 const firebase = require('firebase-admin');
@@ -36,12 +44,19 @@ function createSubscriptionRoutes(pool) {
                 try {
                     let userRecord;
                     try {
-                        // Try to create new user
-                        userRecord = await firebase.auth().createUser({
+                        // Try to create new user with password
+                        const userCreationData = {
                             email: email,
                             displayName: name,
                             emailVerified: true
-                        });
+                        };
+                        
+                        // Add password if provided (for new accounts)
+                        if (password) {
+                            userCreationData.password = password;
+                        }
+                        
+                        userRecord = await firebase.auth().createUser(userCreationData);
                         console.log(`✅ Created new Firebase user: ${userRecord.uid}`);
                     } catch (createError) {
                         if (createError.code === 'auth/email-already-exists') {
