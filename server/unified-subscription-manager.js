@@ -847,6 +847,107 @@ class UnifiedSubscriptionManager {
         return match ? parseInt(match[1]) : 1;
     }
 
+    /**
+     * Record a Stripe subscription in the database
+     */
+    async recordStripeSubscription(userId, subscriptionId, planType, amount) {
+        const client = await this.pool.connect();
+        try {
+            console.log(`📝 Recording subscription: User ${userId}, Plan ${planType}, Amount $${amount}`);
+            
+            // Insert or update subscription record
+            await client.query(`
+                INSERT INTO subscriptions (
+                    user_id, provider, provider_subscription_id, plan_type, 
+                    status, current_period_start, current_period_end, amount, created_at
+                )
+                VALUES ($1, $2, $3, $4, $5, NOW(), NOW() + INTERVAL '1 month', $6, NOW())
+                ON CONFLICT (provider, provider_subscription_id) DO UPDATE SET
+                    status = EXCLUDED.status,
+                    plan_type = EXCLUDED.plan_type,
+                    amount = EXCLUDED.amount,
+                    updated_at = NOW()
+            `, [userId, 'stripe', subscriptionId, planType, 'active', amount]);
+            
+            console.log(`✅ Subscription recorded successfully for user: ${userId}`);
+        } catch (error) {
+            console.error('❌ Error recording subscription:', error);
+            throw error;
+        } finally {
+            client.release();
+        }
+    }
+    
+    /**
+     * Update user subscription summary table
+     */
+    async updateUserSubscriptionSummary(userId) {
+        const client = await this.pool.connect();
+        try {
+            console.log(`📊 Updating subscription summary for user: ${userId}`);
+            
+            // Get all active subscriptions for the user
+            const subscriptionsResult = await client.query(`
+                SELECT * FROM subscriptions 
+                WHERE user_id = $1 AND status = 'active'
+                ORDER BY created_at DESC
+            `, [userId]);
+            
+            const subscriptions = subscriptionsResult.rows;
+            let hasProfessionalPlan = false;
+            let totalStorageGb = 0;
+            let professionalStatus = 'inactive';
+            let storageAddonCount = 0;
+            
+            // Calculate totals from active subscriptions
+            for (const sub of subscriptions) {
+                if (sub.plan_type === 'professional') {
+                    hasProfessionalPlan = true;
+                    professionalStatus = 'active';
+                    totalStorageGb = 100; // Professional plan includes 100GB
+                } else if (sub.plan_type && sub.plan_type.includes('storage_')) {
+                    // Storage addon
+                    const tbMatch = sub.plan_type.match(/storage_(\d+)tb/);
+                    if (tbMatch) {
+                        const tb = parseInt(tbMatch[1]);
+                        totalStorageGb += tb * 1024; // Convert TB to GB
+                        storageAddonCount++;
+                    }
+                }
+            }
+            
+            // Update or insert summary
+            await client.query(`
+                INSERT INTO user_subscription_summary (
+                    user_id, has_professional_plan, professional_status,
+                    total_storage_gb, storage_addon_count, 
+                    last_updated, created_at
+                )
+                VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+                ON CONFLICT (user_id) DO UPDATE SET
+                    has_professional_plan = EXCLUDED.has_professional_plan,
+                    professional_status = EXCLUDED.professional_status,
+                    total_storage_gb = EXCLUDED.total_storage_gb,
+                    storage_addon_count = EXCLUDED.storage_addon_count,
+                    last_updated = NOW()
+            `, [userId, hasProfessionalPlan, professionalStatus, totalStorageGb, storageAddonCount]);
+            
+            // Also update the users table subscription_status
+            await client.query(`
+                UPDATE users 
+                SET subscription_status = $2, updated_at = NOW()
+                WHERE id = $1
+            `, [userId, professionalStatus]);
+            
+            console.log(`✅ Subscription summary updated: Professional=${hasProfessionalPlan}, Storage=${totalStorageGb}GB`);
+        } catch (error) {
+            console.error('❌ Error updating subscription summary:', error);
+            throw error;
+        } finally {
+            client.release();
+        }
+    }
+
     async handleCheckoutSessionCompleted(session) {
         console.log(`✅ Processing checkout session: ${session.id}`);
         
@@ -964,6 +1065,9 @@ class UnifiedSubscriptionManager {
                                 'professional',
                                 39.00
                             );
+                            
+                            // Update user subscription summary
+                            await this.updateUserSubscriptionSummary(userRecord.uid);
                         }
                     } finally {
                         client.release();
