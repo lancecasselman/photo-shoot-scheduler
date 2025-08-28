@@ -1320,6 +1320,8 @@
             box-shadow: var(--shadow-soft);
             display: block !important;
             visibility: visible !important;
+            position: relative;
+            z-index: 1;
         }
         
         .admin-checkboxes h3 {
@@ -4376,11 +4378,13 @@
             display: block !important;
             visibility: visible !important;
             position: relative !important;
-            z-index: 10;
+            z-index: 100;
         }
 
         .session-form {
             margin-bottom: var(--spacing-xl);
+            position: relative;
+            z-index: 100;
         }
 
         .loading-message, .error-message {
@@ -5599,8 +5603,8 @@
                 <h2>Add New Session</h2>
                 <span class="collapse-icon" id="sessionFormIcon">▼</span>
             </div>
-            <div class="collapsible-content" id="sessionFormContent">
-            <form id="sessionForm">
+            <div class="collapsible-content" id="sessionFormContent" style="position: relative !important; z-index: 1000 !important;">
+            <form id="sessionForm" style="position: relative !important; z-index: 1001 !important;">
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="clientName">Client Name</label>
@@ -5641,9 +5645,9 @@
                 </div>
                 
                 <!-- Workflow Status Checkboxes -->
-                <div class="admin-checkboxes">
+                <div class="admin-checkboxes" style="position: relative !important; z-index: 1002 !important; display: block !important;">
                     <h3>Workflow Status</h3>
-                    <div class="checkbox-grid">
+                    <div class="checkbox-grid" style="display: grid !important;">
                         <div class="checkbox-group">
                             <input type="checkbox" id="contractSigned" name="contractSigned">
                             <label for="contractSigned">Contract Signed</label>
@@ -5672,7 +5676,7 @@
                 </div>
                 
                 <!-- Add Session Button - At the Very Bottom -->
-                <button type="submit" class="btn btn-primary" style="margin-top: 25px !important; margin-bottom: 15px !important; padding: 15px 40px !important; font-size: 1.2rem !important; font-weight: 600 !important; background: linear-gradient(135deg, #d4af37, #b8941f) !important; display: block !important; width: 200px !important; cursor: pointer !important; border: none !important; border-radius: 6px !important; box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;">Add Session</button>
+                <button type="submit" class="btn btn-primary" style="margin-top: 25px !important; margin-bottom: 15px !important; padding: 15px 40px !important; font-size: 1.2rem !important; font-weight: 600 !important; background: linear-gradient(135deg, #d4af37, #b8941f) !important; display: block !important; width: 200px !important; cursor: pointer !important; border: none !important; border-radius: 6px !important; box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important; position: relative !important; z-index: 1003 !important;">Add Session</button>
 
             </form>
             </div>
