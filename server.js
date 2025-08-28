@@ -918,7 +918,15 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // Body parsing middleware (must be before routes)
-app.use(express.json({ limit: '100gb' }));
+// Skip JSON parsing for Stripe webhook endpoint (needs raw body for signature verification)
+app.use((req, res, next) => {
+    if (req.originalUrl === '/api/subscriptions/webhook/stripe') {
+        // Skip JSON parsing for webhook - it will use express.raw() in its route
+        next();
+    } else {
+        express.json({ limit: '100gb' })(req, res, next);
+    }
+});
 app.use(express.urlencoded({ extended: true, limit: '100gb' }));
 
 // Session configuration with fallback mechanism
