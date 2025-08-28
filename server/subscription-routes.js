@@ -375,10 +375,10 @@ function createSubscriptionRoutes(pool) {
                 const client = await pool.connect();
                 try {
                     const result = await client.query(
-                        'SELECT onboarding_complete FROM users WHERE id = $1',
+                        'SELECT onboarding_completed FROM users WHERE id = $1',
                         [userId]
                     );
-                    needsOnboarding = !result.rows[0]?.onboarding_complete;
+                    needsOnboarding = !result.rows[0]?.onboarding_completed;
                 } finally {
                     client.release();
                 }
