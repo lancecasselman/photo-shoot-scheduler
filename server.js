@@ -3515,6 +3515,37 @@ app.post('/api/users/complete-onboarding', isAuthenticated, async (req, res) => 
             businessType
         } = req.body;
 
+        // Validate required fields
+        if (!username || !displayName || !firstName || !lastName || 
+            !businessName || !phoneNumber || !streetAddress || 
+            !city || !state || !zipCode) {
+            return res.status(400).json({ 
+                error: 'Missing required fields. Please fill in all required information.' 
+            });
+        }
+
+        // Validate phone number format (at least 10 digits)
+        const phoneDigits = phoneNumber.replace(/\D/g, '');
+        if (phoneDigits.length < 10) {
+            return res.status(400).json({ 
+                error: 'Invalid phone number. Please enter at least 10 digits.' 
+            });
+        }
+
+        // Validate state code (2 letters)
+        if (state.length !== 2) {
+            return res.status(400).json({ 
+                error: 'State must be a 2-letter code (e.g., CA, NY).' 
+            });
+        }
+
+        // Validate ZIP code (5 digits)
+        if (!/^\d{5}$/.test(zipCode)) {
+            return res.status(400).json({ 
+                error: 'ZIP code must be exactly 5 digits.' 
+            });
+        }
+
         // First check if username is available
         const usernameCheck = await pool.query(
             'SELECT id FROM users WHERE username = $1 AND id != $2',
@@ -3565,7 +3596,7 @@ app.post('/api/users/complete-onboarding', isAuthenticated, async (req, res) => 
             
             // Create Express account with the business information
             const accountResult = await connectManager.createExpressAccount(
-                req.user.email || businessEmail,
+                req.user.email,
                 businessName,
                 'US'  // Default to US, can be updated later
             );

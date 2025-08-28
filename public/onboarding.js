@@ -628,6 +628,10 @@ class OnboardingWizard {
                     alert('Please enter your business name.');
                     return false;
                 }
+                if (!this.formData.phoneNumber || this.formData.phoneNumber.trim().length < 10) {
+                    alert('Please enter a valid phone number (at least 10 digits).');
+                    return false;
+                }
                 if (!this.formData.streetAddress || this.formData.streetAddress.trim().length < 3) {
                     alert('Please enter your street address.');
                     return false;
