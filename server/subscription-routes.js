@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const UnifiedSubscriptionManager = require('./unified-subscription-manager');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 /**
  * Subscription API Routes
