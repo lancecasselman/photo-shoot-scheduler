@@ -319,6 +319,80 @@ function createSubscriptionRoutes(pool) {
         }
     });
 
+    // Verify Stripe checkout session after successful payment
+    router.post('/verify-session', async (req, res) => {
+        try {
+            const { sessionId } = req.body;
+            
+            if (!sessionId) {
+                return res.status(400).json({ 
+                    success: false, 
+                    error: 'Session ID is required' 
+                });
+            }
+
+            // Retrieve the session from Stripe
+            const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+            const session = await stripe.checkout.sessions.retrieve(sessionId, {
+                expand: ['customer', 'subscription']
+            });
+
+            if (!session) {
+                return res.status(404).json({ 
+                    success: false, 
+                    error: 'Session not found' 
+                });
+            }
+
+            // Check if payment was successful
+            if (session.payment_status !== 'paid') {
+                return res.status(400).json({ 
+                    success: false, 
+                    error: 'Payment not completed' 
+                });
+            }
+
+            // Get user info from session metadata or customer
+            const userId = session.metadata?.userId;
+            const email = session.customer_email || session.customer?.email;
+            
+            // Check if user needs onboarding
+            let needsOnboarding = false;
+            if (userId) {
+                const client = await pool.connect();
+                try {
+                    const result = await client.query(
+                        'SELECT onboarding_complete FROM users WHERE id = $1',
+                        [userId]
+                    );
+                    needsOnboarding = !result.rows[0]?.onboarding_complete;
+                } finally {
+                    client.release();
+                }
+            } else {
+                // New user created during checkout
+                needsOnboarding = true;
+            }
+
+            console.log(`✅ Session verified: ${sessionId}, User: ${userId || email}, Needs onboarding: ${needsOnboarding}`);
+
+            res.json({
+                success: true,
+                sessionId: session.id,
+                userId,
+                email,
+                needsOnboarding,
+                subscriptionId: session.subscription?.id || session.subscription
+            });
+        } catch (error) {
+            console.error('Error verifying session:', error);
+            res.status(500).json({ 
+                success: false, 
+                error: error.message 
+            });
+        }
+    });
+
     return router;
 }
 

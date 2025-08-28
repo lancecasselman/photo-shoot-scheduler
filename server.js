@@ -3450,30 +3450,8 @@ app.get('/api/sessions/:sessionId/files/:folderType/download-zip', isAuthenticat
     }
 });
 
-// Subscription success page
-app.get('/subscription-success', isAuthenticated, async (req, res) => {
-    try {
-        // Update user subscription status
-        const now = new Date();
-        const expires = new Date(now);
-        expires.setMonth(expires.getMonth() + 1); // Default to monthly
-
-        await pool.query(
-            `UPDATE users 
-             SET subscription_status = 'active', 
-                 subscription_expires = $1,
-                 onboarding_completed = false
-             WHERE id = $2`,
-            [expires, req.user.id]
-        );
-
-        // Redirect to main app with onboarding flag
-        res.redirect('/?onboarding=true');
-    } catch (error) {
-        console.error('Error updating subscription:', error);
-        res.redirect('/');
-    }
-});
+// NOTE: Subscription success page route removed - now handled by static route
+// The subscription status update is handled by Stripe webhook and verify-session endpoint
 
 // Onboarding status endpoint
 app.get('/api/onboarding/status', isAuthenticated, async (req, res) => {
@@ -11724,6 +11702,14 @@ app.get('/secure-login.html', (req, res) => {
 // Subscription checkout page
 app.get('/subscription-checkout.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'subscription-checkout.html'));
+});
+
+// Subscription success page (after Stripe payment)
+app.get('/subscription-success', (req, res) => {
+    res.sendFile(path.join(__dirname, 'subscription-success.html'));
+});
+app.get('/subscription-success.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'subscription-success.html'));
 });
 
 // Secure app - BULLETPROOF authentication required
