@@ -1318,6 +1318,8 @@
             padding: var(--spacing-lg);
             margin: var(--spacing-lg) 0;
             box-shadow: var(--shadow-soft);
+            display: block !important;
+            visibility: visible !important;
         }
         
         .admin-checkboxes h3 {
@@ -1329,9 +1331,10 @@
         }
         
         .checkbox-grid {
-            display: grid;
+            display: grid !important;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: var(--spacing-sm);
+            visibility: visible !important;
         }
         
         .checkbox-group {
@@ -4358,7 +4361,7 @@
             opacity: 1;
             overflow: visible !important;
             transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            padding-bottom: 30px;
+            padding: 20px 0 30px 0;
             display: block !important;
         }
 
@@ -6622,8 +6625,13 @@ ${contract.contract_content}
             // Ensure the session form is expanded by default
             const sessionFormContent = document.getElementById('sessionFormContent');
             const sessionFormIcon = document.getElementById('sessionFormIcon');
-            if (sessionFormContent && sessionFormContent.classList.contains('collapsed')) {
+            if (sessionFormContent) {
+                // Always ensure it starts expanded
                 sessionFormContent.classList.remove('collapsed');
+                sessionFormContent.style.display = 'block';
+                sessionFormContent.style.visibility = 'visible';
+                sessionFormContent.style.maxHeight = 'none';
+                sessionFormContent.style.overflow = 'visible';
                 if (sessionFormIcon) {
                     sessionFormIcon.textContent = '▼';
                     sessionFormIcon.classList.remove('rotated');
@@ -6641,14 +6649,15 @@ ${contract.contract_content}
             
             if (content.classList.contains('collapsed')) {
                 content.classList.remove('collapsed');
+                content.style.display = 'block';
                 content.style.maxHeight = 'none';
                 content.style.overflow = 'visible';
+                content.style.visibility = 'visible';
                 icon.textContent = '▼';
                 icon.classList.remove('rotated');
             } else {
                 content.classList.add('collapsed');
-                content.style.maxHeight = '0';
-                content.style.overflow = 'hidden';
+                content.style.display = 'none';
                 icon.textContent = '▶';
                 icon.classList.add('rotated');
             }
