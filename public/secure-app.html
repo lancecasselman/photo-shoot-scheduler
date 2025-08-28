@@ -3020,7 +3020,19 @@
             .form-grid { grid-template-columns: 1fr; }
             .session-actions { flex-direction: column; }
             .btn { width: 100%; margin: 2px 0; }
-            .checkbox-grid { grid-template-columns: 1fr; }
+            .checkbox-grid { 
+                grid-template-columns: 1fr !important; 
+                display: grid !important;
+            }
+            /* Ensure Add Session form is visible on mobile */
+            #sessionFormContent {
+                display: block !important;
+                visibility: visible !important;
+            }
+            #sessionForm .admin-checkboxes {
+                display: block !important;
+                visibility: visible !important;
+            }
             
 
             
@@ -4360,11 +4372,20 @@
 
         .collapsible-content {
             max-height: none !important;
-            opacity: 1;
+            min-height: auto !important;
+            height: auto !important;
+            opacity: 1 !important;
             overflow: visible !important;
             transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             padding: 20px 0 30px 0;
             display: block !important;
+            visibility: visible !important;
+        }
+        
+        /* Show all children when expanded */
+        .collapsible-content:not(.collapsed) * {
+            display: inherit !important;
+            visibility: visible !important;
         }
 
         .collapsible-content.collapsed {
