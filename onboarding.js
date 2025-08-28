@@ -40,12 +40,12 @@ class OnboardingWizard {
                 }
             } else {
                 // Not authenticated - redirect to auth
-                window.location.href = '/auth.html';
+                window.location.href = '/secure-login.html';
                 return;
             }
         } catch (error) {
             console.error('Error checking auth status:', error);
-            window.location.href = '/auth.html';
+            window.location.href = '/secure-login.html';
         }
     }
     

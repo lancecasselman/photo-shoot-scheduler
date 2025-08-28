@@ -22,7 +22,7 @@
             .then(authData => {
                 if (!authData.authenticated) {
                     console.log('🚨 Not authenticated - redirecting to login');
-                    window.location.replace('/auth.html');
+                    window.location.replace('/secure-login.html');
                     return;
                 }
                 
@@ -65,7 +65,7 @@
             })
             .catch(err => {
                 console.error('🚨 Subscription check error:', err);
-                window.location.replace('/auth.html');
+                window.location.replace('/secure-login.html');
             });
     }
 })();
@@ -339,8 +339,8 @@ class SubscriptionAccessGuard {
     }
 
     redirectToAuth() {
-        if (window.location.pathname !== '/auth.html') {
-            window.location.href = '/auth.html';
+        if (window.location.pathname !== '/secure-login.html') {
+            window.location.href = '/secure-login.html';
         }
     }
 
@@ -406,7 +406,7 @@ class SubscriptionAccessGuard {
             const authResponse = await fetch('/api/check-auth');
             if (!authResponse.ok) {
                 console.log('🔐 Not authenticated, redirecting to login');
-                window.location.href = '/auth.html';
+                window.location.href = '/secure-login.html';
                 return;
             }
             
@@ -460,7 +460,7 @@ class SubscriptionAccessGuard {
         } catch (error) {
             console.error('🔐 Subscription check error:', error);
             // On error, redirect to auth for safety
-            window.location.href = '/auth.html';
+            window.location.href = '/secure-login.html';
         }
     }
     
