@@ -4485,11 +4485,13 @@
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: var(--spacing-md);
             margin-bottom: var(--spacing-xl);
+            position: relative;
+            z-index: 1;
         }
 
         @media (min-width: 768px) {
             .financial-overview {
-                grid-template-columns: repeat(4, 1fr);
+                grid-template-columns: repeat(2, 1fr);
                 gap: var(--spacing-lg);
             }
         }
@@ -4503,6 +4505,8 @@
             align-items: center;
             gap: var(--spacing-md);
             border-left: 4px solid;
+            position: relative;
+            min-height: 120px;
         }
 
         .financial-card.earnings {
@@ -4515,6 +4519,11 @@
 
         .financial-card.profit {
             border-left-color: var(--gold-muted);
+            position: relative;
+            z-index: 10;
+            background: var(--bg-secondary) !important;
+            opacity: 1 !important;
+            visibility: visible !important;
         }
 
         .financial-card.mileage {
@@ -12460,11 +12469,11 @@ END:VCALENDAR`;
                         </div>
                     </div>
                     
-                    <div class="financial-card profit">
-                        <div class="card-icon">📈</div>
+                    <div class="financial-card profit" style="background: #f0fdf4 !important; border: 2px solid #28a745 !important;">
+                        <div class="card-icon">💰</div>
                         <div class="card-content">
-                            <h3 style="color: #000000 !important;">Net Profit</h3>
-                            <div class="amount" id="netProfit" style="color: #000000 !important;">$2170.00</div>
+                            <h3 style="color: #000000 !important; font-weight: 700 !important;">Net Profit</h3>
+                            <div class="amount" id="netProfit" style="color: #28a745 !important; font-size: 2.2rem !important; font-weight: 800 !important;">$2170.00</div>
                             <div class="period" id="profitPeriod" style="color: #000000 !important;">This Month</div>
                         </div>
                     </div>
