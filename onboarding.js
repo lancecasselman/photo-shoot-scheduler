@@ -238,6 +238,39 @@ class OnboardingWizard {
                     </div>
                 </div>
                 
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="email">Email *</label>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            placeholder="your@email.com"
+                            value="${this.formData.email || ''}"
+                            required
+                            readonly
+                        >
+                        <div class="form-hint">
+                            Your account email (cannot be changed).
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="phoneNumber">Phone Number *</label>
+                        <input 
+                            type="tel" 
+                            id="phoneNumber" 
+                            name="phoneNumber" 
+                            placeholder="(555) 123-4567"
+                            value="${this.formData.phoneNumber || ''}"
+                            required
+                        >
+                        <div class="form-hint">
+                            For client communications and Stripe account.
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="form-group">
                     <label for="streetAddress">Street Address *</label>
                     <input 
@@ -404,6 +437,12 @@ class OnboardingWizard {
                         </div>
                         <div class="summary-item">
                             <strong>Business:</strong> ${this.formData.businessName}
+                        </div>
+                        <div class="summary-item">
+                            <strong>Email:</strong> ${this.formData.email}
+                        </div>
+                        <div class="summary-item">
+                            <strong>Phone:</strong> ${this.formData.phoneNumber}
                         </div>
                         <div class="summary-item">
                             <strong>Address:</strong> ${this.formData.streetAddress}, ${this.formData.city}, ${this.formData.state} ${this.formData.zipCode}

@@ -40,12 +40,12 @@ class OnboardingWizard {
                 }
             } else {
                 // Not authenticated - redirect to auth
-                window.location.href = '/secure-login.html';
+                window.location.href = '/auth.html';
                 return;
             }
         } catch (error) {
             console.error('Error checking auth status:', error);
-            window.location.href = '/secure-login.html';
+            window.location.href = '/auth.html';
         }
     }
     
@@ -197,40 +197,135 @@ class OnboardingWizard {
                 <h2>Business Information</h2>
                 <p>Tell us about your photography business to customize your experience.</p>
                 
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="firstName">First Name *</label>
+                        <input 
+                            type="text" 
+                            id="firstName" 
+                            name="firstName" 
+                            placeholder="First Name"
+                            value="${this.formData.firstName || ''}"
+                            required
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="lastName">Last Name *</label>
+                        <input 
+                            type="text" 
+                            id="lastName" 
+                            name="lastName" 
+                            placeholder="Last Name"
+                            value="${this.formData.lastName || ''}"
+                            required
+                        >
+                    </div>
+                </div>
+                
                 <div class="form-group">
-                    <label for="businessName">Business Name</label>
+                    <label for="businessName">Business Name *</label>
                     <input 
                         type="text" 
                         id="businessName" 
                         name="businessName" 
                         placeholder="Your Photography Business Name"
                         value="${this.formData.businessName || ''}"
+                        required
                     >
                     <div class="form-hint">
                         This will appear on invoices and client communications.
                     </div>
                 </div>
                 
-                <div class="form-group">
-                    <label for="firstName">First Name</label>
-                    <input 
-                        type="text" 
-                        id="firstName" 
-                        name="firstName" 
-                        placeholder="First Name"
-                        value="${this.formData.firstName || ''}"
-                    >
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="email">Email *</label>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            placeholder="your@email.com"
+                            value="${this.formData.email || ''}"
+                            required
+                            readonly
+                        >
+                        <div class="form-hint">
+                            Your account email (cannot be changed).
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="phoneNumber">Phone Number *</label>
+                        <input 
+                            type="tel" 
+                            id="phoneNumber" 
+                            name="phoneNumber" 
+                            placeholder="(555) 123-4567"
+                            value="${this.formData.phoneNumber || ''}"
+                            required
+                        >
+                        <div class="form-hint">
+                            For client communications and Stripe account.
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="form-group">
-                    <label for="lastName">Last Name</label>
+                    <label for="streetAddress">Street Address *</label>
                     <input 
                         type="text" 
-                        id="lastName" 
-                        name="lastName" 
-                        placeholder="Last Name"
-                        value="${this.formData.lastName || ''}"
+                        id="streetAddress" 
+                        name="streetAddress" 
+                        placeholder="123 Main Street"
+                        value="${this.formData.streetAddress || ''}"
+                        required
                     >
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="city">City *</label>
+                        <input 
+                            type="text" 
+                            id="city" 
+                            name="city" 
+                            placeholder="City"
+                            value="${this.formData.city || ''}"
+                            required
+                        >
+                    </div>
+                    
+                    <div class="form-group" style="max-width: 150px;">
+                        <label for="state">State *</label>
+                        <input 
+                            type="text" 
+                            id="state" 
+                            name="state" 
+                            placeholder="State"
+                            value="${this.formData.state || ''}"
+                            maxlength="2"
+                            required
+                        >
+                    </div>
+                    
+                    <div class="form-group" style="max-width: 150px;">
+                        <label for="zipCode">ZIP Code *</label>
+                        <input 
+                            type="text" 
+                            id="zipCode" 
+                            name="zipCode" 
+                            placeholder="12345"
+                            value="${this.formData.zipCode || ''}"
+                            pattern="[0-9]{5}"
+                            maxlength="5"
+                            required
+                        >
+                    </div>
+                </div>
+                
+                <div class="form-hint" style="margin-top: 20px;">
+                    * Required fields - This information helps us provide location-based features and proper invoicing.
                 </div>
             </div>
         `;
@@ -338,10 +433,19 @@ class OnboardingWizard {
                             <strong>Username:</strong> @${this.formData.username}
                         </div>
                         <div class="summary-item">
-                            <strong>Display Name:</strong> ${this.formData.displayName}
+                            <strong>Name:</strong> ${this.formData.firstName} ${this.formData.lastName}
                         </div>
                         <div class="summary-item">
                             <strong>Business:</strong> ${this.formData.businessName}
+                        </div>
+                        <div class="summary-item">
+                            <strong>Email:</strong> ${this.formData.email}
+                        </div>
+                        <div class="summary-item">
+                            <strong>Phone:</strong> ${this.formData.phoneNumber}
+                        </div>
+                        <div class="summary-item">
+                            <strong>Address:</strong> ${this.formData.streetAddress}, ${this.formData.city}, ${this.formData.state} ${this.formData.zipCode}
                         </div>
                         <div class="summary-item">
                             <strong>Specialty:</strong> ${this.getBusinessTypeLabel(this.formData.businessType)}
@@ -511,9 +615,33 @@ class OnboardingWizard {
                     return false;
                 }
                 break;
-            case 3: // Business info
+            case 3: // Business Information step
+                if (!this.formData.firstName || this.formData.firstName.trim().length < 1) {
+                    alert('Please enter your first name.');
+                    return false;
+                }
+                if (!this.formData.lastName || this.formData.lastName.trim().length < 1) {
+                    alert('Please enter your last name.');
+                    return false;
+                }
                 if (!this.formData.businessName || this.formData.businessName.trim().length < 2) {
                     alert('Please enter your business name.');
+                    return false;
+                }
+                if (!this.formData.streetAddress || this.formData.streetAddress.trim().length < 3) {
+                    alert('Please enter your street address.');
+                    return false;
+                }
+                if (!this.formData.city || this.formData.city.trim().length < 2) {
+                    alert('Please enter your city.');
+                    return false;
+                }
+                if (!this.formData.state || this.formData.state.trim().length !== 2) {
+                    alert('Please enter your state (2-letter code).');
+                    return false;
+                }
+                if (!this.formData.zipCode || !/^\d{5}$/.test(this.formData.zipCode)) {
+                    alert('Please enter a valid 5-digit ZIP code.');
                     return false;
                 }
                 break;

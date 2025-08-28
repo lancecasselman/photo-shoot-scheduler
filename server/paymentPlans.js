@@ -262,10 +262,14 @@ class PaymentPlanManager {
       
       if (!photographer) throw new Error('Photographer not found');
       
-      // Use photographer's business name and email for invoicing
+      // Use photographer's business name, contact info and address for invoicing
       const businessName = photographer.businessName || 
                           (photographer.displayName ? `${photographer.displayName} Photography` : 'Photography Business');
       const businessEmail = photographer.email || 'noreply@photomanagementsystem.com';
+      const businessPhone = photographer.phoneNumber || '';
+      const businessAddress = (photographer.streetAddress && photographer.city && photographer.state) 
+        ? `${photographer.streetAddress}, ${photographer.city}, ${photographer.state} ${photographer.zipCode || ''}`
+        : '';
 
       // Create Stripe invoice
       let stripeInvoice = null;
@@ -296,9 +300,11 @@ class PaymentPlanManager {
               paymentNumber: payment.paymentNumber.toString(),
               photographerName: businessName,
               photographerEmail: businessEmail,
+              photographerPhone: businessPhone,
+              photographerAddress: businessAddress,
               customInvoiceUrl: invoiceCustomUrl
             },
-            footer: `Thank you for choosing ${businessName}!\n\nYou can add an optional tip and view full invoice details at:\n${invoiceCustomUrl}\n\nContact: ${businessEmail}`
+            footer: `Thank you for choosing ${businessName}!\n${businessAddress ? `\n${businessAddress}` : ''}\n\nYou can add an optional tip and view full invoice details at:\n${invoiceCustomUrl}\n\nContact: ${businessEmail}${businessPhone ? ` | ${businessPhone}` : ''}`
           });
 
           // Add main invoice item

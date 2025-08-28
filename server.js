@@ -3507,6 +3507,7 @@ app.post('/api/users/complete-onboarding', isAuthenticated, async (req, res) => 
             firstName,
             lastName,
             businessName,
+            phoneNumber,
             streetAddress,
             city,
             state,
@@ -3532,20 +3533,22 @@ app.post('/api/users/complete-onboarding', isAuthenticated, async (req, res) => 
                  first_name = $3,
                  last_name = $4,
                  business_name = $5,
-                 street_address = $6,
-                 city = $7,
-                 state = $8,
-                 zip_code = $9,
-                 business_type = $10,
+                 phone_number = $6,
+                 street_address = $7,
+                 city = $8,
+                 state = $9,
+                 zip_code = $10,
+                 business_type = $11,
                  onboarding_completed = true,
                  onboarding_date = NOW()
-             WHERE id = $11`,
+             WHERE id = $12`,
             [
                 username,
                 displayName,
                 firstName,
                 lastName,
                 businessName,
+                phoneNumber,
                 streetAddress,
                 city,
                 state,
@@ -3554,6 +3557,34 @@ app.post('/api/users/complete-onboarding', isAuthenticated, async (req, res) => 
                 req.user.uid
             ]
         );
+
+        // Create Stripe Connect account for the photographer
+        try {
+            const stripeConnect = require('./server/stripe-connect');
+            const connectManager = new stripeConnect.StripeConnectManager();
+            
+            // Create Express account with the business information
+            const accountResult = await connectManager.createExpressAccount(
+                req.user.email || businessEmail,
+                businessName,
+                'US'  // Default to US, can be updated later
+            );
+            
+            if (accountResult.success) {
+                // Save Stripe Connect account ID
+                await pool.query(
+                    'UPDATE users SET stripe_connect_account_id = $1 WHERE id = $2',
+                    [accountResult.accountId, req.user.uid]
+                );
+                console.log('SUCCESS: Stripe Connect account created for user:', req.user.uid);
+            } else {
+                console.error('WARNING: Could not create Stripe Connect account:', accountResult.error);
+                // Don't fail onboarding if Stripe setup fails - they can set it up later
+            }
+        } catch (stripeError) {
+            console.error('WARNING: Stripe Connect setup failed during onboarding:', stripeError.message);
+            // Continue without failing onboarding
+        }
 
         res.json({ success: true, message: 'Onboarding completed successfully' });
     } catch (error) {
