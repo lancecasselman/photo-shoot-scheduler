@@ -377,7 +377,7 @@
             right: -8px;
             top: -8px;
             background: var(--secondary-accent);
-            color: var(--text-primary);
+            color: #000000;
             font-size: 0.6rem;
             font-weight: 600;
             padding: 2px 6px;
@@ -623,12 +623,12 @@
             font-family: var(--font-heading);
             font-size: 2.5rem;
             font-weight: 600;
-            color: var(--text-primary);
+            color: #000000;
             margin-bottom: var(--spacing-xs);
         }
         
         .header p {
-            color: var(--text-secondary);
+            color: #000000;
             font-size: 1.1rem;
             font-weight: 400;
         }
@@ -1071,7 +1071,7 @@
         .detail-item {
             margin-bottom: var(--spacing-sm);
             line-height: 1.6;
-            color: var(--text-primary);
+            color: #000000;
         }
 
         .detail-item strong {
@@ -1219,7 +1219,7 @@
         
         .session-type {
             background: linear-gradient(135deg, var(--gold-muted) 0%, var(--cream-warm) 100%);
-            color: var(--text-primary);
+            color: #000000;
             padding: var(--spacing-xs) var(--spacing-md);
             border-radius: var(--border-radius-full);
             font-size: 0.85em;
@@ -1246,7 +1246,7 @@
         }
         
         .detail-value {
-            color: var(--text-primary);
+            color: #000000;
             font-weight: 400;
         }
         
@@ -1605,7 +1605,7 @@
 
         .invoice-card-modal .modal-footer .btn-secondary {
             background: var(--bg-elevated);
-            color: var(--text-primary);
+            color: #000000;
             border: 2px solid var(--border-secondary);
         }
 
@@ -1750,7 +1750,7 @@
             border: none;
             border-radius: 16px;
             background: transparent;
-            color: var(--text-secondary);
+            color: #000000;
             font-weight: 600;
             font-size: 0.95rem;
             cursor: pointer;
@@ -3243,7 +3243,7 @@
             display: flex;
             align-items: center;
             gap: var(--spacing-xs);
-            color: var(--text-primary);
+            color: #000000;
             font-weight: 500;
             cursor: pointer;
             font-family: var(--font-body);
@@ -3259,7 +3259,7 @@
             border-radius: var(--border-radius-sm);
             border: 2px solid var(--accent-beige);
             background: var(--bg-secondary);
-            color: var(--text-primary);
+            color: #000000;
             font-size: 14px;
             font-family: var(--font-body);
             transition: all 0.3s ease;
@@ -3285,7 +3285,7 @@
             display: flex;
             align-items: center;
             gap: var(--spacing-xs);
-            color: var(--text-primary);
+            color: #000000;
             cursor: pointer;
             font-family: var(--font-body);
         }
@@ -3342,7 +3342,7 @@
             font-family: var(--font-heading);
             font-size: 1.8rem;
             font-weight: 600;
-            color: var(--text-primary);
+            color: #000000;
             margin: 0;
         }
 
@@ -4113,7 +4113,11 @@
             100% { content: '...'; }
         }
         
-        /* GLOBAL OVERRIDE: Force all text to be black */
+        /* GLOBAL OVERRIDE: Force ALL text to be black */
+        * {
+            color: #000000 !important;
+        }
+        
         body *,
         .session-list-item *,
         .session-info *,
@@ -4122,7 +4126,20 @@
         span,
         p,
         h1, h2, h3, h4, h5, h6,
-        div {
+        div,
+        a,
+        strong,
+        em,
+        i,
+        b,
+        u,
+        td,
+        th,
+        li,
+        button,
+        input,
+        textarea,
+        select {
             color: #000000 !important;
         }
 
@@ -4241,7 +4258,7 @@
         .time-display {
             font-size: 2rem;
             font-weight: 600;
-            color: var(--text-primary);
+            color: #000000;
             margin-bottom: var(--spacing-md);
             font-family: var(--font-heading);
         }
@@ -4329,7 +4346,7 @@
 
         .collapsible-header h2 {
             margin: 0;
-            color: var(--text-primary);
+            color: #000000;
             font-family: var(--font-heading);
             display: flex;
             align-items: center;
@@ -4420,7 +4437,7 @@
         .business-nav-btn {
             background: none;
             border: 2px solid var(--gold-muted);
-            color: var(--text-secondary);
+            color: #000000;
             padding: var(--spacing-sm) var(--spacing-md);
             border-radius: var(--border-radius);
             cursor: pointer;
@@ -4460,7 +4477,7 @@
             border: 2px solid var(--gold-muted);
             border-radius: var(--border-radius);
             background: var(--bg-primary);
-            color: var(--text-primary);
+            color: #000000;
             font-family: var(--font-body);
         }
 
@@ -4512,7 +4529,7 @@
 
         .card-content h3 {
             margin: 0 0 var(--spacing-xs) 0;
-            color: var(--text-secondary);
+            color: #000000;
             font-size: 0.9rem;
             font-weight: 500;
         }
@@ -4520,7 +4537,7 @@
         .card-content .amount {
             font-size: 2rem;
             font-weight: 600;
-            color: var(--text-primary);
+            color: #000000;
             margin-bottom: var(--spacing-xs);
         }
 
@@ -4544,7 +4561,7 @@
 
         .chart-container h3 {
             margin-bottom: var(--spacing-md);
-            color: var(--text-primary);
+            color: #000000;
         }
 
         /* AI Assistant Styles */
@@ -4566,7 +4583,7 @@
             padding: var(--spacing-sm) var(--spacing-md);
             cursor: pointer;
             font-weight: 500;
-            color: var(--text-secondary);
+            color: #000000;
             border-bottom: 3px solid transparent;
             transition: all 0.3s ease;
             font-family: var(--font-body);
@@ -4599,7 +4616,7 @@
             display: block;
             margin-bottom: var(--spacing-sm);
             font-weight: 600;
-            color: var(--text-primary);
+            color: #000000;
         }
 
         .ai-input-section textarea,
@@ -4610,7 +4627,7 @@
             border: 2px solid var(--gold-muted);
             border-radius: var(--border-radius);
             background: var(--bg-primary);
-            color: var(--text-primary);
+            color: #000000;
             font-family: var(--font-body);
             margin-bottom: var(--spacing-sm);
         }
@@ -4645,7 +4662,7 @@
             border: 2px solid var(--accent-beige);
             border-radius: var(--border-radius);
             background: var(--bg-primary);
-            color: var(--text-primary);
+            color: #000000;
             font-family: var(--font-body);
             line-height: 1.6;
             margin-bottom: var(--spacing-md);
@@ -4657,7 +4674,7 @@
             border: 2px solid var(--accent-beige);
             border-radius: var(--border-radius);
             background: var(--bg-primary);
-            color: var(--text-primary);
+            color: #000000;
             font-family: var(--font-body);
             line-height: 1.6;
             margin-bottom: var(--spacing-md);
@@ -4696,7 +4713,7 @@
         }
 
         .idea-description {
-            color: var(--text-secondary);
+            color: #000000;
             line-height: 1.5;
             font-size: 0.95rem;
         }
@@ -4708,7 +4725,7 @@
 
         .output-actions button {
             background: var(--accent-beige);
-            color: var(--text-primary);
+            color: #000000;
             border: none;
             padding: var(--spacing-xs) var(--spacing-sm);
             border-radius: var(--border-radius-sm);
@@ -5136,7 +5153,7 @@
             display: block;
             margin-bottom: var(--spacing-xs);
             font-weight: 600;
-            color: var(--text-primary);
+            color: #000000;
         }
 
         .form-group input,
@@ -5146,7 +5163,7 @@
             border: 2px solid var(--gold-muted);
             border-radius: var(--border-radius);
             background: var(--bg-primary);
-            color: var(--text-primary);
+            color: #000000;
             font-family: var(--font-body);
         }
 
@@ -5226,7 +5243,7 @@
 
         .export-btn {
             background: var(--accent-sage);
-            color: var(--text-primary);
+            color: #000000;
             border: none;
             padding: var(--spacing-sm) var(--spacing-md);
             border-radius: var(--border-radius);
@@ -5280,7 +5297,7 @@
 
         .summary-item label {
             font-weight: 600;
-            color: var(--text-primary);
+            color: #000000;
         }
 
         .summary-item span {
@@ -5499,7 +5516,7 @@
                 <!-- Real-time Search Bar -->
                 <div class="search-section">
                     <input type="text" id="clientSearch" placeholder="Search clients by name, location, or email..." 
-                           oninput="filterSessions()" style="width: 100%; padding: 12px; border-radius: var(--border-radius); border: 2px solid var(--gold-muted); background: var(--bg-primary); color: var(--text-primary); font-size: 16px; font-family: var(--font-body);">
+                           oninput="filterSessions()" style="width: 100%; padding: 12px; border-radius: var(--border-radius); border: 2px solid var(--gold-muted); background: var(--bg-primary); color: #000000; font-size: 16px; font-family: var(--font-body);">
                 </div>
                 
                 <!-- Compact Filter Controls with Dropdowns -->
@@ -5533,18 +5550,18 @@
                         <div class="date-range-controls" style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
                             <div style="display: flex; align-items: center; gap: 10px;">
                                 <label style="color: #000000; font-weight: 600;">From:</label>
-                                <input type="date" id="dateFromFilter" onchange="filterSessions()" style="padding: 10px; border: 2px solid var(--primary-accent); border-radius: 6px; background: var(--bg-elevated); color: var(--text-primary);">
+                                <input type="date" id="dateFromFilter" onchange="filterSessions()" style="padding: 10px; border: 2px solid var(--primary-accent); border-radius: 6px; background: var(--bg-elevated); color: #000000;">
                             </div>
                             <span style="color: #000000; font-weight: 600;">to</span>
                             <div style="display: flex; align-items: center; gap: 10px;">
                                 <label style="color: #000000; font-weight: 600;">To:</label>
-                                <input type="date" id="dateToFilter" onchange="filterSessions()" style="padding: 10px; border: 2px solid var(--primary-accent); border-radius: 6px; background: var(--bg-elevated); color: var(--text-primary);">
+                                <input type="date" id="dateToFilter" onchange="filterSessions()" style="padding: 10px; border: 2px solid var(--primary-accent); border-radius: 6px; background: var(--bg-elevated); color: #000000;">
                             </div>
                         </div>
                     </div>
 
                     <div id="type-filters" class="filter-dropdown" style="display: none; background: rgba(16, 185, 129, 0.08); border-radius: 12px; padding: 20px; margin: 10px 0; border-left: 4px solid var(--primary-accent); backdrop-filter: blur(10px); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);">
-                        <select id="sessionTypeFilter" onchange="filterSessions()" style="width: 100%; max-width: 350px; padding: 12px; border: 2px solid var(--primary-accent); border-radius: 8px; background: var(--bg-elevated); color: var(--text-primary); font-size: 15px; font-weight: 500;">
+                        <select id="sessionTypeFilter" onchange="filterSessions()" style="width: 100%; max-width: 350px; padding: 12px; border: 2px solid var(--primary-accent); border-radius: 8px; background: var(--bg-elevated); color: #000000; font-size: 15px; font-weight: 500;">
                             <option value=""> All Types</option>
                             <option value="Wedding"> Wedding</option>
                             <option value="Family"> Family</option>
@@ -5555,7 +5572,7 @@
                     </div>
 
                     <div id="sort-filters" class="filter-dropdown" style="display: none; background: rgba(16, 185, 129, 0.08); border-radius: 12px; padding: 20px; margin: 10px 0; border-left: 4px solid var(--primary-accent); backdrop-filter: blur(10px); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);">
-                        <select id="sortOptions" onchange="sortSessions()" style="width: 100%; max-width: 400px; padding: 12px; border: 2px solid var(--primary-accent); border-radius: 8px; background: var(--bg-elevated); color: var(--text-primary); font-size: 15px; font-weight: 500;">
+                        <select id="sortOptions" onchange="sortSessions()" style="width: 100%; max-width: 400px; padding: 12px; border: 2px solid var(--primary-accent); border-radius: 8px; background: var(--bg-elevated); color: #000000; font-size: 15px; font-weight: 500;">
                             <option value="calendar-upcoming">Calendar (Upcoming First)</option>
                             <option value="date-desc">Date (Newest First)</option>
                             <option value="date-asc" selected>Date (Oldest First)</option>
@@ -5840,7 +5857,7 @@
                             </div>
                             
                             <div style="background: #e8f5e8; padding: 15px; border-radius: 8px;">
-                                <h5 style="color: #28a745; margin: 0 0 10px 0;">Contract Signing URL</h5>
+                                <h5 style="color: #000000; margin: 0 0 10px 0;">Contract Signing URL</h5>
                                 <div style="display: flex; gap: 10px;">
                                     <input type="text" id="signingUrlCopy" value="${contractData.signingUrl || ''}" readonly style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px;">
                                     <button onclick="copySigningUrl()" class="btn btn-secondary">Copy URL</button>
@@ -5979,12 +5996,12 @@ The Legacy Photography`);
                 <div id="signedContractModal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10001;">
                     <div class="modal-content" style="background: white; margin: 20px auto; padding: 30px; width: 95%; max-width: 900px; border-radius: 10px; max-height: 90vh; overflow-y: auto;">
                         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #d4af37; padding-bottom: 15px;">
-                            <h2 style="color: #8b7355; margin: 0;"> Signed Contract - ${contract.contract_title}</h2>
+                            <h2 style="color: #000000; margin: 0;"> Signed Contract - ${contract.contract_title}</h2>
                             <button onclick="closeModal('signedContractModal')" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
                         </div>
                         
                         <div class="signature-info" style="background: #e8f5e8; border: 1px solid #c3e6c3; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-                            <h3 style="color: #28a745; margin: 0 0 15px 0;"> Contract Signed</h3>
+                            <h3 style="color: #000000; margin: 0 0 15px 0;"> Contract Signed</h3>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
                                 <div><strong>Client:</strong> ${contract.client_name}</div>
                                 <div><strong>Email:</strong> ${contract.client_email}</div>
@@ -6292,7 +6309,7 @@ ${contract.contract_content}
             }
             
             if (endDate <= startDate) {
-                resultsDiv.innerHTML = '<p style="color:#ff4444;margin:0;"> End date must be after start date</p>';
+                resultsDiv.innerHTML = '<p style="color:#000000;margin:0;"> End date must be after start date</p>';
                 calculationDiv.style.display = 'block';
                 return;
             }
@@ -6344,7 +6361,7 @@ ${contract.contract_content}
                 scheduleHTML += `
                     <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 10px; background: rgba(212,175,55,0.15); border-radius: 6px; border-left: 3px solid #d4af37;">
                         <span style="font-weight: 600;">Payment ${i + 1}</span>
-                        <span style="color: #d4af37;">${paymentDate.toLocaleDateString()}</span>
+                        <span style="color: #000000;">${paymentDate.toLocaleDateString()}</span>
                         <span style="font-weight: 600; color: #f5f5f5;">$${paymentAmount}</span>
                     </div>
                 `;
@@ -6362,7 +6379,7 @@ ${contract.contract_content}
                     <div><strong> Each Payment:</strong> $${paymentAmount}</div>
                 </div>
                 <div style="background:rgba(26,26,26,0.8);padding:20px;border-radius:12px;border:2px solid #d4af37;margin-top:20px;">
-                    <h6 style="color:#d4af37;margin:0 0 15px 0;font-size:1.1rem;"> Payment Schedule:</h6>
+                    <h6 style="color:#000000;margin:0 0 15px 0;font-size:1.1rem;"> Payment Schedule:</h6>
                     ${scheduleHTML}
                     <div style="text-align:center;margin-top:15px;padding-top:15px;border-top:1px solid rgba(212,175,55,0.3);color:#d4af37;font-weight:600;">
                         Total: ${numberOfPayments} × $${paymentAmount} = $${totalAmount.toFixed(2)}
@@ -6806,10 +6823,10 @@ ${contract.contract_content}
                                 <span class="session-duration"> ${formatDuration(session.duration)}</span>
                                 <span class="session-price">Money $${session.price}</span>
                                 ${(session.depositAmount && session.depositAmount > 0) ? 
-                                    `<span class="session-deposit" style="color: #28a745; font-weight: 600;">Deposit: $${session.depositAmount.toFixed(2)}</span>` : 
+                                    `<span class="session-deposit" style="color: #000000; font-weight: 600;">Deposit: $${session.depositAmount.toFixed(2)}</span>` : 
                                     ''}
                                 ${(session.depositAmount && session.depositAmount > 0) ? 
-                                    `<span class="session-remaining" style="color: #d4af37; font-weight: 600;">Remaining: $${(session.price - session.depositAmount).toFixed(2)}</span>` : 
+                                    `<span class="session-remaining" style="color: #000000; font-weight: 600;">Remaining: $${(session.price - session.depositAmount).toFixed(2)}</span>` : 
                                     ''
                                 }
                             </div>
@@ -6822,10 +6839,10 @@ ${contract.contract_content}
                             <div class="detail-section">
                                 <h4>Phone Contact Info</h4>
                                 <div class="detail-item">
-                                    <strong>Email:</strong> <a href="mailto:${session.email}" style="color: #d4af37;">${session.email}</a>
+                                    <strong>Email:</strong> <a href="mailto:${session.email}" style="color: #000000;">${session.email}</a>
                                 </div>
                                 <div class="detail-item">
-                                    <strong>Phone:</strong> <span style="color: #d4af37;">${session.phoneNumber}</span>
+                                    <strong>Phone:</strong> <span style="color: #000000;">${session.phoneNumber}</span>
                                     <button onclick="callClient('${session.phoneNumber}'); event.stopPropagation();" class="btn btn-secondary">Phone</button>
                                     <button onclick="textClient('${session.phoneNumber}', '${session.clientName}', '${sessionId}'); event.stopPropagation();" class="btn btn-secondary">Message</button>
                                 </div>
@@ -7103,7 +7120,7 @@ ${contract.contract_content}
                     <div style="padding: 20px; color: white;">
                         <div class="upload-area" style="border: 2px dashed #d4af37; border-radius: 8px; padding: 40px; text-align: center; margin-bottom: 20px; background: rgba(212, 175, 55, 0.1);">
                             <input type="file" id="fileInput" multiple style="display: none;" accept="*/*">
-                            <div style="color: #2563eb; font-size: 48px; margin-bottom: 15px;">
+                            <div style="color: #000000; font-size: 48px; margin-bottom: 15px;">
                                 <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/>
                                 </svg>
@@ -7723,20 +7740,20 @@ lance@thelegacyphotography.com`;
                 // Create PDF content
                 const pdfContent = `
                     <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 800px;">
-                        <h1 style="color: #d4af37; border-bottom: 2px solid #d4af37; padding-bottom: 10px;">
+                        <h1 style="color: #000000; border-bottom: 2px solid #d4af37; padding-bottom: 10px;">
                             Photography Session Summary
                         </h1>
                         
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin: 20px 0;">
                             <div>
-                                <h2 style="color: #333;">Client Information</h2>
+                                <h2 style="color: #000000;">Client Information</h2>
                                 <p><strong>Name:</strong> ${session.clientName}</p>
                                 <p><strong>Email:</strong> ${session.email}</p>
                                 <p><strong>Phone:</strong> ${session.phoneNumber}</p>
                                 <p><strong>Location:</strong> ${session.location}</p>
                             </div>
                             <div>
-                                <h2 style="color: #333;">Session Details</h2>
+                                <h2 style="color: #000000;">Session Details</h2>
                                 <p><strong>Type:</strong> ${session.sessionType}</p>
                                 <p><strong>Date & Time:</strong> ${formatDateTime(session.dateTime)}</p>
                                 <p><strong>Duration:</strong> ${session.duration} hours</p>
@@ -7745,7 +7762,7 @@ lance@thelegacyphotography.com`;
                         </div>
                         
                         <div style="margin: 30px 0;">
-                            <h2 style="color: #333;">Workflow Status</h2>
+                            <h2 style="color: #000000;">Workflow Status</h2>
                             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
                                 <p>Document Contract Signed: ${session.contractSigned ? 'Success Yes' : 'Error No'}</p>
                                 <p>Money Paid: ${session.paid ? 'Success Yes' : 'Error No'}</p>
@@ -7757,7 +7774,7 @@ lance@thelegacyphotography.com`;
                         </div>
                         
                         <div style="margin: 30px 0;">
-                            <h2 style="color: #333;">Additional Checklist</h2>
+                            <h2 style="color: #000000;">Additional Checklist</h2>
                             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
                                 <p> Prints Ordered: ${session.printsOrdered ? 'Success Yes' : 'Error No'}</p>
                                 <p>Star Special Edits: ${session.specialEdits ? 'Success Yes' : 'Error No'}</p>
@@ -7770,7 +7787,7 @@ lance@thelegacyphotography.com`;
                         
                         ${session.sessionNotes ? `
                             <div style="margin: 30px 0;">
-                                <h2 style="color: #333;">Session Notes</h2>
+                                <h2 style="color: #000000;">Session Notes</h2>
                                 <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; border-left: 4px solid #d4af37;">
                                     ${session.sessionNotes.replace(/\n/g, '<br>')}
                                 </div>
@@ -7912,8 +7929,8 @@ lance@thelegacyphotography.com`;
 
             return `
                 <div class="tip-panel" style="background: linear-gradient(135deg, #fff9e6, #f4e4bc); padding: 20px; margin-top: 30px; border-radius: 12px; border: 2px solid #d4af37; text-align: center;">
-                    <h3 style="color: #8b7355; margin-bottom: 15px; font-size: 1.2em;">💛 Love your photos?</h3>
-                    <p style="color: #8b7355; margin-bottom: 20px; font-size: 0.95em;">
+                    <h3 style="color: #000000; margin-bottom: 15px; font-size: 1.2em;">💛 Love your photos?</h3>
+                    <p style="color: #000000; margin-bottom: 20px; font-size: 0.95em;">
                         If you're thrilled with your photos, you can leave a tip to show your appreciation<br>
                         <em>(totally optional and not expected!)</em>
                     </p>
@@ -8097,7 +8114,7 @@ lance@thelegacyphotography.com`;
                 <div id="contractSelectionModal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000;">
                     <div class="modal-content" style="background: white; margin: 50px auto; padding: 30px; width: 90%; max-width: 600px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
                         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 2px solid #d4af37; padding-bottom: 15px;">
-                            <h2 style="color: #8b7355; margin: 0; font-size: 24px;"> Select Contract Template</h2>
+                            <h2 style="color: #000000; margin: 0; font-size: 24px;"> Select Contract Template</h2>
                             <button onclick="closeModal('contractSelectionModal')" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666; padding: 5px;">&times;</button>
                         </div>
                         
@@ -8277,7 +8294,7 @@ lance@thelegacyphotography.com`;
                 <div id="contractsViewModal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000;">
                     <div class="modal-content" style="background: white; margin: 50px auto; padding: 30px; width: 90%; max-width: 800px; border-radius: 10px; max-height: 80vh; overflow-y: auto;">
                         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #d4af37; padding-bottom: 15px;">
-                            <h2 style="color: #8b7355; margin: 0;">Contracts for ${clientName}</h2>
+                            <h2 style="color: #000000; margin: 0;">Contracts for ${clientName}</h2>
                             <button onclick="closeModal('contractsViewModal')" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
                         </div>
                         
@@ -8701,7 +8718,7 @@ lance@thelegacyphotography.com`;
                 <div id="contractDetailsModal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10001;">
                     <div class="modal-content" style="background: white; margin: 20px auto; padding: 30px; width: 95%; max-width: 900px; border-radius: 10px; max-height: 90vh; overflow-y: auto;">
                         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #d4af37; padding-bottom: 15px;">
-                            <h2 style="color: #8b7355; margin: 0;">${contract.contract_title}</h2>
+                            <h2 style="color: #000000; margin: 0;">${contract.contract_title}</h2>
                             <button onclick="closeModal('contractDetailsModal')" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
                         </div>
                         
@@ -8782,7 +8799,7 @@ ${contract.contract_content}
                 <div id="contractEditModal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10002;">
                     <div class="modal-content" style="background: white; margin: 20px auto; padding: 30px; width: 95%; max-width: 1000px; border-radius: 10px; max-height: 90vh; overflow-y: auto;">
                         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #d4af37; padding-bottom: 15px;">
-                            <h2 style="color: #8b7355; margin: 0;">Edit Contract: ${contract.contract_title}</h2>
+                            <h2 style="color: #000000; margin: 0;">Edit Contract: ${contract.contract_title}</h2>
                             <button onclick="closeModal('contractEditModal')" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
                         </div>
                         
@@ -8867,7 +8884,7 @@ ${contract.contract_content}
                 <div id="customContractModal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000;">
                     <div class="modal-content" style="background: white; margin: 20px auto; padding: 30px; width: 95%; max-width: 1000px; border-radius: 10px; max-height: 90vh; overflow-y: auto;">
                         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #d4af37; padding-bottom: 15px;">
-                            <h2 style="color: #8b7355; margin: 0;">Create Custom Contract for ${session.clientName}</h2>
+                            <h2 style="color: #000000; margin: 0;">Create Custom Contract for ${session.clientName}</h2>
                             <button onclick="closeModal('customContractModal')" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
                         </div>
                         
@@ -8957,7 +8974,7 @@ ${contract.contract_content}
                 <div id="updateSessionModal" class="modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000;">
                     <div class="modal-content" style="background: white; margin: 50px auto; padding: 30px; width: 90%; max-width: 600px; border-radius: 10px; max-height: 80vh; overflow-y: auto;">
                         <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #d4af37; padding-bottom: 15px;">
-                            <h2 style="color: #8b7355; margin: 0;">Update Session</h2>
+                            <h2 style="color: #000000; margin: 0;">Update Session</h2>
                             <button onclick="closeUpdateSessionModal()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
                         </div>
                         
@@ -10313,7 +10330,7 @@ END:VCALENDAR`;
                         <span style="font-size: 0.85rem; color: var(--text-light);">${new Date(item.timestamp).toLocaleDateString()}</span>
                     </div>
                     <div style="margin-bottom: var(--spacing-xs); font-weight: 500;">Prompt: ${item.prompt}</div>
-                    <div style="color: var(--text-secondary); max-height: 100px; overflow-y: auto;">${item.response.substring(0, 200)}${item.response.length > 200 ? '...' : ''}</div>
+                    <div style="color: #000000; max-height: 100px; overflow-y: auto;">${item.response.substring(0, 200)}${item.response.length > 200 ? '...' : ''}</div>
                 </div>
             `).join('');
         }
@@ -12285,7 +12302,7 @@ END:VCALENDAR`;
                         <input type="text" id="locationInput" placeholder="Enter location (e.g., Myrtle Beach, SC)" 
                                list="popularLocations" onkeypress="handleLocationEnter(event)" 
                                style="width: 60%; padding: 12px; border: 2px solid var(--gold-muted); 
-                               border-radius: var(--border-radius); background: var(--bg-primary); color: var(--text-primary); 
+                               border-radius: var(--border-radius); background: var(--bg-primary); color: #000000; 
                                font-family: var(--font-body);">
                         <datalist id="popularLocations">
                             <option value="Myrtle Beach, SC">
@@ -12300,7 +12317,7 @@ END:VCALENDAR`;
                             <option value="Tybee Island, GA">
                         </datalist>
                         <button onclick="selectLocation()" style="padding: 12px 16px; background: var(--cream-warm); 
-                                color: var(--text-primary); border: 2px solid var(--gold-muted); 
+                                color: #000000; border: 2px solid var(--gold-muted); 
                                 border-radius: var(--border-radius); margin-left: 8px; cursor: pointer; 
                                 font-weight: 600;">📍 Enter</button>
                         <button id="getCurrentLocation" onclick="getCurrentLocation()" style="padding: 12px 20px; 
@@ -12313,7 +12330,7 @@ END:VCALENDAR`;
                 <div class="date-selector">
                     <h3> Date</h3>
                     <input type="date" id="dateInput" style="padding: 12px; border: 2px solid var(--gold-muted); 
-                           border-radius: var(--border-radius); background: var(--bg-primary); color: var(--text-primary); 
+                           border-radius: var(--border-radius); background: var(--bg-primary); color: #000000; 
                            font-family: var(--font-body); font-size: 16px;">
                 </div>
                 
@@ -13037,7 +13054,7 @@ END:VCALENDAR`;
                     <div class="settings-content" style="display: grid; gap: 20px; margin-top: 20px;">
                         <div style="padding: 20px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #007bff;">
                             <h3 style="margin-top: 0;">Account Information</h3>
-                            <p style="color: #666;">Manage your account settings and preferences.</p>
+                            <p style="color: #000000;">Manage your account settings and preferences.</p>
                             <button onclick="showMessage('Account settings feature coming soon!', 'info')" class="btn btn-secondary">
                                 Edit Profile
                             </button>
@@ -13045,7 +13062,7 @@ END:VCALENDAR`;
                         
                         <div style="padding: 20px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #28a745;">
                             <h3 style="margin-top: 0;">Subscription & Billing</h3>
-                            <p style="color: #666;">View your current plan and billing information.</p>
+                            <p style="color: #000000;">View your current plan and billing information.</p>
                             <button onclick="showMessage('Billing management feature coming soon!', 'info')" class="btn btn-secondary">
                                 Manage Subscription
                             </button>
@@ -13058,7 +13075,7 @@ END:VCALENDAR`;
                         
                         <div style="padding: 20px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #6f42c1;">
                             <h3 style="margin-top: 0;">App Preferences</h3>
-                            <p style="color: #666;">Customize your app experience.</p>
+                            <p style="color: #000000;">Customize your app experience.</p>
                             <button onclick="showMessage('Preference settings feature coming soon!', 'info')" class="btn btn-secondary">
                                 Customize Settings
                             </button>
@@ -16284,10 +16301,10 @@ END:VCALENDAR`;
                     <!-- AI Panel (Hidden) - Will be shown as modal -->
                     <div class="wb-ai-panel" id="wb-ai-panel" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 400px; height: 600px; background: #1a1a1a; border-radius: 12px; z-index: 3000; padding: 20px;">
                         <div class="wb-ai-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                            <h3 style="color: white; margin: 0;">🚀 AI Website Generator</h3>
+                            <h3 style="color: #000000; margin: 0;">🚀 AI Website Generator</h3>
                             <button onclick="WebsiteBuilder.closeAIEditor()" style="background: none; border: none; color: white; font-size: 20px; cursor: pointer;">✕</button>
                         </div>
-                        <div style="color: white; text-align: center; padding: 40px;">
+                        <div style="color: #000000; text-align: center; padding: 40px;">
                             <p>AI editor will be implemented here</p>
                         </div>
                     </div>
