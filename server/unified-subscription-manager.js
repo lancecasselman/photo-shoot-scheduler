@@ -215,8 +215,9 @@ class UnifiedSubscriptionManager {
                     planType: 'professional',
                     storageGb: this.BASE_STORAGE_GB.toString()
                 },
-                success_url: `${process.env.FRONTEND_URL || 'http://localhost:5000'}/subscription-success?session_id={CHECKOUT_SESSION_ID}`,
-                cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:5000'}/subscription-checkout.html`,
+                // Use proper domain from REPLIT_DOMAINS environment variable
+                success_url: `https://${process.env.REPLIT_DOMAINS ? process.env.REPLIT_DOMAINS.split(',')[0] : 'localhost:5000'}/subscription-success?session_id={CHECKOUT_SESSION_ID}`,
+                cancel_url: `https://${process.env.REPLIT_DOMAINS ? process.env.REPLIT_DOMAINS.split(',')[0] : 'localhost:5000'}/subscription-checkout.html`,
                 allow_promotion_codes: true,
                 billing_address_collection: 'required'
             });
@@ -264,8 +265,9 @@ class UnifiedSubscriptionManager {
                     planType: 'storage',
                     tbCount: tbCount.toString()
                 },
-                success_url: `${process.env.FRONTEND_URL || 'http://localhost:5000'}/subscription-success?session_id={CHECKOUT_SESSION_ID}`,
-                cancel_url: `${process.env.FRONTEND_URL || 'http://localhost:5000'}/subscription-checkout.html`,
+                // Use proper domain from REPLIT_DOMAINS environment variable
+                success_url: `https://${process.env.REPLIT_DOMAINS ? process.env.REPLIT_DOMAINS.split(',')[0] : 'localhost:5000'}/subscription-success?session_id={CHECKOUT_SESSION_ID}`,
+                cancel_url: `https://${process.env.REPLIT_DOMAINS ? process.env.REPLIT_DOMAINS.split(',')[0] : 'localhost:5000'}/subscription-checkout.html`,
                 allow_promotion_codes: true
             });
 

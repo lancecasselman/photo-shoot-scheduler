@@ -44,6 +44,20 @@
             font-size: 40px;
         }
 
+        .error-icon {
+            background: #f44336;
+        }
+
+        .loading-icon {
+            background: #667eea;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
         h1 {
             color: #333;
             margin-bottom: 20px;
@@ -106,6 +120,8 @@
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
             margin: 10px;
+            text-decoration: none;
+            display: inline-block;
         }
 
         .continue-btn:hover {
@@ -113,17 +129,20 @@
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
         }
 
+        .secondary-btn {
+            background: #28a745;
+        }
+
         .loading {
-            display: none;
             margin: 20px 0;
         }
 
-        .loading .spinner {
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #667eea;
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
+            width: 40px;
+            height: 40px;
             animation: spin 1s linear infinite;
             margin: 0 auto;
         }
@@ -132,15 +151,46 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .email-highlight {
+            background: #fffbea;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
-    <div class="success-container">
+    <!-- Loading State -->
+    <div class="success-container" id="loadingContainer">
+        <div class="success-icon loading-icon">
+            <div class="spinner"></div>
+        </div>
+        <h1>Processing Your Subscription...</h1>
+        <div class="description">
+            We're setting up your Professional account. This will only take a moment.
+        </div>
+    </div>
+
+    <!-- Success State -->
+    <div class="success-container hidden" id="successContainer">
         <div class="success-icon">✓</div>
         
         <h1>Welcome to Professional!</h1>
         
-        <div class="description">
+        <div class="description" id="successDescription">
             Your subscription has been successfully activated. You now have access to all Professional features and 100GB of cloud storage.
         </div>
 
@@ -152,80 +202,150 @@
                 <li>Client Gallery Management</li>
                 <li>Invoice & Contract System</li>
                 <li>Booking & Scheduling</li>
-                <li>Mobile App Access</li>
                 <li>Payment Processing</li>
                 <li>Custom Website Builder</li>
                 <li>24/7 Premium Support</li>
             </ul>
         </div>
 
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <p>Setting up your account...</p>
+        <div id="actionButtons">
+            <a href="/secure-login.html" class="continue-btn" id="loginBtn">
+                Sign In to Continue
+            </a>
+            <a href="/onboarding.html" class="continue-btn secondary-btn hidden" id="onboardingBtn">
+                Complete Setup Guide
+            </a>
+            <a href="/photographer-dashboard.html" class="continue-btn hidden" id="dashboardBtn">
+                Go to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Error State -->
+    <div class="success-container hidden" id="errorContainer">
+        <div class="success-icon error-icon">✗</div>
+        
+        <h1>Subscription Processing</h1>
+        
+        <div class="error-message" id="errorMessage">
+            We're having trouble verifying your subscription. Please try signing in or contact support if the issue persists.
         </div>
 
-        <button class="continue-btn" onclick="continueToApp()">
-            Continue to Your Dashboard
-        </button>
-        
-        <button class="continue-btn" onclick="startOnboarding()" style="background: #28a745;">
-            Complete Setup Guide
-        </button>
+        <div id="errorActions">
+            <a href="/secure-login.html" class="continue-btn">
+                Try Signing In
+            </a>
+        </div>
     </div>
 
     <script>
-        // Check if this is coming from a Stripe checkout session
+        // Get session ID from URL
         const urlParams = new URLSearchParams(window.location.search);
         const sessionId = urlParams.get('session_id');
 
-        if (sessionId) {
-            // Verify the session and update user account
-            verifySubscription(sessionId);
-        }
+        async function verifySubscription() {
+            if (!sessionId) {
+                showError('Invalid session. Please return to the subscription page.');
+                return;
+            }
 
-        async function verifySubscription(sessionId) {
             try {
                 console.log('Verifying subscription session:', sessionId);
                 
-                // The webhook should have already processed the subscription
-                // This is just for verification and user experience
+                // Verify the session with the backend
                 const response = await fetch('/api/subscriptions/verify-session', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ sessionId })
                 });
 
-                if (response.ok) {
-                    console.log('Subscription verified successfully');
+                const result = await response.json();
+                
+                if (result.success) {
+                    showSuccess(result);
                 } else {
-                    console.log('Subscription verification pending - webhook will handle');
+                    // If verification fails, still show success but guide to login
+                    // The webhook will handle the actual subscription creation
+                    showSuccessWithLogin(result.error);
                 }
             } catch (error) {
                 console.error('Error verifying subscription:', error);
-                // Don't show error to user as webhook will handle the subscription
+                // Don't show error to user, assume webhook will handle
+                showSuccessWithLogin();
             }
         }
 
-        function continueToApp() {
-            showLoading();
-            window.location.href = '/';
+        function showSuccess(result) {
+            document.getElementById('loadingContainer').classList.add('hidden');
+            document.getElementById('successContainer').classList.remove('hidden');
+            
+            // Determine which buttons to show based on user state
+            if (result.needsOnboarding) {
+                // New user - show login button first
+                document.getElementById('loginBtn').classList.remove('hidden');
+                document.getElementById('successDescription').innerHTML = `
+                    Your Professional subscription is active! Your account has been created with email: 
+                    <span class="email-highlight">${result.email || 'your email'}</span>. 
+                    Please sign in to complete your business setup.
+                `;
+            } else if (result.userId) {
+                // Existing user - go straight to dashboard
+                document.getElementById('dashboardBtn').classList.remove('hidden');
+                document.getElementById('loginBtn').classList.add('hidden');
+                document.getElementById('successDescription').textContent = 
+                    'Your account has been upgraded to Professional! You can now access all premium features.';
+                
+                // Auto-redirect to dashboard after 3 seconds
+                setTimeout(() => {
+                    window.location.href = '/photographer-dashboard.html';
+                }, 3000);
+            } else {
+                // Default - show login
+                document.getElementById('loginBtn').classList.remove('hidden');
+            }
         }
 
-        function startOnboarding() {
-            showLoading();
-            window.location.href = '/onboarding.html';
+        function showSuccessWithLogin(message) {
+            document.getElementById('loadingContainer').classList.add('hidden');
+            document.getElementById('successContainer').classList.remove('hidden');
+            
+            if (message && message.includes('resource_missing')) {
+                // Session not found - likely already processed
+                document.getElementById('successDescription').innerHTML = `
+                    Your subscription has been processed! Please sign in to access your account.
+                `;
+            } else {
+                document.getElementById('successDescription').innerHTML = `
+                    Your Professional subscription is being activated. Please sign in to access your account.
+                `;
+            }
+            
+            document.getElementById('loginBtn').classList.remove('hidden');
         }
 
-        function showLoading() {
-            document.getElementById('loading').style.display = 'block';
-            document.querySelectorAll('.continue-btn').forEach(btn => btn.style.display = 'none');
+        function showError(message) {
+            document.getElementById('loadingContainer').classList.add('hidden');
+            document.getElementById('errorContainer').classList.remove('hidden');
+            document.getElementById('errorMessage').textContent = message;
         }
 
-        // Auto-redirect after 10 seconds if user doesn't click
+        // Start verification when page loads
+        window.addEventListener('load', () => {
+            setTimeout(verifySubscription, 1500); // Small delay for better UX
+        });
+
+        // Prevent accidental navigation away
+        let isProcessing = true;
+        window.addEventListener('beforeunload', (e) => {
+            if (isProcessing && sessionId) {
+                e.preventDefault();
+                e.returnValue = 'Your subscription is still being processed. Are you sure you want to leave?';
+            }
+        });
+
+        // Clear processing flag when done
         setTimeout(() => {
-            if (window.location.pathname === '/subscription-success.html') {
-                continueToApp();
-            }
+            isProcessing = false;
         }, 10000);
     </script>
 </body>
