@@ -6649,19 +6649,16 @@ ${contract.contract_content}
             setupEventListeners();
             setMinDateTime();
             
-            // Ensure the session form is expanded by default
+            // Keep the session form collapsed initially
             const sessionFormContent = document.getElementById('sessionFormContent');
             const sessionFormIcon = document.getElementById('sessionFormIcon');
             if (sessionFormContent) {
-                // Always ensure it starts expanded
-                sessionFormContent.classList.remove('collapsed');
-                sessionFormContent.style.display = 'block';
-                sessionFormContent.style.visibility = 'visible';
-                sessionFormContent.style.maxHeight = 'none';
-                sessionFormContent.style.overflow = 'visible';
+                // Start collapsed to keep the page clean
+                sessionFormContent.classList.add('collapsed');
+                sessionFormContent.style.display = 'none';
                 if (sessionFormIcon) {
-                    sessionFormIcon.textContent = '▼';
-                    sessionFormIcon.classList.remove('rotated');
+                    sessionFormIcon.textContent = '▶';
+                    sessionFormIcon.classList.add('rotated');
                 }
             }
             
@@ -6677,11 +6674,18 @@ ${contract.contract_content}
             if (content.classList.contains('collapsed')) {
                 content.classList.remove('collapsed');
                 content.style.display = 'block';
-                content.style.maxHeight = 'none';
-                content.style.overflow = 'visible';
+                content.style.maxHeight = '60vh';
+                content.style.overflowY = 'auto';
                 content.style.visibility = 'visible';
                 icon.textContent = '▼';
                 icon.classList.remove('rotated');
+                
+                // Ensure the button is visible
+                const buttonContainer = content.querySelector('div[style*="sticky"]');
+                if (buttonContainer) {
+                    buttonContainer.style.display = 'block';
+                    buttonContainer.style.visibility = 'visible';
+                }
             } else {
                 content.classList.add('collapsed');
                 content.style.display = 'none';
