@@ -275,7 +275,12 @@ class PaymentPlanManager {
       let stripeInvoice = null;
       if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY.length > 50) {
         try {
-          // Create or get customer
+          // Check if photographer has Stripe Connect account
+          if (!photographer.stripeConnectAccountId) {
+            throw new Error('Photographer must complete Stripe Connect onboarding before accepting payments');
+          }
+
+          // Create or get customer ON THE CONNECTED ACCOUNT
           const customer = await stripe.customers.create({
             email: session.email,
             name: session.clientName,
@@ -284,9 +289,11 @@ class PaymentPlanManager {
               paymentPlanId: payment.planId,
               paymentNumber: payment.paymentNumber.toString()
             }
+          }, {
+            stripeAccount: photographer.stripeConnectAccountId // CRITICAL: Route to photographer's account
           });
 
-          // Create invoice
+          // Create invoice ON THE CONNECTED ACCOUNT
           const invoiceCustomUrl = `${process.env.REPL_SLUG ? `https://${process.env.REPL_SLUG}.${process.env.REPLIT_DOMAINS}` : 'http://localhost:5000'}/invoice.html?payment=${payment.id}`;
           
           const invoice = await stripe.invoices.create({
@@ -304,19 +311,25 @@ class PaymentPlanManager {
               photographerAddress: businessAddress,
               customInvoiceUrl: invoiceCustomUrl
             },
-            footer: `Thank you for choosing ${businessName}!\n${businessAddress ? `\n${businessAddress}` : ''}\n\nYou can add an optional tip and view full invoice details at:\n${invoiceCustomUrl}\n\nContact: ${businessEmail}${businessPhone ? ` | ${businessPhone}` : ''}`
+            footer: `Thank you for choosing ${businessName}!\n${businessAddress ? `\n${businessAddress}` : ''}\n\nYou can add an optional tip and view full invoice details at:\n${invoiceCustomUrl}\n\nContact: ${businessEmail}${businessPhone ? ` | ${businessPhone}` : ''}`,
+            // Optional: Add application fee for platform revenue (5% = 0.05)
+            application_fee_amount: Math.round(parseFloat(payment.amount) * 100 * 0.05), // 5% platform fee
+          }, {
+            stripeAccount: photographer.stripeConnectAccountId // CRITICAL: Route to photographer's account
           });
 
-          // Add main invoice item
+          // Add main invoice item ON THE CONNECTED ACCOUNT
           await stripe.invoiceItems.create({
             customer: customer.id,
             invoice: invoice.id,
             amount: Math.round(parseFloat(payment.amount) * 100), // Convert to cents
             currency: 'usd',
             description: `${session.sessionType} Session - Payment ${payment.paymentNumber} of ${session.paymentsRemaining + 1}`,
+          }, {
+            stripeAccount: photographer.stripeConnectAccountId // CRITICAL: Route to photographer's account
           });
 
-          // Add optional tip line if tip amount is specified
+          // Add optional tip line if tip amount is specified ON THE CONNECTED ACCOUNT
           const tipAmount = parseFloat(payment.tipAmount || '0');
           if (tipAmount > 0) {
             await stripe.invoiceItems.create({
@@ -325,12 +338,18 @@ class PaymentPlanManager {
               amount: Math.round(tipAmount * 100), // Convert to cents
               currency: 'usd',
               description: 'Optional Tip',
+            }, {
+              stripeAccount: photographer.stripeConnectAccountId // CRITICAL: Route to photographer's account
             });
           }
 
-          // Finalize and send invoice
-          const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
-          const sentInvoice = await stripe.invoices.sendInvoice(finalizedInvoice.id);
+          // Finalize and send invoice ON THE CONNECTED ACCOUNT
+          const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id, {}, {
+            stripeAccount: photographer.stripeConnectAccountId // CRITICAL: Route to photographer's account
+          });
+          const sentInvoice = await stripe.invoices.sendInvoice(finalizedInvoice.id, {}, {
+            stripeAccount: photographer.stripeConnectAccountId // CRITICAL: Route to photographer's account
+          });
 
           stripeInvoice = {
             id: sentInvoice.id,
