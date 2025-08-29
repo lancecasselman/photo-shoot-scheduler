@@ -311,9 +311,7 @@ class PaymentPlanManager {
               photographerAddress: businessAddress,
               customInvoiceUrl: invoiceCustomUrl
             },
-            footer: `Thank you for choosing ${businessName}!\n${businessAddress ? `\n${businessAddress}` : ''}\n\nYou can add an optional tip and view full invoice details at:\n${invoiceCustomUrl}\n\nContact: ${businessEmail}${businessPhone ? ` | ${businessPhone}` : ''}`,
-            // Optional: Add application fee for platform revenue (5% = 0.05)
-            application_fee_amount: Math.round(parseFloat(payment.amount) * 100 * 0.05), // 5% platform fee
+            footer: `Thank you for choosing ${businessName}!\n${businessAddress ? `\n${businessAddress}` : ''}\n\nYou can add an optional tip and view full invoice details at:\n${invoiceCustomUrl}\n\nContact: ${businessEmail}${businessPhone ? ` | ${businessPhone}` : ''}`
           }, {
             stripeAccount: photographer.stripeConnectAccountId // CRITICAL: Route to photographer's account
           });
