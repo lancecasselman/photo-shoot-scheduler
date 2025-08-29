@@ -5462,11 +5462,6 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="/payment-settings.html" target="_blank" class="nav-link">
-                             Payment Settings
-                        </a>
-                    </li>
-                    <li class="nav-item">
                         <a href="/subscription-settings.html" class="nav-link">
                              Subscription Settings
                         </a>
@@ -12841,143 +12836,6 @@ END:VCALENDAR`;
             </div>
         </div>
 
-        <!-- Payment Settings Tab Content -->
-        <div id="paymentSettingsTab" class="tab-content">
-            <div class="content-header">
-                <h1> Payment Settings</h1>
-                <p>Connect your Stripe account to receive payments directly from clients</p>
-            </div>
-
-            <div class="payment-settings-container">
-                <!-- Stripe Connect Status Card -->
-                <div class="setting-card" id="stripe-status-card">
-                    <div class="card-header">
-                        <h3>Stripe Connect</h3>
-                        <div class="status-indicator" id="stripe-status-indicator">
-                            <span class="status-dot checking"></span>
-                            <span class="status-text" id="stripe-status-text">Checking connection...</span>
-                        </div>
-                    </div>
-                    
-                    <div class="card-content" id="stripe-card-content">
-                        <div class="loading-state" id="stripe-loading">
-                            <div class="spinner"></div>
-                            <p>Checking your Stripe connection...</p>
-                        </div>
-                        
-                        <!-- Not Connected State -->
-                        <div class="connection-state" id="not-connected-state" style="display: none;">
-                            <div class="info-section">
-                                <h4> Why Connect Stripe?</h4>
-                                <ul class="benefits-list">
-                                    <li>Receive payments directly to your bank account</li>
-                                    <li>Process credit cards, debit cards, and digital wallets</li>
-                                    <li>Automatic invoice generation and receipts</li>
-                                    <li>Real-time payment notifications</li>
-                                    <li>Industry-standard security and PCI compliance</li>
-                                </ul>
-                            </div>
-                            
-                            <div class="action-section">
-                                <button id="connect-stripe-btn" class="btn btn-primary">
-                                     Connect Stripe Account
-                                </button>
-                                <p class="note">You'll be redirected to Stripe to set up your account. This is completely free and takes just a few minutes.</p>
-                            </div>
-                        </div>
-                        
-                        <!-- Connected State -->
-                        <div class="connection-state" id="connected-state" style="display: none;">
-                            <div class="success-message">
-                                <div class="success-icon"></div>
-                                <h4>Account Connected Successfully!</h4>
-                                <p>Your Stripe account is connected and ready to receive payments.</p>
-                            </div>
-                            
-                            <div class="account-details" id="account-details">
-                                <div class="detail-row">
-                                    <span class="label">Account Status:</span>
-                                    <span class="value" id="account-status">Active</span>
-                                </div>
-                                <div class="detail-row">
-                                    <span class="label">Payments Enabled:</span>
-                                    <span class="value" id="payments-enabled">Yes</span>
-                                </div>
-                                <div class="detail-row">
-                                    <span class="label">Payouts Enabled:</span>
-                                    <span class="value" id="payouts-enabled">Yes</span>
-                                </div>
-                            </div>
-                            
-                            <div class="action-section">
-                                <button id="refresh-status-btn" class="btn btn-secondary">
-                                     Refresh Status
-                                </button>
-                                <button id="manage-account-btn" class="btn btn-outline">
-                                    ⚙️ Manage Stripe Account
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <!-- Incomplete State -->
-                        <div class="connection-state" id="incomplete-state" style="display: none;">
-                            <div class="warning-message">
-                                <div class="warning-icon"></div>
-                                <h4>Setup Incomplete</h4>
-                                <p>Your Stripe account needs additional information before you can receive payments.</p>
-                            </div>
-                            
-                            <div class="action-section">
-                                <button id="complete-setup-btn" class="btn btn-warning">
-                                     Complete Setup
-                                </button>
-                                <p class="note">Complete your Stripe account setup to start receiving payments.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Payment Processing Info -->
-                <div class="setting-card">
-                    <div class="card-header">
-                        <h3>💱 Payment Processing</h3>
-                    </div>
-                    <div class="card-content">
-                        <div class="info-grid">
-                            <div class="info-item">
-                                <h4>Processing Fees</h4>
-                                <p>Stripe charges 2.9% + 30¢ per successful payment</p>
-                            </div>
-                            <div class="info-item">
-                                <h4>Platform Fees</h4>
-                                <p>No additional fees - you keep 100% minus Stripe's processing fee</p>
-                            </div>
-                            <div class="info-item">
-                                <h4>Payout Schedule</h4>
-                                <p>Daily automatic transfers to your connected bank account</p>
-                            </div>
-                            <div class="info-item">
-                                <h4>Supported Payment Methods</h4>
-                                <p>Credit cards, debit cards, Apple Pay, Google Pay, and more</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Test Payment Section -->
-                <div class="setting-card" id="test-payment-card" style="display: none;">
-                    <div class="card-header">
-                        <h3>🧪 Test Payment</h3>
-                    </div>
-                    <div class="card-content">
-                        <p>Test your payment setup with a small transaction to ensure everything works correctly.</p>
-                        <button id="test-payment-btn" class="btn btn-outline">
-                            🧪 Create Test Payment
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         </div> <!-- Close main-content -->
     </div> <!-- Close container -->
@@ -15596,12 +15454,6 @@ END:VCALENDAR`;
             opacity: 1;
         }
 
-        /* Payment Settings Styles */
-        .payment-settings-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
 
         .setting-card {
             background: white;
@@ -15839,9 +15691,6 @@ END:VCALENDAR`;
 
         /* Responsive adjustments */
         @media (max-width: 768px) {
-            .payment-settings-container {
-                padding: 10px;
-            }
             
             .card-header {
                 padding: 20px;
