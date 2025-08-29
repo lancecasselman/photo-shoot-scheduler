@@ -92,45 +92,46 @@ class OnboardingWizard {
     renderWelcomeStep() {
         return `
             <div class="step-content">
-                <div class="welcome-hero">
-                    <h2>Welcome to Your Photography Business Platform! 📸</h2>
-                    <p>Let's set up your professional photography management system in just a few steps.</p>
-                    
-                    <div class="feature-preview">
-                        <div class="feature-item">
-                            <div class="feature-icon">📅</div>
-                            <h4>Session Management</h4>
-                            <p>Schedule and track all your photography sessions</p>
-                        </div>
-                        <div class="feature-item">
-                            <div class="feature-icon">🖼️</div>
-                            <h4>Client Galleries</h4>
-                            <p>Share photos with clients securely</p>
-                        </div>
-                        <div class="feature-item">
-                            <div class="feature-icon">💰</div>
-                            <h4>Invoicing & Payments</h4>
-                            <p>Get paid faster with professional invoices</p>
-                        </div>
-                        <div class="feature-item">
-                            <div class="feature-icon">🌐</div>
-                            <h4>Website Builder</h4>
-                            <p>Create stunning photography websites</p>
-                        </div>
-                        <div class="feature-item">
-                            <div class="feature-icon">👥</div>
-                            <h4>Community</h4>
-                            <p>Connect with other photographers</p>
-                        </div>
-                        <div class="feature-item">
-                            <div class="feature-icon">☁️</div>
-                            <h4>Cloud Storage</h4>
-                            <p>100GB secure storage included</p>
+                <div class="welcome-hero" style="background: linear-gradient(135deg, #8B7355 0%, #A0896E 100%); color: white; padding: 40px; border-radius: 16px; margin-bottom: 30px;">
+                    <h2 style="color: white; margin-bottom: 15px;">Welcome to Photography Management System</h2>
+                    <p style="color: rgba(255, 255, 255, 0.9); font-size: 18px;">Let's get your business connected and ready to manage clients professionally</p>
+                </div>
+                
+                <div class="news-section" style="background: #FFF9E6; padding: 20px; border-radius: 12px; margin-bottom: 30px; border-left: 4px solid #FFD700;">
+                    <h4 style="color: #333; margin-bottom: 10px;">Good News:</h4>
+                    <p style="color: #555;">Payment processing is automatically set up during onboarding! The platform uses your device's built-in email and messaging apps - no external API setup required.</p>
+                </div>
+                
+                <div class="setup-section">
+                    <div class="setup-card" style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px;">
+                        <div style="display: flex; align-items: flex-start; gap: 20px;">
+                            <div style="background: #8B7355; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; flex-shrink: 0;">
+                                1
+                            </div>
+                            <div style="flex: 1;">
+                                <h3 style="margin-bottom: 15px; color: #333;">Configure Your Business Profile</h3>
+                                <p style="color: #666; margin-bottom: 20px; line-height: 1.6;">
+                                    Add your business information, branding, session types, and pricing. This personalizes the entire platform for your business.
+                                </p>
+                                <button onclick="window.onboardingWizard.renderStep(2)" class="setup-btn" style="background: #8B7355; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; cursor: pointer; font-weight: 500; transition: background 0.3s;">
+                                    Setup Business Profile
+                                </button>
+                            </div>
                         </div>
                     </div>
                     
-                    <div class="user-info">
-                        <p><strong>Account:</strong> ${this.formData.email || 'Setting up...'}</p>
+                    <div class="setup-card" style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); opacity: 0.6; pointer-events: none;">
+                        <div style="display: flex; align-items: flex-start; gap: 20px;">
+                            <div style="background: #ccc; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; flex-shrink: 0;">
+                                2
+                            </div>
+                            <div style="flex: 1;">
+                                <h3 style="margin-bottom: 15px; color: #999;">Configure Payment Processing</h3>
+                                <p style="color: #999; line-height: 1.6;">
+                                    Set up your Stripe account to accept payments directly from clients. This will be available after setting up your business profile.
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -385,8 +386,8 @@ class OnboardingWizard {
     renderPaymentSettingsStep() {
         return `
             <div class="step-content">
-                <h2>💳 Payment Settings</h2>
-                <p>Set up your secure payment processing to receive payments from clients directly.</p>
+                <h2>💳 Configure Payment Processing</h2>
+                <p>Set up your Stripe account to accept payments directly from clients. You can always return to this later in Business Setup if needed.</p>
                 
                 <!-- Payment Setup Status -->
                 <div class="payment-status-card">
@@ -452,9 +453,11 @@ class OnboardingWizard {
                 </div>
 
                 <!-- Skip Option -->
-                <div class="skip-section">
-                    <p><em>You can skip this step and set up payments later from your Business Management dashboard.</em></p>
-                    <button onclick="skipPaymentSetup()" class="skip-btn">Skip Payment Setup for Now</button>
+                <div class="skip-section" style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                    <p style="color: #666; margin-bottom: 15px;"><em>Not ready to set up payments? You can configure your bank account later from the Business Setup section to accept Stripe payments.</em></p>
+                    <button onclick="window.onboardingWizard.skipPaymentSetup()" class="skip-btn" style="background: transparent; border: 2px solid #8B7355; color: #8B7355; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 500;">
+                        Skip Payment Setup for Now
+                    </button>
                 </div>
 
                 <!-- Help Information -->
@@ -704,6 +707,12 @@ class OnboardingWizard {
         }
     }
     
+    skipPaymentSetup() {
+        // Mark payment setup as skipped and proceed to next step
+        this.formData.paymentSetupSkipped = true;
+        this.nextStep();
+    }
+
     async validateCurrentStep() {
         switch(this.currentStep) {
             case 2: // Username step
@@ -986,12 +995,7 @@ window.continueOnboardingStripeSetup = async function() {
     }
 }
 
-window.skipPaymentSetup = function() {
-    // Move to next step
-    if (window.onboardingWizard) {
-        window.onboardingWizard.nextStep();
-    }
-}
+// No longer needed - method is part of the class now
 
 // Initialize the wizard when the page loads
 document.addEventListener('DOMContentLoaded', () => {
