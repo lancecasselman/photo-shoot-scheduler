@@ -5497,7 +5497,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="#" onclick="showSection('businessSetup')" class="nav-link">
+                        <a href="#" onclick="switchTab('businessSetup'); closeMobileMenu();" class="nav-link">
                             Business Setup
                         </a>
                     </li>
@@ -5527,7 +5527,7 @@
         <div class="main-content">
 
         <!-- Business Setup Tab Content -->
-        <div id="businessSetup" class="tab-content">
+        <div id="businessSetupTab" class="tab-content">
             <div class="content-header">
                 <h1>Business Setup</h1>
                 <p>Configure your photography business settings and payment processing</p>
@@ -10669,6 +10669,11 @@ END:VCALENDAR`;
             } else if (tabName === 'businessManagement') {
                 // Initialize Business Management when tab is first opened
                 initializeBusinessManagement();
+            } else if (tabName === 'businessSetup') {
+                // Initialize Business Setup and load payment status
+                setTimeout(() => {
+                    loadBusinessSetupPaymentStatus();
+                }, 100);
             }
         }
 
@@ -17066,6 +17071,9 @@ END:VCALENDAR`;
             // Website Builder initialization is handled by the tab system
         });
 
+        // Global currentUser variable for Business Setup
+        let currentUser = null;
+        
         // Business Setup Section Functions
         function showSection(sectionId) {
             // Hide all tab contents
