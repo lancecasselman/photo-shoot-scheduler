@@ -51,3 +51,6 @@ run = ["sh", "-c", "node server.js"]
 
 [objectStorage]
 defaultBucketID = "replit-objstore-6f952740-cee2-4603-8b31-051d69aa0fcd"
+
+[agent]
+expertMode = true
