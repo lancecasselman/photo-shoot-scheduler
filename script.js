@@ -37,7 +37,7 @@ async function checkAuth() {
     }
 
     // Check if we just came from auth page
-    const fromAuth = document.referrer.includes('auth.html') || sessionStorage.getItem('fromAuth') === 'true';
+    const fromAuth = document.referrer.includes('auth.html') || document.referrer.includes('secure-login.html') || sessionStorage.getItem('fromAuth') === 'true';
     
     try {
         console.log(' AUTH CHECK: Checking authentication with backend...');
@@ -61,7 +61,7 @@ async function checkAuth() {
             console.log('Auth check failed - response not ok:', response.status);
             
             // COMPLETELY disable redirects if coming from auth page
-            if (localStorage.getItem('manualLogout') !== 'true' && !fromAuth && !sessionStorage.getItem('fromAuth') && !document.referrer.includes('auth.html')) {
+            if (localStorage.getItem('manualLogout') !== 'true' && !fromAuth && !sessionStorage.getItem('fromAuth') && !document.referrer.includes('auth.html') && !document.referrer.includes('secure-login.html')) {
                 console.log(' AUTH CHECK: Scheduling redirect to auth page...');
                 setTimeout(() => {
                     redirectToAuth();
@@ -78,7 +78,7 @@ async function checkAuth() {
         console.error('Auth check failed:', error);
         
         // COMPLETELY disable redirects if coming from auth page
-        if (localStorage.getItem('manualLogout') !== 'true' && !fromAuth && !sessionStorage.getItem('fromAuth') && !document.referrer.includes('auth.html')) {
+        if (localStorage.getItem('manualLogout') !== 'true' && !fromAuth && !sessionStorage.getItem('fromAuth') && !document.referrer.includes('auth.html') && !document.referrer.includes('secure-login.html')) {
             console.log(' AUTH CHECK: Scheduling redirect to auth page due to error...');
             setTimeout(() => {
                 redirectToAuth();
@@ -150,9 +150,9 @@ function redirectToAuth() {
     // Debug stack trace to see who called this function
     console.log('🚨 REDIRECT STACK TRACE:', new Error().stack);
     
-    if (window.location.pathname !== '/auth.html') {
-        console.log('🚨 PERFORMING REDIRECT TO AUTH.HTML...');
-        window.location.href = '/auth.html';
+    if (window.location.pathname !== '/secure-login.html' && window.location.pathname !== '/auth.html') {
+        console.log('🚨 PERFORMING REDIRECT TO SECURE-LOGIN.HTML...');
+        window.location.href = '/secure-login.html';
     } else {
         console.log('🚨 Already on auth page, skipping redirect');
     }

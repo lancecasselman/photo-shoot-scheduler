@@ -228,7 +228,7 @@ class NativeAuthHandler {
                 return true;
             } else {
                 // Web authentication flow
-                window.location.href = '/auth.html';
+                window.location.href = '/secure-login.html';
                 return true;
             }
         } catch (error) {
@@ -261,7 +261,7 @@ class NativeAuthHandler {
             console.log('User signed out successfully');
             
             // Redirect to login
-            window.location.href = '/auth.html';
+            window.location.href = '/secure-login.html';
         } catch (error) {
             console.error('Sign out failed:', error);
         }

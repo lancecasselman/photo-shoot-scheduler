@@ -46,7 +46,7 @@ class SubscriptionAccessGuard {
     guardMainAppAccess() {
         // Skip subscription checks on actual landing page and auth pages only
         const currentPath = window.location.pathname;
-        const authPages = ['/auth.html', '/auth', '/login'];
+        const authPages = ['/secure-login.html', '/auth.html', '/auth', '/login'];
         
         // Check if this is the real landing page (not the app served at root)
         const isLandingPage = document.querySelector('.landing-hero') || document.querySelector('.pricing-section') || document.title.includes('Complete Business Platform');
@@ -288,8 +288,8 @@ class SubscriptionAccessGuard {
     }
 
     redirectToAuth() {
-        if (window.location.pathname !== '/auth.html') {
-            window.location.href = '/auth.html';
+        if (window.location.pathname !== '/secure-login.html') {
+            window.location.href = '/secure-login.html';
         }
     }
 

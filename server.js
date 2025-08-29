@@ -11169,17 +11169,10 @@ app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
-// Serve auth page for non-authenticated users
+// Serve auth page for non-authenticated users - redirect to secure-login.html
 app.get('/auth.html', (req, res) => {
-    // Add cache-busting headers to prevent caching of auth.html
-    res.set({
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0',
-        'Last-Modified': new Date().toUTCString(),
-        'ETag': `"${Date.now()}"`
-    });
-    res.sendFile(path.join(__dirname, 'auth.html'));
+    console.log('🔄 REDIRECT: /auth.html → /secure-login.html');
+    res.redirect(301, '/secure-login.html');
 });
 
 // ==================== WEBSITE PUBLISHING SYSTEM ====================
