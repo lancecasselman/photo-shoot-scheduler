@@ -5497,7 +5497,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="/onboarding" target="_blank" class="nav-link">
+                        <a href="#" onclick="showSection('businessSetup')" class="nav-link">
                             Business Setup
                         </a>
                     </li>
@@ -5525,6 +5525,147 @@
         
         <!-- Main Content Area -->
         <div class="main-content">
+
+        <!-- Business Setup Tab Content -->
+        <div id="businessSetup" class="tab-content">
+            <div class="content-header">
+                <h1>Business Setup</h1>
+                <p>Configure your photography business settings and payment processing</p>
+            </div>
+
+            <!-- Business Setup Navigation -->
+            <div class="business-nav">
+                <button class="business-nav-btn active" onclick="showBusinessSetupSection('paymentSettings')">Payment Settings</button>
+                <button class="business-nav-btn" onclick="showBusinessSetupSection('businessProfile')">Business Profile</button>
+                <button class="business-nav-btn" onclick="showBusinessSetupSection('preferences')">Preferences</button>
+            </div>
+
+            <!-- Payment Settings Section -->
+            <div id="businessSetupPaymentSettings" class="business-section active">
+                <div class="payment-settings-header">
+                    <h2>💳 Payment Settings</h2>
+                    <p>Set up your payment processing and banking information</p>
+                </div>
+
+                <!-- Payment Setup Status -->
+                <div class="payment-status-card">
+                    <div class="status-indicator" id="businessSetupStripeStatusIndicator">
+                        <span class="status-dot pending" id="businessSetupStatusDot"></span>
+                        <span id="businessSetupStripeStatusText">Setting up payment processing...</span>
+                    </div>
+                    <div class="status-details" id="businessSetupStripeStatusDetails">
+                        Loading payment setup status...
+                    </div>
+                </div>
+
+                <!-- Stripe Connect Setup Form -->
+                <div id="businessSetupStripeSetupForm" class="payment-form" style="display: none;">
+                    <h3>Complete Payment Setup</h3>
+                    <p>We'll create your secure payment processing account to receive payments directly from clients.</p>
+                    
+                    <div class="form-section">
+                        <h4>Business Information</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="businessSetupBusinessEmail">Business Email:</label>
+                                <input type="email" id="businessSetupBusinessEmail" placeholder="business@example.com" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="businessSetupBusinessCountry">Country:</label>
+                                <select id="businessSetupBusinessCountry">
+                                    <option value="US">United States</option>
+                                    <option value="CA">Canada</option>
+                                    <option value="GB">United Kingdom</option>
+                                    <option value="AU">Australia</option>
+                                    <option value="DE">Germany</option>
+                                    <option value="FR">France</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button onclick="businessSetupStripeConnect()" class="primary-btn" id="businessSetupStripeBtn">
+                            <span class="btn-text">Set Up Payment Processing</span>
+                            <span class="btn-loading" style="display: none;">Setting Up...</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stripe Connect Complete -->
+                <div id="businessSetupStripeConnectComplete" class="payment-complete" style="display: none;">
+                    <div class="success-card">
+                        <div class="success-icon">✅</div>
+                        <h3>Payment Processing Active</h3>
+                        <p>Your Stripe Express account is set up and ready to receive payments!</p>
+                        
+                        <div class="account-details">
+                            <h4>Account Details</h4>
+                            <div class="detail-row">
+                                <span class="detail-label">Account ID:</span>
+                                <span class="detail-value" id="businessSetupStripeAccountId">Loading...</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Status:</span>
+                                <span class="detail-value status-active">Active</span>
+                            </div>
+                        </div>
+                        
+                        <div class="payment-actions">
+                            <button onclick="openStripeDashboard()" class="secondary-btn">
+                                View Stripe Dashboard
+                            </button>
+                            <button onclick="refreshBusinessSetupPaymentStatus()" class="secondary-btn">
+                                Refresh Status
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Settings Help -->
+                <div class="help-section">
+                    <h4>ℹ️ How Payment Processing Works</h4>
+                    <div class="help-grid">
+                        <div class="help-item">
+                            <h5>Secure Processing</h5>
+                            <p>All payments are processed through Stripe, a PCI-compliant payment processor used by millions of businesses worldwide.</p>
+                        </div>
+                        <div class="help-item">
+                            <h5>Direct Deposits</h5>
+                            <p>Payments from your clients go directly to your bank account. No platform holds your money.</p>
+                        </div>
+                        <div class="help-item">
+                            <h5>Low Fees</h5>
+                            <p>Standard processing fees apply (2.9% + 30¢ per transaction). No hidden charges or platform fees.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Business Profile Section -->
+            <div id="businessSetupBusinessProfile" class="business-section" style="display: none;">
+                <div class="profile-header">
+                    <h2>🏢 Business Profile</h2>
+                    <p>Manage your business information and branding</p>
+                </div>
+                
+                <div class="profile-content">
+                    <p>Business profile settings will be available here. This includes business name, address, contact information, and branding preferences.</p>
+                </div>
+            </div>
+
+            <!-- Preferences Section -->
+            <div id="businessSetupPreferences" class="business-section" style="display: none;">
+                <div class="preferences-header">
+                    <h2>⚙️ Business Preferences</h2>
+                    <p>Configure your workflow and notification preferences</p>
+                </div>
+                
+                <div class="preferences-content">
+                    <p>Business preference settings will be available here. This includes workflow settings, notification preferences, and default session templates.</p>
+                </div>
+            </div>
+        </div>
 
         <!-- Client Management Tab Content -->
         <div id="clientsTab" class="tab-content active">
@@ -16924,6 +17065,193 @@ END:VCALENDAR`;
         document.addEventListener('DOMContentLoaded', function() {
             // Website Builder initialization is handled by the tab system
         });
+
+        // Business Setup Section Functions
+        function showSection(sectionId) {
+            // Hide all tab contents
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show the selected section
+            const selectedSection = document.getElementById(sectionId);
+            if (selectedSection) {
+                selectedSection.classList.add('active');
+                
+                // If it's business setup, initialize payment settings
+                if (sectionId === 'businessSetup') {
+                    setTimeout(() => {
+                        loadBusinessSetupPaymentStatus();
+                    }, 100);
+                }
+            }
+        }
+
+        function showBusinessSetupSection(sectionId) {
+            // Hide all business sections
+            const businessSections = document.querySelectorAll('.business-section');
+            businessSections.forEach(section => {
+                section.classList.remove('active');
+                section.style.display = 'none';
+            });
+            
+            // Show the selected business section
+            const selectedSection = document.getElementById('businessSetup' + sectionId.charAt(0).toUpperCase() + sectionId.slice(1));
+            if (selectedSection) {
+                selectedSection.classList.add('active');
+                selectedSection.style.display = 'block';
+            }
+            
+            // Update navigation buttons
+            const navButtons = document.querySelectorAll('.business-nav-btn');
+            navButtons.forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            event.target.classList.add('active');
+            
+            // Load payment status if showing payment settings
+            if (sectionId === 'paymentSettings') {
+                loadBusinessSetupPaymentStatus();
+            }
+        }
+
+        async function loadBusinessSetupPaymentStatus() {
+            const statusText = document.getElementById('businessSetupStripeStatusText');
+            const statusDetails = document.getElementById('businessSetupStripeStatusDetails');
+            const setupForm = document.getElementById('businessSetupStripeSetupForm');
+            const completeSection = document.getElementById('businessSetupStripeConnectComplete');
+            const businessEmail = document.getElementById('businessSetupBusinessEmail');
+
+            try {
+                // Set business email from current user
+                if (businessEmail && currentUser) {
+                    businessEmail.value = currentUser.email || '';
+                }
+
+                // Check Stripe Connect status
+                const stripeResponse = await fetch('/api/stripe-connect/status');
+                if (!stripeResponse.ok) {
+                    throw new Error('Failed to load payment status');
+                }
+                const stripeData = await stripeResponse.json();
+
+                const statusDot = document.getElementById('businessSetupStatusDot');
+
+                if (stripeData.hasAccount && stripeData.onboardingComplete) {
+                    // Show complete state
+                    setupForm.style.display = 'none';
+                    completeSection.style.display = 'block';
+                    
+                    statusText.textContent = 'Payment processing is active and ready';
+                    statusDetails.textContent = 'Your Stripe Express account is fully set up and can receive payments.';
+                    statusDot.className = 'status-dot active';
+                    
+                    document.getElementById('businessSetupStripeAccountId').textContent = stripeData.accountId || 'Loading...';
+
+                } else if (stripeData.hasAccount) {
+                    // Account exists but onboarding not complete
+                    statusText.textContent = 'Complete your payment setup';
+                    statusDetails.innerHTML = \`
+                        <p>Your Stripe Express account has been created but setup is not complete.</p>
+                        <button onclick="continueBusinessSetupStripeOnboarding()" class="primary-btn" style="margin-top: 15px;">
+                            Continue Setup
+                        </button>
+                    \`;
+                    setupForm.style.display = 'none';
+                    completeSection.style.display = 'none';
+                    
+                } else {
+                    // No account exists yet
+                    statusText.textContent = 'Set up payment processing';
+                    statusDetails.textContent = 'Create your secure Stripe Express account to receive payments from clients.';
+                    setupForm.style.display = 'block';
+                    completeSection.style.display = 'none';
+                    statusDot.className = 'status-dot pending';
+                }
+
+            } catch (error) {
+                console.error('Error loading payment status:', error);
+                statusText.textContent = 'Error loading payment status';
+                statusDetails.textContent = 'Unable to check your payment setup. Please try refreshing the page.';
+                
+                const statusDot = document.getElementById('businessSetupStatusDot');
+                statusDot.className = 'status-dot error';
+            }
+        }
+
+        async function businessSetupStripeConnect() {
+            const button = document.getElementById('businessSetupStripeBtn');
+            const buttonText = button.querySelector('.btn-text');
+            const buttonLoading = button.querySelector('.btn-loading');
+            const businessCountry = document.getElementById('businessSetupBusinessCountry').value;
+
+            button.disabled = true;
+            buttonText.style.display = 'none';
+            buttonLoading.style.display = 'inline';
+
+            try {
+                const response = await fetch('/api/stripe-connect/create-account', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        country: businessCountry
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to create Stripe account');
+                }
+
+                const data = await response.json();
+                
+                if (data.accountLinkUrl) {
+                    // Open Stripe onboarding in current tab
+                    window.location.href = data.accountLinkUrl;
+                } else {
+                    throw new Error('No onboarding URL received');
+                }
+
+            } catch (error) {
+                console.error('Error setting up Stripe Connect:', error);
+                showMessage('Error setting up payment processing. Please try again.', 'error');
+                
+                button.disabled = false;
+                buttonText.style.display = 'inline';
+                buttonLoading.style.display = 'none';
+            }
+        }
+
+        async function continueBusinessSetupStripeOnboarding() {
+            try {
+                const response = await fetch('/api/stripe-connect/continue-onboarding', {
+                    method: 'POST'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to continue onboarding');
+                }
+
+                const data = await response.json();
+                
+                if (data.accountLinkUrl) {
+                    window.location.href = data.accountLinkUrl;
+                } else {
+                    throw new Error('No onboarding URL received');
+                }
+
+            } catch (error) {
+                console.error('Error continuing Stripe onboarding:', error);
+                showMessage('Error accessing payment setup. Please try again.', 'error');
+            }
+        }
+
+        function refreshBusinessSetupPaymentStatus() {
+            loadBusinessSetupPaymentStatus();
+        }
     </script>
 
     <!-- Booking Agreements System -->
