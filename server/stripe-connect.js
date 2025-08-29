@@ -225,6 +225,147 @@ class StripeConnectManager {
         }
     }
 
+    // Create onboarding link for Express account
+    async createAccountLink(accountId, refreshUrl, returnUrl) {
+        try {
+            console.log('🔗 STRIPE: Creating onboarding link for account:', accountId);
+            
+            const accountLink = await stripe.accountLinks.create({
+                account: accountId,
+                refresh_url: refreshUrl,
+                return_url: returnUrl,
+                type: 'account_onboarding',
+            });
+
+            console.log('✅ STRIPE: Onboarding link created');
+            return {
+                success: true,
+                onboardingUrl: accountLink.url,
+                expiresAt: accountLink.expires_at
+            };
+
+        } catch (error) {
+            console.error('❌ STRIPE: Failed to create onboarding link:', error.message);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    // Create login link for photographer to access Stripe dashboard
+    async createLoginLink(accountId) {
+        try {
+            console.log('🔗 STRIPE: Creating login link for account:', accountId);
+            
+            const loginLink = await stripe.accounts.createLoginLink(accountId);
+
+            console.log('✅ STRIPE: Login link created');
+            return {
+                success: true,
+                url: loginLink.url
+            };
+
+        } catch (error) {
+            console.error('❌ STRIPE: Failed to create login link:', error.message);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    // Create customer on photographer's connected account
+    async createCustomer(email, name, photographerAccountId) {
+        try {
+            console.log('👤 STRIPE CONNECT: Creating customer on photographer account:', photographerAccountId);
+            
+            const customer = await stripe.customers.create({
+                email: email,
+                name: name,
+                metadata: {
+                    platform: 'photography_management_system',
+                    photographer_account: photographerAccountId
+                }
+            }, {
+                stripeAccount: photographerAccountId
+            });
+
+            console.log('✅ STRIPE CONNECT: Customer created:', customer.id);
+            return {
+                success: true,
+                customer: customer
+            };
+
+        } catch (error) {
+            console.error('❌ STRIPE CONNECT: Failed to create customer:', error.message);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
+    // Create invoice on photographer's connected account
+    async createInvoice(customerId, items, photographerAccountId, metadata = {}, options = {}) {
+        try {
+            console.log('📋 STRIPE CONNECT: Creating invoice on photographer account:', photographerAccountId);
+            
+            // Create invoice
+            const invoice = await stripe.invoices.create({
+                customer: customerId,
+                collection_method: 'send_invoice',
+                days_until_due: options.daysUntilDue || 7,
+                description: options.description || 'Photography Services Invoice',
+                footer: options.footer || '',
+                custom_fields: options.customFields || [],
+                metadata: {
+                    ...metadata,
+                    photographer_account: photographerAccountId,
+                    platform: 'photography_management_system'
+                }
+            }, {
+                stripeAccount: photographerAccountId
+            });
+
+            // Add invoice items
+            for (const item of items) {
+                await stripe.invoiceItems.create({
+                    customer: customerId,
+                    invoice: invoice.id,
+                    amount: Math.round(item.amount * 100), // Convert to cents
+                    currency: 'usd',
+                    description: item.description,
+                    metadata: item.metadata || {}
+                }, {
+                    stripeAccount: photographerAccountId
+                });
+            }
+
+            // Finalize and send invoice
+            const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id, {}, {
+                stripeAccount: photographerAccountId
+            });
+
+            const sentInvoice = await stripe.invoices.sendInvoice(finalizedInvoice.id, {}, {
+                stripeAccount: photographerAccountId
+            });
+
+            console.log('✅ STRIPE CONNECT: Invoice created and sent:', sentInvoice.id);
+            return {
+                success: true,
+                invoice: sentInvoice
+            };
+
+        } catch (error) {
+            console.error('❌ STRIPE CONNECT: Failed to create invoice:', error.message);
+            return {
+                success: false,
+                error: error.message
+            };
+        }
+    }
+
     // Delete/deactivate account (for testing)
     async deleteAccount(accountId) {
         try {

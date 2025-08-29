@@ -336,15 +336,19 @@
         
         async function loadStripeStatus() {
             try {
-                const response = await fetch('/api/stripe-connect/status', {
+                console.log('🔐 STRIPE CONNECT: Loading account status...');
+                
+                const response = await fetch('/api/stripe-connect/account-status', {
                     credentials: 'include'
                 });
                 
                 if (!response.ok) {
-                    throw new Error('Failed to load Stripe status');
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error('Failed to load Stripe status: ' + (errorData.message || 'Unknown error'));
                 }
                 
                 const data = await response.json();
+                console.log('✅ STRIPE CONNECT: Account status loaded:', data);
                 displayStatus(data);
                 
                 // Hide loading, show content
@@ -468,7 +472,7 @@
                 // SECURITY FIX: Validate user identity before Stripe Connect
                 console.log('🔐 SECURITY: Starting Stripe onboarding for user:', window.currentUserEmail);
                 
-                const response = await fetch('/api/stripe-connect/onboard', {
+                const response = await fetch('/api/stripe-connect/start-onboarding', {
                     method: 'POST',
                     credentials: 'include',
                     headers: {
@@ -534,9 +538,36 @@
             }
         }
         
-        function openStripeDashboard() {
-            // Open Stripe Express Dashboard
-            window.open(`https://dashboard.stripe.com/connect/accounts/${stripeAccountId}`, '_blank');
+        async function openStripeDashboard() {
+            try {
+                console.log('🔗 STRIPE CONNECT: Getting dashboard link...');
+                
+                const response = await fetch('/api/stripe-connect/dashboard-link', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error('Failed to get dashboard link: ' + (errorData.message || 'Unknown error'));
+                }
+                
+                const data = await response.json();
+                
+                if (data.dashboardUrl) {
+                    console.log('✅ STRIPE CONNECT: Opening dashboard...');
+                    window.open(data.dashboardUrl, '_blank');
+                } else {
+                    throw new Error('No dashboard URL received');
+                }
+                
+            } catch (error) {
+                console.error('Error opening dashboard:', error);
+                showError('Failed to open Stripe dashboard. Please try again.');
+            }
         }
         
         function showMessage(message, type) {

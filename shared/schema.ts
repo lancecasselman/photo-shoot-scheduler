@@ -49,6 +49,7 @@ export const users = pgTable("users", {
   stripeSubscriptionId: varchar("stripe_subscription_id"),
   stripeConnectAccountId: varchar("stripe_connect_account_id"),
   stripeOnboardingComplete: boolean("stripe_onboarding_complete").default(false),
+  platformFeePercentage: decimal("platform_fee_percentage", { precision: 5, scale: 2 }).default("0.00"),
   aiCredits: integer("ai_credits").default(0),
   totalAiCreditsUsed: integer("total_ai_credits_used").default(0),
   lastAiCreditPurchase: timestamp("last_ai_credit_purchase"),

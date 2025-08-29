@@ -8674,15 +8674,15 @@ app.get('/api/sessions/:id/email-preview', (req, res) => {
     `);
 });
 
-// Create and send invoice via Stripe (supports both full and deposit invoices)
+// 🚀 REBUILT: Create and send invoice via Stripe Connect
 app.post('/api/create-invoice', isAuthenticated, async (req, res) => {
     const { sessionId, clientName, email, amount, description, dueDate, isDeposit, depositAmount, totalAmount, includeTip } = req.body;
 
     try {
-        // Get photographer's business information
+        // Get photographer's business information and Stripe Connect details
         const userId = req.user.uid || req.user.id;
         const photographerResult = await pool.query(
-            'SELECT business_name, email, display_name FROM users WHERE id = $1',
+            'SELECT business_name, email, display_name, stripe_connect_account_id, stripe_onboarding_complete FROM users WHERE id = $1',
             [userId]
         );
         
@@ -8690,64 +8690,50 @@ app.post('/api/create-invoice', isAuthenticated, async (req, res) => {
         if (!photographer) {
             return res.status(404).json({ error: 'Photographer profile not found' });
         }
+
+        // Check if photographer has completed Stripe Connect setup
+        const photographerAccountId = photographer.stripe_connect_account_id;
+        const onboardingComplete = photographer.stripe_onboarding_complete;
+
+        if (!photographerAccountId || !onboardingComplete) {
+            return res.status(400).json({ 
+                error: 'Payment setup incomplete',
+                message: 'Please complete your Stripe Connect setup before creating invoices.',
+                setupRequired: true
+            });
+        }
         
         // Use photographer's business information
         const businessName = photographer.business_name || 
                            (photographer.display_name ? `${photographer.display_name} Photography` : 'Photography Business');
         const businessEmail = photographer.email || 'noreply@photomanagementsystem.com';
         
-        console.log(`Creating invoice for ${businessName} (${businessEmail})`);
+        console.log(`📋 STRIPE CONNECT: Creating invoice for ${businessName} on account: ${photographerAccountId}`);
 
         if (!process.env.STRIPE_SECRET_KEY) {
             return res.status(500).json({ error: 'Stripe not configured. Please add STRIPE_SECRET_KEY.' });
         }
 
-        // Check if Stripe key is valid (should be longer than 50 characters)
-        if (process.env.STRIPE_SECRET_KEY.length < 50) {
-            // Fallback mode - simulate invoice creation without actual Stripe API call
-            console.log('Stripe key too short, simulating invoice creation');
-
-            const invoiceType = isDeposit ? 'Deposit Invoice' : 'Invoice';
-            return res.json({ 
-                success: true,
-                message: `${invoiceType} simulation completed (Stripe not configured)`,
-                fallbackMode: true,
-                invoice_url: `https://invoice-demo.stripe.com/demo-${sessionId}-${Date.now()}`,
-                details: 'To send real invoices, provide your complete Stripe secret key (100+ characters) from your Stripe Dashboard',
-                clientName: clientName,
-                amount: amount,
-                description: description,
-                businessName: businessName,
-                businessEmail: businessEmail
-            });
-        }
-
-        // Create customer if not exists
+        // Create customer on photographer's connected account
+        const stripeConnectManager = new StripeConnectManager();
         let customer;
         try {
-            const customers = await stripe.customers.list({
-                email: email,
-                limit: 1
-            });
+            // Create customer directly on photographer's Stripe account
+            const customerResult = await stripeConnectManager.createCustomer(
+                email,
+                clientName,
+                photographerAccountId
+            );
 
-            if (customers.data.length > 0) {
-                customer = customers.data[0];
-            } else {
-                customer = await stripe.customers.create({
-                    email: email,
-                    name: clientName,
-                    description: `Client of ${businessName}`,
-                    metadata: {
-                        sessionId: sessionId,
-                        businessName: businessName,
-                        businessEmail: businessEmail,
-                        photographerId: userId
-                    }
-                });
-                console.log('Created new Stripe customer:', customer.id);
+            if (!customerResult.success) {
+                console.error('❌ STRIPE CONNECT: Failed to create customer:', customerResult.error);
+                return res.status(500).json({ error: 'Failed to create customer: ' + customerResult.error });
             }
+
+            customer = customerResult.customer;
+            console.log('✅ STRIPE CONNECT: Customer created on photographer account:', customer.id);
         } catch (error) {
-            console.error('Customer creation failed:', error);
+            console.error('❌ Customer creation failed:', error);
             return res.status(500).json({ error: 'Failed to create customer' });
         }
 
@@ -8765,39 +8751,9 @@ app.post('/api/create-invoice', isAuthenticated, async (req, res) => {
             customFooter += `\n\nRetainer: $${depositAmount} | Remaining Balance: $${remainingBalance.toFixed(2)}`;
         }
 
-        // Create invoice with proper collection method for manual sending
-        const invoice = await stripe.invoices.create({
-            customer: customer.id,
-            description: `${businessName}: ${invoiceDescription}`,
-            collection_method: 'send_invoice',
-            days_until_due: daysUntilDue,
-            footer: customFooter,
-            custom_fields: [
-                {
-                    name: 'Photographer',
-                    value: businessName
-                },
-                {
-                    name: 'Session ID',
-                    value: sessionId
-                }
-            ],
-            metadata: {
-                sessionId: sessionId,
-                clientName: clientName,
-                businessName: businessName,
-                businessEmail: businessEmail,
-                photographerId: userId,
-                isDeposit: isDeposit ? 'true' : 'false'
-            }
-        });
-
-        // Add main invoice item
-        await stripe.invoiceItems.create({
-            customer: customer.id,
-            invoice: invoice.id,
-            amount: Math.round(amount * 100), // Convert to cents
-            currency: 'usd',
+        // Prepare invoice items
+        const invoiceItems = [{
+            amount: amount,
             description: invoiceDescription,
             metadata: {
                 sessionId: sessionId,
@@ -8807,16 +8763,13 @@ app.post('/api/create-invoice', isAuthenticated, async (req, res) => {
                 photographerId: userId,
                 isDeposit: isDeposit ? 'true' : 'false'
             }
-        });
+        }];
 
         // Add optional tip item if requested
         if (includeTip) {
-            await stripe.invoiceItems.create({
-                customer: customer.id,
-                invoice: invoice.id,
+            invoiceItems.push({
                 amount: 0, // $0 default - client can add custom tip amount
-                currency: 'usd',
-                description: ' Optional Gratuity (Add Custom Amount)',
+                description: '⭐ Optional Gratuity (Add Custom Amount)',
                 metadata: {
                     sessionId: sessionId,
                     tipItem: 'true',
@@ -8826,25 +8779,58 @@ app.post('/api/create-invoice', isAuthenticated, async (req, res) => {
             });
         }
 
-        // Finalize and send invoice
-        const finalizedInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
-        await stripe.invoices.sendInvoice(finalizedInvoice.id);
+        // Create and send invoice using Stripe Connect
+        const invoiceResult = await stripeConnectManager.createInvoice(
+            customer.id,
+            invoiceItems,
+            photographerAccountId,
+            {
+                sessionId: sessionId,
+                clientName: clientName,
+                businessName: businessName,
+                businessEmail: businessEmail,
+                photographerId: userId,
+                isDeposit: isDeposit ? 'true' : 'false'
+            },
+            {
+                daysUntilDue: daysUntilDue,
+                description: `${businessName}: ${invoiceDescription}`,
+                footer: customFooter,
+                customFields: [
+                    {
+                        name: 'Photographer',
+                        value: businessName
+                    },
+                    {
+                        name: 'Session ID',
+                        value: sessionId
+                    }
+                ]
+            }
+        );
 
+        if (!invoiceResult.success) {
+            console.error('❌ STRIPE CONNECT: Failed to create invoice:', invoiceResult.error);
+            return res.status(500).json({ error: 'Failed to create invoice: ' + invoiceResult.error });
+        }
+
+        const invoice = invoiceResult.invoice;
         const invoiceType = isDeposit ? 'Deposit invoice' : 'Invoice';
-        console.log(`${invoiceType} sent to ${clientName} for $${amount}`);
-        console.log(`Invoice URL: ${finalizedInvoice.hosted_invoice_url}`);
+        console.log(`✅ STRIPE CONNECT: ${invoiceType} sent to ${clientName} for $${amount}`);
+        console.log(`📧 Invoice URL: ${invoice.hosted_invoice_url}`);
 
         res.json({
             success: true,
-            message: `${invoiceType} sent successfully via Stripe`,
-            invoice_url: finalizedInvoice.hosted_invoice_url,
+            message: `${invoiceType} sent successfully via Stripe Connect`,
+            invoice_url: invoice.hosted_invoice_url,
             invoice: {
-                id: finalizedInvoice.id,
-                hostedInvoiceUrl: finalizedInvoice.hosted_invoice_url,
-                invoicePdf: finalizedInvoice.invoice_pdf,
+                id: invoice.id,
+                hostedInvoiceUrl: invoice.hosted_invoice_url,
+                invoicePdf: invoice.invoice_pdf,
                 amount: amount,
-                status: finalizedInvoice.status,
-                customer: customer.email
+                status: invoice.status,
+                customer: customer.email,
+                photographerAccount: photographerAccountId
             }
         });
     } catch (error) {
@@ -14222,7 +14208,7 @@ app.post('/api/export/multi-page-zip', isAuthenticated, async (req, res) => {
     }
 });
 
-// Create Payment Intent for session payments (deposits and invoices)
+// 🚀 REBUILT: Create Payment Intent using Stripe Connect Express
 app.post('/api/create-payment-intent', async (req, res) => {
     try {
         const { amount, sessionId, paymentType = 'invoice', clientEmail } = req.body;
@@ -14230,6 +14216,8 @@ app.post('/api/create-payment-intent', async (req, res) => {
         if (!amount || !sessionId) {
             return res.status(400).json({ error: 'Amount and sessionId are required' });
         }
+
+        console.log('💳 STRIPE CONNECT: Creating payment intent:', { amount, sessionId, paymentType, clientEmail });
 
         // Get session details for metadata
         const session = await getSessionById(sessionId);
@@ -14239,62 +14227,63 @@ app.post('/api/create-payment-intent', async (req, res) => {
 
         // Get photographer's Stripe Connect account
         const photographerResult = await pool.query(
-            'SELECT stripe_connect_account_id, stripe_onboarding_complete FROM users WHERE id = $1',
+            'SELECT stripe_connect_account_id, stripe_onboarding_complete, email FROM users WHERE id = $1',
             [session.userId]
         );
 
         const photographer = photographerResult.rows[0];
-        const connectedAccountId = photographer?.stripe_connect_account_id;
+        const photographerAccountId = photographer?.stripe_connect_account_id;
         const onboardingComplete = photographer?.stripe_onboarding_complete;
 
-        // Create payment intent - use Stripe Connect if photographer has completed setup
-        let paymentIntentData = {
-            amount: Math.round(parseFloat(amount) * 100), // Convert to cents
-            currency: 'usd',
-            automatic_payment_methods: {
-                enabled: true,
-            },
-            metadata: {
+        if (!photographerAccountId || !onboardingComplete) {
+            return res.status(400).json({ 
+                error: 'Photographer payment setup incomplete',
+                message: 'The photographer has not completed their payment setup. Please contact them to complete their Stripe Connect onboarding.',
+                setupRequired: true,
+                photographerEmail: photographer?.email
+            });
+        }
+
+        console.log('🔗 STRIPE CONNECT: Creating payment on photographer account:', photographerAccountId);
+
+        // Create payment intent directly on photographer's Stripe account
+        const stripeConnectManager = new StripeConnectManager();
+        const paymentResult = await stripeConnectManager.createPaymentIntent(
+            parseFloat(amount),
+            photographerAccountId,
+            {
                 sessionId: sessionId,
-                type: paymentType, // 'deposit' or 'invoice'
+                type: paymentType,
                 clientName: session.clientName,
                 sessionType: session.sessionType,
                 sessionDate: session.dateTime,
                 sessionLocation: session.location,
                 photographerId: session.userId,
-                connectedAccount: connectedAccountId || 'platform'
-            },
-            receipt_email: clientEmail || session.email,
-            description: `${paymentType === 'deposit' ? 'Deposit' : 'Payment'} for ${session.sessionType} session - ${session.clientName}`
-        };
+                clientEmail: clientEmail || session.email,
+                platform: 'photography_management_system'
+            }
+        );
 
-        // If photographer has Stripe Connect account and onboarding is complete, route payment to them
-        if (connectedAccountId && onboardingComplete) {
-            console.log('🔗 Using Stripe Connect for payment - Account:', connectedAccountId);
-            
-            // Route payment to connected account using transfer_data
-            paymentIntentData.transfer_data = {
-                destination: connectedAccountId
-            };
-            
-            // Optional: Take platform fee (currently 0%)
-            // paymentIntentData.application_fee_amount = Math.round(parseFloat(amount) * 0.02 * 100); // 2% fee
-        } else {
-            console.log('💳 Using platform Stripe account - Connect account not ready');
+        if (!paymentResult.success) {
+            console.error('❌ STRIPE CONNECT: Failed to create payment intent:', paymentResult.error);
+            return res.status(500).json({ 
+                error: 'Failed to create payment intent',
+                message: paymentResult.error
+            });
         }
 
-        const paymentIntent = await stripe.paymentIntents.create(paymentIntentData);
-
-        console.log(' Payment Intent created:', paymentIntent.id, 'Amount:', amount, 'Session:', sessionId, 'Type:', paymentType, 'Connect:', !!connectedAccountId);
+        console.log('✅ STRIPE CONNECT: Payment intent created on photographer account:', paymentResult.paymentIntent.id);
 
         res.json({
-            clientSecret: paymentIntent.client_secret,
-            paymentIntentId: paymentIntent.id,
-            usingConnect: !!(connectedAccountId && onboardingComplete)
+            clientSecret: paymentResult.clientSecret,
+            paymentIntentId: paymentResult.paymentIntent.id,
+            photographerAccount: photographerAccountId,
+            amount: amount,
+            usingConnect: true
         });
 
     } catch (error) {
-        console.error('Error creating payment intent:', error);
+        console.error('❌ Error creating payment intent:', error);
         res.status(500).json({ error: 'Failed to create payment intent' });
     }
 });
@@ -14604,6 +14593,196 @@ app.post('/api/stripe-connect/refresh', isAuthenticated, async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to refresh onboarding link'
+        });
+    }
+});
+
+// 🚀 NEW STRIPE CONNECT ENDPOINTS FOR COMPLETE REBUILD
+
+// Start Stripe Connect onboarding for photographer
+app.post('/api/stripe-connect/start-onboarding', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.user.uid;
+        console.log('🚀 STRIPE: Starting onboarding for user:', userId);
+
+        // Get user's business information
+        const userResult = await pool.query(
+            'SELECT email, business_name, stripe_connect_account_id FROM users WHERE id = $1',
+            [userId]
+        );
+
+        if (!userResult.rows[0]) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        const user = userResult.rows[0];
+        let accountId = user.stripe_connect_account_id;
+
+        // Create Stripe Express account if doesn't exist
+        if (!accountId) {
+            console.log('🔧 Creating new Express account for:', user.email);
+            const stripeConnectManager = new StripeConnectManager();
+            
+            const accountResult = await stripeConnectManager.createExpressAccount(
+                user.email,
+                user.business_name || 'Photography Business'
+            );
+
+            if (!accountResult.success) {
+                return res.status(500).json({
+                    success: false,
+                    message: 'Failed to create Stripe account: ' + accountResult.error
+                });
+            }
+
+            accountId = accountResult.accountId;
+
+            // Save account ID to database
+            await pool.query(
+                'UPDATE users SET stripe_connect_account_id = $1 WHERE id = $2',
+                [accountId, userId]
+            );
+        }
+
+        // Create onboarding link
+        const stripeConnectManager = new StripeConnectManager();
+        const baseUrl = req.headers.origin || `https://${req.headers.host}`;
+        const refreshUrl = `${baseUrl}/payment-settings?refresh=true`;
+        const returnUrl = `${baseUrl}/payment-settings?success=true`;
+
+        const linkResult = await stripeConnectManager.createAccountLink(
+            accountId,
+            refreshUrl,
+            returnUrl
+        );
+
+        if (!linkResult.success) {
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to create onboarding link: ' + linkResult.error
+            });
+        }
+
+        console.log('✅ STRIPE: Onboarding link created for user:', userId);
+        res.json({
+            success: true,
+            onboardingUrl: linkResult.onboardingUrl,
+            accountId: accountId
+        });
+
+    } catch (error) {
+        console.error('❌ Error starting Stripe onboarding:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to start onboarding'
+        });
+    }
+});
+
+// Check photographer's Stripe Connect status
+app.get('/api/stripe-connect/account-status', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.user.uid;
+        console.log('🔍 STRIPE: Checking account status for user:', userId);
+
+        const userResult = await pool.query(
+            'SELECT stripe_connect_account_id, stripe_onboarding_complete FROM users WHERE id = $1',
+            [userId]
+        );
+
+        if (!userResult.rows[0]?.stripe_connect_account_id) {
+            return res.json({
+                success: true,
+                hasAccount: false,
+                onboardingComplete: false,
+                canReceivePayments: false,
+                message: 'No Stripe Connect account found'
+            });
+        }
+
+        const accountId = userResult.rows[0].stripe_connect_account_id;
+        const stripeConnectManager = new StripeConnectManager();
+        const statusResult = await stripeConnectManager.getAccountStatus(accountId);
+
+        if (!statusResult.success) {
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to check account status: ' + statusResult.error
+            });
+        }
+
+        // Update database with current status
+        if (statusResult.onboardingComplete !== userResult.rows[0].stripe_onboarding_complete) {
+            await pool.query(
+                'UPDATE users SET stripe_onboarding_complete = $1 WHERE id = $2',
+                [statusResult.onboardingComplete, userId]
+            );
+        }
+
+        console.log('✅ STRIPE: Account status checked. Onboarding complete:', statusResult.onboardingComplete);
+        res.json({
+            success: true,
+            hasAccount: true,
+            accountId: accountId,
+            onboardingComplete: statusResult.onboardingComplete,
+            canReceivePayments: statusResult.canReceivePayments,
+            canReceivePayouts: statusResult.canReceivePayouts,
+            requiresInfo: statusResult.requiresInfo,
+            businessProfile: statusResult.business_profile
+        });
+
+    } catch (error) {
+        console.error('❌ Error checking account status:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to check account status'
+        });
+    }
+});
+
+// Get Stripe dashboard login link
+app.post('/api/stripe-connect/dashboard-link', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.user.uid;
+        console.log('🔗 STRIPE: Creating dashboard link for user:', userId);
+
+        const userResult = await pool.query(
+            'SELECT stripe_connect_account_id FROM users WHERE id = $1',
+            [userId]
+        );
+
+        if (!userResult.rows[0]?.stripe_connect_account_id) {
+            return res.status(404).json({
+                success: false,
+                message: 'No Stripe Connect account found'
+            });
+        }
+
+        const accountId = userResult.rows[0].stripe_connect_account_id;
+        const stripeConnectManager = new StripeConnectManager();
+        const linkResult = await stripeConnectManager.createLoginLink(accountId);
+
+        if (!linkResult.success) {
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to create dashboard link: ' + linkResult.error
+            });
+        }
+
+        console.log('✅ STRIPE: Dashboard link created for user:', userId);
+        res.json({
+            success: true,
+            dashboardUrl: linkResult.url
+        });
+
+    } catch (error) {
+        console.error('❌ Error creating dashboard link:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to create dashboard link'
         });
     }
 });
