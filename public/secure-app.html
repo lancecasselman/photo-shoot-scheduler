@@ -12892,7 +12892,6 @@ END:VCALENDAR`;
             <!-- Business Management Navigation -->
             <div class="business-nav">
                 <button class="business-nav-btn active" onclick="showBusinessSection('dashboard')"> Dashboard</button>
-                <button class="business-nav-btn" onclick="showBusinessSection('paymentSettings')"> Payment Settings</button>
                 <button class="business-nav-btn" onclick="showBusinessSection('aiAssistant')">AI Assistant</button>
                 <button class="business-nav-btn" onclick="showBusinessSection('expenses')"> Expense Tracker</button>
                 <button class="business-nav-btn" onclick="showBusinessSection('mileage')">Mileage Tracker</button>
@@ -12966,107 +12965,6 @@ END:VCALENDAR`;
                 <!-- Chart sections removed as requested -->
             </div>
 
-            <!-- Payment Settings Section -->
-            <div id="paymentSettingsSection" class="business-section">
-                <div class="payment-settings-header">
-                    <h2>💳 Payment Settings</h2>
-                    <p>Set up your payment processing and banking information</p>
-                </div>
-
-                <!-- Payment Setup Status -->
-                <div class="payment-status-card">
-                    <div class="status-indicator" id="stripeStatusIndicator">
-                        <span class="status-dot pending"></span>
-                        <span id="stripeStatusText">Setting up payment processing...</span>
-                    </div>
-                    <div class="status-details" id="stripeStatusDetails">
-                        Loading payment setup status...
-                    </div>
-                </div>
-
-                <!-- Stripe Connect Setup Form -->
-                <div id="stripeSetupForm" class="payment-form" style="display: none;">
-                    <h3>Complete Payment Setup</h3>
-                    <p>We'll create your secure payment processing account to receive payments directly from clients.</p>
-                    
-                    <div class="form-section">
-                        <h4>Business Information</h4>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="businessEmail">Business Email:</label>
-                                <input type="email" id="businessEmail" placeholder="business@example.com" readonly>
-                            </div>
-                            <div class="form-group">
-                                <label for="businessCountry">Country:</label>
-                                <select id="businessCountry">
-                                    <option value="US">United States</option>
-                                    <option value="CA">Canada</option>
-                                    <option value="GB">United Kingdom</option>
-                                    <option value="AU">Australia</option>
-                                    <option value="DE">Germany</option>
-                                    <option value="FR">France</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="form-actions">
-                        <button onclick="setupStripeConnect()" class="primary-btn" id="setupStripeBtn">
-                            <span class="btn-text">Set Up Payment Processing</span>
-                            <span class="btn-loading" style="display: none;">Setting Up...</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Stripe Connect Complete -->
-                <div id="stripeConnectComplete" class="payment-complete" style="display: none;">
-                    <div class="success-card">
-                        <div class="success-icon">✅</div>
-                        <h3>Payment Processing Active</h3>
-                        <p>Your Stripe Express account is set up and ready to receive payments!</p>
-                        
-                        <div class="account-details">
-                            <h4>Account Details</h4>
-                            <div class="detail-row">
-                                <span class="detail-label">Account ID:</span>
-                                <span class="detail-value" id="stripeAccountId">Loading...</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">Status:</span>
-                                <span class="detail-value status-active">Active</span>
-                            </div>
-                        </div>
-                        
-                        <div class="payment-actions">
-                            <button onclick="openStripeDashboard()" class="secondary-btn">
-                                View Stripe Dashboard
-                            </button>
-                            <button onclick="refreshPaymentStatus()" class="secondary-btn">
-                                Refresh Status
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Payment Settings Help -->
-                <div class="help-section">
-                    <h4>ℹ️ How Payment Processing Works</h4>
-                    <div class="help-grid">
-                        <div class="help-item">
-                            <h5>Secure Processing</h5>
-                            <p>All payments are processed through Stripe, a PCI-compliant payment processor used by millions of businesses worldwide.</p>
-                        </div>
-                        <div class="help-item">
-                            <h5>Direct Deposits</h5>
-                            <p>Payments from your clients go directly to your bank account. No platform holds your money.</p>
-                        </div>
-                        <div class="help-item">
-                            <h5>Low Fees</h5>
-                            <p>Standard processing fees apply (2.9% + 30¢ per transaction). No hidden charges or platform fees.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <!-- AI Assistant Section -->
             <div id="aiAssistantSection" class="business-section">

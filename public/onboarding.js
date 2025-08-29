@@ -6,7 +6,7 @@
 class OnboardingWizard {
     constructor() {
         this.currentStep = 1;
-        this.totalSteps = 5;
+        this.totalSteps = 6;
         this.formData = {};
         this.usernameCheckTimeout = null;
         
@@ -79,6 +79,10 @@ class OnboardingWizard {
                 formContainer.innerHTML = this.renderBusinessTypeStep();
                 break;
             case 5:
+                formContainer.innerHTML = this.renderPaymentSettingsStep();
+                this.setupPaymentSettings();
+                break;
+            case 6:
                 formContainer.innerHTML = this.renderCompletionStep();
                 this.completeOnboarding();
                 break;
@@ -378,6 +382,103 @@ class OnboardingWizard {
         `;
     }
     
+    renderPaymentSettingsStep() {
+        return `
+            <div class="step-content">
+                <h2>💳 Payment Settings</h2>
+                <p>Set up your secure payment processing to receive payments from clients directly.</p>
+                
+                <!-- Payment Setup Status -->
+                <div class="payment-status-card">
+                    <div class="status-indicator" id="onboardingStripeStatusIndicator">
+                        <span class="status-dot pending" id="onboardingStatusDot"></span>
+                        <span id="onboardingStripeStatusText">Initializing payment setup...</span>
+                    </div>
+                    <div class="status-details" id="onboardingStripeStatusDetails">
+                        Loading payment setup status...
+                    </div>
+                </div>
+
+                <!-- Stripe Connect Setup Form -->
+                <div id="onboardingStripeSetupForm" class="payment-setup-form" style="display: none;">
+                    <h3>Complete Payment Setup</h3>
+                    <p>We'll create your secure Stripe Express account to receive payments directly from clients.</p>
+                    
+                    <div class="form-section">
+                        <h4>Business Information</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="onboardingBusinessEmail">Business Email:</label>
+                                <input type="email" id="onboardingBusinessEmail" placeholder="business@example.com" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="onboardingBusinessCountry">Country:</label>
+                                <select id="onboardingBusinessCountry">
+                                    <option value="US">United States</option>
+                                    <option value="CA">Canada</option>
+                                    <option value="GB">United Kingdom</option>
+                                    <option value="AU">Australia</option>
+                                    <option value="DE">Germany</option>
+                                    <option value="FR">France</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button onclick="onboardingSetupStripeConnect()" class="primary-btn" id="onboardingSetupStripeBtn">
+                            <span class="btn-text">Set Up Payment Processing</span>
+                            <span class="btn-loading" style="display: none;">Setting Up...</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stripe Connect Complete -->
+                <div id="onboardingStripeConnectComplete" class="payment-complete-card" style="display: none;">
+                    <div class="success-icon">✅</div>
+                    <h3>Payment Processing Ready!</h3>
+                    <p>Your Stripe Express account is set up and ready to receive payments.</p>
+                    
+                    <div class="account-info">
+                        <div class="info-row">
+                            <span class="info-label">Account ID:</span>
+                            <span class="info-value" id="onboardingStripeAccountId">Loading...</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Status:</span>
+                            <span class="info-value status-ready">Ready for Payments</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Skip Option -->
+                <div class="skip-section">
+                    <p><em>You can skip this step and set up payments later from your Business Management dashboard.</em></p>
+                    <button onclick="skipPaymentSetup()" class="skip-btn">Skip Payment Setup for Now</button>
+                </div>
+
+                <!-- Help Information -->
+                <div class="help-info">
+                    <h4>ℹ️ Why Set Up Payments Now?</h4>
+                    <div class="help-grid">
+                        <div class="help-item">
+                            <h5>Direct Deposits</h5>
+                            <p>Client payments go directly to your bank account - no middleman holds your money.</p>
+                        </div>
+                        <div class="help-item">
+                            <h5>Professional Invoicing</h5>
+                            <p>Send professional invoices and accept payments online instantly.</p>
+                        </div>
+                        <div class="help-item">
+                            <h5>Secure Processing</h5>
+                            <p>Stripe handles all security and compliance - the same system used by millions of businesses.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
     renderSubscriptionStep() {
         return `
             <div class="step-content">
@@ -707,6 +808,188 @@ class OnboardingWizard {
             other: 'Other'
         };
         return labels[type] || type;
+    }
+
+    // Setup Payment Settings functionality
+    setupPaymentSettings() {
+        this.loadOnboardingPaymentStatus();
+    }
+
+    async loadOnboardingPaymentStatus() {
+        const statusText = document.getElementById('onboardingStripeStatusText');
+        const statusDetails = document.getElementById('onboardingStripeStatusDetails');
+        const setupForm = document.getElementById('onboardingStripeSetupForm');
+        const completeSection = document.getElementById('onboardingStripeConnectComplete');
+        const businessEmail = document.getElementById('onboardingBusinessEmail');
+
+        try {
+            // Set business email from form data
+            if (businessEmail) {
+                businessEmail.value = this.formData.email || '';
+            }
+
+            // Check Stripe Connect status
+            const stripeResponse = await fetch('/api/stripe-connect/status');
+            if (!stripeResponse.ok) {
+                throw new Error('Failed to load payment status');
+            }
+            const stripeData = await stripeResponse.json();
+
+            const statusDot = document.getElementById('onboardingStatusDot');
+
+            if (stripeData.hasAccount && stripeData.onboardingComplete) {
+                // Show complete state
+                setupForm.style.display = 'none';
+                completeSection.style.display = 'block';
+                
+                statusText.textContent = 'Payment processing is ready!';
+                statusDetails.textContent = 'Your Stripe Express account is fully set up and can receive payments.';
+                statusDot.className = 'status-dot active';
+                
+                document.getElementById('onboardingStripeAccountId').textContent = stripeData.accountId || 'Loading...';
+
+            } else if (stripeData.hasAccount) {
+                // Account exists but onboarding not complete
+                statusText.textContent = 'Complete your payment setup';
+                statusDetails.innerHTML = `
+                    <p>Your Stripe Express account has been created but setup is not complete.</p>
+                    <button onclick="continueOnboardingStripeSetup()" class="primary-btn" style="margin-top: 15px;">
+                        Continue Setup
+                    </button>
+                `;
+                setupForm.style.display = 'none';
+                completeSection.style.display = 'none';
+                
+            } else {
+                // No account exists yet
+                statusText.textContent = 'Set up payment processing';
+                statusDetails.textContent = 'Create your secure Stripe Express account to receive payments from clients.';
+                setupForm.style.display = 'block';
+                completeSection.style.display = 'none';
+                statusDot.className = 'status-dot pending';
+            }
+
+        } catch (error) {
+            console.error('Error loading payment status:', error);
+            statusText.textContent = 'Error loading payment status';
+            statusDetails.textContent = 'Unable to check your payment setup. You can skip this step for now.';
+            
+            const statusDot = document.getElementById('onboardingStatusDot');
+            statusDot.className = 'status-dot error';
+        }
+    }
+}
+
+// Global functions for payment setup in onboarding
+window.onboardingSetupStripeConnect = async function() {
+    const button = document.getElementById('onboardingSetupStripeBtn');
+    const buttonText = button.querySelector('.btn-text');
+    const buttonLoading = button.querySelector('.btn-loading');
+    const businessCountry = document.getElementById('onboardingBusinessCountry').value;
+
+    button.disabled = true;
+    buttonText.style.display = 'none';
+    buttonLoading.style.display = 'inline';
+
+    try {
+        const response = await fetch('/api/stripe-connect/create-account', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                country: businessCountry
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to create Stripe account');
+        }
+
+        const data = await response.json();
+        
+        if (data.accountLinkUrl) {
+            // Open Stripe onboarding in a new window
+            const stripeWindow = window.open(data.accountLinkUrl, 'stripe-onboarding', 'width=800,height=600,scrollbars=yes,resizable=yes');
+            
+            // Poll for completion
+            const checkCompletion = setInterval(() => {
+                try {
+                    if (stripeWindow.closed) {
+                        clearInterval(checkCompletion);
+                        // Reload payment status after onboarding window closes
+                        setTimeout(() => {
+                            if (window.onboardingWizard) {
+                                window.onboardingWizard.loadOnboardingPaymentStatus();
+                            }
+                        }, 2000);
+                    }
+                } catch (e) {
+                    // Handle cross-origin restrictions
+                    clearInterval(checkCompletion);
+                }
+            }, 1000);
+
+        } else {
+            throw new Error('No onboarding URL received');
+        }
+
+    } catch (error) {
+        console.error('Error setting up Stripe Connect:', error);
+        alert('Error setting up payment processing. You can skip this step and set it up later.');
+        
+        button.disabled = false;
+        buttonText.style.display = 'inline';
+        buttonLoading.style.display = 'none';
+    }
+}
+
+window.continueOnboardingStripeSetup = async function() {
+    try {
+        const response = await fetch('/api/stripe-connect/continue-onboarding', {
+            method: 'POST'
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to continue onboarding');
+        }
+
+        const data = await response.json();
+        
+        if (data.accountLinkUrl) {
+            // Open in new window like the initial setup
+            const stripeWindow = window.open(data.accountLinkUrl, 'stripe-onboarding', 'width=800,height=600,scrollbars=yes,resizable=yes');
+            
+            // Poll for completion
+            const checkCompletion = setInterval(() => {
+                try {
+                    if (stripeWindow.closed) {
+                        clearInterval(checkCompletion);
+                        setTimeout(() => {
+                            if (window.onboardingWizard) {
+                                window.onboardingWizard.loadOnboardingPaymentStatus();
+                            }
+                        }, 2000);
+                    }
+                } catch (e) {
+                    clearInterval(checkCompletion);
+                }
+            }, 1000);
+
+        } else {
+            throw new Error('No onboarding URL received');
+        }
+
+    } catch (error) {
+        console.error('Error continuing Stripe onboarding:', error);
+        alert('Error accessing payment setup. You can skip this step and set it up later.');
+    }
+}
+
+window.skipPaymentSetup = function() {
+    // Move to next step
+    if (window.onboardingWizard) {
+        window.onboardingWizard.nextStep();
     }
 }
 
