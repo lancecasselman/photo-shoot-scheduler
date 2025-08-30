@@ -14643,6 +14643,42 @@ app.get('/api/stripe-connect/callback', isAuthenticated, async (req, res) => {
     }
 });
 
+// Create dashboard link for connected account
+app.post('/api/stripe-connect/dashboard-link', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.user.uid;
+        
+        const userResult = await pool.query(
+            'SELECT stripe_connect_account_id FROM users WHERE id = $1',
+            [userId]
+        );
+        
+        if (!userResult.rows[0]?.stripe_connect_account_id) {
+            return res.status(404).json({
+                success: false,
+                message: 'No Stripe account found'
+            });
+        }
+        
+        const accountId = userResult.rows[0].stripe_connect_account_id;
+        
+        // For Express accounts, Stripe dashboard is accessed differently
+        // They should use the Express dashboard URL
+        res.json({
+            success: true,
+            dashboardUrl: 'https://dashboard.stripe.com/express',
+            accountId: accountId
+        });
+        
+    } catch (error) {
+        console.error('❌ Error creating dashboard link:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to create dashboard link'
+        });
+    }
+});
+
 // Handle refresh link for expired onboarding
 app.get('/api/stripe-connect/refresh-link', isAuthenticated, async (req, res) => {
     try {

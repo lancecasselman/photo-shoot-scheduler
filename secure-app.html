@@ -16515,13 +16515,16 @@ END:VCALENDAR`;
             const isReturningFromStripe = urlParams.get('stripe_success') === 'true';
             
             try {
+                console.log('Checking Stripe Connect status...');
                 const response = await fetch('/api/stripe-connect/account-status');
                 
                 if (!response.ok) {
+                    console.error('Failed to fetch status:', response.status, response.statusText);
                     throw new Error('Failed to fetch status');
                 }
                 
                 const data = await response.json();
+                console.log('Stripe status response:', data);
                 
                 if (data.onboardingComplete && data.canReceivePayments) {
                     // Show connected state

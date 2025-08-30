@@ -1,16 +1,28 @@
 // Stripe Connect Express Account Management
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const stripe = process.env.STRIPE_SECRET_KEY ? require('stripe')(process.env.STRIPE_SECRET_KEY) : null;
 
 class StripeConnectManager {
     constructor() {
         if (!process.env.STRIPE_SECRET_KEY) {
-            console.warn('Stripe Connect: No secret key provided');
+            console.warn('⚠️ STRIPE CONNECT: No secret key provided - Stripe features disabled');
+            this.enabled = false;
+        } else {
+            console.log('✅ STRIPE CONNECT: Initialized with API key');
+            this.enabled = true;
         }
     }
 
     // Create Express Account for photographer
     async createExpressAccount(email, businessName, country = 'US') {
         try {
+            if (!this.enabled || !stripe) {
+                console.warn('⚠️ STRIPE: API not enabled, cannot create account');
+                return {
+                    success: false,
+                    error: 'Stripe API not configured. Please add STRIPE_SECRET_KEY to environment.'
+                };
+            }
+            
             console.log('🔧 STRIPE: Creating new Express account for email:', email);
             console.log('🔧 STRIPE: Business name:', businessName, 'Country:', country);
             
@@ -97,6 +109,14 @@ class StripeConnectManager {
     // Create account link for onboarding
     async createAccountLink(accountId, refreshUrl, returnUrl) {
         try {
+            if (!this.enabled || !stripe) {
+                console.warn('⚠️ STRIPE: API not enabled, cannot create account link');
+                return {
+                    success: false,
+                    error: 'Stripe API not configured'
+                };
+            }
+            
             const accountLink = await stripe.accountLinks.create({
                 account: accountId,
                 refresh_url: refreshUrl,
@@ -121,6 +141,15 @@ class StripeConnectManager {
     // Check account onboarding status
     async getAccountStatus(accountId) {
         try {
+            if (!this.enabled || !stripe) {
+                console.warn('⚠️ STRIPE: API not enabled, returning mock status');
+                return {
+                    success: false,
+                    error: 'Stripe API not configured'
+                };
+            }
+            
+            console.log('🔍 STRIPE: Retrieving account status for:', accountId);
             const account = await stripe.accounts.retrieve(accountId);
             
             const isOnboardingComplete = account.details_submitted && 
