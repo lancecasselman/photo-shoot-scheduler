@@ -164,27 +164,6 @@
                     throw new Error(`Backend verification failed: ${authResponse.status} - ${errorText}`);
                 }
                 
-                // Check onboarding status first before subscription
-                showLoading('Checking account setup...');
-                const onboardingResponse = await fetch('/api/onboarding-status', {
-                    headers: {
-                        'Authorization': 'Bearer ' + idToken
-                    },
-                    credentials: 'include'
-                });
-                
-                const onboardingData = await onboardingResponse.json();
-                console.log('📋 Onboarding status:', onboardingData);
-                
-                if (!onboardingData.completed) {
-                    console.log('New user detected - redirecting to onboarding wizard');
-                    showSuccess('Welcome! Redirecting to setup wizard...');
-                    setTimeout(() => {
-                        window.location.href = '/onboarding';
-                    }, 1000);
-                    return;
-                }
-
                 // Check subscription status
                 const subResponse = await fetch('/api/subscription-status', {
                     credentials: 'include' // Ensure cookies are included for Android
