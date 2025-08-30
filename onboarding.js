@@ -77,6 +77,7 @@ class OnboardingWizard {
                 break;
             case 4:
                 formContainer.innerHTML = this.renderBusinessTypeStep();
+                this.setupBusinessTypeSelection();
                 break;
             case 5:
                 formContainer.innerHTML = this.renderPaymentSettingsStep();
@@ -661,17 +662,34 @@ class OnboardingWizard {
             this.updatePreview();
         });
         
-        // Setup business type selection
-        setTimeout(() => {
-            const typeCards = document.querySelectorAll('.business-type-card');
-            typeCards.forEach(card => {
-                card.addEventListener('click', () => {
-                    typeCards.forEach(c => c.classList.remove('selected'));
-                    card.classList.add('selected');
-                    this.formData.businessType = card.dataset.type;
-                });
+        // Username validation is handled in setupUsernameValidation
+    }
+    
+    setupBusinessTypeSelection() {
+        // Setup business type card selection for step 4
+        const typeCards = document.querySelectorAll('.business-type-card');
+        console.log('Setting up business type selection, found', typeCards.length, 'cards');
+        
+        typeCards.forEach(card => {
+            card.addEventListener('click', () => {
+                console.log('Business type clicked:', card.dataset.type);
+                // Remove selected class from all cards
+                typeCards.forEach(c => c.classList.remove('selected'));
+                // Add selected class to clicked card
+                card.classList.add('selected');
+                // Store the selected type
+                this.formData.businessType = card.dataset.type;
+                console.log('Business type selected:', this.formData.businessType);
             });
-        }, 100);
+        });
+        
+        // If there's already a selected type, ensure it's highlighted
+        if (this.formData.businessType) {
+            const selectedCard = document.querySelector(`.business-type-card[data-type="${this.formData.businessType}"]`);
+            if (selectedCard) {
+                selectedCard.classList.add('selected');
+            }
+        }
     }
     
     async validateUsername(username) {
