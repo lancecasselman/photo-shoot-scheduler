@@ -590,12 +590,14 @@ class OnboardingWizard {
                 businessEmail.value = this.formData.email || '';
             }
 
-            // Check Stripe Connect status
-            const stripeResponse = await fetch('/api/stripe-connect/status');
+            // Check Stripe Connect status - use the correct endpoint
+            const stripeResponse = await fetch('/api/stripe-connect/account-status');
             if (!stripeResponse.ok) {
+                console.error('Failed to load payment status:', stripeResponse.status);
                 throw new Error('Failed to load payment status');
             }
             const stripeData = await stripeResponse.json();
+            console.log('Onboarding payment status:', stripeData);
 
             const statusDot = document.getElementById('onboardingStatusDot');
 
@@ -923,7 +925,7 @@ window.onboardingSetupStripeConnect = async function() {
         btnLoading.style.display = 'inline';
         btn.disabled = true;
 
-        const response = await fetch('/api/stripe-connect/create-account', {
+        const response = await fetch('/api/stripe-connect/start-onboarding', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -931,11 +933,11 @@ window.onboardingSetupStripeConnect = async function() {
             body: JSON.stringify({ country, email })
         });
 
-        if (!response.ok) {
-            throw new Error('Failed to create Stripe account');
-        }
-
         const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.message || 'Failed to create Stripe account');
+        }
         
         if (data.onboardingUrl) {
             window.location.href = data.onboardingUrl;

@@ -14679,6 +14679,62 @@ app.post('/api/stripe-connect/dashboard-link', isAuthenticated, async (req, res)
     }
 });
 
+// Continue onboarding for existing account
+app.post('/api/stripe-connect/continue-onboarding', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.user.uid;
+        console.log('🔄 STRIPE: Continuing onboarding for user:', userId);
+        
+        // Get user's existing account ID
+        const userResult = await pool.query(
+            'SELECT stripe_connect_account_id FROM users WHERE id = $1',
+            [userId]
+        );
+        
+        if (!userResult.rows[0]?.stripe_connect_account_id) {
+            return res.status(404).json({
+                success: false,
+                message: 'No Stripe account found. Please start setup first.'
+            });
+        }
+        
+        const accountId = userResult.rows[0].stripe_connect_account_id;
+        
+        // Create new onboarding link for existing account
+        const stripeConnectManager = new StripeConnectManager();
+        const baseUrl = req.headers.origin || `https://${req.headers.host}`;
+        const refreshUrl = `${baseUrl}/api/stripe-connect/refresh-link?account=${accountId}`;
+        const returnUrl = `${baseUrl}/api/stripe-connect/callback?account_id=${accountId}`;
+        
+        const linkResult = await stripeConnectManager.createAccountLink(
+            accountId,
+            refreshUrl,
+            returnUrl
+        );
+        
+        if (!linkResult.success) {
+            return res.status(500).json({
+                success: false,
+                message: 'Failed to create onboarding link: ' + linkResult.error
+            });
+        }
+        
+        console.log('✅ STRIPE: Continue onboarding link created for user:', userId);
+        res.json({
+            success: true,
+            onboardingUrl: linkResult.onboardingUrl,
+            accountId: accountId
+        });
+        
+    } catch (error) {
+        console.error('❌ Error continuing Stripe onboarding:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to continue onboarding'
+        });
+    }
+});
+
 // Handle refresh link for expired onboarding
 app.get('/api/stripe-connect/refresh-link', isAuthenticated, async (req, res) => {
     try {
