@@ -174,9 +174,14 @@ class StripeConnectManager {
         }
     }
 
-    // Create payment intent for connected account
+    // Create payment intent for connected account - DIRECT CHARGE
     async createPaymentIntent(amount, connectedAccountId, metadata = {}) {
         try {
+            console.log('💳 Creating DIRECT payment on photographer account:', connectedAccountId);
+            console.log('💰 Amount: $', amount);
+            
+            // Create payment intent DIRECTLY on the connected account
+            // This means payment goes straight to photographer, not through platform
             const paymentIntent = await stripe.paymentIntents.create({
                 amount: Math.round(amount * 100), // Convert to cents
                 currency: 'usd',
@@ -184,32 +189,42 @@ class StripeConnectManager {
                     enabled: true,
                 },
                 metadata: metadata,
-                // Route payment to connected account
-                transfer_data: {
-                    destination: connectedAccountId,
-                },
-                // Optional: Take application fee (platform fee)
-                // application_fee_amount: Math.round(amount * 0.02 * 100), // 2% fee
+                // Optional: Take a platform fee (uncomment if you want to charge a fee)
+                // application_fee_amount: Math.round(amount * 0.05 * 100), // 5% platform fee
+            }, {
+                // THIS IS THE KEY: Create the payment intent on the CONNECTED account
+                stripeAccount: connectedAccountId,
             });
+
+            console.log('✅ Direct payment intent created:', paymentIntent.id);
+            console.log('   → Payment will go directly to photographer account');
+            console.log('   → Not routing through platform account');
 
             return {
                 success: true,
                 paymentIntent: paymentIntent,
-                clientSecret: paymentIntent.client_secret
+                clientSecret: paymentIntent.client_secret,
+                accountId: connectedAccountId
             };
 
         } catch (error) {
-            console.error('❌ Error creating payment intent for connected account:', error.message);
+            console.error('❌ Error creating direct payment intent:', error.message);
+            console.error('   Account ID:', connectedAccountId);
+            console.error('   Error code:', error.code);
             return {
                 success: false,
-                error: error.message
+                error: error.message,
+                errorCode: error.code
             };
         }
     }
 
-    // Create checkout session for connected account
+    // Create checkout session for connected account - DIRECT CHARGE
     async createCheckoutSession(sessionData, connectedAccountId, successUrl, cancelUrl) {
         try {
+            console.log('💳 Creating DIRECT checkout session on photographer account:', connectedAccountId);
+            
+            // Create checkout session DIRECTLY on the connected account
             const session = await stripe.checkout.sessions.create({
                 payment_method_types: ['card'],
                 line_items: [
@@ -229,15 +244,17 @@ class StripeConnectManager {
                 success_url: successUrl,
                 cancel_url: cancelUrl,
                 metadata: sessionData.metadata || {},
-                // Route payment to connected account
-                payment_intent_data: {
-                    transfer_data: {
-                        destination: connectedAccountId,
-                    },
-                    // Optional: Application fee
-                    // application_fee_amount: Math.round(sessionData.amount * 0.02 * 100),
-                }
+                // Optional: Take a platform fee (uncomment if you want to charge a fee)
+                // payment_intent_data: {
+                //     application_fee_amount: Math.round(sessionData.amount * 0.05 * 100), // 5% platform fee
+                // }
+            }, {
+                // THIS IS THE KEY: Create the session on the CONNECTED account
+                stripeAccount: connectedAccountId,
             });
+
+            console.log('✅ Direct checkout session created:', session.id);
+            console.log('   → Payment will go directly to photographer account');
 
             return {
                 success: true,
@@ -246,7 +263,8 @@ class StripeConnectManager {
             };
 
         } catch (error) {
-            console.error('❌ Error creating checkout session for connected account:', error.message);
+            console.error('❌ Error creating direct checkout session:', error.message);
+            console.error('   Account ID:', connectedAccountId);
             return {
                 success: false,
                 error: error.message

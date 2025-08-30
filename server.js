@@ -14226,25 +14226,52 @@ app.post('/api/create-payment-intent', async (req, res) => {
             return res.status(400).json({ error: 'Amount and sessionId are required' });
         }
 
-        console.log('💳 STRIPE CONNECT: Creating payment intent:', { amount, sessionId, paymentType, clientEmail });
+        console.log('\n========================================');
+        console.log('💳 PAYMENT INTENT CREATION - DIAGNOSTIC LOG');
+        console.log('========================================');
+        console.log('📍 Request Details:', { 
+            amount, 
+            sessionId, 
+            paymentType, 
+            clientEmail,
+            timestamp: new Date().toISOString()
+        });
 
         // Get session details for metadata
         const session = await getSessionById(sessionId);
         if (!session) {
+            console.error('❌ Session not found:', sessionId);
             return res.status(404).json({ error: 'Session not found' });
         }
+        
+        console.log('✅ Session found:', {
+            clientName: session.clientName,
+            photographerId: session.userId,
+            sessionPrice: session.price
+        });
 
         // Get photographer's Stripe Connect account
         const photographerResult = await pool.query(
-            'SELECT stripe_connect_account_id, stripe_onboarding_complete, email FROM users WHERE id = $1',
+            'SELECT stripe_connect_account_id, stripe_onboarding_complete, email, business_name FROM users WHERE id = $1',
             [session.userId]
         );
 
         const photographer = photographerResult.rows[0];
         const photographerAccountId = photographer?.stripe_connect_account_id;
         const onboardingComplete = photographer?.stripe_onboarding_complete;
+        
+        console.log('📍 Photographer Details:', {
+            email: photographer?.email,
+            businessName: photographer?.business_name,
+            stripeAccountId: photographerAccountId,
+            onboardingComplete: onboardingComplete
+        });
 
         if (!photographerAccountId || !onboardingComplete) {
+            console.error('❌ Photographer setup incomplete:', {
+                hasAccountId: !!photographerAccountId,
+                onboardingComplete: onboardingComplete
+            });
             return res.status(400).json({ 
                 error: 'Photographer payment setup incomplete',
                 message: 'The photographer has not completed their payment setup. Please contact them to complete their Stripe Connect onboarding.',
@@ -14253,7 +14280,11 @@ app.post('/api/create-payment-intent', async (req, res) => {
             });
         }
 
-        console.log('🔗 STRIPE CONNECT: Creating payment on photographer account:', photographerAccountId);
+        console.log('🔗 PAYMENT ROUTING - BEFORE FIX:');
+        console.log('   ❌ OLD: Using transfer_data → Payment to Legacy Photography → Transfer to photographer');
+        console.log('🔗 PAYMENT ROUTING - AFTER FIX:');
+        console.log('   ✅ NEW: Using stripeAccount header → Payment DIRECTLY to photographer account');
+        console.log('   → Photographer Account:', photographerAccountId);
 
         // Create payment intent directly on photographer's Stripe account
         const stripeConnectManager = new StripeConnectManager();
@@ -14281,14 +14312,20 @@ app.post('/api/create-payment-intent', async (req, res) => {
             });
         }
 
-        console.log('✅ STRIPE CONNECT: Payment intent created on photographer account:', paymentResult.paymentIntent.id);
+        console.log('✅ Payment Intent Created Successfully:');
+        console.log('   → Payment Intent ID:', paymentResult.paymentIntent.id);
+        console.log('   → Destination Account:', photographerAccountId);
+        console.log('   → Amount: $', amount);
+        console.log('   → Status: Payment will go DIRECTLY to photographer');
+        console.log('========================================\n');
 
         res.json({
             clientSecret: paymentResult.clientSecret,
             paymentIntentId: paymentResult.paymentIntent.id,
             photographerAccount: photographerAccountId,
             amount: amount,
-            usingConnect: true
+            usingConnect: true,
+            paymentRouting: 'DIRECT_TO_PHOTOGRAPHER'
         });
 
     } catch (error) {
