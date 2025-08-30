@@ -8693,13 +8693,35 @@ app.post('/api/create-invoice', isAuthenticated, async (req, res) => {
 
         // Check if photographer has completed Stripe Connect setup
         const photographerAccountId = photographer.stripe_connect_account_id;
-        const onboardingComplete = photographer.stripe_onboarding_complete;
+        let onboardingComplete = photographer.stripe_onboarding_complete;
 
-        if (!photographerAccountId || !onboardingComplete) {
+        if (!photographerAccountId) {
+            return res.status(400).json({ 
+                error: 'Payment setup required',
+                message: 'Please set up your payment processing in Business Setup > Payment Settings to create invoices.',
+                setupRequired: true
+            });
+        }
+        
+        // Double-check account status with Stripe
+        const connectManager = new StripeConnectManager();
+        const statusResult = await connectManager.getAccountStatus(photographerAccountId);
+        
+        if (statusResult.success && statusResult.onboardingComplete !== onboardingComplete) {
+            // Update database with current status
+            await pool.query(
+                'UPDATE users SET stripe_onboarding_complete = $1 WHERE id = $2',
+                [statusResult.onboardingComplete, userId]
+            );
+            onboardingComplete = statusResult.onboardingComplete;
+        }
+        
+        if (!onboardingComplete || !statusResult.canReceivePayments) {
             return res.status(400).json({ 
                 error: 'Payment setup incomplete',
-                message: 'Please complete your Stripe Connect setup before creating invoices.',
-                setupRequired: true
+                message: 'Please complete your Stripe Connect setup before creating invoices. Go to Business Setup > Payment Settings.',
+                setupRequired: true,
+                requiresInfo: statusResult.requiresInfo
             });
         }
         
@@ -14590,6 +14612,78 @@ app.post('/api/stripe-connect/refresh', isAuthenticated, async (req, res) => {
     }
 });
 
+// Handle Stripe Connect return callback
+app.get('/api/stripe-connect/callback', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.user.uid;
+        const { account_id } = req.query;
+        
+        console.log('✅ STRIPE CALLBACK: User returned from onboarding:', userId);
+        
+        if (account_id) {
+            // Verify account status
+            const stripeConnectManager = new StripeConnectManager();
+            const statusResult = await stripeConnectManager.getAccountStatus(account_id);
+            
+            if (statusResult.success) {
+                // Update database with current onboarding status
+                await pool.query(
+                    'UPDATE users SET stripe_onboarding_complete = $1 WHERE id = $2 AND stripe_connect_account_id = $3',
+                    [statusResult.onboardingComplete, userId, account_id]
+                );
+                console.log('✅ STRIPE: Account status updated for user:', userId, 'Complete:', statusResult.onboardingComplete);
+            }
+        }
+        
+        // Redirect to Business Setup with success message
+        res.redirect('/secure-app.html?stripe_success=true#businessSetup');
+    } catch (error) {
+        console.error('❌ Error handling Stripe callback:', error);
+        res.redirect('/secure-app.html?error=callback_failed#businessSetup');
+    }
+});
+
+// Handle refresh link for expired onboarding
+app.get('/api/stripe-connect/refresh-link', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.user.uid;
+        const { account } = req.query;
+        
+        console.log('🔄 STRIPE: Refreshing onboarding link for user:', userId);
+        
+        // Verify this account belongs to the user
+        const userResult = await pool.query(
+            'SELECT stripe_connect_account_id FROM users WHERE id = $1',
+            [userId]
+        );
+        
+        if (userResult.rows[0]?.stripe_connect_account_id !== account) {
+            return res.status(403).send('Unauthorized');
+        }
+        
+        // Create new onboarding link
+        const stripeConnectManager = new StripeConnectManager();
+        const baseUrl = req.headers.origin || `https://${req.headers.host}`;
+        const refreshUrl = `${baseUrl}/api/stripe-connect/refresh-link?account=${account}`;
+        const returnUrl = `${baseUrl}/api/stripe-connect/callback?account_id=${account}`;
+        
+        const linkResult = await stripeConnectManager.createAccountLink(
+            account,
+            refreshUrl,
+            returnUrl
+        );
+        
+        if (linkResult.success) {
+            res.redirect(linkResult.onboardingUrl);
+        } else {
+            res.redirect('/secure-app.html?error=refresh_failed#businessSetup');
+        }
+    } catch (error) {
+        console.error('❌ Error refreshing onboarding link:', error);
+        res.redirect('/secure-app.html?error=refresh_failed#businessSetup');
+    }
+});
+
 // 🚀 NEW STRIPE CONNECT ENDPOINTS FOR COMPLETE REBUILD
 
 // Start Stripe Connect onboarding for photographer
@@ -14643,8 +14737,8 @@ app.post('/api/stripe-connect/start-onboarding', isAuthenticated, async (req, re
         // Create onboarding link
         const stripeConnectManager = new StripeConnectManager();
         const baseUrl = req.headers.origin || `https://${req.headers.host}`;
-        const refreshUrl = `${baseUrl}/payment-settings?refresh=true`;
-        const returnUrl = `${baseUrl}/payment-settings?success=true`;
+        const refreshUrl = `${baseUrl}/api/stripe-connect/refresh-link?account=${accountId}`;
+        const returnUrl = `${baseUrl}/api/stripe-connect/callback?account_id=${accountId}`;
 
         const linkResult = await stripeConnectManager.createAccountLink(
             accountId,

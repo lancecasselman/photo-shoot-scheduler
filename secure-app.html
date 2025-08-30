@@ -16510,6 +16510,10 @@ END:VCALENDAR`;
             const setupForm = document.getElementById('stripeSetupForm');
             const completeCard = document.getElementById('stripeConnectComplete');
             
+            // Check for success parameter in URL (returning from Stripe)
+            const urlParams = new URLSearchParams(window.location.search);
+            const isReturningFromStripe = urlParams.get('stripe_success') === 'true';
+            
             try {
                 const response = await fetch('/api/stripe-connect/account-status');
                 
@@ -16521,7 +16525,7 @@ END:VCALENDAR`;
                 
                 if (data.onboardingComplete && data.canReceivePayments) {
                     // Show connected state
-                    statusText.textContent = 'Payment processing is active';
+                    statusText.textContent = 'Payment processing is active ✅';
                     statusDetails.textContent = 'Your Stripe Express account is connected and ready to receive payments.';
                     statusDot.style.background = '#28a745';
                     setupForm.style.display = 'none';
@@ -16530,7 +16534,27 @@ END:VCALENDAR`;
                     // Update account ID
                     const accountIdEl = document.getElementById('stripeAccountId');
                     if (accountIdEl && data.accountId) {
-                        accountIdEl.textContent = data.accountId;
+                        accountIdEl.textContent = data.accountId.substring(0, 20) + '...';
+                    }
+                    
+                    // Show success message if returning from Stripe
+                    if (isReturningFromStripe) {
+                        showMessage('Payment setup completed successfully! You can now receive payments directly to your bank account.', 'success');
+                        // Clean URL
+                        window.history.replaceState({}, document.title, window.location.pathname + '#businessSetup');
+                    }
+                } else if (data.hasAccount && data.requiresInfo) {
+                    // Account exists but needs more info
+                    statusText.textContent = 'Additional information required';
+                    statusDetails.textContent = 'Please complete your account setup to start receiving payments.';
+                    statusDot.style.background = '#ffc107';
+                    setupForm.style.display = 'block';
+                    completeCard.style.display = 'none';
+                    
+                    // Show continue button instead of initial setup
+                    const btnText = document.querySelector('#setupStripeBtn .btn-text');
+                    if (btnText) {
+                        btnText.textContent = 'Continue Setup';
                     }
                 } else {
                     // Show setup form
@@ -16597,8 +16621,29 @@ END:VCALENDAR`;
         }
         
         // Open Stripe Dashboard
-        function openStripeDashboard() {
-            window.open('https://dashboard.stripe.com/express', '_blank');
+        async function openStripeDashboard() {
+            try {
+                const response = await fetch('/api/stripe-connect/dashboard-link', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.dashboardUrl) {
+                        window.open(data.dashboardUrl, '_blank');
+                    } else {
+                        window.open('https://dashboard.stripe.com/express', '_blank');
+                    }
+                } else {
+                    window.open('https://dashboard.stripe.com/express', '_blank');
+                }
+            } catch (error) {
+                console.error('Error getting dashboard link:', error);
+                window.open('https://dashboard.stripe.com/express', '_blank');
+            }
         }
     </script>
 
