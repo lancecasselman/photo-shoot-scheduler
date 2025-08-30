@@ -1415,81 +1415,8 @@ app.post('/api/auth/firebase-verify', async (req, res) => {
     }
 });
 
-// Missing endpoint that secure-login.html is trying to use
-app.post('/api/verify-auth', async (req, res) => {
-    try {
-        const { idToken, isAndroid, isCapacitor } = req.body;
-        
-        console.log('🔐 VERIFY-AUTH: Received verification request', {
-            hasToken: !!idToken,
-            isAndroid,
-            isCapacitor,
-            userAgent: req.get('User-Agent')
-        });
-
-        if (!idToken) {
-            return res.status(400).json({ error: 'Missing ID token' });
-        }
-
-        // Verify the Firebase token using admin SDK
-        try {
-            const decodedToken = await admin.auth().verifyIdToken(idToken);
-            
-            console.log('🎫 TOKEN VERIFIED:', {
-                uid: decodedToken.uid,
-                email: decodedToken.email,
-                isAndroid,
-                isCapacitor
-            });
-
-            // Get normalized user ID (for Lance's accounts)
-            const normalizedUser = normalizeUserForLance({
-                uid: decodedToken.uid,
-                email: decodedToken.email
-            });
-
-            // Create/update session with Android-specific flags
-            req.session.user = {
-                uid: normalizedUser.uid,
-                email: decodedToken.email,
-                displayName: decodedToken.name || '',
-                photoURL: decodedToken.picture || '',
-                isAndroid: isAndroid || false,
-                isCapacitor: isCapacitor || false,
-                verifiedAt: new Date().toISOString()
-            };
-
-            // Force session save with proper error handling
-            const sessionSavePromise = new Promise((resolve, reject) => {
-                req.session.save((err) => {
-                    if (err) {
-                        console.error('❌ Session save error:', err);
-                        reject(err);
-                    } else {
-                        console.log('✅ Session saved for:', decodedToken.email);
-                        resolve();
-                    }
-                });
-            });
-
-            await sessionSavePromise;
-
-            res.json({
-                success: true,
-                user: req.session.user,
-                sessionId: req.session.id
-            });
-
-        } catch (tokenError) {
-            console.error('❌ Token verification failed:', tokenError);
-            return res.status(401).json({ error: 'Invalid authentication token' });
-        }
-
-    } catch (error) {
-        console.error('❌ VERIFY-AUTH ERROR:', error);
-        res.status(500).json({ error: 'Authentication verification failed' });
-    }
-});
+// DUPLICATE ENDPOINT REMOVED - Using the better implementation at line 1769 instead
+// The second /api/verify-auth endpoint below handles this functionality
 
 app.get('/api/auth/user', (req, res) => {
     try {
