@@ -8040,23 +8040,39 @@ lance@thelegacyphotography.com`;
 
         // Helper function to display invoice status badge
         window.getInvoiceStatusBadge = function getInvoiceStatusBadge(session) {
-            if (!session.stripeInvoice) return '';
-            
-            const invoice = session.stripeInvoice;
             let badgeHTML = '';
             
-            // Check if invoice is paid
-            if (invoice.status === 'paid') {
-                badgeHTML += `<span class="invoice-badge" style="background: #4CAF50; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-left: 8px;">✓ Invoice Paid</span>`;
-                
-                // Check if deposit was paid
-                if (invoice.depositPaid) {
-                    badgeHTML += `<span class="invoice-badge" style="background: #2196F3; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-left: 4px;">✓ Deposit Paid</span>`;
+            // Check deposit status if deposit amount exists
+            if (session.depositAmount && session.depositAmount > 0) {
+                if (session.depositPaid) {
+                    badgeHTML += `<span class="invoice-badge" style="background: #4CAF50; color: white; padding: 3px 10px; border-radius: 4px; font-size: 12px; margin-left: 8px; font-weight: 600;">✓ Deposit Paid: $${session.depositAmount.toFixed(2)}</span>`;
+                } else if (session.depositSent) {
+                    badgeHTML += `<span class="invoice-badge" style="background: #FF9800; color: white; padding: 3px 10px; border-radius: 4px; font-size: 12px; margin-left: 8px; font-weight: 600;">⏳ Deposit Pending: $${session.depositAmount.toFixed(2)}</span>`;
+                } else {
+                    badgeHTML += `<span class="invoice-badge" style="background: #9E9E9E; color: white; padding: 3px 10px; border-radius: 4px; font-size: 12px; margin-left: 8px;">Deposit Required: $${session.depositAmount.toFixed(2)}</span>`;
                 }
-            } else if (invoice.status === 'open') {
-                badgeHTML += `<span class="invoice-badge" style="background: #FF9800; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-left: 8px;">⏳ Invoice Sent</span>`;
-            } else if (invoice.status === 'draft') {
-                badgeHTML += `<span class="invoice-badge" style="background: #9E9E9E; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-left: 8px;">📝 Draft Invoice</span>`;
+            }
+            
+            // Check main invoice status
+            const totalAmount = parseFloat(session.price);
+            const remainingAmount = totalAmount - (session.depositPaid ? parseFloat(session.depositAmount || 0) : 0);
+            
+            if (session.paid) {
+                badgeHTML += `<span class="invoice-badge" style="background: #4CAF50; color: white; padding: 3px 10px; border-radius: 4px; font-size: 12px; margin-left: 4px; font-weight: 600;">✓ Fully Paid: $${totalAmount.toFixed(2)}</span>`;
+            } else if (session.invoiceSent) {
+                badgeHTML += `<span class="invoice-badge" style="background: #2196F3; color: white; padding: 3px 10px; border-radius: 4px; font-size: 12px; margin-left: 4px; font-weight: 600;">⏳ Invoice Sent: $${remainingAmount.toFixed(2)}</span>`;
+            } else if (session.depositPaid && remainingAmount > 0) {
+                badgeHTML += `<span class="invoice-badge" style="background: #9E9E9E; color: white; padding: 3px 10px; border-radius: 4px; font-size: 12px; margin-left: 4px;">Balance Due: $${remainingAmount.toFixed(2)}</span>`;
+            }
+            
+            // Legacy Stripe invoice support
+            if (session.stripeInvoice) {
+                const invoice = session.stripeInvoice;
+                if (invoice.status === 'paid' && !session.paid) {
+                    badgeHTML += `<span class="invoice-badge" style="background: #4CAF50; color: white; padding: 3px 10px; border-radius: 4px; font-size: 12px; margin-left: 4px;">✓ Stripe Paid</span>`;
+                } else if (invoice.status === 'open') {
+                    badgeHTML += `<span class="invoice-badge" style="background: #FF9800; color: white; padding: 3px 10px; border-radius: 4px; font-size: 12px; margin-left: 4px;">Stripe Invoice Open</span>`;
+                }
             }
             
             return badgeHTML;

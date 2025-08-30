@@ -3961,6 +3961,11 @@ async function getAllSessions(userId) {
             price: parseFloat(row.price),
             depositAmount: parseFloat(row.deposit_amount || 0),
             deposit_amount: parseFloat(row.deposit_amount || 0), // Also include snake_case version
+            depositPaid: row.deposit_paid || false,
+            depositSent: row.deposit_sent || false,
+            invoiceSent: row.invoice_sent || false,
+            depositPaidAt: row.deposit_paid_at,
+            invoicePaidAt: row.invoice_paid_at,
             duration: row.duration,
             notes: row.notes,
             contractSigned: row.contract_signed,
@@ -3977,7 +3982,8 @@ async function getAllSessions(userId) {
             hasPaymentPlan: row.has_payment_plan || false,
             paymentPlanId: row.payment_plan_id || null,
             createdAt: row.created_at,
-            updatedAt: row.updated_at
+            updatedAt: row.updated_at,
+            stripeInvoice: row.stripe_invoice // Include stripe invoice for legacy support
         }));
         
         return mappedRows;
@@ -4650,6 +4656,11 @@ app.get('/api/sessions', isAuthenticated, requireSubscription, async (req, res) 
                 price: parseFloat(row.price),
                 depositAmount: parseFloat(row.deposit_amount || 0), // FIXED: Include deposit amount mapping
                 deposit_amount: parseFloat(row.deposit_amount || 0), // Also include snake_case version
+                depositPaid: row.deposit_paid || false,
+                depositSent: row.deposit_sent || false,
+                invoiceSent: row.invoice_sent || false,
+                depositPaidAt: row.deposit_paid_at,
+                invoicePaidAt: row.invoice_paid_at,
                 duration: row.duration,
                 notes: row.notes,
                 contractSigned: row.contract_signed,
@@ -4666,7 +4677,8 @@ app.get('/api/sessions', isAuthenticated, requireSubscription, async (req, res) 
                 hasPaymentPlan: row.has_payment_plan || false,
                 paymentPlanId: row.payment_plan_id || null,
                 createdAt: row.created_at,
-                updatedAt: row.updated_at
+                updatedAt: row.updated_at,
+                stripeInvoice: row.stripe_invoice // Include stripe invoice for legacy support
             }));
             console.log(`UNIFIED ACCOUNT: Found ${sessions.length} sessions for Lance's unified account`);
         }
@@ -4738,6 +4750,67 @@ app.put('/api/sessions/:id', isAuthenticated, async (req, res) => {
     } catch (error) {
         console.error('Error updating session:', error);
         res.status(500).json({ error: 'Failed to update session' });
+    }
+});
+
+// Update session payment status (for deposits and invoices)
+app.post('/api/sessions/:id/update-payment-status', isAuthenticated, async (req, res) => {
+    const sessionId = req.params.id;
+    const { paymentType, paid, amount } = req.body;
+    const normalizedUser = normalizeUserForLance(req.user);
+    const userId = normalizedUser.uid;
+
+    try {
+        // Verify session ownership
+        const sessionResult = await pool.query(
+            'SELECT * FROM photography_sessions WHERE id = $1 AND user_id = $2',
+            [sessionId, userId]
+        );
+        
+        if (sessionResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Session not found or access denied' });
+        }
+        
+        const session = sessionResult.rows[0];
+        
+        // Update payment status based on type
+        if (paymentType === 'deposit' && paid) {
+            await pool.query(
+                'UPDATE photography_sessions SET deposit_paid = true, deposit_paid_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = $1',
+                [sessionId]
+            );
+            console.log(`✓ Marked deposit as paid for session ${sessionId} - Amount: $${amount || session.deposit_amount}`);
+        } else if (paymentType === 'invoice' && paid) {
+            await pool.query(
+                'UPDATE photography_sessions SET paid = true, invoice_paid_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = $1',
+                [sessionId]
+            );
+            console.log(`✓ Marked invoice as paid for session ${sessionId} - Amount: $${amount || session.price}`);
+        }
+        
+        // Get updated session
+        const updatedResult = await pool.query(
+            'SELECT * FROM photography_sessions WHERE id = $1',
+            [sessionId]
+        );
+        
+        const updatedSession = {
+            ...updatedResult.rows[0],
+            depositPaid: updatedResult.rows[0].deposit_paid,
+            depositSent: updatedResult.rows[0].deposit_sent,
+            invoiceSent: updatedResult.rows[0].invoice_sent,
+            depositPaidAt: updatedResult.rows[0].deposit_paid_at,
+            invoicePaidAt: updatedResult.rows[0].invoice_paid_at
+        };
+        
+        res.json({ 
+            success: true, 
+            message: `${paymentType} marked as paid`,
+            session: updatedSession 
+        });
+    } catch (error) {
+        console.error('Error updating payment status:', error);
+        res.status(500).json({ error: 'Failed to update payment status' });
     }
 });
 
@@ -9396,17 +9469,23 @@ app.post('/api/sessions/:id/send-invoice', async (req, res) => {
             ? await stripe.invoices.sendInvoice(finalizedInvoice.id, {}, { stripeAccount: photographerAccountId })
             : await stripe.invoices.sendInvoice(finalizedInvoice.id);
 
-        // If this is a deposit, update the session's deposit amount
+        // Update the session's deposit or invoice status
         if (isDeposit && depositAmount) {
             const newDepositAmount = (session.depositAmount || 0) + depositAmount;
             
-            // Update the session in the database
+            // Update the session in the database with deposit status
             await pool.query(
-                'UPDATE photography_sessions SET deposit_amount = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+                'UPDATE photography_sessions SET deposit_amount = $1, deposit_sent = true, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
                 [newDepositAmount, sessionId]
             );
             
             session.depositAmount = newDepositAmount;
+        } else {
+            // Mark invoice as sent for full payment
+            await pool.query(
+                'UPDATE photography_sessions SET invoice_sent = true, updated_at = CURRENT_TIMESTAMP WHERE id = $1',
+                [sessionId]
+            );
         }
 
         // Store invoice details in session
