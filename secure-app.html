@@ -6837,6 +6837,7 @@ ${contract.contract_content}
                                     `<span class="session-remaining" style="color: #000000; font-weight: 600;">Remaining: $${(session.price - session.depositAmount).toFixed(2)}</span>` : 
                                     ''
                                 }
+                                ${getInvoiceStatusBadge(session)}
                             </div>
                         </div>
                         <div class="expand-icon" id="expand-${sessionId}">▼</div>
@@ -6894,7 +6895,7 @@ ${contract.contract_content}
                                 <div class="status-item">
                                     <input type="checkbox" id="paid_${sessionId}" ${session.paid ? 'checked' : ''} 
                                            onchange="toggleWorkflowStatus('${sessionId}', 'paid', this.checked); event.stopPropagation();">
-                                    <label for="paid_${sessionId}">Paid</label>
+                                    <label for="paid_${sessionId}">Paid${getInvoicePaymentDetails(session)}</label>
                                 </div>
                                 <div class="status-item">
                                     <input type="checkbox" id="edited_${sessionId}" ${session.edited ? 'checked' : ''} 
@@ -8035,6 +8036,50 @@ lance@thelegacyphotography.com`;
                 hour: '2-digit',
                 minute: '2-digit'
             });
+        }
+
+        // Helper function to display invoice status badge
+        window.getInvoiceStatusBadge = function getInvoiceStatusBadge(session) {
+            if (!session.stripeInvoice) return '';
+            
+            const invoice = session.stripeInvoice;
+            let badgeHTML = '';
+            
+            // Check if invoice is paid
+            if (invoice.status === 'paid') {
+                badgeHTML += `<span class="invoice-badge" style="background: #4CAF50; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-left: 8px;">✓ Invoice Paid</span>`;
+                
+                // Check if deposit was paid
+                if (invoice.depositPaid) {
+                    badgeHTML += `<span class="invoice-badge" style="background: #2196F3; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-left: 4px;">✓ Deposit Paid</span>`;
+                }
+            } else if (invoice.status === 'open') {
+                badgeHTML += `<span class="invoice-badge" style="background: #FF9800; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-left: 8px;">⏳ Invoice Sent</span>`;
+            } else if (invoice.status === 'draft') {
+                badgeHTML += `<span class="invoice-badge" style="background: #9E9E9E; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-left: 8px;">📝 Draft Invoice</span>`;
+            }
+            
+            return badgeHTML;
+        }
+        
+        // Helper function to display invoice payment details
+        window.getInvoicePaymentDetails = function getInvoicePaymentDetails(session) {
+            if (!session.stripeInvoice || session.stripeInvoice.status !== 'paid') return '';
+            
+            const invoice = session.stripeInvoice;
+            let details = '';
+            
+            if (invoice.amountPaid) {
+                const amountPaid = (invoice.amountPaid / 100).toFixed(2);
+                details += ` ($${amountPaid})`;
+            }
+            
+            if (invoice.paidAt) {
+                const paidDate = new Date(invoice.paidAt * 1000).toLocaleDateString();
+                details += ` on ${paidDate}`;
+            }
+            
+            return details;
         }
 
         window.formatDuration = function formatDuration(durationMinutes) {
